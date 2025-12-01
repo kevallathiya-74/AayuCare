@@ -11,9 +11,6 @@ web-build/
 dist/
 
 # Environment variables
-.env
-backend/.env
-frontend/.env
 
 # Build outputs
 build/
