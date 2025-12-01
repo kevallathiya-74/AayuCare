@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+frontend/.expo/
+web-build/
+dist/
+
+# Environment variables
+.env
+backend/.env
+frontend/.env
+
+# Build outputs
+build/
+dist/
+coverage/
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Certificates and keys
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+*.pem
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Database
+*.sqlite
+*.db
+
+# Test coverage
+coverage/
+.nyc_output/
