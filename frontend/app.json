@@ -4,11 +4,11 @@
     "slug": "aayucare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/aayucare-logo.png",
     "userInterfaceStyle": "light",
     "scheme": "aayucare",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/images/aayucare-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#4A90E2"
     },
@@ -24,8 +24,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#4A90E2"
+        "foregroundImage": "./assets/images/aayucare-logo.png",
+        "backgroundColor": "#4DD0E1"
       },
       "package": "com.aayucare.app",
       "permissions": [
@@ -35,7 +35,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/images/aayucare-logo.png",
       "bundler": "metro"
     },
     "extra": {

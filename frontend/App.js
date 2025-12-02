@@ -1,82 +1,41 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+/**
+ * AayuCare - Main App Entry Point
+ * 
+ * Integrates Redux, React Native Paper, Navigation, and Theme.
+ */
+
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SplashScreen from 'expo-splash-screen';
+import { Provider as ReduxProvider } from 'react-redux';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Screens
-import SplashScreenComponent from './src/screens/SplashScreen';
-import OnboardingScreen from './src/screens/OnboardingScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import RegisterScreen from './src/screens/RegisterScreen';
-import MainNavigator from './src/navigation/MainNavigator';
+import store from './src/store/store';
+import AppNavigator from './src/navigation/AppNavigator';
+import { paperTheme } from './src/theme/theme';
 
-// Context
-import { AuthProvider, useAuth } from './src/context/AuthContext';
-
-const Stack = createStackNavigator();
-
-SplashScreen.preventAutoHideAsync();
-
-function AppNavigator() {
-  const { user, loading } = useAuth();
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
-        if (hasLaunched === null) {
-          setIsFirstLaunch(true);
-          await AsyncStorage.setItem('hasLaunched', 'true');
-        } else {
-          setIsFirstLaunch(false);
-        }
-        
-        // Simulate splash screen delay
-        setTimeout(async () => {
-          setShowSplash(false);
-          await SplashScreen.hideAsync();
-        }, 1500);
-      } catch (e) {
-        console.warn(e);
-        await SplashScreen.hideAsync();
-      }
-    }
-
-    prepare();
-  }, []);
-
-  if (loading || showSplash || isFirstLaunch === null) {
-    return <SplashScreenComponent />;
-  }
-
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <Stack.Screen name="Main" component={MainNavigator} />
-      ) : (
-        <>
-          {isFirstLaunch && (
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-          )}
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-        </>
-      )}
-    </Stack.Navigator>
-  );
-}
+// Create React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="dark" backgroundColor="transparent" translucent />
-        <AppNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ReduxProvider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider theme={paperTheme}>
+            <StatusBar style="dark" />
+            <AppNavigator />
+          </PaperProvider>
+        </QueryClientProvider>
+      </ReduxProvider>
+    </GestureHandlerRootView>
   );
 }
