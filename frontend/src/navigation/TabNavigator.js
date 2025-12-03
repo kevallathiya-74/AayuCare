@@ -9,6 +9,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import colors from '../theme/colors';
+import { createShadow } from '../utils/platformStyles';
 
 // Import screens
 import {
@@ -56,11 +57,13 @@ const TabNavigator = () => {
           height: Platform.OS === 'ios' ? 85 : 60,
           paddingBottom: Platform.OS === 'ios' ? 25 : 8,
           paddingTop: 8,
-          elevation: 8,
-          shadowColor: colors.shadows.medium,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
+          ...createShadow({
+            color: colors.shadows.medium,
+            offset: { width: 0, height: -2 },
+            opacity: 0.1,
+            radius: 8,
+            elevation: 8,
+          }),
         },
         tabBarLabelStyle: {
           fontSize: 12,

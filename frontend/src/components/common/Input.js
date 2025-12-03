@@ -37,7 +37,12 @@ const Input = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [hasValue, setHasValue] = useState(!!value);
   const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
+
+  React.useEffect(() => {
+    setHasValue(!!value);
+  }, [value]);
 
   const handleFocus = () => {
     setIsFocused(true);
@@ -64,7 +69,7 @@ const Input = ({
     left: leftIcon ? 48 : spacing.md,
     top: labelAnim.interpolate({
       inputRange: [0, 1],
-      outputRange: [18, -8],
+      outputRange: [13, -10],
     }),
     fontSize: labelAnim.interpolate({
       inputRange: [0, 1],
@@ -75,7 +80,10 @@ const Input = ({
       : isFocused
       ? colors.primary.main
       : colors.text.tertiary,
-    paddingHorizontal: 4,
+    backgroundColor: colors.background.primary,
+    paddingHorizontal: 6,
+    fontWeight: '500',
+    zIndex: 1,
   };
 
   const containerStyle = [
@@ -94,7 +102,10 @@ const Input = ({
 
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={(text) => {
+            setHasValue(!!text);
+            onChangeText && onChangeText(text);
+          }}
           placeholder={!label || isFocused || value ? placeholder : ''}
           placeholderTextColor={colors.input.placeholder}
           onFocus={handleFocus}
@@ -103,11 +114,14 @@ const Input = ({
           secureTextEntry={secureTextEntry && !showPassword}
           multiline={multiline}
           numberOfLines={numberOfLines}
+          autoCorrect={false}
+          autoCapitalize="none"
           style={[
             styles.input,
             leftIcon && styles.inputWithLeftIcon,
             (rightIcon || secureTextEntry) && styles.inputWithRightIcon,
             multiline && styles.inputMultiline,
+            !hasValue && !isFocused && styles.inputCentered,
             inputStyle,
           ]}
           {...props}
@@ -147,18 +161,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.input.background,
-    borderWidth: 1,
+    backgroundColor: colors.background.primary,
+    borderWidth: 1.5,
     borderColor: colors.input.border,
     borderRadius: colors.borderRadius.medium,
     height: layout.inputHeight,
   },
   containerFocused: {
     borderColor: colors.input.borderFocused,
-    borderWidth: 2,
+    borderWidth: 1.5,
+    backgroundColor: colors.background.primary,
+    outlineStyle: 'none',
   },
   containerError: {
     borderColor: colors.input.borderError,
+    borderWidth: 1.5,
   },
   containerDisabled: {
     backgroundColor: colors.neutral.gray100,
@@ -171,6 +188,12 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    paddingTop: 10,
+    outlineStyle: 'none',
+    textAlign: 'left',
+  },
+  inputCentered: {
+    textAlign: 'center',
   },
   inputWithLeftIcon: {
     paddingLeft: 0,

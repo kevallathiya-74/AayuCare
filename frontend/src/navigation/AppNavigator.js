@@ -53,9 +53,11 @@ const linking = {
       CreateAccount: 'create-account',
       Auth: {
         screens: {
-          Login: 'login',
-          Register: 'register',
-          ForgotPassword: 'forgot-password',
+          Login: 'auth/login',
+          Register: 'auth/register',
+          ForgotPassword: 'auth/forgot-password',
+          OTP: 'auth/otp',
+          ResetPassword: 'auth/reset-password',
         },
       },
       Main: {

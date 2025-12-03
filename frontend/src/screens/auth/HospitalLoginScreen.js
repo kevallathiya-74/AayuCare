@@ -19,6 +19,7 @@ import Animated, {
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { colors } from '../../theme/colors';
+import { createShadow } from '../../utils/platformStyles';
 
 const HospitalLoginScreen = ({ navigation }) => {
   const [hospitalId, setHospitalId] = useState('');
@@ -46,7 +47,11 @@ const HospitalLoginScreen = ({ navigation }) => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('BoxSelection');
+    }
   };
 
   return (
@@ -156,47 +161,39 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 40,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 24,
+    ...createShadow({ color: '#000', offset: { width: 0, height: 2 }, opacity: 0.08, radius: 8, elevation: 2 }),
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
   },
   iconWrapper: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   iconGradient: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#43A047',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    ...createShadow({ color: '#43A047', offset: { width: 0, height: 6 }, opacity: 0.25, radius: 12, elevation: 8 }),
   },
   title: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '700',
     color: '#1B5E20',
-    marginBottom: 8,
+    marginBottom: 10,
     letterSpacing: 0.3,
   },
   subtitle: {
@@ -207,12 +204,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: 40,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 28,
+    paddingVertical: 4,
   },
   forgotPasswordText: {
     fontSize: 14,
@@ -222,22 +220,24 @@ const styles = StyleSheet.create({
   loginButton: {
     marginTop: 8,
     backgroundColor: '#43A047',
+    height: 56,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 40,
-    paddingTop: 24,
+    marginTop: 48,
+    paddingTop: 28,
     borderTopWidth: 1,
     borderTopColor: '#C8E6C9',
   },
   footerText: {
-    marginLeft: 8,
+    marginLeft: 10,
     fontSize: 13,
     fontWeight: '500',
     color: '#2E7D32',
     textAlign: 'center',
+    lineHeight: 18,
   },
 });
 

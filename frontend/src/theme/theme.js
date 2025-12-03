@@ -9,6 +9,7 @@ import { MD3LightTheme, configureFonts } from 'react-native-paper';
 import colors from './colors';
 import { fontFamilies, fontSizes, fontWeights } from './typography';
 import { spacing, componentSpacing, layout } from './spacing';
+import { createShadow } from '../utils/platformStyles';
 
 // Configure fonts for React Native Paper
 const fontConfig = {
@@ -130,34 +131,34 @@ export const theme = {
   
   // Shadows (elevation styles for iOS/Android)
   shadows: {
-    small: {
-      shadowColor: colors.shadows.small,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 1,
-      shadowRadius: 2,
+    small: createShadow({
+      color: '#000',
+      offset: { width: 0, height: 1 },
+      opacity: 0.06,
+      radius: 2,
       elevation: 1,
-    },
-    medium: {
-      shadowColor: colors.shadows.medium,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 1,
-      shadowRadius: 4,
+    }),
+    medium: createShadow({
+      color: '#000',
+      offset: { width: 0, height: 2 },
+      opacity: 0.08,
+      radius: 4,
       elevation: 2,
-    },
-    large: {
-      shadowColor: colors.shadows.large,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 1,
-      shadowRadius: 8,
+    }),
+    large: createShadow({
+      color: '#000',
+      offset: { width: 0, height: 4 },
+      opacity: 0.12,
+      radius: 8,
       elevation: 4,
-    },
-    elevated: {
-      shadowColor: colors.shadows.elevated,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 1,
-      shadowRadius: 16,
+    }),
+    elevated: createShadow({
+      color: '#000',
+      offset: { width: 0, height: 8 },
+      opacity: 0.15,
+      radius: 16,
       elevation: 8,
-    },
+    }),
   },
   
   // Border styles

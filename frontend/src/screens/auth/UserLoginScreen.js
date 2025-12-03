@@ -19,6 +19,7 @@ import Animated, {
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { colors } from '../../theme/colors';
+import { createShadow } from '../../utils/platformStyles';
 
 const UserLoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -54,7 +55,11 @@ const UserLoginScreen = ({ navigation }) => {
   };
 
   const handleBack = () => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('BoxSelection');
+    }
   };
 
   return (
@@ -75,7 +80,7 @@ const UserLoginScreen = ({ navigation }) => {
         >
           {/* Back Button */}
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Feather name="arrow-left" size={24} color={colors.primary} />
+            <Feather name="arrow-left" size={24} color={colors.primary.main} />
           </TouchableOpacity>
 
           {/* Header Section */}
@@ -195,114 +200,123 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 40,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 24,
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 2 },
+      opacity: 0.08,
+      radius: 8,
+      elevation: 2,
+    }),
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
   },
   iconWrapper: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   iconGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#4FC3F7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    ...createShadow({
+      color: '#4FC3F7',
+      offset: { width: 0, height: 6 },
+      opacity: 0.25,
+      radius: 12,
+      elevation: 8,
+    }),
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: 10,
     letterSpacing: 0.3,
   },
   subtitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: colors.textSecondary,
+    color: colors.text.secondary,
     textAlign: 'center',
     letterSpacing: 0.2,
     paddingHorizontal: 20,
+    lineHeight: 22,
   },
   form: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 28,
+    paddingVertical: 4,
   },
   forgotPasswordText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.primary.main,
   },
   loginButton: {
     marginTop: 8,
+    height: 56,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 28,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: colors.card.border,
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: colors.text.secondary,
   },
   additionalOptions: {
-    marginBottom: 24,
-    gap: 12,
+    marginBottom: 28,
+    gap: 14,
   },
   optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: colors.primary.main,
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 2 },
+      opacity: 0.05,
+      radius: 4,
+      elevation: 2,
+    }),
   },
   optionButtonText: {
     marginLeft: 10,
     fontSize: 15,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.primary.main,
   },
   googleButton: {
     borderColor: '#E0E0E0',
@@ -319,29 +333,30 @@ const styles = StyleSheet.create({
   signUpText: {
     fontSize: 14,
     fontWeight: '400',
-    color: colors.textSecondary,
+    color: colors.text.secondary,
   },
   signUpLink: {
     marginLeft: 6,
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.primary.main,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 32,
-    paddingTop: 24,
+    marginTop: 36,
+    paddingTop: 28,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.card.border,
   },
   footerText: {
-    marginLeft: 8,
+    marginLeft: 10,
     fontSize: 12,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: colors.text.secondary,
     textAlign: 'center',
+    lineHeight: 18,
   },
 });
 

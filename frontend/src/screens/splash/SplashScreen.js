@@ -10,6 +10,7 @@ import Animated, {
   withRepeat,
   Easing,
 } from 'react-native-reanimated';
+import { createShadow, createTextShadow } from '../../utils/platformStyles';
 
 const { width, height } = Dimensions.get('window');
 
@@ -143,11 +144,13 @@ const styles = StyleSheet.create({
     height: 240,
     borderRadius: 120,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#FFFFFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 40,
-    elevation: 20,
+    ...createShadow({
+      color: '#FFFFFF',
+      offset: { width: 0, height: 0 },
+      opacity: 0.8,
+      radius: 40,
+      elevation: 20,
+    }),
   },
   logoContainer: {
     width: 180,
@@ -167,9 +170,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.5,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    ...createTextShadow({
+      color: 'rgba(0, 0, 0, 0.2)',
+      offset: { width: 0, height: 2 },
+      radius: 4,
+    }),
   },
 });
 

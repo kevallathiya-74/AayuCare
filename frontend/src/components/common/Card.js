@@ -9,6 +9,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import colors from '../../theme/colors';
 import { spacing, componentSpacing } from '../../theme/spacing';
+import { createShadow } from '../../utils/platformStyles';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -89,25 +90,31 @@ const styles = StyleSheet.create({
     padding: componentSpacing.cardPadding,
   },
   elevationSmall: {
-    shadowColor: colors.shadows.small,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
-    shadowRadius: 2,
-    elevation: 1,
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 1 },
+      opacity: 0.06,
+      radius: 2,
+      elevation: 1,
+    }),
   },
   elevationMedium: {
-    shadowColor: colors.shadows.medium,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 2 },
+      opacity: 0.08,
+      radius: 4,
+      elevation: 2,
+    }),
   },
   elevationLarge: {
-    shadowColor: colors.shadows.large,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 4,
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 4 },
+      opacity: 0.12,
+      radius: 8,
+      elevation: 4,
+    }),
   },
 });
 
