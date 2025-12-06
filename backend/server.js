@@ -11,6 +11,9 @@ const logger = require('./src/utils/logger');
 
 // Routes
 const authRoutes = require('./src/routes/authRoutes');
+const medicalRecordRoutes = require('./src/routes/medicalRecordRoutes');
+const appointmentRoutes = require('./src/routes/appointmentRoutes');
+const doctorRoutes = require('./src/routes/doctorRoutes');
 
 const app = express();
 
@@ -20,7 +23,7 @@ connectDB();
 // Security Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: ['http://localhost:19006', 'http://localhost:8081', 'http://localhost:8082'],
   credentials: true,
 }));
 
@@ -43,6 +46,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/medical-records', medicalRecordRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/doctors', doctorRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

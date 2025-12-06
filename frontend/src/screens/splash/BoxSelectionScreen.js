@@ -1,313 +1,301 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Dimensions, Platform } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withDelay,
-  Easing,
-  runOnJS,
-} from 'react-native-reanimated';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { createShadow } from '../../utils/platformStyles';
+/**
+ * Premium Box Selection Screen
+ * Vibrant, beautiful design with enhanced colors
+ * Optimized for Indian users
+ */
 
-const { width, height } = Dimensions.get('window');
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  Dimensions,
+  Image,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { healthColors } from '../../theme/healthColors';
+import { indianDesign, createShadow } from '../../theme/indianDesign';
+
+const { width } = Dimensions.get('window');
 
 const BoxSelectionScreen = ({ navigation }) => {
-  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-  
-  // Entrance animations
-  const headerOpacity = useSharedValue(0);
-  const headerTranslateY = useSharedValue(-20);
-  const box1Opacity = useSharedValue(0);
-  const box1TranslateX = useSharedValue(-50);
-  const box2Opacity = useSharedValue(0);
-  const box2TranslateX = useSharedValue(50);
-  const footerOpacity = useSharedValue(0);
+  const handleHospitalPress = () => {
+    navigation.navigate('HospitalLogin');
+  };
 
-  useEffect(() => {
-    // Stagger entrance animations
-    headerOpacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-    headerTranslateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-
-    box1Opacity.value = withDelay(200, withTiming(1, { duration: 600 }));
-    box1TranslateX.value = withDelay(200, withSpring(0, { damping: 20, stiffness: 100 }));
-
-    box2Opacity.value = withDelay(400, withTiming(1, { duration: 600 }));
-    box2TranslateX.value = withDelay(400, withSpring(0, { damping: 20, stiffness: 100 }));
-
-    footerOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
-  }, []);
-
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-    transform: [{ translateY: headerTranslateY.value }],
-  }));
-
-  const box1AnimatedStyle = useAnimatedStyle(() => ({
-    opacity: box1Opacity.value,
-    transform: [{ translateX: box1TranslateX.value }],
-  }));
-
-  const box2AnimatedStyle = useAnimatedStyle(() => ({
-    opacity: box2Opacity.value,
-    transform: [{ translateX: box2TranslateX.value }],
-  }));
-
-  const footerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: footerOpacity.value,
-  }));
-
-  const handleSelection = (userType) => {
-    console.log('User selected:', userType);
-    
-    // Navigate to appropriate login screen
-    if (userType === 'hospital') {
-      navigation.navigate('HospitalLogin');
-    } else {
-      navigation.navigate('UserLogin');
-    }
+  const handleUserPress = () => {
+    // Coming soon
+    alert('User section coming soon!');
   };
 
   return (
-    <LinearGradient
-      colors={['#E3F2FD', '#FFFFFF', '#F5F5F5']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={styles.container}
-    >
-      {/* Logo/Brand Section */}
-      <Animated.View style={[styles.logoSection, headerAnimatedStyle]}>
-        <View style={styles.logoCircle}>
-          <Feather name="heart" size={36} color="#4A90E2" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Header with Logo */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../../assets/images/aayucare-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
-      </Animated.View>
+        <Text style={styles.title}>Continue as</Text>
+        <Text style={styles.subtitle}>Choose your role to get started</Text>
+      </View>
 
-      {/* Header */}
-      <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <Text style={styles.title}>Welcome to AayuCare</Text>
-        <Text style={styles.subtitle}>Choose how you'd like to continue</Text>
-      </Animated.View>
+      {/* Selection Cards */}
+      <View style={styles.cardsContainer}>
+        {/* Hospital Card - Professional Teal + Navy */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={handleHospitalPress}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={healthColors.hospital.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cardGradient}
+          >
+            {/* Icon Circle */}
+            <View style={styles.iconCircle}>
+              <Ionicons
+                name="business"
+                size={44}
+                color="#FFFFFF"
+              />
+            </View>
 
-      {/* Selection Boxes */}
-      <View style={styles.boxContainer}>
-        <Animated.View style={box1AnimatedStyle}>
-          <SelectionBox
-            title="Hospital"
-            subtitle="Healthcare providers & facilities"
-            icon="hospital-building"
-            iconType="MaterialCommunityIcons"
-            gradientColors={['#66BB6A', '#43A047']}
-            onPress={() => handleSelection('hospital')}
-          />
-        </Animated.View>
+            {/* Card Content */}
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>Hospital</Text>
+              <Text style={styles.cardSubtitle}>
+                Admin, Doctor & Patient Access
+              </Text>
+            </View>
 
-        <Animated.View style={box2AnimatedStyle}>
-          <SelectionBox
-            title="User"
-            subtitle="Patients & health seekers"
-            icon="user"
-            iconType="Feather"
-            gradientColors={['#4FC3F7', '#29B6F6']}
-            onPress={() => handleSelection('user')}
-          />
-        </Animated.View>
+            {/* Arrow */}
+            <View style={styles.arrowCircle}>
+              <Ionicons
+                name="arrow-forward"
+                size={26}
+                color="#FFFFFF"
+              />
+            </View>
+
+            {/* Decorative Elements */}
+            <View style={styles.decorCircle1} />
+            <View style={styles.decorCircle2} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* User Card - Sky Wellness Blue */}
+        <TouchableOpacity
+          style={[styles.card, styles.disabledCard]}
+          onPress={handleUserPress}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={healthColors.secondary.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cardGradient}
+          >
+            {/* Coming Soon Badge */}
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>Coming Soon</Text>
+            </View>
+
+            {/* Icon Circle */}
+            <View style={styles.iconCircle}>
+              <Ionicons
+                name="person"
+                size={44}
+                color="#FFFFFF"
+              />
+            </View>
+
+            {/* Card Content */}
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>User</Text>
+              <Text style={styles.cardSubtitle}>
+                General Health Services
+              </Text>
+            </View>
+
+            {/* Decorative Elements */}
+            <View style={styles.decorCircle1} />
+            <View style={styles.decorCircle2} />
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
       {/* Footer */}
-      <Animated.View style={[styles.footer, footerAnimatedStyle]}>
-        <Feather name="shield" size={16} color="#78909C" />
-        <Text style={styles.footerText}>Secure • Private • Trusted</Text>
-      </Animated.View>
-    </LinearGradient>
-  );
-};
-
-const SelectionBox = ({ title, subtitle, icon, iconType, gradientColors, onPress }) => {
-  const scale = useSharedValue(1);
-  const shadowOpacity = useSharedValue(0.15);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    if (Platform.OS === 'web') {
-      return {
-        transform: [{ scale: scale.value }],
-        boxShadow: `0px 8px 16px rgba(0, 0, 0, ${shadowOpacity.value})`,
-      };
-    }
-    return {
-      transform: [{ scale: scale.value }],
-      shadowOpacity: shadowOpacity.value,
-    };
-  });
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.95, {
-      damping: 15,
-      stiffness: 300,
-    });
-    shadowOpacity.value = withTiming(0.25, { duration: 150 });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, {
-      damping: 15,
-      stiffness: 300,
-    });
-    shadowOpacity.value = withTiming(0.15, { duration: 150 });
-  };
-
-  const IconComponent = iconType === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Feather;
-
-  return (
-    <Animated.View style={[styles.boxWrapper, animatedStyle]}>
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={onPress}
-        style={styles.touchable}
-      >
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.box}
-        >
-          {/* Icon Container */}
-          <View style={styles.iconContainer}>
-            <View style={styles.iconCircle}>
-              <IconComponent name={icon} size={40} color="#FFFFFF" />
-            </View>
-          </View>
-
-          {/* Text Content */}
-          <View style={styles.textContent}>
-            <Text style={styles.boxTitle}>{title}</Text>
-            <Text style={styles.boxSubtitle}>{subtitle}</Text>
-          </View>
-
-          {/* Arrow Indicator */}
-          <View style={styles.arrowContainer}>
-            <Feather name="chevron-right" size={28} color="rgba(255,255,255,0.9)" />
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    </Animated.View>
+      <View style={styles.footer}>
+        <View style={styles.footerDot} />
+        <Text style={styles.footerText}>
+          Secure • Private • Trusted
+        </Text>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-  },
-  logoSection: {
-    marginTop: height * 0.08,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logoCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'rgba(74, 144, 226, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(74, 144, 226, 0.2)',
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    marginBottom: 40,
+    paddingTop: indianDesign.spacing.xxxl,
+    paddingHorizontal: indianDesign.spacing.xl,
+    marginBottom: indianDesign.spacing.xxl,
     alignItems: 'center',
+  },
+  logoContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: indianDesign.spacing.lg,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  logo: {
+    width: 65,
+    height: 65,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#1A237E',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-    textAlign: 'center',
+    color: '#2C3E50',
+    marginBottom: indianDesign.spacing.xs,
   },
   subtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#546E7A',
-    letterSpacing: 0.2,
-    textAlign: 'center',
+    fontSize: indianDesign.fontSize.medium,
+    color: '#7F8C8D',
+    fontWeight: '500',
   },
-  boxContainer: {
+  cardsContainer: {
     flex: 1,
+    paddingHorizontal: indianDesign.spacing.xl,
+    gap: indianDesign.spacing.lg,
     justifyContent: 'center',
-    gap: 24,
-    paddingBottom: 60,
   },
-  boxWrapper: {
-    ...createShadow({
-      color: '#000',
-      offset: { width: 0, height: 8 },
-      opacity: 0.15,
-      radius: 16,
-      elevation: 8,
-    }),
+  card: {
+    height: 190,
     borderRadius: 20,
+    overflow: 'hidden',
+    boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.12)',
   },
-  touchable: {
-    borderRadius: 20,
+  disabledCard: {
+    opacity: 0.92,
   },
-  box: {
-    height: 160,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-  },
-  iconContainer: {
-    marginRight: 20,
+  cardGradient: {
+    flex: 1,
+    padding: indianDesign.spacing.xl,
+    justifyContent: 'center',
+    position: 'relative',
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    marginBottom: indianDesign.spacing.md,
+    borderWidth: 3,
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
-  textContent: {
+  cardContent: {
     flex: 1,
   },
-  boxTitle: {
-    fontSize: 28,
+  cardTitle: {
+    fontSize: 32,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 6,
-    letterSpacing: 0.5,
+    marginBottom: 4,
+    textShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
   },
-  boxSubtitle: {
-    fontSize: 14,
+  cardSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    opacity: 0.98,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.95)',
-    letterSpacing: 0.3,
+    textShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
   },
-  arrowContainer: {
-    marginLeft: 12,
+  arrowCircle: {
+    position: 'absolute',
+    bottom: indianDesign.spacing.xl,
+    right: indianDesign.spacing.xl,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    top: indianDesign.spacing.lg,
+    right: indianDesign.spacing.lg,
+    backgroundColor: '#FF9800',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.2)',
+  },
+  comingSoonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  decorCircle1: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  decorCircle2: {
+    position: 'absolute',
+    bottom: -30,
+    left: -30,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   footer: {
-    paddingBottom: 40,
-    alignItems: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    paddingVertical: indianDesign.spacing.xl,
+    gap: indianDesign.spacing.sm,
+  },
+  footerDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
   },
   footerText: {
     fontSize: 14,
+    color: '#95A5A6',
     fontWeight: '500',
-    color: '#78909C',
-    letterSpacing: 0.3,
   },
 });
 

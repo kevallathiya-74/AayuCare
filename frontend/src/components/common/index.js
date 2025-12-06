@@ -20,3 +20,6 @@ export { default as ListItem } from './ListItem';
 export { default as EmptyState } from './EmptyState';
 export { default as LoadingOverlay } from './LoadingOverlay';
 export { default as ProgressBar } from './ProgressBar';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as LargeActionCard } from './LargeActionCard';
+

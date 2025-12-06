@@ -13,25 +13,30 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadUser } from '../store/slices/authSlice';
-import colors from '../theme/colors';
+import { healthColors } from '../theme/healthColors';
 
 // Splash & Selection
-import SplashScreen from '../screens/splash/SplashScreen';
+import AnimatedSplashScreen from '../screens/splash/AnimatedSplashScreen';
 import BoxSelectionScreen from '../screens/splash/BoxSelectionScreen';
 
 // Auth Screens
 import HospitalLoginScreen from '../screens/auth/HospitalLoginScreen';
-import UserLoginScreen from '../screens/auth/UserLoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
-import LoginWithOTPScreen from '../screens/auth/LoginWithOTPScreen';
-import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 
 // Hospital Screens (Role-based)
 import {
   AdminDashboard,
   DoctorDashboard,
-  PatientDashboard
+  PatientDashboard,
+  TodaysAppointmentsScreen,
+  PrescriptionCreationScreen,
 } from '../screens/hospital';
+
+// Patient Screens
+import {
+  MyAppointmentsScreen,
+  MyReportsScreen,
+} from '../screens/patient';
 
 // User Main App
 import TabNavigator from './TabNavigator';
@@ -53,17 +58,17 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Splash"
+        initialRouteName="AnimatedSplash"
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: colors.background.primary },
+          contentStyle: { backgroundColor: healthColors.background.primary },
         }}
       >
         {/* Splash & Selection - Always available */}
         <Stack.Screen
-          name="Splash"
-          component={SplashScreen}
+          name="AnimatedSplash"
+          component={AnimatedSplashScreen}
           options={{ animation: 'fade' }}
         />
         <Stack.Screen
@@ -72,28 +77,31 @@ const AppNavigator = () => {
           options={{ animation: 'fade' }}
         />
 
-        {!isAuthenticated ? (
-          // Auth Flow
-          <>
-            <Stack.Screen name="HospitalLogin" component={HospitalLoginScreen} />
-            <Stack.Screen name="UserLogin" component={UserLoginScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="LoginWithOTP" component={LoginWithOTPScreen} />
-            <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
-          </>
-        ) : (
-          // Role-based Dashboards
+        {/* Auth Screens - Always available */}
+        <Stack.Screen name="HospitalLogin" component={HospitalLoginScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+
+        {/* Role-based Dashboards - Only when authenticated */}
+        {isAuthenticated && (
           <>
             {userRole === 'admin' && (
               <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
             )}
 
             {userRole === 'doctor' && (
-              <Stack.Screen name="DoctorDashboard" component={DoctorDashboard} />
+              <>
+                <Stack.Screen name="DoctorDashboard" component={DoctorDashboard} />
+                <Stack.Screen name="TodaysAppointments" component={TodaysAppointmentsScreen} />
+                <Stack.Screen name="WritePrescription" component={PrescriptionCreationScreen} />
+              </>
             )}
 
             {userRole === 'patient' && (
-              <Stack.Screen name="PatientDashboard" component={PatientDashboard} />
+              <>
+                <Stack.Screen name="PatientDashboard" component={PatientDashboard} />
+                <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
+                <Stack.Screen name="MyReports" component={MyReportsScreen} />
+              </>
             )}
 
             {userRole === 'user' && (
@@ -105,8 +113,8 @@ const AppNavigator = () => {
                   options={{
                     headerShown: true,
                     title: 'Settings',
-                    headerStyle: { backgroundColor: colors.background.primary },
-                    headerTintColor: colors.text.primary,
+                    headerStyle: { backgroundColor: healthColors.background.primary },
+                    headerTintColor: healthColors.text.primary,
                   }}
                 />
               </>

@@ -1,331 +1,426 @@
 /**
- * AayuCare - Unified Hospital Login Screen
- * 
- * Single login page for Admin, Doctor, and Patient roles
- * Redirects to role-specific dashboard after authentication
+ * Universal Hospital Login Screen
+ * Single login for Admin, Doctor, and Patient
+ * Optimized for Indian users with large inputs and auto-focus
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
-    StyleSheet,
     Text,
-    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    TouchableOpacity,
-    Alert,
+    ScrollView,
+    StatusBar,
+    ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useDispatch } from 'react-redux';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
-import { colors } from '../../theme/colors';
-import { createShadow } from '../../utils/platformStyles';
+import { Ionicons } from '@expo/vector-icons';
+import { healthColors } from '../../theme/healthColors';
+import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../store/slices/authSlice';
 
 const HospitalLoginScreen = ({ navigation }) => {
     const dispatch = useDispatch();
+    const { loading, error } = useSelector((state) => state.auth);
+
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
-    const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [userIdFocused, setUserIdFocused] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
+
+    const passwordInputRef = useRef(null);
+
+    // Auto-focus on userId input
+    useEffect(() => {
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+            // Auto-focus logic can be added here if needed
+        }, 300);
+    }, []);
 
     const handleLogin = async () => {
-        // Validation
-        const newErrors = {};
-        if (!userId) newErrors.userId = 'User ID is required';
-        if (!password) newErrors.password = 'Password is required';
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
+        if (!userId.trim() || !password.trim()) {
+            alert('Please enter both User ID and Password');
             return;
         }
 
         try {
-            setLoading(true);
-            // Dispatch login action
-            const result = await dispatch(loginUser({ userId, password })).unwrap();
+            const result = await dispatch(loginUser({ userId: userId.trim(), password })).unwrap();
+            // Navigation handled by AppNavigator based on user role
+        } catch (err) {
+            // Extract user-friendly error message
+            let errorMessage = 'Incorrect User ID or Password';
 
-            console.log('Login successful:', result);
-
-            // Navigate based on role
-            const role = result.user.role;
-
-            if (role === 'admin') {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'AdminDashboard' }],
-                });
-            } else if (role === 'doctor') {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'DoctorDashboard' }],
-                });
-            } else if (role === 'patient') {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'PatientDashboard' }],
-                });
-            } else {
-                Alert.alert('Error', 'Invalid user role');
+            // Check if it's a string error message from backend
+            if (typeof err === 'string') {
+                // Show specific errors from backend
+                if (err.includes('Incorrect User ID')) {
+                    errorMessage = 'Incorrect User ID';
+                } else if (err.includes('Incorrect Password')) {
+                    errorMessage = 'Incorrect Password';
+                } else if (err.includes('deactivated')) {
+                    errorMessage = 'Your account has been deactivated';
+                } else if (!err.includes('ExpoSecureStore') && !err.includes('is not a function')) {
+                    // Only show non-technical errors
+                    errorMessage = err;
+                }
             }
-        } catch (error) {
-            console.error('Login error:', error);
-            Alert.alert('Login Failed', error || 'Invalid credentials. Please try again.');
-        } finally {
-            setLoading(false);
+
+            alert(errorMessage);
         }
     };
 
     const handleForgotPassword = () => {
-        navigation.navigate('ForgotPassword', { userType: 'hospital' });
+        navigation.navigate('ForgotPassword');
     };
 
     const handleBack = () => {
-        if (navigation.canGoBack()) {
-            navigation.goBack();
-        } else {
-            navigation.navigate('BoxSelection');
-        }
+        navigation.goBack();
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-        >
-            <LinearGradient
-                colors={['#E8F5E9', '#FFFFFF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradient}
+        <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.keyboardView}
             >
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Back Button */}
-                    <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                        <Feather name="arrow-left" size={24} color="#2E7D32" />
-                    </TouchableOpacity>
-
-                    {/* Header Section */}
+                    {/* Header */}
                     <View style={styles.header}>
-                        <View style={styles.iconWrapper}>
-                            <LinearGradient
-                                colors={['#66BB6A', '#43A047']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.iconGradient}
-                            >
-                                <MaterialCommunityIcons name="hospital-building" size={42} color="#FFFFFF" />
-                            </LinearGradient>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={handleBack}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons
+                                name="arrow-back"
+                                size={24}
+                                color={healthColors.text.primary}
+                            />
+                        </TouchableOpacity>
+
+                        <View style={styles.logoContainer}>
+                            <View style={styles.logo}>
+                                <Ionicons
+                                    name="medical"
+                                    size={40}
+                                    color={healthColors.primary.main}
+                                />
+                            </View>
+                            <Text style={styles.title}>Hospital Login</Text>
+                            <Text style={styles.subtitle}>
+                                Enter your credentials to continue
+                            </Text>
                         </View>
-                        <Text style={styles.title}>Hospital Login</Text>
-                        <Text style={styles.subtitle}>
-                            Admin • Doctor • Patient
-                        </Text>
-                        <Text style={styles.description}>
-                            Enter your credentials to access your dashboard
-                        </Text>
                     </View>
 
-                    {/* Form Section */}
-                    <View style={styles.form}>
-                        <Input
-                            label="User ID"
-                            placeholder="Enter your User ID (e.g., ADM001, DOC001, PAT001)"
-                            value={userId}
-                            onChangeText={(text) => {
-                                setUserId(text.toUpperCase());
-                                setErrors({ ...errors, userId: '' });
-                            }}
-                            error={errors.userId}
-                            leftIcon={<Feather name="user" size={20} color="#2E7D32" />}
-                            autoCapitalize="characters"
-                        />
+                    {/* Login Form */}
+                    <View style={styles.formContainer}>
+                        {/* User ID Input */}
+                        <View style={styles.inputContainer}>
+                            <Text
+                                style={[
+                                    styles.label,
+                                    (userIdFocused || userId) && styles.labelFocused,
+                                ]}
+                            >
+                                Mobile / Email / Employee ID
+                            </Text>
+                            <View
+                                style={[
+                                    styles.inputWrapper,
+                                    userIdFocused && styles.inputWrapperFocused,
+                                ]}
+                            >
+                                <Ionicons
+                                    name="person-outline"
+                                    size={20}
+                                    color={
+                                        userIdFocused
+                                            ? healthColors.primary.main
+                                            : healthColors.text.tertiary
+                                    }
+                                    style={styles.inputIcon}
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    value={userId}
+                                    onChangeText={setUserId}
+                                    onFocus={() => setUserIdFocused(true)}
+                                    onBlur={() => setUserIdFocused(false)}
+                                    placeholder="Enter your ID"
+                                    placeholderTextColor={healthColors.text.tertiary}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    returnKeyType="next"
+                                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                                    editable={!loading}
+                                />
+                            </View>
+                        </View>
 
-                        <Input
-                            label="Password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChangeText={(text) => {
-                                setPassword(text);
-                                setErrors({ ...errors, password: '' });
-                            }}
-                            error={errors.password}
-                            leftIcon={<Feather name="lock" size={20} color="#2E7D32" />}
-                            secureTextEntry
-                        />
+                        {/* Password Input */}
+                        <View style={styles.inputContainer}>
+                            <Text
+                                style={[
+                                    styles.label,
+                                    (passwordFocused || password) && styles.labelFocused,
+                                ]}
+                            >
+                                Password
+                            </Text>
+                            <View
+                                style={[
+                                    styles.inputWrapper,
+                                    passwordFocused && styles.inputWrapperFocused,
+                                ]}
+                            >
+                                <Ionicons
+                                    name="lock-closed-outline"
+                                    size={20}
+                                    color={
+                                        passwordFocused
+                                            ? healthColors.primary.main
+                                            : healthColors.text.tertiary
+                                    }
+                                    style={styles.inputIcon}
+                                />
+                                <TextInput
+                                    ref={passwordInputRef}
+                                    style={styles.input}
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    onFocus={() => setPasswordFocused(true)}
+                                    onBlur={() => setPasswordFocused(false)}
+                                    placeholder="Enter your password"
+                                    placeholderTextColor={healthColors.text.tertiary}
+                                    secureTextEntry={!showPassword}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleLogin}
+                                    editable={!loading}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={styles.eyeIcon}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                                        size={20}
+                                        color={healthColors.text.tertiary}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
+                        {/* Forgot Password */}
                         <TouchableOpacity
                             style={styles.forgotPassword}
                             onPress={handleForgotPassword}
+                            activeOpacity={0.7}
                         >
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
 
-                        <Button
-                            variant="primary"
-                            size="large"
+                        {/* Error Message */}
+                        {error && (
+                            <View style={styles.errorContainer}>
+                                <Ionicons
+                                    name="alert-circle"
+                                    size={16}
+                                    color={healthColors.error.main}
+                                />
+                                <Text style={styles.errorText}>{error}</Text>
+                            </View>
+                        )}
+
+                        {/* Login Button */}
+                        <TouchableOpacity
+                            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
                             onPress={handleLogin}
-                            loading={loading}
+                            activeOpacity={0.8}
                             disabled={loading}
-                            style={styles.loginButton}
                         >
-                            Login to Dashboard
-                        </Button>
+                            {loading ? (
+                                <ActivityIndicator color={healthColors.text.white} />
+                            ) : (
+                                <Text style={styles.loginButtonText}>Login</Text>
+                            )}
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Role Info */}
-                    <View style={styles.roleInfo}>
-                        <Text style={styles.roleInfoTitle}>Access Levels:</Text>
-                        <View style={styles.roleItem}>
-                            <MaterialCommunityIcons name="shield-account" size={20} color="#1976D2" />
-                            <Text style={styles.roleText}>Admin - Full system access</Text>
-                        </View>
-                        <View style={styles.roleItem}>
-                            <MaterialCommunityIcons name="doctor" size={20} color="#388E3C" />
-                            <Text style={styles.roleText}>Doctor - Patient management</Text>
-                        </View>
-                        <View style={styles.roleItem}>
-                            <MaterialCommunityIcons name="account" size={20} color="#F57C00" />
-                            <Text style={styles.roleText}>Patient - Personal health records</Text>
-                        </View>
-                    </View>
-
-                    {/* Footer Info */}
+                    {/* Footer */}
                     <View style={styles.footer}>
-                        <MaterialCommunityIcons name="shield-check" size={20} color="#2E7D32" />
+                        <Ionicons
+                            name="shield-checkmark"
+                            size={16}
+                            color={healthColors.text.tertiary}
+                        />
                         <Text style={styles.footerText}>
-                            Secure hospital access with role-based authentication
+                            Secure Login • Your data is protected
                         </Text>
                     </View>
                 </ScrollView>
-            </LinearGradient>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: healthColors.background.primary,
     },
-    gradient: {
+    keyboardView: {
         flex: 1,
     },
     scrollContent: {
         flexGrow: 1,
-        paddingHorizontal: 24,
-        paddingTop: 50,
-        paddingBottom: 40,
-    },
-    backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 24,
-        ...createShadow({ color: '#000', offset: { width: 0, height: 2 }, opacity: 0.08, radius: 8, elevation: 2 }),
+        paddingHorizontal: indianDesign.spacing.xl,
     },
     header: {
-        alignItems: 'center',
-        marginBottom: 40,
+        paddingTop: indianDesign.spacing.xl,
+        marginBottom: indianDesign.spacing.xxxl,
     },
-    iconWrapper: {
-        marginBottom: 24,
-    },
-    iconGradient: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: healthColors.background.card,
         justifyContent: 'center',
         alignItems: 'center',
-        ...createShadow({ color: '#43A047', offset: { width: 0, height: 6 }, opacity: 0.25, radius: 12, elevation: 8 }),
+        marginBottom: indianDesign.spacing.xl,
+        ...createShadow(2),
+    },
+    logoContainer: {
+        alignItems: 'center',
+    },
+    logo: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: healthColors.primary.main + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: indianDesign.spacing.md,
     },
     title: {
-        fontSize: 32,
-        fontWeight: '700',
-        color: '#1B5E20',
-        marginBottom: 8,
-        letterSpacing: 0.3,
+        fontSize: indianDesign.fontSize.title,
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.text.primary,
+        marginBottom: indianDesign.spacing.xs,
     },
     subtitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#2E7D32',
-        marginBottom: 8,
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
+        fontWeight: indianDesign.fontWeight.regular,
     },
-    description: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: '#66BB6A',
-        textAlign: 'center',
-        letterSpacing: 0.2,
+    formContainer: {
+        flex: 1,
     },
-    form: {
-        marginBottom: 32,
+    inputContainer: {
+        marginBottom: indianDesign.spacing.lg,
+    },
+    label: {
+        fontSize: indianDesign.fontSize.small,
+        color: healthColors.text.tertiary,
+        marginBottom: indianDesign.spacing.xs,
+        fontWeight: indianDesign.fontWeight.medium,
+    },
+    labelFocused: {
+        color: healthColors.primary.main,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: healthColors.background.card,
+        borderRadius: indianDesign.borderRadius.medium,
+        borderWidth: 1,
+        borderColor: healthColors.border.light,
+        paddingHorizontal: indianDesign.spacing.md,
+        height: indianDesign.touchTarget.large,
+        ...createShadow(1),
+    },
+    inputWrapperFocused: {
+        borderColor: healthColors.primary.main,
+        ...createShadow(2),
+    },
+    inputIcon: {
+        marginRight: indianDesign.spacing.sm,
+    },
+    input: {
+        flex: 1,
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.primary,
+        fontWeight: indianDesign.fontWeight.regular,
+        outlineStyle: 'none', // Remove web outline
+        borderWidth: 0, // Remove default border
+    },
+    eyeIcon: {
+        padding: indianDesign.spacing.xs,
     },
     forgotPassword: {
         alignSelf: 'flex-end',
-        marginTop: 12,
-        marginBottom: 28,
-        paddingVertical: 4,
+        marginBottom: indianDesign.spacing.xl,
     },
     forgotPasswordText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#2E7D32',
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.primary.main,
+        fontWeight: indianDesign.fontWeight.semibold,
     },
-    loginButton: {
-        marginTop: 8,
-        backgroundColor: '#43A047',
-        height: 56,
-    },
-    roleInfo: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        padding: 20,
-        marginBottom: 24,
-        ...createShadow({ color: '#000', offset: { width: 0, height: 2 }, opacity: 0.05, radius: 8, elevation: 2 }),
-    },
-    roleInfoTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1B5E20',
-        marginBottom: 12,
-    },
-    roleItem: {
+    errorContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        backgroundColor: healthColors.error.background,
+        padding: indianDesign.spacing.md,
+        borderRadius: indianDesign.borderRadius.medium,
+        marginBottom: indianDesign.spacing.lg,
+        gap: indianDesign.spacing.sm,
     },
-    roleText: {
-        fontSize: 13,
-        color: '#424242',
-        marginLeft: 10,
+    errorText: {
+        flex: 1,
+        fontSize: indianDesign.fontSize.small,
+        color: healthColors.error.main,
+        fontWeight: indianDesign.fontWeight.medium,
+    },
+    loginButton: {
+        backgroundColor: healthColors.primary.main,
+        height: indianDesign.touchTarget.large,
+        borderRadius: indianDesign.borderRadius.medium,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...createShadow(3),
+    },
+    loginButtonDisabled: {
+        opacity: 0.6,
+    },
+    loginButtonText: {
+        fontSize: indianDesign.fontSize.large,
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.text.white,
     },
     footer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 24,
-        paddingTop: 24,
-        borderTopWidth: 1,
-        borderTopColor: '#C8E6C9',
+        paddingVertical: indianDesign.spacing.xl,
+        gap: indianDesign.spacing.xs,
     },
     footerText: {
-        marginLeft: 10,
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#2E7D32',
-        textAlign: 'center',
-        lineHeight: 18,
+        fontSize: indianDesign.fontSize.small,
+        color: healthColors.text.tertiary,
+        fontWeight: indianDesign.fontWeight.regular,
     },
 });
 

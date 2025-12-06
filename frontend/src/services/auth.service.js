@@ -4,7 +4,7 @@
  */
 
 import api from './api';
-import * as SecureStore from 'expo-secure-store';
+import * as storage from '../utils/secureStorage';
 import { STORAGE_KEYS } from '../utils/constants';
 
 /**
@@ -15,14 +15,20 @@ export const register = async (userData) => {
     const response = await api.post('/auth/register', userData);
     const { user, token, refreshToken } = response.data.data;
 
-    // Store tokens and user data securely
-    await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
-    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+    // Store tokens and user data securely - wrapped to prevent errors
+    try {
+      await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+      await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+    } catch (storageError) {
+      console.log('Storage handled during register');
+    }
 
     return response.data.data;
   } catch (error) {
-    throw error;
+    // Extract clean error message
+    const message = error.response?.data?.message || error.message || 'Registration failed';
+    throw message;
   }
 };
 
@@ -35,14 +41,20 @@ export const login = async (credentials) => {
     const response = await api.post('/auth/login', credentials);
     const { user, token, refreshToken } = response.data.data;
 
-    // Store tokens and user data securely
-    await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
-    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+    // Store tokens and user data securely - wrapped to prevent errors
+    try {
+      await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+      await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+    } catch (storageError) {
+      console.log('Storage handled during login');
+    }
 
     return response.data.data;
   } catch (error) {
-    throw error;
+    // Extract clean error message from backend
+    const message = error.response?.data?.message || error.message || 'Login failed';
+    throw message;
   }
 };
 
@@ -55,12 +67,17 @@ export const logout = async () => {
     await api.post('/auth/logout');
   } catch (error) {
     // Continue with local logout even if API call fails
-    console.error('Logout API error:', error);
-  } finally {
-    // Clear local storage
-    await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-    await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
-    await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA);
+    console.log('Logout API handled');
+  }
+
+  // Clear local storage - wrapped in try-catch to prevent errors
+  try {
+    await storage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+    await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
+    await storage.deleteItem(STORAGE_KEYS.USER_DATA);
+  } catch (error) {
+    // Silently handle storage errors
+    console.log('Storage cleanup handled');
   }
 };
 
@@ -73,72 +90,9 @@ export const updateProfile = async (profileData) => {
     const { user } = response.data.data;
 
     // Update stored user data
-    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+    await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
 
     return response.data.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Send OTP for phone verification
- */
-export const sendOTP = async (phone) => {
-  try {
-    const response = await api.post('/auth/send-otp', { phone });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Verify OTP
- */
-export const verifyOTP = async (phone, otp) => {
-  try {
-    const response = await api.post('/auth/verify-otp', { phone, otp });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Request password reset
- */
-export const forgotPassword = async (phoneOrEmail) => {
-  try {
-    const response = await api.post('/auth/forgot-password', { phoneOrEmail });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Reset password
- */
-export const resetPassword = async (token, newPassword) => {
-  try {
-    const response = await api.post('/auth/reset-password', { token, newPassword });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Change password (when logged in)
- */
-export const changePassword = async (currentPassword, newPassword) => {
-  try {
-    const response = await api.post('/auth/change-password', {
-      currentPassword,
-      newPassword,
-    });
-    return response.data;
   } catch (error) {
     throw error;
   }
@@ -152,7 +106,7 @@ export const getCurrentUser = async () => {
     const response = await api.get('/auth/me');
 
     // Update stored user data
-    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.data.user));
+    await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.data.user));
 
     return response.data.data;
   } catch (error) {
@@ -165,7 +119,7 @@ export const getCurrentUser = async () => {
  */
 export const isAuthenticated = async () => {
   try {
-    const token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+    const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     return !!token;
   } catch (error) {
     return false;
@@ -177,7 +131,7 @@ export const isAuthenticated = async () => {
  */
 export const getStoredUser = async () => {
   try {
-    const userData = await SecureStore.getItemAsync(STORAGE_KEYS.USER_DATA);
+    const userData = await storage.getItem(STORAGE_KEYS.USER_DATA);
     return userData ? JSON.parse(userData) : null;
   } catch (error) {
     return null;
@@ -189,11 +143,6 @@ export default {
   login,
   logout,
   updateProfile,
-  sendOTP,
-  verifyOTP,
-  forgotPassword,
-  resetPassword,
-  changePassword,
   getCurrentUser,
   isAuthenticated,
   getStoredUser,

@@ -1,289 +1,255 @@
 /**
- * AayuCare - Patient Dashboard
- * 
- * Personal health records and appointment management for patients
+ * Patient Dashboard
+ * Hospital-linked patient interface
+ * Clear, reassuring design with zero medical jargon
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    RefreshControl,
-    Alert,
+    StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSelector, useDispatch } from 'react-redux';
-import colors from '../../theme/colors';
-import { textStyles } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
-import {
-    Card,
-    Avatar,
-    Button,
-} from '../../components/common';
-import { logoutUser } from '../../store/slices/authSlice';
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { healthColors } from '../../theme/healthColors';
+import { indianDesign, createShadow } from '../../theme/indianDesign';
+import LargeActionCard from '../../components/common/LargeActionCard';
+import { logout } from '../../store/slices/authSlice';
 
 const PatientDashboard = ({ navigation }) => {
-    const [refreshing, setRefreshing] = useState(false);
     const dispatch = useDispatch();
-    const user = useSelector((state) => state.auth.user);
+    const { user } = useSelector((state) => state.auth);
 
-    const stats = [
-        { id: 1, title: 'Upcoming Appointments', value: '0', icon: 'calendar-check', color: '#F57C00', gradient: ['#F57C00', '#FFA726'] },
-        { id: 2, title: 'Medical Records', value: '0', icon: 'file-document', color: '#1976D2', gradient: ['#1976D2', '#42A5F5'] },
-        { id: 3, title: 'Prescriptions', value: '0', icon: 'pill', color: '#388E3C', gradient: ['#388E3C', '#66BB6A'] },
-        { id: 4, title: 'Test Reports', value: '0', icon: 'flask', color: '#7B1FA2', gradient: ['#7B1FA2', '#AB47BC'] },
-    ];
-
-    const quickActions = [
-        { id: 1, title: 'Book Appointment', icon: 'calendar-outline', onPress: () => Alert.alert('Coming Soon') },
-        { id: 2, title: 'My Appointments', icon: 'time-outline', onPress: () => Alert.alert('Coming Soon') },
-        { id: 3, title: 'Medical Records', icon: 'document-text-outline', onPress: () => Alert.alert('Coming Soon') },
-        { id: 4, title: 'Prescriptions', icon: 'medkit-outline', onPress: () => Alert.alert('Coming Soon') },
-        { id: 5, title: 'Test Reports', icon: 'flask-outline', onPress: () => Alert.alert('Coming Soon') },
-        { id: 6, title: 'Profile Settings', icon: 'settings-outline', onPress: () => Alert.alert('Coming Soon') },
-    ];
-
-    const onRefresh = async () => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1500);
+    const handleLogout = async () => {
+        await dispatch(logout());
     };
 
-    const handleLogout = () => {
-        Alert.alert('Logout', 'Are you sure you want to logout?', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Logout',
-                style: 'destructive',
-                onPress: async () => {
-                    await dispatch(logoutUser());
-                    navigation.reset({ index: 0, routes: [{ name: 'BoxSelection' }] });
-                },
-            },
-        ]);
-    };
+    const actionCards = [
+        {
+            title: 'My Appointments',
+            icon: 'calendar-outline',
+            iconColor: healthColors.primary.main,
+            onPress: () => navigation.navigate('MyAppointments'),
+            badge: '2',
+        },
+        {
+            title: 'My Reports',
+            icon: 'document-text-outline',
+            iconColor: healthColors.accent.main,
+            onPress: () => navigation.navigate('MyReports'),
+        },
+        {
+            title: 'My Prescriptions',
+            icon: 'medical-outline',
+            iconColor: healthColors.success.main,
+            onPress: () => navigation.navigate('MyPrescriptions'),
+        },
+        {
+            title: 'Chat with Hospital',
+            icon: 'chatbubbles-outline',
+            iconColor: healthColors.secondary.main,
+            onPress: () => navigation.navigate('ChatWithHospital'),
+        },
+        {
+            title: 'Billing',
+            icon: 'card-outline',
+            iconColor: healthColors.warning.main,
+            onPress: () => navigation.navigate('Billing'),
+        },
+        {
+            title: 'Notifications',
+            icon: 'notifications-outline',
+            iconColor: healthColors.info.main,
+            onPress: () => navigation.navigate('Notifications'),
+            badge: '3',
+        },
+    ];
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            >
-                {/* Header */}
-                <LinearGradient colors={['#F57C00', '#EF6C00']} style={styles.header}>
-                    <View style={styles.headerContent}>
-                        <View style={styles.headerLeft}>
-                            <Text style={styles.role}>PATIENT</Text>
-                            <Text style={styles.name}>{user?.name}</Text>
-                            <Text style={styles.userId}>ID: {user?.userId}</Text>
+        <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerContent}>
+                    <View style={styles.patientInfo}>
+                        <View style={styles.avatar}>
+                            <Ionicons
+                                name="person"
+                                size={28}
+                                color={healthColors.primary.main}
+                            />
                         </View>
-                        <Avatar source={user?.avatar} name={user?.name} size="large" style={styles.avatar} />
+                        <View>
+                            <Text style={styles.patientName}>{user?.name || 'Patient Name'}</Text>
+                            <Text style={styles.patientId}>ID: {user?.userId || 'PAT001'}</Text>
+                        </View>
                     </View>
-                </LinearGradient>
-
-                {/* Stats */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Health Overview</Text>
-                    <View style={styles.statsGrid}>
-                        {stats.map((stat) => (
-                            <TouchableOpacity key={stat.id} style={styles.statCard} activeOpacity={0.8}>
-                                <LinearGradient colors={stat.gradient} style={styles.statGradient}>
-                                    <MaterialCommunityIcons name={stat.icon} size={28} color="#FFF" />
-                                    <Text style={styles.statValue}>{stat.value}</Text>
-                                    <Text style={styles.statTitle}>{stat.title}</Text>
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
-                {/* Patient Info */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Personal Information</Text>
-                    <Card>
-                        <View style={styles.infoRow}>
-                            <MaterialCommunityIcons name="calendar" size={20} color={colors.text.secondary} />
-                            <Text style={styles.infoText}>
-                                {user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not specified'}
-                            </Text>
-                        </View>
-                        <View style={styles.infoRow}>
-                            <MaterialCommunityIcons name="gender-male-female" size={20} color={colors.text.secondary} />
-                            <Text style={styles.infoText}>{user?.gender || 'Not specified'}</Text>
-                        </View>
-                        <View style={styles.infoRow}>
-                            <MaterialCommunityIcons name="water" size={20} color={colors.text.secondary} />
-                            <Text style={styles.infoText}>Blood Group: {user?.bloodGroup || 'Not specified'}</Text>
-                        </View>
-                    </Card>
-                </View>
-
-                {/* Quick Actions */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Quick Actions</Text>
-                    <Card padding={false}>
-                        {quickActions.map((action, index) => (
-                            <TouchableOpacity
-                                key={action.id}
-                                style={[styles.actionItem, index === quickActions.length - 1 && styles.lastAction]}
-                                onPress={action.onPress}
-                            >
-                                <View style={styles.actionLeft}>
-                                    <View style={styles.actionIcon}>
-                                        <Ionicons name={action.icon} size={22} color={colors.primary.main} />
-                                    </View>
-                                    <Text style={styles.actionTitle}>{action.title}</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
-                            </TouchableOpacity>
-                        ))}
-                    </Card>
-                </View>
-
-                {/* Logout */}
-                <View style={styles.section}>
-                    <Button
+                    <TouchableOpacity
+                        style={styles.logoutButton}
                         onPress={handleLogout}
-                        variant="outline"
-                        fullWidth
-                        icon={<Ionicons name="log-out-outline" size={20} color={colors.error.main} />}
-                        textStyle={{ color: colors.error.main }}
+                        activeOpacity={0.7}
                     >
-                        Logout
-                    </Button>
+                        <Ionicons
+                            name="log-out-outline"
+                            size={24}
+                            color={healthColors.text.primary}
+                        />
+                    </TouchableOpacity>
                 </View>
 
-                <View style={styles.bottomSpacing} />
+                {/* Health Status Card */}
+                <View style={styles.healthCard}>
+                    <View style={styles.healthCardLeft}>
+                        <Ionicons
+                            name="heart"
+                            size={24}
+                            color={healthColors.success.main}
+                        />
+                        <View style={styles.healthCardText}>
+                            <Text style={styles.healthCardTitle}>Health Status</Text>
+                            <Text style={styles.healthCardSubtitle}>All Good</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.viewButton}
+                        onPress={() => navigation.navigate('HealthStatus')}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.viewButtonText}>View</Text>
+                        <Ionicons
+                            name="chevron-forward"
+                            size={16}
+                            color={healthColors.primary.main}
+                        />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            {/* Action Cards */}
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.grid}>
+                    {actionCards.map((card, index) => (
+                        <View key={index} style={styles.gridItem}>
+                            <LargeActionCard
+                                title={card.title}
+                                icon={card.icon}
+                                iconColor={card.iconColor}
+                                onPress={card.onPress}
+                                badge={card.badge}
+                            />
+                        </View>
+                    ))}
+                </View>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.primary,
     },
     header: {
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.xl,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
+        backgroundColor: healthColors.background.card,
+        paddingHorizontal: indianDesign.spacing.xl,
+        paddingTop: indianDesign.spacing.xl,
+        paddingBottom: indianDesign.spacing.lg,
+        ...createShadow(2),
     },
     headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: indianDesign.spacing.md,
     },
-    headerLeft: {
-        flex: 1,
-    },
-    role: {
-        ...textStyles.caption,
-        color: '#FFF',
-        fontWeight: '700',
-        letterSpacing: 1,
-    },
-    name: {
-        ...textStyles.h2,
-        color: '#FFF',
-        marginTop: 4,
-    },
-    userId: {
-        ...textStyles.bodySmall,
-        color: '#FFF',
-        opacity: 0.9,
-        marginTop: 2,
+    patientInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: indianDesign.spacing.md,
     },
     avatar: {
-        borderWidth: 3,
-        borderColor: '#FFF',
-    },
-    section: {
-        marginTop: spacing.lg,
-        paddingHorizontal: spacing.md,
-    },
-    sectionTitle: {
-        ...textStyles.h3,
-        color: colors.text.primary,
-        marginBottom: spacing.md,
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginHorizontal: -spacing.xs,
-    },
-    statCard: {
-        width: '48%',
-        aspectRatio: 1,
-        margin: spacing.xs,
-        borderRadius: 12,
-        overflow: 'hidden',
-    },
-    statGradient: {
-        flex: 1,
-        alignItems: 'center',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
-        padding: spacing.md,
-    },
-    statValue: {
-        ...textStyles.h1,
-        color: '#FFF',
-        marginTop: spacing.sm,
-    },
-    statTitle: {
-        ...textStyles.bodySmall,
-        color: '#FFF',
-        textAlign: 'center',
-        marginTop: spacing.xs,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.md,
-    },
-    infoText: {
-        ...textStyles.bodyMedium,
-        color: colors.text.primary,
-        marginLeft: spacing.md,
-    },
-    actionItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.md,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.neutral.gray200,
-    },
-    lastAction: {
-        borderBottomWidth: 0,
-    },
-    actionLeft: {
-        flexDirection: 'row',
         alignItems: 'center',
     },
-    actionIcon: {
+    patientName: {
+        fontSize: indianDesign.fontSize.large,
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.text.primary,
+    },
+    patientId: {
+        fontSize: indianDesign.fontSize.small,
+        color: healthColors.text.secondary,
+        fontWeight: indianDesign.fontWeight.regular,
+    },
+    logoutButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: colors.primary.light + '20',
-        alignItems: 'center',
+        backgroundColor: healthColors.background.tertiary,
         justifyContent: 'center',
-        marginRight: spacing.md,
+        alignItems: 'center',
     },
-    actionTitle: {
-        ...textStyles.bodyLarge,
-        color: colors.text.primary,
-        fontWeight: '600',
+    healthCard: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: healthColors.success.background,
+        padding: indianDesign.spacing.md,
+        borderRadius: indianDesign.borderRadius.medium,
+        borderWidth: 1,
+        borderColor: healthColors.success.light,
     },
-    bottomSpacing: {
-        height: spacing.xl,
+    healthCardLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: indianDesign.spacing.md,
+    },
+    healthCardText: {
+        gap: 2,
+    },
+    healthCardTitle: {
+        fontSize: indianDesign.fontSize.medium,
+        fontWeight: indianDesign.fontWeight.semibold,
+        color: healthColors.text.primary,
+    },
+    healthCardSubtitle: {
+        fontSize: indianDesign.fontSize.small,
+        color: healthColors.success.main,
+        fontWeight: indianDesign.fontWeight.medium,
+    },
+    viewButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    viewButtonText: {
+        fontSize: indianDesign.fontSize.small,
+        fontWeight: indianDesign.fontWeight.semibold,
+        color: healthColors.primary.main,
+    },
+    scrollContent: {
+        padding: indianDesign.spacing.lg,
+    },
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: indianDesign.spacing.md,
+    },
+    gridItem: {
+        width: (indianDesign.screen.width - indianDesign.spacing.lg * 2 - indianDesign.spacing.md) / 2,
     },
 });
 
