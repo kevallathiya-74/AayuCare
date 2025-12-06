@@ -2,11 +2,17 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: [true, 'User ID is required'],
+        unique: true,
+        trim: true,
+        uppercase: true,
+    },
     name: {
         type: String,
         required: [true, 'Name is required'],
         trim: true,
-        maxlength: [50, 'Name cannot exceed 50 characters'],
     },
     email: {
         type: String,
@@ -19,7 +25,6 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: [true, 'Phone number is required'],
-        unique: true,
         match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number'],
     },
     password: {
@@ -28,40 +33,85 @@ const userSchema = new mongoose.Schema({
         minlength: [6, 'Password must be at least 6 characters'],
         select: false,
     },
-    userType: {
+    role: {
         type: String,
-        enum: ['user', 'hospital', 'doctor'],
-        default: 'user',
+        enum: ['admin', 'doctor', 'patient'],
+        required: [true, 'Role is required'],
     },
-    avatar: {
+    // Admin specific fields
+    department: {
         type: String,
-        default: null,
+        required: function () { return this.role === 'admin'; },
     },
-    dateOfBirth: Date,
+    // Doctor specific fields
+    specialization: {
+        type: String,
+        required: function () { return this.role === 'doctor'; },
+    },
+    qualification: {
+        type: String,
+        required: function () { return this.role === 'doctor'; },
+    },
+    experience: {
+        type: Number,
+        required: function () { return this.role === 'doctor'; },
+    },
+    consultationFee: {
+        type: Number,
+        required: function () { return this.role === 'doctor'; },
+    },
+    // Patient specific fields
+    dateOfBirth: {
+        type: Date,
+        required: function () { return this.role === 'patient'; },
+    },
     gender: {
         type: String,
         enum: ['male', 'female', 'other'],
+        required: function () { return this.role === 'patient'; },
     },
-    bloodGroup: String,
-    height: Number,
-    weight: Number,
+    bloodGroup: {
+        type: String,
+        enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+    },
+    address: String,
+    emergencyContact: {
+        name: String,
+        phone: String,
+        relation: String,
+    },
+    medicalHistory: [{
+        condition: String,
+        diagnosedDate: Date,
+        status: {
+            type: String,
+            enum: ['active', 'resolved', 'chronic'],
+            default: 'active',
+        },
+    }],
     allergies: [String],
-    medicalConditions: [String],
-    isVerified: {
-        type: Boolean,
-        default: false,
-    },
+    currentMedications: [String],
+    // Common fields
+    avatar: String,
     isActive: {
         type: Boolean,
         default: true,
     },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
     refreshToken: String,
+    lastLogin: Date,
 }, {
     timestamps: true,
 });
 
-// Index for faster queries
-userSchema.index({ email: 1, phone: 1 });
+// Indexes for faster queries
+userSchema.index({ userId: 1 });
+userSchema.index({ email: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ userId: 1, role: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

@@ -1,6 +1,6 @@
 /**
  * AayuCare - Authentication Service
- * Connects to real backend API
+ * Connects to real backend API with role-based authentication
  */
 
 import api from './api';
@@ -8,7 +8,7 @@ import * as SecureStore from 'expo-secure-store';
 import { STORAGE_KEYS } from '../utils/constants';
 
 /**
- * Register new user
+ * Register new user (Admin, Doctor, Patient, or User)
  */
 export const register = async (userData) => {
   try {
@@ -27,7 +27,8 @@ export const register = async (userData) => {
 };
 
 /**
- * Login user
+ * Login user with userId and password
+ * Supports all roles: admin, doctor, patient, user
  */
 export const login = async (credentials) => {
   try {
@@ -60,6 +61,23 @@ export const logout = async () => {
     await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
     await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
     await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA);
+  }
+};
+
+/**
+ * Update user profile
+ */
+export const updateProfile = async (profileData) => {
+  try {
+    const response = await api.put('/auth/profile', profileData);
+    const { user } = response.data.data;
+
+    // Update stored user data
+    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+
+    return response.data.data;
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -170,6 +188,7 @@ export default {
   register,
   login,
   logout,
+  updateProfile,
   sendOTP,
   verifyOTP,
   forgotPassword,

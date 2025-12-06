@@ -1,11 +1,11 @@
 /**
  * AayuCare - App Navigator (Root Navigator)
  * 
- * Clean navigation structure:
- * - Splash Screen
- * - Box Selection (Hospital/User)
- * - Auth Screens (Hospital Login, User Login, Forgot Password, OTP, Create Account)
- * - Main App (After Login)
+ * Role-based navigation:
+ * - Admin → Admin Dashboard
+ * - Doctor → Doctor Dashboard
+ * - Patient → Patient Dashboard
+ * - User → Main App (Home, Doctors, etc.)
  */
 
 import React, { useEffect } from 'react';
@@ -26,7 +26,14 @@ import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import LoginWithOTPScreen from '../screens/auth/LoginWithOTPScreen';
 import CreateAccountScreen from '../screens/auth/CreateAccountScreen';
 
-// Main App
+// Hospital Screens (Role-based)
+import {
+  AdminDashboard,
+  DoctorDashboard,
+  PatientDashboard
+} from '../screens/hospital';
+
+// User Main App
 import TabNavigator from './TabNavigator';
 import { SettingsScreen } from '../screens/main';
 
@@ -34,11 +41,14 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(loadUser());
   }, [dispatch]);
+
+  // Determine user role
+  const userRole = user?.role;
 
   return (
     <NavigationContainer>
@@ -72,19 +82,35 @@ const AppNavigator = () => {
             <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
           </>
         ) : (
-          // Main App
+          // Role-based Dashboards
           <>
-            <Stack.Screen name="Main" component={TabNavigator} />
-            <Stack.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={{
-                headerShown: true,
-                title: 'Settings',
-                headerStyle: { backgroundColor: colors.background.primary },
-                headerTintColor: colors.text.primary,
-              }}
-            />
+            {userRole === 'admin' && (
+              <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+            )}
+
+            {userRole === 'doctor' && (
+              <Stack.Screen name="DoctorDashboard" component={DoctorDashboard} />
+            )}
+
+            {userRole === 'patient' && (
+              <Stack.Screen name="PatientDashboard" component={PatientDashboard} />
+            )}
+
+            {userRole === 'user' && (
+              <>
+                <Stack.Screen name="Main" component={TabNavigator} />
+                <Stack.Screen
+                  name="Settings"
+                  component={SettingsScreen}
+                  options={{
+                    headerShown: true,
+                    title: 'Settings',
+                    headerStyle: { backgroundColor: colors.background.primary },
+                    headerTintColor: colors.text.primary,
+                  }}
+                />
+              </>
+            )}
           </>
         )}
       </Stack.Navigator>

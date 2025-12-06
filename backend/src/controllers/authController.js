@@ -3,45 +3,76 @@ const User = require('../models/User');
 const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 
-const generateTokens = (userId) => {
-    const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRE || '30d',
-    });
+const generateTokens = (userId, role) => {
+    const accessToken = jwt.sign(
+        { id: userId, role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
 
-    const refreshToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-        expiresIn: '90d',
-    });
+    const refreshToken = jwt.sign(
+        { id: userId, role },
+        process.env.JWT_SECRET,
+        { expiresIn: '90d' }
+    );
 
     return { accessToken, refreshToken };
 };
 
+/**
+ * @desc    Register new user (Admin, Doctor, or Patient)
+ * @route   POST /api/auth/register
+ * @access  Public
+ */
 exports.register = async (req, res, next) => {
     try {
-        const { name, email, phone, password, userType } = req.body;
+        const { userId, name, email, phone, password, role, ...roleSpecificData } = req.body;
 
         // Check if user already exists
-        const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+        const existingUser = await User.findOne({
+            $or: [{ userId }, { email }, { phone }]
+        });
+
         if (existingUser) {
-            return next(new AppError('User with this email or phone already exists', 400));
+            return next(new AppError('User with this ID, email, or phone already exists', 400));
+        }
+
+        // Validate role-specific data
+        if (role === 'doctor') {
+            if (!roleSpecificData.specialization || !roleSpecificData.qualification ||
+                !roleSpecificData.experience || !roleSpecificData.consultationFee) {
+                return next(new AppError('Doctor registration requires specialization, qualification, experience, and consultation fee', 400));
+            }
+        } else if (role === 'patient') {
+            if (!roleSpecificData.dateOfBirth || !roleSpecificData.gender) {
+                return next(new AppError('Patient registration requires date of birth and gender', 400));
+            }
+        } else if (role === 'admin') {
+            if (!roleSpecificData.department) {
+                return next(new AppError('Admin registration requires department', 400));
+            }
         }
 
         // Create user
         const user = await User.create({
+            userId,
             name,
             email,
             phone,
             password,
-            userType: userType || 'user',
+            role,
+            ...roleSpecificData,
         });
 
         // Generate tokens
-        const { accessToken, refreshToken } = generateTokens(user._id);
+        const { accessToken, refreshToken } = generateTokens(user._id, user.role);
 
         // Save refresh token
         user.refreshToken = refreshToken;
+        user.lastLogin = new Date();
         await user.save();
 
-        logger.info(`New user registered: ${user.email}`);
+        logger.info(`New ${role} registered: ${user.userId}`);
 
         res.status(201).json({
             status: 'success',
@@ -57,39 +88,42 @@ exports.register = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Login user (Admin, Doctor, or Patient)
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
 exports.login = async (req, res, next) => {
     try {
-        const { email, password, userType } = req.body;
+        const { userId, password } = req.body;
 
-        if (!email || !password) {
-            return next(new AppError('Please provide email and password', 400));
+        if (!userId || !password) {
+            return next(new AppError('Please provide user ID and password', 400));
         }
 
-        // Find user and include password
-        const user = await User.findOne({
-            $or: [{ email }, { phone: email }],
-            userType: userType || 'user'
-        }).select('+password');
+        // Find user by userId and include password
+        const user = await User.findOne({ userId }).select('+password');
 
         if (!user || !(await user.comparePassword(password))) {
             return next(new AppError('Invalid credentials', 401));
         }
 
         if (!user.isActive) {
-            return next(new AppError('Your account has been deactivated', 403));
+            return next(new AppError('Your account has been deactivated. Please contact support.', 403));
         }
 
-        // Generate tokens
-        const { accessToken, refreshToken } = generateTokens(user._id);
+        // Generate tokens with role
+        const { accessToken, refreshToken } = generateTokens(user._id, user.role);
 
-        // Save refresh token
+        // Save refresh token and update last login
         user.refreshToken = refreshToken;
+        user.lastLogin = new Date();
         await user.save();
 
         // Remove password from response
         user.password = undefined;
 
-        logger.info(`User logged in: ${user.email}`);
+        logger.info(`${user.role} logged in: ${user.userId}`);
 
         res.status(200).json({
             status: 'success',
@@ -105,6 +139,11 @@ exports.login = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Refresh access token
+ * @route   POST /api/auth/refresh
+ * @access  Public
+ */
 exports.refreshToken = async (req, res, next) => {
     try {
         const { refreshToken } = req.body;
@@ -123,7 +162,7 @@ exports.refreshToken = async (req, res, next) => {
         }
 
         // Generate new access token
-        const { accessToken } = generateTokens(user._id);
+        const { accessToken } = generateTokens(user._id, user.role);
 
         res.status(200).json({
             status: 'success',
@@ -136,13 +175,18 @@ exports.refreshToken = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Logout user
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
 exports.logout = async (req, res, next) => {
     try {
         // Clear refresh token
         req.user.refreshToken = null;
         await req.user.save();
 
-        logger.info(`User logged out: ${req.user.email}`);
+        logger.info(`${req.user.role} logged out: ${req.user.userId}`);
 
         res.status(200).json({
             status: 'success',
@@ -153,9 +197,59 @@ exports.logout = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Get current user profile
+ * @route   GET /api/auth/me
+ * @access  Private
+ */
 exports.getMe = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Update user profile
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ */
+exports.updateProfile = async (req, res, next) => {
+    try {
+        const { name, email, phone, avatar, ...otherFields } = req.body;
+
+        // Fields that can be updated
+        const allowedFields = { name, email, phone, avatar };
+
+        // Add role-specific fields
+        if (req.user.role === 'doctor') {
+            allowedFields.specialization = otherFields.specialization;
+            allowedFields.qualification = otherFields.qualification;
+            allowedFields.experience = otherFields.experience;
+            allowedFields.consultationFee = otherFields.consultationFee;
+        } else if (req.user.role === 'patient') {
+            allowedFields.bloodGroup = otherFields.bloodGroup;
+            allowedFields.address = otherFields.address;
+            allowedFields.emergencyContact = otherFields.emergencyContact;
+        } else if (req.user.role === 'admin') {
+            allowedFields.department = otherFields.department;
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            allowedFields,
+            { new: true, runValidators: true }
+        );
+
+        logger.info(`${user.role} updated profile: ${user.userId}`);
 
         res.status(200).json({
             status: 'success',
