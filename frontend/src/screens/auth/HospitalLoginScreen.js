@@ -7,9 +7,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,13 +22,16 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import { colors } from '../../theme/colors';
 import { createShadow } from '../../utils/platformStyles';
+import { loginUser } from '../../store/slices/authSlice';
 
 const HospitalLoginScreen = ({ navigation }) => {
+  const dispatch = useDispatch();
   const [hospitalId, setHospitalId] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // Validation
     const newErrors = {};
     if (!hospitalId) newErrors.hospitalId = 'Hospital ID is required';
@@ -37,9 +42,28 @@ const HospitalLoginScreen = ({ navigation }) => {
       return;
     }
 
-    // TODO: Implement actual login logic
-    console.log('Hospital Login:', { hospitalId, password });
-    // navigation.navigate('HospitalDashboard');
+    try {
+      setLoading(true);
+      // Dispatch login action with hospital credentials
+      const result = await dispatch(loginUser({
+        email: hospitalId,
+        password,
+        userType: 'hospital'
+      })).unwrap();
+
+      // Success - navigate to main app
+      console.log('Hospital Login successful:', result);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    } catch (error) {
+      // Handle error
+      console.error('Hospital Login error:', error);
+      Alert.alert('Login Failed', error || 'Invalid hospital credentials. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -132,6 +156,8 @@ const HospitalLoginScreen = ({ navigation }) => {
               variant="primary"
               size="large"
               onPress={handleLogin}
+              loading={loading}
+              disabled={loading}
               style={styles.loginButton}
             >
               Login to Dashboard

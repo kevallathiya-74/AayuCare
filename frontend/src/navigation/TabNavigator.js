@@ -1,103 +1,55 @@
 /**
- * AayuCare - Tab Navigator
+ * AayuCare - Tab Navigator (Bottom Tabs)
  * 
- * Bottom tab navigation for main app screens.
+ * Main app bottom tab navigation with custom tab bar
  */
 
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
-import { Platform } from 'react-native';
-import colors from '../theme/colors';
-import { createShadow } from '../utils/platformStyles';
+import CustomTabBar from './CustomTabBar';
 
-// Import screens
+// Import main screens
 import {
   HomeScreen,
+  DoctorsScreen,
   AppointmentsScreen,
-  HealthRecordsScreen,
   ProfileScreen,
-} from '../screens/PlaceholderScreens';
+} from '../screens/main';
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
         headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          switch (route.name) {
-            case 'Home':
-              iconName = 'home';
-              break;
-            case 'Appointments':
-              iconName = 'calendar';
-              break;
-            case 'Health':
-              iconName = 'activity';
-              break;
-            case 'Profile':
-              iconName = 'user';
-              break;
-            default:
-              iconName = 'circle';
-          }
-
-          return <Feather name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: colors.primary.main,
-        tabBarInactiveTintColor: colors.neutral.gray500,
-        tabBarStyle: {
-          backgroundColor: colors.background.primary,
-          borderTopColor: colors.card.border,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 85 : 60,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 8,
-          paddingTop: 8,
-          ...createShadow({
-            color: colors.shadows.medium,
-            offset: { width: 0, height: -2 },
-            opacity: 0.1,
-            radius: 8,
-            elevation: 8,
-          }),
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginTop: 4,
-        },
-        tabBarItemStyle: {
-          paddingVertical: 4,
-        },
-      })}
+        tabBarHideOnKeyboard: true,
+      }}
     >
-      <Tab.Screen 
-        name="Home" 
+      <Tab.Screen
+        name="Home"
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
         }}
       />
-      <Tab.Screen 
-        name="Appointments" 
+      <Tab.Screen
+        name="Doctors"
+        component={DoctorsScreen}
+        options={{
+          tabBarLabel: 'Doctors',
+        }}
+      />
+      <Tab.Screen
+        name="Appointments"
         component={AppointmentsScreen}
         options={{
           tabBarLabel: 'Appointments',
         }}
       />
-      <Tab.Screen 
-        name="Health" 
-        component={HealthRecordsScreen}
-        options={{
-          tabBarLabel: 'Health',
-        }}
-      />
-      <Tab.Screen 
-        name="Profile" 
+      <Tab.Screen
+        name="Profile"
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',

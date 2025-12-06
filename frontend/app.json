@@ -19,7 +19,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.aayucare.app",
       "infoPlist": {
-        "UIBackgroundModes": ["fetch", "remote-notification"]
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -45,7 +48,9 @@
       }
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-asset",
+      "expo-secure-store"
     ]
   }
 }

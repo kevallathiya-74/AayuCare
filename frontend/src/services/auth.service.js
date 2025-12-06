@@ -1,7 +1,6 @@
 /**
  * AayuCare - Authentication Service
- * 
- * Handles all authentication-related API calls.
+ * Connects to real backend API
  */
 
 import api from './api';
@@ -14,9 +13,16 @@ import { STORAGE_KEYS } from '../utils/constants';
 export const register = async (userData) => {
   try {
     const response = await api.post('/auth/register', userData);
-    return response.data;
+    const { user, token, refreshToken } = response.data.data;
+
+    // Store tokens and user data securely
+    await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
+    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+
+    return response.data.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -26,16 +32,16 @@ export const register = async (userData) => {
 export const login = async (credentials) => {
   try {
     const response = await api.post('/auth/login', credentials);
-    const { token, refreshToken, user } = response.data;
-    
+    const { user, token, refreshToken } = response.data.data;
+
     // Store tokens and user data securely
     await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
     await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
     await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
-    
-    return response.data;
+
+    return response.data.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -44,10 +50,11 @@ export const login = async (credentials) => {
  */
 export const logout = async () => {
   try {
-    // Call logout endpoint (optional, for server-side cleanup)
+    // Call logout endpoint
     await api.post('/auth/logout');
   } catch (error) {
     // Continue with local logout even if API call fails
+    console.error('Logout API error:', error);
   } finally {
     // Clear local storage
     await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
@@ -64,7 +71,7 @@ export const sendOTP = async (phone) => {
     const response = await api.post('/auth/send-otp', { phone });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -76,7 +83,7 @@ export const verifyOTP = async (phone, otp) => {
     const response = await api.post('/auth/verify-otp', { phone, otp });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -88,7 +95,7 @@ export const forgotPassword = async (phoneOrEmail) => {
     const response = await api.post('/auth/forgot-password', { phoneOrEmail });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -100,7 +107,7 @@ export const resetPassword = async (token, newPassword) => {
     const response = await api.post('/auth/reset-password', { token, newPassword });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -115,7 +122,7 @@ export const changePassword = async (currentPassword, newPassword) => {
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
@@ -125,13 +132,13 @@ export const changePassword = async (currentPassword, newPassword) => {
 export const getCurrentUser = async () => {
   try {
     const response = await api.get('/auth/me');
-    
+
     // Update stored user data
-    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
-    
-    return response.data;
+    await SecureStore.setItemAsync(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.data.user));
+
+    return response.data.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error;
   }
 };
 
