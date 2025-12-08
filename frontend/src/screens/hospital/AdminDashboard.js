@@ -12,33 +12,34 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import LargeActionCard from '../../components/common/LargeActionCard';
-import { logout } from '../../store/slices/authSlice';
+import { logoutUser } from '../../store/slices/authSlice';
 
 const AdminDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
 
     const handleLogout = async () => {
-        await dispatch(logout());
+        await dispatch(logoutUser());
     };
 
     const actionCards = [
         {
             title: 'Manage Doctors',
             icon: 'people',
-            iconColor: healthColors.roles.doctor,
+            iconColor: healthColors.secondary.main,
             onPress: () => navigation.navigate('ManageDoctors'),
         },
         {
             title: 'Manage Patients',
             icon: 'person-add',
-            iconColor: healthColors.roles.patient,
+            iconColor: healthColors.accent.coral,
             onPress: () => navigation.navigate('ManagePatients'),
         },
         {
@@ -51,7 +52,7 @@ const AdminDashboard = ({ navigation }) => {
         {
             title: 'Reports & Records',
             icon: 'document-text',
-            iconColor: healthColors.accent.main,
+            iconColor: healthColors.accent.green,
             onPress: () => navigation.navigate('Reports'),
         },
         {
@@ -133,40 +134,41 @@ const AdminDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: healthColors.background.primary,
+        backgroundColor: healthColors.background.secondary,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: indianDesign.spacing.xl,
-        paddingTop: indianDesign.spacing.xl,
-        paddingBottom: indianDesign.spacing.lg,
+        paddingHorizontal: 16,
+        paddingTop: Platform.OS === 'ios' ? 50 : 16,
+        paddingBottom: 16,
         backgroundColor: healthColors.background.card,
         ...createShadow(2),
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: indianDesign.spacing.md,
+        gap: 12,
     },
     hospitalIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     hospitalName: {
-        fontSize: indianDesign.fontSize.large,
-        fontWeight: indianDesign.fontWeight.bold,
+        fontSize: 17,
+        fontWeight: '700',
         color: healthColors.text.primary,
     },
     adminName: {
-        fontSize: indianDesign.fontSize.small,
+        fontSize: 13,
         color: healthColors.text.secondary,
-        fontWeight: indianDesign.fontWeight.regular,
+        fontWeight: '400',
+        marginTop: 2,
     },
     profileButton: {
         width: 40,
@@ -177,15 +179,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     scrollContent: {
-        padding: indianDesign.spacing.lg,
+        padding: 16,
+        paddingBottom: 32,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: indianDesign.spacing.md,
+        justifyContent: 'space-between',
     },
     gridItem: {
-        width: (indianDesign.screen.width - indianDesign.spacing.lg * 2 - indianDesign.spacing.md) / 2,
+        width: '48%',
+        marginBottom: 16,
     },
 });
 

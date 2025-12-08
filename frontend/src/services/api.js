@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import * as storage from '../utils/secureStorage';
 import { Platform } from 'react-native';
 import { STORAGE_KEYS } from '../utils/constants';
 
@@ -13,9 +13,9 @@ const getBaseURL = () => {
   if (__DEV__) {
     // Development mode
     if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:5000/api'; // Android emulator
+      return 'http://10.9.15.29:5000/api'; // Real device with Expo Go
     } else if (Platform.OS === 'ios') {
-      return 'http://localhost:5000/api'; // iOS simulator
+      return 'http://10.9.15.29:5000/api'; // Real device with Expo Go
     } else {
       return 'http://localhost:5000/api'; // Web
     }
@@ -37,7 +37,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+      const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -67,7 +67,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+        const refreshToken = await storage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (refreshToken) {
           const response = await axios.post(`${getBaseURL()}/auth/refresh`, {
@@ -77,7 +77,7 @@ api.interceptors.response.use(
           const { token } = response.data.data;
 
           // Save new token
-          await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
+          await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -85,9 +85,9 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed - Clear storage and redirect to login
-        await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
-        await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
-        await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA);
+        await storage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+        await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
+        await storage.deleteItem(STORAGE_KEYS.USER_DATA);
 
         return Promise.reject(refreshError);
       }

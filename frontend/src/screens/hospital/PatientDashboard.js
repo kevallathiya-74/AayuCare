@@ -12,20 +12,21 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import LargeActionCard from '../../components/common/LargeActionCard';
-import { logout } from '../../store/slices/authSlice';
+import { logoutUser } from '../../store/slices/authSlice';
 
 const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
 
     const handleLogout = async () => {
-        await dispatch(logout());
+        await dispatch(logoutUser());
     };
 
     const actionCards = [
@@ -39,7 +40,7 @@ const PatientDashboard = ({ navigation }) => {
         {
             title: 'My Reports',
             icon: 'document-text-outline',
-            iconColor: healthColors.accent.main,
+            iconColor: healthColors.accent.aqua,
             onPress: () => navigation.navigate('MyReports'),
         },
         {
@@ -156,43 +157,44 @@ const PatientDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: healthColors.background.primary,
+        backgroundColor: healthColors.background.secondary,
     },
     header: {
         backgroundColor: healthColors.background.card,
-        paddingHorizontal: indianDesign.spacing.xl,
-        paddingTop: indianDesign.spacing.xl,
-        paddingBottom: indianDesign.spacing.lg,
+        paddingHorizontal: 16,
+        paddingTop: Platform.OS === 'ios' ? 50 : 16,
+        paddingBottom: 16,
         ...createShadow(2),
     },
     headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: indianDesign.spacing.md,
+        marginBottom: 12,
     },
     patientInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: indianDesign.spacing.md,
+        gap: 12,
     },
     avatar: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     patientName: {
-        fontSize: indianDesign.fontSize.large,
-        fontWeight: indianDesign.fontWeight.bold,
+        fontSize: 17,
+        fontWeight: '700',
         color: healthColors.text.primary,
     },
     patientId: {
-        fontSize: indianDesign.fontSize.small,
+        fontSize: 13,
         color: healthColors.text.secondary,
-        fontWeight: indianDesign.fontWeight.regular,
+        fontWeight: '400',
+        marginTop: 2,
     },
     logoutButton: {
         width: 40,
@@ -207,28 +209,28 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: healthColors.success.background,
-        padding: indianDesign.spacing.md,
-        borderRadius: indianDesign.borderRadius.medium,
+        padding: 12,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: healthColors.success.light,
     },
     healthCardLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: indianDesign.spacing.md,
+        gap: 12,
     },
     healthCardText: {
         gap: 2,
     },
     healthCardTitle: {
-        fontSize: indianDesign.fontSize.medium,
-        fontWeight: indianDesign.fontWeight.semibold,
+        fontSize: 15,
+        fontWeight: '600',
         color: healthColors.text.primary,
     },
     healthCardSubtitle: {
-        fontSize: indianDesign.fontSize.small,
+        fontSize: 13,
         color: healthColors.success.main,
-        fontWeight: indianDesign.fontWeight.medium,
+        fontWeight: '500',
     },
     viewButton: {
         flexDirection: 'row',
@@ -236,20 +238,22 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     viewButtonText: {
-        fontSize: indianDesign.fontSize.small,
-        fontWeight: indianDesign.fontWeight.semibold,
+        fontSize: 13,
+        fontWeight: '600',
         color: healthColors.primary.main,
     },
     scrollContent: {
-        padding: indianDesign.spacing.lg,
+        padding: 16,
+        paddingBottom: 32,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: indianDesign.spacing.md,
+        justifyContent: 'space-between',
     },
     gridItem: {
-        width: (indianDesign.screen.width - indianDesign.spacing.lg * 2 - indianDesign.spacing.md) / 2,
+        width: '48%',
+        marginBottom: 16,
     },
 });
 

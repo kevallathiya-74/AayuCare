@@ -13,13 +13,14 @@ import {
     TouchableOpacity,
     StatusBar,
     Switch,
+    Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import LargeActionCard from '../../components/common/LargeActionCard';
-import { logout } from '../../store/slices/authSlice';
+import { logoutUser } from '../../store/slices/authSlice';
 
 const DoctorDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -27,7 +28,7 @@ const DoctorDashboard = ({ navigation }) => {
     const [isOnline, setIsOnline] = useState(true);
 
     const handleLogout = async () => {
-        await dispatch(logout());
+        await dispatch(logoutUser());
     };
 
     const actionCards = [
@@ -41,7 +42,7 @@ const DoctorDashboard = ({ navigation }) => {
         {
             title: 'Patient History',
             icon: 'folder-open-outline',
-            iconColor: healthColors.accent.main,
+            iconColor: healthColors.accent.green,
             onPress: () => navigation.navigate('PatientHistory'),
         },
         {
@@ -160,43 +161,44 @@ const DoctorDashboard = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: healthColors.background.primary,
+        backgroundColor: healthColors.background.secondary,
     },
     header: {
         backgroundColor: healthColors.background.card,
-        paddingHorizontal: indianDesign.spacing.xl,
-        paddingTop: indianDesign.spacing.xl,
-        paddingBottom: indianDesign.spacing.lg,
+        paddingHorizontal: 16,
+        paddingTop: Platform.OS === 'ios' ? 50 : 16,
+        paddingBottom: 16,
         ...createShadow(2),
     },
     headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: indianDesign.spacing.md,
+        marginBottom: 12,
     },
     doctorInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: indianDesign.spacing.md,
+        gap: 12,
     },
     avatar: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     doctorName: {
-        fontSize: indianDesign.fontSize.large,
-        fontWeight: indianDesign.fontWeight.bold,
+        fontSize: 17,
+        fontWeight: '700',
         color: healthColors.text.primary,
     },
     specialization: {
-        fontSize: indianDesign.fontSize.small,
+        fontSize: 13,
         color: healthColors.text.secondary,
-        fontWeight: indianDesign.fontWeight.regular,
+        fontWeight: '400',
+        marginTop: 2,
     },
     logoutButton: {
         width: 40,
@@ -211,13 +213,13 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: healthColors.background.tertiary,
-        padding: indianDesign.spacing.md,
-        borderRadius: indianDesign.borderRadius.medium,
+        padding: 12,
+        borderRadius: 12,
     },
     availabilityLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: indianDesign.spacing.sm,
+        gap: 8,
     },
     statusDot: {
         width: 10,
@@ -229,26 +231,27 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.success.main,
     },
     availabilityText: {
-        fontSize: indianDesign.fontSize.medium,
-        fontWeight: indianDesign.fontWeight.semibold,
+        fontSize: 15,
+        fontWeight: '600',
         color: healthColors.text.primary,
     },
     scrollContent: {
-        padding: indianDesign.spacing.lg,
-        paddingBottom: 100, // Space for FAB
+        padding: 16,
+        paddingBottom: 100,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: indianDesign.spacing.md,
+        justifyContent: 'space-between',
     },
     gridItem: {
-        width: (indianDesign.screen.width - indianDesign.spacing.lg * 2 - indianDesign.spacing.md) / 2,
+        width: '48%',
+        marginBottom: 16,
     },
     fab: {
         position: 'absolute',
-        bottom: indianDesign.spacing.xl,
-        right: indianDesign.spacing.xl,
+        bottom: 24,
+        right: 24,
         width: 56,
         height: 56,
         borderRadius: 28,

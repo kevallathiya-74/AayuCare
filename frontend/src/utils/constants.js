@@ -6,7 +6,7 @@
 
 // API Configuration
 export const API_BASE_URL = __DEV__
-  ? 'http://localhost:5000/api'
+  ? 'http://10.9.15.29:5000/api' // Use computer IP for Expo Go
   : 'https://api.aayucare.com/api'; // Replace with production URL
 
 export const API_TIMEOUT = 30000; // 30 seconds

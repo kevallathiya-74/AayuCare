@@ -23,7 +23,7 @@ connectDB();
 // Security Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:19006', 'http://localhost:8081', 'http://localhost:8082'],
+  origin: true, // Allow all origins in development (for Expo Go)
   credentials: true,
 }));
 

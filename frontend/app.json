@@ -1,56 +1,56 @@
 {
-  "expo": {
-    "name": "AayuCare",
-    "slug": "aayucare",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/aayucare-logo.png",
-    "userInterfaceStyle": "light",
-    "scheme": "aayucare",
-    "splash": {
-      "image": "./assets/images/aayucare-logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#4A90E2"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.aayucare.app",
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "fetch",
-          "remote-notification"
+    "expo": {
+        "name": "AayuCare",
+        "slug": "aayucare",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/aayucare-logo.png",
+        "userInterfaceStyle": "light",
+        "scheme": "aayucare",
+        "splash": {
+            "image": "./assets/images/aayucare-logo.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#4A90E2"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.aayucare.app",
+            "infoPlist": {
+                "UIBackgroundModes": [
+                    "fetch",
+                    "remote-notification"
+                ]
+            }
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/images/aayucare-logo.png",
+                "backgroundColor": "#4DD0E1"
+            },
+            "package": "com.aayucare.app",
+            "permissions": [
+                "CAMERA",
+                "READ_EXTERNAL_STORAGE",
+                "WRITE_EXTERNAL_STORAGE"
+            ]
+        },
+        "web": {
+            "favicon": "./assets/images/aayucare-logo.png",
+            "bundler": "metro"
+        },
+        "extra": {
+            "apiUrl": "http://localhost:5000/api",
+            "eas": {
+                "projectId": "aayucare-healthcare-app"
+            }
+        },
+        "plugins": [
+            "expo-font",
+            "expo-asset",
+            "expo-secure-store"
         ]
-      }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/aayucare-logo.png",
-        "backgroundColor": "#4DD0E1"
-      },
-      "package": "com.aayucare.app",
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/images/aayucare-logo.png",
-      "bundler": "metro"
-    },
-    "extra": {
-      "apiUrl": "http://localhost:5000/api",
-      "eas": {
-        "projectId": "aayucare-healthcare-app"
-      }
-    },
-    "plugins": [
-      "expo-font",
-      "expo-asset",
-      "expo-secure-store"
-    ]
-  }
+    }
 }

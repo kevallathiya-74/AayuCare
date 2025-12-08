@@ -8,3 +8,8 @@ export { default as DoctorDashboard } from './DoctorDashboard';
 export { default as PatientDashboard } from './PatientDashboard';
 export { default as TodaysAppointmentsScreen } from './TodaysAppointmentsScreen';
 export { default as PrescriptionCreationScreen } from './PrescriptionCreationScreen';
+export { default as ManageDoctorsScreen } from './ManageDoctorsScreen';
+export { default as ManagePatientsScreen } from './ManagePatientsScreen';
+export { default as AppointmentsScreen } from './AppointmentsScreen';
+export { default as ReportsScreen } from './ReportsScreen';
+export { default as AdminSettingsScreen } from './AdminSettingsScreen';
