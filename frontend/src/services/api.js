@@ -11,11 +11,11 @@ import { STORAGE_KEYS } from '../utils/constants';
 // Determine API base URL based on platform
 const getBaseURL = () => {
   if (__DEV__) {
-    // Development mode
+    // Development mode - Use your computer's IP address for mobile devices
     if (Platform.OS === 'android') {
-      return 'http://10.9.15.29:5000/api'; // Real device with Expo Go
+      return 'http://10.121.108.30:5000/api'; // Real device with Expo Go
     } else if (Platform.OS === 'ios') {
-      return 'http://10.9.15.29:5000/api'; // Real device with Expo Go
+      return 'http://10.121.108.30:5000/api'; // Real device with Expo Go
     } else {
       return 'http://localhost:5000/api'; // Web
     }

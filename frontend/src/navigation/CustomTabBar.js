@@ -1,17 +1,12 @@
 /**
  * AayuCare - CustomTabBar
  * 
- * Custom bottom tab bar with animations
- * Features: active tab indicator, icon transitions, haptic feedback
+ * Custom bottom tab bar with simple animations
+ * Features: active tab indicator, icon transitions
  */
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import { textStyles } from '../theme/typography';
@@ -78,7 +73,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
                         style={styles.tab}
                         activeOpacity={0.7}
                     >
-                        <Animated.View style={styles.tabContent}>
+                        <View style={styles.tabContent}>
                             <Ionicons
                                 name={getIconName()}
                                 size={24}
@@ -92,7 +87,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
                             >
                                 {label}
                             </Text>
-                        </Animated.View>
+                        </View>
                         {isFocused && <View style={styles.indicator} />}
                     </TouchableOpacity>
                 );

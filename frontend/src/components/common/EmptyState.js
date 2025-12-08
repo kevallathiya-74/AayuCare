@@ -5,14 +5,8 @@
  * Features: animated entrance, action button
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-    withDelay,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -27,21 +21,27 @@ const EmptyState = ({
     onActionPress,
     style,
 }) => {
-    const opacity = useSharedValue(0);
-    const translateY = useSharedValue(20);
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(20)).current;
 
     useEffect(() => {
-        opacity.value = withDelay(100, withSpring(1));
-        translateY.value = withDelay(100, withSpring(0));
+        Animated.parallel([
+            Animated.timing(opacity, {
+                toValue: 1,
+                delay: 100,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+            Animated.spring(translateY, {
+                toValue: 0,
+                delay: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
     }, []);
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [{ translateY: translateY.value }],
-    }));
-
     return (
-        <Animated.View style={[styles.container, animatedStyle, style]}>
+        <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }, style]}>
             <View style={styles.iconContainer}>
                 <Ionicons name={icon} size={80} color={colors.neutral.gray300} />
             </View>

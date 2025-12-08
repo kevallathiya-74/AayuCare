@@ -52,8 +52,12 @@ export const login = async (credentials) => {
 
     return response.data.data;
   } catch (error) {
-    // Extract clean error message from backend
-    const message = error.response?.data?.message || error.message || 'Login failed';
+    // Extract specific error message from backend
+    // Backend sends specific messages like "Incorrect User ID" or "Incorrect Password"
+    const message = error.response?.data?.message || 
+                   error.response?.data?.error ||
+                   error.message || 
+                   'Login failed';
     throw message;
   }
 };

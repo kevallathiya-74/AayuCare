@@ -5,20 +5,14 @@
  * Features: active/inactive states, close button, icons
  */
 
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
-} from 'react-native-reanimated';
+import React, { useRef, useEffect } from 'react';
+import { Pressable, Text, StyleSheet, View, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const Chip = ({
     label,
@@ -31,30 +25,38 @@ const Chip = ({
     style,
     textStyle,
 }) => {
-    const scale = useSharedValue(1);
-    const backgroundColor = useSharedValue(
-        selected ? colors.primary.main : colors.background.secondary
-    );
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const bgColorAnim = useRef(new Animated.Value(selected ? 1 : 0)).current;
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-        backgroundColor: backgroundColor.value,
-    }));
+    useEffect(() => {
+        Animated.timing(bgColorAnim, {
+            toValue: selected ? 1 : 0,
+            duration: 200,
+            useNativeDriver: false,
+        }).start();
+    }, [selected]);
+
+    const backgroundColor = bgColorAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [colors.background.secondary, colors.primary.main],
+    });
 
     const handlePressIn = () => {
-        scale.value = withSpring(0.95);
+        Animated.spring(scaleAnim, {
+            toValue: 0.95,
+            useNativeDriver: true,
+        }).start();
     };
 
     const handlePressOut = () => {
-        scale.value = withSpring(1);
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+        }).start();
     };
 
     const handlePress = () => {
         if (!disabled && onPress) {
-            backgroundColor.value = withTiming(
-                !selected ? colors.primary.main : colors.background.secondary,
-                { duration: 200 }
-            );
             onPress();
         }
     };
@@ -65,15 +67,14 @@ const Chip = ({
     };
 
     return (
-        <AnimatedTouchable
+        <AnimatedPressable
             onPress={handlePress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
             disabled={disabled}
-            activeOpacity={0.8}
             style={[
                 styles.chip,
-                animatedStyle,
+                { transform: [{ scale: scaleAnim }], backgroundColor },
                 disabled && styles.disabled,
                 style,
             ]}
@@ -91,7 +92,7 @@ const Chip = ({
             </Text>
 
             {onClose && (
-                <TouchableOpacity
+                <Pressable
                     onPress={onClose}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     style={styles.closeButton}
@@ -101,9 +102,9 @@ const Chip = ({
                         size={16}
                         color={selected ? colors.text.inverse : colors.text.secondary}
                     />
-                </TouchableOpacity>
+                </Pressable>
             )}
-        </AnimatedTouchable>
+        </AnimatedPressable>
     );
 };
 

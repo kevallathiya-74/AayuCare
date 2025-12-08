@@ -13,6 +13,8 @@ import {
     TouchableOpacity,
     StatusBar,
     Platform,
+    Alert,
+    Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,6 +22,13 @@ import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import LargeActionCard from '../../components/common/LargeActionCard';
 import { logoutUser } from '../../store/slices/authSlice';
+import { 
+    getScreenPadding, 
+    moderateScale, 
+    verticalScale,
+    scaledFontSize,
+    getGridColumns,
+} from '../../utils/responsive';
 
 const AdminDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -59,14 +68,7 @@ const AdminDashboard = ({ navigation }) => {
             title: 'Billing',
             icon: 'card',
             iconColor: healthColors.success.main,
-            onPress: () => navigation.navigate('Billing'),
-        },
-        {
-            title: 'Notifications',
-            icon: 'notifications',
-            iconColor: healthColors.warning.main,
-            onPress: () => navigation.navigate('Notifications'),
-            badge: '5',
+            onPress: () => Alert.alert('Coming Soon', 'Billing feature will be available soon'),
         },
         {
             title: 'Settings',
@@ -90,9 +92,13 @@ const AdminDashboard = ({ navigation }) => {
                             color={healthColors.primary.main}
                         />
                     </View>
-                    <View>
-                        <Text style={styles.hospitalName}>AayuCare Hospital</Text>
-                        <Text style={styles.adminName}>{user?.name || 'Admin'}</Text>
+                    <View style={styles.hospitalNameContainer}>
+                        <Text style={styles.hospitalName} numberOfLines={1} ellipsizeMode="tail">
+                            AayuCare Hospital
+                        </Text>
+                        <Text style={styles.adminName} numberOfLines={1} ellipsizeMode="tail">
+                            {user?.name || 'Admin'}
+                        </Text>
                     </View>
                 </View>
                 <TouchableOpacity
@@ -140,56 +146,66 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingTop: Platform.OS === 'ios' ? 50 : 16,
-        paddingBottom: 16,
+        paddingHorizontal: getScreenPadding(),
+        paddingTop: Platform.OS === 'ios' ? verticalScale(50) : getScreenPadding(),
+        paddingBottom: getScreenPadding(),
         backgroundColor: healthColors.background.card,
         ...createShadow(2),
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: moderateScale(12),
+        flex: 1,
+        marginRight: moderateScale(8),
+    },
+    hospitalNameContainer: {
+        flex: 1,
+        justifyContent: 'center',
     },
     hospitalIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: moderateScale(44),
+        height: moderateScale(44),
+        borderRadius: moderateScale(22),
         backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     hospitalName: {
-        fontSize: 17,
+        fontSize: scaledFontSize(16),
         fontWeight: '700',
         color: healthColors.text.primary,
+        lineHeight: scaledFontSize(20),
     },
     adminName: {
-        fontSize: 13,
+        fontSize: scaledFontSize(13),
         color: healthColors.text.secondary,
         fontWeight: '400',
-        marginTop: 2,
+        marginTop: moderateScale(2),
+        lineHeight: scaledFontSize(16),
     },
     profileButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: moderateScale(40),
+        height: moderateScale(40),
+        borderRadius: moderateScale(20),
         backgroundColor: healthColors.background.tertiary,
         justifyContent: 'center',
         alignItems: 'center',
     },
     scrollContent: {
-        padding: 16,
-        paddingBottom: 32,
+        padding: getScreenPadding(),
+        paddingBottom: verticalScale(32),
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        width: '100%',
     },
     gridItem: {
         width: '48%',
-        marginBottom: 16,
+        aspectRatio: 1.2,
+        marginBottom: moderateScale(12),
     },
 });
 

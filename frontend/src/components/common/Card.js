@@ -4,14 +4,17 @@
  * Features: elevation, press animation, swipeable actions
  */
 
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import React, { useRef } from 'react';
+import { View, StyleSheet, Pressable, Animated } from 'react-native';
 import colors from '../../theme/colors';
 import { spacing, componentSpacing } from '../../theme/spacing';
 import { createShadow } from '../../utils/platformStyles';
+import { 
+    moderateScale,
+    borderRadius as responsiveBorderRadius,
+} from '../../utils/responsive';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const Card = ({
   children,
@@ -21,21 +24,23 @@ const Card = ({
   style,
   ...props
 }) => {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
     if (onPress) {
-      scale.value = withSpring(0.98);
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
   const handlePressOut = () => {
     if (onPress) {
-      scale.value = withSpring(1);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
@@ -52,14 +57,13 @@ const Card = ({
     }
   };
 
-  const Component = onPress ? AnimatedTouchable : View;
+  const Component = onPress ? AnimatedPressable : View;
   const animationProps = onPress
     ? {
         onPressIn: handlePressIn,
         onPressOut: handlePressOut,
         onPress,
-        activeOpacity: 0.95,
-        style: animatedStyle,
+        style: { transform: [{ scale: scaleAnim }] },
       }
     : {};
 
@@ -82,12 +86,12 @@ const Card = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card.background,
-    borderRadius: colors.borderRadius.medium,
+    borderRadius: responsiveBorderRadius.medium,
     borderWidth: 1,
     borderColor: colors.card.border,
   },
   withPadding: {
-    padding: componentSpacing.cardPadding,
+    padding: moderateScale(componentSpacing.cardPadding),
   },
   elevationSmall: {
     ...createShadow({

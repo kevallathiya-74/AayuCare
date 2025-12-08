@@ -5,13 +5,8 @@
  * Features: gradient support, press animation, icon support
  */
 
-import React from 'react';
-import { TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from 'react-native-reanimated';
+import React, { useRef } from 'react';
+import { TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
@@ -31,18 +26,20 @@ const FloatingActionButton = ({
     style,
     disabled = false,
 }) => {
-    const scale = useSharedValue(1);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
+    const scale = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
-        scale.value = withSpring(0.9);
+        Animated.spring(scale, {
+            toValue: 0.9,
+            useNativeDriver: true,
+        }).start();
     };
 
     const handlePressOut = () => {
-        scale.value = withSpring(1);
+        Animated.spring(scale, {
+            toValue: 1,
+            useNativeDriver: true,
+        }).start();
     };
 
     const getSizeStyle = () => {

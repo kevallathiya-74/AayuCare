@@ -1,20 +1,12 @@
 /**
- * AayuCare - Toast Component
+ * AayuCare - Toast Component (Simplified for Expo Go)
  * 
  * Animated toast notifications with auto-dismiss
- * Features: success, error, warning, info variants, swipe to dismiss
+ * Features: success, error, warning, info variants
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-    withTiming,
-    runOnJS,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, Platform, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -31,14 +23,22 @@ const Toast = ({
     onDismiss,
     position = 'top', // top, bottom
 }) => {
-    const translateY = useSharedValue(position === 'top' ? -TOAST_HEIGHT : TOAST_HEIGHT);
-    const translateX = useSharedValue(0);
-    const opacity = useSharedValue(0);
+    const translateY = useRef(new Animated.Value(position === 'top' ? -TOAST_HEIGHT : TOAST_HEIGHT)).current;
+    const opacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         if (visible) {
-            translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
-            opacity.value = withTiming(1, { duration: 200 });
+            Animated.parallel([
+                Animated.spring(translateY, {
+                    toValue: 0,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(opacity, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
 
             if (duration > 0) {
                 const timer = setTimeout(() => {
@@ -48,11 +48,17 @@ const Toast = ({
                 return () => clearTimeout(timer);
             }
         } else {
-            translateY.value = withSpring(
-                position === 'top' ? -TOAST_HEIGHT : TOAST_HEIGHT,
-                { damping: 20, stiffness: 300 }
-            );
-            opacity.value = withTiming(0, { duration: 200 });
+            Animated.parallel([
+                Animated.spring(translateY, {
+                    toValue: position === 'top' ? -TOAST_HEIGHT : TOAST_HEIGHT,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(opacity, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
         }
     }, [visible]);
 
@@ -61,30 +67,6 @@ const Toast = ({
             onDismiss();
         }
     };
-
-    const panGesture = Gesture.Pan()
-        .onUpdate((event) => {
-            translateX.value = event.translationX;
-        })
-        .onEnd((event) => {
-            if (Math.abs(event.translationX) > SCREEN_WIDTH * 0.3) {
-                translateX.value = withTiming(
-                    event.translationX > 0 ? SCREEN_WIDTH : -SCREEN_WIDTH,
-                    { duration: 200 }
-                );
-                runOnJS(handleDismiss)();
-            } else {
-                translateX.value = withSpring(0);
-            }
-        });
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [
-            { translateY: translateY.value },
-            { translateX: translateX.value },
-        ],
-        opacity: opacity.value,
-    }));
 
     const getToastConfig = () => {
         switch (type) {
@@ -120,21 +102,22 @@ const Toast = ({
     if (!visible) return null;
 
     return (
-        <GestureDetector gesture={panGesture}>
-            <Animated.View
-                style={[
-                    styles.container,
-                    position === 'top' ? styles.top : styles.bottom,
-                    { backgroundColor: config.backgroundColor },
-                    animatedStyle,
-                ]}
-            >
-                <Ionicons name={config.icon} size={24} color={config.iconColor} />
-                <Text style={styles.message} numberOfLines={2}>
-                    {message}
-                </Text>
-            </Animated.View>
-        </GestureDetector>
+        <Animated.View
+            style={[
+                styles.container,
+                {
+                    [position]: Platform.OS === 'ios' ? 50 : 20,
+                    transform: [{ translateY }],
+                    opacity,
+                    backgroundColor: config.backgroundColor,
+                },
+            ]}
+        >
+            <Ionicons name={config.icon} size={24} color={config.iconColor} style={styles.icon} />
+            <Text style={styles.message} numberOfLines={2}>
+                {message}
+            </Text>
+        </Animated.View>
     );
 };
 
@@ -147,30 +130,21 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: spacing.md,
-        paddingVertical: spacing.md,
+        paddingVertical: spacing.sm,
         borderRadius: colors.borderRadius.medium,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 8,
-            },
-            android: {
-                elevation: 8,
-            },
-        }),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        zIndex: 9999,
     },
-    top: {
-        top: Platform.OS === 'ios' ? 50 : 20,
-    },
-    bottom: {
-        bottom: Platform.OS === 'ios' ? 50 : 20,
+    icon: {
+        marginRight: spacing.sm,
     },
     message: {
-        ...textStyles.bodyMedium,
+        ...textStyles.body,
         color: colors.neutral.white,
-        marginLeft: spacing.md,
         flex: 1,
     },
 });

@@ -4,15 +4,8 @@
  * Animated loading placeholders
  */
 
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated } from 'react-native';
 import colors from '../../theme/colors';
 import { spacing, componentSpacing } from '../../theme/spacing';
 
@@ -22,19 +15,24 @@ const SkeletonLoader = ({
   borderRadius = colors.borderRadius.small,
   style,
 }) => {
-  const opacity = useSharedValue(0.3);
+  const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(1, { duration: 1000 }),
-      -1,
-      true
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(opacity.value, [0.3, 1], [0.3, 0.7]),
-  }));
 
   return (
     <Animated.View
@@ -44,8 +42,8 @@ const SkeletonLoader = ({
           width,
           height,
           borderRadius,
+          opacity,
         },
-        animatedStyle,
         style,
       ]}
     />

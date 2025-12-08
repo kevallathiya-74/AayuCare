@@ -5,19 +5,15 @@
  * Features: clear button, filter button, voice search icon
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     TextInput,
     TouchableOpacity,
     StyleSheet,
     Platform,
+    Animated,
 } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -35,21 +31,30 @@ const SearchBar = ({
     style,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
-    const borderColor = useSharedValue(colors.input.border);
+    const borderColorAnim = useRef(new Animated.Value(0)).current;
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        borderColor: borderColor.value,
-    }));
+    const borderColor = borderColorAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [colors.input.border, colors.input.borderFocused],
+    });
 
     const handleFocus = () => {
         setIsFocused(true);
-        borderColor.value = withTiming(colors.input.borderFocused, { duration: 200 });
+        Animated.timing(borderColorAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: false,
+        }).start();
         if (onFocus) onFocus();
     };
 
     const handleBlur = () => {
         setIsFocused(false);
-        borderColor.value = withTiming(colors.input.border, { duration: 200 });
+        Animated.timing(borderColorAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: false,
+        }).start();
         if (onBlur) onBlur();
     };
 
@@ -58,7 +63,7 @@ const SearchBar = ({
     };
 
     return (
-        <Animated.View style={[styles.container, animatedStyle, style]}>
+        <Animated.View style={[styles.container, { borderColor }, style]}>
             <Ionicons
                 name="search"
                 size={20}

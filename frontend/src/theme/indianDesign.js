@@ -5,28 +5,38 @@
  */
 
 import { Dimensions, Platform } from 'react-native';
+import { 
+    scale, 
+    verticalScale, 
+    moderateScale, 
+    scaledFontSize,
+    touchTargets as responsiveTouchTargets,
+    iconSizes as responsiveIconSizes,
+    spacing as responsiveSpacing,
+    borderRadius as responsiveBorderRadius,
+} from '../utils/responsive';
 
 const { width, height } = Dimensions.get('window');
 
 export const indianDesign = {
-    // Touch Targets - Large for easy tapping
+    // Touch Targets - Large for easy tapping (responsive)
     touchTarget: {
-        small: 44,
-        medium: 48,
-        large: 56,
-        extraLarge: 64,
+        small: responsiveTouchTargets.small,
+        medium: responsiveTouchTargets.medium,
+        large: responsiveTouchTargets.large,
+        extraLarge: Math.max(64, moderateScale(64)),
     },
 
-    // Font Sizes - Very readable
+    // Font Sizes - Very readable (responsive)
     fontSize: {
-        tiny: 12,
-        small: 14,
-        medium: 16,
-        large: 18,
-        xlarge: 20,
-        xxlarge: 24,
-        huge: 28,
-        title: 32,
+        tiny: scaledFontSize(12),
+        small: scaledFontSize(14),
+        medium: scaledFontSize(16),
+        large: scaledFontSize(18),
+        xlarge: scaledFontSize(20),
+        xxlarge: scaledFontSize(24),
+        huge: scaledFontSize(28),
+        title: scaledFontSize(32),
     },
 
     // Font Weights
@@ -37,81 +47,81 @@ export const indianDesign = {
         bold: '700',
     },
 
-    // Spacing - Generous and breathable
+    // Spacing - Generous and breathable (responsive)
     spacing: {
-        xs: 4,
-        sm: 8,
-        md: 12,
-        lg: 16,
-        xl: 20,
-        xxl: 24,
-        xxxl: 32,
-        huge: 40,
+        xs: moderateScale(4),
+        sm: moderateScale(8),
+        md: moderateScale(12),
+        lg: moderateScale(16),
+        xl: moderateScale(20),
+        xxl: moderateScale(24),
+        xxxl: moderateScale(32),
+        huge: moderateScale(40),
     },
 
-    // Border Radius - Friendly and modern
+    // Border Radius - Friendly and modern (responsive)
     borderRadius: {
-        small: 4,
-        medium: 8,
-        large: 12,
-        xlarge: 16,
-        round: 50,
+        small: responsiveBorderRadius.small,
+        medium: responsiveBorderRadius.medium,
+        large: responsiveBorderRadius.large,
+        xlarge: responsiveBorderRadius.xlarge,
+        round: moderateScale(50),
         pill: 999,
     },
 
-    // Card Styles
+    // Card Styles (responsive)
     card: {
         elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        borderRadius: 12,
-        padding: 16,
+        borderRadius: responsiveBorderRadius.large,
+        padding: moderateScale(16),
     },
 
-    // Large Action Card (for dashboards)
+    // Large Action Card (for dashboards) (responsive)
     actionCard: {
-        minHeight: 100,
+        minHeight: verticalScale(100),
         elevation: 3,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.12,
         shadowRadius: 6,
-        borderRadius: 16,
-        padding: 20,
+        borderRadius: responsiveBorderRadius.xlarge,
+        padding: moderateScale(20),
     },
 
-    // Button Styles
+    // Button Styles (responsive)
     button: {
-        height: 48,
-        borderRadius: 8,
-        paddingHorizontal: 24,
+        height: responsiveTouchTargets.medium,
+        borderRadius: responsiveBorderRadius.medium,
+        paddingHorizontal: moderateScale(24),
     },
 
     largeButton: {
-        height: 56,
-        borderRadius: 12,
-        paddingHorizontal: 32,
+        height: responsiveTouchTargets.large,
+        borderRadius: responsiveBorderRadius.large,
+        paddingHorizontal: moderateScale(32),
     },
 
-    // Input Styles
+    // Input Styles (responsive)
     input: {
-        height: 48,
+        height: responsiveTouchTargets.medium,
         borderRadius: 8,
         paddingHorizontal: 16,
         fontSize: 16,
         borderWidth: 1,
     },
 
-    // Icon Sizes
+    // Icon Sizes (responsive)
     iconSize: {
-        tiny: 16,
-        small: 20,
-        medium: 24,
-        large: 32,
-        xlarge: 40,
-        huge: 48,
+        tiny: responsiveIconSizes.tiny,
+        small: responsiveIconSizes.small,
+        medium: responsiveIconSizes.medium,
+        large: responsiveIconSizes.large,
+        xlarge: responsiveIconSizes.xlarge,
+        huge: scaledFontSize(48),
     },
 
     // Animation Durations

@@ -5,13 +5,8 @@
  * Features: mark as taken, refill reminder, dosage info
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-} from 'react-native-reanimated';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -31,16 +26,19 @@ const MedicationCard = ({
     style,
 }) => {
     const [taken, setTaken] = useState(isTaken);
-    const checkScale = useSharedValue(1);
-
-    const checkAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: checkScale.value }],
-    }));
+    const checkScale = useRef(new Animated.Value(1)).current;
 
     const handleMarkAsTaken = () => {
-        checkScale.value = withSpring(1.2, {}, () => {
-            checkScale.value = withSpring(1);
-        });
+        Animated.sequence([
+            Animated.spring(checkScale, {
+                toValue: 1.2,
+                useNativeDriver: true,
+            }),
+            Animated.spring(checkScale, {
+                toValue: 1,
+                useNativeDriver: true,
+            }),
+        ]).start();
         setTaken(!taken);
         if (onMarkAsTaken) onMarkAsTaken(!taken);
     };
@@ -64,7 +62,7 @@ const MedicationCard = ({
                 </View>
 
                 <TouchableOpacity onPress={handleMarkAsTaken} style={styles.checkButton}>
-                    <Animated.View style={checkAnimatedStyle}>
+                    <Animated.View style={{ transform: [{ scale: checkScale }] }}>
                         <Ionicons
                             name={taken ? 'checkmark-circle' : 'ellipse-outline'}
                             size={32}

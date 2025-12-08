@@ -14,6 +14,8 @@ import {
     StatusBar,
     Switch,
     Platform,
+    Alert,
+    Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,6 +23,13 @@ import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import LargeActionCard from '../../components/common/LargeActionCard';
 import { logoutUser } from '../../store/slices/authSlice';
+import { 
+    getScreenPadding, 
+    moderateScale, 
+    verticalScale,
+    scaledFontSize,
+    getGridColumns,
+} from '../../utils/responsive';
 
 const DoctorDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -64,13 +73,6 @@ const DoctorDashboard = ({ navigation }) => {
             onPress: () => navigation.navigate('Messages'),
             badge: '3',
         },
-        {
-            title: 'Notifications',
-            icon: 'notifications-outline',
-            iconColor: healthColors.warning.main,
-            onPress: () => navigation.navigate('Notifications'),
-            badge: '5',
-        },
     ];
 
     return (
@@ -88,9 +90,13 @@ const DoctorDashboard = ({ navigation }) => {
                                 color={healthColors.primary.main}
                             />
                         </View>
-                        <View>
-                            <Text style={styles.doctorName}>{user?.name || 'Dr. Name'}</Text>
-                            <Text style={styles.specialization}>{user?.specialization || 'Specialist'}</Text>
+                        <View style={styles.doctorNameContainer}>
+                            <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+                                {user?.name || 'Dr. Name'}
+                            </Text>
+                            <Text style={styles.specialization} numberOfLines={1} ellipsizeMode="tail">
+                                {user?.specialization || 'Specialist'}
+                            </Text>
                         </View>
                     </View>
                     <TouchableOpacity
@@ -165,45 +171,53 @@ const styles = StyleSheet.create({
     },
     header: {
         backgroundColor: healthColors.background.card,
-        paddingHorizontal: 16,
-        paddingTop: Platform.OS === 'ios' ? 50 : 16,
-        paddingBottom: 16,
+        paddingHorizontal: getScreenPadding(),
+        paddingTop: Platform.OS === 'ios' ? verticalScale(50) : getScreenPadding(),
+        paddingBottom: getScreenPadding(),
         ...createShadow(2),
     },
     headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: moderateScale(12),
     },
     doctorInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: moderateScale(12),
+        flex: 1,
+        marginRight: moderateScale(8),
+    },
+    doctorNameContainer: {
+        flex: 1,
+        justifyContent: 'center',
     },
     avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: moderateScale(48),
+        height: moderateScale(48),
+        borderRadius: moderateScale(24),
         backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     doctorName: {
-        fontSize: 17,
+        fontSize: scaledFontSize(16),
         fontWeight: '700',
         color: healthColors.text.primary,
+        lineHeight: scaledFontSize(20),
     },
     specialization: {
-        fontSize: 13,
+        fontSize: scaledFontSize(13),
         color: healthColors.text.secondary,
         fontWeight: '400',
-        marginTop: 2,
+        marginTop: moderateScale(2),
+        lineHeight: scaledFontSize(16),
     },
     logoutButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: moderateScale(40),
+        height: moderateScale(40),
+        borderRadius: moderateScale(20),
         backgroundColor: healthColors.background.tertiary,
         justifyContent: 'center',
         alignItems: 'center',
@@ -213,48 +227,50 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: healthColors.background.tertiary,
-        padding: 12,
-        borderRadius: 12,
+        padding: moderateScale(12),
+        borderRadius: moderateScale(12),
     },
     availabilityLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: moderateScale(8),
     },
     statusDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: moderateScale(10),
+        height: moderateScale(10),
+        borderRadius: moderateScale(5),
         backgroundColor: healthColors.text.tertiary,
     },
     statusDotOnline: {
         backgroundColor: healthColors.success.main,
     },
     availabilityText: {
-        fontSize: 15,
+        fontSize: scaledFontSize(15),
         fontWeight: '600',
         color: healthColors.text.primary,
     },
     scrollContent: {
-        padding: 16,
-        paddingBottom: 100,
+        padding: getScreenPadding(),
+        paddingBottom: verticalScale(100),
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        width: '100%',
     },
     gridItem: {
         width: '48%',
-        marginBottom: 16,
+        aspectRatio: 1.2,
+        marginBottom: moderateScale(12),
     },
     fab: {
         position: 'absolute',
-        bottom: 24,
-        right: 24,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        bottom: moderateScale(24),
+        right: moderateScale(24),
+        width: moderateScale(56),
+        height: moderateScale(56),
+        borderRadius: moderateScale(28),
         backgroundColor: healthColors.primary.main,
         justifyContent: 'center',
         alignItems: 'center',

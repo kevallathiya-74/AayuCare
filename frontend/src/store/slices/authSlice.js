@@ -25,7 +25,8 @@ export const loginUser = createAsyncThunk(
       const response = await authService.login(credentials);
       return response;
     } catch (error) {
-      return rejectWithValue(error.message || 'Login failed');
+      // Error is already a string message from auth service
+      return rejectWithValue(error || 'Login failed');
     }
   }
 );

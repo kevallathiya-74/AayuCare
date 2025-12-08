@@ -5,7 +5,7 @@
  * Features: scrollable tabs, icon support, badge support
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,12 +13,8 @@ import {
     ScrollView,
     StyleSheet,
     Dimensions,
+    Animated,
 } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -34,16 +30,24 @@ const Tabs = ({
     style,
 }) => {
     const [tabWidths, setTabWidths] = useState([]);
-    const indicatorPosition = useSharedValue(0);
-    const indicatorWidth = useSharedValue(0);
+    const indicatorPosition = useRef(new Animated.Value(0)).current;
+    const indicatorWidth = useRef(new Animated.Value(0)).current;
 
     const handleTabPress = (index) => {
         if (onChange) onChange(index);
 
         // Calculate indicator position
         const position = tabWidths.slice(0, index).reduce((sum, width) => sum + width, 0);
-        indicatorPosition.value = withSpring(position, { damping: 20, stiffness: 300 });
-        indicatorWidth.value = withSpring(tabWidths[index] || 0, { damping: 20, stiffness: 300 });
+        Animated.parallel([
+            Animated.spring(indicatorPosition, {
+                toValue: position,
+                useNativeDriver: true,
+            }),
+            Animated.spring(indicatorWidth, {
+                toValue: tabWidths[index] || 0,
+                useNativeDriver: false,
+            }),
+        ]).start();
     };
 
     const handleTabLayout = (index, event) => {
@@ -53,10 +57,10 @@ const Tabs = ({
         setTabWidths(newWidths);
 
         // Set initial indicator position
-        if (index === activeIndex && indicatorWidth.value === 0) {
+        if (index === activeIndex && tabWidths.length === 0) {
             const position = newWidths.slice(0, activeIndex).reduce((sum, w) => sum + w, 0);
-            indicatorPosition.value = position;
-            indicatorWidth.value = width;
+            indicatorPosition.setValue(position);
+            indicatorWidth.setValue(width);
         }
     };
 
@@ -118,7 +122,10 @@ const Tabs = ({
             <TabContainer {...containerProps}>
                 {tabs.map((tab, index) => renderTab(tab, index))}
             </TabContainer>
-            <Animated.View style={[styles.indicator, indicatorStyle]} />
+            <Animated.View style={[styles.indicator, {
+                transform: [{ translateX: indicatorPosition }],
+                width: indicatorWidth,
+            }]} />
         </View>
     );
 };

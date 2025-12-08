@@ -5,13 +5,8 @@
  * Features: linear variant, gradient support, percentage display
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -26,24 +21,25 @@ const ProgressBar = ({
     backgroundColor = colors.neutral.gray200,
     style,
 }) => {
-    const width = useSharedValue(0);
+    const widthAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        width.value = withSpring(progress, {
-            damping: 20,
-            stiffness: 300,
-        });
+        Animated.spring(widthAnim, {
+            toValue: progress,
+            useNativeDriver: false,
+        }).start();
     }, [progress]);
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        width: `${width.value}%`,
-    }));
+    const animatedWidth = widthAnim.interpolate({
+        inputRange: [0, 100],
+        outputRange: ['0%', '100%'],
+    });
 
     return (
         <View style={style}>
             <View style={[styles.container, { height, backgroundColor }]}>
                 {gradient ? (
-                    <Animated.View style={[styles.progress, animatedStyle]}>
+                    <Animated.View style={[styles.progress, { width: animatedWidth }]}>
                         <LinearGradient
                             colors={colors.gradients.primary}
                             start={{ x: 0, y: 0 }}
@@ -55,8 +51,7 @@ const ProgressBar = ({
                     <Animated.View
                         style={[
                             styles.progress,
-                            { backgroundColor: color },
-                            animatedStyle,
+                            { backgroundColor: color, width: animatedWidth },
                         ]}
                     />
                 )}

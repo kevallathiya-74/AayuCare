@@ -82,9 +82,11 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   logger.info(`🌐 API URL: http://localhost:${PORT}`);
+  logger.info(`📱 Mobile API URL: http://10.121.108.30:${PORT}`);
+  logger.info(`💡 Use the mobile URL for Expo Go on your phone`);
 });
 
 // Handle unhandled promise rejections

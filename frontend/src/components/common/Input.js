@@ -17,6 +17,12 @@ import { Feather } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles, fontFamilies } from '../../theme/typography';
 import { spacing, componentSpacing, layout } from '../../theme/spacing';
+import { 
+    moderateScale, 
+    scaledFontSize,
+    touchTargets,
+    borderRadius as responsiveBorderRadius,
+} from '../../utils/responsive';
 
 const Input = ({
   label,
@@ -156,7 +162,7 @@ const Input = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: componentSpacing.inputMargin,
+    marginBottom: moderateScale(componentSpacing.inputMargin),
   },
   container: {
     flexDirection: 'row',
@@ -164,8 +170,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.primary,
     borderWidth: 1.5,
     borderColor: colors.input.border,
-    borderRadius: colors.borderRadius.medium,
-    height: layout.inputHeight,
+    borderRadius: responsiveBorderRadius.medium,
+    height: touchTargets.medium,
   },
   containerFocused: {
     borderColor: colors.input.borderFocused,
@@ -184,11 +190,11 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: fontFamilies.body,
-    fontSize: 16,
+    fontSize: scaledFontSize(16),
     color: colors.text.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    paddingTop: 10,
+    paddingHorizontal: moderateScale(spacing.md),
+    paddingVertical: moderateScale(spacing.sm),
+    paddingTop: moderateScale(10),
     outlineStyle: 'none',
     textAlign: 'left',
   },

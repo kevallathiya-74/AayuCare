@@ -5,13 +5,8 @@
  * Features: swipeable actions, press animation, divider
  */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from 'react-native-reanimated';
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -32,21 +27,23 @@ const ListItem = ({
     showDivider = true,
     style,
 }) => {
-    const scale = useSharedValue(1);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
+    const scale = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
         if (onPress) {
-            scale.value = withSpring(0.98);
+            Animated.spring(scale, {
+                toValue: 0.98,
+                useNativeDriver: true,
+            }).start();
         }
     };
 
     const handlePressOut = () => {
         if (onPress) {
-            scale.value = withSpring(1);
+            Animated.spring(scale, {
+                toValue: 1,
+                useNativeDriver: true,
+            }).start();
         }
     };
 
@@ -57,7 +54,7 @@ const ListItem = ({
             onPressIn: handlePressIn,
             onPressOut: handlePressOut,
             activeOpacity: 0.95,
-            style: animatedStyle,
+            style: { transform: [{ scale }] },
         }
         : {};
 

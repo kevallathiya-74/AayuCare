@@ -5,13 +5,8 @@
  * Features: favorite toggle, rating stars, book button
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-} from 'react-native-reanimated';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
@@ -36,16 +31,19 @@ const DoctorCard = ({
     style,
 }) => {
     const [favorite, setFavorite] = useState(isFavorite);
-    const heartScale = useSharedValue(1);
-
-    const heartAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: heartScale.value }],
-    }));
+    const heartScale = useRef(new Animated.Value(1)).current;
 
     const handleFavoritePress = () => {
-        heartScale.value = withSpring(1.3, {}, () => {
-            heartScale.value = withSpring(1);
-        });
+        Animated.sequence([
+            Animated.spring(heartScale, {
+                toValue: 1.3,
+                useNativeDriver: true,
+            }),
+            Animated.spring(heartScale, {
+                toValue: 1,
+                useNativeDriver: true,
+            }),
+        ]).start();
         setFavorite(!favorite);
         if (onFavoriteToggle) onFavoriteToggle(doctorId, !favorite);
     };
@@ -91,7 +89,7 @@ const DoctorCard = ({
                     onPress={handleFavoritePress}
                     style={styles.favoriteButton}
                 >
-                    <Animated.View style={heartAnimatedStyle}>
+                    <Animated.View style={{ transform: [{ scale: heartScale }] }}>
                         <Ionicons
                             name={favorite ? 'heart' : 'heart-outline'}
                             size={24}

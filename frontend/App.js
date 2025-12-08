@@ -2,7 +2,7 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Provider as PaperProvider } from 'react-native-paper';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import store from './src/store/store';
@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <ReduxProvider store={store}>
           <QueryClientProvider client={queryClient}>
             <PaperProvider theme={paperTheme}>
@@ -32,7 +32,7 @@ export default function App() {
             </PaperProvider>
           </QueryClientProvider>
         </ReduxProvider>
-      </GestureHandlerRootView>
+      </View>
     </ErrorBoundary>
   );
 }

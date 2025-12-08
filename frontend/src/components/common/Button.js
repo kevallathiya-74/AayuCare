@@ -5,15 +5,20 @@
  * Features: loading state, gradient, icons, haptic feedback
  */
 
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
+import React, { useRef } from 'react';
+import { Pressable, Text, StyleSheet, ActivityIndicator, View, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import colors from '../../theme/colors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import { 
+    moderateScale, 
+    scaledFontSize,
+    touchTargets,
+    borderRadius as responsiveBorderRadius,
+} from '../../utils/responsive';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const Button = ({
   children,
@@ -30,18 +35,20 @@ const Button = ({
   textStyle,
   ...props
 }) => {
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95);
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePress = () => {
@@ -114,13 +121,12 @@ const Button = ({
 
   if (gradient && variant === 'primary' && !disabled) {
     return (
-      <AnimatedTouchable
+      <AnimatedPressable
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled || loading}
-        activeOpacity={0.8}
-        style={[animatedStyle, getButtonStyle(), style]}
+        style={[{ transform: [{ scale: scaleAnim }] }, getButtonStyle(), style]}
         {...props}
       >
         <LinearGradient
@@ -131,28 +137,27 @@ const Button = ({
         >
           {renderContent()}
         </LinearGradient>
-      </AnimatedTouchable>
+      </AnimatedPressable>
     );
   }
 
   return (
-    <AnimatedTouchable
+    <AnimatedPressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled || loading}
-      activeOpacity={0.8}
-      style={[animatedStyle, getButtonStyle(), style]}
+      style={[{ transform: [{ scale: scaleAnim }] }, getButtonStyle(), style]}
       {...props}
     >
       {renderContent()}
-    </AnimatedTouchable>
+    </AnimatedPressable>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: colors.borderRadius.medium,
+    borderRadius: responsiveBorderRadius.medium,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -161,18 +166,18 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   
-  // Sizes
+  // Sizes (responsive)
   small: {
-    height: 36,
-    paddingHorizontal: spacing.md,
+    height: Math.max(36, moderateScale(36)),
+    paddingHorizontal: moderateScale(spacing.md),
   },
   medium: {
-    height: 48,
-    paddingHorizontal: spacing.lg,
+    height: touchTargets.medium,
+    paddingHorizontal: moderateScale(spacing.lg),
   },
   large: {
-    height: 56,
-    paddingHorizontal: spacing.xl,
+    height: touchTargets.large,
+    paddingHorizontal: moderateScale(spacing.xl),
   },
   
   // Variants
@@ -196,18 +201,18 @@ const styles = StyleSheet.create({
     borderColor: colors.button.disabled,
   },
   
-  // Text styles
+  // Text styles (responsive)
   buttonText: {
     ...textStyles.button,
   },
   smallText: {
-    fontSize: 14,
+    fontSize: scaledFontSize(14),
   },
   mediumText: {
-    fontSize: 16,
+    fontSize: scaledFontSize(16),
   },
   largeText: {
-    fontSize: 18,
+    fontSize: scaledFontSize(18),
   },
   
   primaryText: {

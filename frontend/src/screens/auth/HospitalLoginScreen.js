@@ -22,6 +22,13 @@ import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../store/slices/authSlice';
+import { 
+    getScreenPadding, 
+    moderateScale, 
+    verticalScale,
+    scaledFontSize,
+    touchTargets,
+} from '../../utils/responsive';
 
 const HospitalLoginScreen = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -44,8 +51,15 @@ const HospitalLoginScreen = ({ navigation }) => {
     }, []);
 
     const handleLogin = async () => {
-        if (!userId.trim() || !password.trim()) {
-            alert('Please enter both User ID and Password');
+        // Validate User ID
+        if (!userId.trim()) {
+            alert('Please enter User ID');
+            return;
+        }
+
+        // Validate Password
+        if (!password.trim()) {
+            alert('Please enter Password');
             return;
         }
 
@@ -53,20 +67,15 @@ const HospitalLoginScreen = ({ navigation }) => {
             const result = await dispatch(loginUser({ userId: userId.trim(), password })).unwrap();
             // Navigation handled by AppNavigator based on user role
         } catch (err) {
-            // Extract user-friendly error message
-            let errorMessage = 'Incorrect User ID or Password';
+            // Backend sends specific error messages
+            let errorMessage = 'Login failed. Please try again.';
 
-            // Check if it's a string error message from backend
             if (typeof err === 'string') {
-                // Show specific errors from backend
-                if (err.includes('Incorrect User ID')) {
-                    errorMessage = 'Incorrect User ID';
-                } else if (err.includes('Incorrect Password')) {
-                    errorMessage = 'Incorrect Password';
-                } else if (err.includes('deactivated')) {
-                    errorMessage = 'Your account has been deactivated';
-                } else if (!err.includes('ExpoSecureStore') && !err.includes('is not a function')) {
-                    // Only show non-technical errors
+                // Filter out technical errors, show user-friendly backend messages
+                if (err.includes('ExpoSecureStore') || err.includes('is not a function')) {
+                    errorMessage = 'Login failed. Please try again.';
+                } else {
+                    // Show the exact backend error message
                     errorMessage = err;
                 }
             }
@@ -287,15 +296,15 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        paddingHorizontal: indianDesign.spacing.xl,
+        paddingHorizontal: getScreenPadding(),
     },
     header: {
-        paddingTop: indianDesign.spacing.xl,
-        marginBottom: indianDesign.spacing.xxxl,
+        paddingTop: verticalScale(indianDesign.spacing.xl),
+        marginBottom: verticalScale(indianDesign.spacing.xxxl),
     },
     backButton: {
-        width: 40,
-        height: 40,
+        width: moderateScale(40),
+        height: moderateScale(40),
         borderRadius: 20,
         backgroundColor: healthColors.background.card,
         justifyContent: 'center',

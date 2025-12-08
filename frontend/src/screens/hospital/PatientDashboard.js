@@ -13,6 +13,8 @@ import {
     TouchableOpacity,
     StatusBar,
     Platform,
+    Alert,
+    Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,6 +22,13 @@ import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import LargeActionCard from '../../components/common/LargeActionCard';
 import { logoutUser } from '../../store/slices/authSlice';
+import { 
+    getScreenPadding, 
+    moderateScale, 
+    verticalScale,
+    scaledFontSize,
+    getGridColumns,
+} from '../../utils/responsive';
 
 const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -61,13 +70,6 @@ const PatientDashboard = ({ navigation }) => {
             iconColor: healthColors.warning.main,
             onPress: () => navigation.navigate('Billing'),
         },
-        {
-            title: 'Notifications',
-            icon: 'notifications-outline',
-            iconColor: healthColors.info.main,
-            onPress: () => navigation.navigate('Notifications'),
-            badge: '3',
-        },
     ];
 
     return (
@@ -85,9 +87,13 @@ const PatientDashboard = ({ navigation }) => {
                                 color={healthColors.primary.main}
                             />
                         </View>
-                        <View>
-                            <Text style={styles.patientName}>{user?.name || 'Patient Name'}</Text>
-                            <Text style={styles.patientId}>ID: {user?.userId || 'PAT001'}</Text>
+                        <View style={styles.patientNameContainer}>
+                            <Text style={styles.patientName} numberOfLines={1} ellipsizeMode="tail">
+                                {user?.name || 'Patient Name'}
+                            </Text>
+                            <Text style={styles.patientId} numberOfLines={1} ellipsizeMode="tail">
+                                ID: {user?.userId || 'PAT001'}
+                            </Text>
                         </View>
                     </View>
                     <TouchableOpacity
@@ -161,45 +167,53 @@ const styles = StyleSheet.create({
     },
     header: {
         backgroundColor: healthColors.background.card,
-        paddingHorizontal: 16,
-        paddingTop: Platform.OS === 'ios' ? 50 : 16,
-        paddingBottom: 16,
+        paddingHorizontal: getScreenPadding(),
+        paddingTop: Platform.OS === 'ios' ? verticalScale(50) : getScreenPadding(),
+        paddingBottom: getScreenPadding(),
         ...createShadow(2),
     },
     headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: moderateScale(12),
     },
     patientInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
+        flex: 1,
+        marginRight: moderateScale(8),
+    },
+    patientNameContainer: {
+        flex: 1,
+        justifyContent: 'center',
     },
     avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: moderateScale(48),
+        height: moderateScale(48),
+        borderRadius: moderateScale(24),
         backgroundColor: healthColors.primary.main + '15',
         justifyContent: 'center',
         alignItems: 'center',
     },
     patientName: {
-        fontSize: 17,
+        fontSize: scaledFontSize(16),
         fontWeight: '700',
         color: healthColors.text.primary,
+        lineHeight: scaledFontSize(20),
     },
     patientId: {
-        fontSize: 13,
+        fontSize: scaledFontSize(13),
         color: healthColors.text.secondary,
         fontWeight: '400',
-        marginTop: 2,
+        marginTop: moderateScale(2),
+        lineHeight: scaledFontSize(16),
     },
     logoutButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: moderateScale(40),
+        height: moderateScale(40),
+        borderRadius: moderateScale(20),
         backgroundColor: healthColors.background.tertiary,
         justifyContent: 'center',
         alignItems: 'center',
@@ -209,51 +223,55 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: healthColors.success.background,
-        padding: 12,
-        borderRadius: 12,
+        padding: moderateScale(12),
+        borderRadius: moderateScale(12),
         borderWidth: 1,
         borderColor: healthColors.success.light,
     },
     healthCardLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: moderateScale(12),
+        flex: 1,
     },
     healthCardText: {
-        gap: 2,
+        gap: moderateScale(2),
+        flex: 1,
     },
     healthCardTitle: {
-        fontSize: 15,
+        fontSize: scaledFontSize(15),
         fontWeight: '600',
         color: healthColors.text.primary,
     },
     healthCardSubtitle: {
-        fontSize: 13,
+        fontSize: scaledFontSize(13),
         color: healthColors.success.main,
         fontWeight: '500',
     },
     viewButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: moderateScale(4),
     },
     viewButtonText: {
-        fontSize: 13,
+        fontSize: scaledFontSize(13),
         fontWeight: '600',
         color: healthColors.primary.main,
     },
     scrollContent: {
-        padding: 16,
-        paddingBottom: 32,
+        padding: getScreenPadding(),
+        paddingBottom: verticalScale(32),
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        width: '100%',
     },
     gridItem: {
         width: '48%',
-        marginBottom: 16,
+        aspectRatio: 1.2,
+        marginBottom: moderateScale(12),
     },
 });
 
