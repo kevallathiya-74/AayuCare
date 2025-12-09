@@ -7,20 +7,54 @@ import axios from 'axios';
 import * as storage from '../utils/secureStorage';
 import { Platform } from 'react-native';
 import { STORAGE_KEYS } from '../utils/constants';
+import Constants from 'expo-constants';
 
 // Determine API base URL based on platform
 const getBaseURL = () => {
   if (__DEV__) {
-    // Development mode - Use your computer's IP address for mobile devices
-    if (Platform.OS === 'android') {
-      return 'http://10.121.108.30:5000/api'; // Real device with Expo Go
-    } else if (Platform.OS === 'ios') {
-      return 'http://10.121.108.30:5000/api'; // Real device with Expo Go
-    } else {
-      return 'http://localhost:5000/api'; // Web
+    // Development mode
+    if (Platform.OS === 'web') {
+      return 'http://localhost:5000/api';
     }
+    
+    // For mobile (Android/iOS)
+    // IMPORTANT: Tunnel mode only works for frontend, not backend!
+    // We need to use a fixed IP or ngrok for backend
+    
+    const debuggerHost = Constants.expoConfig?.hostUri || 
+                        Constants.manifest?.debuggerHost ||
+                        Constants.manifest2?.extra?.expoGo?.debuggerHost;
+    
+    if (debuggerHost) {
+      const host = debuggerHost.split(':')[0];
+      
+      // Check if using Expo tunnel (contains exp.direct or ngrok)
+      if (host.includes('exp.direct') || host.includes('ngrok') || host.includes('expo.dev')) {
+        // Expo tunnel doesn't expose backend!
+        // Use ngrok URL if set, otherwise fallback to local IP
+        const ngrokUrl = Constants.expoConfig?.extra?.backendUrl;
+        
+        if (ngrokUrl) {
+          console.log('🌐 Using ngrok backend:', ngrokUrl);
+          return ngrokUrl;
+        }
+        
+        // Fallback: Use computer's local IP (change this to your IP)
+        const fallbackIP = '10.9.14.41'; // Update if your IP changed
+        console.warn('⚠️ Tunnel mode: Using fallback IP for backend:', fallbackIP);
+        return `http://${fallbackIP}:5000/api`;
+      }
+      
+      // LAN mode - use detected IP
+      return `http://${host}:5000/api`;
+    }
+    
+    // Fallback
+    console.warn('Could not detect debugger host, using localhost');
+    return 'http://localhost:5000/api';
   }
-  // Production mode - replace with your production API URL
+  
+  // Production mode
   return 'https://your-production-api.com/api';
 };
 
@@ -33,6 +67,13 @@ const api = axios.create({
   },
 });
 
+// Log API URL in development
+if (__DEV__) {
+  console.log('📡 API Base URL:', api.defaults.baseURL);
+  console.log('📱 Platform:', Platform.OS);
+  console.log('🔧 Debug Host:', Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || 'Not available');
+}
+
 // Request interceptor - Add auth token
 api.interceptors.request.use(
   async (config) => {
@@ -43,13 +84,18 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
 
+      if (__DEV__) {
+        console.log(`🌐 ${config.method?.toUpperCase()} ${config.url}`);
+      }
+
       return config;
     } catch (error) {
-      console.error('Error getting auth token:', error);
+      console.error('❌ Error getting auth token:', error);
       return config;
     }
   },
   (error) => {
+    console.error('❌ Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -95,14 +141,48 @@ api.interceptors.response.use(
 
     // Handle network errors
     if (!error.response) {
-      return Promise.reject(new Error('Network error. Please check your internet connection.'));
+      const debugHost = Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || 'unknown';
+      const isTunnel = debugHost.includes('ngrok') || debugHost.includes('exp.direct') || debugHost.includes('expo.dev');
+      
+      let errorMsg = 'Cannot connect to server. Please check:\n';
+      
+      if (isTunnel) {
+        errorMsg += '1. Backend server is running\n';
+        errorMsg += '2. Tunnel connection is active\n';
+        errorMsg += '3. Wait a moment and try again';
+      } else {
+        errorMsg += '1. Backend server is running\n';
+        errorMsg += '2. Phone and computer are on same WiFi\n';
+        errorMsg += '3. Firewall allows port 5000\n';
+        errorMsg += '\nTIP: Use tunnel mode if on different networks:\n';
+        errorMsg += 'Run: npm run start:tunnel';
+      }
+      
+      const networkError = new Error(errorMsg);
+      console.error('❌ Network Error:', networkError.message);
+      console.error('🔍 Attempted URL:', error.config?.baseURL + error.config?.url);
+      console.error('🌐 Debug Host:', debugHost);
+      return Promise.reject(networkError);
     }
 
     // Extract error message from response
     const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+    console.error('❌ API Error:', errorMessage);
 
     return Promise.reject(new Error(errorMessage));
   }
 );
+
+// Test API connectivity (useful for debugging)
+export const testConnection = async () => {
+  try {
+    const response = await api.get('/health');
+    console.log('✅ Backend connection successful:', response.data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('❌ Backend connection failed:', error.message);
+    return { success: false, error: error.message };
+  }
+};
 
 export default api;

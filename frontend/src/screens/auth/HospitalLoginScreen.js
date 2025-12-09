@@ -1,9 +1,3 @@
-/**
- * Universal Hospital Login Screen
- * Single login for Admin, Doctor, and Patient
- * Optimized for Indian users with large inputs and auto-focus
- */
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View,

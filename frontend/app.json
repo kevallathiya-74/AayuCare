@@ -42,10 +42,10 @@
             "bundler": "metro"
         },
         "extra": {
-            "apiUrl": "http://localhost:5000/api",
             "eas": {
                 "projectId": "aayucare-healthcare-app"
-            }
+            },
+            "backendUrl": "https://gtev3k0-kevallathiya-8081.exp.direct/"
         },
         "plugins": [
             "expo-font",

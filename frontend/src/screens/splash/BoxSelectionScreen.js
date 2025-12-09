@@ -13,11 +13,13 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
-import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { indianDesign } from '../../theme/indianDesign';
+import { createShadow, createTextShadow } from '../../utils/platformStyles';
 
 const { width } = Dimensions.get('window');
 
@@ -94,6 +96,9 @@ const BoxSelectionScreen = ({ navigation }) => {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* Spacer between cards */}
+        <View style={styles.cardSpacer} />
+
         {/* User Card - Sky Wellness Blue */}
         <TouchableOpacity
           style={[styles.card, styles.disabledCard]}
@@ -138,6 +143,7 @@ const BoxSelectionScreen = ({ navigation }) => {
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.footerDot} />
+        <View style={styles.footerSpacer} />
         <Text style={styles.footerText}>
           Secure • Private • Trusted
         </Text>
@@ -152,7 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    paddingTop: indianDesign.spacing.xxxl,
+    paddingTop: Platform.OS === 'web' ? indianDesign.spacing.xxxl + 20 : indianDesign.spacing.xxxl + 20,
     paddingHorizontal: indianDesign.spacing.xl,
     marginBottom: indianDesign.spacing.xxl,
     alignItems: 'center',
@@ -165,9 +171,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: indianDesign.spacing.lg,
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)',
     borderWidth: 1,
     borderColor: '#F0F0F0',
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 4 },
+      opacity: 0.08,
+      radius: 12,
+      elevation: 4,
+    }),
   },
   logo: {
     width: 65,
@@ -187,14 +199,23 @@ const styles = StyleSheet.create({
   cardsContainer: {
     flex: 1,
     paddingHorizontal: indianDesign.spacing.xl,
-    gap: indianDesign.spacing.lg,
     justifyContent: 'center',
+    paddingBottom: indianDesign.spacing.xxxl,
+  },
+  cardSpacer: {
+    height: indianDesign.spacing.lg,
   },
   card: {
     height: 190,
     borderRadius: 20,
     overflow: 'hidden',
-    boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.12)',
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 8 },
+      opacity: 0.12,
+      radius: 20,
+      elevation: 8,
+    }),
   },
   disabledCard: {
     opacity: 0.92,
@@ -224,14 +245,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 4,
-    textShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+    ...createTextShadow({
+      color: 'rgba(0, 0, 0, 0.15)',
+      offset: { width: 0, height: 2 },
+      radius: 8,
+    }),
   },
   cardSubtitle: {
     fontSize: 16,
     color: '#FFFFFF',
     opacity: 0.98,
     fontWeight: '500',
-    textShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+    ...createTextShadow({
+      color: 'rgba(0, 0, 0, 0.1)',
+      offset: { width: 0, height: 1 },
+      radius: 4,
+    }),
   },
   arrowCircle: {
     position: 'absolute',
@@ -254,7 +283,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    boxShadow: '0px 3px 8px rgba(0, 0, 0, 0.2)',
+    ...createShadow({
+      color: '#000',
+      offset: { width: 0, height: 3 },
+      opacity: 0.2,
+      radius: 8,
+      elevation: 5,
+    }),
   },
   comingSoonText: {
     fontSize: 13,
@@ -284,7 +319,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: indianDesign.spacing.xl,
-    gap: indianDesign.spacing.sm,
+  },
+  footerSpacer: {
+    width: indianDesign.spacing.sm,
   },
   footerDot: {
     width: 8,

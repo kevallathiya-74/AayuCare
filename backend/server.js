@@ -50,6 +50,22 @@ app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 
+// API Root route
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'Welcome to AayuCare API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      appointments: '/api/appointments',
+      doctors: '/api/doctors',
+      medicalRecords: '/api/medical-records',
+    },
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
@@ -85,8 +101,8 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   logger.info(`🌐 API URL: http://localhost:${PORT}`);
-  logger.info(`📱 Mobile API URL: http://10.121.108.30:${PORT}`);
-  logger.info(`💡 Use the mobile URL for Expo Go on your phone`);
+  logger.info(`📱 Expo Go will auto-detect your computer's IP address`);
+  logger.info(`💡 Make sure phone and computer are on the same WiFi network`);
 });
 
 // Handle unhandled promise rejections

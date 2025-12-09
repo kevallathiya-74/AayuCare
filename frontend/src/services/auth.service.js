@@ -12,20 +12,41 @@ import { STORAGE_KEYS } from '../utils/constants';
  */
 export const register = async (userData) => {
   try {
+    console.log('📝 Attempting registration for:', userData.userId);
     const response = await api.post('/auth/register', userData);
-    const { user, token, refreshToken } = response.data.data;
+    
+    console.log('📥 Registration response:', response.data);
+    
+    // Extract data from response
+    const data = response.data?.data;
+    
+    if (!data) {
+      console.error('❌ Invalid response structure:', response.data);
+      throw new Error('Invalid server response');
+    }
+    
+    const { user, token, refreshToken } = data;
+    
+    if (!user || !token) {
+      console.error('❌ Missing user or token in response:', data);
+      throw new Error('Invalid registration response from server');
+    }
+
+    console.log('✅ Registration successful, user:', user.userId, 'role:', user.role);
 
     // Store tokens and user data securely - wrapped to prevent errors
     try {
       await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
       await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+      console.log('💾 Tokens and user data stored');
     } catch (storageError) {
-      console.log('Storage handled during register');
+      console.log('⚠️ Storage handled during register:', storageError.message);
     }
 
-    return response.data.data;
+    return { user, token, refreshToken };
   } catch (error) {
+    console.error('❌ Registration error:', error);
     // Extract clean error message
     const message = error.response?.data?.message || error.message || 'Registration failed';
     throw message;
@@ -38,20 +59,41 @@ export const register = async (userData) => {
  */
 export const login = async (credentials) => {
   try {
+    console.log('🔐 Attempting login with:', credentials.userId);
     const response = await api.post('/auth/login', credentials);
-    const { user, token, refreshToken } = response.data.data;
+    
+    console.log('📥 Login response:', response.data);
+    
+    // Extract data from response
+    const data = response.data?.data;
+    
+    if (!data) {
+      console.error('❌ Invalid response structure:', response.data);
+      throw new Error('Invalid server response');
+    }
+    
+    const { user, token, refreshToken } = data;
+    
+    if (!user || !token) {
+      console.error('❌ Missing user or token in response:', data);
+      throw new Error('Invalid login response from server');
+    }
+
+    console.log('✅ Login successful, user:', user.userId, 'role:', user.role);
 
     // Store tokens and user data securely - wrapped to prevent errors
     try {
       await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
       await storage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+      console.log('💾 Tokens and user data stored');
     } catch (storageError) {
-      console.log('Storage handled during login');
+      console.log('⚠️ Storage handled during login:', storageError.message);
     }
 
-    return response.data.data;
+    return { user, token, refreshToken };
   } catch (error) {
+    console.error('❌ Login error:', error);
     // Extract specific error message from backend
     // Backend sends specific messages like "Incorrect User ID" or "Incorrect Password"
     const message = error.response?.data?.message || 
