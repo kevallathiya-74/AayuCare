@@ -16,6 +16,7 @@ import {
     Alert,
     Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
@@ -70,10 +71,40 @@ const PatientDashboard = ({ navigation }) => {
             iconColor: healthColors.warning.main,
             onPress: () => navigation.navigate('Billing'),
         },
+        {
+            title: 'Activity Tracker',
+            icon: 'fitness-outline',
+            iconColor: '#4CAF50',
+            onPress: () => navigation.navigate('ActivityTracker'),
+        },
+        {
+            title: 'Women\'s Health',
+            icon: 'flower-outline',
+            iconColor: '#EC4899',
+            onPress: () => navigation.navigate('WomensHealth'),
+        },
+        {
+            title: 'Disease Info',
+            icon: 'library-outline',
+            iconColor: '#7E57C2',
+            onPress: () => navigation.navigate('DiseaseInfo'),
+        },
+        {
+            title: 'Hospital Events',
+            icon: 'calendar-number-outline',
+            iconColor: '#FF6F00',
+            onPress: () => navigation.navigate('HospitalEvents'),
+        },
+        {
+            title: 'Pharmacy',
+            icon: 'medical-outline',
+            iconColor: '#00897B',
+            onPress: () => navigation.navigate('PharmacyBilling'),
+        },
     ];
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Header */}
@@ -156,7 +187,7 @@ const PatientDashboard = ({ navigation }) => {
                     ))}
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 };
 

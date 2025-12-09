@@ -18,9 +18,13 @@ import { healthColors } from '../theme/healthColors';
 // Splash & Selection
 import AnimatedSplashScreen from '../screens/splash/AnimatedSplashScreen';
 import BoxSelectionScreen from '../screens/splash/BoxSelectionScreen';
+import SplashScreen from '../screens/splash/SplashScreen';
+import RoleSelectionScreen from '../screens/splash/RoleSelectionScreen';
 
 // Auth Screens
+import UnifiedLoginScreen from '../screens/auth/UnifiedLoginScreen';
 import HospitalLoginScreen from '../screens/auth/HospitalLoginScreen';
+import PatientLoginScreen from '../screens/auth/PatientLoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Tab Navigators (Role-based)
@@ -40,6 +44,13 @@ import {
   ChatWithHospitalScreen,
   BillingScreen,
 } from '../screens/patient';
+
+// New Patient Screens
+import ActivityTrackerScreen from '../screens/patient/ActivityTrackerScreen';
+import WomensHealthScreen from '../screens/patient/WomensHealthScreen';
+import DiseaseInfoScreen from '../screens/patient/DiseaseInfoScreen';
+import HospitalEventsScreen from '../screens/patient/HospitalEventsScreen';
+import PharmacyBillingScreen from '../screens/patient/PharmacyBillingScreen';
 
 // User Main App
 import TabNavigator from './TabNavigator';
@@ -82,7 +93,7 @@ const AppNavigator = () => {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName="AnimatedSplash"
+        initialRouteName="SplashScreen"
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
@@ -90,6 +101,16 @@ const AppNavigator = () => {
         }}
       >
         {/* Splash & Selection - Always available */}
+        <Stack.Screen
+          name="SplashScreen"
+          component={SplashScreen}
+          options={{ animation: 'fade' }}
+        />
+        <Stack.Screen
+          name="RoleSelection"
+          component={RoleSelectionScreen}
+          options={{ animation: 'slide_from_bottom' }}
+        />
         <Stack.Screen
           name="AnimatedSplash"
           component={AnimatedSplashScreen}
@@ -102,7 +123,9 @@ const AppNavigator = () => {
         />
 
         {/* Auth Screens - Always available */}
+        <Stack.Screen name="Login" component={UnifiedLoginScreen} />
         <Stack.Screen name="HospitalLogin" component={HospitalLoginScreen} />
+        <Stack.Screen name="PatientLogin" component={PatientLoginScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
 
         {/* Role-based Tab Navigators - Only when authenticated */}
@@ -129,6 +152,11 @@ const AppNavigator = () => {
                 <Stack.Screen name="HealthStatus" component={HealthStatusScreen} />
                 <Stack.Screen name="ChatWithHospital" component={ChatWithHospitalScreen} />
                 <Stack.Screen name="Billing" component={BillingScreen} />
+                <Stack.Screen name="ActivityTracker" component={ActivityTrackerScreen} />
+                <Stack.Screen name="WomensHealth" component={WomensHealthScreen} />
+                <Stack.Screen name="DiseaseInfo" component={DiseaseInfoScreen} />
+                <Stack.Screen name="HospitalEvents" component={HospitalEventsScreen} />
+                <Stack.Screen name="PharmacyBilling" component={PharmacyBillingScreen} />
               </>
             )}
 

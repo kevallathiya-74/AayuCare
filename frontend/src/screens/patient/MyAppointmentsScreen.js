@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
@@ -85,7 +86,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
     );
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Header */}
@@ -131,7 +132,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
             />
-        </View>
+        </SafeAreaView>
     );
 };
 

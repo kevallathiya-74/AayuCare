@@ -21,4 +21,8 @@ export { default as LoadingOverlay } from './LoadingOverlay';
 export { default as ProgressBar } from './ProgressBar';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as LargeActionCard } from './LargeActionCard';
+export { default as LoadingIndicator } from './LoadingIndicator';
+export { default as AITagline } from './AITagline';
+export * from './CustomIcons';
+
 

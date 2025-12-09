@@ -5,6 +5,27 @@
  */
 
 export const healthColors = {
+    // Common Colors - Quick Access
+    white: '#FFFFFF',
+    black: '#000000',
+    transparent: 'transparent',
+
+    // Neutral Colors - Grayscale
+    neutral: {
+        white: '#FFFFFF',
+        gray50: '#FAFAFA',
+        gray100: '#F5F5F5',
+        gray200: '#EEEEEE',
+        gray300: '#E0E0E0',
+        gray400: '#BDBDBD',
+        gray500: '#9E9E9E',
+        gray600: '#757575',
+        gray700: '#616161',
+        gray800: '#424242',
+        gray900: '#212121',
+        black: '#000000',
+    },
+
     // Primary Colors - Healing & Trust
     primary: {
         main: '#00ACC1',        // Healing Teal
@@ -87,6 +108,7 @@ export const healthColors = {
     // Border Colors
     border: {
         light: '#E8EAED',
+        main: '#DADCE0',
         medium: '#DADCE0',
         dark: '#BDC1C6',
     },
@@ -121,6 +143,26 @@ export const healthColors = {
         secondaryButton: '#81D4FA', // Sky Wellness Blue
         alert: '#FF7043',        // Energy Coral
         safe: '#66BB6A',         // Herbal Green
+    },
+
+    // Card Colors
+    card: {
+        background: '#FFFFFF',
+        border: '#E8EAED',
+        shadow: 'rgba(0, 0, 0, 0.1)',
+    },
+
+    // Button Colors
+    button: {
+        disabled: '#E0E0E0',
+        disabledText: '#9E9E9E',
+    },
+
+    // Shadow Colors
+    shadows: {
+        light: 'rgba(0, 0, 0, 0.05)',
+        medium: 'rgba(0, 0, 0, 0.1)',
+        dark: 'rgba(0, 0, 0, 0.2)',
     },
 };
 

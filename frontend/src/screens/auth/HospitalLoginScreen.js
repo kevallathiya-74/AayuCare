@@ -11,6 +11,7 @@ import {
     StatusBar,
     ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
@@ -87,7 +88,7 @@ const HospitalLoginScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             <KeyboardAvoidingView
@@ -276,7 +277,7 @@ const HospitalLoginScreen = ({ navigation }) => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: getScreenPadding(),
     },
     header: {
-        paddingTop: verticalScale(indianDesign.spacing.xl),
+        paddingTop: verticalScale(indianDesign.spacing.md),
         marginBottom: verticalScale(indianDesign.spacing.xxxl),
     },
     backButton: {
@@ -304,6 +305,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: indianDesign.spacing.xl,
+        marginTop: indianDesign.spacing.sm,
         ...createShadow(2),
     },
     logoContainer: {

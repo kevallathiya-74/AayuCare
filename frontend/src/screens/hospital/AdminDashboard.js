@@ -16,6 +16,7 @@ import {
     Alert,
     Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
@@ -79,7 +80,7 @@ const AdminDashboard = ({ navigation }) => {
     ];
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Header */}
@@ -133,7 +134,7 @@ const AdminDashboard = ({ navigation }) => {
                     ))}
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 };
 

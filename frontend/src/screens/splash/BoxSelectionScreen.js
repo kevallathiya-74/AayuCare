@@ -15,6 +15,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
@@ -29,12 +30,12 @@ const BoxSelectionScreen = ({ navigation }) => {
   };
 
   const handleUserPress = () => {
-    // Coming soon
-    alert('User section coming soon!');
+    // Coming soon - User section not available yet
+    alert('🚧 User Section Coming Soon!\n\nThis feature is currently under development. Please use the Hospital login for now.');
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header with Logo */}
@@ -148,7 +149,7 @@ const BoxSelectionScreen = ({ navigation }) => {
           Secure • Private • Trusted
         </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 

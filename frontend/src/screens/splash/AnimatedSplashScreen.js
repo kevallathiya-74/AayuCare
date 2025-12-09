@@ -14,6 +14,7 @@ import {
     StatusBar,
     Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign } from '../../theme/indianDesign';
@@ -59,7 +60,7 @@ const AnimatedSplashScreen = ({ navigation }) => {
     }, []);
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
 
             {/* Beautiful Gradient Background - Healing Teal → Fresh Aqua → Sky Blue */}
@@ -129,7 +130,7 @@ const AnimatedSplashScreen = ({ navigation }) => {
                 <View style={styles.footerDot} />
                 <Text style={styles.footerText}>Trusted by thousands</Text>
             </Animated.View>
-        </View>
+        </SafeAreaView>
     );
 };
 

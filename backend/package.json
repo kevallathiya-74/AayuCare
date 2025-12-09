@@ -15,13 +15,16 @@
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
+    "expo-localization": "^17.0.8",
     "express": "^4.18.2",
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
+    "i18next": "^25.7.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
     "morgan": "^1.10.1",
+    "react-i18next": "^16.4.0",
     "winston": "^3.18.3"
   },
   "devDependencies": {

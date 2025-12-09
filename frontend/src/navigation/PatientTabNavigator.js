@@ -14,6 +14,11 @@ import PatientDashboard from '../screens/hospital/PatientDashboard';
 import MyAppointmentsScreen from '../screens/patient/MyAppointmentsScreen';
 import MyReportsScreen from '../screens/patient/MyReportsScreen';
 import NotificationsScreen from '../screens/patient/NotificationsScreen';
+import ActivityTrackerScreen from '../screens/patient/ActivityTrackerScreen';
+import WomensHealthScreen from '../screens/patient/WomensHealthScreen';
+import DiseaseInfoScreen from '../screens/patient/DiseaseInfoScreen';
+import HospitalEventsScreen from '../screens/patient/HospitalEventsScreen';
+import PharmacyBillingScreen from '../screens/patient/PharmacyBillingScreen';
 
 const Tab = createBottomTabNavigator();
 

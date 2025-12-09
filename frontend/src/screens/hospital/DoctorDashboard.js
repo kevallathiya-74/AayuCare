@@ -17,6 +17,7 @@ import {
     Alert,
     Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
@@ -76,7 +77,7 @@ const DoctorDashboard = ({ navigation }) => {
     ];
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Header */}
@@ -160,7 +161,7 @@ const DoctorDashboard = ({ navigation }) => {
             >
                 <Ionicons name="add" size={28} color={healthColors.text.white} />
             </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     );
 };
 
