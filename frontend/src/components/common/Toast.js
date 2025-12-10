@@ -8,7 +8,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Platform, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
@@ -72,27 +72,27 @@ const Toast = ({
         switch (type) {
             case 'success':
                 return {
-                    backgroundColor: colors.success.main,
+                    backgroundColor: healthColors.success.main,
                     icon: 'checkmark-circle',
-                    iconColor: colors.neutral.white,
+                    iconColor: healthColors.neutral.white,
                 };
             case 'error':
                 return {
-                    backgroundColor: colors.error.main,
+                    backgroundColor: healthColors.error.main,
                     icon: 'close-circle',
-                    iconColor: colors.neutral.white,
+                    iconColor: healthColors.neutral.white,
                 };
             case 'warning':
                 return {
-                    backgroundColor: colors.warning.main,
+                    backgroundColor: healthColors.warning.main,
                     icon: 'warning',
-                    iconColor: colors.neutral.white,
+                    iconColor: healthColors.neutral.white,
                 };
             default:
                 return {
-                    backgroundColor: colors.info.main,
+                    backgroundColor: healthColors.info.main,
                     icon: 'information-circle',
-                    iconColor: colors.neutral.white,
+                    iconColor: healthColors.neutral.white,
                 };
         }
     };
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
-        borderRadius: colors.borderRadius.medium,
+        borderRadius: healthColors.borderRadius.medium,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     },
     message: {
         ...textStyles.body,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         flex: 1,
     },
 });

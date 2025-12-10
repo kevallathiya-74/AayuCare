@@ -9,7 +9,7 @@ import React, { useRef } from 'react';
 import { TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { spacing } from '../../theme/spacing';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -18,10 +18,10 @@ const FloatingActionButton = ({
     onPress,
     icon = 'add',
     iconSize = 28,
-    iconColor = colors.neutral.white,
+    iconColor = healthColors.neutral.white,
     size = 'large', // small, medium, large
     gradient = true,
-    backgroundColor = colors.primary.main,
+    backgroundColor = healthColors.primary.main,
     position = 'bottom-right', // bottom-right, bottom-left, bottom-center
     style,
     disabled = false,
@@ -91,7 +91,7 @@ const FloatingActionButton = ({
                 ]}
             >
                 <LinearGradient
-                    colors={colors.gradients.primary}
+                    colors={healthColors.gradients.primary}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={[styles.gradient, getSizeStyle()]}

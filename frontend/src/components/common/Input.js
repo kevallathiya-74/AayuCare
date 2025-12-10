@@ -14,7 +14,7 @@ import {
   Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles, fontFamilies } from '../../theme/typography';
 import { spacing, componentSpacing, layout } from '../../theme/spacing';
 import { 
@@ -82,11 +82,11 @@ const Input = ({
       outputRange: [16, 12],
     }),
     color: error
-      ? colors.error.main
+      ? healthColors.error.main
       : isFocused
-      ? colors.primary.main
-      : colors.text.tertiary,
-    backgroundColor: colors.background.primary,
+      ? healthColors.primary.main
+      : healthColors.text.tertiary,
+    backgroundColor: healthColors.background.primary,
     paddingHorizontal: 6,
     fontWeight: '500',
     zIndex: 1,
@@ -113,7 +113,7 @@ const Input = ({
             onChangeText && onChangeText(text);
           }}
           placeholder={!label || isFocused || value ? placeholder : ''}
-          placeholderTextColor={colors.input.placeholder}
+          placeholderTextColor={healthColors.input.placeholder}
           onFocus={handleFocus}
           onBlur={handleBlur}
           editable={!disabled}
@@ -141,7 +141,7 @@ const Input = ({
             <Feather
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
-              color={colors.text.tertiary}
+              color={healthColors.text.tertiary}
             />
           </TouchableOpacity>
         )}
@@ -167,31 +167,31 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.primary,
+    backgroundColor: healthColors.background.primary,
     borderWidth: 1.5,
-    borderColor: colors.input.border,
+    borderColor: healthColors.input.border,
     borderRadius: responsiveBorderRadius.medium,
     height: touchTargets.medium,
   },
   containerFocused: {
-    borderColor: colors.input.borderFocused,
+    borderColor: healthColors.input.borderFocused,
     borderWidth: 1.5,
-    backgroundColor: colors.background.primary,
+    backgroundColor: healthColors.background.primary,
     outlineStyle: 'none',
   },
   containerError: {
-    borderColor: colors.input.borderError,
+    borderColor: healthColors.input.borderError,
     borderWidth: 1.5,
   },
   containerDisabled: {
-    backgroundColor: colors.neutral.gray100,
+    backgroundColor: healthColors.neutral.gray100,
     opacity: 0.6,
   },
   input: {
     flex: 1,
     fontFamily: fontFamilies.body,
     fontSize: scaledFontSize(16),
-    color: colors.text.primary,
+    color: healthColors.text.primary,
     paddingHorizontal: moderateScale(spacing.md),
     paddingVertical: moderateScale(spacing.sm),
     paddingTop: moderateScale(10),
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   errorText: {
-    color: colors.error.main,
+    color: healthColors.error.main,
   },
 });
 

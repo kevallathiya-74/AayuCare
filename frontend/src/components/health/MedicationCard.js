@@ -8,7 +8,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Card from '../common/Card';
@@ -44,16 +44,16 @@ const MedicationCard = ({
     };
 
     const getStockLevelColor = () => {
-        if (stockLevel <= 20) return colors.error.main;
-        if (stockLevel <= 50) return colors.warning.main;
-        return colors.success.main;
+        if (stockLevel <= 20) return healthColors.error.main;
+        if (stockLevel <= 50) return healthColors.warning.main;
+        return healthColors.success.main;
     };
 
     return (
         <Card elevation="medium" style={[styles.card, style]}>
             <View style={styles.header}>
                 <View style={styles.iconContainer}>
-                    <Ionicons name="medical" size={24} color={colors.primary.main} />
+                    <Ionicons name="medical" size={24} color={healthColors.primary.main} />
                 </View>
 
                 <View style={styles.info}>
@@ -66,7 +66,7 @@ const MedicationCard = ({
                         <Ionicons
                             name={taken ? 'checkmark-circle' : 'ellipse-outline'}
                             size={32}
-                            color={taken ? colors.success.main : colors.neutral.gray300}
+                            color={taken ? healthColors.success.main : healthColors.neutral.gray300}
                         />
                     </Animated.View>
                 </TouchableOpacity>
@@ -74,7 +74,7 @@ const MedicationCard = ({
 
             <View style={styles.details}>
                 <View style={styles.detailRow}>
-                    <Ionicons name="time-outline" size={16} color={colors.text.secondary} />
+                    <Ionicons name="time-outline" size={16} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>
                         {frequency} • {time}
                     </Text>
@@ -85,7 +85,7 @@ const MedicationCard = ({
                         <Text style={styles.stockLabel}>Stock Level</Text>
                         {stockLevel <= 20 && (
                             <TouchableOpacity onPress={onRefill} style={styles.refillButton}>
-                                <Ionicons name="add-circle" size={16} color={colors.primary.main} />
+                                <Ionicons name="add-circle" size={16} color={healthColors.primary.main} />
                                 <Text style={styles.refillText}>Refill</Text>
                             </TouchableOpacity>
                         )}
@@ -101,7 +101,7 @@ const MedicationCard = ({
 
             {taken && (
                 <View style={styles.takenBadge}>
-                    <Ionicons name="checkmark" size={12} color={colors.success.main} />
+                    <Ionicons name="checkmark" size={12} color={healthColors.success.main} />
                     <Text style={styles.takenText}>Taken today</Text>
                 </View>
             )}
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: colors.primary.light + '20',
+        backgroundColor: healthColors.primary.light + '20',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -133,12 +133,12 @@ const styles = StyleSheet.create({
     name: {
         ...textStyles.bodyLarge,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: 2,
     },
     dosage: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     checkButton: {
         padding: spacing.xs,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginLeft: spacing.xs,
     },
     stockContainer: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     },
     stockLabel: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         fontWeight: '600',
     },
     refillButton: {
@@ -174,23 +174,23 @@ const styles = StyleSheet.create({
     },
     refillText: {
         ...textStyles.bodySmall,
-        color: colors.primary.main,
+        color: healthColors.primary.main,
         fontWeight: '600',
         marginLeft: spacing.xs,
     },
     takenBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.success.light,
+        backgroundColor: healthColors.success.light,
         paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
-        borderRadius: colors.borderRadius.small,
+        borderRadius: healthColors.borderRadius.small,
         alignSelf: 'flex-start',
         marginTop: spacing.md,
     },
     takenText: {
         ...textStyles.bodySmall,
-        color: colors.success.dark,
+        color: healthColors.success.dark,
         fontWeight: '600',
         marginLeft: spacing.xs,
     },

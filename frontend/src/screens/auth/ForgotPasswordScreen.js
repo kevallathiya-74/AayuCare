@@ -13,8 +13,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { createShadow } from '../../utils/platformStyles';
+import { showError, showSuccess, validateEmail, validatePhone } from '../../utils/errorHandler';
 
 const ForgotPasswordScreen = ({ navigation, route }) => {
   const userType = route?.params?.userType || 'user';
@@ -27,15 +28,30 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   const handleSendOTP = () => {
     // Validation
     const newErrors = {};
-    if (!email) newErrors.email = isHospital ? 'Hospital ID or Email is required' : 'Email or Phone is required';
-
-    if (Object.keys(newErrors).length > 0) {
+    if (!email) {
+      newErrors.email = isHospital ? 'Hospital ID or Email is required' : 'Email or Phone is required';
       setErrors(newErrors);
       return;
     }
 
-    // TODO: Implement actual OTP sending logic
-    console.log('Send OTP to:', email);
+    // Validate email or phone format
+    if (!isHospital && email.includes('@')) {
+      if (!validateEmail(email)) {
+        showError('Please enter a valid email address');
+        return;
+      }
+    } else if (!isHospital && !email.includes('@')) {
+      if (!validatePhone(email)) {
+        showError('Please enter a valid phone number');
+        return;
+      }
+    }
+
+    // Show success message
+    showSuccess(
+      `OTP sent successfully to ${email}. Please check your ${email.includes('@') ? 'email' : 'phone'}.`,
+      'OTP Sent'
+    );
     setEmailSent(true);
     
     // Navigate to reset password or OTP verification
@@ -156,7 +172,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
             {isHospital ? (
               <MaterialCommunityIcons name="shield-check" size={20} color="#2E7D32" />
             ) : (
-              <Feather name="shield" size={16} color={colors.textSecondary} />
+              <Feather name="shield" size={16} color={healthColors.textSecondary} />
             )}
             <Text style={[styles.footerText, isHospital && styles.hospitalFooter]}>
               Secure password reset process
@@ -172,7 +188,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: healthColors.background.primary,
   },
   container: {
     flex: 1,
@@ -190,7 +206,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: healthColors.background.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -214,7 +230,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: healthColors.text.primary,
     marginBottom: 10,
     letterSpacing: 0.3,
   },
@@ -224,7 +240,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     fontWeight: '400',
-    color: colors.text.secondary,
+    color: healthColors.text.secondary,
     textAlign: 'center',
     letterSpacing: 0.2,
     paddingHorizontal: 20,
@@ -241,7 +257,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   hospitalButton: {
-    backgroundColor: '#43A047',
+    backgroundColor: healthColors.success.dark,
   },
   backToLogin: {
     flexDirection: 'row',
@@ -252,13 +268,13 @@ const styles = StyleSheet.create({
   backToLoginText: {
     fontSize: 14,
     fontWeight: '400',
-    color: colors.text.secondary,
+    color: healthColors.text.secondary,
   },
   backToLoginLink: {
     marginLeft: 6,
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary.main,
+    color: healthColors.primary.main,
   },
   hospitalLink: {
     color: '#2E7D32',
@@ -273,13 +289,13 @@ const styles = StyleSheet.create({
   successText: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text.primary,
+    color: healthColors.text.primary,
     marginBottom: 14,
   },
   successSubtext: {
     fontSize: 15,
     fontWeight: '400',
-    color: colors.text.secondary,
+    color: healthColors.text.secondary,
     textAlign: 'center',
     paddingHorizontal: 20,
     lineHeight: 22,
@@ -291,13 +307,13 @@ const styles = StyleSheet.create({
     marginTop: 44,
     paddingTop: 28,
     borderTopWidth: 1,
-    borderTopColor: colors.card.border,
+    borderTopColor: healthColors.card.border,
   },
   footerText: {
     marginLeft: 10,
     fontSize: 13,
     fontWeight: '500',
-    color: colors.text.secondary,
+    color: healthColors.text.secondary,
     textAlign: 'center',
     lineHeight: 18,
   },

@@ -31,6 +31,7 @@ import {
     verticalScale,
     scaledFontSize,
 } from '../../utils/responsive';
+import { showError, validateRequiredFields } from '../../utils/errorHandler';
 
 const UnifiedLoginScreen = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -46,15 +47,10 @@ const UnifiedLoginScreen = ({ navigation }) => {
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     const handleLogin = async () => {
-        // Validate User ID
-        if (!userId.trim()) {
-            alert('Please enter User ID');
-            return;
-        }
-
-        // Validate Password
-        if (!password.trim()) {
-            alert('Please enter Password');
+        // Validate inputs
+        const validation = validateRequiredFields({ userId, password });
+        if (!validation.isValid) {
+            showError('Please enter both User ID and Password');
             return;
         }
 
@@ -80,18 +76,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
             
             // Role-based navigation handled automatically by AppNavigator
         } catch (err) {
-            // Show user-friendly error
-            let errorMessage = 'Login failed. Please try again.';
-
-            if (typeof err === 'string') {
-                if (err.includes('ExpoSecureStore') || err.includes('is not a function')) {
-                    errorMessage = 'Login failed. Please try again.';
-                } else {
-                    errorMessage = err;
-                }
-            }
-
-            alert(errorMessage);
+            // Show user-friendly error with errorHandler
+            showError(err, 'Login Failed');
         }
     };
 

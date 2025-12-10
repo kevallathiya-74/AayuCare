@@ -3,7 +3,7 @@
  * View and manage medical bills
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -11,16 +11,65 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const BillingScreen = ({ navigation }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
+
+    useEffect(() => {
+        fetchBills();
+    }, []);
+
+    const fetchBills = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            // TODO: Replace with actual API call
+            // const response = await billingService.getBills();
+            // Update bills with response data
+        } catch (err) {
+            const errorMessage = 'Failed to load billing information';
+            setError(errorMessage);
+            logError(err, { context: 'BillingScreen.fetchBills' });
+            showError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRetry = () => {
+        setError(null);
+        fetchBills();
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onBack={() => navigation.goBack()}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+            <NetworkStatusIndicator />
 
             {/* Header */}
             <View style={styles.header}>
@@ -41,17 +90,24 @@ const BillingScreen = ({ navigation }) => {
 
             {/* Content */}
             <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.emptyState}>
-                    <Ionicons
-                        name="card-outline"
-                        size={80}
-                        color={healthColors.text.tertiary}
-                    />
-                    <Text style={styles.emptyTitle}>No Bills</Text>
-                    <Text style={styles.emptySubtitle}>
-                        Your medical bills will appear here
-                    </Text>
-                </View>
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={healthColors.primary.main} />
+                        <Text style={styles.loadingText}>Loading bills...</Text>
+                    </View>
+                ) : (
+                    <View style={styles.emptyState}>
+                        <Ionicons
+                            name="card-outline"
+                            size={80}
+                            color={healthColors.text.tertiary}
+                        />
+                        <Text style={styles.emptyTitle}>No Bills</Text>
+                        <Text style={styles.emptySubtitle}>
+                            Your medical bills will appear here
+                        </Text>
+                    </View>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -108,6 +164,17 @@ const styles = StyleSheet.create({
         color: healthColors.text.secondary,
         marginTop: indianDesign.spacing.xs,
         textAlign: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: indianDesign.spacing.xxxl,
+    },
+    loadingText: {
+        marginTop: indianDesign.spacing.md,
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
     },
 });
 

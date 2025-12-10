@@ -8,7 +8,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { healthColors } from '../theme/healthColors';
 import { textStyles } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 
@@ -77,12 +77,12 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
                             <Ionicons
                                 name={getIconName()}
                                 size={24}
-                                color={isFocused ? colors.primary.main : colors.text.tertiary}
+                                color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
                             />
                             <Text
                                 style={[
                                     styles.label,
-                                    { color: isFocused ? colors.primary.main : colors.text.tertiary },
+                                    { color: isFocused ? healthColors.primary.main : healthColors.text.tertiary },
                                 ]}
                             >
                                 {label}
@@ -99,9 +99,9 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        backgroundColor: colors.background.primary,
+        backgroundColor: healthColors.background.primary,
         borderTopWidth: 1,
-        borderTopColor: colors.neutral.gray200,
+        borderTopColor: healthColors.neutral.gray200,
         paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.sm,
         paddingTop: spacing.sm,
         ...Platform.select({
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
         top: 0,
         width: 40,
         height: 3,
-        backgroundColor: colors.primary.main,
+        backgroundColor: healthColors.primary.main,
         borderRadius: 2,
     },
 });

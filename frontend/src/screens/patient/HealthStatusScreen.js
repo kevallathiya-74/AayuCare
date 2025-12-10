@@ -3,7 +3,7 @@
  * View patient's health status and vitals
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -11,16 +11,44 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const HealthStatusScreen = ({ navigation }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
+
+    const handleRetry = () => {
+        setError(null);
+        // Add data fetching logic here when API is ready
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onBack={() => navigation.goBack()}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+            <NetworkStatusIndicator />
 
             {/* Header */}
             <View style={styles.header}>
@@ -41,17 +69,24 @@ const HealthStatusScreen = ({ navigation }) => {
 
             {/* Content */}
             <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.emptyState}>
-                    <Ionicons
-                        name="heart-outline"
-                        size={80}
-                        color={healthColors.success.main}
-                    />
-                    <Text style={styles.emptyTitle}>All Good!</Text>
-                    <Text style={styles.emptySubtitle}>
-                        Your health vitals will be tracked here
-                    </Text>
-                </View>
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={healthColors.primary.main} />
+                        <Text style={styles.loadingText}>Loading health status...</Text>
+                    </View>
+                ) : (
+                    <View style={styles.emptyState}>
+                        <Ionicons
+                            name="heart-outline"
+                            size={80}
+                            color={healthColors.success.main}
+                        />
+                        <Text style={styles.emptyTitle}>All Good!</Text>
+                        <Text style={styles.emptySubtitle}>
+                            Your health vitals will be tracked here
+                        </Text>
+                    </View>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -108,6 +143,17 @@ const styles = StyleSheet.create({
         color: healthColors.text.secondary,
         marginTop: indianDesign.spacing.xs,
         textAlign: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: indianDesign.spacing.xxxl,
+    },
+    loadingText: {
+        marginTop: indianDesign.spacing.md,
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
     },
 });
 

@@ -6,7 +6,7 @@
 
 import React, { useRef } from 'react';
 import { View, StyleSheet, Pressable, Animated } from 'react-native';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { spacing, componentSpacing } from '../../theme/spacing';
 import { createShadow } from '../../utils/platformStyles';
 import { 
@@ -85,10 +85,10 @@ const Card = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card.background,
+    backgroundColor: healthColors.card.background,
     borderRadius: responsiveBorderRadius.medium,
     borderWidth: 1,
-    borderColor: colors.card.border,
+    borderColor: healthColors.card.border,
   },
   withPadding: {
     padding: moderateScale(componentSpacing.cardPadding),

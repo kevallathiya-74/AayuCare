@@ -4,7 +4,7 @@
  * Optimized for healthcare application
  */
 
-export const healthColors = {
+const healthColors = {
     // Common Colors - Quick Access
     white: '#FFFFFF',
     black: '#000000',
@@ -28,59 +28,59 @@ export const healthColors = {
 
     // Primary Colors - Healing & Trust
     primary: {
-        main: '#00ACC1',        // Healing Teal
-        light: '#4DD0E1',       // Fresh Aqua
-        dark: '#00838F',        // Deep Teal
-        gradient: ['#00ACC1', '#4DD0E1', '#81D4FA'], // Teal → Aqua → Sky Blue
+        main: '#00ACC1',
+        light: '#4DD0E1',
+        dark: '#00838F',
+        gradient: ['#00ACC1', '#4DD0E1', '#81D4FA'],
     },
 
     // Secondary Colors - Wellness & Energy
     secondary: {
-        main: '#81D4FA',        // Sky Wellness Blue
-        light: '#B3E5FC',       // Light Sky
-        dark: '#4FC3F7',        // Bright Blue
+        main: '#81D4FA',
+        light: '#B3E5FC',
+        dark: '#4FC3F7',
         gradient: ['#81D4FA', '#4FC3F7'],
     },
 
     // Hospital Professional - Teal + Navy
     hospital: {
-        teal: '#00ACC1',        // Professional Teal
-        navy: '#1A237E',        // Trustworthy Navy
+        teal: '#00ACC1',
+        navy: '#1A237E',
         gradient: ['#00ACC1', '#1A237E'],
     },
 
     // Accent Colors
     accent: {
-        coral: '#FF7043',       // Energy Coral (alerts, important)
-        green: '#66BB6A',       // Herbal Green (vitals good/safe)
-        lavender: '#CE93D8',    // Mild Lavender (women's health)
-        aqua: '#4DD0E1',        // Fresh Aqua (fitness)
+        coral: '#FF7043',
+        green: '#66BB6A',
+        lavender: '#CE93D8',
+        aqua: '#4DD0E1',
     },
 
     // Semantic Colors
     success: {
-        main: '#66BB6A',        // Herbal Green
+        main: '#66BB6A',
         light: '#C8E6C9',
         dark: '#43A047',
         background: '#E8F5E9',
     },
 
     error: {
-        main: '#FF7043',        // Energy Coral
+        main: '#FF7043',
         light: '#FFCCBC',
         dark: '#F4511E',
         background: '#FBE9E7',
     },
 
     warning: {
-        main: '#FFA726',        // Warm Orange
+        main: '#FFA726',
         light: '#FFE0B2',
         dark: '#FB8C00',
         background: '#FFF3E0',
     },
 
     info: {
-        main: '#81D4FA',        // Sky Blue
+        main: '#81D4FA',
         light: '#B3E5FC',
         dark: '#4FC3F7',
         background: '#E1F5FE',
@@ -88,21 +88,21 @@ export const healthColors = {
 
     // Background Colors
     background: {
-        primary: '#FFFFFF',      // Soft Medical White
-        secondary: '#F8FAFB',    // Very Light Blue-Gray
-        tertiary: '#F0F4F7',     // Light Gray
-        card: '#FFFFFF',         // White cards
+        primary: '#FFFFFF',
+        secondary: '#F8FAFB',
+        tertiary: '#F0F4F7',
+        card: '#FFFFFF',
         overlay: 'rgba(0, 0, 0, 0.5)',
     },
 
     // Text Colors
     text: {
-        primary: '#2C3E50',      // Dark Slate
-        secondary: '#7F8C8D',    // Medium Gray
-        tertiary: '#95A5A6',     // Light Gray
-        white: '#FFFFFF',        // Pure White
-        link: '#00ACC1',         // Healing Teal
-        disabled: '#BDC3C7',     // Disabled Gray
+        primary: '#2C3E50',
+        secondary: '#7F8C8D',
+        tertiary: '#95A5A6',
+        white: '#FFFFFF',
+        link: '#00ACC1',
+        disabled: '#BDC3C7',
     },
 
     // Border Colors
@@ -113,36 +113,36 @@ export const healthColors = {
         dark: '#BDC1C6',
     },
 
-    // Fitness & Wellness - Energetic but Clean
+    // Fitness & Wellness
     fitness: {
-        aqua: '#4DD0E1',         // Fresh Aqua
-        green: '#66BB6A',        // Herbal Green
-        coral: '#FF7043',        // Energy Coral
+        aqua: '#4DD0E1',
+        green: '#66BB6A',
+        coral: '#FF7043',
         gradient: ['#4DD0E1', '#66BB6A', '#FF7043'],
     },
 
     // Women's Health
     womens: {
-        lavender: '#CE93D8',     // Mild Lavender
+        lavender: '#CE93D8',
         light: '#F3E5F5',
         gradient: ['#CE93D8', '#E1BEE7'],
     },
 
-    // AI Guidance - Minimal & Clean
+    // AI Guidance
     ai: {
-        teal: '#00ACC1',         // Soft Teal
-        white: '#FFFFFF',        // White minimal
-        coral: '#FF7043',        // Red flags
+        teal: '#00ACC1',
+        white: '#FFFFFF',
+        coral: '#FF7043',
         gradient: ['#00ACC1', '#FFFFFF'],
     },
 
     // Dashboard Specific
     dashboard: {
-        background: '#FFFFFF',   // Soft Medical White
-        primaryButton: '#00ACC1', // Healing Teal
-        secondaryButton: '#81D4FA', // Sky Wellness Blue
-        alert: '#FF7043',        // Energy Coral
-        safe: '#66BB6A',         // Herbal Green
+        background: '#FFFFFF',
+        primaryButton: '#00ACC1',
+        secondaryButton: '#81D4FA',
+        alert: '#FF7043',
+        safe: '#66BB6A',
     },
 
     // Card Colors
@@ -164,10 +164,48 @@ export const healthColors = {
         medium: 'rgba(0, 0, 0, 0.1)',
         dark: 'rgba(0, 0, 0, 0.2)',
     },
+
+    // Healthcare-Specific Colors
+    health: {
+        heartRate: '#E91E63',
+        bloodPressure: '#9C27B0',
+        temperature: '#FF9800',
+        glucose: '#66BB6A',
+        oxygen: '#00ACC1',
+        weight: '#FF7043',
+        steps: '#81D4FA',
+    },
+
+    // Status Colors
+    status: {
+        pending: '#FFA726',
+        confirmed: '#66BB6A',
+        cancelled: '#FF7043',
+        completed: '#9E9E9E',
+        inProgress: '#00ACC1',
+    },
+
+    // Gradient Combinations
+    gradients: {
+        primary: ['#00ACC1', '#4DD0E1'],
+        secondary: ['#81D4FA', '#4FC3F7'],
+        warm: ['#FF9800', '#FFB74D'],
+        cool: ['#00ACC1', '#81D4FA'],
+        health: ['#66BB6A', '#00ACC1'],
+    },
+
+    // Border Radius
+    borderRadius: {
+        small: 8,
+        medium: 12,
+        large: 16,
+        xlarge: 24,
+        round: 999,
+    },
 };
 
 // Utility function to get rgba color with opacity
-export const withOpacity = (color, opacity) => {
+const withOpacity = (color, opacity) => {
     const hex = color.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
@@ -175,4 +213,9 @@ export const withOpacity = (color, opacity) => {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
-export default healthColors;
+// CommonJS exports for better Metro bundler compatibility
+module.exports = {
+    healthColors,
+    withOpacity,
+    default: healthColors,
+};

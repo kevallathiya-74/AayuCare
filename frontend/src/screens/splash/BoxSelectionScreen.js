@@ -156,7 +156,7 @@ const BoxSelectionScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: healthColors.background.primary,
   },
   header: {
     paddingTop: Platform.OS === 'web' ? indianDesign.spacing.xxxl + 20 : indianDesign.spacing.xxxl + 20,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: healthColors.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: indianDesign.spacing.lg,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: healthColors.white,
     marginBottom: 4,
     ...createTextShadow({
       color: 'rgba(0, 0, 0, 0.15)',
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: healthColors.white,
     opacity: 0.98,
     fontWeight: '500',
     ...createTextShadow({
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: indianDesign.spacing.lg,
     right: indianDesign.spacing.lg,
-    backgroundColor: '#FF9800',
+    backgroundColor: healthColors.warning.main,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   comingSoonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: healthColors.white,
   },
   decorCircle1: {
     position: 'absolute',
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4CAF50',
+    backgroundColor: healthColors.success.main,
   },
   footerText: {
     fontSize: 14,

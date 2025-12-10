@@ -6,13 +6,13 @@
 
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { spacing, componentSpacing } from '../../theme/spacing';
 
 const SkeletonLoader = ({
   width = '100%',
   height = 20,
-  borderRadius = colors.borderRadius.small,
+  borderRadius = healthColors.borderRadius.small,
   style,
 }) => {
   const opacity = useRef(new Animated.Value(0.3)).current;
@@ -89,15 +89,15 @@ export const SkeletonText = ({ lines = 3 }) => (
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: colors.neutral.gray200,
+    backgroundColor: healthColors.neutral.gray200,
   },
   card: {
-    backgroundColor: colors.card.background,
-    borderRadius: colors.borderRadius.medium,
+    backgroundColor: healthColors.card.background,
+    borderRadius: healthColors.borderRadius.medium,
     padding: componentSpacing.cardPadding,
     marginBottom: componentSpacing.cardMargin,
     borderWidth: 1,
-    borderColor: colors.card.border,
+    borderColor: healthColors.card.border,
   },
   cardHeader: {
     flexDirection: 'row',

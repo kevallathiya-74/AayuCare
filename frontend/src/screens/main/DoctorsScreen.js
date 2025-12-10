@@ -11,21 +11,29 @@ import {
     StyleSheet,
     FlatList,
     RefreshControl,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import {
     SearchBar,
     Chip,
     EmptyState,
+    ErrorRecovery,
+    NetworkStatusIndicator,
 } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const DoctorsScreen = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
 
     const specialties = [
         { id: 'all', label: 'All' },
@@ -36,10 +44,19 @@ const DoctorsScreen = ({ navigation }) => {
         { id: 'neurology', label: 'Neurology' },
     ];
 
-    const onRefresh = () => {
-        setRefreshing(true);
-        // TODO: Fetch doctors from API
-        setTimeout(() => setRefreshing(false), 1500);
+    const onRefresh = async () => {
+        try {
+            setRefreshing(true);
+            setError(null);
+            // TODO: Fetch doctors from API
+            setTimeout(() => setRefreshing(false), 1500);
+        } catch (err) {
+            logError(err, 'DoctorsScreen.onRefresh');
+            setError(err.message || 'Failed to refresh doctors');
+            showError(err.message || 'Failed to refresh doctors');
+        } finally {
+            setRefreshing(false);
+        }
     };
 
     const handleSpecialtyPress = (specialtyId) => {
@@ -74,6 +91,21 @@ const DoctorsScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
+            {error ? (
+                <ErrorRecovery
+                    error={error}
+                    onRetry={() => {
+                        setError(null);
+                        onRefresh();
+                    }}
+                />
+            ) : loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading doctors...</Text>
+                </View>
+            ) : (
             <FlatList
                 data={[]}
                 renderItem={null}
@@ -92,6 +124,7 @@ const DoctorsScreen = ({ navigation }) => {
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
             />
+            )}
         </SafeAreaView>
     );
 };
@@ -99,7 +132,7 @@ const DoctorsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.secondary,
     },
     listContent: {
         paddingHorizontal: spacing.md,
@@ -111,12 +144,12 @@ const styles = StyleSheet.create({
     },
     title: {
         ...textStyles.h1,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: spacing.xs,
     },
     subtitle: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginBottom: spacing.lg,
     },
     searchBar: {
@@ -126,6 +159,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         marginBottom: spacing.md,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.xl,
+    },
+    loadingText: {
+        ...textStyles.bodyMedium,
+        color: healthColors.text.secondary,
+        marginTop: spacing.md,
     },
 });
 

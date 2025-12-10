@@ -10,6 +10,7 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,8 +18,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
+import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicator';
+import ErrorRecovery from '../../components/common/ErrorRecovery';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const WomensHealthScreen = ({ navigation }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
+
     const menstrualData = {
         currentDay: 12,
         cycleDays: 28,
@@ -44,8 +53,26 @@ const WomensHealthScreen = ({ navigation }) => {
         { icon: 'call', name: 'Counseling Support', action: 'Call Now', color: '#F44336' },
     ];
 
+    const handleRetry = () => {
+        setError(null);
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onDismiss={() => setError(null)}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient
                 colors={['#EC4899', '#DB2777']}
@@ -90,7 +117,7 @@ const WomensHealthScreen = ({ navigation }) => {
                                         styles.progressFill,
                                         {
                                             width: `${(menstrualData.currentDay / menstrualData.cycleDays) * 100}%`,
-                                            backgroundColor: '#EC4899',
+                                            backgroundColor: healthColors.primary.main,
                                         },
                                     ]}
                                 />
@@ -288,7 +315,7 @@ const styles = StyleSheet.create({
     },
     insightBox: {
         flexDirection: 'row',
-        backgroundColor: '#FFF3E0',
+        backgroundColor: healthColors.background.secondary,
         padding: indianDesign.spacing.md,
         borderRadius: indianDesign.borderRadius.medium,
         gap: indianDesign.spacing.sm,

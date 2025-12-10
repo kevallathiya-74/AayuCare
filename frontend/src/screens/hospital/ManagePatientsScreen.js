@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
         marginBottom: indianDesign.spacing.md,
     },
     alertCard: {
-        backgroundColor: '#FEE2E2',
+        backgroundColor: healthColors.error.light,
         borderRadius: 12,
         padding: indianDesign.spacing.md,
         borderWidth: 1,

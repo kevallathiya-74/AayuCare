@@ -10,9 +10,10 @@ import { Platform } from 'react-native';
 import { healthColors } from '../theme/healthColors';
 
 // Doctor Screens
-import DoctorDashboard from '../screens/hospital/DoctorDashboard';
+import DoctorHomeScreen from '../screens/hospital/DoctorHomeScreen';
 import TodaysAppointmentsScreen from '../screens/hospital/TodaysAppointmentsScreen';
-import PrescriptionCreationScreen from '../screens/hospital/PrescriptionCreationScreen';
+import EnhancedPrescriptionScreen from '../screens/hospital/EnhancedPrescriptionScreen';
+import DoctorProfileScreen from '../screens/hospital/DoctorProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -25,11 +26,11 @@ const DoctorTabNavigator = () => {
                     let iconName;
 
                     if (route.name === 'Dashboard') {
-                        iconName = focused ? 'grid' : 'grid-outline';
+                        iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'TodaysAppointments') {
                         iconName = focused ? 'calendar' : 'calendar-outline';
                     } else if (route.name === 'Prescriptions') {
-                        iconName = focused ? 'create' : 'create-outline';
+                        iconName = focused ? 'people' : 'people-outline';
                     } else if (route.name === 'Profile') {
                         iconName = focused ? 'person' : 'person-outline';
                     }
@@ -60,9 +61,9 @@ const DoctorTabNavigator = () => {
         >
             <Tab.Screen
                 name="Dashboard"
-                component={DoctorDashboard}
+                component={DoctorHomeScreen}
                 options={{
-                    tabBarLabel: 'Dashboard',
+                    tabBarLabel: 'Home',
                 }}
             />
             <Tab.Screen
@@ -70,14 +71,21 @@ const DoctorTabNavigator = () => {
                 component={TodaysAppointmentsScreen}
                 options={{
                     tabBarLabel: 'Today',
-                    tabBarBadge: 8,
+                    tabBarBadge: 7,
                 }}
             />
             <Tab.Screen
                 name="Prescriptions"
-                component={PrescriptionCreationScreen}
+                component={EnhancedPrescriptionScreen}
                 options={{
-                    tabBarLabel: 'Prescribe',
+                    tabBarLabel: 'Patients',
+                }}
+            />
+            <Tab.Screen
+                name="Profile"
+                component={DoctorProfileScreen}
+                options={{
+                    tabBarLabel: 'Me',
                 }}
             />
         </Tab.Navigator>

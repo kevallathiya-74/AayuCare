@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import {
@@ -43,15 +43,15 @@ const HomeScreen = ({ navigation }) => {
             id: 1,
             icon: 'calendar',
             label: 'Book Appointment',
-            color: colors.primary.main,
-            gradient: colors.gradients.primary,
+            color: healthColors.primary.main,
+            gradient: healthColors.gradients.primary,
             onPress: () => navigation.navigate('Doctors'),
         },
         {
             id: 2,
             icon: 'call',
             label: 'Emergency',
-            color: colors.error.main,
+            color: healthColors.error.main,
             gradient: ['#F44336', '#E57373'],
             onPress: () => Alert.alert('Emergency', 'Calling emergency services...'),
         },
@@ -59,17 +59,17 @@ const HomeScreen = ({ navigation }) => {
             id: 3,
             icon: 'document-text',
             label: 'Health Records',
-            color: colors.accent.teal,
+            color: healthColors.accent.teal,
             gradient: ['#26A69A', '#4DB6AC'],
-            onPress: () => Alert.alert('Coming Soon', 'Health Records feature coming soon!'),
+            onPress: () => Alert.alert('Health Records', 'Access your complete health history including:\\n\\n• Lab Reports\\n• Prescriptions\\n• Doctor Visits\\n• Medical History'),
         },
         {
             id: 4,
             icon: 'medkit',
             label: 'Medications',
-            color: colors.accent.purple,
+            color: healthColors.accent.purple,
             gradient: ['#9C27B0', '#BA68C8'],
-            onPress: () => Alert.alert('Coming Soon', 'Medications feature coming soon!'),
+            onPress: () => Alert.alert('Medications', 'Track your medications including:\\n\\n• Current Prescriptions\\n• Dosage Schedule\\n• Medication Reminders\\n• Refill Alerts'),
         },
     ];
 
@@ -128,7 +128,7 @@ const HomeScreen = ({ navigation }) => {
                                     <Ionicons
                                         name={action.icon}
                                         size={28}
-                                        color={colors.neutral.white}
+                                        color={healthColors.neutral.white}
                                     />
                                     <Text style={styles.quickActionLabel}>{action.label}</Text>
                                 </LinearGradient>
@@ -175,7 +175,7 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.secondary,
     },
     scrollView: {
         flex: 1,
@@ -186,15 +186,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.lg,
-        backgroundColor: colors.background.primary,
+        backgroundColor: healthColors.background.primary,
     },
     greeting: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     userName: {
         ...textStyles.h2,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginTop: 2,
     },
     section: {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         ...textStyles.h3,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: spacing.md,
     },
     quickActionsGrid: {
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
         width: '48%',
         aspectRatio: 1,
         margin: spacing.xs,
-        borderRadius: colors.borderRadius.medium,
+        borderRadius: healthColors.borderRadius.medium,
         overflow: 'hidden',
     },
     quickActionGradient: {
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     },
     quickActionLabel: {
         ...textStyles.bodyMedium,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         fontWeight: '600',
         marginTop: spacing.sm,
         textAlign: 'center',

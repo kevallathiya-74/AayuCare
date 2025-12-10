@@ -36,6 +36,8 @@ import PatientTabNavigator from './PatientTabNavigator';
 import {
   ManageDoctorsScreen,
   ManagePatientsScreen,
+  PatientManagementScreen,
+  EnhancedPrescriptionScreen,
 } from '../screens/hospital';
 
 import {
@@ -51,10 +53,17 @@ import WomensHealthScreen from '../screens/patient/WomensHealthScreen';
 import DiseaseInfoScreen from '../screens/patient/DiseaseInfoScreen';
 import HospitalEventsScreen from '../screens/patient/HospitalEventsScreen';
 import PharmacyBillingScreen from '../screens/patient/PharmacyBillingScreen';
+import AIHealthAssistantScreen from '../screens/patient/AIHealthAssistantScreen';
+import SpecialistCareFinderScreen from '../screens/patient/SpecialistCareFinderScreen';
+import AppointmentBookingScreen from '../screens/patient/AppointmentBookingScreen';
+import MedicalRecordsScreen from '../screens/patient/MedicalRecordsScreen';
+import HealthMetricsDashboard from '../screens/patient/HealthMetricsDashboard';
+import AISymptomChecker from '../screens/patient/AISymptomChecker';
+import EmergencyServices from '../screens/patient/EmergencyServices';
 
 // User Main App
 import TabNavigator from './TabNavigator';
-import { SettingsScreen } from '../screens/main';
+import { SettingsScreen, SettingsAccessibilityScreen } from '../screens/main';
 
 const Stack = createNativeStackNavigator();
 
@@ -136,6 +145,8 @@ const AppNavigator = () => {
                 <Stack.Screen name="AdminTabs" component={AdminTabNavigator} />
                 <Stack.Screen name="ManageDoctors" component={ManageDoctorsScreen} />
                 <Stack.Screen name="ManagePatients" component={ManagePatientsScreen} />
+                <Stack.Screen name="PatientManagement" component={PatientManagementScreen} />
+                <Stack.Screen name="CreatePrescription" component={EnhancedPrescriptionScreen} />
               </>
             )}
 
@@ -157,6 +168,14 @@ const AppNavigator = () => {
                 <Stack.Screen name="DiseaseInfo" component={DiseaseInfoScreen} />
                 <Stack.Screen name="HospitalEvents" component={HospitalEventsScreen} />
                 <Stack.Screen name="PharmacyBilling" component={PharmacyBillingScreen} />
+                <Stack.Screen name="AIHealthAssistant" component={AIHealthAssistantScreen} />
+                <Stack.Screen name="SpecialistCareFinder" component={SpecialistCareFinderScreen} />
+                <Stack.Screen name="AppointmentBooking" component={AppointmentBookingScreen} />
+                <Stack.Screen name="MedicalRecords" component={MedicalRecordsScreen} />
+                <Stack.Screen name="HealthMetrics" component={HealthMetricsDashboard} />
+                <Stack.Screen name="AISymptomChecker" component={AISymptomChecker} />
+                <Stack.Screen name="Emergency" component={EmergencyServices} />
+                <Stack.Screen name="SettingsAccessibility" component={SettingsAccessibilityScreen} />
               </>
             )}
 

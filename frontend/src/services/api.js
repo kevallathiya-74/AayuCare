@@ -1,6 +1,6 @@
 /**
  * AayuCare - API Service Configuration
- * Production-ready Axios instance with interceptors
+ * Production-ready Axios instance with interceptors and offline support
  */
 
 import axios from 'axios';
@@ -8,6 +8,7 @@ import * as storage from '../utils/secureStorage';
 import { Platform } from 'react-native';
 import { STORAGE_KEYS } from '../utils/constants';
 import Constants from 'expo-constants';
+import offlineHandler from '../utils/offlineHandler';
 
 // Determine API base URL based on platform
 const getBaseURL = () => {
@@ -183,6 +184,24 @@ export const testConnection = async () => {
     console.error('❌ Backend connection failed:', error.message);
     return { success: false, error: error.message };
   }
+};
+
+/**
+ * Enhanced API call wrapper with offline support
+ * Automatically queues failed requests when offline
+ * @param {Object} config - Axios config object
+ * @param {Object} options - Offline handler options
+ * @returns {Promise} API response
+ */
+export const apiCallWithOfflineSupport = async (config, options = {}) => {
+  return offlineHandler.executeWithOfflineSupport(
+    async () => api(config),
+    {
+      retryAttempts: options.retryAttempts || 3,
+      priority: options.priority || 'normal',
+      ...options,
+    }
+  );
 };
 
 export default api;

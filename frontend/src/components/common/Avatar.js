@@ -8,7 +8,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { layout } from '../../theme/spacing';
 
@@ -41,8 +41,8 @@ const Avatar = ({
 
   const avatarSize = getSize();
   const fontSize = getFontSize();
-  const defaultBgColor = backgroundColor || colors.primary.main;
-  const defaultTextColor = textColor || colors.neutral.white;
+  const defaultBgColor = backgroundColor || healthColors.primary.main;
+  const defaultTextColor = textColor || healthColors.neutral.white;
 
   const renderContent = () => {
     if (variant === 'image' && source) {
@@ -123,8 +123,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: colors.success.main,
-    borderColor: colors.background.primary,
+    backgroundColor: healthColors.success.main,
+    borderColor: healthColors.background.primary,
   },
 });
 

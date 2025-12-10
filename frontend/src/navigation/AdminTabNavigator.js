@@ -10,10 +10,11 @@ import { Platform } from 'react-native';
 import { healthColors } from '../theme/healthColors';
 
 // Admin Screens
-import AdminDashboard from '../screens/hospital/AdminDashboard';
+import AdminHomeScreen from '../screens/hospital/AdminHomeScreen';
 import AppointmentsScreen from '../screens/hospital/AppointmentsScreen';
 import ReportsScreen from '../screens/hospital/ReportsScreen';
 import AdminSettingsScreen from '../screens/hospital/AdminSettingsScreen';
+import ErrorAnalyticsDashboard from '../screens/hospital/ErrorAnalyticsDashboard';
 
 const Tab = createBottomTabNavigator();
 
@@ -31,6 +32,8 @@ const AdminTabNavigator = () => {
                         iconName = focused ? 'calendar' : 'calendar-outline';
                     } else if (route.name === 'Reports') {
                         iconName = focused ? 'document-text' : 'document-text-outline';
+                    } else if (route.name === 'Analytics') {
+                        iconName = focused ? 'analytics' : 'analytics-outline';
                     } else if (route.name === 'Settings') {
                         iconName = focused ? 'settings' : 'settings-outline';
                     }
@@ -61,9 +64,9 @@ const AdminTabNavigator = () => {
         >
             <Tab.Screen
                 name="Dashboard"
-                component={AdminDashboard}
+                component={AdminHomeScreen}
                 options={{
-                    tabBarLabel: 'Dashboard',
+                    tabBarLabel: 'Home',
                 }}
             />
             <Tab.Screen
@@ -79,6 +82,13 @@ const AdminTabNavigator = () => {
                 component={ReportsScreen}
                 options={{
                     tabBarLabel: 'Reports',
+                }}
+            />
+            <Tab.Screen
+                name="Analytics"
+                component={ErrorAnalyticsDashboard}
+                options={{
+                    tabBarLabel: 'Analytics',
                 }}
             />
             <Tab.Screen

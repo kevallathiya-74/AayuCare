@@ -8,7 +8,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Card from '../common/Card';
@@ -33,25 +33,25 @@ const AppointmentCard = ({
             case 'confirmed':
                 return {
                     label: 'Confirmed',
-                    color: colors.status.confirmed,
+                    color: healthColors.status.confirmed,
                     icon: 'checkmark-circle',
                 };
             case 'completed':
                 return {
                     label: 'Completed',
-                    color: colors.status.completed,
+                    color: healthColors.status.completed,
                     icon: 'checkmark-done',
                 };
             case 'cancelled':
                 return {
                     label: 'Cancelled',
-                    color: colors.status.cancelled,
+                    color: healthColors.status.cancelled,
                     icon: 'close-circle',
                 };
             default:
                 return {
                     label: 'Pending',
-                    color: colors.status.pending,
+                    color: healthColors.status.pending,
                     icon: 'time',
                 };
         }
@@ -78,18 +78,18 @@ const AppointmentCard = ({
 
             <View style={styles.details}>
                 <View style={styles.detailRow}>
-                    <Ionicons name="calendar" size={18} color={colors.text.secondary} />
+                    <Ionicons name="calendar" size={18} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{date}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
-                    <Ionicons name="time" size={18} color={colors.text.secondary} />
+                    <Ionicons name="time" size={18} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{time}</Text>
                 </View>
 
                 {location && (
                     <View style={styles.detailRow}>
-                        <Ionicons name="location" size={18} color={colors.text.secondary} />
+                        <Ionicons name="location" size={18} color={healthColors.text.secondary} />
                         <Text style={styles.detailText} numberOfLines={1}>
                             {location}
                         </Text>
@@ -109,7 +109,7 @@ const AppointmentCard = ({
                                 <Ionicons
                                     name="calendar-outline"
                                     size={18}
-                                    color={colors.primary.main}
+                                    color={healthColors.primary.main}
                                 />
                                 <Text style={styles.actionText}>Reschedule</Text>
                             </TouchableOpacity>
@@ -123,9 +123,9 @@ const AppointmentCard = ({
                                 <Ionicons
                                     name="close-circle-outline"
                                     size={18}
-                                    color={colors.error.main}
+                                    color={healthColors.error.main}
                                 />
-                                <Text style={[styles.actionText, { color: colors.error.main }]}>
+                                <Text style={[styles.actionText, { color: healthColors.error.main }]}>
                                     Cancel
                                 </Text>
                             </TouchableOpacity>
@@ -153,16 +153,16 @@ const styles = StyleSheet.create({
     doctorName: {
         ...textStyles.bodyLarge,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: 2,
     },
     specialty: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     divider: {
         height: 1,
-        backgroundColor: colors.neutral.gray200,
+        backgroundColor: healthColors.neutral.gray200,
         marginVertical: spacing.md,
     },
     details: {
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         ...textStyles.bodyMedium,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginLeft: spacing.sm,
         flex: 1,
     },
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     },
     actionText: {
         ...textStyles.bodyMedium,
-        color: colors.primary.main,
+        color: healthColors.primary.main,
         fontWeight: '600',
         marginLeft: spacing.xs,
     },

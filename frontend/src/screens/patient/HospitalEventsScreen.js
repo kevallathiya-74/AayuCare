@@ -3,13 +3,14 @@
  * Blood donation, diabetes screening, vaccination, health workshops
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,8 +18,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
+import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicator';
+import ErrorRecovery from '../../components/common/ErrorRecovery';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const HospitalEventsScreen = ({ navigation }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
+
     const upcomingEvents = [
         {
             id: 1,
@@ -70,12 +79,54 @@ const HospitalEventsScreen = ({ navigation }) => {
         },
     ];
 
-    const handleRegister = (event) => {
-        alert(`Registration for "${event.title}" will open soon!`);
+    const handleRegister = async (event) => {
+        try {
+            if (!isConnected) {
+                showError('No internet connection. Please check your network.');
+                return;
+            }
+
+            setLoading(true);
+            setError(null);
+
+            // Simulate registration process
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            alert(`Registration for "${event.title}" will open soon!`);
+        } catch (err) {
+            logError(err, { context: 'HospitalEventsScreen.handleRegister', eventId: event.id });
+            setError(err.message || 'Failed to register for event');
+            showError('Failed to register for event. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const handleRetry = () => {
+        setError(null);
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onDismiss={() => setError(null)}
+                />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
+            {loading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                </View>
+            )}
             {/* Header */}
             <LinearGradient
                 colors={['#FF6F00', '#E65100']}
@@ -273,7 +324,7 @@ const styles = StyleSheet.create({
         color: healthColors.text.secondary,
     },
     enableButton: {
-        backgroundColor: '#FF9800',
+        backgroundColor: healthColors.warning.main,
         paddingHorizontal: indianDesign.spacing.md,
         paddingVertical: indianDesign.spacing.xs,
         borderRadius: indianDesign.borderRadius.small,
@@ -404,7 +455,7 @@ const styles = StyleSheet.create({
         marginRight: indianDesign.spacing.xs,
     },
     feedbackCard: {
-        backgroundColor: '#F3E5F5',
+        backgroundColor: healthColors.primary.light,
         borderRadius: 16,
         padding: indianDesign.spacing.lg,
         marginTop: indianDesign.spacing.lg,
@@ -438,6 +489,17 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         fontWeight: indianDesign.fontWeight.semibold,
         color: '#FFF',
+    },
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
     },
 });
 

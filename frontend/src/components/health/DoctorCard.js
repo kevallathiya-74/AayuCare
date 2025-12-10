@@ -8,7 +8,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Card from '../common/Card';
@@ -56,7 +56,7 @@ const DoctorCard = ({
                     key={i}
                     name={i <= rating ? 'star' : 'star-outline'}
                     size={14}
-                    color={colors.warning.main}
+                    color={healthColors.warning.main}
                     style={styles.star}
                 />
             );
@@ -93,7 +93,7 @@ const DoctorCard = ({
                         <Ionicons
                             name={favorite ? 'heart' : 'heart-outline'}
                             size={24}
-                            color={favorite ? colors.accent.pink : colors.text.tertiary}
+                            color={favorite ? healthColors.accent.pink : healthColors.text.tertiary}
                         />
                     </Animated.View>
                 </TouchableOpacity>
@@ -104,7 +104,7 @@ const DoctorCard = ({
                     <Ionicons
                         name="briefcase-outline"
                         size={16}
-                        color={colors.text.secondary}
+                        color={healthColors.text.secondary}
                     />
                     <Text style={styles.experienceText}>{experience} years exp.</Text>
                 </View>
@@ -114,7 +114,7 @@ const DoctorCard = ({
                         <View
                             style={[
                                 styles.availabilityDot,
-                                { backgroundColor: colors.success.main },
+                                { backgroundColor: healthColors.success.main },
                             ]}
                         />
                         <Text style={styles.availabilityText}>{availability}</Text>
@@ -152,12 +152,12 @@ const styles = StyleSheet.create({
     },
     name: {
         ...textStyles.h4,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: 2,
     },
     specialty: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginBottom: spacing.xs,
     },
     ratingContainer: {
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     },
     ratingText: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     favoriteButton: {
         padding: spacing.xs,
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     },
     experienceText: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginLeft: spacing.xs,
     },
     availabilityContainer: {
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     },
     availabilityText: {
         ...textStyles.bodySmall,
-        color: colors.success.main,
+        color: healthColors.success.main,
         fontWeight: '600',
     },
     bookButton: {

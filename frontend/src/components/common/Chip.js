@@ -8,7 +8,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Pressable, Text, StyleSheet, View, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
@@ -38,7 +38,7 @@ const Chip = ({
 
     const backgroundColor = bgColorAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [colors.background.secondary, colors.primary.main],
+        outputRange: [healthColors.background.secondary, healthColors.primary.main],
     });
 
     const handlePressIn = () => {
@@ -62,8 +62,8 @@ const Chip = ({
     };
 
     const getTextColor = () => {
-        if (disabled) return colors.text.disabled;
-        return selected ? colors.text.inverse : colors.text.primary;
+        if (disabled) return healthColors.text.disabled;
+        return selected ? healthColors.text.inverse : healthColors.text.primary;
     };
 
     return (
@@ -100,7 +100,7 @@ const Chip = ({
                     <Ionicons
                         name="close-circle"
                         size={16}
-                        color={selected ? colors.text.inverse : colors.text.secondary}
+                        color={selected ? healthColors.text.inverse : healthColors.text.secondary}
                     />
                 </Pressable>
             )}
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
-        borderRadius: colors.borderRadius.large,
+        borderRadius: healthColors.borderRadius.large,
         marginRight: spacing.sm,
         marginBottom: spacing.sm,
     },

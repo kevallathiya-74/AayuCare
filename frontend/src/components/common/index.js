@@ -20,8 +20,10 @@ export { default as EmptyState } from './EmptyState';
 export { default as LoadingOverlay } from './LoadingOverlay';
 export { default as ProgressBar } from './ProgressBar';
 export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as ErrorRecovery } from './ErrorRecovery';
 export { default as LargeActionCard } from './LargeActionCard';
 export { default as LoadingIndicator } from './LoadingIndicator';
+export { default as NetworkStatusIndicator } from './NetworkStatusIndicator';
 export { default as AITagline } from './AITagline';
 export * from './CustomIcons';
 

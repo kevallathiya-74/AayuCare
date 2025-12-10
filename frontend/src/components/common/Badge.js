@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
@@ -26,19 +26,19 @@ const Badge = ({
 
     switch (status) {
       case 'pending':
-        return { color: colors.status.pending, backgroundColor: colors.warning.light };
+        return { color: healthColors.status.pending, backgroundColor: healthColors.warning.light };
       case 'confirmed':
-        return { color: colors.status.confirmed, backgroundColor: colors.success.light };
+        return { color: healthColors.status.confirmed, backgroundColor: healthColors.success.light };
       case 'cancelled':
-        return { color: colors.status.cancelled, backgroundColor: colors.error.light };
+        return { color: healthColors.status.cancelled, backgroundColor: healthColors.error.light };
       case 'completed':
-        return { color: colors.status.completed, backgroundColor: colors.neutral.gray200 };
+        return { color: healthColors.status.completed, backgroundColor: healthColors.neutral.gray200 };
       case 'in_progress':
-        return { color: colors.status.inProgress, backgroundColor: colors.info.light };
+        return { color: healthColors.status.inProgress, backgroundColor: healthColors.info.light };
       default:
         return {
-          color: color || colors.text.primary,
-          backgroundColor: backgroundColor || colors.background.secondary,
+          color: color || healthColors.text.primary,
+          backgroundColor: backgroundColor || healthColors.background.secondary,
         };
     }
   };
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: colors.borderRadius.medium,
+    borderRadius: healthColors.borderRadius.medium,
     alignSelf: 'flex-start',
   },
   small: {

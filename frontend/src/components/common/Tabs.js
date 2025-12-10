@@ -16,7 +16,7 @@ import {
     Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
@@ -87,7 +87,7 @@ const Tabs = ({
                     <Ionicons
                         name={tab.icon}
                         size={20}
-                        color={isActive ? colors.primary.main : colors.text.secondary}
+                        color={isActive ? healthColors.primary.main : healthColors.text.secondary}
                         style={styles.tabIcon}
                     />
                 )}
@@ -132,9 +132,9 @@ const Tabs = ({
 
 const styles = StyleSheet.create({
     wrapper: {
-        backgroundColor: colors.background.primary,
+        backgroundColor: healthColors.background.primary,
         borderBottomWidth: 1,
-        borderBottomColor: colors.neutral.gray200,
+        borderBottomColor: healthColors.neutral.gray200,
     },
     container: {
         flexDirection: 'row',
@@ -157,14 +157,14 @@ const styles = StyleSheet.create({
         ...textStyles.labelLarge,
     },
     tabLabelActive: {
-        color: colors.primary.main,
+        color: healthColors.primary.main,
         fontWeight: '600',
     },
     tabLabelInactive: {
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     badge: {
-        backgroundColor: colors.error.main,
+        backgroundColor: healthColors.error.main,
         borderRadius: 10,
         minWidth: 18,
         height: 18,
@@ -175,13 +175,13 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         ...textStyles.caption,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         fontSize: 10,
         fontWeight: '600',
     },
     indicator: {
         height: 3,
-        backgroundColor: colors.primary.main,
+        backgroundColor: healthColors.primary.main,
         borderRadius: 2,
         position: 'absolute',
         bottom: 0,

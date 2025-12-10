@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: '#FFF',
+        backgroundColor: healthColors.white,
     },
     footer: {
         position: 'absolute',

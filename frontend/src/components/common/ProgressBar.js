@@ -8,7 +8,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
@@ -17,8 +17,8 @@ const ProgressBar = ({
     height = 8,
     showPercentage = false,
     gradient = false,
-    color = colors.primary.main,
-    backgroundColor = colors.neutral.gray200,
+    color = healthColors.primary.main,
+    backgroundColor = healthColors.neutral.gray200,
     style,
 }) => {
     const widthAnim = useRef(new Animated.Value(0)).current;
@@ -41,7 +41,7 @@ const ProgressBar = ({
                 {gradient ? (
                     <Animated.View style={[styles.progress, { width: animatedWidth }]}>
                         <LinearGradient
-                            colors={colors.gradients.primary}
+                            colors={healthColors.gradients.primary}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={styles.gradient}
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     },
     percentage: {
         ...textStyles.caption,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginTop: spacing.xs,
         textAlign: 'right',
     },

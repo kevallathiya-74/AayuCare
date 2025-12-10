@@ -8,7 +8,7 @@
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Avatar from './Avatar';
@@ -78,7 +78,7 @@ const ListItem = ({
                             <Ionicons
                                 name={leftIcon.name}
                                 size={leftIcon.size || 24}
-                                color={leftIcon.color || colors.primary.main}
+                                color={leftIcon.color || healthColors.primary.main}
                             />
                         </View>
                     </View>
@@ -113,7 +113,7 @@ const ListItem = ({
                         <Ionicons
                             name={rightIcon.name || 'chevron-forward'}
                             size={rightIcon.size || 20}
-                            color={rightIcon.color || colors.text.tertiary}
+                            color={rightIcon.color || healthColors.text.tertiary}
                         />
                     </View>
                 )}
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.md,
-        backgroundColor: colors.background.primary,
+        backgroundColor: healthColors.background.primary,
     },
     leftSection: {
         marginRight: spacing.md,
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: colors.primary.light + '20',
+        backgroundColor: healthColors.primary.light + '20',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -149,17 +149,17 @@ const styles = StyleSheet.create({
     title: {
         ...textStyles.bodyLarge,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: 2,
     },
     subtitle: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginBottom: 2,
     },
     description: {
         ...textStyles.bodySmall,
-        color: colors.text.tertiary,
+        color: healthColors.text.tertiary,
     },
     rightSection: {
         marginLeft: spacing.sm,
@@ -167,11 +167,11 @@ const styles = StyleSheet.create({
     },
     rightText: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     divider: {
         height: 1,
-        backgroundColor: colors.neutral.gray200,
+        backgroundColor: healthColors.neutral.gray200,
         marginLeft: spacing.md + 40 + spacing.md, // Align with content
     },
 });

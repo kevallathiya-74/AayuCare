@@ -23,6 +23,9 @@ import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
 import AITagline from '../../components/common/AITagline';
 import { HealthMetricsIcon } from '../../components/common/CustomIcons';
+import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const { width } = Dimensions.get('window');
 
@@ -30,12 +33,40 @@ const HealthMetricsDashboard = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
     const [selectedMetric, setSelectedMetric] = useState('bp');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
     const [metricsData, setMetricsData] = useState({
         bp: { current: '120/80', status: 'normal', trend: 'stable', history: [] },
         sugar: { current: 95, status: 'normal', trend: 'stable', history: [] },
         weight: { current: 70, status: 'normal', trend: 'down', history: [] },
         bmi: { current: 22.5, status: 'normal', category: 'Normal', history: [] },
     });
+
+    useEffect(() => {
+        fetchMetrics();
+    }, []);
+
+    const fetchMetrics = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            // TODO: Replace with actual API call
+            // const response = await healthMetricsService.getMetrics(user.id);
+            // setMetricsData(response.data);
+        } catch (err) {
+            const errorMessage = 'Failed to load health metrics';
+            setError(errorMessage);
+            logError(err, { context: 'HealthMetricsDashboard.fetchMetrics' });
+            showError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRetry = () => {
+        setError(null);
+        fetchMetrics();
+    };
 
     const metrics = [
         {
@@ -190,8 +221,22 @@ const HealthMetricsDashboard = ({ navigation }) => {
         );
     };
 
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onBack={() => navigation.goBack()}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient
                 colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -231,7 +276,7 @@ const HealthMetricsDashboard = ({ navigation }) => {
                 </View>
 
                 {/* AI Insights */}
-                {renderAIInsights()}
+                {!loading && renderAIInsights()}
 
                 {/* Recommendations */}
                 {renderRecommendations()}

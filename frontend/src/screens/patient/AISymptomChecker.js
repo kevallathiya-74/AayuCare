@@ -21,6 +21,10 @@ import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { AIIcon, IconWithBackground } from '../../components/common/CustomIcons';
 import AITagline from '../../components/common/AITagline';
 import LoadingIndicator from '../../components/common/LoadingIndicator';
+import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicator';
+import ErrorRecovery from '../../components/common/ErrorRecovery';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 import aiService from '../../services/ai.service';
 import {
     getScreenPadding,
@@ -36,6 +40,8 @@ const AISymptomChecker = ({ navigation }) => {
     const [severity, setSeverity] = useState('moderate');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState(null);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
 
     const commonSymptoms = [
         { id: 1, name: 'Fever', icon: 'thermometer' },
@@ -64,11 +70,17 @@ const AISymptomChecker = ({ navigation }) => {
 
     const handleAnalyze = async () => {
         if (selectedSymptoms.length === 0 && !symptoms.trim()) {
-            alert('Please select or enter at least one symptom');
+            showError('Please select or enter at least one symptom');
+            return;
+        }
+
+        if (!isConnected) {
+            showError('No internet connection. Please check your network.');
             return;
         }
 
         setLoading(true);
+        setError(null);
         try {
             const allSymptoms = [
                 ...selectedSymptoms.map(s => s.name),
@@ -82,8 +94,10 @@ const AISymptomChecker = ({ navigation }) => {
             });
 
             setResults(result);
-        } catch (error) {
-            alert('Failed to analyze symptoms. Please try again.');
+        } catch (err) {
+            logError(err, { context: 'AISymptomChecker.handleAnalyze', symptomsCount: selectedSymptoms.length });
+            setError(err.message || 'Failed to analyze symptoms');
+            showError('Failed to analyze symptoms. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -223,8 +237,27 @@ const AISymptomChecker = ({ navigation }) => {
         );
     };
 
+    const handleRetry = () => {
+        setError(null);
+        setResults(null);
+    };
+
+    if (error && !results) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onDismiss={() => setError(null)}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
                 <LinearGradient
@@ -644,7 +677,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     warningSection: {
-        backgroundColor: '#FEE2E2',
+        backgroundColor: healthColors.error.light,
         padding: indianDesign.spacing.md,
         borderRadius: 12,
         borderWidth: 1,

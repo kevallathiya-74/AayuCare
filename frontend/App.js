@@ -5,12 +5,24 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { View, Platform, StyleSheet } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Sentry from '@sentry/react-native';
 
 import store from './src/store/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { paperTheme } from './src/theme/theme';
 import ErrorBoundary from './src/components/common/ErrorBoundary';
 import './src/i18n'; // Initialize i18n
+
+// Initialize Sentry for production error tracking
+Sentry.init({
+  dsn: 'https://your-dsn-here@sentry.io/your-project-id', // Replace with your Sentry DSN
+  tracesSampleRate: 1.0,
+  environment: __DEV__ ? 'development' : 'production',
+  enableAutoSessionTracking: true,
+  sessionTrackingIntervalMillis: 10000,
+  attachStacktrace: true,
+  debug: __DEV__,
+});
 
 // Create React Query client
 const queryClient = new QueryClient({

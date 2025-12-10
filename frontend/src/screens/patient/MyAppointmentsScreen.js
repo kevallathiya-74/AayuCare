@@ -4,7 +4,7 @@
  * Reschedule/cancel options
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,35 +12,63 @@ import {
     FlatList,
     TouchableOpacity,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const MyAppointmentsScreen = ({ navigation }) => {
     const [selectedTab, setSelectedTab] = useState('upcoming');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [appointments, setAppointments] = useState([]);
+    const isConnected = useNetworkStatus();
 
-    const appointments = [
-        {
-            id: '1',
-            doctorName: 'Dr. Sharma',
-            specialization: 'Cardiologist',
-            date: 'Dec 8, 2025',
-            time: '10:00 AM',
-            status: 'confirmed',
-            type: 'upcoming',
-        },
-        {
-            id: '2',
-            doctorName: 'Dr. Patel',
-            specialization: 'General Physician',
-            date: 'Dec 10, 2025',
-            time: '02:30 PM',
-            status: 'scheduled',
-            type: 'upcoming',
-        },
-    ];
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+    const fetchAppointments = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Mock appointments - replace with actual API call
+            const mockData = [
+                {
+                    id: '1',
+                    doctorName: 'Dr. Sharma',
+                    specialization: 'Cardiologist',
+                    date: 'Dec 8, 2025',
+                    time: '10:00 AM',
+                    status: 'confirmed',
+                    type: 'upcoming',
+                },
+                {
+                    id: '2',
+                    doctorName: 'Dr. Patel',
+                    specialization: 'General Physician',
+                    date: 'Dec 10, 2025',
+                    time: '02:30 PM',
+                    status: 'scheduled',
+                    type: 'upcoming',
+                },
+            ];
+            
+            setAppointments(mockData);
+        } catch (err) {
+            logError(err, 'MyAppointmentsScreen - fetchAppointments');
+            setError(err);
+            showError(err.message || 'Failed to load appointments');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const renderAppointment = ({ item }) => (
         <View style={styles.appointmentCard}>
@@ -88,6 +116,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+            <NetworkStatusIndicator />
 
             {/* Header */}
             <View style={styles.header}>
@@ -125,13 +154,27 @@ const MyAppointmentsScreen = ({ navigation }) => {
             </View>
 
             {/* Appointments List */}
-            <FlatList
-                data={appointments}
-                renderItem={renderAppointment}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
+            {error ? (
+                <ErrorRecovery
+                    error={error}
+                    onRetry={fetchAppointments}
+                    onGoBack={() => navigation.goBack()}
+                    context="loading appointments"
+                />
+            ) : loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading appointments...</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={appointments}
+                    renderItem={renderAppointment}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                />
+            )}
         </SafeAreaView>
     );
 };
@@ -278,6 +321,16 @@ const styles = StyleSheet.create({
     },
     cancelText: {
         color: healthColors.error.main,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: indianDesign.spacing.md,
+    },
+    loadingText: {
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
     },
 });
 

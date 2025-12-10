@@ -1,12 +1,5 @@
-/**
- * AayuCare Design System - Main Theme Configuration
- * 
- * Integrates colors, typography, spacing, and React Native Paper theme.
- * This creates a cohesive design system for the entire app.
- */
-
 import { MD3LightTheme, configureFonts } from 'react-native-paper';
-import colors from './colors';
+import { healthColors } from './healthColors';
 import { fontFamilies, fontSizes, fontWeights } from './typography';
 import { spacing, componentSpacing, layout } from './spacing';
 import { createShadow } from '../utils/platformStyles';
@@ -42,71 +35,71 @@ export const paperTheme = {
     ...MD3LightTheme.colors,
     
     // Primary colors
-    primary: colors.primary.main,
-    primaryContainer: colors.primary.light,
-    onPrimary: colors.neutral.white,
-    onPrimaryContainer: colors.primary.dark,
+    primary: healthColors.primary.main,
+    primaryContainer: healthColors.primary.light,
+    onPrimary: healthColors.neutral.white,
+    onPrimaryContainer: healthColors.primary.dark,
     
     // Secondary colors
-    secondary: colors.secondary.main,
-    secondaryContainer: colors.secondary.light,
-    onSecondary: colors.neutral.white,
-    onSecondaryContainer: colors.secondary.dark,
+    secondary: healthColors.secondary.main,
+    secondaryContainer: healthColors.secondary.light,
+    onSecondary: healthColors.neutral.white,
+    onSecondaryContainer: healthColors.secondary.dark,
     
     // Tertiary/Accent
-    tertiary: colors.accent.teal,
-    tertiaryContainer: colors.accent.orange,
+    tertiary: healthColors.accent.aqua,
+    tertiaryContainer: healthColors.accent.coral,
     
     // Error colors
-    error: colors.error.main,
-    errorContainer: colors.error.light,
-    onError: colors.neutral.white,
-    onErrorContainer: colors.error.dark,
+    error: healthColors.error.main,
+    errorContainer: healthColors.error.light,
+    onError: healthColors.neutral.white,
+    onErrorContainer: healthColors.error.dark,
     
     // Background colors
-    background: colors.background.primary,
-    onBackground: colors.text.primary,
+    background: healthColors.background.primary,
+    onBackground: healthColors.text.primary,
     
     // Surface colors (cards, sheets)
-    surface: colors.background.elevated,
-    surfaceVariant: colors.background.secondary,
-    onSurface: colors.text.primary,
-    onSurfaceVariant: colors.text.secondary,
+    surface: healthColors.background.card,
+    surfaceVariant: healthColors.background.secondary,
+    onSurface: healthColors.text.primary,
+    onSurfaceVariant: healthColors.text.secondary,
     
     // Outline/Border
-    outline: colors.card.border,
-    outlineVariant: colors.neutral.gray200,
+    outline: healthColors.card.border,
+    outlineVariant: healthColors.neutral.gray200,
     
     // Other
-    shadow: colors.shadows.medium,
-    scrim: colors.background.overlay,
-    inverseSurface: colors.neutral.gray800,
-    inverseOnSurface: colors.neutral.white,
-    inversePrimary: colors.primary.light,
+    shadow: healthColors.shadows.medium,
+    scrim: healthColors.background.overlay,
+    inverseSurface: healthColors.neutral.gray800,
+    inverseOnSurface: healthColors.neutral.white,
+    inversePrimary: healthColors.primary.light,
     
     // Elevation
     elevation: {
-      level0: colors.background.primary,
-      level1: colors.background.elevated,
-      level2: colors.background.elevated,
-      level3: colors.background.elevated,
-      level4: colors.background.elevated,
-      level5: colors.background.elevated,
+      level0: healthColors.background.primary,
+      level1: healthColors.background.card,
+      level2: healthColors.background.card,
+      level3: healthColors.background.card,
+      level4: healthColors.background.card,
+      level5: healthColors.background.card,
     },
     
     // Disabled
-    surfaceDisabled: colors.button.disabled,
-    onSurfaceDisabled: colors.button.disabledText,
+    surfaceDisabled: healthColors.button.disabled,
+    onSurfaceDisabled: healthColors.button.disabledText,
     
     // Backdrop
-    backdrop: colors.background.overlay,
+    backdrop: healthColors.background.overlay,
   },
   
   // Fonts configuration
   fonts: configureFonts({ config: fontConfig }),
   
   // Roundness (border radius)
-  roundness: colors.borderRadius.medium,
+  roundness: 12,
   
   // Animation
   animation: {
@@ -117,7 +110,7 @@ export const paperTheme = {
 // Complete theme object (all design tokens)
 export const theme = {
   // Colors
-  colors,
+  colors: healthColors,
   
   // Typography
   fonts: fontFamilies,
@@ -169,7 +162,13 @@ export const theme = {
       thick: 3,
     },
     style: 'solid',
-    radius: colors.borderRadius,
+    radius: {
+      small: 8,
+      medium: 12,
+      large: 16,
+      xlarge: 24,
+      round: 999,
+    },
   },
   
   // Opacity values (for overlays, disabled states)
@@ -229,13 +228,13 @@ export const commonStyles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background.primary,
+    backgroundColor: healthColors.background.primary,
   },
   
   // Screen container
   screenContainer: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: healthColors.background.primary,
   },
   
   // Content container with padding
@@ -246,8 +245,8 @@ export const commonStyles = {
   
   // Card style
   card: {
-    backgroundColor: colors.card.background,
-    borderRadius: colors.borderRadius.medium,
+    backgroundColor: healthColors.card.background,
+    borderRadius: 12,
     padding: componentSpacing.cardPadding,
     marginBottom: componentSpacing.cardMargin,
   },

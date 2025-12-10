@@ -14,6 +14,7 @@ import {
     Linking,
     Alert,
     Platform,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,9 +23,16 @@ import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
 import { EmergencyIcon } from '../../components/common/CustomIcons';
+import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicator';
+import ErrorRecovery from '../../components/common/ErrorRecovery';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const EmergencyServices = ({ navigation }) => {
     const [calling, setCalling] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
 
     const emergencyNumbers = [
         { name: 'Ambulance', number: '108', icon: 'medical', color: '#EF4444' },
@@ -54,44 +62,92 @@ const EmergencyServices = ({ navigation }) => {
         },
     ];
 
-    const handleEmergencyCall = (number, name) => {
-        Alert.alert(
-            `Call ${name}?`,
-            `This will dial ${number} immediately`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Call Now',
-                    style: 'destructive',
-                    onPress: () => {
-                        const phoneNumber = Platform.OS === 'ios' ? `telprompt:${number}` : `tel:${number}`;
-                        Linking.openURL(phoneNumber);
+    const handleEmergencyCall = async (number, name) => {
+        try {
+            Alert.alert(
+                `Call ${name}?`,
+                `This will dial ${number} immediately`,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Call Now',
+                        style: 'destructive',
+                        onPress: async () => {
+                            try {
+                                const phoneNumber = Platform.OS === 'ios' ? `telprompt:${number}` : `tel:${number}`;
+                                const canOpen = await Linking.canOpenURL(phoneNumber);
+                                if (canOpen) {
+                                    await Linking.openURL(phoneNumber);
+                                } else {
+                                    throw new Error('Cannot make phone calls on this device');
+                                }
+                            } catch (err) {
+                                logError(err, { context: 'EmergencyServices.handleEmergencyCall', number });
+                                showError('Failed to initiate call. Please try again.');
+                            }
+                        },
                     },
-                },
-            ]
-        );
+                ]
+            );
+        } catch (err) {
+            logError(err, { context: 'EmergencyServices.handleEmergencyCall', number });
+            setError(err.message || 'Failed to initiate emergency call');
+        }
     };
 
-    const handleAmbulanceCall = () => {
-        Alert.alert(
-            '🚨 Call Ambulance?',
-            'This will immediately dial 108 for emergency medical assistance',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Call 108',
-                    style: 'destructive',
-                    onPress: () => {
-                        const phoneNumber = Platform.OS === 'ios' ? 'telprompt:108' : 'tel:108';
-                        Linking.openURL(phoneNumber);
+    const handleAmbulanceCall = async () => {
+        try {
+            Alert.alert(
+                '🚨 Call Ambulance?',
+                'This will immediately dial 108 for emergency medical assistance',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Call 108',
+                        style: 'destructive',
+                        onPress: async () => {
+                            try {
+                                const phoneNumber = Platform.OS === 'ios' ? 'telprompt:108' : 'tel:108';
+                                const canOpen = await Linking.canOpenURL(phoneNumber);
+                                if (canOpen) {
+                                    await Linking.openURL(phoneNumber);
+                                } else {
+                                    throw new Error('Cannot make phone calls on this device');
+                                }
+                            } catch (err) {
+                                logError(err, { context: 'EmergencyServices.handleAmbulanceCall' });
+                                showError('Failed to call ambulance. Please dial 108 manually.');
+                            }
+                        },
                     },
-                },
-            ]
-        );
+                ]
+            );
+        } catch (err) {
+            logError(err, { context: 'EmergencyServices.handleAmbulanceCall' });
+            setError(err.message || 'Failed to initiate ambulance call');
+        }
     };
+
+    const handleRetry = () => {
+        setError(null);
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onDismiss={() => setError(null)}
+                />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient
                 colors={['#EF4444', '#DC2626']}
@@ -391,7 +447,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     emergencyBadge: {
-        backgroundColor: '#10B981',
+        backgroundColor: healthColors.success.main,
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,

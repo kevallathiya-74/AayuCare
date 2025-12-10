@@ -29,6 +29,11 @@ const languageDetector = {
 
             // Fall back to device locale
             const deviceLocale = Localization.locale;
+            if (!deviceLocale) {
+                callback('en'); // Default to English if locale is unavailable
+                return;
+            }
+            
             const languageCode = deviceLocale.split('-')[0];
             
             // Map device locale to supported languages

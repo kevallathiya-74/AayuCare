@@ -9,7 +9,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Card from '../common/Card';
@@ -30,57 +30,57 @@ const HealthMetricCard = ({
                 return {
                     label: 'Heart Rate',
                     icon: 'heart',
-                    color: colors.health.heartRate,
+                    color: healthColors.health.heartRate,
                     gradient: ['#E91E63', '#F06292'],
                 };
             case 'bloodPressure':
                 return {
                     label: 'Blood Pressure',
                     icon: 'water',
-                    color: colors.health.bloodPressure,
+                    color: healthColors.health.bloodPressure,
                     gradient: ['#9C27B0', '#BA68C8'],
                 };
             case 'temperature':
                 return {
                     label: 'Temperature',
                     icon: 'thermometer',
-                    color: colors.health.temperature,
+                    color: healthColors.health.temperature,
                     gradient: ['#FF9800', '#FFB74D'],
                 };
             case 'glucose':
                 return {
                     label: 'Blood Glucose',
                     icon: 'fitness',
-                    color: colors.health.glucose,
+                    color: healthColors.health.glucose,
                     gradient: ['#4CAF50', '#66BB6A'],
                 };
             case 'oxygen':
                 return {
                     label: 'Oxygen Level',
                     icon: 'pulse',
-                    color: colors.health.oxygen,
+                    color: healthColors.health.oxygen,
                     gradient: ['#2196F3', '#42A5F5'],
                 };
             case 'weight':
                 return {
                     label: 'Weight',
                     icon: 'scale',
-                    color: colors.health.weight,
+                    color: healthColors.health.weight,
                     gradient: ['#FF5722', '#FF7043'],
                 };
             case 'steps':
                 return {
                     label: 'Steps',
                     icon: 'walk',
-                    color: colors.health.steps,
+                    color: healthColors.health.steps,
                     gradient: ['#00BCD4', '#26C6DA'],
                 };
             default:
                 return {
                     label: 'Metric',
                     icon: 'analytics',
-                    color: colors.primary.main,
-                    gradient: colors.gradients.primary,
+                    color: healthColors.primary.main,
+                    gradient: healthColors.gradients.primary,
                 };
         }
     };
@@ -100,9 +100,9 @@ const HealthMetricCard = ({
 
     const getTrendColor = () => {
         if (type === 'weight' || type === 'bloodPressure') {
-            return trend === 'down' ? colors.success.main : colors.error.main;
+            return trend === 'down' ? healthColors.success.main : healthColors.error.main;
         }
-        return trend === 'up' ? colors.success.main : colors.error.main;
+        return trend === 'up' ? healthColors.success.main : healthColors.error.main;
     };
 
     return (
@@ -115,7 +115,7 @@ const HealthMetricCard = ({
             >
                 <View style={styles.header}>
                     <View style={styles.iconContainer}>
-                        <Ionicons name={config.icon} size={24} color={colors.neutral.white} />
+                        <Ionicons name={config.icon} size={24} color={healthColors.neutral.white} />
                     </View>
                     <Text style={styles.label}>{config.label}</Text>
                 </View>
@@ -131,7 +131,7 @@ const HealthMetricCard = ({
                             <Ionicons
                                 name={getTrendIcon()}
                                 size={16}
-                                color={colors.neutral.white}
+                                color={healthColors.neutral.white}
                                 style={styles.trendIcon}
                             />
                             <Text style={styles.trendValue}>{trendValue}</Text>
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     },
     gradient: {
         padding: spacing.md,
-        borderRadius: colors.borderRadius.medium,
+        borderRadius: healthColors.borderRadius.medium,
     },
     header: {
         flexDirection: 'row',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     },
     label: {
         ...textStyles.bodyMedium,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         fontWeight: '600',
     },
     content: {
@@ -185,12 +185,12 @@ const styles = StyleSheet.create({
     },
     value: {
         ...textStyles.displayMedium,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         fontWeight: '700',
     },
     unit: {
         ...textStyles.bodyLarge,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         marginLeft: spacing.xs,
         opacity: 0.9,
     },
@@ -200,19 +200,19 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
         paddingHorizontal: spacing.sm,
         paddingVertical: spacing.xs,
-        borderRadius: colors.borderRadius.small,
+        borderRadius: healthColors.borderRadius.small,
     },
     trendIcon: {
         marginRight: spacing.xs,
     },
     trendValue: {
         ...textStyles.bodySmall,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         fontWeight: '600',
     },
     lastUpdated: {
         ...textStyles.caption,
-        color: colors.neutral.white,
+        color: healthColors.neutral.white,
         opacity: 0.8,
         marginTop: spacing.sm,
     },

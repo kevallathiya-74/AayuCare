@@ -10,6 +10,7 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,10 +18,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
+import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicator';
+import ErrorRecovery from '../../components/common/ErrorRecovery';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const PharmacyBillingScreen = ({ navigation }) => {
     const [selectedPayment, setSelectedPayment] = useState('card');
     const [selectedPurchase, setSelectedPurchase] = useState('hospital');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
 
     const prescription = {
         id: 'RX-2024-001',
@@ -43,12 +51,49 @@ const PharmacyBillingScreen = ({ navigation }) => {
         { id: 'cash', icon: 'cash', name: 'Cash', color: '#FF9800' },
     ];
 
-    const handlePayment = () => {
-        alert(`Payment of ₹${total.toFixed(2)} via ${selectedPayment.toUpperCase()} initiated!`);
+    const handlePayment = async () => {
+        try {
+            if (!isConnected) {
+                showError('No internet connection. Please check your network.');
+                return;
+            }
+
+            setLoading(true);
+            setError(null);
+
+            // Simulate payment processing
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            alert(`Payment of ₹${total.toFixed(2)} via ${selectedPayment.toUpperCase()} initiated!`);
+        } catch (err) {
+            logError(err, { context: 'PharmacyBillingScreen.handlePayment', amount: total, method: selectedPayment });
+            setError(err.message || 'Payment failed');
+            showError('Payment failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const handleRetry = () => {
+        setError(null);
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onDismiss={() => setError(null)}
+                />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient
                 colors={['#00897B', '#00695C']}
@@ -225,15 +270,21 @@ const PharmacyBillingScreen = ({ navigation }) => {
                 </View>
 
                 {/* Pay Button */}
-                <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
+                <TouchableOpacity style={styles.payButton} onPress={handlePayment} disabled={loading}>
                     <LinearGradient
                         colors={['#00897B', '#00695C']}
                         style={styles.payGradient}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                     >
-                        <Ionicons name="card" size={24} color="#FFF" />
-                        <Text style={styles.payButtonText}>Pay ₹{total.toFixed(2)}</Text>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <>
+                                <Ionicons name="card" size={24} color="#FFF" />
+                                <Text style={styles.payButtonText}>Pay ₹{total.toFixed(2)}</Text>
+                            </>
+                        )}
                     </LinearGradient>
                 </TouchableOpacity>
 
@@ -343,7 +394,7 @@ const styles = StyleSheet.create({
         width: moderateScale(48),
         height: moderateScale(48),
         borderRadius: moderateScale(24),
-        backgroundColor: '#E0F7FA',
+        backgroundColor: healthColors.info.light,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: indianDesign.spacing.md,
@@ -375,7 +426,7 @@ const styles = StyleSheet.create({
     priceText: {
         fontSize: scaledFontSize(16),
         fontWeight: indianDesign.fontWeight.bold,
-        color: '#00897B',
+        color: healthColors.success.dark,
     },
     purchaseOption: {
         flexDirection: 'row',
@@ -389,8 +440,8 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     purchaseOptionSelected: {
-        borderColor: '#00897B',
-        backgroundColor: '#E0F2F1',
+        borderColor: healthColors.success.dark,
+        backgroundColor: healthColors.success.light,
     },
     purchaseOptionContent: {
         flexDirection: 'row',
@@ -413,7 +464,7 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
     discountBadge: {
-        backgroundColor: '#00897B',
+        backgroundColor: healthColors.success.dark,
         paddingHorizontal: indianDesign.spacing.sm,
         paddingVertical: 4,
         borderRadius: 8,
@@ -444,10 +495,10 @@ const styles = StyleSheet.create({
         color: healthColors.text.primary,
     },
     discountValue: {
-        color: '#4CAF50',
+        color: healthColors.success.main,
     },
     discountTag: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: healthColors.success.main,
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
@@ -470,7 +521,7 @@ const styles = StyleSheet.create({
     billingTotalValue: {
         fontSize: scaledFontSize(20),
         fontWeight: indianDesign.fontWeight.bold,
-        color: '#00897B',
+        color: healthColors.success.dark,
     },
     paymentMethod: {
         flexDirection: 'row',
@@ -483,8 +534,8 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     paymentMethodSelected: {
-        borderColor: '#00897B',
-        backgroundColor: '#E0F2F1',
+        borderColor: healthColors.success.dark,
+        backgroundColor: healthColors.success.light,
     },
     paymentIcon: {
         width: moderateScale(48),
@@ -521,7 +572,7 @@ const styles = StyleSheet.create({
     infoBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#E3F2FD',
+        backgroundColor: healthColors.info.light,
         padding: indianDesign.spacing.md,
         borderRadius: indianDesign.borderRadius.medium,
         gap: indianDesign.spacing.sm,

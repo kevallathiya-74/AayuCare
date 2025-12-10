@@ -3,13 +3,14 @@
  * Export all hospital-related screens
  */
 
-export { default as AdminDashboard } from './AdminDashboard';
-export { default as DoctorDashboard } from './DoctorDashboard';
-export { default as PatientDashboard } from './PatientDashboard';
+export { default as DoctorHomeScreen } from './DoctorHomeScreen';
+export { default as DoctorProfileScreen } from './DoctorProfileScreen';
 export { default as TodaysAppointmentsScreen } from './TodaysAppointmentsScreen';
-export { default as PrescriptionCreationScreen } from './PrescriptionCreationScreen';
+export { default as EnhancedPrescriptionScreen } from './EnhancedPrescriptionScreen';
 export { default as ManageDoctorsScreen } from './ManageDoctorsScreen';
 export { default as ManagePatientsScreen } from './ManagePatientsScreen';
 export { default as AppointmentsScreen } from './AppointmentsScreen';
 export { default as ReportsScreen } from './ReportsScreen';
 export { default as AdminSettingsScreen } from './AdminSettingsScreen';
+export { default as AdminHomeScreen } from './AdminHomeScreen';
+export { default as PatientManagementScreen } from './PatientManagementScreen';

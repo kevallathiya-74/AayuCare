@@ -11,6 +11,7 @@ import {
     ScrollView,
     TouchableOpacity,
     Modal,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,10 +19,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
+import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicator';
+import ErrorRecovery from '../../components/common/ErrorRecovery';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const DiseaseInfoScreen = ({ navigation }) => {
     const [selectedDisease, setSelectedDisease] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
 
     const categories = [
         { icon: 'heart', name: 'Heart', color: '#E91E63', emoji: '❤️' },
@@ -60,18 +68,52 @@ const DiseaseInfoScreen = ({ navigation }) => {
         },
     };
 
-    const handleCategoryPress = (category) => {
-        if (category.name === 'Diabetes') {
-            setSelectedDisease(diseaseDetails.Diabetes);
-            setModalVisible(true);
-        } else {
-            // For other categories, show coming soon message
-            alert(`${category.name} information coming soon!`);
+    const handleCategoryPress = async (category) => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            if (category.name === 'Diabetes') {
+                setSelectedDisease(diseaseDetails.Diabetes);
+                setModalVisible(true);
+            } else {
+                // For other categories, show coming soon message
+                alert(`${category.name} information coming soon!`);
+            }
+        } catch (err) {
+            logError(err, { context: 'DiseaseInfoScreen.handleCategoryPress', category: category.name });
+            setError(err.message || 'Failed to load disease information');
+            showError('Failed to load disease information');
+        } finally {
+            setLoading(false);
         }
     };
 
+    const handleRetry = () => {
+        setError(null);
+    };
+
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onDismiss={() => setError(null)}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
+            {loading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                </View>
+            )}
             {/* Header */}
             <LinearGradient
                 colors={['#7E57C2', '#5E35B1']}
@@ -370,7 +412,7 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#7E57C2',
+        backgroundColor: healthColors.primary.dark,
     },
     topicText: {
         flex: 1,
@@ -502,6 +544,17 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         fontWeight: indianDesign.fontWeight.semibold,
         color: '#FFF',
+    },
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
     },
 });
 

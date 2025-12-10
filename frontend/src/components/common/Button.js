@@ -8,7 +8,7 @@
 import React, { useRef } from 'react';
 import { Pressable, Text, StyleSheet, ActivityIndicator, View, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { 
@@ -107,7 +107,7 @@ const Button = ({
       {loading ? (
         <ActivityIndicator 
           size="small" 
-          color={variant === 'primary' ? colors.neutral.white : colors.primary.main} 
+          color={variant === 'primary' ? healthColors.neutral.white : healthColors.primary.main} 
         />
       ) : (
         <>
@@ -130,7 +130,7 @@ const Button = ({
         {...props}
       >
         <LinearGradient
-          colors={colors.gradients.primary}
+          colors={healthColors.gradients.primary}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
@@ -182,23 +182,23 @@ const styles = StyleSheet.create({
   
   // Variants
   primary: {
-    backgroundColor: colors.primary.main,
+    backgroundColor: healthColors.primary.main,
   },
   secondary: {
-    backgroundColor: colors.background.secondary,
+    backgroundColor: healthColors.background.secondary,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: colors.primary.main,
+    borderColor: healthColors.primary.main,
   },
   text: {
     backgroundColor: 'transparent',
   },
   
   disabled: {
-    backgroundColor: colors.button.disabled,
-    borderColor: colors.button.disabled,
+    backgroundColor: healthColors.button.disabled,
+    borderColor: healthColors.button.disabled,
   },
   
   // Text styles (responsive)
@@ -216,19 +216,19 @@ const styles = StyleSheet.create({
   },
   
   primaryText: {
-    color: colors.neutral.white,
+    color: healthColors.neutral.white,
   },
   secondaryText: {
-    color: colors.text.primary,
+    color: healthColors.text.primary,
   },
   outlineText: {
-    color: colors.primary.main,
+    color: healthColors.primary.main,
   },
   textButtonText: {
-    color: colors.primary.main,
+    color: healthColors.primary.main,
   },
   disabledText: {
-    color: colors.button.disabledText,
+    color: healthColors.button.disabledText,
   },
   
   // Content

@@ -25,6 +25,7 @@ import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { scaledFontSize, moderateScale, getScreenPadding, verticalScale } from '../../utils/responsive';
 import { authService } from '../../services';
 import { setUser, setToken } from '../../store/slices/authSlice';
+import { showError, validateRequiredFields } from '../../utils/errorHandler';
 
 const PatientLoginScreen = ({ navigation }) => {
     const dispatch = useDispatch();
@@ -34,8 +35,10 @@ const PatientLoginScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-        if (!patientId.trim() || !password.trim()) {
-            Alert.alert('Error', 'Please enter patient ID and password');
+        // Validate inputs
+        const validation = validateRequiredFields({ patientId, password });
+        if (!validation.isValid) {
+            showError('Please enter both Patient ID and Password');
             return;
         }
 
@@ -45,7 +48,7 @@ const PatientLoginScreen = ({ navigation }) => {
             
             if (response.user && response.token) {
                 if (response.user.role !== 'patient') {
-                    Alert.alert('Error', 'This login is for patients only');
+                    showError('This login is for patients only. Please use the correct login portal.', 'Access Denied');
                     return;
                 }
 
@@ -54,7 +57,7 @@ const PatientLoginScreen = ({ navigation }) => {
                 navigation.replace('PatientDashboard');
             }
         } catch (error) {
-            Alert.alert('Login Failed', error.message || 'Invalid credentials');
+            showError(error, 'Login Failed');
         } finally {
             setLoading(false);
         }
@@ -264,7 +267,7 @@ const styles = StyleSheet.create({
     infoBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF3E0',
+        backgroundColor: healthColors.background.secondary,
         padding: indianDesign.spacing.md,
         borderRadius: indianDesign.borderRadius.small,
         marginTop: indianDesign.spacing.sm,
@@ -279,7 +282,7 @@ const styles = StyleSheet.create({
     warningBox: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#FFEBEE',
+        backgroundColor: healthColors.error.light,
         padding: indianDesign.spacing.md,
         borderRadius: indianDesign.borderRadius.small,
         marginTop: indianDesign.spacing.lg,
@@ -326,7 +329,7 @@ const styles = StyleSheet.create({
     demoButton: {
         paddingHorizontal: indianDesign.spacing.xl,
         paddingVertical: indianDesign.spacing.sm,
-        backgroundColor: '#00ACC1',
+        backgroundColor: healthColors.info.main,
         borderRadius: indianDesign.borderRadius.small,
     },
     demoButtonText: {

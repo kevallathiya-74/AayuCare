@@ -3,13 +3,14 @@
  * Track steps, sleep, water intake, and stress relief activities
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,8 +18,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
+import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const ActivityTrackerScreen = ({ navigation }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
     const [waterGlasses, setWaterGlasses] = useState(6);
     const targetGlasses = 8;
     
@@ -41,14 +48,54 @@ const ActivityTrackerScreen = ({ navigation }) => {
         { icon: 'musical-notes', name: 'Meditation', duration: '10 min', color: '#2196F3' },
     ];
 
+    useEffect(() => {
+        fetchActivityData();
+    }, []);
+
+    const fetchActivityData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            // TODO: Replace with actual API call
+            // const response = await activityService.getActivityData();
+            // Update state with response data
+        } catch (err) {
+            const errorMessage = 'Failed to load activity data';
+            setError(errorMessage);
+            logError(err, { context: 'ActivityTrackerScreen.fetchActivityData' });
+            showError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRetry = () => {
+        setError(null);
+        fetchActivityData();
+    };
+
     const addWaterGlass = () => {
         if (waterGlasses < targetGlasses) {
             setWaterGlasses(waterGlasses + 1);
         }
     };
 
+    if (error) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <NetworkStatusIndicator />
+                <ErrorRecovery
+                    error={error}
+                    onRetry={handleRetry}
+                    onBack={() => navigation.goBack()}
+                />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient
                 colors={[healthColors.primary.main, healthColors.primary.dark]}

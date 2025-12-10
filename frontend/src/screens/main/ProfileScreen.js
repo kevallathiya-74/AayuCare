@@ -4,7 +4,7 @@
  * User profile with personal information and health data
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -12,11 +12,12 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector, useDispatch } from 'react-redux';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import {
@@ -24,33 +25,40 @@ import {
     Avatar,
     ListItem,
     Button,
+    ErrorRecovery,
+    NetworkStatusIndicator,
 } from '../../components/common';
 import { logoutUser } from '../../store/slices/authSlice';
+import { showConfirmation, showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const ProfileScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth.user);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
 
     const personalInfoItems = [
         {
             title: 'Email',
             subtitle: user?.email || 'Not provided',
-            leftIcon: { name: 'mail', color: colors.primary.main },
+            leftIcon: { name: 'mail', color: healthColors.primary.main },
         },
         {
             title: 'Phone',
             subtitle: user?.phone || 'Not provided',
-            leftIcon: { name: 'call', color: colors.primary.main },
+            leftIcon: { name: 'call', color: healthColors.primary.main },
         },
         {
             title: 'Date of Birth',
             subtitle: user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'Not provided',
-            leftIcon: { name: 'calendar', color: colors.primary.main },
+            leftIcon: { name: 'calendar', color: healthColors.primary.main },
         },
         {
             title: 'Gender',
             subtitle: user?.gender || 'Not provided',
-            leftIcon: { name: 'person', color: colors.primary.main },
+            leftIcon: { name: 'person', color: healthColors.primary.main },
         },
     ];
 
@@ -58,64 +66,78 @@ const ProfileScreen = ({ navigation }) => {
         {
             title: 'Blood Group',
             subtitle: user?.bloodGroup || 'Not provided',
-            leftIcon: { name: 'water', color: colors.health.bloodPressure },
+            leftIcon: { name: 'water', color: healthColors.health.bloodPressure },
         },
         {
             title: 'Height',
             subtitle: user?.height ? `${user.height} cm` : 'Not provided',
-            leftIcon: { name: 'resize', color: colors.primary.main },
+            leftIcon: { name: 'resize', color: healthColors.primary.main },
         },
         {
             title: 'Weight',
             subtitle: user?.weight ? `${user.weight} kg` : 'Not provided',
-            leftIcon: { name: 'fitness', color: colors.health.weight },
+            leftIcon: { name: 'fitness', color: healthColors.health.weight },
         },
     ];
 
     const settingsItems = [
         {
             title: 'Settings',
-            leftIcon: { name: 'settings', color: colors.text.secondary },
+            leftIcon: { name: 'settings', color: healthColors.text.secondary },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => navigation.navigate('Settings'),
         },
         {
             title: 'Help & Support',
-            leftIcon: { name: 'help-circle', color: colors.text.secondary },
+            leftIcon: { name: 'help-circle', color: healthColors.text.secondary },
             rightIcon: { name: 'chevron-forward' },
-            onPress: () => Alert.alert('Coming Soon', 'Help & Support coming soon!'),
+            onPress: () => Alert.alert('Help & Support', 'For assistance, please contact:\n\nEmail: support@aayucare.com\nPhone: 1800-XXX-XXXX'),
         },
         {
             title: 'Privacy Policy',
-            leftIcon: { name: 'shield-checkmark', color: colors.text.secondary },
+            leftIcon: { name: 'shield-checkmark', color: healthColors.text.secondary },
             rightIcon: { name: 'chevron-forward' },
-            onPress: () => Alert.alert('Coming Soon', 'Privacy Policy coming soon!'),
+            onPress: () => Alert.alert('Privacy Policy', 'Your privacy is important to us. Visit our website for full privacy policy details.'),
         },
     ];
 
     const handleLogout = () => {
-        Alert.alert(
-            'Logout',
+        showConfirmation(
             'Are you sure you want to logout?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Logout',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await dispatch(logoutUser());
-                        navigation.reset({
-                            index: 0,
-                            routes: [{ name: 'BoxSelection' }],
-                        });
-                    },
-                },
-            ]
+            async () => {
+                try {
+                    setLoading(true);
+                    await dispatch(logoutUser());
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'BoxSelection' }],
+                    });
+                } catch (err) {
+                    logError(err, 'ProfileScreen.handleLogout');
+                    showError('Failed to logout. Please try again.');
+                } finally {
+                    setLoading(false);
+                }
+            },
+            () => {},
+            'Logout'
         );
     };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
+            {error ? (
+                <ErrorRecovery
+                    error={error}
+                    onRetry={() => setError(null)}
+                />
+            ) : loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading profile...</Text>
+                </View>
+            ) : (
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
@@ -128,7 +150,7 @@ const ProfileScreen = ({ navigation }) => {
                         onPress={() => Alert.alert('Coming Soon', 'Edit profile coming soon!')}
                         variant="outline"
                         size="small"
-                        icon={<Ionicons name="create" size={16} color={colors.primary.main} />}
+                        icon={<Ionicons name="create" size={16} color={healthColors.primary.main} />}
                         style={styles.editButton}
                     >
                         Edit Profile
@@ -165,7 +187,7 @@ const ProfileScreen = ({ navigation }) => {
                     {user?.allergies && user.allergies.length > 0 && (
                         <Card style={styles.healthCard}>
                             <View style={styles.healthCardHeader}>
-                                <Ionicons name="warning" size={20} color={colors.warning.main} />
+                                <Ionicons name="warning" size={20} color={healthColors.warning.main} />
                                 <Text style={styles.healthCardTitle}>Allergies</Text>
                             </View>
                             <View style={styles.tagsContainer}>
@@ -181,7 +203,7 @@ const ProfileScreen = ({ navigation }) => {
                     {user?.medicalConditions && user.medicalConditions.length > 0 && (
                         <Card style={styles.healthCard}>
                             <View style={styles.healthCardHeader}>
-                                <Ionicons name="medkit" size={20} color={colors.primary.main} />
+                                <Ionicons name="medkit" size={20} color={healthColors.primary.main} />
                                 <Text style={styles.healthCardTitle}>Medical Conditions</Text>
                             </View>
                             <View style={styles.tagsContainer}>
@@ -215,8 +237,8 @@ const ProfileScreen = ({ navigation }) => {
                         onPress={handleLogout}
                         variant="outline"
                         fullWidth
-                        icon={<Ionicons name="log-out-outline" size={20} color={colors.error.main} />}
-                        textStyle={{ color: colors.error.main }}
+                        icon={<Ionicons name="log-out-outline" size={20} color={healthColors.error.main} />}
+                        textStyle={{ color: healthColors.error.main }}
                     >
                         Logout
                     </Button>
@@ -224,6 +246,7 @@ const ProfileScreen = ({ navigation }) => {
 
                 <View style={styles.bottomSpacing} />
             </ScrollView>
+            )}
         </SafeAreaView>
     );
 };
@@ -231,7 +254,7 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.secondary,
     },
     scrollView: {
         flex: 1,
@@ -239,11 +262,11 @@ const styles = StyleSheet.create({
     header: {
         alignItems: 'center',
         paddingVertical: spacing.xl,
-        backgroundColor: colors.background.primary,
+        backgroundColor: healthColors.background.primary,
     },
     name: {
         ...textStyles.h2,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginTop: spacing.md,
         marginBottom: spacing.md,
     },
@@ -256,7 +279,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         ...textStyles.h3,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: spacing.md,
     },
     healthCard: {
@@ -270,7 +293,7 @@ const styles = StyleSheet.create({
     healthCardTitle: {
         ...textStyles.bodyLarge,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginLeft: spacing.sm,
     },
     tagsContainer: {
@@ -279,19 +302,30 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
     tag: {
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.secondary,
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.sm,
-        borderRadius: colors.borderRadius.medium,
+        borderRadius: healthColors.borderRadius.medium,
         marginRight: spacing.sm,
         marginBottom: spacing.sm,
     },
     tagText: {
         ...textStyles.bodyMedium,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
     },
     bottomSpacing: {
         height: spacing.xl,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.xl,
+    },
+    loadingText: {
+        ...textStyles.bodyMedium,
+        color: healthColors.text.secondary,
+        marginTop: spacing.md,
     },
 });
 

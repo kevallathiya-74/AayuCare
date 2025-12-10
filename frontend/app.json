@@ -41,16 +41,16 @@
             "favicon": "./assets/images/aayucare-logo.png",
             "bundler": "metro"
         },
+        "updates": {
+            "enabled": false,
+            "checkAutomatically": "ON_ERROR_RECOVERY",
+            "fallbackToCacheTimeout": 0
+        },
         "extra": {
             "eas": {
                 "projectId": "aayucare-healthcare-app"
             },
             "backendUrl": "https://gtev3k0-kevallathiya-8081.exp.direct/"
-        },
-        "plugins": [
-            "expo-font",
-            "expo-asset",
-            "expo-secure-store"
-        ]
+        }
     }
 }

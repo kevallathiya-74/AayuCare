@@ -12,50 +12,69 @@ import {
     StyleSheet,
     ScrollView,
     Switch,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import {
     Card,
     ListItem,
+    ErrorRecovery,
+    NetworkStatusIndicator,
 } from '../../components/common';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const SettingsScreen = ({ navigation }) => {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [appointmentReminders, setAppointmentReminders] = useState(true);
     const [medicationReminders, setMedicationReminders] = useState(true);
     const [healthTips, setHealthTips] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const isConnected = useNetworkStatus();
 
-    const renderSwitch = (value, onValueChange) => (
+    const handleSettingChange = async (setter, value, settingName) => {
+        try {
+            setter(value);
+            // TODO: Save setting to API
+        } catch (err) {
+            logError(err, `SettingsScreen.handleSettingChange.${settingName}`);
+            showError('Failed to update setting');
+            setter(!value); // Revert on error
+        }
+    };
+
+    const renderSwitch = (value, onValueChange, settingName) => (
         <Switch
             value={value}
-            onValueChange={onValueChange}
+            onValueChange={(val) => handleSettingChange(onValueChange, val, settingName)}
             trackColor={{
-                false: colors.neutral.gray300,
-                true: colors.primary.light,
+                false: healthColors.neutral.gray300,
+                true: healthColors.primary.light,
             }}
-            thumbColor={value ? colors.primary.main : colors.neutral.white}
+            thumbColor={value ? healthColors.primary.main : healthColors.neutral.white}
         />
     );
 
     const accountSettings = [
         {
             title: 'Edit Profile',
-            leftIcon: { name: 'person', color: colors.primary.main },
+            leftIcon: { name: 'person', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
         {
             title: 'Change Password',
-            leftIcon: { name: 'lock-closed', color: colors.primary.main },
+            leftIcon: { name: 'lock-closed', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
         {
             title: 'Linked Accounts',
-            leftIcon: { name: 'link', color: colors.primary.main },
+            leftIcon: { name: 'link', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
@@ -64,19 +83,19 @@ const SettingsScreen = ({ navigation }) => {
     const privacySettings = [
         {
             title: 'Privacy Policy',
-            leftIcon: { name: 'shield-checkmark', color: colors.primary.main },
+            leftIcon: { name: 'shield-checkmark', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
         {
             title: 'Terms of Service',
-            leftIcon: { name: 'document-text', color: colors.primary.main },
+            leftIcon: { name: 'document-text', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
         {
             title: 'Data & Privacy',
-            leftIcon: { name: 'eye-off', color: colors.primary.main },
+            leftIcon: { name: 'eye-off', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
@@ -85,19 +104,19 @@ const SettingsScreen = ({ navigation }) => {
     const aboutSettings = [
         {
             title: 'About AayuCare',
-            leftIcon: { name: 'information-circle', color: colors.primary.main },
+            leftIcon: { name: 'information-circle', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
         {
             title: 'Help & Support',
-            leftIcon: { name: 'help-circle', color: colors.primary.main },
+            leftIcon: { name: 'help-circle', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
         {
             title: 'Rate Us',
-            leftIcon: { name: 'star', color: colors.warning.main },
+            leftIcon: { name: 'star', color: healthColors.warning.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
         },
@@ -105,6 +124,18 @@ const SettingsScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
+            {error ? (
+                <ErrorRecovery
+                    error={error}
+                    onRetry={() => setError(null)}
+                />
+            ) : loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading settings...</Text>
+                </View>
+            ) : (
             <ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
@@ -120,7 +151,7 @@ const SettingsScreen = ({ navigation }) => {
                                     Enable all notifications
                                 </Text>
                             </View>
-                            {renderSwitch(notificationsEnabled, setNotificationsEnabled)}
+                            {renderSwitch(notificationsEnabled, setNotificationsEnabled, 'pushNotifications')}
                         </View>
 
                         <View style={styles.divider} />
@@ -132,7 +163,7 @@ const SettingsScreen = ({ navigation }) => {
                                     Get notified before appointments
                                 </Text>
                             </View>
-                            {renderSwitch(appointmentReminders, setAppointmentReminders)}
+                            {renderSwitch(appointmentReminders, setAppointmentReminders, 'appointmentReminders')}
                         </View>
 
                         <View style={styles.divider} />
@@ -144,7 +175,7 @@ const SettingsScreen = ({ navigation }) => {
                                     Reminders to take medications
                                 </Text>
                             </View>
-                            {renderSwitch(medicationReminders, setMedicationReminders)}
+                            {renderSwitch(medicationReminders, setMedicationReminders, 'medicationReminders')}
                         </View>
 
                         <View style={styles.divider} />
@@ -156,7 +187,7 @@ const SettingsScreen = ({ navigation }) => {
                                     Daily health tips and insights
                                 </Text>
                             </View>
-                            {renderSwitch(healthTips, setHealthTips)}
+                            {renderSwitch(healthTips, setHealthTips, 'healthTips')}
                         </View>
                     </Card>
                 </View>
@@ -210,6 +241,7 @@ const SettingsScreen = ({ navigation }) => {
 
                 <View style={styles.bottomSpacing} />
             </ScrollView>
+            )}
         </SafeAreaView>
     );
 };
@@ -217,7 +249,7 @@ const SettingsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.secondary,
     },
     scrollView: {
         flex: 1,
@@ -228,7 +260,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         ...textStyles.h3,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: spacing.md,
     },
     settingItem: {
@@ -245,16 +277,16 @@ const styles = StyleSheet.create({
     settingTitle: {
         ...textStyles.bodyLarge,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         marginBottom: 2,
     },
     settingDescription: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
     },
     divider: {
         height: 1,
-        backgroundColor: colors.neutral.gray200,
+        backgroundColor: healthColors.neutral.gray200,
         marginLeft: spacing.md,
     },
     versionContainer: {
@@ -263,10 +295,21 @@ const styles = StyleSheet.create({
     },
     versionText: {
         ...textStyles.bodySmall,
-        color: colors.text.tertiary,
+        color: healthColors.text.tertiary,
     },
     bottomSpacing: {
         height: spacing.xl,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: spacing.xl,
+    },
+    loadingText: {
+        ...textStyles.bodyMedium,
+        color: healthColors.text.secondary,
+        marginTop: spacing.md,
     },
 });
 

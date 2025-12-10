@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import {
@@ -25,15 +25,21 @@ import {
     Tabs,
     EmptyState,
     LoadingOverlay,
+    ErrorRecovery,
+    NetworkStatusIndicator,
 } from '../../components/common';
 import { getPatientMedicalRecords } from '../../services/medicalRecord.service';
+import { showError, logError } from '../../utils/errorHandler';
+import { useNetworkStatus } from '../../utils/offlineHandler';
 
 const MedicalRecordsScreen = ({ navigation }) => {
     const [activeTab, setActiveTab] = useState(0);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
     const user = useSelector((state) => state.auth.user);
+    const isConnected = useNetworkStatus();
 
     const tabs = [
         { label: 'All Records' },
@@ -54,14 +60,23 @@ const MedicalRecordsScreen = ({ navigation }) => {
     }, [activeTab]);
 
     const fetchRecords = async () => {
+        if (!user?._id) {
+            const err = new Error('User information not found. Please login again.');
+            setError(err);
+            showError(err.message);
+            return;
+        }
+
         try {
             setLoading(true);
+            setError(null);
             const recordType = recordTypeMap[activeTab];
             const data = await getPatientMedicalRecords(user._id, { recordType });
             setRecords(data.medicalRecords || []);
-        } catch (error) {
-            console.error('Error fetching records:', error);
-            Alert.alert('Error', 'Failed to load medical records');
+        } catch (err) {
+            logError(err, 'MedicalRecordsScreen - fetchRecords');
+            setError(err);
+            showError(err.message || 'Failed to load medical records');
         } finally {
             setLoading(false);
         }
@@ -86,7 +101,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
             case 'imaging':
                 return { name: 'image-outline', color: '#D32F2F' };
             default:
-                return { name: 'file-document', color: colors.text.secondary };
+                return { name: 'file-document', color: healthColors.text.secondary };
         }
     };
 
@@ -114,7 +129,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
                                 </Text>
                             )}
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />
+                        <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
                     </View>
 
                     {item.description && (
@@ -125,7 +140,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
                     {item.files && item.files.length > 0 && (
                         <View style={styles.filesContainer}>
-                            <MaterialCommunityIcons name="paperclip" size={16} color={colors.text.secondary} />
+                            <MaterialCommunityIcons name="paperclip" size={16} color={healthColors.text.secondary} />
                             <Text style={styles.filesText}>
                                 {item.files.length} file{item.files.length > 1 ? 's' : ''} attached
                             </Text>
@@ -137,11 +152,11 @@ const MedicalRecordsScreen = ({ navigation }) => {
                             <MaterialCommunityIcons
                                 name="alert-circle"
                                 size={16}
-                                color={item.aiAnalysis.riskScore > 70 ? colors.error.main : colors.warning.main}
+                                color={item.aiAnalysis.riskScore > 70 ? healthColors.error.main : healthColors.warning.main}
                             />
                             <Text style={[
                                 styles.riskText,
-                                { color: item.aiAnalysis.riskScore > 70 ? colors.error.main : colors.warning.main }
+                                { color: item.aiAnalysis.riskScore > 70 ? healthColors.error.main : healthColors.warning.main }
                             ]}>
                                 Risk Score: {item.aiAnalysis.riskScore}/100
                             </Text>
@@ -154,6 +169,8 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <NetworkStatusIndicator />
+            
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Medical Records</Text>
                 <Text style={styles.headerSubtitle}>Your complete health history</Text>
@@ -161,8 +178,16 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
             <Tabs tabs={tabs} activeIndex={activeTab} onChange={setActiveTab} />
 
-            <FlatList
-                data={records}
+            {error ? (
+                <ErrorRecovery
+                    error={error}
+                    onRetry={fetchRecords}
+                    onGoBack={() => navigation.goBack()}
+                    context="loading medical records"
+                />
+            ) : (
+                <FlatList
+                    data={records}
                 renderItem={renderRecord}
                 keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContent}
@@ -179,7 +204,8 @@ const MedicalRecordsScreen = ({ navigation }) => {
                         />
                     )
                 }
-            />
+                />
+            )}
 
             <LoadingOverlay visible={loading} message="Loading records..." />
         </SafeAreaView>
@@ -189,20 +215,20 @@ const MedicalRecordsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background.secondary,
+        backgroundColor: healthColors.background.secondary,
     },
     header: {
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.lg,
-        backgroundColor: colors.background.primary,
+        backgroundColor: healthColors.background.primary,
     },
     headerTitle: {
         ...textStyles.h2,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
     },
     headerSubtitle: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginTop: 4,
     },
     listContent: {
@@ -231,21 +257,21 @@ const styles = StyleSheet.create({
     recordTitle: {
         ...textStyles.bodyLarge,
         fontWeight: '600',
-        color: colors.text.primary,
+        color: healthColors.text.primary,
     },
     recordDate: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginTop: 2,
     },
     doctorName: {
         ...textStyles.caption,
-        color: colors.primary.main,
+        color: healthColors.primary.main,
         marginTop: 2,
     },
     description: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginTop: spacing.sm,
     },
     filesContainer: {
@@ -254,11 +280,11 @@ const styles = StyleSheet.create({
         marginTop: spacing.sm,
         paddingTop: spacing.sm,
         borderTopWidth: 1,
-        borderTopColor: colors.neutral.gray200,
+        borderTopColor: healthColors.neutral.gray200,
     },
     filesText: {
         ...textStyles.bodySmall,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         marginLeft: spacing.xs,
     },
     riskContainer: {

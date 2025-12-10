@@ -8,7 +8,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Button from './Button';
@@ -43,7 +43,7 @@ const EmptyState = ({
     return (
         <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }, style]}>
             <View style={styles.iconContainer}>
-                <Ionicons name={icon} size={80} color={colors.neutral.gray300} />
+                <Ionicons name={icon} size={80} color={healthColors.neutral.gray300} />
             </View>
 
             <Text style={styles.title}>{title}</Text>
@@ -74,13 +74,13 @@ const styles = StyleSheet.create({
     },
     title: {
         ...textStyles.h3,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         textAlign: 'center',
         marginBottom: spacing.sm,
     },
     message: {
         ...textStyles.bodyMedium,
-        color: colors.text.secondary,
+        color: healthColors.text.secondary,
         textAlign: 'center',
         marginBottom: spacing.lg,
     },

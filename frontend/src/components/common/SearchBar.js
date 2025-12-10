@@ -15,7 +15,7 @@ import {
     Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import colors from '../../theme/colors';
+import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 
@@ -35,7 +35,7 @@ const SearchBar = ({
 
     const borderColor = borderColorAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [colors.input.border, colors.input.borderFocused],
+        outputRange: [healthColors.input.border, healthColors.input.borderFocused],
     });
 
     const handleFocus = () => {
@@ -67,7 +67,7 @@ const SearchBar = ({
             <Ionicons
                 name="search"
                 size={20}
-                color={isFocused ? colors.primary.main : colors.text.tertiary}
+                color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
                 style={styles.searchIcon}
             />
 
@@ -77,26 +77,26 @@ const SearchBar = ({
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 placeholder={placeholder}
-                placeholderTextColor={colors.input.placeholder}
+                placeholderTextColor={healthColors.input.placeholder}
                 style={styles.input}
                 returnKeyType="search"
             />
 
             {value?.length > 0 && (
                 <TouchableOpacity onPress={handleClear} style={styles.iconButton}>
-                    <Ionicons name="close-circle" size={20} color={colors.text.tertiary} />
+                    <Ionicons name="close-circle" size={20} color={healthColors.text.tertiary} />
                 </TouchableOpacity>
             )}
 
             {showVoice && !value && (
                 <TouchableOpacity style={styles.iconButton}>
-                    <Ionicons name="mic" size={20} color={colors.text.tertiary} />
+                    <Ionicons name="mic" size={20} color={healthColors.text.tertiary} />
                 </TouchableOpacity>
             )}
 
             {showFilter && (
                 <TouchableOpacity onPress={onFilterPress} style={styles.filterButton}>
-                    <Ionicons name="options" size={20} color={colors.primary.main} />
+                    <Ionicons name="options" size={20} color={healthColors.primary.main} />
                 </TouchableOpacity>
             )}
         </Animated.View>
@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.input.background,
-        borderRadius: colors.borderRadius.medium,
+        backgroundColor: healthColors.input.background,
+        borderRadius: healthColors.borderRadius.medium,
         borderWidth: 1,
         paddingHorizontal: spacing.md,
         height: 48,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         ...textStyles.bodyMedium,
-        color: colors.text.primary,
+        color: healthColors.text.primary,
         paddingVertical: 0,
     },
     iconButton: {
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
         padding: spacing.xs,
         marginLeft: spacing.sm,
         borderLeftWidth: 1,
-        borderLeftColor: colors.neutral.gray200,
+        borderLeftColor: healthColors.neutral.gray200,
         paddingLeft: spacing.md,
     },
 });

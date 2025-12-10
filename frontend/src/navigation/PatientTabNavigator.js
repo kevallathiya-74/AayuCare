@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import { healthColors } from '../theme/healthColors';
 
 // Patient Screens
-import PatientDashboard from '../screens/hospital/PatientDashboard';
+import PatientDashboard from '../screens/patient/PatientDashboard';
 import MyAppointmentsScreen from '../screens/patient/MyAppointmentsScreen';
 import MyReportsScreen from '../screens/patient/MyReportsScreen';
 import NotificationsScreen from '../screens/patient/NotificationsScreen';
@@ -31,13 +31,13 @@ const PatientTabNavigator = () => {
                     let iconName;
 
                     if (route.name === 'Dashboard') {
-                        iconName = focused ? 'grid' : 'grid-outline';
-                    } else if (route.name === 'MyAppointments') {
-                        iconName = focused ? 'calendar' : 'calendar-outline';
-                    } else if (route.name === 'MyReports') {
-                        iconName = focused ? 'document-text' : 'document-text-outline';
-                    } else if (route.name === 'Notifications') {
-                        iconName = focused ? 'notifications' : 'notifications-outline';
+                        iconName = focused ? 'home' : 'home-outline';
+                    } else if (route.name === 'Health') {
+                        iconName = focused ? 'fitness' : 'fitness-outline';
+                    } else if (route.name === 'Info') {
+                        iconName = focused ? 'library' : 'library-outline';
+                    } else if (route.name === 'More') {
+                        iconName = focused ? 'apps' : 'apps-outline';
                     }
 
                     return <Ionicons name={iconName} size={size} color={color} />;
@@ -72,26 +72,24 @@ const PatientTabNavigator = () => {
                 }}
             />
             <Tab.Screen
-                name="MyAppointments"
-                component={MyAppointmentsScreen}
+                name="Health"
+                component={ActivityTrackerScreen}
                 options={{
-                    tabBarLabel: 'Appointments',
-                    tabBarBadge: 2,
+                    tabBarLabel: 'Health',
                 }}
             />
             <Tab.Screen
-                name="MyReports"
-                component={MyReportsScreen}
+                name="Info"
+                component={DiseaseInfoScreen}
                 options={{
-                    tabBarLabel: 'Reports',
+                    tabBarLabel: 'Info',
                 }}
             />
             <Tab.Screen
-                name="Notifications"
+                name="More"
                 component={NotificationsScreen}
                 options={{
-                    tabBarLabel: 'Alerts',
-                    tabBarBadge: 3,
+                    tabBarLabel: 'More',
                 }}
             />
         </Tab.Navigator>
