@@ -39,7 +39,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const user = useSelector((state) => state.auth.user);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
 
     const tabs = [
         { label: 'All Records' },

@@ -4,6 +4,7 @@
  */
 
 import api from './api';
+import { logError } from '../utils/errorHandler';
 
 class AppointmentService {
     /**
@@ -15,12 +16,40 @@ class AppointmentService {
     }
 
     /**
+     * Get all appointments (admin only)
+     */
+    async getAllAppointments(filters = {}) {
+        try {
+            const params = new URLSearchParams(filters).toString();
+            const response = await api.get(`/appointments/all?${params}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'AppointmentService.getAllAppointments' });
+            // Fallback to regular appointments if /all endpoint doesn't exist
+            return this.getAppointments(filters);
+        }
+    }
+
+    /**
      * Get all appointments for current user
      */
     async getAppointments(filters = {}) {
         const params = new URLSearchParams(filters).toString();
         const response = await api.get(`/appointments?${params}`);
         return response.data;
+    }
+
+    /**
+     * Get appointments for a specific patient
+     */
+    async getPatientAppointments(patientId) {
+        try {
+            const response = await api.get(`/appointments/patient/${patientId}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'AppointmentService.getPatientAppointments', patientId });
+            throw error;
+        }
     }
 
     /**

@@ -4,7 +4,7 @@
  * Clear, reassuring design with zero medical jargon
  */
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import {
     Platform,
     Alert,
     Dimensions,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,13 +34,13 @@ import {
 
 const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.auth);
+    const { user, loading } = useSelector((state) => state.auth);
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         await dispatch(logoutUser());
-    };
+    }, [dispatch]);
 
-    const actionCards = [
+    const actionCards = useMemo(() => [
         {
             title: 'Book Appointment',
             icon: 'calendar',
@@ -61,7 +62,7 @@ const PatientDashboard = ({ navigation }) => {
         },
         {
             title: 'AI Health Assistant',
-            icon: 'chatbot',
+            icon: 'chatbubbles',
             iconColor: healthColors.secondary.main,
             onPress: () => navigation.navigate('AIHealthAssistant'),
         },
@@ -77,7 +78,7 @@ const PatientDashboard = ({ navigation }) => {
             iconColor: '#00897B',
             onPress: () => navigation.navigate('HealthMetrics'),
         },
-    ];
+    ], [navigation]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -87,7 +88,12 @@ const PatientDashboard = ({ navigation }) => {
             <View style={styles.header}>
                 {/* Top Header with Icons */}
                 <View style={styles.headerTop}>
-                    <TouchableOpacity style={styles.iconButton}>
+                    <TouchableOpacity 
+                        style={styles.iconButton}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open menu"
+                        accessibilityHint="Opens the navigation menu"
+                    >
                         <Ionicons name="menu" size={24} color={healthColors.text.primary} />
                     </TouchableOpacity>
                     <Text style={styles.appTitle}>AayuCare</Text>
@@ -95,6 +101,9 @@ const PatientDashboard = ({ navigation }) => {
                         <TouchableOpacity 
                             style={styles.iconButton}
                             onPress={() => navigation.navigate('Notifications')}
+                            accessibilityRole="button"
+                            accessibilityLabel="Notifications"
+                            accessibilityHint="Opens notification list. You have 3 unread notifications"
                         >
                             <Ionicons name="notifications-outline" size={24} color={healthColors.text.primary} />
                             <View style={styles.notificationBadge}>
@@ -104,6 +113,9 @@ const PatientDashboard = ({ navigation }) => {
                         <TouchableOpacity 
                             style={styles.iconButton}
                             onPress={handleLogout}
+                            accessibilityRole="button"
+                            accessibilityLabel="Logout"
+                            accessibilityHint="Logs you out of your account"
                         >
                             <Ionicons name="person-circle-outline" size={24} color={healthColors.text.primary} />
                         </TouchableOpacity>
@@ -112,10 +124,19 @@ const PatientDashboard = ({ navigation }) => {
 
                 {/* Patient Info */}
                 <View style={styles.patientInfoSection}>
-                    <Text style={styles.namasteGreeting}>Namaste, {user?.name || 'Raj Patel'} 🙏</Text>
-                    <Text style={styles.patientDetails}>
-                        ID: {user?.userId || 'P-1234'}  Age: {user?.age || '45'}  Blood: {user?.bloodGroup || 'O+'}
-                    </Text>
+                    {!user || loading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="small" color={healthColors.primary.main} />
+                            <Text style={styles.loadingText}>Loading profile...</Text>
+                        </View>
+                    ) : (
+                        <>
+                            <Text style={styles.namasteGreeting}>Namaste, {user.name} 🙏</Text>
+                            <Text style={styles.patientDetails}>
+                                ID: {user.userId}  Age: {user.age}  Blood: {user.bloodGroup || 'N/A'}
+                            </Text>
+                        </>
+                    )}
                 </View>
 
                 {/* Health Status Card */}
@@ -143,6 +164,9 @@ const PatientDashboard = ({ navigation }) => {
                             style={[styles.emergencyButton, styles.ambulanceButton]}
                             onPress={() => navigation.navigate('Emergency')}
                             activeOpacity={0.8}
+                            accessibilityRole="button"
+                            accessibilityLabel="Call ambulance"
+                            accessibilityHint="Initiates emergency ambulance service with one click"
                         >
                             <Text style={styles.emergencyIcon}>🚑</Text>
                             <Text style={styles.emergencyButtonTitle}>CALL AMBULANCE</Text>
@@ -152,6 +176,9 @@ const PatientDashboard = ({ navigation }) => {
                             style={[styles.emergencyButton, styles.doctorButton]}
                             onPress={() => Alert.alert('Emergency Helpline', 'Calling doctor helpline...')}
                             activeOpacity={0.8}
+                            accessibilityRole="button"
+                            accessibilityLabel="Call doctor helpline"
+                            accessibilityHint="Calls emergency doctor helpline number"
                         >
                             <Text style={styles.emergencyIcon}>📞</Text>
                             <Text style={styles.emergencyButtonTitle}>CALL DOCTOR</Text>
@@ -410,6 +437,16 @@ const styles = StyleSheet.create({
         width: '48%',
         aspectRatio: 1.2,
         marginBottom: moderateScale(12),
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+    },
+    loadingText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        fontWeight: '500',
     },
 });
 

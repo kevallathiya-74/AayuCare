@@ -3,7 +3,7 @@
  * Profile management for doctors
  */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,6 +12,8 @@ import {
     TouchableOpacity,
     StatusBar,
     Alert,
+    ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,10 +28,46 @@ import {
 } from '../../utils/responsive';
 import Avatar from '../../components/common/Avatar';
 import { logoutUser } from '../../store/slices/authSlice';
+import { doctorService } from '../../services';
+import { logError } from '../../utils/errorHandler';
 
 const DoctorProfileScreen = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
+    const [stats, setStats] = useState({
+        totalPatients: 0,
+        rating: 0,
+        yearsExperience: 0,
+    });
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchProfileStats = useCallback(async () => {
+        try {
+            const response = await doctorService.getProfileStats();
+            if (response?.success) {
+                setStats({
+                    totalPatients: response.data.totalPatients || 0,
+                    rating: response.data.averageRating || 0,
+                    yearsExperience: response.data.yearsExperience || 0,
+                });
+            }
+        } catch (err) {
+            logError(err, 'DoctorProfileScreen.fetchProfileStats');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchProfileStats();
+    }, [fetchProfileStats]);
+
+    const handleRefresh = useCallback(() => {
+        setRefreshing(true);
+        fetchProfileStats();
+    }, [fetchProfileStats]);
 
     const handleLogout = () => {
         Alert.alert(
@@ -51,31 +89,31 @@ const DoctorProfileScreen = ({ navigation }) => {
             id: 1,
             title: 'Edit Profile',
             icon: 'create-outline',
-            onPress: () => Alert.alert('Edit Profile', 'Feature coming soon'),
+            onPress: () => navigation.navigate('EditProfile'),
         },
         {
             id: 2,
             title: 'Schedule & Availability',
             icon: 'calendar-outline',
-            onPress: () => Alert.alert('Schedule', 'Manage your availability'),
+            onPress: () => navigation.navigate('ManageSchedule'),
         },
         {
             id: 3,
             title: 'Consultation History',
             icon: 'time-outline',
-            onPress: () => Alert.alert('History', 'View consultation history'),
+            onPress: () => navigation.navigate('ConsultationHistory'),
         },
         {
             id: 4,
             title: 'Settings',
             icon: 'settings-outline',
-            onPress: () => Alert.alert('Settings', 'App settings'),
+            onPress: () => navigation.navigate('Settings'),
         },
         {
             id: 5,
             title: 'Help & Support',
             icon: 'help-circle-outline',
-            onPress: () => Alert.alert('Support', 'Contact: 1800-XXX-XXXX'),
+            onPress: () => navigation.navigate('Support'),
         },
     ];
 
@@ -83,34 +121,72 @@ const DoctorProfileScreen = ({ navigation }) => {
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.main} />
             
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+            >
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>My Profile</Text>
                 </View>
 
                 {/* Profile Card */}
-                <View style={styles.profileCard}>
+                <View 
+                    style={styles.profileCard}
+                    accessible={true}
+                    accessibilityLabel={`Profile of Dr. ${user?.name || 'Doctor'}, ${user?.specialization || 'Specialist'}`}
+                >
                     <Avatar size={80} name={user?.name || 'Doctor'} />
                     <View style={styles.profileInfo}>
-                        <Text style={styles.doctorName}>Dr. {user?.name || 'Shah'}</Text>
-                        <Text style={styles.specialization}>Cardiologist • OPD 3</Text>
-                        <Text style={styles.doctorId}>ID: {user?.employeeId || 'DOC001'}</Text>
+                        <Text style={styles.doctorName}>Dr. {user?.name || 'Doctor'}</Text>
+                        <Text style={styles.specialization}>{user?.specialization || 'Specialist'} • {user?.department || 'OPD'}</Text>
+                        <Text style={styles.doctorId}>ID: {user?.employeeId || user?._id?.slice(-6) || 'N/A'}</Text>
                     </View>
                     
                     <View style={styles.statsRow}>
-                        <View style={styles.statBox}>
-                            <Text style={styles.statValue}>156</Text>
+                        <View 
+                            style={styles.statBox}
+                            accessible={true}
+                            accessibilityLabel={`${loading ? 'Loading' : stats.totalPatients} patients`}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                            ) : (
+                                <Text style={styles.statValue}>{stats.totalPatients}</Text>
+                            )}
                             <Text style={styles.statLabel}>Patients</Text>
                         </View>
                         <View style={styles.statDivider} />
-                        <View style={styles.statBox}>
-                            <Text style={styles.statValue}>4.8</Text>
+                        <View 
+                            style={styles.statBox}
+                            accessible={true}
+                            accessibilityLabel={`${loading ? 'Loading' : stats.rating} star rating`}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                            ) : (
+                                <Text style={styles.statValue}>{stats.rating.toFixed(1)}</Text>
+                            )}
                             <Text style={styles.statLabel}>Rating</Text>
                         </View>
                         <View style={styles.statDivider} />
-                        <View style={styles.statBox}>
-                            <Text style={styles.statValue}>15</Text>
+                        <View 
+                            style={styles.statBox}
+                            accessible={true}
+                            accessibilityLabel={`${loading ? 'Loading' : stats.yearsExperience} years of experience`}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                            ) : (
+                                <Text style={styles.statValue}>{stats.yearsExperience}</Text>
+                            )}
                             <Text style={styles.statLabel}>Years Exp</Text>
                         </View>
                     </View>
@@ -124,6 +200,8 @@ const DoctorProfileScreen = ({ navigation }) => {
                             style={styles.optionItem}
                             onPress={option.onPress}
                             activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel={option.title}
                         >
                             <View style={styles.optionLeft}>
                                 <View style={styles.optionIconContainer}>
@@ -150,6 +228,8 @@ const DoctorProfileScreen = ({ navigation }) => {
                         style={styles.logoutButton}
                         onPress={handleLogout}
                         activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Logout from the app"
                     >
                         <Ionicons name="log-out-outline" size={22} color={healthColors.error} />
                         <Text style={styles.logoutText}>Logout</Text>

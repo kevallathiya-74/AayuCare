@@ -4,7 +4,7 @@
  * Reschedule/cancel options
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -13,62 +13,69 @@ import {
     TouchableOpacity,
     StatusBar,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import { verticalScale } from '../../utils/responsive';
+import appointmentService from '../../services/appointment.service';
 
 const MyAppointmentsScreen = ({ navigation }) => {
     const [selectedTab, setSelectedTab] = useState('upcoming');
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const [appointments, setAppointments] = useState([]);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
+    const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        fetchAppointments();
-    }, []);
+        if (user?._id) {
+            fetchAppointments();
+        }
+    }, [user]);
 
-    const fetchAppointments = async () => {
+    const fetchAppointments = useCallback(async () => {
+        if (!user?._id) {
+            setError('User not authenticated');
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
             
-            // Mock appointments - replace with actual API call
-            const mockData = [
-                {
-                    id: '1',
-                    doctorName: 'Dr. Sharma',
-                    specialization: 'Cardiologist',
-                    date: 'Dec 8, 2025',
-                    time: '10:00 AM',
-                    status: 'confirmed',
-                    type: 'upcoming',
-                },
-                {
-                    id: '2',
-                    doctorName: 'Dr. Patel',
-                    specialization: 'General Physician',
-                    date: 'Dec 10, 2025',
-                    time: '02:30 PM',
-                    status: 'scheduled',
-                    type: 'upcoming',
-                },
-            ];
+            const response = await appointmentService.getAppointments({
+                patientId: user.userId,
+                status: selectedTab === 'upcoming' ? 'scheduled,confirmed' : 'completed,cancelled',
+            });
             
-            setAppointments(mockData);
+            if (response.success) {
+                setAppointments(response.data || []);
+            } else {
+                throw new Error(response.message || 'Failed to load appointments');
+            }
         } catch (err) {
-            logError(err, 'MyAppointmentsScreen - fetchAppointments');
-            setError(err);
-            showError(err.message || 'Failed to load appointments');
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to load appointments';
+            logError(err, { context: 'MyAppointmentsScreen.fetchAppointments', userId: user?.userId });
+            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedTab, user]);
+
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchAppointments();
+        setRefreshing(false);
+    }, [fetchAppointments]);
 
     const renderAppointment = ({ item }) => (
         <View style={styles.appointmentCard}>
@@ -170,9 +177,27 @@ const MyAppointmentsScreen = ({ navigation }) => {
                 <FlatList
                     data={appointments}
                     renderItem={renderAppointment}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => item._id || item.id}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={handleRefresh}
+                            colors={[healthColors.primary.main]}
+                            tintColor={healthColors.primary.main}
+                        />
+                    }
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="calendar-outline" size={64} color={healthColors.text.tertiary} />
+                            <Text style={styles.emptyText}>
+                                {selectedTab === 'upcoming' 
+                                    ? 'No upcoming appointments' 
+                                    : 'No past appointments'}
+                            </Text>
+                        </View>
+                    }
                 />
             )}
         </SafeAreaView>
@@ -331,6 +356,18 @@ const styles = StyleSheet.create({
     loadingText: {
         fontSize: indianDesign.fontSize.medium,
         color: healthColors.text.secondary,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: verticalScale(80),
+        gap: indianDesign.spacing.md,
+    },
+    emptyText: {
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
+        textAlign: 'center',
     },
 });
 

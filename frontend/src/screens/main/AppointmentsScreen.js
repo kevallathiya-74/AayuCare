@@ -32,7 +32,7 @@ const AppointmentsScreen = ({ navigation }) => {
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
 
     const tabs = [
         { label: 'Upcoming' },

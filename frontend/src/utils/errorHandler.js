@@ -7,7 +7,7 @@
  */
 
 import { Alert, Platform } from 'react-native';
-import * as Sentry from '@sentry/react-native';
+import { captureException } from '../config/sentry';
 import { errorAnalytics } from './errorAnalytics';
 
 /**
@@ -257,28 +257,20 @@ export const logError = (error, context = '') => {
         });
     }
 
-    // Development console logging
-    if (__DEV__) {
-        console.error(`[${context}] Error:`, error);
-    }
+    // Always log to console for debugging (both dev and production)
+    console.error(`[${context}] Error:`, error);
     
-    // Send to Sentry in production
+    // Send to Sentry (handles both Expo Go and native builds)
     if (!__DEV__) {
-        try {
-            const severity = getSeverity(error);
-            Sentry.captureException(error instanceof Error ? error : new Error(error), {
-                tags: { context },
-                level: severity,
-                contexts: {
-                    additional: {
-                        platform: Platform.OS,
-                        timestamp: new Date().toISOString(),
-                    },
-                },
-            });
-        } catch (sentryError) {
-            console.error('Failed to send error to Sentry:', sentryError);
-        }
+        const severity = getSeverity(error);
+        captureException(error instanceof Error ? error : new Error(String(error)), {
+            tags: { context },
+            level: severity,
+            extra: {
+                platform: Platform.OS,
+                timestamp: new Date().toISOString(),
+            },
+        });
     }
 };
 

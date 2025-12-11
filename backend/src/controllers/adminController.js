@@ -1,0 +1,433 @@
+/**
+ * Admin Controller
+ * Handles admin dashboard stats, user management, and system operations
+ */
+
+const User = require('../models/User');
+const Appointment = require('../models/Appointment');
+const Prescription = require('../models/Prescription');
+const MedicalRecord = require('../models/MedicalRecord');
+const logger = require('../utils/logger');
+
+/**
+ * @desc    Get dashboard statistics
+ * @route   GET /api/admin/dashboard/stats
+ * @access  Private (Admin only)
+ */
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Run all queries in parallel for performance
+        const [
+            appointmentsToday,
+            activeDoctors,
+            totalPatients,
+            prescriptionsToday,
+        ] = await Promise.all([
+            Appointment.countDocuments({
+                appointmentDate: { $gte: today },
+                status: { $in: ['scheduled', 'confirmed'] },
+            }),
+            User.countDocuments({ role: 'doctor', isActive: true }),
+            User.countDocuments({ role: 'patient' }),
+            Prescription.countDocuments({
+                createdAt: { $gte: today },
+            }),
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                appointments: appointmentsToday,
+                doctors: activeDoctors,
+                patients: totalPatients,
+                prescriptions: prescriptionsToday,
+            },
+        });
+    } catch (error) {
+        logger.error('Dashboard stats error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch dashboard statistics',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Get recent activities
+ * @route   GET /api/admin/activities
+ * @access  Private (Admin only)
+ */
+exports.getRecentActivities = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+
+        // Get recent appointments
+        const recentAppointments = await Appointment.find()
+            .populate('patientId', 'name userId')
+            .populate('doctorId', 'name userId')
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .lean();
+
+        // Get recent prescriptions
+        const recentPrescriptions = await Prescription.find()
+            .populate('doctorId', 'name userId')
+            .populate('patientId', 'name userId')
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .lean();
+
+        // Combine and format activities
+        const activities = [
+            ...recentAppointments.map(apt => ({
+                id: apt._id,
+                text: `${apt.doctorId?.name || 'Doctor'} scheduled appointment with ${apt.patientId?.name || 'patient'}`,
+                icon: 'calendar',
+                time: apt.createdAt,
+                type: 'appointment',
+            })),
+            ...recentPrescriptions.map(presc => ({
+                id: presc._id,
+                text: `${presc.doctorId?.name || 'Doctor'} added prescription for patient`,
+                icon: 'document-text',
+                time: presc.createdAt,
+                type: 'prescription',
+            })),
+        ]
+            .sort((a, b) => new Date(b.time) - new Date(a.time))
+            .slice(0, limit)
+            .map(activity => ({
+                ...activity,
+                time: getTimeAgo(activity.time),
+            }));
+
+        res.json({
+            success: true,
+            data: activities,
+        });
+    } catch (error) {
+        logger.error('Recent activities error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch recent activities',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Get all users with pagination
+ * @route   GET /api/admin/users
+ * @access  Private (Admin only)
+ */
+exports.getUsers = async (req, res) => {
+    try {
+        const { page = 1, limit = 20, role, search } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const query = {};
+
+        if (role) {
+            query.role = role;
+        }
+
+        if (search) {
+            // Sanitize regex to prevent injection
+            const sanitizedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            query.$or = [
+                { name: { $regex: sanitizedSearch, $options: 'i' } },
+                { email: { $regex: sanitizedSearch, $options: 'i' } },
+                { userId: { $regex: sanitizedSearch, $options: 'i' } },
+            ];
+        }
+
+        const [users, total] = await Promise.all([
+            User.find(query)
+                .select('-password')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(parseInt(limit))
+                .lean(),
+            User.countDocuments(query),
+        ]);
+
+        res.json({
+            success: true,
+            data: users,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / parseInt(limit)),
+            },
+        });
+    } catch (error) {
+        logger.error('Get users error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch users',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Update user status (activate/deactivate)
+ * @route   PATCH /api/admin/users/:userId/status
+ * @access  Private (Admin only)
+ */
+exports.updateUserStatus = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { isActive } = req.body;
+
+        if (typeof isActive !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: 'isActive must be a boolean value',
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { isActive },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        // Log admin action
+        logger.info('User status updated', {
+            adminId: req.user.userId,
+            targetUserId: userId,
+            isActive,
+        });
+
+        res.json({
+            success: true,
+            message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+            data: user,
+        });
+    } catch (error) {
+        logger.error('Update user status error:', { error: error.message, stack: error.stack, userId: req.params.userId });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update user status',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Update user role (with optimistic locking)
+ * @route   PATCH /api/admin/users/:userId/role
+ * @access  Private (Admin only)
+ */
+exports.updateUserRole = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { role, version } = req.body;
+
+        const validRoles = ['patient', 'doctor', 'admin'];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid role. Must be one of: ${validRoles.join(', ')}`,
+            });
+        }
+
+        // Find user and check version for optimistic locking
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        // Optimistic locking check
+        if (version !== undefined && user.__v !== version) {
+            return res.status(409).json({
+                success: false,
+                message: 'User was modified by another admin. Please refresh and try again.',
+                currentVersion: user.__v,
+            });
+        }
+
+        // Prevent demoting the last admin
+        if (user.role === 'admin' && role !== 'admin') {
+            const adminCount = await User.countDocuments({ role: 'admin', isActive: true });
+            if (adminCount <= 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot demote the last admin. Promote another user first.',
+                });
+            }
+        }
+
+        user.role = role;
+        await user.save();
+
+        // Log admin action
+        logger.info('User role updated', {
+            adminId: req.user.userId,
+            targetUserId: userId,
+            oldRole: user.role,
+            newRole: role,
+        });
+
+        res.json({
+            success: true,
+            message: `User role updated to ${role} successfully`,
+            data: { ...user.toObject(), password: undefined },
+        });
+    } catch (error) {
+        logger.error('Update user role error:', { error: error.message, stack: error.stack, userId: req.params.userId });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update user role',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Bulk update users (transactional)
+ * @route   POST /api/admin/users/bulk
+ * @access  Private (Admin only)
+ */
+exports.bulkUpdateUsers = async (req, res) => {
+    const session = await User.startSession();
+    session.startTransaction();
+
+    try {
+        const { operations } = req.body;
+
+        if (!Array.isArray(operations) || operations.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Operations must be a non-empty array',
+            });
+        }
+
+        if (operations.length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'Maximum 100 operations allowed per batch',
+            });
+        }
+
+        const results = [];
+
+        for (const op of operations) {
+            const { userId, action, data } = op;
+
+            let result;
+            switch (action) {
+                case 'activate':
+                    result = await User.findByIdAndUpdate(
+                        userId,
+                        { isActive: true },
+                        { session, new: true }
+                    );
+                    break;
+                case 'deactivate':
+                    result = await User.findByIdAndUpdate(
+                        userId,
+                        { isActive: false },
+                        { session, new: true }
+                    );
+                    break;
+                case 'updateRole':
+                    result = await User.findByIdAndUpdate(
+                        userId,
+                        { role: data.role },
+                        { session, new: true, runValidators: true }
+                    );
+                    break;
+                default:
+                    throw new Error(`Unknown action: ${action}`);
+            }
+
+            results.push({ userId, action, success: !!result });
+        }
+
+        await session.commitTransaction();
+
+        // Log bulk operation
+        logger.info('Bulk user update completed', {
+            adminId: req.user.userId,
+            operationsCount: operations.length,
+        });
+
+        res.json({
+            success: true,
+            message: `Successfully processed ${operations.length} operations`,
+            data: results,
+        });
+    } catch (error) {
+        await session.abortTransaction();
+        logger.error('Bulk update error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Bulk update failed. All changes have been rolled back.',
+            error: error.message,
+        });
+    } finally {
+        session.endSession();
+    }
+};
+
+/**
+ * @desc    Get system health
+ * @route   GET /api/admin/system/health
+ * @access  Private (Admin only)
+ */
+exports.getSystemHealth = async (req, res) => {
+    try {
+        const dbStatus = await User.db.admin().ping();
+
+        res.json({
+            success: true,
+            data: {
+                status: 'healthy',
+                database: dbStatus?.ok === 1 ? 'connected' : 'disconnected',
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime(),
+            },
+        });
+    } catch (error) {
+        logger.error('System health check error:', { error: error.message });
+        res.status(500).json({
+            success: true,
+            data: {
+                status: 'degraded',
+                database: 'error',
+                error: error.message,
+            },
+        });
+    }
+};
+
+// Helper function
+function getTimeAgo(date) {
+    const now = new Date();
+    const diff = now - new Date(date);
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} mins ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    return `${days} days ago`;
+}

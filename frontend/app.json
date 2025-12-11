@@ -23,7 +23,8 @@
                     "fetch",
                     "remote-notification"
                 ]
-            }
+            },
+            "jsEngine": "hermes"
         },
         "android": {
             "adaptiveIcon": {
@@ -35,7 +36,8 @@
                 "CAMERA",
                 "READ_EXTERNAL_STORAGE",
                 "WRITE_EXTERNAL_STORAGE"
-            ]
+            ],
+            "jsEngine": "hermes"
         },
         "web": {
             "favicon": "./assets/images/aayucare-logo.png",
@@ -47,10 +49,10 @@
             "fallbackToCacheTimeout": 0
         },
         "extra": {
+            "sentryDSN": null,
             "eas": {
                 "projectId": "aayucare-healthcare-app"
-            },
-            "backendUrl": "https://gtev3k0-kevallathiya-8081.exp.direct/"
+            }
         }
     }
 }

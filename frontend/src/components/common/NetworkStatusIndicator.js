@@ -13,7 +13,7 @@ import { useNetworkStatus, useRequestQueue } from '../../utils/offlineHandler';
 import { moderateScale, verticalScale, scaledFontSize } from '../../utils/responsive';
 
 const NetworkStatusIndicator = ({ onPress }) => {
-    const isOnline = useNetworkStatus();
+    const { isConnected: isOnline } = useNetworkStatus();
     const queueSize = useRequestQueue();
     const [slideAnim] = React.useState(new Animated.Value(-100));
     const [showIndicator, setShowIndicator] = React.useState(!isOnline);

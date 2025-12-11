@@ -10,4 +10,6 @@ export { default as medicalRecordService } from './medicalRecord.service';
 export { default as aiService } from './ai.service';
 export { default as patientService } from './patient.service';
 export { default as prescriptionService } from './prescription.service';
+export { default as healthMetricsService } from './healthMetrics.service';
+export { default as adminService } from './admin.service';
 export { default as api } from './api';

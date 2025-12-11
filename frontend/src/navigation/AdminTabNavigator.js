@@ -8,6 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import { healthColors } from '../theme/healthColors';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 // Admin Screens
 import AdminHomeScreen from '../screens/hospital/AdminHomeScreen';
@@ -20,29 +21,30 @@ const Tab = createBottomTabNavigator();
 
 const AdminTabNavigator = () => {
     return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
-                headerShown: false,
-                tabBarIcon: ({ focused, color, size }) => {
-                    let iconName;
+        <ErrorBoundary>
+            <Tab.Navigator
+                screenOptions={({ route }) => ({
+                    headerShown: false,
+                    tabBarIcon: ({ focused, color, size }) => {
+                        let iconName;
 
-                    if (route.name === 'Dashboard') {
-                        iconName = focused ? 'grid' : 'grid-outline';
-                    } else if (route.name === 'Appointments') {
-                        iconName = focused ? 'calendar' : 'calendar-outline';
-                    } else if (route.name === 'Reports') {
-                        iconName = focused ? 'document-text' : 'document-text-outline';
-                    } else if (route.name === 'Analytics') {
-                        iconName = focused ? 'analytics' : 'analytics-outline';
-                    } else if (route.name === 'Settings') {
-                        iconName = focused ? 'settings' : 'settings-outline';
-                    }
+                        if (route.name === 'Dashboard') {
+                            iconName = focused ? 'grid' : 'grid-outline';
+                        } else if (route.name === 'Appointments') {
+                            iconName = focused ? 'calendar' : 'calendar-outline';
+                        } else if (route.name === 'Reports') {
+                            iconName = focused ? 'document-text' : 'document-text-outline';
+                        } else if (route.name === 'Analytics') {
+                            iconName = focused ? 'analytics' : 'analytics-outline';
+                        } else if (route.name === 'Settings') {
+                            iconName = focused ? 'settings' : 'settings-outline';
+                        }
 
-                    return <Ionicons name={iconName} size={size} color={color} />;
-                },
-                tabBarActiveTintColor: healthColors.primary.main,
-                tabBarInactiveTintColor: healthColors.text.tertiary,
-                tabBarStyle: {
+                        return <Ionicons name={iconName} size={size} color={color} />;
+                    },
+                    tabBarActiveTintColor: healthColors.primary.main,
+                    tabBarInactiveTintColor: healthColors.text.tertiary,
+                    tabBarStyle: {
                     backgroundColor: healthColors.background.card,
                     borderTopWidth: 1,
                     borderTopColor: healthColors.border.light,
@@ -98,7 +100,8 @@ const AdminTabNavigator = () => {
                     tabBarLabel: 'Settings',
                 }}
             />
-        </Tab.Navigator>
+            </Tab.Navigator>
+        </ErrorBoundary>
     );
 };
 

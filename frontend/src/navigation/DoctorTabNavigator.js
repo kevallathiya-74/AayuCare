@@ -8,6 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import { healthColors } from '../theme/healthColors';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 // Doctor Screens
 import DoctorHomeScreen from '../screens/hospital/DoctorHomeScreen';
@@ -19,8 +20,9 @@ const Tab = createBottomTabNavigator();
 
 const DoctorTabNavigator = () => {
     return (
-        <Tab.Navigator
-            screenOptions={({ route }) => ({
+        <ErrorBoundary>
+            <Tab.Navigator
+                screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName;
@@ -87,8 +89,9 @@ const DoctorTabNavigator = () => {
                 options={{
                     tabBarLabel: 'Me',
                 }}
-            />
-        </Tab.Navigator>
+                />
+            </Tab.Navigator>
+        </ErrorBoundary>
     );
 };
 

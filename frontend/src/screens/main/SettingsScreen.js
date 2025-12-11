@@ -34,7 +34,7 @@ const SettingsScreen = ({ navigation }) => {
     const [healthTips, setHealthTips] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
 
     const handleSettingChange = async (setter, value, settingName) => {
         try {

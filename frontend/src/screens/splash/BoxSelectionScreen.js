@@ -22,11 +22,28 @@ import { healthColors } from '../../theme/healthColors';
 import { indianDesign } from '../../theme/indianDesign';
 import { createShadow, createTextShadow } from '../../utils/platformStyles';
 
+// Verify imports loaded correctly
+if (!healthColors || !indianDesign) {
+  console.error('[BoxSelectionScreen] ═══════════════════════════════════');
+  console.error('[BoxSelectionScreen] Missing theme imports!');
+  console.error('[BoxSelectionScreen] healthColors:', !!healthColors);
+  console.error('[BoxSelectionScreen] indianDesign:', !!indianDesign);
+  console.error('[BoxSelectionScreen] ═══════════════════════════════════');
+}
+
 const { width } = Dimensions.get('window');
 
 const BoxSelectionScreen = ({ navigation }) => {
+  console.log('[BoxSelectionScreen] Rendering...');
+  console.log('[BoxSelectionScreen] Navigation available:', !!navigation);
+
   const handleHospitalPress = () => {
-    navigation.navigate('HospitalLogin');
+    try {
+      console.log('[BoxSelectionScreen] Hospital button pressed');
+      navigation.navigate('HospitalLogin');
+    } catch (error) {
+      console.error('[BoxSelectionScreen] Navigation error:', error);
+    }
   };
 
   const handleUserPress = () => {

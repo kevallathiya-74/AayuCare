@@ -25,7 +25,7 @@ import { useNetworkStatus } from '../../utils/offlineHandler';
 const ActivityTrackerScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
     const [waterGlasses, setWaterGlasses] = useState(6);
     const targetGlasses = 8;
     

@@ -4,6 +4,11 @@ import { fontFamilies, fontSizes, fontWeights } from './typography';
 import { spacing, componentSpacing, layout } from './spacing';
 import { createShadow } from '../utils/platformStyles';
 
+// Ensure healthColors is loaded
+if (!healthColors || !healthColors.card) {
+  console.error('healthColors not properly loaded!');
+}
+
 // Configure fonts for React Native Paper
 const fontConfig = {
   default: {
@@ -35,64 +40,64 @@ export const paperTheme = {
     ...MD3LightTheme.colors,
     
     // Primary colors
-    primary: healthColors.primary.main,
-    primaryContainer: healthColors.primary.light,
-    onPrimary: healthColors.neutral.white,
-    onPrimaryContainer: healthColors.primary.dark,
+    primary: healthColors?.primary?.main || '#00ACC1',
+    primaryContainer: healthColors?.primary?.light || '#B2EBF2',
+    onPrimary: healthColors?.neutral?.white || '#FFFFFF',
+    onPrimaryContainer: healthColors?.primary?.dark || '#00838F',
     
     // Secondary colors
-    secondary: healthColors.secondary.main,
-    secondaryContainer: healthColors.secondary.light,
-    onSecondary: healthColors.neutral.white,
-    onSecondaryContainer: healthColors.secondary.dark,
+    secondary: healthColors?.secondary?.main || '#66BB6A',
+    secondaryContainer: healthColors?.secondary?.light || '#C8E6C9',
+    onSecondary: healthColors?.neutral?.white || '#FFFFFF',
+    onSecondaryContainer: healthColors?.secondary?.dark || '#43A047',
     
     // Tertiary/Accent
-    tertiary: healthColors.accent.aqua,
-    tertiaryContainer: healthColors.accent.coral,
+    tertiary: healthColors?.accent?.aqua || '#4DD0E1',
+    tertiaryContainer: healthColors?.accent?.coral || '#FF7043',
     
     // Error colors
-    error: healthColors.error.main,
-    errorContainer: healthColors.error.light,
-    onError: healthColors.neutral.white,
-    onErrorContainer: healthColors.error.dark,
+    error: healthColors?.error?.main || '#F44336',
+    errorContainer: healthColors?.error?.light || '#FFCDD2',
+    onError: healthColors?.neutral?.white || '#FFFFFF',
+    onErrorContainer: healthColors?.error?.dark || '#C62828',
     
     // Background colors
-    background: healthColors.background.primary,
-    onBackground: healthColors.text.primary,
+    background: healthColors?.background?.primary || '#FAFAFA',
+    onBackground: healthColors?.text?.primary || '#2C3E50',
     
     // Surface colors (cards, sheets)
-    surface: healthColors.background.card,
-    surfaceVariant: healthColors.background.secondary,
-    onSurface: healthColors.text.primary,
-    onSurfaceVariant: healthColors.text.secondary,
+    surface: healthColors?.background?.card || '#FFFFFF',
+    surfaceVariant: healthColors?.background?.secondary || '#F5F5F5',
+    onSurface: healthColors?.text?.primary || '#2C3E50',
+    onSurfaceVariant: healthColors?.text?.secondary || '#7F8C8D',
     
     // Outline/Border
-    outline: healthColors.card.border,
-    outlineVariant: healthColors.neutral.gray200,
+    outline: healthColors?.card?.border || '#E8EAED',
+    outlineVariant: healthColors?.neutral?.gray200 || '#EEEEEE',
     
     // Other
-    shadow: healthColors.shadows.medium,
-    scrim: healthColors.background.overlay,
-    inverseSurface: healthColors.neutral.gray800,
-    inverseOnSurface: healthColors.neutral.white,
-    inversePrimary: healthColors.primary.light,
+    shadow: healthColors?.shadows?.medium || 'rgba(0,0,0,0.1)',
+    scrim: healthColors?.background?.overlay || 'rgba(0,0,0,0.5)',
+    inverseSurface: healthColors?.neutral?.gray800 || '#424242',
+    inverseOnSurface: healthColors?.neutral?.white || '#FFFFFF',
+    inversePrimary: healthColors?.primary?.light || '#B2EBF2',
     
     // Elevation
     elevation: {
-      level0: healthColors.background.primary,
-      level1: healthColors.background.card,
-      level2: healthColors.background.card,
-      level3: healthColors.background.card,
-      level4: healthColors.background.card,
-      level5: healthColors.background.card,
+      level0: healthColors?.background?.primary || '#FAFAFA',
+      level1: healthColors?.background?.card || '#FFFFFF',
+      level2: healthColors?.background?.card || '#FFFFFF',
+      level3: healthColors?.background?.card || '#FFFFFF',
+      level4: healthColors?.background?.card || '#FFFFFF',
+      level5: healthColors?.background?.card || '#FFFFFF',
     },
     
     // Disabled
-    surfaceDisabled: healthColors.button.disabled,
-    onSurfaceDisabled: healthColors.button.disabledText,
+    surfaceDisabled: healthColors?.button?.disabled || '#E0E0E0',
+    onSurfaceDisabled: healthColors?.button?.disabledText || '#9E9E9E',
     
     // Backdrop
-    backdrop: healthColors.background.overlay,
+    backdrop: healthColors?.background?.overlay || 'rgba(0,0,0,0.5)',
   },
   
   // Fonts configuration
@@ -228,27 +233,27 @@ export const commonStyles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: healthColors.background.primary,
+    backgroundColor: healthColors?.background?.primary || '#FAFAFA',
   },
   
   // Screen container
   screenContainer: {
     flex: 1,
-    backgroundColor: healthColors.background.primary,
+    backgroundColor: healthColors?.background?.primary || '#FAFAFA',
   },
   
   // Content container with padding
   contentContainer: {
     flex: 1,
-    padding: componentSpacing.screenPadding,
+    padding: componentSpacing?.screenPadding || 16,
   },
   
   // Card style
   card: {
-    backgroundColor: healthColors.card.background,
+    backgroundColor: healthColors?.card?.background || '#FFFFFF',
     borderRadius: 12,
-    padding: componentSpacing.cardPadding,
-    marginBottom: componentSpacing.cardMargin,
+    padding: componentSpacing?.cardPadding || 16,
+    marginBottom: componentSpacing?.cardMargin || 16,
   },
   
   // Row layout

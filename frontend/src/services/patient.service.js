@@ -4,6 +4,7 @@
  */
 
 import api from './api';
+import { logError } from '../utils/errorHandler';
 
 class PatientService {
     /**
@@ -16,6 +17,22 @@ class PatientService {
             const response = await api.get(`/patients/search?q=${encodeURIComponent(query)}`);
             return response.data;
         } catch (error) {
+            logError(error, { context: 'PatientService.searchPatients', query });
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Get patient by ID
+     * @param {String} patientId - Patient ID
+     * @returns {Promise<Object>} - Patient data
+     */
+    async getPatientById(patientId) {
+        try {
+            const response = await api.get(`/patients/${patientId}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'PatientService.getPatientById', patientId });
             throw this.handleError(error);
         }
     }
@@ -30,6 +47,7 @@ class PatientService {
             const response = await api.get(`/patients/${patientId}/complete-history`);
             return response.data;
         } catch (error) {
+            logError(error, { context: 'PatientService.getCompleteHistory', patientId });
             throw this.handleError(error);
         }
     }
@@ -44,6 +62,7 @@ class PatientService {
             const response = await api.get(`/patients/${patientId}/profile`);
             return response.data;
         } catch (error) {
+            logError(error, { context: 'PatientService.getPatientProfile', patientId });
             throw this.handleError(error);
         }
     }
@@ -59,6 +78,7 @@ class PatientService {
             const response = await api.patch(`/patients/${patientId}/profile`, updates);
             return response.data;
         } catch (error) {
+            logError(error, { context: 'PatientService.updatePatientProfile', patientId });
             throw this.handleError(error);
         }
     }

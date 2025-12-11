@@ -24,7 +24,7 @@ import { useNetworkStatus } from '../../utils/offlineHandler';
 const BillingScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
 
     useEffect(() => {
         fetchBills();

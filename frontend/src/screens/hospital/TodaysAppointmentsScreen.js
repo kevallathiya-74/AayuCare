@@ -4,7 +4,7 @@
  * Filters: Today, Upcoming, Completed
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,43 +12,23 @@ import {
     FlatList,
     TouchableOpacity,
     StatusBar,
-    Image,
+    ActivityIndicator,
+    RefreshControl,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { doctorService } from '../../services';
+import { logError } from '../../utils/errorHandler';
 
 const TodaysAppointmentsScreen = ({ navigation }) => {
     const [selectedFilter, setSelectedFilter] = useState('today');
-
-    // Mock data - replace with API call
-    const appointments = [
-        {
-            id: '1',
-            patientName: 'Rajesh Kumar',
-            patientPhoto: null,
-            time: '10:00 AM',
-            reason: 'Regular Checkup',
-            status: 'scheduled',
-        },
-        {
-            id: '2',
-            patientName: 'Priya Sharma',
-            patientPhoto: null,
-            time: '11:30 AM',
-            reason: 'Follow-up Visit',
-            status: 'confirmed',
-        },
-        {
-            id: '3',
-            patientName: 'Amit Patel',
-            patientPhoto: null,
-            time: '02:00 PM',
-            reason: 'Consultation',
-            status: 'scheduled',
-        },
-    ];
+    const [appointments, setAppointments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
 
     const filters = [
         { key: 'today', label: 'Today' },
@@ -56,40 +36,158 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         { key: 'completed', label: 'Completed' },
     ];
 
+    const fetchAppointments = useCallback(async (filter = selectedFilter) => {
+        try {
+            setError(null);
+            let response;
+            
+            if (filter === 'today') {
+                response = await doctorService.getTodaysAppointments();
+            } else if (filter === 'upcoming') {
+                response = await doctorService.getUpcomingAppointments();
+            } else {
+                response = await doctorService.getTodaysAppointments('completed');
+            }
+
+            if (response?.success) {
+                setAppointments(response.data || []);
+            } else {
+                setError('Failed to load appointments');
+            }
+        } catch (err) {
+            logError(err, 'TodaysAppointmentsScreen.fetchAppointments');
+            setError('Unable to fetch appointments');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [selectedFilter]);
+
+    useEffect(() => {
+        fetchAppointments();
+    }, [fetchAppointments]);
+
+    const handleFilterChange = useCallback((filterKey) => {
+        setSelectedFilter(filterKey);
+        setLoading(true);
+        fetchAppointments(filterKey);
+    }, [fetchAppointments]);
+
+    const handleRefresh = useCallback(() => {
+        setRefreshing(true);
+        fetchAppointments();
+    }, [fetchAppointments]);
+
+    const handleStartConsultation = useCallback(async (appointment) => {
+        try {
+            const response = await doctorService.updateAppointmentStatus(
+                appointment._id,
+                'in-progress'
+            );
+            if (response?.success) {
+                navigation.navigate('Consultation', { appointment });
+            }
+        } catch (err) {
+            logError(err, 'TodaysAppointmentsScreen.handleStartConsultation');
+            Alert.alert('Error', 'Unable to start consultation');
+        }
+    }, [navigation]);
+
+    const getStatusColor = useCallback((status) => {
+        switch (status) {
+            case 'confirmed': return healthColors.success.main;
+            case 'completed': return healthColors.info.main;
+            case 'cancelled': return healthColors.error;
+            case 'in-progress': return healthColors.primary.main;
+            default: return healthColors.warning;
+        }
+    }, []);
+
+    const getStatusLabel = useCallback((status) => {
+        switch (status) {
+            case 'confirmed': return 'Confirmed';
+            case 'completed': return 'Completed';
+            case 'cancelled': return 'Cancelled';
+            case 'in-progress': return 'In Progress';
+            case 'scheduled': return 'Scheduled';
+            default: return 'Pending';
+        }
+    }, []);
+
     const renderAppointmentCard = ({ item }) => (
         <TouchableOpacity
             style={styles.appointmentCard}
-            onPress={() => navigation.navigate('AppointmentDetails', { appointmentId: item.id })}
+            onPress={() => navigation.navigate('AppointmentDetails', { appointmentId: item._id })}
             activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Appointment with ${item.patient?.name || item.patientName} at ${item.timeSlot || item.time}, ${getStatusLabel(item.status)}`}
         >
             <View style={styles.cardLeft}>
                 <View style={styles.avatar}>
                     <Ionicons name="person" size={24} color={healthColors.primary.main} />
                 </View>
                 <View style={styles.patientInfo}>
-                    <Text style={styles.patientName}>{item.patientName}</Text>
-                    <Text style={styles.reason}>{item.reason}</Text>
+                    <Text style={styles.patientName}>{item.patient?.name || item.patientName}</Text>
+                    <Text style={styles.reason}>{item.reasonForVisit || item.reason}</Text>
                     <View style={styles.timeContainer}>
                         <Ionicons name="time-outline" size={14} color={healthColors.text.secondary} />
-                        <Text style={styles.time}>{item.time}</Text>
+                        <Text style={styles.time}>{item.timeSlot || item.time}</Text>
                     </View>
                 </View>
             </View>
             <View style={styles.cardRight}>
-                <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+                <TouchableOpacity 
+                    style={styles.actionButton} 
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('VideoCall', { appointmentId: item._id })}
+                    accessibilityRole="button"
+                    accessibilityLabel="Start video call"
+                >
                     <Ionicons name="videocam-outline" size={20} color={healthColors.primary.main} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
-                    <Ionicons name="call-outline" size={20} color={healthColors.success.main} />
+                <TouchableOpacity 
+                    style={styles.actionButton} 
+                    activeOpacity={0.7}
+                    onPress={() => handleStartConsultation(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Start consultation"
+                >
+                    <Ionicons name="medical-outline" size={20} color={healthColors.success.main} />
                 </TouchableOpacity>
-                <View style={[styles.statusBadge, styles[`status_${item.status}`]]}>
-                    <Text style={styles.statusText}>
-                        {item.status === 'confirmed' ? 'Confirmed' : 'Scheduled'}
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+                        {getStatusLabel(item.status)}
                     </Text>
                 </View>
             </View>
         </TouchableOpacity>
     );
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <Ionicons name="calendar-outline" size={64} color={healthColors.text.secondary} />
+            <Text style={styles.emptyStateTitle}>No Appointments</Text>
+            <Text style={styles.emptyStateText}>
+                {selectedFilter === 'today' 
+                    ? 'No appointments scheduled for today'
+                    : selectedFilter === 'upcoming'
+                    ? 'No upcoming appointments'
+                    : 'No completed appointments'}
+            </Text>
+        </View>
+    );
+
+    if (loading && !refreshing) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading appointments...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -101,11 +199,19 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go back"
                 >
                     <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Appointments</Text>
-                <TouchableOpacity style={styles.searchButton} activeOpacity={0.7}>
+                <TouchableOpacity 
+                    style={styles.searchButton} 
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('SearchAppointments')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Search appointments"
+                >
                     <Ionicons name="search" size={24} color={healthColors.text.primary} />
                 </TouchableOpacity>
             </View>
@@ -119,8 +225,11 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                             styles.filterButton,
                             selectedFilter === filter.key && styles.filterButtonActive,
                         ]}
-                        onPress={() => setSelectedFilter(filter.key)}
+                        onPress={() => handleFilterChange(filter.key)}
                         activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: selectedFilter === filter.key }}
+                        accessibilityLabel={`Filter by ${filter.label}`}
                     >
                         <Text
                             style={[
@@ -134,13 +243,36 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                 ))}
             </View>
 
+            {/* Error State */}
+            {error && (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity 
+                        onPress={handleRefresh}
+                        accessibilityRole="button"
+                        accessibilityLabel="Retry loading appointments"
+                    >
+                        <Text style={styles.retryText}>Tap to retry</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {/* Appointments List */}
             <FlatList
                 data={appointments}
                 renderItem={renderAppointmentCard}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item._id || item.id}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={renderEmptyState}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
             />
         </SafeAreaView>
     );
@@ -150,6 +282,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: healthColors.background.primary,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: indianDesign.spacing.md,
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
     },
     header: {
         flexDirection: 'row',
@@ -206,6 +348,41 @@ const styles = StyleSheet.create({
     },
     filterTextActive: {
         color: healthColors.text.white,
+    },
+    errorContainer: {
+        padding: indianDesign.spacing.lg,
+        alignItems: 'center',
+        backgroundColor: healthColors.error + '10',
+        marginHorizontal: indianDesign.spacing.lg,
+        borderRadius: indianDesign.borderRadius.medium,
+    },
+    errorText: {
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.error,
+        marginBottom: indianDesign.spacing.sm,
+    },
+    retryText: {
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.primary.main,
+        fontWeight: indianDesign.fontWeight.semibold,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: indianDesign.spacing.xxl * 2,
+    },
+    emptyStateTitle: {
+        fontSize: indianDesign.fontSize.xlarge,
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.text.primary,
+        marginTop: indianDesign.spacing.lg,
+    },
+    emptyStateText: {
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
+        marginTop: indianDesign.spacing.sm,
+        textAlign: 'center',
     },
     listContent: {
         padding: indianDesign.spacing.lg,
@@ -274,16 +451,9 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: indianDesign.borderRadius.small,
     },
-    status_scheduled: {
-        backgroundColor: healthColors.warning.background,
-    },
-    status_confirmed: {
-        backgroundColor: healthColors.success.background,
-    },
     statusText: {
         fontSize: indianDesign.fontSize.tiny,
         fontWeight: indianDesign.fontWeight.semibold,
-        color: healthColors.text.primary,
     },
 });
 

@@ -2,6 +2,13 @@ const User = require('../models/User');
 const { AppError } = require('../middleware/errorHandler');
 
 /**
+ * Sanitize regex input to prevent injection attacks
+ */
+const sanitizeRegex = (str) => {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+/**
  * Doctor Service - Business Logic Layer
  */
 
@@ -19,10 +26,11 @@ class DoctorService {
         }
 
         if (search) {
+            const sanitizedSearch = sanitizeRegex(search);
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { specialization: { $regex: search, $options: 'i' } },
-                { qualification: { $regex: search, $options: 'i' } }
+                { name: { $regex: sanitizedSearch, $options: 'i' } },
+                { specialization: { $regex: sanitizedSearch, $options: 'i' } },
+                { qualification: { $regex: sanitizedSearch, $options: 'i' } }
             ];
         }
 

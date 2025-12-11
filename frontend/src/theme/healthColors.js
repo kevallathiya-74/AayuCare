@@ -113,6 +113,19 @@ const healthColors = {
         dark: '#BDC1C6',
     },
 
+    // Input Colors
+    input: {
+        background: '#FFFFFF',
+        backgroundDisabled: '#F5F5F5',
+        border: '#DADCE0',
+        borderFocused: '#00ACC1',
+        borderError: '#FF7043',
+        borderDisabled: '#E0E0E0',
+        placeholder: '#9E9E9E',
+        text: '#2C3E50',
+        textDisabled: '#BDC3C7',
+    },
+
     // Fitness & Wellness
     fitness: {
         aqua: '#4DD0E1',
@@ -204,6 +217,23 @@ const healthColors = {
     },
 };
 
+// Validate healthColors object structure
+const validateHealthColors = (colors) => {
+    const requiredKeys = ['card', 'border', 'primary', 'secondary', 'background', 'text', 'neutral'];
+    for (const key of requiredKeys) {
+        if (!colors[key]) {
+            console.error(`Missing required key in healthColors: ${key}`);
+        }
+    }
+    if (colors.card && !colors.card.border) {
+        console.error('Missing card.border in healthColors');
+    }
+    return colors;
+};
+
+// Validate on load
+validateHealthColors(healthColors);
+
 // Utility function to get rgba color with opacity
 const withOpacity = (color, opacity) => {
     const hex = color.replace('#', '');
@@ -213,9 +243,6 @@ const withOpacity = (color, opacity) => {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
-// CommonJS exports for better Metro bundler compatibility
-module.exports = {
-    healthColors,
-    withOpacity,
-    default: healthColors,
-};
+// ES6 exports for React Native compatibility
+export { healthColors, withOpacity };
+export default healthColors;

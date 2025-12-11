@@ -5,6 +5,7 @@
 
 const MedicalRecord = require('../models/MedicalRecord');
 const User = require('../models/User');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Analyze symptoms and provide AI insights
@@ -40,7 +41,7 @@ exports.analyzeSymptoms = async (req, res) => {
             tagline: 'Your health, enhanced by intelligence.',
         });
     } catch (error) {
-        console.error('Symptom analysis error:', error);
+        logger.error('Symptom analysis error:', { error: error.message, stack: error.stack, userId: req.user?.userId });
         res.status(500).json({
             success: false,
             message: 'Failed to analyze symptoms',
@@ -93,7 +94,7 @@ exports.getHealthInsights = async (req, res) => {
             tagline: 'Your health, enhanced by intelligence.',
         });
     } catch (error) {
-        console.error('Health insights error:', error);
+        logger.error('Health insights error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to generate health insights',
@@ -193,7 +194,7 @@ exports.calculateRiskScore = async (req, res) => {
             tagline: 'Your health, enhanced by intelligence.',
         });
     } catch (error) {
-        console.error('Risk score calculation error:', error);
+        logger.error('Risk score calculation error:', { error: error.message, stack: error.stack, userId: req.user?.userId });
         res.status(500).json({
             success: false,
             message: 'Failed to calculate risk score',
@@ -219,7 +220,7 @@ exports.getDietRecommendations = async (req, res) => {
             tagline: 'Your health, enhanced by intelligence.',
         });
     } catch (error) {
-        console.error('Diet recommendations error:', error);
+        logger.error('Diet recommendations error:', { error: error.message, stack: error.stack, userId: req.user?.userId });
         res.status(500).json({
             success: false,
             message: 'Failed to generate diet recommendations',
@@ -245,7 +246,7 @@ exports.getExerciseRecommendations = async (req, res) => {
             tagline: 'Your health, enhanced by intelligence.',
         });
     } catch (error) {
-        console.error('Exercise recommendations error:', error);
+        logger.error('Exercise recommendations error:', { error: error.message, stack: error.stack, userId: req.user?.userId });
         res.status(500).json({
             success: false,
             message: 'Failed to generate exercise recommendations',
@@ -292,7 +293,7 @@ exports.analyzeMedicalRecord = async (req, res) => {
             tagline: 'Your health, enhanced by intelligence.',
         });
     } catch (error) {
-        console.error('Medical record analysis error:', error);
+        logger.error('Medical record analysis error:', { error: error.message, stack: error.stack, recordId: req.params.recordId });
         res.status(500).json({
             success: false,
             message: 'Failed to analyze medical record',

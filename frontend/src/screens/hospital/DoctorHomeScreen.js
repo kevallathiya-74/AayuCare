@@ -3,7 +3,7 @@
  * Main dashboard for doctors with today's schedule and quick patient access
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -14,6 +14,7 @@ import {
     RefreshControl,
     TextInput,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,75 +29,137 @@ import {
 } from '../../utils/responsive';
 import Avatar from '../../components/common/Avatar';
 import { logoutUser } from '../../store/slices/authSlice';
-import { showConfirmation } from '../../utils/errorHandler';
+import { showConfirmation, logError } from '../../utils/errorHandler';
+import { doctorService } from '../../services';
 
 const DoctorHomeScreen = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searching, setSearching] = useState(false);
+    const [error, setError] = useState(null);
     const [notificationCount] = useState(3);
-    const [schedule] = useState({
-        totalAppointments: 15,
-        completed: 8,
-        pending: 7,
-        nextPatient: 'Raj Patel',
-        nextTime: '10:30 AM',
+    
+    const [schedule, setSchedule] = useState({
+        totalAppointments: 0,
+        completed: 0,
+        pending: 0,
+        nextPatient: 'Loading...',
+        nextTime: '--:--',
     });
 
-    const [todaysAppointments] = useState([
-        {
-            id: 1,
-            time: '10:30',
-            patientName: 'Raj Patel',
-            patientId: 'P-1234',
-            age: 45,
-            reason: 'BP Checkup',
-            status: 'pending',
-            type: 'in-person',
-        },
-        {
-            id: 2,
-            time: '11:00',
-            patientName: 'Priya Shah',
-            patientId: 'P-5678',
-            age: 32,
-            reason: 'Follow-up',
-            status: 'pending',
-            type: 'in-person',
-        },
-        {
-            id: 3,
-            time: '11:30',
-            patientName: 'Amit Kumar',
-            patientId: 'P-9012',
-            age: 28,
-            reason: 'Consultation',
-            status: 'pending',
-            type: 'telemedicine',
-        },
-    ]);
+    const [todaysAppointments, setTodaysAppointments] = useState([]);
 
-    const onRefresh = React.useCallback(() => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1500);
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            setError(null);
+            const response = await doctorService.getDashboard();
+            
+            if (response?.success) {
+                setSchedule(response.data.schedule);
+                setTodaysAppointments(response.data.todaysAppointments || []);
+            }
+        } catch (err) {
+            logError(err, { context: 'DoctorHomeScreen.fetchDashboardData' });
+            setError('Failed to load dashboard');
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const handleLogout = () => {
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchDashboardData();
+        setRefreshing(false);
+    }, [fetchDashboardData]);
+
+    const handleSearch = useCallback(async (query) => {
+        setSearchQuery(query);
+        if (query.length < 2) {
+            setSearchResults([]);
+            return;
+        }
+
+        setSearching(true);
+        try {
+            const response = await doctorService.searchMyPatients(query);
+            setSearchResults(response?.data || []);
+        } catch (err) {
+            logError(err, { context: 'DoctorHomeScreen.handleSearch' });
+        } finally {
+            setSearching(false);
+        }
+    }, []);
+
+    const handleLogout = useCallback(() => {
         showConfirmation(
             'Are you sure you want to logout?',
             () => dispatch(logoutUser()),
             () => {},
             'Logout'
         );
-    };
+    }, [dispatch]);
 
-    const getGreeting = () => {
+    const handleStartConsultation = useCallback(async (appointment) => {
+        try {
+            await doctorService.updateAppointmentStatus(appointment.id, 'in-progress');
+            Alert.alert('Consultation Started', `Starting consultation with ${appointment.patientName}`);
+            fetchDashboardData();
+        } catch (err) {
+            logError(err, { context: 'DoctorHomeScreen.handleStartConsultation' });
+            Alert.alert('Error', 'Failed to start consultation');
+        }
+    }, [fetchDashboardData]);
+
+    const getGreeting = useMemo(() => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Good Morning';
         if (hour < 17) return 'Good Afternoon';
         return 'Good Evening';
-    };
+    }, []);
+
+    const getStatusColor = useCallback((status) => {
+        switch (status) {
+            case 'completed':
+                return healthColors.success.main || healthColors.success;
+            case 'in-progress':
+                return healthColors.info.main || healthColors.info;
+            case 'cancelled':
+            case 'no-show':
+                return healthColors.error.main || healthColors.error;
+            default:
+                return healthColors.warning.main || healthColors.warning;
+        }
+    }, []);
+
+    const getStatusLabel = useCallback((status) => {
+        switch (status) {
+            case 'completed': return 'Completed';
+            case 'in-progress': return 'In Progress';
+            case 'cancelled': return 'Cancelled';
+            case 'no-show': return 'No Show';
+            case 'confirmed': return 'Confirmed';
+            default: return 'Pending';
+        }
+    }, []);
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading dashboard...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -105,19 +168,30 @@ const DoctorHomeScreen = ({ navigation }) => {
             <ScrollView 
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    <RefreshControl 
+                        refreshing={refreshing} 
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
                 }
             >
                 {/* Header with Icons */}
                 <View style={styles.header}>
                     <View style={styles.headerIcons}>
-                        <TouchableOpacity style={styles.iconButton}>
+                        <TouchableOpacity 
+                            style={styles.iconButton}
+                            accessibilityRole="button"
+                            accessibilityLabel="Menu"
+                        >
                             <Ionicons name="menu" size={24} color={healthColors.text.primary} />
                         </TouchableOpacity>
                         <View style={styles.headerRight}>
                             <TouchableOpacity 
                                 style={styles.iconButton}
-                                onPress={() => Alert.alert('Notifications', 'You have 3 new notifications')}
+                                onPress={() => Alert.alert('Notifications', `You have ${notificationCount} new notifications`)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`${notificationCount} notifications`}
                             >
                                 <Ionicons name="notifications-outline" size={24} color={healthColors.text.primary} />
                                 {notificationCount > 0 && (
@@ -195,68 +269,122 @@ const DoctorHomeScreen = ({ navigation }) => {
                             placeholder="Enter patient name..."
                             placeholderTextColor={healthColors.text.secondary}
                             value={searchQuery}
-                            onChangeText={setSearchQuery}
+                            onChangeText={handleSearch}
+                            accessibilityLabel="Search patients by name"
+                            accessibilityHint="Type patient name to search"
                         />
-                        {searchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                        {searching && (
+                            <ActivityIndicator size="small" color={healthColors.primary.main} />
+                        )}
+                        {searchQuery.length > 0 && !searching && (
+                            <TouchableOpacity 
+                                onPress={() => {
+                                    setSearchQuery('');
+                                    setSearchResults([]);
+                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel="Clear search"
+                            >
                                 <Ionicons name="close-circle" size={20} color={healthColors.text.secondary} />
                             </TouchableOpacity>
                         )}
                     </View>
+                    {searchResults.length > 0 && (
+                        <View style={styles.searchResultsContainer}>
+                            {searchResults.map((patient) => (
+                                <TouchableOpacity 
+                                    key={patient._id}
+                                    style={styles.searchResultItem}
+                                    onPress={() => navigation.navigate('PatientManagement', { patientId: patient._id })}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`View ${patient.name}, ${patient.age} years old`}
+                                >
+                                    <View style={styles.searchResultInfo}>
+                                        <Text style={styles.searchResultName}>{patient.name}</Text>
+                                        <Text style={styles.searchResultDetails}>
+                                            Age: {patient.age} | ID: {patient._id?.slice(-6)}
+                                        </Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 {/* Today's Appointments */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>TODAY'S APPOINTMENTS:</Text>
-                    {todaysAppointments.map((appointment) => (
-                        <View key={appointment.id} style={styles.appointmentCard}>
-                            <View style={styles.appointmentHeader}>
-                                <View style={styles.appointmentTime}>
-                                    <Ionicons name="time-outline" size={16} color={healthColors.primary.main} />
-                                    <Text style={styles.appointmentTimeText}>{appointment.time}</Text>
-                                </View>
-                                <View style={styles.appointmentTypeBadge}>
-                                    <Ionicons 
-                                        name={appointment.type === 'telemedicine' ? 'videocam' : 'medical'} 
-                                        size={14} 
-                                        color={appointment.type === 'telemedicine' ? healthColors.info.main : healthColors.primary.main} 
-                                    />
-                                </View>
-                            </View>
-                            
-                            <View style={styles.appointmentPatientRow}>
-                                <Text style={styles.appointmentPatient}>{appointment.patientName}</Text>
-                                <View style={[styles.statusBadge, { backgroundColor: healthColors.warning + '20' }]}>
-                                    <Text style={[styles.statusText, { color: healthColors.warning }]}>Pending</Text>
-                                </View>
-                            </View>
-                            <Text style={styles.appointmentReason}>
-                                ID: {appointment.patientId} | Age: {appointment.age} | {appointment.reason}
-                            </Text>
-                            
-                            <View style={styles.appointmentActions}>
-                                <TouchableOpacity 
-                                    style={styles.actionButtonSecondary}
-                                    onPress={() => navigation.navigate('PatientManagement')}
-                                >
-                                    <Text style={styles.actionButtonSecondaryText}>View History</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity 
-                                    style={styles.actionButtonPrimary}
-                                    onPress={() => Alert.alert('Start Consultation', `Starting consultation with ${appointment.patientName}`)}
-                                >
-                                    <Text style={styles.actionButtonPrimaryText}>Start Consultation</Text>
-                                </TouchableOpacity>
-                            </View>
+                    {todaysAppointments.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Ionicons name="calendar-outline" size={48} color={healthColors.text.secondary} />
+                            <Text style={styles.emptyStateText}>No appointments scheduled for today</Text>
                         </View>
-                    ))}
+                    ) : (
+                        todaysAppointments.map((appointment) => (
+                            <View 
+                                key={appointment._id || appointment.id} 
+                                style={styles.appointmentCard}
+                                accessible={true}
+                                accessibilityLabel={`Appointment with ${appointment.patientName || appointment.patient?.name} at ${appointment.time || appointment.timeSlot}, Status: ${getStatusLabel(appointment.status)}`}
+                            >
+                                <View style={styles.appointmentHeader}>
+                                    <View style={styles.appointmentTime}>
+                                        <Ionicons name="time-outline" size={16} color={healthColors.primary.main} />
+                                        <Text style={styles.appointmentTimeText}>{appointment.time || appointment.timeSlot}</Text>
+                                    </View>
+                                    <View style={styles.appointmentTypeBadge}>
+                                        <Ionicons 
+                                            name={appointment.type === 'telemedicine' ? 'videocam' : 'medical'} 
+                                            size={14} 
+                                            color={appointment.type === 'telemedicine' ? healthColors.info.main : healthColors.primary.main} 
+                                        />
+                                    </View>
+                                </View>
+                                
+                                <View style={styles.appointmentPatientRow}>
+                                    <Text style={styles.appointmentPatient}>{appointment.patientName || appointment.patient?.name}</Text>
+                                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(appointment.status) + '20' }]}>
+                                        <Text style={[styles.statusText, { color: getStatusColor(appointment.status) }]}>
+                                            {getStatusLabel(appointment.status)}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.appointmentReason}>
+                                    ID: {appointment.patientId || appointment.patient?._id?.slice(-6)} | Age: {appointment.age || appointment.patient?.age || 'N/A'} | {appointment.reason || appointment.reasonForVisit}
+                                </Text>
+                                
+                                <View style={styles.appointmentActions}>
+                                    <TouchableOpacity 
+                                        style={styles.actionButtonSecondary}
+                                        onPress={() => navigation.navigate('PatientManagement', { patientId: appointment.patient?._id })}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`View history for ${appointment.patientName || appointment.patient?.name}`}
+                                    >
+                                        <Text style={styles.actionButtonSecondaryText}>View History</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity 
+                                        style={styles.actionButtonPrimary}
+                                        onPress={() => handleStartConsultation(appointment)}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Start consultation with ${appointment.patientName || appointment.patient?.name}`}
+                                    >
+                                        <Text style={styles.actionButtonPrimaryText}>Start Consultation</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))
+                    )}
                 </View>
 
                 {/* Add Walk-in Button */}
                 <View style={styles.section}>
                     <TouchableOpacity 
                         style={styles.addWalkinButton}
-                        onPress={() => Alert.alert('Add Walk-in', 'Feature to add walk-in patient')}
+                        onPress={() => navigation.navigate('AddWalkin')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Add walk-in patient"
+                        accessibilityHint="Add a new walk-in patient to the queue"
                     >
                         <Ionicons name="add-circle" size={24} color={healthColors.primary.main} />
                         <Text style={styles.addWalkinText}>Add Walk-in Patient</Text>
@@ -441,6 +569,47 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: scaledFontSize(14),
         color: healthColors.text.primary,
+    },
+    searchResultsContainer: {
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(12),
+        marginTop: moderateScale(8),
+        ...createShadow(2),
+    },
+    searchResultItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: moderateScale(12),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    searchResultInfo: {
+        flex: 1,
+    },
+    searchResultName: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+    },
+    searchResultDetails: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(2),
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: moderateScale(32),
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(12),
+        ...createShadow(1),
+    },
+    emptyStateText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(12),
+        textAlign: 'center',
     },
     appointmentCard: {
         backgroundColor: healthColors.background.card,

@@ -3,10 +3,11 @@
  * 
  * Tracks and stores error metrics for analytics dashboard
  * Can be integrated with Sentry or other error tracking services
+ * 
+ * NOTE: This module does NOT import errorHandler to avoid circular dependencies
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logError } from './errorHandler';
 
 const ANALYTICS_STORAGE_KEY = '@aayucare_error_analytics';
 const MAX_STORED_ERRORS = 100; // Keep last 100 errors
@@ -31,7 +32,8 @@ class ErrorAnalytics {
             }
             this.initialized = true;
         } catch (error) {
-            logError(error, 'ErrorAnalytics.initialize');
+            // Don't use logError here to avoid circular dependency
+            console.error('[ErrorAnalytics.initialize] Failed:', error);
             this.errors = [];
             this.initialized = true;
         }
@@ -118,7 +120,8 @@ class ErrorAnalytics {
         try {
             await AsyncStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(this.errors));
         } catch (error) {
-            logError(error, 'ErrorAnalytics.saveAnalytics');
+            // Don't use logError here to avoid circular dependency
+            console.error('[ErrorAnalytics.saveAnalytics] Failed:', error);
         }
     }
 
@@ -264,7 +267,8 @@ class ErrorAnalytics {
             try {
                 callback(this.getStatistics());
             } catch (error) {
-                logError(error, 'ErrorAnalytics.notifyListeners');
+                // Don't use logError here to avoid circular dependency
+                console.error('[ErrorAnalytics.notifyListeners] Callback failed:', error);
             }
         });
     }

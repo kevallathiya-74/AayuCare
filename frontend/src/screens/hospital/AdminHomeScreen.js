@@ -3,7 +3,7 @@
  * Complete dashboard with overview stats, quick actions, and recent activities
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     View,
     Text,
@@ -14,6 +14,7 @@ import {
     RefreshControl,
     Dimensions,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +23,8 @@ import { healthColors } from '../../theme/healthColors';
 import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
 import { logoutUser } from '../../store/slices/authSlice';
-import { showConfirmation } from '../../utils/errorHandler';
+import { showConfirmation, showError, logError } from '../../utils/errorHandler';
+import adminService from '../../services/admin.service';
 
 const { width } = Dimensions.get('window');
 
@@ -30,41 +32,69 @@ const AdminHomeScreen = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
     const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [stats, setStats] = useState({
-        appointments: 120,
-        doctors: 45,
-        patients: 2340,
-        prescriptions: 89,
+        appointments: 0,
+        doctors: 0,
+        patients: 0,
+        prescriptions: 0,
     });
+    const [recentActivities, setRecentActivities] = useState([]);
 
-    const [recentActivities] = useState([
-        { id: 1, text: 'Dr. Shah added new prescription', icon: 'document-text', time: '5 mins ago' },
-        { id: 2, text: 'Patient P-1234 checked in', icon: 'person', time: '12 mins ago' },
-        { id: 3, text: 'Lab report uploaded for P-5678', icon: 'flask', time: '25 mins ago' },
-    ]);
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            setError(null);
+            
+            // Fetch stats and activities in parallel
+            const [statsResponse, activitiesResponse] = await Promise.all([
+                adminService.getDashboardStats().catch(() => null),
+                adminService.getRecentActivities(5).catch(() => null),
+            ]);
 
-    const onRefresh = React.useCallback(() => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1500);
+            if (statsResponse?.success) {
+                setStats(statsResponse.data);
+            }
+
+            if (activitiesResponse?.success) {
+                setRecentActivities(activitiesResponse.data);
+            }
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to load dashboard';
+            setError(errorMessage);
+            logError(err, { context: 'AdminHomeScreen.fetchDashboardData' });
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const handleLogout = () => {
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchDashboardData();
+        setRefreshing(false);
+    }, [fetchDashboardData]);
+
+    const handleLogout = useCallback(() => {
         showConfirmation(
             'Are you sure you want to logout?',
             () => dispatch(logoutUser()),
             () => {},
             'Logout'
         );
-    };
+    }, [dispatch]);
 
-    const quickActions = [
+    const quickActions = useMemo(() => [
         { title: 'Patients', icon: 'people', color: healthColors.primary.main, screen: 'PatientManagement' },
         { title: 'Doctors', icon: 'medical', color: healthColors.secondary.main, screen: 'ManageDoctors' },
         { title: 'Appoints.', icon: 'calendar', color: healthColors.accent.coral, screen: 'Appointments' },
         { title: 'Reports', icon: 'stats-chart', color: healthColors.accent.green, screen: 'Reports' },
         { title: 'Pharmacy', icon: 'medkit', color: healthColors.info.main, screen: 'CreatePrescription' },
         { title: 'Events', icon: 'megaphone', color: healthColors.warning.main, screen: 'Events' },
-    ];
+    ], []);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -72,24 +102,47 @@ const AdminHomeScreen = ({ navigation }) => {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.menuButton}>
+                <TouchableOpacity 
+                    style={styles.menuButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open menu"
+                    accessibilityHint="Opens the navigation menu"
+                >
                     <Ionicons name="menu" size={28} color={healthColors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Admin Dashboard</Text>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
+                    <TouchableOpacity 
+                        style={styles.iconButton} 
+                        onPress={() => navigation.navigate('Notifications')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Notifications"
+                        accessibilityHint="Opens notification list"
+                    >
                         <Ionicons name="notifications-outline" size={24} color={healthColors.text.primary} />
                         <View style={styles.notificationDot} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Profile')}>
+                    <TouchableOpacity 
+                        style={styles.iconButton} 
+                        onPress={() => navigation.navigate('Profile')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Profile"
+                        accessibilityHint="Opens your profile"
+                    >
                         <Ionicons name="person-circle-outline" size={24} color={healthColors.text.primary} />
                     </TouchableOpacity>
                 </View>
             </View>
 
+            {loading && !refreshing ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading dashboard...</Text>
+                </View>
+            ) : (
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[healthColors.primary.main]} />}
             >
                 {/* Welcome Section */}
                 <View style={styles.welcomeSection}>
@@ -97,7 +150,13 @@ const AdminHomeScreen = ({ navigation }) => {
                         <Text style={styles.welcomeText}>Welcome, {user?.name || 'Admin'}</Text>
                         <Text style={styles.welcomeSubtext}>{user?.role?.toUpperCase() || 'ADMIN'} • AayuCare Hospital</Text>
                     </View>
-                    <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                    <TouchableOpacity 
+                        onPress={handleLogout} 
+                        style={styles.logoutButton}
+                        accessibilityRole="button"
+                        accessibilityLabel="Logout"
+                        accessibilityHint="Logs you out of the admin dashboard"
+                    >
                         <Ionicons name="log-out-outline" size={24} color={healthColors.error} />
                     </TouchableOpacity>
                 </View>
@@ -163,17 +222,22 @@ const AdminHomeScreen = ({ navigation }) => {
                         <Text style={styles.sectionTitle}>RECENT ACTIVITIES</Text>
                     </View>
                     <View style={styles.activitiesCard}>
-                        {recentActivities.map((activity) => (
-                            <View key={activity.id} style={styles.activityItem}>
-                                <Ionicons name={activity.icon} size={18} color={healthColors.text.secondary} />
-                                <Text style={styles.activityText}>• {activity.text}</Text>
-                            </View>
-                        ))}
+                        {recentActivities.length > 0 ? (
+                            recentActivities.map((activity) => (
+                                <View key={activity.id || activity._id} style={styles.activityItem}>
+                                    <Ionicons name={activity.icon || 'ellipse'} size={18} color={healthColors.text.secondary} />
+                                    <Text style={styles.activityText}>• {activity.text}</Text>
+                                </View>
+                            ))
+                        ) : (
+                            <Text style={styles.emptyText}>No recent activities</Text>
+                        )}
                     </View>
                 </View>
 
                 <View style={{ height: 80 }} />
             </ScrollView>
+            )}
         </SafeAreaView>
     );
 };
@@ -348,6 +412,22 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         color: healthColors.text.primary,
         flex: 1,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: moderateScale(12),
+    },
+    loadingText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+    },
+    emptyText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        textAlign: 'center',
+        paddingVertical: moderateScale(12),
     },
 });
 

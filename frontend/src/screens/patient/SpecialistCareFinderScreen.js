@@ -27,7 +27,7 @@ import { useNetworkStatus } from '../../utils/offlineHandler';
 const SpecialistCareFinderScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
     const [selectedSpecialty, setSelectedSpecialty] = useState('All');
     const [selectedAvailability, setSelectedAvailability] = useState('Today');
     const [feeRange, setFeeRange] = useState([0, 1000]);

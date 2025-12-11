@@ -14,52 +14,14 @@ import gu from '../locales/gu.json';
 
 const LANGUAGE_STORAGE_KEY = '@aayucare_language';
 
-// Language detector
-const languageDetector = {
-    type: 'languageDetector',
-    async: true,
-    detect: async (callback) => {
-        try {
-            // Try to get saved language preference
-            const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-            if (savedLanguage) {
-                callback(savedLanguage);
-                return;
-            }
-
-            // Fall back to device locale
-            const deviceLocale = Localization.locale;
-            if (!deviceLocale) {
-                callback('en'); // Default to English if locale is unavailable
-                return;
-            }
-            
-            const languageCode = deviceLocale.split('-')[0];
-            
-            // Map device locale to supported languages
-            const supportedLanguages = ['en', 'hi', 'gu'];
-            const detectedLanguage = supportedLanguages.includes(languageCode) 
-                ? languageCode 
-                : 'en';
-            
-            callback(detectedLanguage);
-        } catch (error) {
-            console.error('Error detecting language:', error);
-            callback('en'); // Default to English
-        }
-    },
-    init: () => {},
-    cacheUserLanguage: async (language) => {
-        try {
-            await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-        } catch (error) {
-            console.error('Error caching language:', error);
-        }
-    },
+// Simplified language detection - remove async detector
+const getInitialLanguage = () => {
+    // Default to English for initial load
+    return 'en';
 };
 
+// Initialize i18n immediately without async detection
 i18n
-    .use(languageDetector)
     .use(initReactI18next)
     .init({
         compatibilityJSON: 'v3',
@@ -68,6 +30,7 @@ i18n
             hi: { translation: hi },
             gu: { translation: gu },
         },
+        lng: 'en', // Always start with English
         fallbackLng: 'en',
         interpolation: {
             escapeValue: false,
@@ -75,7 +38,22 @@ i18n
         react: {
             useSuspense: false,
         },
+    })
+    .catch((error) => {
+        console.error('[i18n] Initialization error:', error);
     });
+
+// Load saved language after initialization
+setTimeout(async () => {
+    try {
+        const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (savedLanguage && ['en', 'hi', 'gu'].includes(savedLanguage)) {
+            await i18n.changeLanguage(savedLanguage);
+        }
+    } catch (error) {
+        console.log('[i18n] Could not load saved language:', error.message);
+    }
+}, 100);
 
 export default i18n;
 

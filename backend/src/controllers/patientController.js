@@ -7,6 +7,7 @@ const User = require('../models/User');
 const MedicalRecord = require('../models/MedicalRecord');
 const Appointment = require('../models/Appointment');
 const Prescription = require('../models/Prescription');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Search patients by name, ID, phone, or email
@@ -24,7 +25,8 @@ exports.searchPatients = async (req, res) => {
             });
         }
 
-        const searchQuery = q.trim();
+        // Sanitize search query to prevent regex injection
+        const searchQuery = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         // Search in multiple fields
         const patients = await User.find({
@@ -46,7 +48,7 @@ exports.searchPatients = async (req, res) => {
             patients,
         });
     } catch (error) {
-        console.error('Patient search error:', error);
+        logger.error('Patient search error:', { error: error.message, stack: error.stack });
         res.status(500).json({
             success: false,
             message: 'Failed to search patients',
@@ -148,7 +150,7 @@ exports.getCompleteHistory = async (req, res) => {
             data: completeHistory,
         });
     } catch (error) {
-        console.error('Complete history error:', error);
+        logger.error('Complete history error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch patient history',
@@ -208,7 +210,7 @@ exports.getPatientProfile = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Patient profile error:', error);
+        logger.error('Patient profile error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch patient profile',
@@ -272,7 +274,7 @@ exports.updatePatientProfile = async (req, res) => {
             data: patient,
         });
     } catch (error) {
-        console.error('Patient profile update error:', error);
+        logger.error('Patient profile update error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to update patient profile',

@@ -3,7 +3,7 @@
  * AUTO-SYNC to patient app and pharmacy
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,49 +14,71 @@ import {
     StatusBar,
     Modal,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
+import { prescriptionService, patientService } from '../../services';
+import { logError } from '../../utils/errorHandler';
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
-    const [patient, setPatient] = useState({
-        name: 'Raj Patel',
-        id: 'P-1234',
-    });
-    const [doctor, setDoctor] = useState({
-        name: 'Dr. Shah',
-        specialty: 'Cardiology',
-    });
-    const [date] = useState('9 Dec 2025');
-    const [medications, setMedications] = useState([
-        {
-            id: 1,
-            name: 'Paracetamol 500mg',
-            dosage: '1-0-1',
-            duration: '5 days',
-            timings: { morning: true, afternoon: false, evening: true },
-        },
-        {
-            id: 2,
-            name: 'Crocin 650mg',
-            dosage: '1-1-1',
-            duration: '3 days',
-            timings: { morning: true, afternoon: true, evening: true },
-        },
-    ]);
-    const [instructions, setInstructions] = useState('Take after meals. Avoid cold drinks. Rest for 2 days.');
-    const [nextVisit, setNextVisit] = useState('15 Dec 2025');
+    const { user } = useSelector((state) => state.auth);
+    const { patientId, appointmentId } = route.params || {};
+    
+    const [patient, setPatient] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [date] = useState(new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+    const [medications, setMedications] = useState([]);
+    const [instructions, setInstructions] = useState('');
+    const [nextVisit, setNextVisit] = useState('');
     const [sendOptions, setSendOptions] = useState({
         patientApp: true,
         hospitalPharmacy: true,
         externalPharmacy: false,
     });
     const [showAddMedicine, setShowAddMedicine] = useState(false);
-    const [estimatedCost] = useState(250);
+    const [estimatedCost, setEstimatedCost] = useState(0);
     const [discount] = useState(15); // Hospital pharmacy discount percentage
+
+    const fetchPatientDetails = useCallback(async () => {
+        if (!patientId) {
+            setLoading(false);
+            Alert.alert('Error', 'Patient information is required');
+            return;
+        }
+
+        try {
+            const response = await patientService.getPatientById(patientId);
+            if (response?.success) {
+                setPatient(response.data);
+            } else {
+                Alert.alert('Error', 'Unable to fetch patient details');
+            }
+        } catch (err) {
+            logError(err, 'EnhancedPrescriptionScreen.fetchPatientDetails');
+            Alert.alert('Error', 'Unable to fetch patient details');
+        } finally {
+            setLoading(false);
+        }
+    }, [patientId]);
+
+    useEffect(() => {
+        fetchPatientDetails();
+    }, [fetchPatientDetails]);
+
+    useEffect(() => {
+        // Calculate estimated cost based on medications
+        const cost = medications.reduce((total, med) => {
+            // Simplified cost calculation - in real app, fetch from medicine database
+            return total + (med.unitPrice || 50) * (parseInt(med.duration) || 5);
+        }, 0);
+        setEstimatedCost(cost);
+    }, [medications]);
 
     const handleAddMedicine = () => {
         setShowAddMedicine(true);
@@ -73,25 +95,71 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         }));
     };
 
-    const handleSavePrescription = () => {
+    const handleSavePrescription = async () => {
         if (medications.length === 0) {
             Alert.alert('Error', 'Please add at least one medicine');
             return;
         }
 
-        Alert.alert(
-            'Prescription Saved',
-            `Prescription has been saved and will be sent to:\n${sendOptions.patientApp ? '✓ Patient Mobile App\n' : ''}${sendOptions.hospitalPharmacy ? '✓ Hospital Pharmacy\n' : ''}${sendOptions.externalPharmacy ? '✓ External Pharmacy' : ''}`,
-            [
-                {
-                    text: 'OK',
-                    onPress: () => navigation.goBack(),
-                },
-            ]
-        );
+        if (!patient?._id) {
+            Alert.alert('Error', 'Patient information is required');
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const prescriptionData = {
+                patient: patient._id,
+                doctor: user._id,
+                appointment: appointmentId,
+                medications: medications.map(med => ({
+                    name: med.name,
+                    dosage: med.dosage,
+                    frequency: med.frequency || med.dosage,
+                    duration: med.duration,
+                    instructions: med.instructions || '',
+                })),
+                instructions,
+                nextVisitDate: nextVisit || null,
+                sendOptions,
+            };
+
+            const response = await prescriptionService.createPrescription(prescriptionData);
+            
+            if (response?.success) {
+                Alert.alert(
+                    'Prescription Saved',
+                    `Prescription has been saved and will be sent to:\n${sendOptions.patientApp ? '✓ Patient Mobile App\n' : ''}${sendOptions.hospitalPharmacy ? '✓ Hospital Pharmacy\n' : ''}${sendOptions.externalPharmacy ? '✓ External Pharmacy' : ''}`,
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => navigation.goBack(),
+                        },
+                    ]
+                );
+            } else {
+                Alert.alert('Error', response?.message || 'Failed to save prescription');
+            }
+        } catch (err) {
+            logError(err, 'EnhancedPrescriptionScreen.handleSavePrescription');
+            Alert.alert('Error', 'Unable to save prescription. Please try again.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const finalCost = estimatedCost - (estimatedCost * discount / 100);
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top']}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading patient details...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -99,26 +167,45 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go back"
+                >
                     <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Create Prescription</Text>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSavePrescription}>
-                    <Ionicons name="save" size={24} color={healthColors.primary.main} />
+                <TouchableOpacity 
+                    style={styles.saveButton} 
+                    onPress={handleSavePrescription}
+                    disabled={saving}
+                    accessibilityRole="button"
+                    accessibilityLabel="Save prescription"
+                >
+                    {saving ? (
+                        <ActivityIndicator size="small" color={healthColors.primary.main} />
+                    ) : (
+                        <Ionicons name="save" size={24} color={healthColors.primary.main} />
+                    )}
                 </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Basic Info */}
                 <View style={styles.section}>
-                    <View style={styles.infoCard}>
+                    <View 
+                        style={styles.infoCard}
+                        accessible={true}
+                        accessibilityLabel={`Prescription for ${patient?.name || 'Patient'}`}
+                    >
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Patient:</Text>
-                            <Text style={styles.infoValue}>{patient.name} ({patient.id})</Text>
+                            <Text style={styles.infoValue}>{patient?.name || 'N/A'} ({patient?._id?.slice(-6) || 'N/A'})</Text>
                         </View>
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Doctor:</Text>
-                            <Text style={styles.infoValue}>{doctor.name} ({doctor.specialty})</Text>
+                            <Text style={styles.infoValue}>Dr. {user?.name || 'Doctor'} ({user?.specialization || 'Specialist'})</Text>
                         </View>
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Date:</Text>
@@ -278,6 +365,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: healthColors.background.secondary,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: moderateScale(12),
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
     },
     header: {
         flexDirection: 'row',

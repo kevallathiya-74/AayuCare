@@ -22,38 +22,60 @@ const SplashScreen = ({ navigation }) => {
     const scaleAnim = useRef(new Animated.Value(0.5)).current;
     const loadingAnim = useRef(new Animated.Value(0)).current;
 
+    console.log('[SplashScreen] Rendering...');
+
     useEffect(() => {
-        // Animate logo
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 1000,
-                useNativeDriver: true,
-            }),
-            Animated.spring(scaleAnim, {
-                toValue: 1,
-                friction: 4,
-                tension: 40,
-                useNativeDriver: true,
-            }),
-        ]).start();
+        try {
+            console.log('[SplashScreen] Starting animations...');
+            
+            // Animate logo
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                }),
+                Animated.spring(scaleAnim, {
+                    toValue: 1,
+                    friction: 4,
+                    tension: 40,
+                    useNativeDriver: true,
+                }),
+            ]).start();
 
-        // Animate loading dots
-        Animated.loop(
-            Animated.timing(loadingAnim, {
-                toValue: 1,
-                duration: 1500,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            })
-        ).start();
+            // Animate loading dots
+            Animated.loop(
+                Animated.timing(loadingAnim, {
+                    toValue: 1,
+                    duration: 1500,
+                    easing: Easing.linear,
+                    useNativeDriver: true,
+                })
+            ).start();
 
-        // Navigate to box selection after 3 seconds
-        const timer = setTimeout(() => {
-            navigation.replace('BoxSelection');
-        }, 3000);
+            console.log('[SplashScreen] Animations started, scheduling navigation...');
 
-        return () => clearTimeout(timer);
+            // Navigate to box selection after 3 seconds
+            const timer = setTimeout(() => {
+                try {
+                    console.log('[SplashScreen] Navigating to BoxSelection...');
+                    navigation.replace('BoxSelection');
+                } catch (navError) {
+                    console.error('[SplashScreen] Navigation error:', navError);
+                }
+            }, 3000);
+
+            return () => {
+                console.log('[SplashScreen] Cleanup...');
+                clearTimeout(timer);
+            };
+        } catch (error) {
+            console.error('[SplashScreen] ═══════════════════════════════════');
+            console.error('[SplashScreen] Error:', error);
+            console.error('[SplashScreen] Error message:', error?.message);
+            console.error('[SplashScreen] Error stack:', error?.stack);
+            console.error('[SplashScreen] ═══════════════════════════════════');
+        }
     }, []);
 
     const dotTranslateY = loadingAnim.interpolate({

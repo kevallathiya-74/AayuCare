@@ -86,6 +86,31 @@ export const getPatientHistory = async (patientId) => {
     }
 };
 
+/**
+ * Get all medical records (admin only)
+ */
+export const getAllRecords = async (filters = {}) => {
+    try {
+        const params = new URLSearchParams(filters).toString();
+        const response = await api.get(`/medical-records?${params}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+/**
+ * Get patient records by patient ID
+ */
+export const getPatientRecords = async (patientId) => {
+    try {
+        const response = await api.get(`/medical-records/patient/${patientId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export default {
     createMedicalRecord,
     getPatientMedicalRecords,
@@ -93,4 +118,6 @@ export default {
     updateMedicalRecord,
     deleteMedicalRecord,
     getPatientHistory,
+    getAllRecords,
+    getPatientRecords,
 };

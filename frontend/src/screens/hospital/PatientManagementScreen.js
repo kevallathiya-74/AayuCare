@@ -3,7 +3,7 @@
  * ONE-CLICK ACCESS - Instant search with auto-load full history
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -13,67 +13,147 @@ import {
     TextInput,
     StatusBar,
     ActivityIndicator,
+    RefreshControl,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
+import { patientService, prescriptionService, appointmentService, medicalRecordService } from '../../services';
+import { logError } from '../../utils/errorHandler';
 
 const PatientManagementScreen = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
 
-    // Mock patient data
-    const mockPatient = {
-        id: 'P-1234',
-        name: 'Raj Patel',
-        age: 45,
-        bloodGroup: 'O+',
-        lastVisit: '5 Dec 2025',
-        vitals: {
-            bp: '130/85',
-            sugar: '110',
-            status: 'Normal',
-        },
-        medicalRecords: [
-            { id: 1, type: 'Blood Test', date: '3 Dec 2025', icon: 'water' },
-            { id: 2, type: 'X-Ray Report', date: '1 Dec 2025', icon: 'body' },
-        ],
-        prescriptions: [
-            { id: 1, medicine: 'Paracetamol 500mg', status: 'Current', date: '5 Dec 2025' },
-            { id: 2, medicine: 'Crocin 650mg', status: 'Completed', date: '1 Dec 2025' },
-        ],
-        appointments: [
-            { id: 1, doctor: 'Dr. Shah', date: '5 Dec', status: 'Completed', specialty: 'Cardiology' },
-            { id: 2, doctor: 'Dr. Mehta', date: '15 Nov', status: 'Completed', specialty: 'General' },
-        ],
-        allergies: ['Penicillin'],
-        phone: '+91 98765 43210',
-        email: 'raj.patel@email.com',
-        address: 'Ahmedabad, Gujarat',
-    };
+    const fetchPatientData = useCallback(async (patientId) => {
+        try {
+            // Fetch all patient data in parallel
+            const [patientRes, prescriptionsRes, appointmentsRes, recordsRes] = await Promise.allSettled([
+                patientService.getPatientById(patientId),
+                prescriptionService.getPatientPrescriptions(patientId),
+                appointmentService.getPatientAppointments(patientId),
+                medicalRecordService.getPatientRecords(patientId),
+            ]);
 
-    const handleSearch = () => {
-        if (searchQuery.trim()) {
-            setLoading(true);
-            // Simulate API call
-            setTimeout(() => {
-                setSelectedPatient(mockPatient);
-                setLoading(false);
-            }, 800);
+            const patient = patientRes.status === 'fulfilled' ? patientRes.value?.data : null;
+            const prescriptions = prescriptionsRes.status === 'fulfilled' ? prescriptionsRes.value?.data || [] : [];
+            const appointments = appointmentsRes.status === 'fulfilled' ? appointmentsRes.value?.data || [] : [];
+            const records = recordsRes.status === 'fulfilled' ? recordsRes.value?.data || [] : [];
+
+            if (!patient) {
+                return null;
+            }
+
+            // Format patient data with full history
+            return {
+                id: patient.userId || patient._id,
+                name: patient.name || 'Unknown',
+                age: patient.age || 'N/A',
+                bloodGroup: patient.bloodGroup || 'Unknown',
+                lastVisit: patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString('en-IN') : 'Never',
+                vitals: patient.vitals || { bp: 'N/A', sugar: 'N/A', status: 'Unknown' },
+                medicalRecords: records.slice(0, 10).map(rec => ({
+                    id: rec._id,
+                    type: rec.recordType || rec.type || 'Record',
+                    date: new Date(rec.createdAt).toLocaleDateString('en-IN'),
+                    icon: rec.recordType === 'Blood Test' ? 'water' : 'document',
+                })),
+                prescriptions: prescriptions.slice(0, 10).map(presc => ({
+                    id: presc._id,
+                    medicine: presc.medicines?.[0]?.name || presc.medicineName || 'Unknown',
+                    status: presc.status || 'Active',
+                    date: new Date(presc.createdAt).toLocaleDateString('en-IN'),
+                })),
+                appointments: appointments.slice(0, 10).map(apt => ({
+                    id: apt._id,
+                    doctor: apt.doctorId?.name || apt.doctorName || 'Doctor',
+                    date: new Date(apt.appointmentDate).toLocaleDateString('en-IN'),
+                    status: apt.status || 'Scheduled',
+                    specialty: apt.doctorId?.specialization || apt.specialty || 'General',
+                })),
+                allergies: patient.allergies || [],
+                phone: patient.phone || 'N/A',
+                email: patient.email || 'N/A',
+                address: patient.address || 'N/A',
+            };
+        } catch (err) {
+            logError(err, { context: 'fetchPatientData', patientId });
+            throw err;
         }
-    };
+    }, []);
 
-    const handleAddRecord = () => {
-        navigation.navigate('AddMedicalRecord', { patientId: selectedPatient?.id });
-    };
+    const handleSearch = useCallback(async () => {
+        if (!searchQuery.trim()) {
+            Alert.alert('Search Required', 'Please enter a patient name or ID');
+            return;
+        }
 
-    const handlePrintSummary = () => {
-        // Print functionality
-        alert('Printing patient summary...');
-    };
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Search for patients
+            const searchRes = await patientService.searchPatients(searchQuery.trim());
+            const patients = searchRes?.data || [];
+
+            if (patients.length === 0) {
+                setSelectedPatient(null);
+                setError('No patient found matching your search');
+                return;
+            }
+
+            // Get full data for first matching patient
+            const patientData = await fetchPatientData(patients[0]._id);
+            if (patientData) {
+                setSelectedPatient(patientData);
+            } else {
+                setError('Failed to load patient details');
+            }
+        } catch (err) {
+            logError(err, { context: 'PatientManagementScreen.handleSearch' });
+            setError('Search failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    }, [searchQuery, fetchPatientData]);
+
+    const onRefresh = useCallback(async () => {
+        if (!selectedPatient?.id) return;
+        
+        setRefreshing(true);
+        try {
+            const patientData = await fetchPatientData(selectedPatient.id);
+            if (patientData) {
+                setSelectedPatient(patientData);
+            }
+        } catch (err) {
+            logError(err, { context: 'PatientManagementScreen.onRefresh' });
+        } finally {
+            setRefreshing(false);
+        }
+    }, [selectedPatient?.id, fetchPatientData]);
+
+    const handleAddRecord = useCallback(() => {
+        if (!selectedPatient?.id) {
+            Alert.alert('Error', 'Please select a patient first');
+            return;
+        }
+        navigation.navigate('AddMedicalRecord', { patientId: selectedPatient.id });
+    }, [navigation, selectedPatient?.id]);
+
+    const handlePrintSummary = useCallback(() => {
+        if (!selectedPatient) {
+            Alert.alert('Error', 'No patient data to print');
+            return;
+        }
+        Alert.alert('Print', 'Preparing patient summary for printing...');
+    }, [selectedPatient]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -81,16 +161,35 @@ const PatientManagementScreen = ({ navigation }) => {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Go back"
+                >
                     <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Patient Management</Text>
-                <TouchableOpacity style={styles.notificationButton}>
+                <TouchableOpacity 
+                    style={styles.notificationButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Notifications"
+                >
                     <Ionicons name="notifications-outline" size={24} color={healthColors.text.primary} />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+            >
                 {/* Search Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>🔍 Search by Name or ID</Text>
@@ -105,17 +204,37 @@ const PatientManagementScreen = ({ navigation }) => {
                                 onChangeText={setSearchQuery}
                                 onSubmitEditing={handleSearch}
                                 returnKeyType="search"
+                                accessibilityLabel="Search patients"
+                                accessibilityHint="Enter patient name or ID to search"
                             />
                             {searchQuery.length > 0 && (
-                                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <TouchableOpacity 
+                                    onPress={() => setSearchQuery('')}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Clear search"
+                                >
                                     <Ionicons name="close-circle" size={20} color={healthColors.text.disabled} />
                                 </TouchableOpacity>
                             )}
                         </View>
-                        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                            <Ionicons name="search" size={20} color="#FFFFFF" />
+                        <TouchableOpacity 
+                            style={styles.searchButton} 
+                            onPress={handleSearch}
+                            disabled={loading}
+                            accessibilityRole="button"
+                            accessibilityLabel="Search"
+                            accessibilityState={{ disabled: loading }}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                            ) : (
+                                <Ionicons name="search" size={20} color="#FFFFFF" />
+                            )}
                         </TouchableOpacity>
                     </View>
+                    {error && (
+                        <Text style={styles.errorText}>{error}</Text>
+                    )}
                 </View>
 
                 {/* Loading State */}
@@ -506,6 +625,12 @@ const styles = StyleSheet.create({
     emptyStateText: {
         fontSize: scaledFontSize(14),
         color: healthColors.text.secondary,
+        textAlign: 'center',
+    },
+    errorText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.error.main,
+        marginTop: moderateScale(8),
         textAlign: 'center',
     },
 });

@@ -1,29 +1,89 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Provider as PaperProvider } from 'react-native-paper';
-import { View, Platform, StyleSheet } from 'react-native';
+import { View, Platform, StyleSheet, LogBox } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import * as Sentry from '@sentry/react-native';
+
+console.log('═══════════════════════════════════════════');
+console.log('[App.js] File loading...');
+console.log('═══════════════════════════════════════════');
+
+// Global error handler to catch unhandled errors
+if (__DEV__) {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    // Log additional context for property access errors
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('Property')) {
+      console.log('[DEBUG] Property error context:', new Error().stack);
+    }
+    originalConsoleError.apply(console, args);
+  };
+  
+  // Set up global error handler
+  const errorHandler = (error, isFatal) => {
+    console.log('═══════════════════════════════════════════');
+    console.log('[GLOBAL ERROR CAUGHT]');
+    console.log('Error:', error?.message || error);
+    console.log('Stack:', error?.stack);
+    console.log('Fatal:', isFatal);
+    console.log('═══════════════════════════════════════════');
+    if (isFatal) {
+      console.log('[FATAL ERROR] App will restart');
+    }
+  };
+  
+  if (global.ErrorUtils) {
+    global.ErrorUtils.setGlobalHandler(errorHandler);
+  }
+}
+
+// Ignore specific logs that might spam the console
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+]);
+
+console.log('[App.js] Importing dependencies...');
 
 import store from './src/store/store';
+console.log('[App.js] Store imported');
+
 import AppNavigator from './src/navigation/AppNavigator';
-import { paperTheme } from './src/theme/theme';
+console.log('[App.js] AppNavigator imported');
+
 import ErrorBoundary from './src/components/common/ErrorBoundary';
-import './src/i18n'; // Initialize i18n
+console.log('[App.js] ErrorBoundary imported');
 
-// Initialize Sentry for production error tracking
-Sentry.init({
-  dsn: 'https://your-dsn-here@sentry.io/your-project-id', // Replace with your Sentry DSN
-  tracesSampleRate: 1.0,
-  environment: __DEV__ ? 'development' : 'production',
-  enableAutoSessionTracking: true,
-  sessionTrackingIntervalMillis: 10000,
-  attachStacktrace: true,
-  debug: __DEV__,
-});
+// Initialize i18n
+console.log('[App.js] Initializing i18n...');
+import './src/i18n';
+console.log('[App.js] i18n initialized');
 
+// Import theme safely with fallback
+console.log('[App.js] Loading theme...');
+let paperTheme;
+try {
+  const themeModule = require('./src/theme/theme');
+  paperTheme = themeModule.paperTheme;
+  console.log('[App] Theme loaded successfully');
+} catch (e) {
+  console.log('[App] Theme loading failed:', e.message);
+  // Use a minimal fallback theme
+  paperTheme = {};
+}
+
+console.log('[App.js] Initializing Sentry...');
+// Initialize Sentry safely
+try {
+  const { initializeSentry } = require('./src/config/sentry');
+  initializeSentry();
+  console.log('[App.js] Sentry initialized');
+} catch (e) {
+  console.log('[App] Sentry init skipped:', e.message);
+}
+
+console.log('[App.js] Creating QueryClient...');
 // Create React Query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,7 +94,30 @@ const queryClient = new QueryClient({
   },
 });
 
+console.log('[App.js] QueryClient created');
+console.log('[App.js] Defining App component...');
+
 export default function App() {
+  console.log('[App] Component rendering...');
+  
+  useEffect(() => {
+    // Simple logging for debugging - don't block rendering
+    const logInit = () => {
+      console.log('[App] Starting...');
+      if (!paperTheme || Object.keys(paperTheme).length === 0) {
+        console.warn('[App] Theme not fully loaded');
+      } else {
+        console.log('[App] Theme OK');
+      }
+      console.log('[App] Ready');
+    };
+    
+    // Run async to avoid blocking
+    setTimeout(logInit, 0);
+  }, []);
+
+  console.log('[App] Returning JSX...');
+
   return (
     <SafeAreaProvider>
       <ErrorBoundary>

@@ -69,11 +69,30 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, isLoading } = useSelector((state) => state.auth || {});
   const navigationRef = useRef(null);
 
+  console.log('[AppNavigator] Initializing...');
+  console.log('[AppNavigator] Auth state:', { isAuthenticated, user: user?.userId, isLoading });
+
   useEffect(() => {
-    dispatch(loadUser());
+    // Load user asynchronously with error handling
+    const initAuth = async () => {
+      try {
+        console.log('[AppNavigator] Loading user...');
+        await dispatch(loadUser());
+        console.log('[AppNavigator] User loaded successfully');
+      } catch (error) {
+        console.error('[AppNavigator] ═══════════════════════════════════');
+        console.error('[AppNavigator] Error loading user:', error);
+        console.error('[AppNavigator] Error message:', error?.message);
+        console.error('[AppNavigator] Error stack:', error?.stack);
+        console.error('[AppNavigator] ═══════════════════════════════════');
+        // Continue anyway - auth will default to logged out state
+      }
+    };
+    
+    initAuth();
   }, [dispatch]);
 
   // Auto-navigate after successful login

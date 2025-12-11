@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign } from '../../theme/indianDesign';
+import { captureException } from '../../config/sentry';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -19,8 +20,24 @@ class ErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, errorInfo) {
-        // Log error to error reporting service
-        console.error('Error Boundary caught an error:', error, errorInfo);
+        // Always log error to console for debugging with clear markers
+        console.log('═══════════════════════════════════════════');
+        console.log('[ERROR BOUNDARY CAUGHT ERROR]');
+        console.log('Error:', error);
+        console.log('Error Message:', error?.message);
+        console.log('Error Stack:', error?.stack);
+        console.log('Component Stack:', errorInfo?.componentStack);
+        console.log('═══════════════════════════════════════════');
+        
+        // Send to Sentry
+        try {
+            captureException(error, {
+                tags: { context: 'ErrorBoundary' },
+                extra: { errorInfo },
+            });
+        } catch (sentryError) {
+            console.log('[ErrorBoundary] Sentry capture failed:', sentryError.message);
+        }
     }
 
     handleReset = () => {

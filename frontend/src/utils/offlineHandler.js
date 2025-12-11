@@ -5,6 +5,7 @@
  * Queues failed requests and retries when connection restored
  */
 
+import React from 'react';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showError, showSuccess, logError } from './errorHandler';
@@ -261,15 +262,16 @@ class OfflineHandler {
 export const offlineHandler = new OfflineHandler();
 
 // React Hook for network status
+// Returns { isConnected } object for consistent usage across components
 export const useNetworkStatus = () => {
-    const [isOnline, setIsOnline] = React.useState(offlineHandler.getNetworkStatus());
+    const [isConnected, setIsConnected] = React.useState(offlineHandler.getNetworkStatus());
     
     React.useEffect(() => {
-        const unsubscribe = offlineHandler.addListener(setIsOnline);
+        const unsubscribe = offlineHandler.addListener(setIsConnected);
         return unsubscribe;
     }, []);
     
-    return isOnline;
+    return { isConnected };
 };
 
 // React Hook for request queue

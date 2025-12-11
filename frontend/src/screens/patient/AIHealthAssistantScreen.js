@@ -28,7 +28,7 @@ import { useNetworkStatus } from '../../utils/offlineHandler';
 const AIHealthAssistantScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([
         {

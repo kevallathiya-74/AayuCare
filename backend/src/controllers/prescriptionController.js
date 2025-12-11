@@ -5,6 +5,7 @@
 
 const Prescription = require('../models/Prescription');
 const User = require('../models/User');
+const logger = require('../utils/logger');
 
 /**
  * @desc    Create a new prescription
@@ -61,7 +62,7 @@ exports.createPrescription = async (req, res) => {
             data: prescription,
         });
     } catch (error) {
-        console.error('Create prescription error:', error);
+        logger.error('Create prescription error:', { error: error.message, stack: error.stack, patientId: req.body.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to create prescription',
@@ -101,7 +102,7 @@ exports.getPatientPrescriptions = async (req, res) => {
             data: prescriptions,
         });
     } catch (error) {
-        console.error('Get patient prescriptions error:', error);
+        logger.error('Get patient prescriptions error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch prescriptions',
@@ -137,7 +138,7 @@ exports.getDoctorPrescriptions = async (req, res) => {
             data: prescriptions,
         });
     } catch (error) {
-        console.error('Get doctor prescriptions error:', error);
+        logger.error('Get doctor prescriptions error:', { error: error.message, stack: error.stack, doctorId: req.params.doctorId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch prescriptions',
@@ -183,7 +184,7 @@ exports.getPrescriptionById = async (req, res) => {
             data: prescription,
         });
     } catch (error) {
-        console.error('Get prescription by ID error:', error);
+        logger.error('Get prescription by ID error:', { error: error.message, stack: error.stack, prescriptionId: req.params.prescriptionId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch prescription',
@@ -229,7 +230,7 @@ exports.updatePrescriptionStatus = async (req, res) => {
             data: prescription,
         });
     } catch (error) {
-        console.error('Update prescription status error:', error);
+        logger.error('Update prescription status error:', { error: error.message, stack: error.stack, prescriptionId: req.params.prescriptionId, status: req.body.status });
         res.status(500).json({
             success: false,
             message: 'Failed to update prescription status',
@@ -261,7 +262,7 @@ exports.deletePrescription = async (req, res) => {
             message: 'Prescription deleted successfully',
         });
     } catch (error) {
-        console.error('Delete prescription error:', error);
+        logger.error('Delete prescription error:', { error: error.message, stack: error.stack, prescriptionId: req.params.prescriptionId });
         res.status(500).json({
             success: false,
             message: 'Failed to delete prescription',

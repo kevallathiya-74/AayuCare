@@ -4,7 +4,7 @@
  * Optimized for Indian users with large touch targets
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import {
     TouchableOpacity,
     View,
@@ -21,7 +21,7 @@ import {
     getCardHeight,
 } from '../../utils/responsive';
 
-const LargeActionCard = ({
+const LargeActionCard = memo(({
     title,
     icon,
     iconColor = healthColors.primary.main,
@@ -40,6 +40,10 @@ const LargeActionCard = ({
             onPress={onPress}
             activeOpacity={0.7}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={title}
+            accessibilityHint={badge ? `${title}. ${badge} items pending` : `Opens ${title}`}
+            accessibilityState={{ disabled }}
         >
             <View style={styles.content}>
                 {/* Icon Container */}
@@ -61,7 +65,9 @@ const LargeActionCard = ({
             </View>
         </TouchableOpacity>
     );
-};
+});
+
+LargeActionCard.displayName = 'LargeActionCard';
 
 const styles = StyleSheet.create({
     card: {

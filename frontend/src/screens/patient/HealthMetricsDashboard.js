@@ -4,7 +4,7 @@
  * AI-powered insights and trend analysis
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     Dimensions,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,7 @@ import { HealthMetricsIcon } from '../../components/common/CustomIcons';
 import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import healthMetricsService from '../../services/healthMetrics.service';
 
 const { width } = Dimensions.get('window');
 
@@ -33,40 +35,59 @@ const HealthMetricsDashboard = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
     const [selectedMetric, setSelectedMetric] = useState('bp');
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
-    const isConnected = useNetworkStatus();
+    const { isConnected } = useNetworkStatus();
     const [metricsData, setMetricsData] = useState({
-        bp: { current: '120/80', status: 'normal', trend: 'stable', history: [] },
-        sugar: { current: 95, status: 'normal', trend: 'stable', history: [] },
-        weight: { current: 70, status: 'normal', trend: 'down', history: [] },
-        bmi: { current: 22.5, status: 'normal', category: 'Normal', history: [] },
+        bp: { current: null, status: 'unknown', trend: 'stable', history: [] },
+        sugar: { current: null, status: 'unknown', trend: 'stable', history: [] },
+        weight: { current: null, status: 'unknown', trend: 'stable', history: [] },
+        bmi: { current: null, status: 'unknown', category: 'Unknown', history: [] },
     });
 
     useEffect(() => {
-        fetchMetrics();
-    }, []);
+        if (user?.userId) {
+            fetchMetrics();
+        }
+    }, [user]);
 
-    const fetchMetrics = async () => {
+    const fetchMetrics = useCallback(async () => {
+        if (!user?.userId) {
+            setError('User not authenticated');
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
-            // TODO: Replace with actual API call
-            // const response = await healthMetricsService.getMetrics(user.id);
-            // setMetricsData(response.data);
+            
+            const response = await healthMetricsService.getMetrics(user.userId);
+            
+            if (response.success && response.data) {
+                setMetricsData(response.data);
+            } else {
+                throw new Error(response.message || 'Failed to load health metrics');
+            }
         } catch (err) {
-            const errorMessage = 'Failed to load health metrics';
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to load health metrics';
             setError(errorMessage);
-            logError(err, { context: 'HealthMetricsDashboard.fetchMetrics' });
+            logError(err, { context: 'HealthMetricsDashboard.fetchMetrics', userId: user?.userId });
             showError(errorMessage);
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
-    const handleRetry = () => {
+    const handleRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchMetrics();
+        setRefreshing(false);
+    }, [fetchMetrics]);
+
+    const handleRetry = useCallback(() => {
         setError(null);
         fetchMetrics();
-    };
+    }, [fetchMetrics]);
 
     const metrics = [
         {
@@ -259,7 +280,18 @@ const HealthMetricsDashboard = ({ navigation }) => {
                 </TouchableOpacity>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView 
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={handleRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+            >
                 {/* Metrics Grid */}
                 <View style={styles.metricsGrid}>
                     {metrics.map(renderMetricCard)}

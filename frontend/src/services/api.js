@@ -41,7 +41,7 @@ const getBaseURL = () => {
         }
         
         // Fallback: Use computer's local IP (change this to your IP)
-        const fallbackIP = '10.9.14.41'; // Update if your IP changed
+        const fallbackIP = '10.9.15.29'; // ✅ Updated to current IP
         console.warn('⚠️ Tunnel mode: Using fallback IP for backend:', fallbackIP);
         return `http://${fallbackIP}:5000/api`;
       }
