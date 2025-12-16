@@ -102,8 +102,8 @@
     "patientMobileApp": "Patient Mobile App (Auto-Sync)",
     "hospitalPharmacy": "Hospital Pharmacy",
     "externalPharmacy": "External Pharmacy (Patient Choice)",
-    "estimatedCost": "💰 Estimated Cost:",
-    "discount": "🎁 Hospital Pharmacy Discount:",
+    "estimatedCost": "Estimated Cost:",
+    "discount": "Hospital Pharmacy Discount:",
     "buyFrom": "BUY FROM:",
     "payOnline": "💳 Pay Online",
     "payAtCounter": "💵 Pay at Counter"

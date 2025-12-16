@@ -17,16 +17,17 @@ class AppointmentService {
 
     /**
      * Get all appointments (admin only)
+     * Now uses the main /appointments endpoint with role-based filtering
      */
     async getAllAppointments(filters = {}) {
         try {
             const params = new URLSearchParams(filters).toString();
-            const response = await api.get(`/appointments/all?${params}`);
+            // Use main endpoint - backend handles admin access automatically
+            const response = await api.get(`/appointments?${params}`);
             return response.data;
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAllAppointments' });
-            // Fallback to regular appointments if /all endpoint doesn't exist
-            return this.getAppointments(filters);
+            throw error;
         }
     }
 

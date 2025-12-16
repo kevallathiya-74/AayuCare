@@ -64,7 +64,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      const loginScreen = userType === 'hospital' ? 'HospitalLogin' : 'UserLogin';
+      const loginScreen = 'Login'; // Unified login screen for all user types
       navigation.navigate(loginScreen);
     }
   };

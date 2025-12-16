@@ -185,26 +185,17 @@ export const indianDesign = {
     },
 };
 
-// Helper Functions
-export const createShadow = (elevation = 2) => {
-    if (Platform.OS === 'web') {
-        const opacity = 0.1 + elevation * 0.02;
-        const blur = elevation * 2;
-        return {
-            boxShadow: `0px ${elevation}px ${blur}px rgba(0, 0, 0, ${opacity})`,
-        };
-    }
-    if (Platform.OS === 'ios') {
-        return {
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: elevation },
-            shadowOpacity: 0.1 + elevation * 0.02,
-            shadowRadius: elevation * 2,
-        };
-    }
-    return {
-        elevation,
-    };
+// Helper Functions - using elevation system from elevation.js for consistency
+// Re-exporting createShadow for backward compatibility with proper naming
+export { createShadow } from './elevation';
+
+// Shadow presets with semantic naming for backward compatibility
+export const shadows = {
+    none: require('./elevation').elevation.level0,
+    small: require('./elevation').elevation.level1,
+    medium: require('./elevation').elevation.level2,
+    large: require('./elevation').elevation.level4,
+    xlarge: require('./elevation').elevation.level6,
 };
 
 export const isSmallScreen = () => width < 375;

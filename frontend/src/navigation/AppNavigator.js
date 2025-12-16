@@ -23,8 +23,6 @@ import RoleSelectionScreen from '../screens/splash/RoleSelectionScreen';
 
 // Auth Screens
 import UnifiedLoginScreen from '../screens/auth/UnifiedLoginScreen';
-import HospitalLoginScreen from '../screens/auth/HospitalLoginScreen';
-import PatientLoginScreen from '../screens/auth/PatientLoginScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Tab Navigators (Role-based)
@@ -42,9 +40,6 @@ import {
 
 import {
   MyPrescriptionsScreen,
-  HealthStatusScreen,
-  ChatWithHospitalScreen,
-  BillingScreen,
 } from '../screens/patient';
 
 // New Patient Screens
@@ -62,7 +57,6 @@ import AISymptomChecker from '../screens/patient/AISymptomChecker';
 import EmergencyServices from '../screens/patient/EmergencyServices';
 
 // User Main App
-import TabNavigator from './TabNavigator';
 import { SettingsScreen, SettingsAccessibilityScreen } from '../screens/main';
 
 const Stack = createNativeStackNavigator();
@@ -108,8 +102,6 @@ const AppNavigator = () => {
           navigationRef.current?.navigate('DoctorTabs');
         } else if (userRole === 'patient') {
           navigationRef.current?.navigate('PatientTabs');
-        } else if (userRole === 'user') {
-          navigationRef.current?.navigate('Main');
         }
       }, 100); // Small delay to ensure navigation is ready
     }
@@ -152,8 +144,6 @@ const AppNavigator = () => {
 
         {/* Auth Screens - Always available */}
         <Stack.Screen name="Login" component={UnifiedLoginScreen} />
-        <Stack.Screen name="HospitalLogin" component={HospitalLoginScreen} />
-        <Stack.Screen name="PatientLogin" component={PatientLoginScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
 
         {/* Role-based Tab Navigators - Only when authenticated */}
@@ -166,12 +156,14 @@ const AppNavigator = () => {
                 <Stack.Screen name="ManagePatients" component={ManagePatientsScreen} />
                 <Stack.Screen name="PatientManagement" component={PatientManagementScreen} />
                 <Stack.Screen name="CreatePrescription" component={EnhancedPrescriptionScreen} />
+                <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}
 
             {userRole === 'doctor' && (
               <>
                 <Stack.Screen name="DoctorTabs" component={DoctorTabNavigator} />
+                <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}
 
@@ -179,9 +171,7 @@ const AppNavigator = () => {
               <>
                 <Stack.Screen name="PatientTabs" component={PatientTabNavigator} />
                 <Stack.Screen name="MyPrescriptions" component={MyPrescriptionsScreen} />
-                <Stack.Screen name="HealthStatus" component={HealthStatusScreen} />
-                <Stack.Screen name="ChatWithHospital" component={ChatWithHospitalScreen} />
-                <Stack.Screen name="Billing" component={BillingScreen} />
+
                 <Stack.Screen name="ActivityTracker" component={ActivityTrackerScreen} />
                 <Stack.Screen name="WomensHealth" component={WomensHealthScreen} />
                 <Stack.Screen name="DiseaseInfo" component={DiseaseInfoScreen} />
@@ -195,22 +185,7 @@ const AppNavigator = () => {
                 <Stack.Screen name="AISymptomChecker" component={AISymptomChecker} />
                 <Stack.Screen name="Emergency" component={EmergencyServices} />
                 <Stack.Screen name="SettingsAccessibility" component={SettingsAccessibilityScreen} />
-              </>
-            )}
-
-            {userRole === 'user' && (
-              <>
-                <Stack.Screen name="Main" component={TabNavigator} />
-                <Stack.Screen
-                  name="Settings"
-                  component={SettingsScreen}
-                  options={{
-                    headerShown: true,
-                    title: 'Settings',
-                    headerStyle: { backgroundColor: healthColors.background.primary },
-                    headerTintColor: healthColors.text.primary,
-                  }}
-                />
+                <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}
           </>

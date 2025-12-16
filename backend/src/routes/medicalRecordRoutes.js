@@ -6,6 +6,13 @@ const { protect, restrictTo } = require('../middleware/auth');
 // All routes require authentication
 router.use(protect);
 
+// Get all medical records (Admin only) - must be before /:id route
+router.get(
+    '/',
+    restrictTo('admin'),
+    medicalRecordController.getAllMedicalRecords
+);
+
 // Create medical record (Doctor only)
 router.post(
     '/',

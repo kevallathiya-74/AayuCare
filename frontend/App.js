@@ -66,9 +66,16 @@ let paperTheme;
 try {
   const themeModule = require('./src/theme/theme');
   paperTheme = themeModule.paperTheme;
-  console.log('[App] Theme loaded successfully');
+  
+  // Validate theme has required properties
+  if (paperTheme && paperTheme.colors && paperTheme.fonts) {
+    console.log('[App] Theme loaded successfully');
+  } else {
+    console.warn('[App] Theme incomplete, using defaults');
+    paperTheme = paperTheme || {};
+  }
 } catch (e) {
-  console.log('[App] Theme loading failed:', e.message);
+  console.error('[App] Theme loading failed:', e.message);
   // Use a minimal fallback theme
   paperTheme = {};
 }
@@ -104,10 +111,10 @@ export default function App() {
     // Simple logging for debugging - don't block rendering
     const logInit = () => {
       console.log('[App] Starting...');
-      if (!paperTheme || Object.keys(paperTheme).length === 0) {
+      if (!paperTheme || !paperTheme.colors || !paperTheme.fonts) {
         console.warn('[App] Theme not fully loaded');
       } else {
-        console.log('[App] Theme OK');
+        console.log('[App] Theme OK - Colors:', Object.keys(paperTheme.colors).length, 'properties');
       }
       console.log('[App] Ready');
     };

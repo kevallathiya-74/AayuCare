@@ -22,9 +22,14 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
+      console.log('[authSlice] Login thunk started with:', credentials.userId);
       const response = await authService.login(credentials);
+      console.log('[authSlice] Login response:', JSON.stringify(response, null, 2));
+      console.log('[authSlice] User:', response?.user);
+      console.log('[authSlice] Token:', response?.token ? 'exists' : 'missing');
       return response;
     } catch (error) {
+      console.log('[authSlice] Login error:', error);
       // Error is already a string message from auth service
       return rejectWithValue(error || 'Login failed');
     }
@@ -35,9 +40,14 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
+      console.log('[authSlice] Register thunk started with:', userData.userId);
       const response = await authService.register(userData);
+      console.log('[authSlice] Register response:', JSON.stringify(response, null, 2));
+      console.log('[authSlice] User:', response?.user);
+      console.log('[authSlice] Token:', response?.token ? 'exists' : 'missing');
       return response;
     } catch (error) {
+      console.log('[authSlice] Register error:', error);
       return rejectWithValue(error.message || 'Registration failed');
     }
   }
@@ -47,9 +57,12 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('[authSlice] Logout thunk started');
       await authService.logout();
+      console.log('[authSlice] Logout complete');
       return null;
     } catch (error) {
+      console.log('[authSlice] Logout error:', error);
       return rejectWithValue(error.message || 'Logout failed');
     }
   }
@@ -59,14 +72,19 @@ export const loadUser = createAsyncThunk(
   'auth/loadUser',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('[authSlice] Load user thunk started');
       const isAuth = await authService.isAuthenticated();
+      console.log('[authSlice] isAuthenticated:', isAuth);
       if (!isAuth) {
+        console.log('[authSlice] No auth token found');
         return null;
       }
       
       const user = await authService.getStoredUser();
+      console.log('[authSlice] Loaded user:', user?.userId);
       return user;
     } catch (error) {
+      console.log('[authSlice] Load user error:', error);
       return rejectWithValue(error.message || 'Failed to load user');
     }
   }
@@ -111,11 +129,19 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
+        console.log('[authSlice] loginUser.fulfilled - payload:', JSON.stringify(action.payload, null, 2));
+        console.log('[authSlice] Setting user:', action.payload?.user);
+        console.log('[authSlice] Setting token:', action.payload?.token ? 'exists' : 'missing');
         state.isLoading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.error = null;
+        console.log('[authSlice] State after update:', { 
+          isAuthenticated: state.isAuthenticated, 
+          hasUser: !!state.user, 
+          hasToken: !!state.token 
+        });
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -130,11 +156,17 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
+        console.log('[authSlice] registerUser.fulfilled - payload:', JSON.stringify(action.payload, null, 2));
         state.isLoading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.error = null;
+        console.log('[authSlice] Register state updated:', { 
+          isAuthenticated: state.isAuthenticated, 
+          hasUser: !!state.user, 
+          hasToken: !!state.token 
+        });
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -148,11 +180,13 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(logoutUser.fulfilled, (state) => {
+        console.log('[authSlice] logoutUser.fulfilled - clearing state');
         state.isLoading = false;
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
         state.error = null;
+        console.log('[authSlice] Logout state cleared');
       })
       .addCase(logoutUser.rejected, (state) => {
         state.isLoading = false;
@@ -168,14 +202,21 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
+        console.log('[authSlice] loadUser.fulfilled - payload:', action.payload?.userId);
         state.isLoading = false;
         if (action.payload) {
+          console.log('[authSlice] Setting authenticated user:', action.payload.userId);
           state.isAuthenticated = true;
           state.user = action.payload;
         } else {
+          console.log('[authSlice] No user data found');
           state.isAuthenticated = false;
           state.user = null;
         }
+        console.log('[authSlice] LoadUser state:', { 
+          isAuthenticated: state.isAuthenticated, 
+          hasUser: !!state.user 
+        });
       })
       .addCase(loadUser.rejected, (state) => {
         state.isLoading = false;

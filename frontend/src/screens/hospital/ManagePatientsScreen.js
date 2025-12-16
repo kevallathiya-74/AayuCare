@@ -256,7 +256,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                                         )}
                                         {record.doctorId && (
                                             <Text style={styles.recordDoctor}>
-                                                Dr. {record.doctorId.name}
+                                                {record.doctorId.name}
                                             </Text>
                                         )}
                                     </View>
@@ -279,7 +279,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                                         </View>
                                         {prescription.doctorId && (
                                             <Text style={styles.prescriptionDoctor}>
-                                                By Dr. {prescription.doctorId.name}
+                                                By {prescription.doctorId.name}
                                             </Text>
                                         )}
                                         {prescription.medications && prescription.medications.length > 0 && (

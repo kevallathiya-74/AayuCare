@@ -110,9 +110,10 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
         return (
             <TouchableOpacity
-                onPress={() => navigation.navigate('RecordDetail', { recordId: item._id })}
+                onPress={() => Alert.alert('Medical Record', `Viewing details for ${item.title || item.recordType} - Full record viewer coming soon!`)}
                 activeOpacity={0.7}
             >
+                {/* Removed navigation to non-existent RecordDetail screen */}
                 <Card style={styles.recordCard}>
                     <View style={styles.recordHeader}>
                         <View style={[styles.iconContainer, { backgroundColor: icon.color + '20' }]}>
@@ -125,7 +126,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
                             </Text>
                             {item.doctorId && (
                                 <Text style={styles.doctorName}>
-                                    Dr. {item.doctorId.name} • {item.doctorId.specialization}
+                                    {item.doctorId.name} • {item.doctorId.specialization}
                                 </Text>
                             )}
                         </View>

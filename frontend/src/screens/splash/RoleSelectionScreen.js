@@ -26,11 +26,8 @@ const RoleSelectionScreen = ({ navigation }) => {
     const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'en');
 
     const handleRoleSelection = (role) => {
-        if (role === 'hospital') {
-            navigation.navigate('HospitalLogin');
-        } else {
-            navigation.navigate('PatientLogin');
-        }
+        // Navigate to unified login screen for all roles
+        navigation.navigate('Login');
     };
 
     const handleLanguageChange = async (lang) => {

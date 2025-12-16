@@ -28,15 +28,23 @@ exports.login = async (req, res, next) => {
     try {
         const { userId, password } = req.body;
         const { user, accessToken, refreshToken } = await authService.login(userId, password);
+        
+        console.log(`[authController] Received from service: user=${!!user}, accessToken=${!!accessToken}, refreshToken=${!!refreshToken}`);
+        console.log(`[authController] accessToken type: ${typeof accessToken}, value: ${accessToken ? 'exists' : 'missing'}`);
+        console.log(`[authController] refreshToken type: ${typeof refreshToken}, value: ${refreshToken ? 'exists' : 'missing'}`);
+
+        const responseData = {
+            user,
+            token: accessToken,
+            refreshToken,
+        };
+        
+        console.log(`[authController] Sending response:`, JSON.stringify(responseData, null, 2));
 
         res.status(200).json({
             status: 'success',
             message: 'Login successful',
-            data: {
-                user,
-                token: accessToken,
-                refreshToken,
-            },
+            data: responseData,
         });
     } catch (error) {
         next(error);

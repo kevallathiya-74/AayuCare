@@ -7,6 +7,7 @@
  * NOTE: This module does NOT import errorHandler to avoid circular dependencies
  */
 
+import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ANALYTICS_STORAGE_KEY = '@aayucare_error_analytics';

@@ -85,7 +85,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                 'in-progress'
             );
             if (response?.success) {
-                navigation.navigate('Consultation', { appointment });
+                Alert.alert('Consultation Started', 'Consultation interface coming soon!');
+                // navigation.navigate('Consultation', { appointment }); // Screen doesn't exist yet
             }
         } catch (err) {
             logError(err, 'TodaysAppointmentsScreen.handleStartConsultation');
@@ -208,7 +209,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                 <TouchableOpacity 
                     style={styles.searchButton} 
                     activeOpacity={0.7}
-                    onPress={() => navigation.navigate('SearchAppointments')}
+                    onPress={() => Alert.alert('Search', 'Appointment search feature coming soon!')}
                     accessibilityRole="button"
                     accessibilityLabel="Search appointments"
                 >

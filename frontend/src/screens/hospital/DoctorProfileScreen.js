@@ -89,19 +89,19 @@ const DoctorProfileScreen = ({ navigation }) => {
             id: 1,
             title: 'Edit Profile',
             icon: 'create-outline',
-            onPress: () => navigation.navigate('EditProfile'),
+            onPress: () => Alert.alert('Edit Profile', 'Profile editing feature coming soon!'),
         },
         {
             id: 2,
             title: 'Schedule & Availability',
             icon: 'calendar-outline',
-            onPress: () => navigation.navigate('ManageSchedule'),
+            onPress: () => Alert.alert('Schedule Management', 'Schedule management feature coming soon!'),
         },
         {
             id: 3,
             title: 'Consultation History',
             icon: 'time-outline',
-            onPress: () => navigation.navigate('ConsultationHistory'),
+            onPress: () => Alert.alert('Consultation History', 'Consultation history feature coming soon!'),
         },
         {
             id: 4,
@@ -113,7 +113,7 @@ const DoctorProfileScreen = ({ navigation }) => {
             id: 5,
             title: 'Help & Support',
             icon: 'help-circle-outline',
-            onPress: () => navigation.navigate('Support'),
+            onPress: () => Alert.alert('Help & Support', 'Support feature coming soon! Contact: support@aayucare.com'),
         },
     ];
 
@@ -145,7 +145,7 @@ const DoctorProfileScreen = ({ navigation }) => {
                 >
                     <Avatar size={80} name={user?.name || 'Doctor'} />
                     <View style={styles.profileInfo}>
-                        <Text style={styles.doctorName}>Dr. {user?.name || 'Doctor'}</Text>
+                        <Text style={styles.doctorName}>{user?.name || 'Doctor'}</Text>
                         <Text style={styles.specialization}>{user?.specialization || 'Specialist'} • {user?.department || 'OPD'}</Text>
                         <Text style={styles.doctorId}>ID: {user?.employeeId || user?._id?.slice(-6) || 'N/A'}</Text>
                     </View>

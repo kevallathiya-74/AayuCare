@@ -13,6 +13,7 @@ import {
     TextInput,
     StatusBar,
     Image,
+    Alert,
     ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -142,17 +143,19 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             <View style={styles.doctorActions}>
                 <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => navigation.navigate('BookAppointment', { doctor })}
+                    onPress={() => navigation.navigate('AppointmentBooking', { doctor })}
                 >
                     <Text style={styles.actionButtonText}>Book Appointment</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={styles.viewProfileButton}
-                    onPress={() => navigation.navigate('DoctorProfile', { doctor })}
+                    onPress={() => Alert.alert('Doctor Profile', `Viewing profile for ${doctor.name} - Full profile coming soon!`)}
                 >
                     <Text style={styles.viewProfileText}>View Profile</Text>
                 </TouchableOpacity>
             </View>
+            {/* Fixed: BookAppointment -> AppointmentBooking (correct screen name) */}
+            {/* Fixed: DoctorProfile replaced with Alert (screen doesn't exist) */}
         </View>
     );
 

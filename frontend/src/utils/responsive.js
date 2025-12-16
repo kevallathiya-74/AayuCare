@@ -48,29 +48,73 @@ export const isTablet = () => {
 
 // Scale size based on screen width
 export const scale = (size) => {
+    // Validate input
+    if (typeof size !== 'number' || isNaN(size) || !isFinite(size)) {
+        return 0;
+    }
+    
     const { width } = getWindowDimensions();
     const scaleFactor = width / BASE_WIDTH;
+    
+    if (!isFinite(scaleFactor)) {
+        return Math.round(size);
+    }
+    
     return Math.round(size * scaleFactor);
 };
 
 // Scale vertically based on screen height
 export const verticalScale = (size) => {
+    // Validate input
+    if (typeof size !== 'number' || isNaN(size) || !isFinite(size)) {
+        return 0;
+    }
+    
     const { height } = getWindowDimensions();
     const scaleFactor = height / BASE_HEIGHT;
+    
+    if (!isFinite(scaleFactor)) {
+        return Math.round(size);
+    }
+    
     return Math.round(size * scaleFactor);
 };
 
 // Moderate scale - less aggressive scaling
 export const moderateScale = (size, factor = 0.5) => {
+    // Validate inputs
+    if (typeof size !== 'number' || isNaN(size) || !isFinite(size)) {
+        return 0;
+    }
+    if (typeof factor !== 'number' || isNaN(factor) || !isFinite(factor)) {
+        factor = 0.5;
+    }
+    
     const { width } = getWindowDimensions();
     const scaleFactor = width / BASE_WIDTH;
+    
+    if (!isFinite(scaleFactor)) {
+        return Math.round(size);
+    }
+    
     return Math.round(size + (scaleFactor - 1) * size * factor);
 };
 
 // Font scale with device font scale consideration
 export const scaledFontSize = (size) => {
+    // Validate input
+    if (typeof size !== 'number' || isNaN(size) || !isFinite(size)) {
+        return 14; // Default fallback font size
+    }
+    
     const { fontScale } = getWindowDimensions();
     const scaled = moderateScale(size, 0.3); // Less aggressive for fonts
+    
+    // Validate fontScale
+    if (typeof fontScale !== 'number' || isNaN(fontScale) || !isFinite(fontScale) || fontScale === 0) {
+        return Math.round(scaled); // Return scaled size without fontScale adjustment
+    }
+    
     return Math.round(scaled / fontScale) * fontScale; // Respect user's font size setting
 };
 

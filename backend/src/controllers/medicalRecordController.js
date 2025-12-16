@@ -4,6 +4,65 @@ const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 
 /**
+ * @desc    Get all medical records (admin only with filters)
+ * @route   GET /api/medical-records
+ * @access  Private (Admin)
+ */
+exports.getAllMedicalRecords = async (req, res, next) => {
+    try {
+        const { patientId, doctorId, recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
+
+        // Build query
+        const query = {};
+
+        if (patientId) {
+            query.patientId = patientId;
+        }
+
+        if (doctorId) {
+            query.doctorId = doctorId;
+        }
+
+        if (recordType) {
+            query.recordType = recordType;
+        }
+
+        if (startDate || endDate) {
+            query.date = {};
+            if (startDate) query.date.$gte = new Date(startDate);
+            if (endDate) query.date.$lte = new Date(endDate);
+        }
+
+        // Pagination
+        const skip = (page - 1) * limit;
+
+        const medicalRecords = await MedicalRecord.find(query)
+            .populate('patientId', 'name userId email phone')
+            .populate('doctorId', 'name specialization')
+            .sort({ date: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const total = await MedicalRecord.countDocuments(query);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                medicalRecords,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    pages: Math.ceil(total / limit),
+                },
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * @desc    Create new medical record
  * @route   POST /api/medical-records
  * @access  Private (Doctor)

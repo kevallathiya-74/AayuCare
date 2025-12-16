@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
@@ -35,10 +36,27 @@ import {
 const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user, loading } = useSelector((state) => state.auth);
+    const [showProfile, setShowProfile] = React.useState(false);
 
     const handleLogout = useCallback(async () => {
         await dispatch(logoutUser());
     }, [dispatch]);
+
+    const getTimeBasedGreeting = useCallback(() => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'Good Morning';
+        if (hour >= 12 && hour < 17) return 'Good Afternoon';
+        if (hour >= 17 && hour < 21) return 'Good Evening';
+        return 'Good Night';
+    }, []);
+
+    const getGreetingIcon = useCallback(() => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'sunny';
+        if (hour >= 12 && hour < 17) return 'partly-sunny';
+        if (hour >= 17 && hour < 21) return 'moon';
+        return 'moon-outline';
+    }, []);
 
     const actionCards = useMemo(() => [
         {
@@ -84,73 +102,259 @@ const PatientDashboard = ({ navigation }) => {
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
-            {/* Header */}
-            <View style={styles.header}>
-                {/* Top Header with Icons */}
-                <View style={styles.headerTop}>
+            {/* Enhanced Welcome Banner */}
+            <LinearGradient
+                colors={[healthColors.primary.main, healthColors.primary.dark]}
+                style={styles.welcomeBanner}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            >
+                {/* Top Icons Row */}
+                <View style={styles.bannerTopRow}>
                     <TouchableOpacity 
-                        style={styles.iconButton}
+                        style={styles.bannerIconButton}
                         accessibilityRole="button"
                         accessibilityLabel="Open menu"
-                        accessibilityHint="Opens the navigation menu"
                     >
-                        <Ionicons name="menu" size={24} color={healthColors.text.primary} />
+                        <Ionicons name="menu" size={24} color="#FFFFFF" />
                     </TouchableOpacity>
                     <Text style={styles.appTitle}>AayuCare</Text>
-                    <View style={styles.headerRight}>
+                    <View style={styles.bannerRightIcons}>
                         <TouchableOpacity 
-                            style={styles.iconButton}
-                            onPress={() => navigation.navigate('Notifications')}
+                            style={styles.bannerIconButton}
+                            onPress={() => navigation.navigate('More')}
                             accessibilityRole="button"
                             accessibilityLabel="Notifications"
-                            accessibilityHint="Opens notification list. You have 3 unread notifications"
                         >
-                            <Ionicons name="notifications-outline" size={24} color={healthColors.text.primary} />
-                            <View style={styles.notificationBadge}>
-                                <Text style={styles.notificationBadgeText}>3</Text>
+                            <Ionicons name="notifications" size={24} color="#FFFFFF" />
+                            <View style={styles.bannerNotificationBadge}>
+                                <Text style={styles.bannerNotificationBadgeText}>3</Text>
                             </View>
                         </TouchableOpacity>
                         <TouchableOpacity 
-                            style={styles.iconButton}
-                            onPress={handleLogout}
+                            style={styles.bannerIconButton}
+                            onPress={() => setShowProfile(!showProfile)}
                             accessibilityRole="button"
-                            accessibilityLabel="Logout"
-                            accessibilityHint="Logs you out of your account"
+                            accessibilityLabel="Toggle profile view"
                         >
-                            <Ionicons name="person-circle-outline" size={24} color={healthColors.text.primary} />
+                            <Ionicons name="person" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* Patient Info */}
-                <View style={styles.patientInfoSection}>
+                {/* Patient Greeting */}
+                <View style={styles.bannerGreeting}>
                     {!user || loading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="small" color={healthColors.primary.main} />
-                            <Text style={styles.loadingText}>Loading profile...</Text>
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                            <Text style={[styles.loadingText, { color: '#FFFFFF' }]}>Loading profile...</Text>
                         </View>
                     ) : (
                         <>
-                            <Text style={styles.namasteGreeting}>Namaste, {user.name} 🙏</Text>
-                            <Text style={styles.patientDetails}>
-                                ID: {user.userId}  Age: {user.age}  Blood: {user.bloodGroup || 'N/A'}
-                            </Text>
+                            <View style={styles.greetingRow}>
+                                <Ionicons 
+                                    name={getGreetingIcon()} 
+                                    size={28} 
+                                    color="#FFFFFF" 
+                                    style={styles.greetingIcon}
+                                />
+                                <View>
+                                    <Text style={styles.bannerTimeGreeting}>{getTimeBasedGreeting()}</Text>
+                                    <Text style={styles.bannerWelcomeText}>{user.name}</Text>
+                                </View>
+                            </View>
+                            <View style={styles.bannerInfoCard}>
+                                <View style={styles.bannerInfoRow}>
+                                    <Ionicons name="finger-print" size={16} color="#FFFFFF" />
+                                    <Text style={styles.bannerInfoText}>ID: {user.userId}</Text>
+                                </View>
+                                <View style={styles.bannerInfoRow}>
+                                    <Ionicons name="calendar-outline" size={16} color="#FFFFFF" />
+                                    <Text style={styles.bannerInfoText}>Age: {user.age}</Text>
+                                    <Ionicons name="water" size={16} color="#FFFFFF" style={{ marginLeft: moderateScale(12) }} />
+                                    <Text style={styles.bannerInfoText}>Blood: {user.bloodGroup || 'N/A'}</Text>
+                                </View>
+                            </View>
                         </>
                     )}
                 </View>
+            </LinearGradient>
 
-                {/* Health Status Card */}
+            {/* Scrollable Content */}
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {showProfile ? (
+                    /* Profile View */
+                    <>
+                        {/* Profile Header */}
+                        <View style={styles.profileHeader}>
+                            <LinearGradient
+                                colors={[healthColors.primary.main, healthColors.primary.dark]}
+                                style={styles.profileHeaderGradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                            >
+                                <View style={styles.profileAvatarContainer}>
+                                    <View style={styles.profileAvatar}>
+                                        <Ionicons name="person" size={48} color="#FFFFFF" />
+                                    </View>
+                                    <Text style={styles.profileName}>{user?.name || 'Patient'}</Text>
+                                    <Text style={styles.profileId}>ID: {user?.userId}</Text>
+                                </View>
+                            </LinearGradient>
+                        </View>
+
+                        {/* Profile Info Section */}
+                        <View style={styles.profileSection}>
+                            <Text style={styles.profileSectionTitle}>Personal Information</Text>
+                            <View style={styles.profileCard}>
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="person-outline" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Full Name</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.name || 'Patient'}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.profileDivider} />
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="finger-print" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Patient ID</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.userId || 'N/A'}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.profileDivider} />
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="mail-outline" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Email Address</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.email || 'patient@aayucare.com'}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.profileDivider} />
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="call-outline" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Phone Number</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.phone || '+91 XXXXXXXXXX'}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.profileDivider} />
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="calendar-outline" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Age</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.age || 'N/A'}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.profileDivider} />
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="water" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Blood Group</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.bloodGroup || 'N/A'}</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.profileDivider} />
+                                <View style={styles.profileInfoRow}>
+                                    <Ionicons name="transgender" size={20} color={healthColors.primary.main} />
+                                    <View style={styles.profileInfoContent}>
+                                        <Text style={styles.profileInfoLabel}>Gender</Text>
+                                        <Text style={styles.profileInfoValue}>{user?.gender || 'N/A'}</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Account Settings */}
+                        <View style={styles.profileSection}>
+                            <Text style={styles.profileSectionTitle}>Account Settings</Text>
+                            <View style={styles.profileCard}>
+                                <TouchableOpacity 
+                                    style={styles.profileActionRow}
+                                    onPress={() => Alert.alert('Edit Profile', 'Edit profile feature coming soon!')}
+                                >
+                                    <Ionicons name="create-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.profileActionText}>Edit Profile</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+                                <View style={styles.profileDivider} />
+                                <TouchableOpacity 
+                                    style={styles.profileActionRow}
+                                    onPress={() => Alert.alert('Medical History', 'Medical history feature coming soon!')}
+                                >
+                                    <Ionicons name="medical-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.profileActionText}>Medical History</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+                                <View style={styles.profileDivider} />
+                                <TouchableOpacity 
+                                    style={styles.profileActionRow}
+                                    onPress={() => Alert.alert('Change Password', 'Change password feature coming soon!')}
+                                >
+                                    <Ionicons name="key-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.profileActionText}>Change Password</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+                                <View style={styles.profileDivider} />
+                                <TouchableOpacity 
+                                    style={styles.profileActionRow}
+                                    onPress={() => Alert.alert('Privacy Settings', 'Privacy settings coming soon!')}
+                                >
+                                    <Ionicons name="shield-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.profileActionText}>Privacy & Security</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Logout Button */}
+                        <View style={styles.profileSection}>
+                            <TouchableOpacity 
+                                style={styles.logoutButtonProfile}
+                                onPress={handleLogout}
+                            >
+                                <Ionicons name="log-out-outline" size={22} color={healthColors.error.main} />
+                                <Text style={styles.logoutButtonText}>Logout</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (
+                    /* Dashboard View */
+                    <>
+                        {/* Health Status Card */}
                 <View style={styles.healthStatusSection}>
-                    <Text style={styles.healthStatusTitle}>🩺 HEALTH STATUS:</Text>
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="fitness" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.healthStatusTitle}>HEALTH STATUS</Text>
+                    </View>
                     <View style={styles.healthCard}>
                         <View style={styles.healthCardLeft}>
-                            <Text style={styles.healthEmoji}>💚</Text>
+                            <View style={styles.healthIconCircle}>
+                                <Ionicons name="heart" size={32} color={healthColors.success.main} />
+                            </View>
                             <View style={styles.healthCardText}>
                                 <Text style={styles.healthCardTitle}>HEALTHY  Risk Score: 25/100</Text>
-                                <Text style={styles.healthCardDetail}>
-                                    BP: 130/85  Sugar: 110  Temp: 98.6°F
-                                </Text>
-                                <Text style={styles.healthCardUpdated}>Last Updated: Today 9:00 AM</Text>
+                                <View style={styles.healthMetrics}>
+                                    <View style={styles.metricItem}>
+                                        <Ionicons name="water" size={14} color={healthColors.info.main} />
+                                        <Text style={styles.healthCardDetail}>BP: 130/85</Text>
+                                    </View>
+                                    <View style={styles.metricItem}>
+                                        <Ionicons name="flash" size={14} color={healthColors.warning.main} />
+                                        <Text style={styles.healthCardDetail}>Sugar: 110</Text>
+                                    </View>
+                                    <View style={styles.metricItem}>
+                                        <Ionicons name="thermometer" size={14} color={healthColors.error.main} />
+                                        <Text style={styles.healthCardDetail}>Temp: 98.6°F</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.healthCardUpdateRow}>
+                                    <Ionicons name="time-outline" size={12} color={healthColors.text.secondary} />
+                                    <Text style={styles.healthCardUpdated}>Last Updated: Today 9:00 AM</Text>
+                                </View>
                             </View>
                         </View>
                     </View>
@@ -158,7 +362,10 @@ const PatientDashboard = ({ navigation }) => {
 
                 {/* Quick Emergency Buttons */}
                 <View style={styles.emergencySection}>
-                    <Text style={styles.emergencyTitle}>🚨 QUICK EMERGENCY:</Text>
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="warning" size={20} color={healthColors.error.main} />
+                        <Text style={styles.emergencyTitle}>QUICK EMERGENCY</Text>
+                    </View>
                     <View style={styles.emergencyButtons}>
                         <TouchableOpacity
                             style={[styles.emergencyButton, styles.ambulanceButton]}
@@ -166,11 +373,19 @@ const PatientDashboard = ({ navigation }) => {
                             activeOpacity={0.8}
                             accessibilityRole="button"
                             accessibilityLabel="Call ambulance"
-                            accessibilityHint="Initiates emergency ambulance service with one click"
                         >
-                            <Text style={styles.emergencyIcon}>🚑</Text>
-                            <Text style={styles.emergencyButtonTitle}>CALL AMBULANCE</Text>
-                            <Text style={styles.emergencyButtonSubtitle}>ONE CLICK</Text>
+                            <LinearGradient
+                                colors={[healthColors.error.main, healthColors.error.dark]}
+                                style={styles.emergencyButtonGradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                            >
+                                <View style={styles.emergencyIconCircle}>
+                                    <Ionicons name="medkit" size={28} color="#FFFFFF" />
+                                </View>
+                                <Text style={styles.emergencyButtonTitle}>CALL AMBULANCE</Text>
+                                <Text style={styles.emergencyButtonSubtitle}>ONE CLICK</Text>
+                            </LinearGradient>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.emergencyButton, styles.doctorButton]}
@@ -178,24 +393,30 @@ const PatientDashboard = ({ navigation }) => {
                             activeOpacity={0.8}
                             accessibilityRole="button"
                             accessibilityLabel="Call doctor helpline"
-                            accessibilityHint="Calls emergency doctor helpline number"
                         >
-                            <Text style={styles.emergencyIcon}>📞</Text>
-                            <Text style={styles.emergencyButtonTitle}>CALL DOCTOR</Text>
-                            <Text style={styles.emergencyButtonSubtitle}>HELPLINE</Text>
+                            <LinearGradient
+                                colors={[healthColors.primary.main, healthColors.primary.dark]}
+                                style={styles.emergencyButtonGradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                            >
+                                <View style={styles.emergencyIconCircle}>
+                                    <Ionicons name="call" size={28} color="#FFFFFF" />
+                                </View>
+                                <Text style={styles.emergencyButtonTitle}>CALL DOCTOR</Text>
+                                <Text style={styles.emergencyButtonSubtitle}>HELPLINE</Text>
+                            </LinearGradient>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {/* Main Features Title */}
-                <Text style={styles.sectionTitle}>MAIN FEATURES:</Text>
-            </View>
+                <View style={styles.sectionHeader}>
+                    <Ionicons name="grid" size={20} color={healthColors.primary.main} />
+                    <Text style={styles.sectionTitle}>MAIN FEATURES</Text>
+                </View>
 
-            {/* Action Cards */}
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
+                {/* Action Cards */}
                 <View style={styles.grid}>
                     {actionCards.map((card, index) => (
                         <View key={index} style={styles.gridItem}>
@@ -222,6 +443,8 @@ const PatientDashboard = ({ navigation }) => {
                         <Text style={styles.notificationItem}>• Health camp on 15 Dec</Text>
                     </View>
                 </View>
+                    </>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -232,74 +455,114 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: healthColors.background.secondary,
     },
-    header: {
-        backgroundColor: healthColors.background.card,
+    welcomeBanner: {
         paddingTop: moderateScale(12),
-        paddingBottom: moderateScale(16),
-        ...createShadow(2),
+        paddingBottom: moderateScale(20),
+        borderBottomLeftRadius: moderateScale(24),
+        borderBottomRightRadius: moderateScale(24),
+        ...createShadow(4),
     },
-    headerTop: {
+    bannerTopRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: getScreenPadding(),
         marginBottom: moderateScale(16),
     },
-    iconButton: {
+    bannerIconButton: {
         padding: moderateScale(8),
         position: 'relative',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: moderateScale(20),
+        width: moderateScale(40),
+        height: moderateScale(40),
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     appTitle: {
         fontSize: scaledFontSize(18),
         fontWeight: '700',
-        color: healthColors.primary.main,
+        color: '#FFFFFF',
     },
-    headerRight: {
+    bannerRightIcons: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: moderateScale(4),
+        gap: moderateScale(8),
     },
-    notificationBadge: {
+    bannerNotificationBadge: {
         position: 'absolute',
-        top: 6,
-        right: 6,
-        backgroundColor: healthColors.error,
+        top: moderateScale(2),
+        right: moderateScale(2),
+        backgroundColor: healthColors.error.main,
         borderRadius: moderateScale(10),
         minWidth: moderateScale(18),
         height: moderateScale(18),
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: moderateScale(4),
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
     },
-    notificationBadgeText: {
+    bannerNotificationBadgeText: {
         fontSize: scaledFontSize(10),
         fontWeight: '700',
         color: '#FFFFFF',
     },
-    patientInfoSection: {
+    bannerGreeting: {
         paddingHorizontal: getScreenPadding(),
-        marginBottom: moderateScale(16),
     },
-    namasteGreeting: {
-        fontSize: scaledFontSize(20),
-        fontWeight: '700',
-        color: healthColors.text.primary,
-        marginBottom: moderateScale(4),
+    greetingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: moderateScale(12),
     },
-    patientDetails: {
+    greetingIcon: {
+        marginRight: moderateScale(12),
+    },
+    bannerTimeGreeting: {
         fontSize: scaledFontSize(14),
-        color: healthColors.text.secondary,
+        fontWeight: '500',
+        color: 'rgba(255, 255, 255, 0.9)',
+        marginBottom: moderateScale(2),
+        letterSpacing: 0.5,
+    },
+    bannerWelcomeText: {
+        fontSize: scaledFontSize(24),
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    bannerInfoCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: moderateScale(12),
+        padding: moderateScale(12),
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    bannerInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: moderateScale(6),
+    },
+    bannerInfoText: {
+        fontSize: scaledFontSize(14),
+        color: '#FFFFFF',
+        marginLeft: moderateScale(8),
         fontWeight: '500',
     },
     healthStatusSection: {
         paddingHorizontal: getScreenPadding(),
         marginBottom: moderateScale(16),
     },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+        marginBottom: moderateScale(12),
+    },
     healthStatusTitle: {
         fontSize: scaledFontSize(14),
         fontWeight: '700',
         color: healthColors.text.primary,
-        marginBottom: moderateScale(12),
     },
     healthCard: {
         flexDirection: 'row',
@@ -317,8 +580,13 @@ const styles = StyleSheet.create({
         gap: moderateScale(12),
         flex: 1,
     },
-    healthEmoji: {
-        fontSize: moderateScale(32),
+    healthIconCircle: {
+        width: moderateScale(56),
+        height: moderateScale(56),
+        borderRadius: moderateScale(28),
+        backgroundColor: healthColors.success.main + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     healthCardText: {
         flex: 1,
@@ -327,27 +595,41 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         fontWeight: '700',
         color: healthColors.success.main,
-        marginBottom: moderateScale(4),
+        marginBottom: moderateScale(8),
+    },
+    healthMetrics: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: moderateScale(12),
+        marginBottom: moderateScale(8),
+    },
+    metricItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(4),
     },
     healthCardDetail: {
-        fontSize: scaledFontSize(13),
+        fontSize: scaledFontSize(12),
         color: healthColors.text.primary,
         fontWeight: '500',
-        marginBottom: moderateScale(2),
+    },
+    healthCardUpdateRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(4),
     },
     healthCardUpdated: {
-        fontSize: scaledFontSize(12),
+        fontSize: scaledFontSize(11),
         color: healthColors.text.secondary,
-        marginTop: moderateScale(4),
     },
     emergencySection: {
+        paddingHorizontal: getScreenPadding(),
         marginBottom: moderateScale(16),
     },
     emergencyTitle: {
         fontSize: scaledFontSize(14),
         fontWeight: '700',
         color: healthColors.text.primary,
-        marginBottom: moderateScale(12),
     },
     emergencyButtons: {
         flexDirection: 'row',
@@ -355,19 +637,21 @@ const styles = StyleSheet.create({
     },
     emergencyButton: {
         flex: 1,
-        padding: moderateScale(16),
         borderRadius: moderateScale(12),
-        alignItems: 'center',
+        overflow: 'hidden',
         ...createShadow(3),
     },
-    ambulanceButton: {
-        backgroundColor: healthColors.error.main,
+    emergencyButtonGradient: {
+        padding: moderateScale(16),
+        alignItems: 'center',
     },
-    doctorButton: {
-        backgroundColor: healthColors.primary.main,
-    },
-    emergencyIcon: {
-        fontSize: moderateScale(32),
+    emergencyIconCircle: {
+        width: moderateScale(56),
+        height: moderateScale(56),
+        borderRadius: moderateScale(28),
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
         marginBottom: moderateScale(8),
     },
     emergencyButtonTitle: {
@@ -385,13 +669,13 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         fontWeight: '700',
         color: healthColors.text.primary,
-        marginBottom: moderateScale(4),
     },
     notificationsSection: {
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
         marginTop: moderateScale(16),
+        marginHorizontal: getScreenPadding(),
         ...createShadow(2),
     },
     notificationsHeader: {
@@ -424,7 +708,7 @@ const styles = StyleSheet.create({
         color: healthColors.primary.main,
     },
     scrollContent: {
-        padding: getScreenPadding(),
+        paddingTop: moderateScale(16),
         paddingBottom: verticalScale(32),
     },
     grid: {
@@ -434,6 +718,7 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     gridItem: {
+        paddingHorizontal: getScreenPadding(),
         width: '48%',
         aspectRatio: 1.2,
         marginBottom: moderateScale(12),
@@ -447,6 +732,111 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         color: healthColors.text.secondary,
         fontWeight: '500',
+    },
+    // Profile Styles
+    profileHeader: {
+        marginBottom: moderateScale(16),
+    },
+    profileHeaderGradient: {
+        padding: moderateScale(24),
+        alignItems: 'center',
+        borderRadius: moderateScale(12),
+        marginHorizontal: getScreenPadding(),
+    },
+    profileAvatarContainer: {
+        alignItems: 'center',
+    },
+    profileAvatar: {
+        width: moderateScale(80),
+        height: moderateScale(80),
+        borderRadius: moderateScale(40),
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: moderateScale(12),
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+    },
+    profileName: {
+        fontSize: scaledFontSize(22),
+        fontWeight: '700',
+        color: '#FFFFFF',
+        marginBottom: moderateScale(4),
+    },
+    profileId: {
+        fontSize: scaledFontSize(14),
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontWeight: '500',
+    },
+    profileSection: {
+        paddingHorizontal: getScreenPadding(),
+        marginBottom: moderateScale(16),
+    },
+    profileSectionTitle: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '700',
+        color: healthColors.text.primary,
+        marginBottom: moderateScale(12),
+        letterSpacing: 0.5,
+    },
+    profileCard: {
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(12),
+        padding: moderateScale(16),
+        ...createShadow(2),
+    },
+    profileInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: moderateScale(8),
+    },
+    profileInfoContent: {
+        marginLeft: moderateScale(12),
+        flex: 1,
+    },
+    profileInfoLabel: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginBottom: moderateScale(2),
+    },
+    profileInfoValue: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+    },
+    profileDivider: {
+        height: 1,
+        backgroundColor: healthColors.border.light,
+        marginVertical: moderateScale(4),
+    },
+    profileActionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: moderateScale(12),
+    },
+    profileActionText: {
+        flex: 1,
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+        marginLeft: moderateScale(12),
+    },
+    logoutButtonProfile: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: healthColors.background.card,
+        padding: moderateScale(16),
+        borderRadius: moderateScale(12),
+        borderWidth: 1,
+        borderColor: healthColors.error.main,
+        ...createShadow(1),
+    },
+    logoutButtonText: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '700',
+        color: healthColors.error.main,
+        marginLeft: moderateScale(8),
     },
 });
 

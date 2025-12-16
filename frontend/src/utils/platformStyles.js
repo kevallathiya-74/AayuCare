@@ -16,10 +16,31 @@ import { Platform } from 'react-native';
  * @returns {Object} Platform-specific shadow styles
  */
 export const createShadow = ({ color = '#000', offset = { width: 0, height: 0 }, opacity = 0, radius = 0, elevation = 0 }) => {
-  // Validate inputs
+  // Validate and sanitize all inputs to prevent NaN
   if (!color || typeof color !== 'string') {
     color = '#000';
   }
+  
+  // Validate offset
+  const safeOffset = {
+    width: typeof offset?.width === 'number' && !isNaN(offset.width) && isFinite(offset.width) ? offset.width : 0,
+    height: typeof offset?.height === 'number' && !isNaN(offset.height) && isFinite(offset.height) ? offset.height : 0,
+  };
+  
+  // Validate opacity (0-1 range)
+  const safeOpacity = typeof opacity === 'number' && !isNaN(opacity) && isFinite(opacity) ? Math.max(0, Math.min(1, opacity)) : 0;
+  
+  // Validate radius
+  const safeRadius = typeof radius === 'number' && !isNaN(radius) && isFinite(radius) ? Math.max(0, radius) : 0;
+  
+  // Validate elevation (0-24 range for Android)
+  const safeElevation = typeof elevation === 'number' && !isNaN(elevation) && isFinite(elevation) ? Math.max(0, Math.min(24, elevation)) : 0;
+  
+  // Use sanitized values
+  offset = safeOffset;
+  opacity = safeOpacity;
+  radius = safeRadius;
+  elevation = safeElevation;
   
   if (Platform.OS === 'web') {
     // Convert color to rgba format for web

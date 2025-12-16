@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
@@ -109,8 +110,11 @@ const DoctorHomeScreen = ({ navigation }) => {
 
     const handleStartConsultation = useCallback(async (appointment) => {
         try {
-            await doctorService.updateAppointmentStatus(appointment.id, 'in-progress');
-            Alert.alert('Consultation Started', `Starting consultation with ${appointment.patientName}`);
+            const appointmentId = appointment._id || appointment.id;
+            const patientName = appointment.patientName || appointment.patient?.name || 'Patient';
+            
+            await doctorService.updateAppointmentStatus(appointmentId, 'in-progress');
+            Alert.alert('Consultation Started', `Starting consultation with ${patientName}`);
             fetchDashboardData();
         } catch (err) {
             logError(err, { context: 'DoctorHomeScreen.handleStartConsultation' });
@@ -118,11 +122,20 @@ const DoctorHomeScreen = ({ navigation }) => {
         }
     }, [fetchDashboardData]);
 
-    const getGreeting = useMemo(() => {
+    const getGreeting = useCallback(() => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Good Morning';
-        if (hour < 17) return 'Good Afternoon';
-        return 'Good Evening';
+        if (hour >= 5 && hour < 12) return 'Good Morning';
+        if (hour >= 12 && hour < 17) return 'Good Afternoon';
+        if (hour >= 17 && hour < 21) return 'Good Evening';
+        return 'Good Night';
+    }, []);
+
+    const getGreetingIcon = useCallback(() => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'sunny';          // Morning sun
+        if (hour >= 12 && hour < 17) return 'partly-sunny';  // Afternoon
+        if (hour >= 17 && hour < 21) return 'moon';          // Evening moon
+        return 'moon-outline';                               // Night
     }, []);
 
     const getStatusColor = useCallback((status) => {
@@ -176,62 +189,110 @@ const DoctorHomeScreen = ({ navigation }) => {
                     />
                 }
             >
-                {/* Header with Icons */}
-                <View style={styles.header}>
-                    <View style={styles.headerIcons}>
+                {error && (
+                    <View style={styles.errorBanner}>
+                        <Ionicons name="warning" size={20} color={healthColors.error.main} />
+                        <Text style={styles.errorText}>{error}</Text>
+                        <TouchableOpacity onPress={fetchDashboardData}>
+                            <Text style={styles.retryText}>Retry</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+                
+                {/* Enhanced Welcome Banner */}
+                <LinearGradient
+                    colors={[healthColors.primary.main, healthColors.primary.dark]}
+                    style={styles.welcomeBanner}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                >
+                    {/* Top Icons Row */}
+                    <View style={styles.bannerTopRow}>
                         <TouchableOpacity 
-                            style={styles.iconButton}
+                            style={styles.bannerIconButton}
+                            onPress={() => Alert.alert('Menu', 'Menu feature coming soon!')}
                             accessibilityRole="button"
                             accessibilityLabel="Menu"
                         >
-                            <Ionicons name="menu" size={24} color={healthColors.text.primary} />
+                            <Ionicons name="menu" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
-                        <View style={styles.headerRight}>
+                        <View style={styles.bannerRightIcons}>
                             <TouchableOpacity 
-                                style={styles.iconButton}
+                                style={styles.bannerIconButton}
                                 onPress={() => Alert.alert('Notifications', `You have ${notificationCount} new notifications`)}
                                 accessibilityRole="button"
                                 accessibilityLabel={`${notificationCount} notifications`}
                             >
-                                <Ionicons name="notifications-outline" size={24} color={healthColors.text.primary} />
+                                <Ionicons name="notifications" size={24} color="#FFFFFF" />
                                 {notificationCount > 0 && (
-                                    <View style={styles.notificationBadge}>
-                                        <Text style={styles.notificationBadgeText}>{notificationCount}</Text>
+                                    <View style={styles.bannerNotificationBadge}>
+                                        <Text style={styles.bannerNotificationBadgeText}>{notificationCount}</Text>
                                     </View>
                                 )}
                             </TouchableOpacity>
                             <TouchableOpacity 
-                                style={styles.iconButton}
-                                onPress={handleLogout}
+                                style={styles.bannerIconButton}
+                                onPress={() => navigation.navigate('Profile')}
+                                accessibilityRole="button"
+                                accessibilityLabel="View profile"
                             >
-                                <Ionicons name="person-circle-outline" size={24} color={healthColors.text.primary} />
+                                <Ionicons name="person" size={24} color="#FFFFFF" />
                             </TouchableOpacity>
                         </View>
                     </View>
                     
-                    <View style={styles.welcomeSection}>
-                        <Text style={styles.welcomeText}>{getGreeting()}, Dr. {user?.name || 'Shah'} 🌅</Text>
-                        <Text style={styles.welcomeSubtext}>Cardiologist • OPD 3</Text>
+                    {/* Greeting Section */}
+                    <View style={styles.bannerGreeting}>
+                        <View style={styles.greetingRow}>
+                            <Ionicons 
+                                name={getGreetingIcon()} 
+                                size={28} 
+                                color="#FFFFFF" 
+                                style={styles.greetingIcon}
+                            />
+                            <View>
+                                <Text style={styles.bannerTimeGreeting}>{getGreeting()}</Text>
+                                <Text style={styles.bannerWelcomeText}>{user?.name || 'Doctor'}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.bannerInfoCard}>
+                            <View style={styles.bannerInfoRow}>
+                                <Ionicons name="medical" size={16} color="#FFFFFF" />
+                                <Text style={styles.bannerInfoText}>
+                                    {user?.specialization || 'General Physician'}
+                                </Text>
+                            </View>
+                            <View style={styles.bannerInfoRow}>
+                                <Ionicons name="business" size={16} color="#FFFFFF" />
+                                <Text style={styles.bannerInfoText}>
+                                    {user?.department || 'OPD'}
+                                </Text>
+                            </View>
+                        </View>
                     </View>
-                </View>
+                </LinearGradient>
 
                 {/* Today's Schedule */}
                 <View style={styles.section}>
                     <View style={styles.scheduleCard}>
                         <View style={styles.scheduleHeader}>
-                            <Ionicons name="calendar" size={20} color={healthColors.primary.main} />
-                            <Text style={styles.scheduleTitle}>TODAY'S SCHEDULE:</Text>
+                            <Ionicons name="calendar-outline" size={22} color={healthColors.primary.main} />
+                            <Text style={styles.scheduleTitle}>TODAY'S SCHEDULE</Text>
                         </View>
                         <View style={styles.divider} />
 
                         <View style={styles.scheduleStats}>
                             <View style={styles.scheduleStat}>
-                                <Text style={styles.scheduleStatIcon}>📅</Text>
+                                <View style={styles.scheduleIconCircle}>
+                                    <Ionicons name="calendar-number-outline" size={28} color={healthColors.primary.main} />
+                                </View>
                                 <Text style={styles.scheduleStatValue}>{schedule.totalAppointments}</Text>
                                 <Text style={styles.scheduleStatLabel}>Appointments</Text>
                             </View>
                             <View style={styles.scheduleStat}>
-                                <Text style={styles.scheduleStatIcon}>⏰</Text>
+                                <View style={styles.scheduleIconCircle}>
+                                    <Ionicons name="time-outline" size={28} color={healthColors.info.main} />
+                                </View>
                                 <Text style={styles.scheduleStatValue}>{schedule.nextTime}</Text>
                                 <Text style={styles.scheduleStatLabel}>Next Patient</Text>
                             </View>
@@ -239,14 +300,20 @@ const DoctorHomeScreen = ({ navigation }) => {
 
                         <View style={styles.progressContainer}>
                             <View style={styles.progressRow}>
-                                <Text style={styles.progressLabel}>✅ Completed: {schedule.completed}</Text>
-                                <Text style={styles.progressLabel}>⏳ Pending: {schedule.pending}</Text>
+                                <View style={styles.progressItem}>
+                                    <Ionicons name="checkmark-circle" size={16} color={healthColors.success.main} />
+                                    <Text style={styles.progressLabel}>Completed: {schedule.completed}</Text>
+                                </View>
+                                <View style={styles.progressItem}>
+                                    <Ionicons name="hourglass-outline" size={16} color={healthColors.warning.main} />
+                                    <Text style={styles.progressLabel}>Pending: {schedule.pending}</Text>
+                                </View>
                             </View>
                             <View style={styles.progressBar}>
                                 <View 
                                     style={[
                                         styles.progressFill, 
-                                        { width: `${(schedule.completed / schedule.totalAppointments) * 100}%` }
+                                        { width: schedule.totalAppointments > 0 ? `${(schedule.completed / schedule.totalAppointments) * 100}%` : '0%' }
                                     ]} 
                                 />
                             </View>
@@ -381,7 +448,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                 <View style={styles.section}>
                     <TouchableOpacity 
                         style={styles.addWalkinButton}
-                        onPress={() => navigation.navigate('AddWalkin')}
+                        onPress={() => Alert.alert('Add Walk-in', 'Walk-in patient registration feature coming soon!')}
                         accessibilityRole="button"
                         accessibilityLabel="Add walk-in patient"
                         accessibilityHint="Add a new walk-in patient to the queue"
@@ -402,58 +469,94 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: healthColors.background.main,
     },
-    header: {
-        backgroundColor: healthColors.background.card,
-        paddingBottom: moderateScale(16),
-        ...createShadow(2),
+    welcomeBanner: {
+        paddingTop: moderateScale(12),
+        paddingBottom: moderateScale(20),
+        borderBottomLeftRadius: moderateScale(24),
+        borderBottomRightRadius: moderateScale(24),
+        ...createShadow(4),
     },
-    headerIcons: {
+    bannerTopRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: getScreenPadding(),
-        paddingTop: moderateScale(12),
-        paddingBottom: moderateScale(8),
+        marginBottom: moderateScale(16),
     },
-    headerRight: {
+    bannerRightIcons: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: moderateScale(8),
     },
-    iconButton: {
+    bannerIconButton: {
         padding: moderateScale(8),
         position: 'relative',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: moderateScale(20),
+        width: moderateScale(40),
+        height: moderateScale(40),
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    notificationBadge: {
+    bannerNotificationBadge: {
         position: 'absolute',
-        top: 6,
-        right: 6,
-        backgroundColor: healthColors.error,
+        top: moderateScale(2),
+        right: moderateScale(2),
+        backgroundColor: healthColors.error.main,
         borderRadius: moderateScale(10),
         minWidth: moderateScale(18),
         height: moderateScale(18),
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: moderateScale(4),
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
     },
-    notificationBadgeText: {
+    bannerNotificationBadgeText: {
         fontSize: scaledFontSize(10),
         fontWeight: '700',
         color: '#FFFFFF',
     },
-    welcomeSection: {
+    bannerGreeting: {
         paddingHorizontal: getScreenPadding(),
-        paddingTop: moderateScale(8),
     },
-    welcomeText: {
-        fontSize: scaledFontSize(22),
-        fontWeight: '700',
-        color: healthColors.text.primary,
+    greetingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: moderateScale(12),
     },
-    welcomeSubtext: {
+    greetingIcon: {
+        marginRight: moderateScale(12),
+    },
+    bannerTimeGreeting: {
         fontSize: scaledFontSize(14),
-        color: healthColors.text.secondary,
-        marginTop: moderateScale(4),
+        fontWeight: '500',
+        color: 'rgba(255, 255, 255, 0.9)',
+        marginBottom: moderateScale(2),
+        letterSpacing: 0.5,
+    },
+    bannerWelcomeText: {
+        fontSize: scaledFontSize(24),
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    bannerInfoCard: {
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: moderateScale(12),
+        padding: moderateScale(12),
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    bannerInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: moderateScale(6),
+    },
+    bannerInfoText: {
+        fontSize: scaledFontSize(14),
+        color: '#FFFFFF',
+        marginLeft: moderateScale(8),
+        fontWeight: '500',
     },
     section: {
         paddingHorizontal: getScreenPadding(),
@@ -496,14 +599,20 @@ const styles = StyleSheet.create({
     scheduleStat: {
         alignItems: 'center',
     },
-    scheduleStatIcon: {
-        fontSize: scaledFontSize(32),
+    scheduleIconCircle: {
+        width: moderateScale(56),
+        height: moderateScale(56),
+        borderRadius: moderateScale(28),
+        backgroundColor: healthColors.primary.main + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
         marginBottom: moderateScale(8),
     },
     scheduleStatValue: {
         fontSize: scaledFontSize(20),
         fontWeight: '700',
         color: healthColors.text.primary,
+        marginTop: moderateScale(4),
     },
     scheduleStatLabel: {
         fontSize: scaledFontSize(12),
@@ -517,6 +626,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: moderateScale(8),
+    },
+    progressItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
     },
     progressLabel: {
         fontSize: scaledFontSize(12),
@@ -713,6 +827,40 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: healthColors.primary.main,
         marginLeft: moderateScale(8),
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: moderateScale(12),
+    },
+    loadingText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        fontWeight: '500',
+    },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: healthColors.error.main + '15',
+        marginHorizontal: getScreenPadding(),
+        marginTop: moderateScale(12),
+        padding: moderateScale(12),
+        borderRadius: moderateScale(8),
+        borderLeftWidth: 3,
+        borderLeftColor: healthColors.error.main,
+        gap: moderateScale(8),
+    },
+    errorText: {
+        flex: 1,
+        fontSize: scaledFontSize(13),
+        color: healthColors.error.main,
+        fontWeight: '500',
+    },
+    retryText: {
+        fontSize: scaledFontSize(13),
+        color: healthColors.primary.main,
+        fontWeight: '600',
     },
 });
 

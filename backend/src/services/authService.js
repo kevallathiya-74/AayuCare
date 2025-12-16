@@ -10,19 +10,29 @@ const logger = require('../utils/logger');
 
 class AuthService {
     /**
-     * Generate JWT tokens
+     * Generate JWT tokens with version tracking
      */
-    generateTokens(userId, role) {
+    async generateTokens(userId, role) {
+        // Validate JWT secret exists and is strong
+        const secret = process.env.JWT_SECRET;
+        if (!secret || secret.length < 32) {
+            throw new Error('JWT_SECRET must be at least 32 characters');
+        }
+
+        // Get user's current token version
+        const user = await User.findById(userId).select('tokenVersion');
+        const tokenVersion = user ? user.tokenVersion : 0;
+
         const accessToken = jwt.sign(
-            { id: userId, role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRE || '30d' }
+            { id: userId, role, version: tokenVersion },
+            secret,
+            { expiresIn: process.env.JWT_EXPIRE || '1h' } // Reduced to 1 hour
         );
 
         const refreshToken = jwt.sign(
-            { id: userId, role },
-            process.env.JWT_SECRET,
-            { expiresIn: '90d' }
+            { id: userId, role, version: tokenVersion },
+            secret,
+            { expiresIn: '7d' } // Reduced to 7 days
         );
 
         return { accessToken, refreshToken };
@@ -95,7 +105,8 @@ class AuthService {
         }
 
         // Generate tokens
-        const { accessToken, refreshToken } = this.generateTokens(user._id, user.role);
+        const { accessToken, refreshToken } = await this.generateTokens(user._id, user.role);
+        logger.info(`[authService] Generated tokens for ${user.userId}: accessToken=${!!accessToken}, refreshToken=${!!refreshToken}`);
 
         // Update user without password validation
         await User.findByIdAndUpdate(
@@ -111,6 +122,7 @@ class AuthService {
         user.password = undefined;
 
         logger.info(`${user.role} logged in: ${user.userId}`);
+        logger.info(`[authService] Returning: user=${!!user}, accessToken=${!!accessToken}, refreshToken=${!!refreshToken}`);
 
         return { user, accessToken, refreshToken };
     }
@@ -139,7 +151,7 @@ class AuthService {
     }
 
     /**
-     * Logout user
+     * Logout user - Invalidate all tokens by incrementing version
      */
     async logout(userId) {
         const user = await User.findById(userId);
@@ -147,10 +159,14 @@ class AuthService {
             throw new AppError('User not found', 404);
         }
 
+        // Increment token version to invalidate all existing tokens
+        user.tokenVersion = (user.tokenVersion || 0) + 1;
         user.refreshToken = null;
         await user.save();
 
-        logger.info(`${user.role} logged out: ${user.userId}`);
+        logger.info(`${user.role} logged out: ${user.userId} (token version: ${user.tokenVersion})`);
+
+        return { message: 'Logged out successfully. All sessions invalidated.' };
     }
 
     /**

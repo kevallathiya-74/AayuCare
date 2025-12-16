@@ -205,7 +205,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                         </View>
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Doctor:</Text>
-                            <Text style={styles.infoValue}>Dr. {user?.name || 'Doctor'} ({user?.specialization || 'Specialist'})</Text>
+                            <Text style={styles.infoValue}>{user?.name || 'Doctor'} ({user?.specialization || 'Specialist'})</Text>
                         </View>
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Date:</Text>
@@ -333,11 +333,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <View style={styles.section}>
                     <View style={styles.costCard}>
                         <View style={styles.costRow}>
-                            <Text style={styles.costLabel}>💰 Estimated Cost:</Text>
+                            <Text style={styles.costLabel}>Estimated Cost:</Text>
                             <Text style={styles.costValue}>₹{estimatedCost}</Text>
                         </View>
                         <View style={styles.costRow}>
-                            <Text style={styles.costLabel}>🎁 Hospital Pharmacy Discount:</Text>
+                            <Text style={styles.costLabel}>Hospital Pharmacy Discount:</Text>
                             <Text style={styles.discountValue}>{discount}%</Text>
                         </View>
                         <View style={styles.divider} />

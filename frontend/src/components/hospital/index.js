@@ -3,4 +3,4 @@
  * Export all hospital-specific components
  */
 
-export { default as AppointmentCard } from './AppointmentCard';
+// Note: AppointmentCard is now in components/health for shared use

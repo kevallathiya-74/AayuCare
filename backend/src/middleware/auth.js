@@ -28,6 +28,11 @@ exports.protect = async (req, res, next) => {
             return next(new AppError('Your account has been deactivated', 403));
         }
 
+        // Check token version (invalidate on logout)
+        if (decoded.version !== undefined && user.tokenVersion !== decoded.version) {
+            return next(new AppError('Token has been revoked. Please login again', 401));
+        }
+
         // Grant access to protected route
         req.user = user;
         next();

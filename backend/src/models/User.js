@@ -97,6 +97,14 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    tokenVersion: {
+        type: Number,
+        default: 0, // Increment on logout to invalidate all tokens
+    },
+    revokedTokens: [{
+        token: String,
+        revokedAt: Date,
+    }],
     isVerified: {
         type: Boolean,
         default: false,

@@ -13,6 +13,7 @@ import {
     TextInput,
     StatusBar,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,14 +62,13 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             alert('Please select a doctor and time slot');
             return;
         }
-        // Navigate to confirmation or payment
-        navigation.navigate('AppointmentConfirmation', {
-            doctor: selectedDoctor,
-            date: selectedDate,
-            time: selectedTime,
-            type: appointmentType,
-            reason,
-        });
+        // Show confirmation alert
+        Alert.alert(
+            'Appointment Booked',
+            `Your appointment with ${selectedDoctor} has been scheduled for ${selectedDate} at ${selectedTime}`,
+            [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+        // Note: Removed navigation to non-existent AppointmentConfirmation screen
     };
 
     return (

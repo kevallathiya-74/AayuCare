@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     Switch,
     StatusBar,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -226,17 +227,17 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
                         <ActionRow
                             icon="key-outline"
                             label="Change Password"
-                            onPress={() => navigation.navigate('ChangePassword')}
+                            onPress={() => Alert.alert('Change Password', 'Password change feature coming soon!')}
                         />
                         <ActionRow
                             icon="finger-print-outline"
                             label="Biometric Login (Fingerprint)"
-                            onPress={() => {}}
+                            onPress={() => Alert.alert('Biometric Login', 'Biometric authentication coming soon!')}
                         />
                         <ActionRow
                             icon="document-text-outline"
                             label="Privacy Policy"
-                            onPress={() => navigation.navigate('PrivacyPolicy')}
+                            onPress={() => Alert.alert('Privacy Policy', 'Privacy policy viewer coming soon!')}
                         />
                     </View>
                 </View>

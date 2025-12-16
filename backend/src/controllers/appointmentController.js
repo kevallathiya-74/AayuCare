@@ -26,6 +26,24 @@ exports.createAppointment = async (req, res, next) => {
 };
 
 /**
+ * @desc    Get all appointments (admin only, with optional filters)
+ * @route   GET /api/appointments (admin calls this)
+ * @access  Private (Admin)
+ */
+exports.getAllAppointments = async (req, res, next) => {
+    try {
+        const result = await appointmentService.getAllAppointments(req.query);
+
+        res.status(200).json({
+            status: 'success',
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * @desc    Get appointments (patient or doctor specific)
  * @route   GET /api/appointments
  * @access  Private
@@ -39,14 +57,15 @@ exports.getAppointments = async (req, res, next) => {
         } else if (req.user.role === 'doctor') {
             result = await appointmentService.getDoctorAppointments(req.user.id, req.query);
         } else if (req.user.role === 'admin') {
-            // Admin can view all appointments with filters
+            // Admin can view all appointments or filter by patient/doctor
             const { patientId, doctorId } = req.query;
             if (patientId) {
                 result = await appointmentService.getPatientAppointments(patientId, req.query);
             } else if (doctorId) {
                 result = await appointmentService.getDoctorAppointments(doctorId, req.query);
             } else {
-                return next(new AppError('Please provide patientId or doctorId', 400));
+                // No filters - get all appointments (admin only)
+                result = await appointmentService.getAllAppointments(req.query);
             }
         }
 
@@ -66,7 +85,14 @@ exports.getAppointments = async (req, res, next) => {
  */
 exports.getAppointment = async (req, res, next) => {
     try {
-        const appointment = await appointmentService.getAppointmentById(req.params.id);
+        const { id } = req.params;
+
+        // Validate ObjectId format to prevent casting errors
+        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+            return next(new AppError('Invalid appointment ID format', 400));
+        }
+
+        const appointment = await appointmentService.getAppointmentById(id);
 
         // Check authorization
         if (

@@ -40,7 +40,7 @@ const BoxSelectionScreen = ({ navigation }) => {
   const handleHospitalPress = () => {
     try {
       console.log('[BoxSelectionScreen] Hospital button pressed');
-      navigation.navigate('HospitalLogin');
+      navigation.navigate('Login');
     } catch (error) {
       console.error('[BoxSelectionScreen] Navigation error:', error);
     }

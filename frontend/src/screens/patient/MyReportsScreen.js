@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     StatusBar,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,9 +58,10 @@ const MyReportsScreen = ({ navigation }) => {
     const renderReport = ({ item }) => (
         <TouchableOpacity
             style={styles.reportCard}
-            onPress={() => navigation.navigate('ReportViewer', { reportId: item.id })}
+            onPress={() => Alert.alert('Report Viewer', `Viewing ${item.title} - Full report viewer coming soon!`)}
             activeOpacity={0.7}
         >
+            {/* Removed navigation to non-existent ReportViewer screen */}
             <View style={styles.reportLeft}>
                 <View style={[styles.fileIcon, styles[`fileType_${item.fileType}`]]}>
                     <Ionicons

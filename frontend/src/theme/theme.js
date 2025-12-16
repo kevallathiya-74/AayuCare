@@ -2,7 +2,8 @@ import { MD3LightTheme, configureFonts } from 'react-native-paper';
 import { healthColors } from './healthColors';
 import { fontFamilies, fontSizes, fontWeights } from './typography';
 import { spacing, componentSpacing, layout } from './spacing';
-import { createShadow } from '../utils/platformStyles';
+import { elevation, shadows, createShadow } from './elevation';
+import { duration, easing, animations, springs } from './animations';
 
 // Ensure healthColors is loaded
 if (!healthColors || !healthColors.card) {
@@ -127,37 +128,10 @@ export const theme = {
   componentSpacing,
   layout,
   
-  // Shadows (elevation styles for iOS/Android)
-  shadows: {
-    small: createShadow({
-      color: '#000',
-      offset: { width: 0, height: 1 },
-      opacity: 0.06,
-      radius: 2,
-      elevation: 1,
-    }),
-    medium: createShadow({
-      color: '#000',
-      offset: { width: 0, height: 2 },
-      opacity: 0.08,
-      radius: 4,
-      elevation: 2,
-    }),
-    large: createShadow({
-      color: '#000',
-      offset: { width: 0, height: 4 },
-      opacity: 0.12,
-      radius: 8,
-      elevation: 4,
-    }),
-    elevated: createShadow({
-      color: '#000',
-      offset: { width: 0, height: 8 },
-      opacity: 0.15,
-      radius: 16,
-      elevation: 8,
-    }),
-  },
+  // Elevation & Shadows (Material Design 3)
+  elevation,
+  shadows,
+  createShadow,
   
   // Border styles
   borders: {
@@ -198,24 +172,11 @@ export const theme = {
     tooltip: 1070,
   },
   
-  // Transitions/Animations
-  transitions: {
-    duration: {
-      shortest: 150,
-      shorter: 200,
-      short: 250,
-      standard: 300,
-      complex: 375,
-      enteringScreen: 225,
-      leavingScreen: 195,
-    },
-    easing: {
-      easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
-      easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
-      easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
-      sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
-    },
-  },
+  // Animations & Motion (Material Design + iOS HIG)
+  animations,
+  duration,
+  easing,
+  springs,
 };
 
 // Helper function to create consistent component styles

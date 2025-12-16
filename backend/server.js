@@ -26,18 +26,44 @@ connectDB();
 
 // Security Middleware
 app.use(helmet());
+
+// CORS - Whitelist specific origins
+const allowedOrigins = [
+  'exp://192.168.137.1:8081', // Expo Go (update with your IP)
+  'http://localhost:19006',  // Expo web
+  'http://localhost:3000',   // Development frontend
+  process.env.FRONTEND_URL,  // Production frontend
+].filter(Boolean);
+
 app.use(cors({
-  origin: true, // Allow all origins in development (for Expo Go)
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
-// Rate limiting
+// Rate limiting - General API
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 100,
   message: 'Too many requests from this IP, please try again later',
 });
 app.use('/api/', limiter);
+
+// Strict rate limiting for auth endpoints (prevent brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Only 5 login attempts per 15 minutes
+  message: 'Too many login attempts, please try again after 15 minutes',
+  skipSuccessfulRequests: true, // Don't count successful logins
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Body parser
 app.use(express.json({ limit: '10mb' }));

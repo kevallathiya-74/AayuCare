@@ -61,6 +61,54 @@ class AppointmentService {
     }
 
     /**
+     * Get all appointments (admin only)
+     */
+    async getAllAppointments(filters = {}) {
+        const { status, startDate, endDate, page = 1, limit = 10, patientId, doctorId } = filters;
+
+        const query = {};
+
+        if (patientId) {
+            query.patientId = patientId;
+        }
+
+        if (doctorId) {
+            query.doctorId = doctorId;
+        }
+
+        if (status) {
+            query.status = status;
+        }
+
+        if (startDate || endDate) {
+            query.appointmentDate = {};
+            if (startDate) query.appointmentDate.$gte = new Date(startDate);
+            if (endDate) query.appointmentDate.$lte = new Date(endDate);
+        }
+
+        const skip = (page - 1) * limit;
+
+        const appointments = await Appointment.find(query)
+            .populate('patientId', 'name userId phone email')
+            .populate('doctorId', 'name specialization qualification consultationFee')
+            .sort({ appointmentDate: -1, appointmentTime: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const total = await Appointment.countDocuments(query);
+
+        return {
+            appointments,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / limit),
+            }
+        };
+    }
+
+    /**
      * Get appointments for a patient
      */
     async getPatientAppointments(patientId, filters = {}) {
