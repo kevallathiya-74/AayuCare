@@ -32,7 +32,7 @@ const ProfileScreen = ({ navigation }) => {
         dispatch(logoutUser());
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Auth' }],
+            routes: [{ name: 'Login' }],
         });
     };
 

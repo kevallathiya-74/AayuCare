@@ -14,7 +14,10 @@ import {
     StatusBar,
     ActivityIndicator,
     Alert,
+    Platform,
+    Modal,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
@@ -28,9 +31,12 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     const [selectedSpecialty, setSelectedSpecialty] = useState('Cardiology');
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [appointmentType, setAppointmentType] = useState('in-person');
+    const [date, setDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState('15 Dec 2025');
-    const [selectedTime, setSelectedTime] = useState('10:30');
+    const [selectedTime, setSelectedTime] = useState('10:30 AM');
     const [reason, setReason] = useState('');
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
 
     const specialties = ['Cardiology', 'Pulmonology', 'Neurology', 'Pediatrics', 'Orthopedics'];
 
@@ -55,7 +61,28 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         },
     ];
 
-    const timeSlots = ['10:00', '10:30', '11:00', '11:30', '12:00', '14:00', '14:30', '15:00'];
+    const timeSlots = [
+        '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', 
+        '12:00 PM', '2:00 PM', '2:30 PM', '3:00 PM'
+    ];
+
+    const formatDate = (date) => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const day = date.getDate();
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day} ${month} ${year}`;
+    };
+
+    const handleDateChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
+        if (selectedDate) {
+            setDate(selectedDate);
+            setSelectedDate(formatDate(selectedDate));
+        }
+    };
 
     const handleConfirm = () => {
         if (!selectedDoctor || !selectedTime) {
@@ -90,20 +117,73 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 {/* Step 1: Select Specialty */}
                 <View style={styles.section}>
                     <View style={styles.stepHeader}>
-                        <Text style={styles.stepNumber}>1️⃣</Text>
+                        <View style={styles.stepNumberBox}>
+                            <Text style={styles.stepNumberText}>1</Text>
+                        </View>
                         <Text style={styles.stepTitle}>SELECT SPECIALTY:</Text>
                     </View>
-                    <View style={styles.specialtyCard}>
-                        <Ionicons name="heart" size={20} color={healthColors.error.main} />
+                    <TouchableOpacity 
+                        style={styles.specialtyCard}
+                        onPress={() => setShowSpecialtyModal(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="medical-outline" size={22} color={healthColors.primary.main} />
                         <Text style={styles.specialtyText}>{selectedSpecialty}</Text>
-                        <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
-                    </View>
+                        <Ionicons name="chevron-down" size={20} color={healthColors.text.secondary} />
+                    </TouchableOpacity>
+
+                    {/* Specialty Selection Modal */}
+                    <Modal
+                        visible={showSpecialtyModal}
+                        transparent
+                        animationType="slide"
+                        onRequestClose={() => setShowSpecialtyModal(false)}
+                    >
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.modalContent}>
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalTitle}>Select Specialty</Text>
+                                    <TouchableOpacity onPress={() => setShowSpecialtyModal(false)}>
+                                        <Ionicons name="close" size={24} color={healthColors.text.primary} />
+                                    </TouchableOpacity>
+                                </View>
+                                <ScrollView style={styles.modalBody}>
+                                    {specialties.map((specialty) => (
+                                        <TouchableOpacity
+                                            key={specialty}
+                                            style={[
+                                                styles.specialtyOption,
+                                                selectedSpecialty === specialty && styles.specialtyOptionSelected
+                                            ]}
+                                            onPress={() => {
+                                                setSelectedSpecialty(specialty);
+                                                setShowSpecialtyModal(false);
+                                            }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text style={[
+                                                styles.specialtyOptionText,
+                                                selectedSpecialty === specialty && styles.specialtyOptionTextSelected
+                                            ]}>
+                                                {specialty}
+                                            </Text>
+                                            {selectedSpecialty === specialty && (
+                                                <Ionicons name="checkmark-circle" size={22} color={healthColors.primary.main} />
+                                            )}
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        </View>
+                    </Modal>
                 </View>
 
                 {/* Step 2: Choose Doctor */}
                 <View style={styles.section}>
                     <View style={styles.stepHeader}>
-                        <Text style={styles.stepNumber}>2️⃣</Text>
+                        <View style={styles.stepNumberBox}>
+                            <Text style={styles.stepNumberText}>2</Text>
+                        </View>
                         <Text style={styles.stepTitle}>CHOOSE DOCTOR:</Text>
                     </View>
                     {doctors.map((doctor) => (
@@ -120,7 +200,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                                 <Ionicons name="person" size={24} color={healthColors.primary.main} />
                             </View>
                             <View style={styles.doctorInfo}>
-                                <Text style={styles.doctorName}>👨‍⚕️ {doctor.name}</Text>
+                                <Text style={styles.doctorName}>{doctor.name}</Text>
                                 <Text style={styles.doctorDetails}>
                                     {doctor.specialty} • {doctor.experience}
                                 </Text>
@@ -131,7 +211,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                                             {doctor.rating} ({doctor.reviews} reviews)
                                         </Text>
                                     </View>
-                                    <Text style={styles.feeText}>💰 Consultation: ₹{doctor.fee}</Text>
+                                    <View style={styles.feeContainer}>
+                                        <Ionicons name="cash-outline" size={14} color={healthColors.success.main} />
+                                        <Text style={styles.feeText}>Consultation: ₹{doctor.fee}</Text>
+                                    </View>
                                 </View>
                             </View>
                             {selectedDoctor?.id === doctor.id && (
@@ -144,7 +227,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 {/* Step 3: Appointment Type */}
                 <View style={styles.section}>
                     <View style={styles.stepHeader}>
-                        <Text style={styles.stepNumber}>3️⃣</Text>
+                        <View style={styles.stepNumberBox}>
+                            <Text style={styles.stepNumberText}>3</Text>
+                        </View>
                         <Text style={styles.stepTitle}>APPOINTMENT TYPE:</Text>
                     </View>
                     <View style={styles.typeRow}>
@@ -156,18 +241,23 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                             onPress={() => setAppointmentType('in-person')}
                             activeOpacity={0.7}
                         >
-                            <Ionicons
-                                name="business"
-                                size={28}
-                                color={appointmentType === 'in-person' ? healthColors.primary.main : healthColors.text.secondary}
-                            />
+                            <View style={[
+                                styles.typeIconBox,
+                                appointmentType === 'in-person' && styles.typeIconBoxSelected
+                            ]}>
+                                <Ionicons
+                                    name="business-outline"
+                                    size={32}
+                                    color={appointmentType === 'in-person' ? healthColors.primary.main : healthColors.text.secondary}
+                                />
+                            </View>
                             <Text
                                 style={[
                                     styles.typeTitle,
                                     appointmentType === 'in-person' && styles.typeTextSelected,
                                 ]}
                             >
-                                IN-PERSON {appointmentType === 'in-person'}
+                                IN-PERSON
                             </Text>
                             <Text style={styles.typeSubtitle}>Visit Clinic</Text>
                         </TouchableOpacity>
@@ -179,11 +269,16 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                             onPress={() => setAppointmentType('telemedicine')}
                             activeOpacity={0.7}
                         >
-                            <Ionicons
-                                name="videocam"
-                                size={28}
-                                color={appointmentType === 'telemedicine' ? healthColors.primary.main : healthColors.text.secondary}
-                            />
+                            <View style={[
+                                styles.typeIconBox,
+                                appointmentType === 'telemedicine' && styles.typeIconBoxSelected
+                            ]}>
+                                <Ionicons
+                                    name="videocam-outline"
+                                    size={32}
+                                    color={appointmentType === 'telemedicine' ? healthColors.primary.main : healthColors.text.secondary}
+                                />
+                            </View>
                             <Text
                                 style={[
                                     styles.typeTitle,
@@ -200,14 +295,63 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 {/* Step 4: Select Date & Time */}
                 <View style={styles.section}>
                     <View style={styles.stepHeader}>
-                        <Text style={styles.stepNumber}>4️⃣</Text>
+                        <View style={styles.stepNumberBox}>
+                            <Text style={styles.stepNumberText}>4</Text>
+                        </View>
                         <Text style={styles.stepTitle}>SELECT DATE & TIME:</Text>
                     </View>
-                    <View style={styles.dateCard}>
-                        <Ionicons name="calendar" size={20} color={healthColors.primary.main} />
-                        <Text style={styles.dateText}>📅 {selectedDate}</Text>
+                    <TouchableOpacity 
+                        style={styles.dateCard}
+                        onPress={() => setShowDatePicker(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="calendar-outline" size={22} color={healthColors.primary.main} />
+                        <Text style={styles.dateText}>{selectedDate}</Text>
+                        <Ionicons name="chevron-down" size={20} color={healthColors.text.secondary} />
+                    </TouchableOpacity>
+
+                    {/* Date Picker */}
+                    {Platform.OS === 'ios' ? (
+                        <Modal
+                            visible={showDatePicker}
+                            transparent
+                            animationType="slide"
+                            onRequestClose={() => setShowDatePicker(false)}
+                        >
+                            <View style={styles.datePickerModal}>
+                                <View style={styles.datePickerContainer}>
+                                    <View style={styles.datePickerHeader}>
+                                        <Text style={styles.datePickerTitle}>Select Date</Text>
+                                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                            <Text style={styles.datePickerDone}>Done</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <DateTimePicker
+                                        value={date}
+                                        mode="date"
+                                        display="spinner"
+                                        onChange={handleDateChange}
+                                        minimumDate={new Date()}
+                                        textColor={healthColors.text.primary}
+                                    />
+                                </View>
+                            </View>
+                        </Modal>
+                    ) : (
+                        showDatePicker && (
+                            <DateTimePicker
+                                value={date}
+                                mode="date"
+                                display="default"
+                                onChange={handleDateChange}
+                                minimumDate={new Date()}
+                            />
+                        )
+                    )}
+                    <View style={styles.timeLabelRow}>
+                        <Ionicons name="time-outline" size={18} color={healthColors.text.primary} />
+                        <Text style={styles.timeLabel}>Available Slots:</Text>
                     </View>
-                    <Text style={styles.timeLabel}>⏰ Available Slots:</Text>
                     <View style={styles.timeSlotsGrid}>
                         {timeSlots.map((slot) => (
                             <TouchableOpacity
@@ -227,7 +371,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                                 >
                                     {slot}
                                 </Text>
-                                {selectedTime === slot && <Text style={styles.checkmark}>✓</Text>}
+                                {selectedTime === slot && (
+                                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                                )}
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -236,7 +382,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 {/* Step 5: Reason for Visit */}
                 <View style={styles.section}>
                     <View style={styles.stepHeader}>
-                        <Text style={styles.stepNumber}>5️⃣</Text>
+                        <View style={styles.stepNumberBox}>
+                            <Text style={styles.stepNumberText}>5</Text>
+                        </View>
                         <Text style={styles.stepTitle}>REASON FOR VISIT:</Text>
                     </View>
                     <TextInput
@@ -253,7 +401,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 {/* Confirm Button */}
                 <View style={styles.section}>
                     <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-                        <Text style={styles.confirmButtonText}>CONFIRM APPOINTMENT ➜</Text>
+                        <View style={styles.confirmButtonContent}>
+                            <Text style={styles.confirmButtonText}>CONFIRM APPOINTMENT</Text>
+                            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                        </View>
                     </TouchableOpacity>
                 </View>
 
@@ -275,7 +426,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: getScreenPadding(),
         paddingVertical: moderateScale(12),
         backgroundColor: healthColors.background.card,
-        ...createShadow(2),
     },
     backButton: {
         padding: moderateScale(4),
@@ -301,8 +451,18 @@ const styles = StyleSheet.create({
         marginBottom: moderateScale(12),
         marginTop: verticalScale(8),
     },
-    stepNumber: {
-        fontSize: moderateScale(20),
+    stepNumberBox: {
+        width: moderateScale(28),
+        height: moderateScale(28),
+        borderRadius: moderateScale(14),
+        backgroundColor: healthColors.primary.main,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    stepNumberText: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '700',
+        color: '#FFFFFF',
     },
     stepTitle: {
         fontSize: scaledFontSize(14),
@@ -313,10 +473,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: moderateScale(12),
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         padding: moderateScale(16),
         borderRadius: moderateScale(12),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     specialtyText: {
         flex: 1,
@@ -327,17 +488,17 @@ const styles = StyleSheet.create({
     doctorCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         padding: moderateScale(16),
         borderRadius: moderateScale(12),
         marginBottom: moderateScale(12),
-        ...createShadow(2),
         borderWidth: 2,
-        borderColor: 'transparent',
+        borderColor: healthColors.border.light,
     },
     doctorCardSelected: {
         borderColor: healthColors.success.main,
-        backgroundColor: healthColors.success.main + '10',
+        borderWidth: 3,
+        backgroundColor: '#FFFFFF',
     },
     doctorAvatar: {
         width: moderateScale(48),
@@ -374,8 +535,14 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(12),
         color: healthColors.text.primary,
     },
+    feeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(4),
+        marginTop: moderateScale(2),
+    },
     feeText: {
-        fontSize: scaledFontSize(13),
+        fontSize: scaledFontSize(12),
         fontWeight: '600',
         color: healthColors.text.primary,
     },
@@ -385,17 +552,29 @@ const styles = StyleSheet.create({
     },
     typeCard: {
         flex: 1,
-        backgroundColor: healthColors.background.card,
-        padding: moderateScale(16),
-        borderRadius: moderateScale(12),
+        backgroundColor: '#FFFFFF',
+        padding: moderateScale(20),
+        borderRadius: moderateScale(16),
         alignItems: 'center',
-        ...createShadow(2),
         borderWidth: 2,
-        borderColor: 'transparent',
+        borderColor: healthColors.border.light,
     },
     typeCardSelected: {
         borderColor: healthColors.primary.main,
-        backgroundColor: healthColors.primary.main + '10',
+        borderWidth: 3,
+        backgroundColor: '#FFFFFF',
+    },
+    typeIconBox: {
+        width: moderateScale(64),
+        height: moderateScale(64),
+        borderRadius: moderateScale(32),
+        backgroundColor: '#FFFFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: moderateScale(8),
+    },
+    typeIconBoxSelected: {
+        backgroundColor: '#FFFFFF',
     },
     typeTitle: {
         fontSize: scaledFontSize(13),
@@ -416,21 +595,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: moderateScale(12),
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         padding: moderateScale(16),
         borderRadius: moderateScale(12),
         marginBottom: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     dateText: {
         fontSize: scaledFontSize(15),
         fontWeight: '600',
         color: healthColors.text.primary,
     },
+    timeLabelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
+        marginBottom: moderateScale(12),
+    },
     timeLabel: {
         fontSize: scaledFontSize(14),
+        fontWeight: '600',
         color: healthColors.text.primary,
-        marginBottom: moderateScale(12),
     },
     timeSlotsGrid: {
         flexDirection: 'row',
@@ -460,31 +646,113 @@ const styles = StyleSheet.create({
     timeSlotTextSelected: {
         color: '#FFFFFF',
     },
-    checkmark: {
-        fontSize: moderateScale(14),
-        color: '#FFFFFF',
-    },
     reasonInput: {
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
         fontSize: scaledFontSize(14),
         color: healthColors.text.primary,
         textAlignVertical: 'top',
         minHeight: moderateScale(80),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     confirmButton: {
         backgroundColor: healthColors.primary.main,
         padding: moderateScale(18),
         borderRadius: moderateScale(12),
         alignItems: 'center',
-        ...createShadow(3),
+    },
+    confirmButtonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
     },
     confirmButtonText: {
         fontSize: scaledFontSize(16),
         fontWeight: '700',
         color: '#FFFFFF',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(15, 23, 42, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: moderateScale(20),
+        borderTopRightRadius: moderateScale(20),
+        maxHeight: '70%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: moderateScale(20),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    modalTitle: {
+        fontSize: scaledFontSize(18),
+        fontWeight: '700',
+        color: healthColors.text.primary,
+    },
+    modalBody: {
+        padding: moderateScale(16),
+    },
+    specialtyOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: moderateScale(16),
+        borderRadius: moderateScale(12),
+        marginBottom: moderateScale(8),
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
+    },
+    specialtyOptionSelected: {
+        backgroundColor: healthColors.primary.main + '08',
+        borderColor: healthColors.primary.main,
+        borderWidth: 2,
+    },
+    specialtyOptionText: {
+        fontSize: scaledFontSize(16),
+        fontWeight: '500',
+        color: healthColors.text.primary,
+    },
+    specialtyOptionTextSelected: {
+        fontWeight: '700',
+        color: healthColors.primary.main,
+    },
+    datePickerModal: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    datePickerContainer: {
+        backgroundColor: '#FFFFFF',
+        borderTopLeftRadius: moderateScale(20),
+        borderTopRightRadius: moderateScale(20),
+        paddingBottom: moderateScale(30),
+    },
+    datePickerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: moderateScale(16),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    datePickerTitle: {
+        fontSize: scaledFontSize(18),
+        fontWeight: '700',
+        color: healthColors.text.primary,
+    },
+    datePickerDone: {
+        fontSize: scaledFontSize(16),
+        fontWeight: '600',
+        color: healthColors.primary.main,
     },
     paymentNote: {
         fontSize: scaledFontSize(13),

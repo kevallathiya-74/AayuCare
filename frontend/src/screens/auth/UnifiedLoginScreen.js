@@ -4,7 +4,7 @@
  * Supports: Admin, Doctor, Patient roles
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -33,6 +33,13 @@ import {
 } from '../../utils/responsive';
 import { showError, validateRequiredFields } from '../../utils/errorHandler';
 
+// Development auto-fill credentials
+const DEV_CREDENTIALS = {
+    patient: { userId: 'PAT001', password: 'patient123' },
+    doctor: { userId: 'DOC001', password: 'doctor123' },
+    admin: { userId: 'ADM001', password: 'admin123' },
+};
+
 const UnifiedLoginScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
@@ -42,9 +49,30 @@ const UnifiedLoginScreen = ({ navigation }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [userIdFocused, setUserIdFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const [showDevHelper, setShowDevHelper] = useState(false);
 
     const passwordInputRef = useRef(null);
     const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    // Auto-fill on component mount (development only)
+    useEffect(() => {
+        // Automatically fill in patient credentials when screen appears
+        const autoFillDelay = setTimeout(() => {
+            setUserId(DEV_CREDENTIALS.patient.userId);
+            setPassword(DEV_CREDENTIALS.patient.password);
+        }, 300); // Small delay for smooth appearance
+
+        return () => clearTimeout(autoFillDelay);
+    }, []);
+
+    const handleAutoFill = (role) => {
+        const credentials = DEV_CREDENTIALS[role];
+        if (credentials) {
+            setUserId(credentials.userId);
+            setPassword(credentials.password);
+            setShowDevHelper(false);
+        }
+    };
 
     const handleLogin = async () => {
         // Validate inputs
@@ -235,6 +263,57 @@ const UnifiedLoginScreen = ({ navigation }) => {
                         >
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
+
+                        {/* Development Helper - Quick Login Buttons */}
+                        {__DEV__ && (
+                            <View style={styles.devHelper}>
+                                <TouchableOpacity
+                                    style={styles.devToggle}
+                                    onPress={() => setShowDevHelper(!showDevHelper)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons 
+                                        name={showDevHelper ? "chevron-up" : "chevron-down"} 
+                                        size={16} 
+                                        color={healthColors.info.main} 
+                                    />
+                                    <Text style={styles.devToggleText}>
+                                        {showDevHelper ? 'Hide' : 'Quick Login'}
+                                    </Text>
+                                </TouchableOpacity>
+                                
+                                {showDevHelper && (
+                                    <View style={styles.devButtons}>
+                                        <TouchableOpacity
+                                            style={[styles.devButton, styles.devButtonPatient]}
+                                            onPress={() => handleAutoFill('patient')}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="people" size={16} color={healthColors.primary.main} />
+                                            <Text style={styles.devButtonText}>Patient</Text>
+                                        </TouchableOpacity>
+                                        
+                                        <TouchableOpacity
+                                            style={[styles.devButton, styles.devButtonDoctor]}
+                                            onPress={() => handleAutoFill('doctor')}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="medical" size={16} color={healthColors.secondary.main} />
+                                            <Text style={styles.devButtonText}>Doctor</Text>
+                                        </TouchableOpacity>
+                                        
+                                        <TouchableOpacity
+                                            style={[styles.devButton, styles.devButtonAdmin]}
+                                            onPress={() => handleAutoFill('admin')}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="shield-checkmark" size={16} color={healthColors.accent.coral} />
+                                            <Text style={styles.devButtonText}>Admin</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        )}
 
                         {/* Login Button */}
                         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
@@ -482,6 +561,59 @@ const styles = StyleSheet.create({
     footerText: {
         fontSize: scaledFontSize(12),
         color: healthColors.text.tertiary,
+    },
+    // Development Helper Styles
+    devHelper: {
+        marginTop: moderateScale(16),
+        backgroundColor: healthColors.info.main + '08',
+        borderRadius: moderateScale(12),
+        borderWidth: 1,
+        borderColor: healthColors.info.main + '20',
+        overflow: 'hidden',
+    },
+    devToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: moderateScale(8),
+        gap: moderateScale(6),
+    },
+    devToggleText: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.info.main,
+        fontWeight: '600',
+    },
+    devButtons: {
+        flexDirection: 'row',
+        gap: moderateScale(8),
+        padding: moderateScale(12),
+        paddingTop: 0,
+    },
+    devButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: moderateScale(6),
+        paddingVertical: moderateScale(10),
+        paddingHorizontal: moderateScale(12),
+        borderRadius: moderateScale(8),
+        borderWidth: 1.5,
+        backgroundColor: healthColors.background.card,
+    },
+    devButtonPatient: {
+        borderColor: healthColors.primary.main + '40',
+    },
+    devButtonDoctor: {
+        borderColor: healthColors.secondary.main + '40',
+    },
+    devButtonAdmin: {
+        borderColor: healthColors.accent.coral + '40',
+    },
+    devButtonText: {
+        fontSize: scaledFontSize(11),
+        fontWeight: '600',
+        color: healthColors.text.primary,
     },
 });
 

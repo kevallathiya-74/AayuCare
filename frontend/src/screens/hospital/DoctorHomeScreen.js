@@ -15,6 +15,8 @@ import {
     TextInput,
     Alert,
     ActivityIndicator,
+    Modal,
+    Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +31,7 @@ import {
     scaledFontSize,
 } from '../../utils/responsive';
 import Avatar from '../../components/common/Avatar';
+import LanguageSelector from '../../components/common/LanguageSelector';
 import { logoutUser } from '../../store/slices/authSlice';
 import { showConfirmation, logError } from '../../utils/errorHandler';
 import { doctorService } from '../../services';
@@ -43,6 +46,7 @@ const DoctorHomeScreen = ({ navigation }) => {
     const [searching, setSearching] = useState(false);
     const [error, setError] = useState(null);
     const [notificationCount] = useState(3);
+    const [menuVisible, setMenuVisible] = useState(false);
     
     const [schedule, setSchedule] = useState({
         totalAppointments: 0,
@@ -210,9 +214,9 @@ const DoctorHomeScreen = ({ navigation }) => {
                     <View style={styles.bannerTopRow}>
                         <TouchableOpacity 
                             style={styles.bannerIconButton}
-                            onPress={() => Alert.alert('Menu', 'Menu feature coming soon!')}
+                            onPress={() => setMenuVisible(true)}
                             accessibilityRole="button"
-                            accessibilityLabel="Menu"
+                            accessibilityLabel="Open menu"
                         >
                             <Ionicons name="menu" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -230,7 +234,8 @@ const DoctorHomeScreen = ({ navigation }) => {
                                     </View>
                                 )}
                             </TouchableOpacity>
-                            <TouchableOpacity 
+<LanguageSelector compact iconColor="#FFFFFF" />
+                        <TouchableOpacity 
                                 style={styles.bannerIconButton}
                                 onPress={() => navigation.navigate('Profile')}
                                 accessibilityRole="button"
@@ -444,22 +449,243 @@ const DoctorHomeScreen = ({ navigation }) => {
                     )}
                 </View>
 
-                {/* Add Walk-in Button */}
+                {/* Quick Actions */}
                 <View style={styles.section}>
-                    <TouchableOpacity 
-                        style={styles.addWalkinButton}
-                        onPress={() => navigation.navigate('WalkInPatient')}
-                        accessibilityRole="button"
-                        accessibilityLabel="Add walk-in patient"
-                        accessibilityHint="Add a new walk-in patient to the queue"
-                    >
-                        <Ionicons name="add-circle" size={24} color={healthColors.primary.main} />
-                        <Text style={styles.addWalkinText}>Add Walk-in Patient</Text>
-                    </TouchableOpacity>
+                    <Text style={styles.sectionTitle}>QUICK ACTIONS:</Text>
+                    <View style={styles.quickActionsGrid}>
+                        <TouchableOpacity 
+                            style={styles.quickActionCard}
+                            onPress={() => navigation.navigate('DoctorTabs', { screen: 'DoctorAppointments' })}
+                            accessibilityRole="button"
+                            accessibilityLabel="View today's appointments"
+                        >
+                            <View style={[styles.quickActionIcon, { backgroundColor: healthColors.primary.main + '15' }]}>
+                                <Ionicons name="calendar" size={28} color={healthColors.primary.main} />
+                            </View>
+                            <Text style={styles.quickActionTitle}>Today's{'\n'}Appointments</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.quickActionCard}
+                            onPress={() => navigation.navigate('PatientManagement')}
+                            accessibilityRole="button"
+                            accessibilityLabel="Manage patients"
+                        >
+                            <View style={[styles.quickActionIcon, { backgroundColor: healthColors.secondary.main + '15' }]}>
+                                <Ionicons name="people" size={28} color={healthColors.secondary.main} />
+                            </View>
+                            <Text style={styles.quickActionTitle}>Patient{'\n'}Management</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.quickActionCard}
+                            onPress={() => navigation.navigate('CreatePrescription')}
+                            accessibilityRole="button"
+                            accessibilityLabel="Create prescription"
+                        >
+                            <View style={[styles.quickActionIcon, { backgroundColor: healthColors.accent.coral + '15' }]}>
+                                <Ionicons name="document-text" size={28} color={healthColors.accent.coral} />
+                            </View>
+                            <Text style={styles.quickActionTitle}>Create{'\n'}Prescription</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.quickActionCard}
+                            onPress={() => navigation.navigate('WalkInPatient')}
+                            accessibilityRole="button"
+                            accessibilityLabel="Add walk-in patient"
+                        >
+                            <View style={[styles.quickActionIcon, { backgroundColor: healthColors.accent.green + '15' }]}>
+                                <Ionicons name="person-add" size={28} color={healthColors.accent.green} />
+                            </View>
+                            <Text style={styles.quickActionTitle}>Walk-in{'\n'}Patient</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 <View style={{ height: verticalScale(20) }} />
             </ScrollView>
+
+            {/* Side Menu Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={menuVisible}
+                onRequestClose={() => setMenuVisible(false)}
+            >
+                <Pressable 
+                    style={styles.menuOverlay}
+                    onPress={() => setMenuVisible(false)}
+                >
+                    <Pressable 
+                        style={styles.menuDrawer}
+                        onPress={(e) => e.stopPropagation()}
+                    >
+                        <LinearGradient
+                            colors={[healthColors.primary.main, healthColors.primary.dark]}
+                            style={styles.menuHeader}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                        >
+                            <View style={styles.menuHeaderContent}>
+                                <View style={styles.menuProfileSection}>
+                                    <View style={styles.menuAvatar}>
+                                        <Ionicons name="person" size={32} color="#FFFFFF" />
+                                    </View>
+                                    <View style={styles.menuUserInfo}>
+                                        <Text style={styles.menuUserName}>{user?.name || 'Doctor'}</Text>
+                                        <Text style={styles.menuUserRole}>{user?.specialization || 'General Physician'}</Text>
+                                        <Text style={styles.menuUserId}>ID: {user?._id?.slice(-6) || 'DOC001'}</Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity 
+                                    style={styles.menuCloseButton}
+                                    onPress={() => setMenuVisible(false)}
+                                >
+                                    <Ionicons name="close" size={28} color="#FFFFFF" />
+                                </TouchableOpacity>
+                            </View>
+                        </LinearGradient>
+
+                        <ScrollView style={styles.menuContent} showsVerticalScrollIndicator={false}>
+                            {/* Navigation Items */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>NAVIGATION</Text>
+                                
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('DoctorTabs', { screen: 'DoctorHome' });
+                                    }}
+                                >
+                                    <Ionicons name="home" size={22} color={healthColors.primary.main} />
+                                    <Text style={styles.menuItemText}>Dashboard</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('DoctorTabs', { screen: 'DoctorAppointments' });
+                                    }}
+                                >
+                                    <Ionicons name="calendar" size={22} color={healthColors.secondary.main} />
+                                    <Text style={styles.menuItemText}>My Appointments</Text>
+                                    {schedule.pending > 0 && (
+                                        <View style={styles.menuBadge}>
+                                            <Text style={styles.menuBadgeText}>{schedule.pending}</Text>
+                                        </View>
+                                    )}
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('PatientManagement');
+                                    }}
+                                >
+                                    <Ionicons name="people" size={22} color={healthColors.accent.aqua} />
+                                    <Text style={styles.menuItemText}>Patient Management</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('CreatePrescription');
+                                    }}
+                                >
+                                    <Ionicons name="document-text" size={22} color={healthColors.accent.coral} />
+                                    <Text style={styles.menuItemText}>Create Prescription</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('WalkInPatient');
+                                    }}
+                                >
+                                    <Ionicons name="person-add" size={22} color={healthColors.accent.green} />
+                                    <Text style={styles.menuItemText}>Add Walk-in Patient</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Quick Stats */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>TODAY'S STATS</Text>
+                                <View style={styles.menuStatsGrid}>
+                                    <View style={styles.menuStatCard}>
+                                        <Text style={styles.menuStatValue}>{schedule.totalAppointments}</Text>
+                                        <Text style={styles.menuStatLabel}>Appointments</Text>
+                                    </View>
+                                    <View style={styles.menuStatCard}>
+                                        <Text style={styles.menuStatValue}>{schedule.completed}</Text>
+                                        <Text style={styles.menuStatLabel}>Completed</Text>
+                                    </View>
+                                    <View style={styles.menuStatCard}>
+                                        <Text style={styles.menuStatValue}>{schedule.pending}</Text>
+                                        <Text style={styles.menuStatLabel}>Pending</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Settings & Account */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>ACCOUNT</Text>
+                                
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('Settings');
+                                    }}
+                                >
+                                    <Ionicons name="settings" size={22} color={healthColors.text.secondary} />
+                                    <Text style={styles.menuItemText}>Settings</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        Alert.alert('Help & Support', 'Contact: support@aayucare.com\nPhone: 1800-XXX-XXXX');
+                                    }}
+                                >
+                                    <Ionicons name="help-circle" size={22} color={healthColors.info.main} />
+                                    <Text style={styles.menuItemText}>Help & Support</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    style={[styles.menuItem, styles.menuItemDanger]}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        handleLogout();
+                                    }}
+                                >
+                                    <Ionicons name="log-out" size={22} color={healthColors.error.main} />
+                                    <Text style={[styles.menuItemText, styles.menuItemTextDanger]}>Logout</Text>
+                                    <Ionicons name="chevron-forward" size={18} color={healthColors.error.main} />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.menuFooter}>
+                                <Text style={styles.menuFooterText}>AayuCare Doctor v1.0.0</Text>
+                                <Text style={styles.menuFooterText}>© 2025 AayuCare Hospital</Text>
+                            </View>
+                        </ScrollView>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -861,6 +1087,181 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(13),
         color: healthColors.primary.main,
         fontWeight: '600',
+    },
+    quickActionsGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: moderateScale(12),
+        justifyContent: 'space-between',
+    },
+    quickActionCard: {
+        width: '48%',
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(12),
+        padding: moderateScale(16),
+        alignItems: 'center',
+        ...createShadow(2),
+        minHeight: moderateScale(110),
+        justifyContent: 'center',
+    },
+    quickActionIcon: {
+        width: moderateScale(56),
+        height: moderateScale(56),
+        borderRadius: moderateScale(28),
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: moderateScale(12),
+    },
+    quickActionTitle: {
+        fontSize: scaledFontSize(13),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+        textAlign: 'center',
+        lineHeight: scaledFontSize(16),
+    },
+    // Menu Drawer Styles
+    menuOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-start',
+    },
+    menuDrawer: {
+        width: '80%',
+        maxWidth: moderateScale(320),
+        height: '100%',
+        backgroundColor: healthColors.background.card,
+        ...createShadow(8),
+    },
+    menuHeader: {
+        paddingTop: moderateScale(50),
+        paddingBottom: moderateScale(20),
+        paddingHorizontal: moderateScale(16),
+    },
+    menuHeaderContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    menuProfileSection: {
+        flex: 1,
+        flexDirection: 'row',
+        gap: moderateScale(12),
+    },
+    menuAvatar: {
+        width: moderateScale(56),
+        height: moderateScale(56),
+        borderRadius: moderateScale(28),
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+    },
+    menuUserInfo: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    menuUserName: {
+        fontSize: scaledFontSize(16),
+        fontWeight: '700',
+        color: '#FFFFFF',
+        marginBottom: moderateScale(2),
+    },
+    menuUserRole: {
+        fontSize: scaledFontSize(13),
+        color: 'rgba(255, 255, 255, 0.9)',
+        marginBottom: moderateScale(2),
+    },
+    menuUserId: {
+        fontSize: scaledFontSize(11),
+        color: 'rgba(255, 255, 255, 0.7)',
+    },
+    menuCloseButton: {
+        padding: moderateScale(4),
+    },
+    menuContent: {
+        flex: 1,
+    },
+    menuSection: {
+        paddingVertical: moderateScale(16),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    menuSectionTitle: {
+        fontSize: scaledFontSize(11),
+        fontWeight: '700',
+        color: healthColors.text.tertiary,
+        paddingHorizontal: moderateScale(16),
+        marginBottom: moderateScale(8),
+        letterSpacing: 0.5,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: moderateScale(12),
+        paddingHorizontal: moderateScale(16),
+        gap: moderateScale(12),
+    },
+    menuItemText: {
+        flex: 1,
+        fontSize: scaledFontSize(14),
+        fontWeight: '500',
+        color: healthColors.text.primary,
+    },
+    menuItemDanger: {
+        backgroundColor: healthColors.error.main + '08',
+    },
+    menuItemTextDanger: {
+        color: healthColors.error.main,
+        fontWeight: '600',
+    },
+    menuBadge: {
+        backgroundColor: healthColors.error.main,
+        borderRadius: moderateScale(10),
+        minWidth: moderateScale(20),
+        height: moderateScale(20),
+        paddingHorizontal: moderateScale(6),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    menuBadgeText: {
+        fontSize: scaledFontSize(11),
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    menuStatsGrid: {
+        flexDirection: 'row',
+        gap: moderateScale(12),
+        paddingHorizontal: moderateScale(16),
+    },
+    menuStatCard: {
+        flex: 1,
+        backgroundColor: healthColors.primary.main + '10',
+        borderRadius: moderateScale(8),
+        padding: moderateScale(12),
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: healthColors.primary.main + '20',
+    },
+    menuStatValue: {
+        fontSize: scaledFontSize(20),
+        fontWeight: '700',
+        color: healthColors.primary.main,
+        marginBottom: moderateScale(4),
+    },
+    menuStatLabel: {
+        fontSize: scaledFontSize(11),
+        color: healthColors.text.secondary,
+        textAlign: 'center',
+    },
+    menuFooter: {
+        padding: moderateScale(16),
+        alignItems: 'center',
+        gap: moderateScale(4),
+    },
+    menuFooterText: {
+        fontSize: scaledFontSize(11),
+        color: healthColors.text.tertiary,
     },
 });
 

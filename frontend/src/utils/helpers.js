@@ -119,6 +119,26 @@ export const formatTime = (date) => {
 };
 
 /**
+ * Convert 24-hour time string to 12-hour format with AM/PM
+ * @param {string} time24 - Time in 24-hour format (e.g., '14:00', '09:30')
+ * @returns {string} Time in 12-hour format (e.g., '2:00 PM', '9:30 AM')
+ */
+export const convert24To12Hour = (time24) => {
+  if (!time24 || typeof time24 !== 'string') return time24;
+  
+  const [hoursStr, minutesStr] = time24.split(':');
+  let hours = parseInt(hoursStr, 10);
+  const minutes = minutesStr || '00';
+  
+  if (isNaN(hours)) return time24;
+  
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  
+  return `${hours}:${minutes} ${ampm}`;
+};
+
+/**
  * Format date and time together
  * @param {Date|string} date - Date/time to format
  * @returns {string} Formatted date and time

@@ -64,13 +64,19 @@ const SettingsScreen = ({ navigation }) => {
             title: 'Edit Profile',
             leftIcon: { name: 'person', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
-            onPress: () => { },
+            onPress: () => navigation.navigate('Profile'),
         },
         {
             title: 'Change Password',
             leftIcon: { name: 'lock-closed', color: healthColors.primary.main },
             rightIcon: { name: 'chevron-forward' },
             onPress: () => { },
+        },
+        {
+            title: 'Accessibility & Advanced',
+            leftIcon: { name: 'accessibility', color: healthColors.primary.main },
+            rightIcon: { name: 'chevron-forward' },
+            onPress: () => navigation.navigate('SettingsAccessibility'),
         },
         {
             title: 'Linked Accounts',

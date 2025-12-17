@@ -109,6 +109,23 @@ const AppNavigator = () => {
     }
   }, [isAuthenticated, user]);
 
+  // Auto-navigate to Login when logged out
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading && navigationRef.current) {
+      // Only navigate if we're not already on an auth screen
+      const currentRoute = navigationRef.current.getCurrentRoute();
+      const authScreens = ['Login', 'ForgotPassword', 'SplashScreen', 'RoleSelection', 'AnimatedSplash', 'BoxSelection'];
+      
+      if (currentRoute && !authScreens.includes(currentRoute.name)) {
+        console.log('[AppNavigator] User logged out, navigating to Login');
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      }
+    }
+  }, [isAuthenticated, isLoading]);
+
   // Determine user role
   const userRole = user?.role;
 
@@ -166,6 +183,8 @@ const AppNavigator = () => {
               <>
                 <Stack.Screen name="DoctorTabs" component={DoctorTabNavigator} />
                 <Stack.Screen name="WalkInPatient" component={WalkInPatientScreen} />
+                <Stack.Screen name="PatientManagement" component={PatientManagementScreen} />
+                <Stack.Screen name="CreatePrescription" component={EnhancedPrescriptionScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}

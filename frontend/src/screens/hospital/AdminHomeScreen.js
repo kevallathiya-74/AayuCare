@@ -17,6 +17,8 @@ import {
     Alert,
     ActivityIndicator,
     Platform,
+    Modal,
+    Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +27,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
+import LanguageSelector from '../../components/common/LanguageSelector';
 import { logoutUser } from '../../store/slices/authSlice';
 import { showConfirmation, showError, logError } from '../../utils/errorHandler';
 import adminService from '../../services/admin.service';
@@ -38,6 +41,7 @@ const AdminHomeScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showProfile, setShowProfile] = useState(false);
+    const [menuVisible, setMenuVisible] = useState(false);
     const [stats, setStats] = useState({
         appointments: { total: 0, today: 0, pending: 0, completed: 0, trend: 0 },
         doctors: { total: 0, active: 0, onDuty: 0, trend: 0 },
@@ -237,12 +241,12 @@ const AdminHomeScreen = ({ navigation }) => {
 
     const quickActions = useMemo(() => ({
         management: [
-            { title: 'Patient Management', icon: 'people', color: healthColors.primary.main, action: () => Alert.alert('Coming Soon', 'Patient Management feature is under development'), badge: null },
-            { title: 'Doctor Management', icon: 'medical', color: healthColors.secondary.main, action: () => Alert.alert('Coming Soon', 'Doctor Management feature is under development'), badge: null },
-            { title: 'Appointments', icon: 'calendar', color: healthColors.accent.coral, action: () => navigation.navigate('Appointments'), badge: stats.appointments.pending },
-            { title: 'Medical Records', icon: 'document-text', color: healthColors.info.main, action: () => navigation.navigate('Reports'), badge: null },
-            { title: 'Analytics', icon: 'stats-chart', color: healthColors.accent.green, action: () => navigation.navigate('Analytics'), badge: null },
-            { title: 'Settings', icon: 'settings', color: healthColors.text.secondary, action: () => navigation.navigate('Settings'), badge: null },
+            { title: 'Patients', icon: 'people', color: healthColors.primary.main, screen: 'ManagePatients', badge: null },
+            { title: 'Doctors', icon: 'medical', color: healthColors.secondary.main, screen: 'ManageDoctors', badge: null },
+            { title: 'Appointments', icon: 'calendar', color: healthColors.accent.coral, screen: 'Appointments', badge: stats.appointments.pending },
+            { title: 'Reports', icon: 'document-text', color: healthColors.info.main, screen: 'Reports', badge: null },
+            { title: 'Pharmacy', icon: 'medkit', color: healthColors.accent.purple, action: () => Alert.alert('Coming Soon', 'Pharmacy management feature is under development'), badge: null },
+            { title: 'Events', icon: 'calendar-outline', color: healthColors.accent.green, action: () => Alert.alert('Coming Soon', 'Hospital events feature is under development'), badge: null },
         ],
     }), [stats.appointments.pending, navigation]);
     
@@ -289,6 +293,7 @@ const AdminHomeScreen = ({ navigation }) => {
             <View style={styles.header}>
                 <TouchableOpacity 
                     style={styles.menuButton}
+                    onPress={() => setMenuVisible(true)}
                     accessibilityRole="button"
                     accessibilityLabel="Open menu"
                     accessibilityHint="Opens the navigation menu"
@@ -297,6 +302,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Admin Dashboard</Text>
                 <View style={styles.headerRight}>
+                    <LanguageSelector compact iconColor={healthColors.primary.main} />
                     <TouchableOpacity 
                         style={styles.iconButton} 
                         onPress={() => Alert.alert('Notifications', 'Notification center coming soon!')}
@@ -540,6 +546,197 @@ const AdminHomeScreen = ({ navigation }) => {
                 <View style={{ height: 100 }} />
             </ScrollView>
             )}
+
+            {/* Side Menu Drawer */}
+            <Modal
+                visible={menuVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setMenuVisible(false)}
+            >
+                <Pressable 
+                    style={styles.menuOverlay}
+                    onPress={() => setMenuVisible(false)}
+                >
+                    <Pressable 
+                        style={styles.menuDrawer}
+                        onPress={(e) => e.stopPropagation()}
+                    >
+                        {/* Menu Header */}
+                        <LinearGradient
+                            colors={[healthColors.primary.main, healthColors.primary.dark]}
+                            style={styles.menuHeader}
+                        >
+                            <View style={styles.menuProfileSection}>
+                                <View style={styles.menuAvatar}>
+                                    <Ionicons name="shield-checkmark" size={32} color="white" />
+                                </View>
+                                <View style={styles.menuUserInfo}>
+                                    <Text style={styles.menuUserName}>{user?.name || 'Administrator'}</Text>
+                                    <Text style={styles.menuUserRole}>System Admin</Text>
+                                    <Text style={styles.menuUserId}>ID: {user?.id || 'N/A'}</Text>
+                                </View>
+                            </View>
+                            <Pressable 
+                                style={styles.menuCloseButton}
+                                onPress={() => setMenuVisible(false)}
+                            >
+                                <Ionicons name="close" size={24} color="white" />
+                            </Pressable>
+                        </LinearGradient>
+
+                        {/* Menu Content */}
+                        <ScrollView style={styles.menuContent}>
+                            {/* System Management */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>SYSTEM MANAGEMENT</Text>
+                                
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminHome');
+                                    }}
+                                >
+                                    <Ionicons name="home-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Dashboard</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminDoctors');
+                                    }}
+                                >
+                                    <Ionicons name="medical-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Manage Doctors</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminPatients');
+                                    }}
+                                >
+                                    <Ionicons name="people-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Manage Patients</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminAppointments');
+                                    }}
+                                >
+                                    <Ionicons name="calendar-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Appointments</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminReports');
+                                    }}
+                                >
+                                    <Ionicons name="bar-chart-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Reports & Analytics</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+                            </View>
+
+                            {/* System Stats */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>SYSTEM STATS</Text>
+                                
+                                <View style={styles.menuStatCard}>
+                                    <Ionicons name="people" size={20} color={healthColors.primary.main} />
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.menuStatLabel}>Active Users</Text>
+                                        <Text style={styles.menuStatValue}>
+                                            {stats.doctors.active + stats.patients.total}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.menuStatCard}>
+                                    <Ionicons name="calendar" size={20} color={healthColors.success.main} />
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.menuStatLabel}>Today's Appointments</Text>
+                                        <Text style={styles.menuStatValue}>{stats.appointments.today}</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.menuStatCard}>
+                                    <Ionicons name="cash" size={20} color={healthColors.warning.main} />
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.menuStatLabel}>Today's Revenue</Text>
+                                        <Text style={styles.menuStatValue}>₹{stats.revenue.today.toLocaleString()}</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* System Settings */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>SYSTEM SETTINGS</Text>
+                                
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminSettings');
+                                    }}
+                                >
+                                    <Ionicons name="settings-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Settings</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+
+                                <Pressable 
+                                    style={styles.menuItem}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        navigation.navigate('AdminProfile');
+                                    }}
+                                >
+                                    <Ionicons name="person-outline" size={22} color={healthColors.text.primary} />
+                                    <Text style={styles.menuItemText}>Profile</Text>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </Pressable>
+                            </View>
+
+                            {/* Account */}
+                            <View style={styles.menuSection}>
+                                <Text style={styles.menuSectionTitle}>ACCOUNT</Text>
+                                
+                                <Pressable 
+                                    style={[styles.menuItem, styles.menuItemDanger]}
+                                    onPress={() => {
+                                        setMenuVisible(false);
+                                        handleLogout();
+                                    }}
+                                >
+                                    <Ionicons name="log-out-outline" size={22} color={healthColors.error.main} />
+                                    <Text style={styles.menuItemTextDanger}>Logout</Text>
+                                </Pressable>
+                            </View>
+
+                            {/* Footer */}
+                            <View style={styles.menuFooter}>
+                                <Text style={styles.menuFooterText}>AayuCare Admin v1.0.0</Text>
+                                <Text style={styles.menuFooterText}>© 2024 AayuCare Health</Text>
+                            </View>
+                        </ScrollView>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -1011,6 +1208,152 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(16),
         fontWeight: '600',
         color: healthColors.error.main,
+    },
+    // Menu Styles
+    menuOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    menuDrawer: {
+        width: '85%',
+        height: '100%',
+        backgroundColor: 'white',
+        borderTopRightRadius: moderateScale(20),
+        borderBottomRightRadius: moderateScale(20),
+        ...createShadow(8),
+    },
+    menuHeader: {
+        padding: moderateScale(20),
+        paddingTop: moderateScale(40),
+        borderTopRightRadius: moderateScale(20),
+    },
+    menuProfileSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(12),
+    },
+    menuAvatar: {
+        width: moderateScale(60),
+        height: moderateScale(60),
+        borderRadius: moderateScale(30),
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.5)',
+    },
+    menuUserInfo: {
+        flex: 1,
+    },
+    menuUserName: {
+        fontSize: scaledFontSize(18),
+        fontWeight: '700',
+        color: 'white',
+        marginBottom: moderateScale(2),
+    },
+    menuUserRole: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '500',
+        color: 'rgba(255,255,255,0.9)',
+        marginBottom: moderateScale(2),
+    },
+    menuUserId: {
+        fontSize: scaledFontSize(12),
+        color: 'rgba(255,255,255,0.7)',
+    },
+    menuCloseButton: {
+        position: 'absolute',
+        top: moderateScale(40),
+        right: moderateScale(20),
+        width: moderateScale(36),
+        height: moderateScale(36),
+        borderRadius: moderateScale(18),
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    menuContent: {
+        flex: 1,
+    },
+    menuSection: {
+        paddingVertical: moderateScale(16),
+        paddingHorizontal: moderateScale(20),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.background.secondary,
+    },
+    menuSectionTitle: {
+        fontSize: scaledFontSize(12),
+        fontWeight: '700',
+        color: healthColors.text.secondary,
+        marginBottom: moderateScale(12),
+        letterSpacing: 0.5,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: moderateScale(12),
+        paddingHorizontal: moderateScale(12),
+        borderRadius: moderateScale(8),
+        gap: moderateScale(12),
+        marginBottom: moderateScale(4),
+    },
+    menuItemText: {
+        flex: 1,
+        fontSize: scaledFontSize(15),
+        fontWeight: '500',
+        color: healthColors.text.primary,
+    },
+    menuItemDanger: {
+        backgroundColor: 'rgba(244, 67, 54, 0.05)',
+    },
+    menuItemTextDanger: {
+        flex: 1,
+        fontSize: scaledFontSize(15),
+        fontWeight: '600',
+        color: healthColors.error.main,
+    },
+    menuBadge: {
+        backgroundColor: healthColors.primary.main,
+        paddingHorizontal: moderateScale(8),
+        paddingVertical: moderateScale(2),
+        borderRadius: moderateScale(10),
+        minWidth: moderateScale(24),
+        alignItems: 'center',
+    },
+    menuBadgeText: {
+        fontSize: scaledFontSize(12),
+        fontWeight: '700',
+        color: 'white',
+    },
+    menuStatCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: moderateScale(12),
+        backgroundColor: healthColors.background.secondary,
+        borderRadius: moderateScale(8),
+        gap: moderateScale(12),
+        marginBottom: moderateScale(8),
+    },
+    menuStatLabel: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginBottom: moderateScale(2),
+    },
+    menuStatValue: {
+        fontSize: scaledFontSize(16),
+        fontWeight: '700',
+        color: healthColors.text.primary,
+    },
+    menuFooter: {
+        padding: moderateScale(20),
+        alignItems: 'center',
+        marginTop: moderateScale(20),
+    },
+    menuFooterText: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginBottom: moderateScale(4),
     },
 });
 
