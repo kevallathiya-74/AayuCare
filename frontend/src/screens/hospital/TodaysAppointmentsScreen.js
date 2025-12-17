@@ -181,7 +181,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
     if (loading && !refreshing) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={healthColors.primary.main} />
                     <Text style={styles.loadingText}>Loading appointments...</Text>
@@ -191,7 +191,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Header */}

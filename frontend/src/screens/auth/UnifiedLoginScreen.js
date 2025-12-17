@@ -86,7 +86,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
 
             <KeyboardAvoidingView

@@ -161,7 +161,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
     if (error) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
                 <NetworkStatusIndicator />
                 <ErrorRecovery
@@ -174,7 +174,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
             <NetworkStatusIndicator />
 

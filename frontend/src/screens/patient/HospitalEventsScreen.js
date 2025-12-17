@@ -108,7 +108,7 @@ const HospitalEventsScreen = ({ navigation }) => {
 
     if (error) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <NetworkStatusIndicator />
                 <ErrorRecovery
                     error={error}
@@ -120,7 +120,7 @@ const HospitalEventsScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <NetworkStatusIndicator />
             {loading && (
                 <View style={styles.loadingOverlay}>

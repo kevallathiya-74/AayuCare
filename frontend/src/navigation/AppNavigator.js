@@ -36,10 +36,12 @@ import {
   ManagePatientsScreen,
   PatientManagementScreen,
   EnhancedPrescriptionScreen,
+  WalkInPatientScreen,
 } from '../screens/hospital';
 
 import {
   MyPrescriptionsScreen,
+  ProfileScreen,
 } from '../screens/patient';
 
 // New Patient Screens
@@ -163,6 +165,7 @@ const AppNavigator = () => {
             {userRole === 'doctor' && (
               <>
                 <Stack.Screen name="DoctorTabs" component={DoctorTabNavigator} />
+                <Stack.Screen name="WalkInPatient" component={WalkInPatientScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}
@@ -170,6 +173,7 @@ const AppNavigator = () => {
             {userRole === 'patient' && (
               <>
                 <Stack.Screen name="PatientTabs" component={PatientTabNavigator} />
+                <Stack.Screen name="Profile" component={ProfileScreen} />
                 <Stack.Screen name="MyPrescriptions" component={MyPrescriptionsScreen} />
 
                 <Stack.Screen name="ActivityTracker" component={ActivityTrackerScreen} />

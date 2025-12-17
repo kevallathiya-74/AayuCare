@@ -136,7 +136,7 @@ const AppointmentsScreen = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             <View style={styles.header}>

@@ -165,7 +165,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={healthColors.primary.main} />
                     <Text style={styles.loadingText}>Loading dashboard...</Text>
@@ -175,7 +175,7 @@ const DoctorHomeScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.main} />
             
             <ScrollView 
@@ -448,7 +448,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                 <View style={styles.section}>
                     <TouchableOpacity 
                         style={styles.addWalkinButton}
-                        onPress={() => Alert.alert('Add Walk-in', 'Walk-in patient registration feature coming soon!')}
+                        onPress={() => navigation.navigate('WalkInPatient')}
                         accessibilityRole="button"
                         accessibilityLabel="Add walk-in patient"
                         accessibilityHint="Add a new walk-in patient to the queue"

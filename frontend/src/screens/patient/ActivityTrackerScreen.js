@@ -82,7 +82,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
 
     if (error) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <NetworkStatusIndicator />
                 <ErrorRecovery
                     error={error}
@@ -94,7 +94,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient

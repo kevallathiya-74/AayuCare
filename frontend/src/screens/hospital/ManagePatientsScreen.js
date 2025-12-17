@@ -129,7 +129,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                 transparent={false}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <SafeAreaView style={styles.modalContainer} edges={['top']}>
+                <SafeAreaView style={styles.modalContainer} edges={['top', 'left', 'right', 'bottom']}>
                     <View style={styles.modalHeader}>
                         <TouchableOpacity onPress={() => setModalVisible(false)}>
                             <Ionicons name="close" size={28} color={healthColors.text.primary} />
@@ -301,7 +301,7 @@ const ManagePatientsScreen = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             <View style={styles.header}>

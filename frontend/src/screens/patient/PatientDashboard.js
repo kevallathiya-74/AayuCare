@@ -36,7 +36,6 @@ import {
 const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user, loading } = useSelector((state) => state.auth);
-    const [showProfile, setShowProfile] = React.useState(false);
 
     const handleLogout = useCallback(async () => {
         await dispatch(logoutUser());
@@ -86,7 +85,7 @@ const PatientDashboard = ({ navigation }) => {
         },
         {
             title: 'Disease Info',
-            icon: 'library',
+            icon: 'information-circle',
             iconColor: '#7E57C2',
             onPress: () => navigation.navigate('DiseaseInfo'),
         },
@@ -99,7 +98,7 @@ const PatientDashboard = ({ navigation }) => {
     ], [navigation]);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Enhanced Welcome Banner */}
@@ -133,9 +132,9 @@ const PatientDashboard = ({ navigation }) => {
                         </TouchableOpacity>
                         <TouchableOpacity 
                             style={styles.bannerIconButton}
-                            onPress={() => setShowProfile(!showProfile)}
+                            onPress={() => navigation.navigate('Profile')}
                             accessibilityRole="button"
-                            accessibilityLabel="Toggle profile view"
+                            accessibilityLabel="Open profile"
                         >
                             <Ionicons name="person" size={24} color="#FFFFFF" />
                         </TouchableOpacity>
@@ -165,14 +164,12 @@ const PatientDashboard = ({ navigation }) => {
                             </View>
                             <View style={styles.bannerInfoCard}>
                                 <View style={styles.bannerInfoRow}>
-                                    <Ionicons name="finger-print" size={16} color="#FFFFFF" />
+                                    <Ionicons name="card-outline" size={18} color="#FFFFFF" />
                                     <Text style={styles.bannerInfoText}>ID: {user.userId}</Text>
                                 </View>
                                 <View style={styles.bannerInfoRow}>
-                                    <Ionicons name="calendar-outline" size={16} color="#FFFFFF" />
-                                    <Text style={styles.bannerInfoText}>Age: {user.age}</Text>
-                                    <Ionicons name="water" size={16} color="#FFFFFF" style={{ marginLeft: moderateScale(12) }} />
-                                    <Text style={styles.bannerInfoText}>Blood: {user.bloodGroup || 'N/A'}</Text>
+                                    <Ionicons name="person-outline" size={18} color="#FFFFFF" />
+                                    <Text style={styles.bannerInfoText}>Age: {user.age}  •  Blood: {user.bloodGroup || 'N/A'}</Text>
                                 </View>
                             </View>
                         </>
@@ -185,165 +182,26 @@ const PatientDashboard = ({ navigation }) => {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {showProfile ? (
-                    /* Profile View */
-                    <>
-                        {/* Profile Header */}
-                        <View style={styles.profileHeader}>
-                            <LinearGradient
-                                colors={[healthColors.primary.main, healthColors.primary.dark]}
-                                style={styles.profileHeaderGradient}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                            >
-                                <View style={styles.profileAvatarContainer}>
-                                    <View style={styles.profileAvatar}>
-                                        <Ionicons name="person" size={48} color="#FFFFFF" />
-                                    </View>
-                                    <Text style={styles.profileName}>{user?.name || 'Patient'}</Text>
-                                    <Text style={styles.profileId}>ID: {user?.userId}</Text>
-                                </View>
-                            </LinearGradient>
-                        </View>
-
-                        {/* Profile Info Section */}
-                        <View style={styles.profileSection}>
-                            <Text style={styles.profileSectionTitle}>Personal Information</Text>
-                            <View style={styles.profileCard}>
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="person-outline" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Full Name</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.name || 'Patient'}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.profileDivider} />
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="finger-print" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Patient ID</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.userId || 'N/A'}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.profileDivider} />
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="mail-outline" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Email Address</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.email || 'patient@aayucare.com'}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.profileDivider} />
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="call-outline" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Phone Number</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.phone || '+91 XXXXXXXXXX'}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.profileDivider} />
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="calendar-outline" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Age</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.age || 'N/A'}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.profileDivider} />
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="water" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Blood Group</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.bloodGroup || 'N/A'}</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.profileDivider} />
-                                <View style={styles.profileInfoRow}>
-                                    <Ionicons name="transgender" size={20} color={healthColors.primary.main} />
-                                    <View style={styles.profileInfoContent}>
-                                        <Text style={styles.profileInfoLabel}>Gender</Text>
-                                        <Text style={styles.profileInfoValue}>{user?.gender || 'N/A'}</Text>
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-
-                        {/* Account Settings */}
-                        <View style={styles.profileSection}>
-                            <Text style={styles.profileSectionTitle}>Account Settings</Text>
-                            <View style={styles.profileCard}>
-                                <TouchableOpacity 
-                                    style={styles.profileActionRow}
-                                    onPress={() => Alert.alert('Edit Profile', 'Edit profile feature coming soon!')}
-                                >
-                                    <Ionicons name="create-outline" size={22} color={healthColors.text.primary} />
-                                    <Text style={styles.profileActionText}>Edit Profile</Text>
-                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
-                                </TouchableOpacity>
-                                <View style={styles.profileDivider} />
-                                <TouchableOpacity 
-                                    style={styles.profileActionRow}
-                                    onPress={() => Alert.alert('Medical History', 'Medical history feature coming soon!')}
-                                >
-                                    <Ionicons name="medical-outline" size={22} color={healthColors.text.primary} />
-                                    <Text style={styles.profileActionText}>Medical History</Text>
-                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
-                                </TouchableOpacity>
-                                <View style={styles.profileDivider} />
-                                <TouchableOpacity 
-                                    style={styles.profileActionRow}
-                                    onPress={() => Alert.alert('Change Password', 'Change password feature coming soon!')}
-                                >
-                                    <Ionicons name="key-outline" size={22} color={healthColors.text.primary} />
-                                    <Text style={styles.profileActionText}>Change Password</Text>
-                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
-                                </TouchableOpacity>
-                                <View style={styles.profileDivider} />
-                                <TouchableOpacity 
-                                    style={styles.profileActionRow}
-                                    onPress={() => Alert.alert('Privacy Settings', 'Privacy settings coming soon!')}
-                                >
-                                    <Ionicons name="shield-outline" size={22} color={healthColors.text.primary} />
-                                    <Text style={styles.profileActionText}>Privacy & Security</Text>
-                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        {/* Logout Button */}
-                        <View style={styles.profileSection}>
-                            <TouchableOpacity 
-                                style={styles.logoutButtonProfile}
-                                onPress={handleLogout}
-                            >
-                                <Ionicons name="log-out-outline" size={22} color={healthColors.error.main} />
-                                <Text style={styles.logoutButtonText}>Logout</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </>
-                ) : (
-                    /* Dashboard View */
-                    <>
-                        {/* Health Status Card */}
+                {/* Health Status Card */}
                 <View style={styles.healthStatusSection}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="fitness" size={20} color={healthColors.primary.main} />
+                        <Ionicons name="heart-circle" size={20} color={healthColors.primary.main} />
                         <Text style={styles.healthStatusTitle}>HEALTH STATUS</Text>
                     </View>
                     <View style={styles.healthCard}>
                         <View style={styles.healthCardLeft}>
                             <View style={styles.healthIconCircle}>
-                                <Ionicons name="heart" size={32} color={healthColors.success.main} />
+                                <Ionicons name="fitness" size={32} color={healthColors.success.main} />
                             </View>
                             <View style={styles.healthCardText}>
                                 <Text style={styles.healthCardTitle}>HEALTHY  Risk Score: 25/100</Text>
                                 <View style={styles.healthMetrics}>
                                     <View style={styles.metricItem}>
-                                        <Ionicons name="water" size={14} color={healthColors.info.main} />
+                                        <Ionicons name="pulse" size={14} color={healthColors.info.main} />
                                         <Text style={styles.healthCardDetail}>BP: 130/85</Text>
                                     </View>
                                     <View style={styles.metricItem}>
-                                        <Ionicons name="flash" size={14} color={healthColors.warning.main} />
+                                        <Ionicons name="water" size={14} color={healthColors.warning.main} />
                                         <Text style={styles.healthCardDetail}>Sugar: 110</Text>
                                     </View>
                                     <View style={styles.metricItem}>
@@ -410,41 +268,28 @@ const PatientDashboard = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Main Features Title */}
-                <View style={styles.sectionHeader}>
-                    <Ionicons name="grid" size={20} color={healthColors.primary.main} />
-                    <Text style={styles.sectionTitle}>MAIN FEATURES</Text>
-                </View>
-
-                {/* Action Cards */}
-                <View style={styles.grid}>
-                    {actionCards.map((card, index) => (
-                        <View key={index} style={styles.gridItem}>
-                            <LargeActionCard
-                                title={card.title}
-                                icon={card.icon}
-                                iconColor={card.iconColor}
-                                onPress={card.onPress}
-                                badge={card.badge}
-                            />
-                        </View>
-                    ))}
-                </View>
-
-                {/* Notifications */}
-                <View style={styles.notificationsSection}>
-                    <View style={styles.notificationsHeader}>
-                        <Ionicons name="notifications" size={20} color={healthColors.primary.main} />
-                        <Text style={styles.notificationsTitle}>NOTIFICATIONS (3):</Text>
+                {/* Main Features Section */}
+                <View style={styles.mainFeaturesSection}>
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="grid" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.emergencyTitle}>MAIN FEATURES</Text>
                     </View>
-                    <View style={styles.notificationsList}>
-                        <Text style={styles.notificationItem}>• Prescription ready at pharmacy</Text>
-                        <Text style={styles.notificationItem}>• Appointment tomorrow 10:30 AM</Text>
-                        <Text style={styles.notificationItem}>• Health camp on 15 Dec</Text>
+
+                    {/* Action Cards */}
+                    <View style={styles.grid}>
+                        {actionCards.map((card, index) => (
+                            <View key={index} style={styles.gridItem}>
+                                <LargeActionCard
+                                    title={card.title}
+                                    icon={card.icon}
+                                    iconColor={card.iconColor}
+                                    onPress={card.onPress}
+                                    badge={card.badge}
+                                />
+                            </View>
+                        ))}
                     </View>
                 </View>
-                    </>
-                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -631,6 +476,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: healthColors.text.primary,
     },
+    mainFeaturesSection: {
+        paddingHorizontal: getScreenPadding(),
+        marginBottom: moderateScale(16),
+    },
     emergencyButtons: {
         flexDirection: 'row',
         gap: moderateScale(12),
@@ -692,7 +541,13 @@ const styles = StyleSheet.create({
     notificationsList: {
         gap: moderateScale(8),
     },
+    notificationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+    },
     notificationItem: {
+        flex: 1,
         fontSize: scaledFontSize(13),
         color: healthColors.text.primary,
         lineHeight: scaledFontSize(18),

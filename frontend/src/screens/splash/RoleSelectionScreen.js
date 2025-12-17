@@ -42,7 +42,7 @@ const RoleSelectionScreen = ({ navigation }) => {
     ];
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <LinearGradient
                 colors={[healthColors.background.primary, '#E8F5E9']}
                 style={styles.gradient}

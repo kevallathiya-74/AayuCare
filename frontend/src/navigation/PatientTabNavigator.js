@@ -20,6 +20,7 @@ import WomensHealthScreen from '../screens/patient/WomensHealthScreen';
 import DiseaseInfoScreen from '../screens/patient/DiseaseInfoScreen';
 import HospitalEventsScreen from '../screens/patient/HospitalEventsScreen';
 import PharmacyBillingScreen from '../screens/patient/PharmacyBillingScreen';
+import SettingsScreen from '../screens/main/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -89,7 +90,7 @@ const PatientTabNavigator = () => {
             />
             <Tab.Screen
                 name="More"
-                component={NotificationsScreen}
+                component={SettingsScreen}
                 options={{
                     tabBarLabel: 'More',
                 }}

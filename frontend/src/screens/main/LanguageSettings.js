@@ -56,7 +56,7 @@ const LanguageSettings = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             {/* Header */}
             <LinearGradient
                 colors={[healthColors.primary.main, healthColors.primary.dark]}

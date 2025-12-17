@@ -169,7 +169,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <NetworkStatusIndicator />
             
             <View style={styles.header}>

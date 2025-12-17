@@ -80,7 +80,7 @@ const PharmacyBillingScreen = ({ navigation }) => {
 
     if (error) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <NetworkStatusIndicator />
                 <ErrorRecovery
                     error={error}
@@ -92,7 +92,7 @@ const PharmacyBillingScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <NetworkStatusIndicator />
             {/* Header */}
             <LinearGradient

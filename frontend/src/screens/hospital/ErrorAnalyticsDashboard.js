@@ -36,7 +36,7 @@ const ErrorAnalyticsDashboard = ({ navigation }) => {
 
     if (!statistics) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <View style={styles.loadingContainer}>
                     <Text style={styles.loadingText}>Loading analytics...</Text>
                 </View>
@@ -135,7 +135,7 @@ const ErrorAnalyticsDashboard = ({ navigation }) => {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>

@@ -72,7 +72,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
             {/* Header */}
@@ -167,7 +167,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                                     appointmentType === 'in-person' && styles.typeTextSelected,
                                 ]}
                             >
-                                🏥 IN-PERSON {appointmentType === 'in-person' && '✓'}
+                                IN-PERSON {appointmentType === 'in-person'}
                             </Text>
                             <Text style={styles.typeSubtitle}>Visit Clinic</Text>
                         </TouchableOpacity>
@@ -190,7 +190,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                                     appointmentType === 'telemedicine' && styles.typeTextSelected,
                                 ]}
                             >
-                                📹 TELEMEDICINE
+                                TELEMEDICINE
                             </Text>
                             <Text style={styles.typeSubtitle}>Video Call</Text>
                         </TouchableOpacity>
@@ -255,7 +255,6 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
                         <Text style={styles.confirmButtonText}>CONFIRM APPOINTMENT ➜</Text>
                     </TouchableOpacity>
-                    <Text style={styles.paymentNote}>💳 Payment: Pay at hospital</Text>
                 </View>
 
                 <View style={{ height: 80 }} />

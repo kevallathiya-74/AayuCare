@@ -27,23 +27,28 @@ import { useNetworkStatus } from '../../utils/offlineHandler';
 const DiseaseInfoScreen = ({ navigation }) => {
     const [selectedDisease, setSelectedDisease] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [videoModalVisible, setVideoModalVisible] = useState(false);
+    const [imageGalleryVisible, setImageGalleryVisible] = useState(false);
+    const [dietChartVisible, setDietChartVisible] = useState(false);
+    const [exercisePlanVisible, setExercisePlanVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const { isConnected } = useNetworkStatus();
 
     const categories = [
-        { icon: 'heart', name: 'Heart', color: '#E91E63', emoji: '❤️' },
-        { icon: 'pulse', name: 'Lung', color: '#2196F3', emoji: '🫁' },
-        { icon: 'brain', name: 'Brain', color: '#9C27B0', emoji: '🧠' },
-        { icon: 'water', name: 'Diabetes', color: '#FF9800', emoji: '🩺' },
-        { icon: 'bone', name: 'Bone', color: '#795548', emoji: '🦴' },
-        { icon: 'eye', name: 'Eye', color: '#00BCD4', emoji: '👁️' },
+        { icon: 'heart', name: 'Heart', color: '#E91E63' },
+        { icon: 'pulse', name: 'Lung', color: '#2196F3' },
+        { icon: 'bulb-outline', name: 'Brain', color: '#9C27B0' },
+        { icon: 'water', name: 'Diabetes', color: '#FF9800' },
+        { icon: 'body', name: 'Bone', color: '#795548' },
+        { icon: 'eye', name: 'Eye', color: '#00BCD4' },
     ];
 
     const diseaseDetails = {
         Diabetes: {
             name: 'Diabetes Mellitus',
-            emoji: '🩺',
+            icon: 'water',
+            color: '#FF9800',
             description: 'A metabolic disorder characterized by high blood sugar levels over prolonged periods.',
             symptoms: [
                 'Frequent urination',
@@ -95,7 +100,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
     if (error) {
         return (
-            <SafeAreaView style={styles.container} edges={['top']}>
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
                 <NetworkStatusIndicator />
                 <ErrorRecovery
                     error={error}
@@ -107,7 +112,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <NetworkStatusIndicator />
             {loading && (
                 <View style={styles.loadingOverlay}>
@@ -125,7 +130,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerIcon}>📚</Text>
+                    <Ionicons name="library" size={32} color="#FFF" />
                     <View style={styles.headerText}>
                         <Text style={styles.headerTitle}>Disease Info Center</Text>
                         <Text style={styles.headerSubtitle}>Health Library</Text>
@@ -151,8 +156,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                             >
-                                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-                                <Ionicons name={category.icon} size={32} color="#FFF" style={styles.categoryIcon} />
+                                <Ionicons name={category.icon} size={48} color="#FFF" style={styles.categoryIcon} />
                                 <Text style={styles.categoryName}>{category.name}</Text>
                             </LinearGradient>
                         </TouchableOpacity>
@@ -161,7 +165,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                 {/* Quick Access */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🔍 QUICK ACCESS</Text>
+                    <View style={styles.sectionTitleRow}>
+                        <Ionicons name="search" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>QUICK ACCESS</Text>
+                    </View>
                     <View style={styles.quickAccessCard}>
                         <TouchableOpacity style={styles.quickAccessItem}>
                             <Ionicons name="videocam" size={24} color="#E91E63" />
@@ -211,7 +218,9 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                     {/* Modal Header */}
                                     <View style={styles.modalHeader}>
                                         <View style={styles.modalTitleRow}>
-                                            <Text style={styles.modalEmoji}>{selectedDisease.emoji}</Text>
+                                            <View style={[styles.modalIconContainer, { backgroundColor: selectedDisease.color + '20' }]}>
+                                                <Ionicons name={selectedDisease.icon} size={32} color={selectedDisease.color} />
+                                            </View>
                                             <View style={styles.modalTitleText}>
                                                 <Text style={styles.modalTitle}>{selectedDisease.name}</Text>
                                             </View>
@@ -223,13 +232,28 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                     </View>
 
                                     {/* Video Section */}
-                                    <TouchableOpacity style={styles.videoSection}>
+                                    <TouchableOpacity style={styles.videoSection} onPress={() => setVideoModalVisible(true)}>
                                         <LinearGradient
                                             colors={['#FF9800', '#F57C00']}
                                             style={styles.videoGradient}
                                         >
                                             <Ionicons name="play-circle" size={64} color="#FFF" />
                                             <Text style={styles.videoText}>Watch Educational Video</Text>
+                                            <Text style={styles.videoDuration}>Duration: 3:45 mins</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+
+                                    {/* Image Gallery Button */}
+                                    <TouchableOpacity 
+                                        style={[styles.videoSection, { marginTop: 0 }]} 
+                                        onPress={() => setImageGalleryVisible(true)}
+                                    >
+                                        <LinearGradient
+                                            colors={['#2196F3', '#1976D2']}
+                                            style={styles.videoGradient}
+                                        >
+                                            <Ionicons name="images" size={48} color="#FFF" />
+                                            <Text style={styles.videoText}>View Images</Text>
                                         </LinearGradient>
                                     </TouchableOpacity>
 
@@ -269,7 +293,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                                     {/* Action Buttons */}
                                     <View style={styles.actionButtons}>
-                                        <TouchableOpacity style={styles.actionButton}>
+                                        <TouchableOpacity style={styles.actionButton} onPress={() => setDietChartVisible(true)}>
                                             <LinearGradient
                                                 colors={['#4CAF50', '#388E3C']}
                                                 style={styles.actionGradient}
@@ -277,7 +301,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                                 <Text style={styles.actionButtonText}>📊 Diet Chart</Text>
                                             </LinearGradient>
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={styles.actionButton}>
+                                        <TouchableOpacity style={styles.actionButton} onPress={() => setExercisePlanVisible(true)}>
                                             <LinearGradient
                                                 colors={['#2196F3', '#1976D2']}
                                                 style={styles.actionGradient}
@@ -288,6 +312,259 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                     </View>
                                 </>
                             )}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Video Player Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={videoModalVisible}
+                onRequestClose={() => setVideoModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { maxHeight: '70%' }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Educational Video</Text>
+                            <TouchableOpacity onPress={() => setVideoModalVisible(false)}>
+                                <Ionicons name="close-circle" size={32} color={healthColors.text.tertiary} />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.videoPlayerPlaceholder}>
+                            <Ionicons name="play-circle-outline" size={80} color={healthColors.primary.main} />
+                            <Text style={styles.placeholderText}>Video Player</Text>
+                            <Text style={styles.placeholderSubtext}>
+                                Educational video about {selectedDisease?.name}
+                            </Text>
+                            <Text style={styles.placeholderNote}>
+                                Integration with video player required
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Image Gallery Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={imageGalleryVisible}
+                onRequestClose={() => setImageGalleryVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Image Gallery</Text>
+                            <TouchableOpacity onPress={() => setImageGalleryVisible(false)}>
+                                <Ionicons name="close-circle" size={32} color={healthColors.text.tertiary} />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView contentContainerStyle={styles.galleryGrid}>
+                            {[1, 2, 3, 4, 5, 6].map((item) => (
+                                <View key={item} style={styles.galleryItem}>
+                                    <Ionicons name="image-outline" size={48} color={healthColors.primary.main} />
+                                    <Text style={styles.galleryItemText}>Image {item}</Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Diet Chart Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={dietChartVisible}
+                onRequestClose={() => setDietChartVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Diet Chart for Diabetes</Text>
+                            <TouchableOpacity onPress={() => setDietChartVisible(false)}>
+                                <Ionicons name="close-circle" size={32} color={healthColors.text.tertiary} />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView contentContainerStyle={{ padding: indianDesign.spacing.lg }}>
+                            {/* Breakfast */}
+                            <View style={styles.dietSection}>
+                                <Text style={styles.dietMealTitle}>🌅 BREAKFAST (7:00 - 8:00 AM)</Text>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Oatmeal (1 cup) with berries</Text>
+                                    <Text style={styles.dietCal}>150 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• 1 Boiled egg</Text>
+                                    <Text style={styles.dietCal}>70 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Green tea (unsweetened)</Text>
+                                    <Text style={styles.dietCal}>0 cal</Text>
+                                </View>
+                            </View>
+
+                            {/* Mid-Morning Snack */}
+                            <View style={styles.dietSection}>
+                                <Text style={styles.dietMealTitle}>🍎 MID-MORNING (10:00 AM)</Text>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• 1 Apple or orange</Text>
+                                    <Text style={styles.dietCal}>60 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Handful of almonds (5-6)</Text>
+                                    <Text style={styles.dietCal}>50 cal</Text>
+                                </View>
+                            </View>
+
+                            {/* Lunch */}
+                            <View style={styles.dietSection}>
+                                <Text style={styles.dietMealTitle}>🍛 LUNCH (12:30 - 1:30 PM)</Text>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Brown rice (1 cup)</Text>
+                                    <Text style={styles.dietCal}>200 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Grilled chicken/fish (100g)</Text>
+                                    <Text style={styles.dietCal}>150 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Mixed vegetable salad</Text>
+                                    <Text style={styles.dietCal}>50 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Buttermilk (1 glass)</Text>
+                                    <Text style={styles.dietCal}>40 cal</Text>
+                                </View>
+                            </View>
+
+                            {/* Evening Snack */}
+                            <View style={styles.dietSection}>
+                                <Text style={styles.dietMealTitle}>☕ EVENING (4:00 PM)</Text>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Green tea with 2 whole wheat biscuits</Text>
+                                    <Text style={styles.dietCal}>80 cal</Text>
+                                </View>
+                            </View>
+
+                            {/* Dinner */}
+                            <View style={styles.dietSection}>
+                                <Text style={styles.dietMealTitle}>🌙 DINNER (7:00 - 8:00 PM)</Text>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• 2 Whole wheat rotis</Text>
+                                    <Text style={styles.dietCal}>150 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Dal (1 bowl)</Text>
+                                    <Text style={styles.dietCal}>100 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Vegetable curry</Text>
+                                    <Text style={styles.dietCal}>80 cal</Text>
+                                </View>
+                                <View style={styles.dietItem}>
+                                    <Text style={styles.dietItemText}>• Salad</Text>
+                                    <Text style={styles.dietCal}>30 cal</Text>
+                                </View>
+                            </View>
+
+                            {/* Important Notes */}
+                            <View style={styles.notesBox}>
+                                <Text style={styles.notesTitle}>⚠️ IMPORTANT NOTES:</Text>
+                                <Text style={styles.notesText}>• Drink 8-10 glasses of water daily</Text>
+                                <Text style={styles.notesText}>• Avoid sugary drinks and processed foods</Text>
+                                <Text style={styles.notesText}>• Eat at regular intervals</Text>
+                                <Text style={styles.notesText}>• Monitor blood sugar regularly</Text>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Exercise Plan Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={exercisePlanVisible}
+                onRequestClose={() => setExercisePlanVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Exercise Plan for Diabetes</Text>
+                            <TouchableOpacity onPress={() => setExercisePlanVisible(false)}>
+                                <Ionicons name="close-circle" size={32} color={healthColors.text.tertiary} />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView contentContainerStyle={{ padding: indianDesign.spacing.lg }}>
+                            {/* Weekly Plan */}
+                            <View style={styles.exerciseDay}>
+                                <Text style={styles.exerciseDayTitle}>MONDAY - WEDNESDAY - FRIDAY</Text>
+                                <Text style={styles.exerciseCategory}>Cardio (30 minutes)</Text>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="walk" size={20} color="#4CAF50" />
+                                    <Text style={styles.exerciseText}>Brisk Walking - 15 min</Text>
+                                </View>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="bicycle" size={20} color="#4CAF50" />
+                                    <Text style={styles.exerciseText}>Cycling - 15 min</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.exerciseDay}>
+                                <Text style={styles.exerciseDayTitle}>TUESDAY - THURSDAY - SATURDAY</Text>
+                                <Text style={styles.exerciseCategory}>Strength Training (30 minutes)</Text>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="fitness" size={20} color="#2196F3" />
+                                    <Text style={styles.exerciseText}>Push-ups - 3 sets of 10</Text>
+                                </View>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="fitness" size={20} color="#2196F3" />
+                                    <Text style={styles.exerciseText}>Squats - 3 sets of 15</Text>
+                                </View>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="fitness" size={20} color="#2196F3" />
+                                    <Text style={styles.exerciseText}>Planks - 3 sets of 30 sec</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.exerciseDay}>
+                                <Text style={styles.exerciseDayTitle}>DAILY (Morning & Evening)</Text>
+                                <Text style={styles.exerciseCategory}>Flexibility & Breathing</Text>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="body" size={20} color="#9C27B0" />
+                                    <Text style={styles.exerciseText}>Yoga - 15 min</Text>
+                                </View>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="heart" size={20} color="#9C27B0" />
+                                    <Text style={styles.exerciseText}>Pranayama - 10 min</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.exerciseDay}>
+                                <Text style={styles.exerciseDayTitle}>SUNDAY</Text>
+                                <Text style={styles.exerciseCategory}>Active Rest</Text>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="walk" size={20} color="#FF9800" />
+                                    <Text style={styles.exerciseText}>Light walking - 20 min</Text>
+                                </View>
+                                <View style={styles.exerciseItem}>
+                                    <Ionicons name="body" size={20} color="#FF9800" />
+                                    <Text style={styles.exerciseText}>Stretching - 10 min</Text>
+                                </View>
+                            </View>
+
+                            {/* Tips */}
+                            <View style={styles.notesBox}>
+                                <Text style={styles.notesTitle}>💡 EXERCISE TIPS:</Text>
+                                <Text style={styles.notesText}>• Start slowly and gradually increase intensity</Text>
+                                <Text style={styles.notesText}>• Check blood sugar before and after exercise</Text>
+                                <Text style={styles.notesText}>• Stay hydrated during workouts</Text>
+                                <Text style={styles.notesText}>• Wear proper footwear</Text>
+                                <Text style={styles.notesText}>• Consult doctor before starting new exercises</Text>
+                            </View>
                         </ScrollView>
                     </View>
                 </View>
@@ -318,11 +595,9 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: indianDesign.spacing.md,
     },
-    headerIcon: {
-        fontSize: 32,
-    },
     headerText: {
         flex: 1,
+        marginLeft: indianDesign.spacing.sm,
     },
     headerTitle: {
         fontSize: scaledFontSize(20),
@@ -355,12 +630,8 @@ const styles = StyleSheet.create({
         minHeight: moderateScale(140),
         justifyContent: 'center',
     },
-    categoryEmoji: {
-        fontSize: 48,
-        marginBottom: indianDesign.spacing.sm,
-    },
     categoryIcon: {
-        marginBottom: indianDesign.spacing.sm,
+        marginBottom: indianDesign.spacing.md,
     },
     categoryName: {
         fontSize: scaledFontSize(16),
@@ -370,11 +641,16 @@ const styles = StyleSheet.create({
     section: {
         marginBottom: indianDesign.spacing.xl,
     },
+    sectionTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: indianDesign.spacing.xs,
+        marginBottom: indianDesign.spacing.md,
+    },
     sectionTitle: {
         fontSize: scaledFontSize(16),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.md,
     },
     quickAccessCard: {
         backgroundColor: healthColors.background.card,
@@ -442,8 +718,12 @@ const styles = StyleSheet.create({
         gap: indianDesign.spacing.md,
         marginBottom: indianDesign.spacing.sm,
     },
-    modalEmoji: {
-        fontSize: 32,
+    modalIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalTitleText: {
         flex: 1,
@@ -555,6 +835,132 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
+    },
+    videoDuration: {
+        fontSize: scaledFontSize(12),
+        color: 'rgba(255, 255, 255, 0.9)',
+        marginTop: 8,
+    },
+    videoPlayerPlaceholder: {
+        padding: indianDesign.spacing.xxxl,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    placeholderText: {
+        fontSize: scaledFontSize(18),
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.text.primary,
+        marginTop: indianDesign.spacing.md,
+    },
+    placeholderSubtext: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        marginTop: indianDesign.spacing.sm,
+        textAlign: 'center',
+    },
+    placeholderNote: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.tertiary,
+        marginTop: indianDesign.spacing.md,
+        fontStyle: 'italic',
+    },
+    galleryGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        padding: indianDesign.spacing.md,
+        gap: indianDesign.spacing.md,
+    },
+    galleryItem: {
+        width: '30%',
+        aspectRatio: 1,
+        backgroundColor: healthColors.background.primary,
+        borderRadius: indianDesign.borderRadius.medium,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: healthColors.border.light,
+    },
+    galleryItemText: {
+        fontSize: scaledFontSize(11),
+        color: healthColors.text.secondary,
+        marginTop: 4,
+    },
+    dietSection: {
+        marginBottom: indianDesign.spacing.lg,
+        backgroundColor: healthColors.background.primary,
+        padding: indianDesign.spacing.md,
+        borderRadius: indianDesign.borderRadius.medium,
+    },
+    dietMealTitle: {
+        fontSize: scaledFontSize(15),
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.text.primary,
+        marginBottom: indianDesign.spacing.md,
+    },
+    dietItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    dietItemText: {
+        flex: 1,
+        fontSize: scaledFontSize(13),
+        color: healthColors.text.secondary,
+    },
+    dietCal: {
+        fontSize: scaledFontSize(12),
+        fontWeight: indianDesign.fontWeight.semibold,
+        color: healthColors.success.main,
+    },
+    notesBox: {
+        backgroundColor: '#FFF3E0',
+        padding: indianDesign.spacing.md,
+        borderRadius: indianDesign.borderRadius.medium,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FF9800',
+        marginTop: indianDesign.spacing.lg,
+    },
+    notesTitle: {
+        fontSize: scaledFontSize(14),
+        fontWeight: indianDesign.fontWeight.bold,
+        color: '#E65100',
+        marginBottom: indianDesign.spacing.sm,
+    },
+    notesText: {
+        fontSize: scaledFontSize(12),
+        color: '#E65100',
+        marginBottom: 4,
+    },
+    exerciseDay: {
+        marginBottom: indianDesign.spacing.lg,
+        backgroundColor: healthColors.background.primary,
+        padding: indianDesign.spacing.md,
+        borderRadius: indianDesign.borderRadius.medium,
+    },
+    exerciseDayTitle: {
+        fontSize: scaledFontSize(14),
+        fontWeight: indianDesign.fontWeight.bold,
+        color: healthColors.primary.main,
+        marginBottom: indianDesign.spacing.xs,
+    },
+    exerciseCategory: {
+        fontSize: scaledFontSize(13),
+        fontWeight: indianDesign.fontWeight.semibold,
+        color: healthColors.text.primary,
+        marginBottom: indianDesign.spacing.md,
+    },
+    exerciseItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        gap: indianDesign.spacing.sm,
+    },
+    exerciseText: {
+        fontSize: scaledFontSize(13),
+        color: healthColors.text.secondary,
     },
 });
 

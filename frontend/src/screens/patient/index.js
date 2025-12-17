@@ -4,6 +4,7 @@
  */
 
 export { default as PatientDashboard } from './PatientDashboard';
+export { default as ProfileScreen } from './ProfileScreen';
 export { default as MyAppointmentsScreen } from './MyAppointmentsScreen';
 export { default as MyReportsScreen } from './MyReportsScreen';
 export { default as MyPrescriptionsScreen } from './MyPrescriptionsScreen';

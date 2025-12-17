@@ -60,7 +60,7 @@ const AnimatedSplashScreen = ({ navigation }) => {
     }, []);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
 
             {/* Beautiful Gradient Background - Healing Teal → Fresh Aqua → Sky Blue */}
