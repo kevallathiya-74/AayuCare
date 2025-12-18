@@ -4,7 +4,7 @@
  * Clear, reassuring design with zero medical jargon
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,7 @@ import {
     ActivityIndicator,
     Modal,
     Pressable,
+    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,10 +37,34 @@ import {
     getGridColumns,
 } from '../../utils/responsive';
 
+const { width } = Dimensions.get('window');
+
 const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user, loading } = useSelector((state) => state.auth);
     const [menuVisible, setMenuVisible] = useState(false);
+    const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
+
+    // Menu animation handlers
+    useEffect(() => {
+        if (menuVisible) {
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        } else {
+            Animated.timing(slideAnim, {
+                toValue: -width * 0.8,
+                duration: 250,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [menuVisible, slideAnim]);
+
+    const closeMenu = useCallback(() => {
+        setMenuVisible(false);
+    }, []);
 
     const handleLogout = useCallback(async () => {
         await dispatch(logoutUser());
@@ -95,7 +120,7 @@ const PatientDashboard = ({ navigation }) => {
         },
         {
             title: 'AI Symptom Checker',
-            icon: 'body',
+            icon: 'fitness-outline',
             iconColor: '#F44336',
             onPress: () => navigation.navigate('AISymptomChecker'),
         },
@@ -336,18 +361,23 @@ const PatientDashboard = ({ navigation }) => {
 
             {/* Side Menu Modal */}
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={menuVisible}
-                onRequestClose={() => setMenuVisible(false)}
+                onRequestClose={closeMenu}
             >
                 <Pressable 
                     style={styles.menuOverlay}
-                    onPress={() => setMenuVisible(false)}
+                    onPress={closeMenu}
                 >
-                    <Pressable 
-                        style={styles.menuDrawer}
-                        onPress={(e) => e.stopPropagation()}
+                    <Animated.View 
+                        style={[
+                            styles.menuDrawer,
+                            {
+                                transform: [{ translateX: slideAnim }],
+                            }
+                        ]}
+                        onStartShouldSetResponder={() => true}
                     >
                         <LinearGradient
                             colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -368,7 +398,7 @@ const PatientDashboard = ({ navigation }) => {
                                 </View>
                                 <TouchableOpacity 
                                     style={styles.menuCloseButton}
-                                    onPress={() => setMenuVisible(false)}
+                                    onPress={closeMenu}
                                 >
                                     <Ionicons name="close" size={28} color="#FFFFFF" />
                                 </TouchableOpacity>
@@ -382,8 +412,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('PatientTabs', { screen: 'PatientDashboard' });
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('PatientTabs', { screen: 'PatientDashboard' }), 100);
                                     }}
                                 >
                                     <Ionicons name="home" size={22} color={healthColors.primary.main} />
@@ -394,8 +424,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AppointmentBooking');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('AppointmentBooking'), 100);
                                     }}
                                 >
                                     <Ionicons name="calendar" size={22} color={healthColors.primary.main} />
@@ -406,8 +436,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('MedicalRecords');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('MedicalRecords'), 100);
                                     }}
                                 >
                                     <Ionicons name="folder-open" size={22} color={healthColors.accent.aqua} />
@@ -418,8 +448,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('MyPrescriptions');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('MyPrescriptions'), 100);
                                     }}
                                 >
                                     <Ionicons name="medical" size={22} color={healthColors.success.main} />
@@ -434,8 +464,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('HealthMetrics');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('HealthMetrics'), 100);
                                     }}
                                 >
                                     <Ionicons name="stats-chart" size={22} color="#00897B" />
@@ -446,8 +476,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('ActivityTracker');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('ActivityTracker'), 100);
                                     }}
                                 >
                                     <Ionicons name="walk" size={22} color="#00BCD4" />
@@ -458,8 +488,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('DiseaseInfo');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('DiseaseInfo'), 100);
                                     }}
                                 >
                                     <Ionicons name="information-circle" size={22} color={healthColors.info.main} />
@@ -474,8 +504,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AIHealthAssistant');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('AIHealthAssistant'), 100);
                                     }}
                                 >
                                     <Ionicons name="chatbubbles" size={22} color={healthColors.secondary.main} />
@@ -486,11 +516,11 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AISymptomChecker');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('AISymptomChecker'), 100);
                                     }}
                                 >
-                                    <Ionicons name="body" size={22} color="#F44336" />
+                                    <Ionicons name="fitness-outline" size={22} color="#F44336" />
                                     <Text style={styles.menuItemText}>AI Symptom Checker</Text>
                                     <Ionicons name="chevron-forward" size={18} color={healthColors.text.tertiary} />
                                 </TouchableOpacity>
@@ -498,8 +528,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('SpecialistFinder');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('SpecialistCareFinder'), 100);
                                     }}
                                 >
                                     <Ionicons name="search" size={22} color={healthColors.accent.purple} />
@@ -514,8 +544,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('Profile');
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('Profile'), 100);
                                     }}
                                 >
                                     <Ionicons name="person" size={22} color={healthColors.text.secondary} />
@@ -526,8 +556,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('PatientTabs', { screen: 'More' });
+                                        closeMenu();
+                                        setTimeout(() => navigation.navigate('PatientTabs', { screen: 'More' }), 100);
                                     }}
                                 >
                                     <Ionicons name="settings" size={22} color={healthColors.text.secondary} />
@@ -538,8 +568,8 @@ const PatientDashboard = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={[styles.menuItem, styles.menuItemDanger]}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        handleLogout();
+                                        closeMenu();
+                                        setTimeout(() => handleLogout(), 100);
                                     }}
                                 >
                                     <Ionicons name="log-out" size={22} color={healthColors.error.main} />
@@ -553,7 +583,7 @@ const PatientDashboard = ({ navigation }) => {
                                 <Text style={styles.menuFooterText}>© 2025 AayuCare Hospital</Text>
                             </View>
                         </ScrollView>
-                    </Pressable>
+                    </Animated.View>
                 </Pressable>
             </Modal>
         </SafeAreaView>
@@ -967,20 +997,28 @@ const styles = StyleSheet.create({
     menuDrawer: {
         width: '85%',
         height: '100%',
-        backgroundColor: 'white',
+        backgroundColor: '#FFFFFF',
         borderTopRightRadius: moderateScale(20),
         borderBottomRightRadius: moderateScale(20),
-        ...createShadow(8),
+        borderRightWidth: 1,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: healthColors.border.light,
     },
     menuHeader: {
         padding: moderateScale(20),
-        paddingTop: moderateScale(40),
+        paddingTop: moderateScale(50),
+        paddingBottom: moderateScale(24),
         borderTopRightRadius: moderateScale(20),
+    },
+    menuHeaderContent: {
+        position: 'relative',
     },
     menuProfileSection: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: moderateScale(12),
+        marginRight: moderateScale(40),
     },
     menuAvatar: {
         width: moderateScale(60),
@@ -1013,12 +1051,12 @@ const styles = StyleSheet.create({
     },
     menuCloseButton: {
         position: 'absolute',
-        top: moderateScale(40),
-        right: moderateScale(20),
-        width: moderateScale(36),
-        height: moderateScale(36),
-        borderRadius: moderateScale(18),
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        top: 0,
+        right: 0,
+        width: moderateScale(40),
+        height: moderateScale(40),
+        borderRadius: moderateScale(20),
+        backgroundColor: 'rgba(255,255,255,0.25)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1026,10 +1064,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     menuSection: {
-        paddingVertical: moderateScale(16),
+        paddingTop: moderateScale(16),
+        paddingBottom: moderateScale(12),
         paddingHorizontal: moderateScale(20),
         borderBottomWidth: 1,
-        borderBottomColor: healthColors.background.secondary,
+        borderBottomColor: healthColors.border.light,
     },
     menuSectionTitle: {
         fontSize: scaledFontSize(12),
@@ -1041,11 +1080,12 @@ const styles = StyleSheet.create({
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: moderateScale(12),
+        paddingVertical: moderateScale(14),
         paddingHorizontal: moderateScale(12),
-        borderRadius: moderateScale(8),
+        borderRadius: moderateScale(10),
         gap: moderateScale(12),
-        marginBottom: moderateScale(4),
+        marginBottom: moderateScale(6),
+        backgroundColor: 'transparent',
     },
     menuItemText: {
         flex: 1,
@@ -1054,7 +1094,9 @@ const styles = StyleSheet.create({
         color: healthColors.text.primary,
     },
     menuItemDanger: {
-        backgroundColor: 'rgba(244, 67, 54, 0.05)',
+        backgroundColor: 'rgba(244, 67, 54, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(244, 67, 54, 0.2)',
     },
     menuItemTextDanger: {
         flex: 1,
@@ -1095,9 +1137,11 @@ const styles = StyleSheet.create({
         color: healthColors.text.primary,
     },
     menuFooter: {
-        padding: moderateScale(20),
+        padding: moderateScale(24),
         alignItems: 'center',
-        marginTop: moderateScale(20),
+        marginTop: moderateScale(16),
+        borderTopWidth: 1,
+        borderTopColor: healthColors.border.light,
     },
     menuFooterText: {
         fontSize: scaledFontSize(12),

@@ -84,7 +84,7 @@ const WomensHealthScreen = ({ navigation }) => {
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerIcon}>🌸</Text>
+                    <Ionicons name="rose-outline" size={32} color="#FFF" />
                     <View style={styles.headerText}>
                         <Text style={styles.headerTitle}>Women's Health</Text>
                         <Text style={styles.headerSubtitle}>Personalized care for women</Text>
@@ -98,7 +98,10 @@ const WomensHealthScreen = ({ navigation }) => {
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Menstrual Tracker */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>📅 MENSTRUAL TRACKER</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="calendar-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>MENSTRUAL TRACKER</Text>
+                    </View>
                     <View style={styles.card}>
                         <View style={styles.cycleInfo}>
                             <Text style={styles.cycleText}>
@@ -125,14 +128,15 @@ const WomensHealthScreen = ({ navigation }) => {
                         </View>
 
                         <TouchableOpacity style={styles.calendarButton}>
-                            <Text style={styles.calendarButtonText}>📊 View Full Calendar</Text>
+                            <Ionicons name="stats-chart-outline" size={18} color="#EC4899" />
+                            <Text style={styles.calendarButtonText}>View Full Calendar</Text>
                             <Ionicons name="chevron-forward" size={16} color="#EC4899" />
                         </TouchableOpacity>
 
                         <View style={styles.insightBox}>
-                            <Ionicons name="bulb" size={20} color="#FFA726" />
+                            <Ionicons name="bulb-outline" size={20} color="#FFA726" />
                             <View style={styles.insightContent}>
-                                <Text style={styles.insightTitle}>💡 Today's Insight:</Text>
+                                <Text style={styles.insightTitle}>Today's Insight:</Text>
                                 <Text style={styles.insightText}>{menstrualData.insight}</Text>
                             </View>
                         </View>
@@ -141,20 +145,29 @@ const WomensHealthScreen = ({ navigation }) => {
 
                 {/* Pregnancy Care */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🤰 PREGNANCY CARE</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="heart-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>PREGNANCY CARE</Text>
+                    </View>
                     <View style={styles.card}>
                         <View style={styles.pregnancyHeader}>
                             <Text style={styles.pregnancyWeek}>
                                 Week {pregnancyData.week} of {pregnancyData.totalWeeks}
                             </Text>
-                            <Text style={styles.babySize}>Baby Size: {pregnancyData.babySize}</Text>
+                            <View style={styles.babySizeContainer}>
+                                <Ionicons name="fitness-outline" size={18} color={healthColors.text.secondary} />
+                                <Text style={styles.babySize}>Baby Size: Mango</Text>
+                            </View>
                         </View>
 
                         <View style={styles.tipsSection}>
-                            <Text style={styles.tipsTitle}>📋 This Week's Tips:</Text>
+                            <View style={styles.tipsHeader}>
+                                <Ionicons name="list-outline" size={18} color={healthColors.text.primary} />
+                                <Text style={styles.tipsTitle}>This Week's Tips:</Text>
+                            </View>
                             {pregnancyData.tips.map((tip, index) => (
                                 <View key={index} style={styles.tipItem}>
-                                    <Text style={styles.tipBullet}>•</Text>
+                                    <Ionicons name="checkmark-circle" size={16} color={healthColors.success.main} />
                                     <Text style={styles.tipText}>{tip}</Text>
                                 </View>
                             ))}
@@ -162,11 +175,12 @@ const WomensHealthScreen = ({ navigation }) => {
 
                         <View style={styles.checkupInfo}>
                             <View style={styles.checkupRow}>
-                                <Ionicons name="medkit" size={20} color="#EC4899" />
+                                <Ionicons name="medkit-outline" size={20} color="#EC4899" />
                                 <Text style={styles.checkupText}>Next Checkup: {pregnancyData.nextCheckup}</Text>
                             </View>
                             <TouchableOpacity style={styles.scheduleButton}>
-                                <Text style={styles.scheduleButtonText}>💊 Immunization Schedule</Text>
+                                <Ionicons name="medical-outline" size={18} color="#EC4899" />
+                                <Text style={styles.scheduleButtonText}>Immunization Schedule</Text>
                                 <Ionicons name="chevron-forward" size={16} color="#EC4899" />
                             </TouchableOpacity>
                         </View>
@@ -175,7 +189,10 @@ const WomensHealthScreen = ({ navigation }) => {
 
                 {/* Mental Wellness */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🧘 MENTAL WELLNESS</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="heart-circle-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>MENTAL WELLNESS</Text>
+                    </View>
                     <View style={styles.card}>
                         {mentalWellnessActivities.map((activity, index) => (
                             <TouchableOpacity key={index} style={styles.activityItem}>
@@ -242,9 +259,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: indianDesign.spacing.md,
     },
-    headerIcon: {
-        fontSize: 32,
-    },
     headerText: {
         flex: 1,
     },
@@ -263,17 +277,23 @@ const styles = StyleSheet.create({
     section: {
         marginBottom: indianDesign.spacing.xl,
     },
+    sectionTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+        marginBottom: indianDesign.spacing.md,
+    },
     sectionTitle: {
         fontSize: scaledFontSize(16),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.md,
     },
     card: {
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: indianDesign.spacing.lg,
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     cycleInfo: {
         marginBottom: indianDesign.spacing.md,
@@ -344,6 +364,12 @@ const styles = StyleSheet.create({
         color: healthColors.text.primary,
         marginBottom: 4,
     },
+    babySizeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
+        marginTop: 4,
+    },
     babySize: {
         fontSize: scaledFontSize(16),
         color: healthColors.text.secondary,
@@ -351,21 +377,23 @@ const styles = StyleSheet.create({
     tipsSection: {
         marginBottom: indianDesign.spacing.lg,
     },
+    tipsHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
+        marginBottom: indianDesign.spacing.sm,
+    },
     tipsTitle: {
         fontSize: scaledFontSize(14),
         fontWeight: indianDesign.fontWeight.semibold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.sm,
     },
     tipItem: {
         flexDirection: 'row',
-        marginBottom: indianDesign.spacing.xs,
+        alignItems: 'center',
+        gap: moderateScale(8),
+        marginBottom: indianDesign.spacing.sm,
         paddingLeft: indianDesign.spacing.sm,
-    },
-    tipBullet: {
-        fontSize: scaledFontSize(14),
-        color: healthColors.text.secondary,
-        marginRight: indianDesign.spacing.sm,
     },
     tipText: {
         flex: 1,
@@ -443,7 +471,6 @@ const styles = StyleSheet.create({
         borderRadius: indianDesign.borderRadius.medium,
         overflow: 'hidden',
         marginTop: indianDesign.spacing.lg,
-        ...createShadow(4),
     },
     emergencyGradient: {
         flexDirection: 'row',

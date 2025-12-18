@@ -282,3 +282,67 @@ exports.updatePatientProfile = async (req, res) => {
         });
     }
 };
+
+/**
+ * @desc    Get health metrics for a patient
+ * @route   GET /api/patients/:patientId/health-metrics
+ * @access  Private (Patient own data, Doctor, or Admin)
+ */
+exports.getHealthMetrics = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+
+        // Check access rights
+        if (
+            req.user.role !== 'admin' &&
+            req.user.role !== 'doctor' &&
+            req.user.userId !== patientId
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to view this patient data',
+            });
+        }
+
+        // For now, return mock data
+        // TODO: Create HealthMetrics model and fetch real data
+        const mockMetrics = {
+            bp: {
+                current: '120/80',
+                status: 'normal',
+                trend: 'stable',
+                history: []
+            },
+            sugar: {
+                current: 95,
+                status: 'normal',
+                trend: 'stable',
+                history: []
+            },
+            weight: {
+                current: 70,
+                status: 'normal',
+                trend: 'stable',
+                history: []
+            },
+            bmi: {
+                current: 22.5,
+                status: 'normal',
+                category: 'Normal',
+                history: []
+            }
+        };
+
+        res.json({
+            success: true,
+            data: mockMetrics,
+        });
+    } catch (error) {
+        logger.error('Get health metrics error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch health metrics',
+            error: error.message,
+        });
+    }
+};

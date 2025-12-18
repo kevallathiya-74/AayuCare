@@ -41,11 +41,11 @@ const Tabs = ({
         Animated.parallel([
             Animated.spring(indicatorPosition, {
                 toValue: position,
-                useNativeDriver: true,
+                useNativeDriver: false, // Must be false since we're animating width too
             }),
             Animated.spring(indicatorWidth, {
                 toValue: tabWidths[index] || 0,
-                useNativeDriver: false,
+                useNativeDriver: false, // width cannot use native driver
             }),
         ]).start();
     };
@@ -63,11 +63,6 @@ const Tabs = ({
             indicatorWidth.setValue(width);
         }
     };
-
-    const indicatorStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: indicatorPosition.value }],
-        width: indicatorWidth.value,
-    }));
 
     const renderTab = (tab, index) => {
         const isActive = index === activeIndex;
@@ -122,10 +117,6 @@ const Tabs = ({
             <TabContainer {...containerProps}>
                 {tabs.map((tab, index) => renderTab(tab, index))}
             </TabContainer>
-            <Animated.View style={[styles.indicator, {
-                transform: [{ translateX: indicatorPosition }],
-                width: indicatorWidth,
-            }]} />
         </View>
     );
 };

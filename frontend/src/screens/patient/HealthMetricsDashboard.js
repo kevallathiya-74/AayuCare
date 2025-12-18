@@ -114,7 +114,7 @@ const HealthMetricsDashboard = ({ navigation }) => {
         {
             id: 'bmi',
             name: 'BMI',
-            icon: 'body',
+            icon: 'analytics-outline',
             color: '#F59E0B',
             unit: '',
         },
@@ -144,6 +144,20 @@ const HealthMetricsDashboard = ({ navigation }) => {
         }
     };
 
+    const formatMetricValue = (metricId, currentValue) => {
+        // Handle null/undefined values
+        if (!currentValue) {
+            return 'N/A';
+        }
+        
+        // Handle BP as object (legacy format)
+        if (metricId === 'bp' && typeof currentValue === 'object' && currentValue.systolic) {
+            return `${currentValue.systolic}/${currentValue.diastolic}`;
+        }
+        
+        return currentValue;
+    };
+
     const renderMetricCard = (metric) => {
         const data = metricsData[metric.id];
         const isSelected = selectedMetric === metric.id;
@@ -170,7 +184,7 @@ const HealthMetricsDashboard = ({ navigation }) => {
                         {metric.name}
                     </Text>
                     <Text style={[styles.metricValue, isSelected && styles.metricValueSelected]}>
-                        {data.current} {metric.unit}
+                        {formatMetricValue(metric.id, data.current)} {metric.unit}
                     </Text>
                     <View style={styles.trendContainer}>
                         <Ionicons

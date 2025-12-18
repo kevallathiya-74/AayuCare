@@ -19,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
-import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { indianDesign } from '../../theme/indianDesign';
 import { doctorService } from '../../services';
 import { logError } from '../../utils/errorHandler';
 
@@ -301,7 +301,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: indianDesign.spacing.lg,
         paddingVertical: indianDesign.spacing.md,
         backgroundColor: healthColors.background.card,
-        ...createShadow(2),
+        borderBottomWidth: 2,
+        borderBottomColor: healthColors.border.light,
     },
     backButton: {
         width: 40,
@@ -395,7 +396,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: indianDesign.borderRadius.large,
         padding: indianDesign.spacing.md,
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     cardLeft: {
         flexDirection: 'row',

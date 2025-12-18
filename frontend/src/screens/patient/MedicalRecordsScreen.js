@@ -173,8 +173,19 @@ const MedicalRecordsScreen = ({ navigation }) => {
             <NetworkStatusIndicator />
             
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Medical Records</Text>
-                <Text style={styles.headerSubtitle}>Your complete health history</Text>
+                <View style={styles.headerTop}>
+                    <TouchableOpacity 
+                        onPress={() => navigation.goBack()} 
+                        style={styles.backButton}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+                    </TouchableOpacity>
+                    <View style={styles.headerTextContainer}>
+                        <Text style={styles.headerTitle}>Medical Records</Text>
+                        <Text style={styles.headerSubtitle}>Your complete health history</Text>
+                    </View>
+                </View>
             </View>
 
             <Tabs tabs={tabs} activeIndex={activeTab} onChange={setActiveTab} />
@@ -222,6 +233,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.lg,
         backgroundColor: healthColors.background.primary,
+    },
+    headerTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    backButton: {
+        marginRight: spacing.md,
+        padding: spacing.xs,
+    },
+    headerTextContainer: {
+        flex: 1,
     },
     headerTitle: {
         ...textStyles.h2,

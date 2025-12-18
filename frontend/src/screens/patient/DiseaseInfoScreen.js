@@ -40,7 +40,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         { icon: 'pulse', name: 'Lung', color: '#2196F3' },
         { icon: 'bulb-outline', name: 'Brain', color: '#9C27B0' },
         { icon: 'water', name: 'Diabetes', color: '#FF9800' },
-        { icon: 'body', name: 'Bone', color: '#795548' },
+        { icon: 'bandage-outline', name: 'Bone', color: '#795548' },
         { icon: 'eye', name: 'Eye', color: '#00BCD4' },
     ];
 
@@ -282,7 +282,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                                     {/* Prevention */}
                                     <View style={styles.detailSection}>
-                                        <Text style={styles.detailTitle}>🛡️ PREVENTION:</Text>
+                                        <View style={styles.detailTitleContainer}>
+                                            <Ionicons name="shield-checkmark-outline" size={18} color={healthColors.primary.main} />
+                                            <Text style={styles.detailTitle}>PREVENTION:</Text>
+                                        </View>
                                         {selectedDisease.prevention.map((item, index) => (
                                             <View key={index} style={styles.listItem}>
                                                 <Text style={styles.listBullet}>•</Text>
@@ -298,7 +301,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                                 colors={['#4CAF50', '#388E3C']}
                                                 style={styles.actionGradient}
                                             >
-                                                <Text style={styles.actionButtonText}>📊 Diet Chart</Text>
+                                                <Ionicons name="restaurant-outline" size={18} color="#FFF" />
+                                                <Text style={styles.actionButtonText}>Diet Chart</Text>
                                             </LinearGradient>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={styles.actionButton} onPress={() => setExercisePlanVisible(true)}>
@@ -306,7 +310,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                                 colors={['#2196F3', '#1976D2']}
                                                 style={styles.actionGradient}
                                             >
-                                                <Text style={styles.actionButtonText}>🏃 Exercise Plan</Text>
+                                                <Ionicons name="fitness-outline" size={18} color="#FFF" />
+                                                <Text style={styles.actionButtonText}>Exercise Plan</Text>
                                             </LinearGradient>
                                         </TouchableOpacity>
                                     </View>
@@ -391,7 +396,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
                         <ScrollView contentContainerStyle={{ padding: indianDesign.spacing.lg }}>
                             {/* Breakfast */}
                             <View style={styles.dietSection}>
-                                <Text style={styles.dietMealTitle}>🌅 BREAKFAST (7:00 - 8:00 AM)</Text>
+                                <View style={styles.dietMealTitleContainer}>
+                                    <Ionicons name="sunny-outline" size={18} color="#FF9800" />
+                                    <Text style={styles.dietMealTitle}>BREAKFAST (7:00 - 8:00 AM)</Text>
+                                </View>
                                 <View style={styles.dietItem}>
                                     <Text style={styles.dietItemText}>• Oatmeal (1 cup) with berries</Text>
                                     <Text style={styles.dietCal}>150 cal</Text>
@@ -408,7 +416,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                             {/* Mid-Morning Snack */}
                             <View style={styles.dietSection}>
-                                <Text style={styles.dietMealTitle}>🍎 MID-MORNING (10:00 AM)</Text>
+                                <View style={styles.dietMealTitleContainer}>
+                                    <Ionicons name="nutrition-outline" size={18} color="#4CAF50" />
+                                    <Text style={styles.dietMealTitle}>MID-MORNING (10:00 AM)</Text>
+                                </View>
                                 <View style={styles.dietItem}>
                                     <Text style={styles.dietItemText}>• 1 Apple or orange</Text>
                                     <Text style={styles.dietCal}>60 cal</Text>
@@ -421,7 +432,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                             {/* Lunch */}
                             <View style={styles.dietSection}>
-                                <Text style={styles.dietMealTitle}>🍛 LUNCH (12:30 - 1:30 PM)</Text>
+                                <View style={styles.dietMealTitleContainer}>
+                                    <Ionicons name="restaurant-outline" size={18} color="#FF5722" />
+                                    <Text style={styles.dietMealTitle}>LUNCH (12:30 - 1:30 PM)</Text>
+                                </View>
                                 <View style={styles.dietItem}>
                                     <Text style={styles.dietItemText}>• Brown rice (1 cup)</Text>
                                     <Text style={styles.dietCal}>200 cal</Text>
@@ -442,7 +456,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                             {/* Evening Snack */}
                             <View style={styles.dietSection}>
-                                <Text style={styles.dietMealTitle}>☕ EVENING (4:00 PM)</Text>
+                                <View style={styles.dietMealTitleContainer}>
+                                    <Ionicons name="cafe-outline" size={18} color="#795548" />
+                                    <Text style={styles.dietMealTitle}>EVENING (4:00 PM)</Text>
+                                </View>
                                 <View style={styles.dietItem}>
                                     <Text style={styles.dietItemText}>• Green tea with 2 whole wheat biscuits</Text>
                                     <Text style={styles.dietCal}>80 cal</Text>
@@ -451,7 +468,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                             {/* Dinner */}
                             <View style={styles.dietSection}>
-                                <Text style={styles.dietMealTitle}>🌙 DINNER (7:00 - 8:00 PM)</Text>
+                                <View style={styles.dietMealTitleContainer}>
+                                    <Ionicons name="moon-outline" size={18} color="#3F51B5" />
+                                    <Text style={styles.dietMealTitle}>DINNER (7:00 - 8:00 PM)</Text>
+                                </View>
                                 <View style={styles.dietItem}>
                                     <Text style={styles.dietItemText}>• 2 Whole wheat rotis</Text>
                                     <Text style={styles.dietCal}>150 cal</Text>
@@ -534,7 +554,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                 <Text style={styles.exerciseDayTitle}>DAILY (Morning & Evening)</Text>
                                 <Text style={styles.exerciseCategory}>Flexibility & Breathing</Text>
                                 <View style={styles.exerciseItem}>
-                                    <Ionicons name="body" size={20} color="#9C27B0" />
+                                    <Ionicons name="hand-left-outline" size={20} color="#9C27B0" />
                                     <Text style={styles.exerciseText}>Yoga - 15 min</Text>
                                 </View>
                                 <View style={styles.exerciseItem}>
@@ -551,7 +571,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                                     <Text style={styles.exerciseText}>Light walking - 20 min</Text>
                                 </View>
                                 <View style={styles.exerciseItem}>
-                                    <Ionicons name="body" size={20} color="#FF9800" />
+                                    <Ionicons name="resize-outline" size={20} color="#FF9800" />
                                     <Text style={styles.exerciseText}>Stretching - 10 min</Text>
                                 </View>
                             </View>
@@ -782,11 +802,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: indianDesign.spacing.lg,
         marginBottom: indianDesign.spacing.lg,
     },
+    detailTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
+        marginBottom: indianDesign.spacing.sm,
+    },
     detailTitle: {
-        fontSize: scaledFontSize(16),
+        fontSize: scaledFontSize(14),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.md,
     },
     listItem: {
         flexDirection: 'row',
@@ -817,8 +842,11 @@ const styles = StyleSheet.create({
         ...createShadow(2),
     },
     actionGradient: {
-        paddingVertical: indianDesign.spacing.md,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: moderateScale(8),
+        paddingVertical: indianDesign.spacing.md,
     },
     actionButtonText: {
         fontSize: scaledFontSize(14),
@@ -891,11 +919,16 @@ const styles = StyleSheet.create({
         padding: indianDesign.spacing.md,
         borderRadius: indianDesign.borderRadius.medium,
     },
+    dietMealTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
+        marginBottom: indianDesign.spacing.sm,
+    },
     dietMealTitle: {
-        fontSize: scaledFontSize(15),
+        fontSize: scaledFontSize(14),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.md,
     },
     dietItem: {
         flexDirection: 'row',

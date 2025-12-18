@@ -3,7 +3,7 @@
  * Main dashboard for doctors with today's schedule and quick patient access
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -17,13 +17,15 @@ import {
     ActivityIndicator,
     Modal,
     Pressable,
+    Animated,
+    Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
-import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { indianDesign } from '../../theme/indianDesign';
 import { 
     getScreenPadding, 
     moderateScale, 
@@ -36,6 +38,8 @@ import { logoutUser } from '../../store/slices/authSlice';
 import { showConfirmation, logError } from '../../utils/errorHandler';
 import { doctorService } from '../../services';
 
+const { width } = Dimensions.get('window');
+
 const DoctorHomeScreen = ({ navigation }) => {
     const { user } = useSelector((state) => state.auth);
     const dispatch = useDispatch();
@@ -47,6 +51,7 @@ const DoctorHomeScreen = ({ navigation }) => {
     const [error, setError] = useState(null);
     const [notificationCount] = useState(3);
     const [menuVisible, setMenuVisible] = useState(false);
+    const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
     
     const [schedule, setSchedule] = useState({
         totalAppointments: 0,
@@ -101,6 +106,27 @@ const DoctorHomeScreen = ({ navigation }) => {
         } finally {
             setSearching(false);
         }
+    }, []);
+
+    // Menu animation handlers
+    useEffect(() => {
+        if (menuVisible) {
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        } else {
+            Animated.timing(slideAnim, {
+                toValue: -width * 0.8,
+                duration: 250,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [menuVisible, slideAnim]);
+
+    const closeMenu = useCallback(() => {
+        setMenuVisible(false);
     }, []);
 
     const handleLogout = useCallback(() => {
@@ -455,7 +481,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                     <View style={styles.quickActionsGrid}>
                         <TouchableOpacity 
                             style={styles.quickActionCard}
-                            onPress={() => navigation.navigate('DoctorTabs', { screen: 'DoctorAppointments' })}
+                            onPress={() => navigation.navigate('DoctorTabs', { screen: 'TodaysAppointments' })}
                             accessibilityRole="button"
                             accessibilityLabel="View today's appointments"
                         >
@@ -508,18 +534,23 @@ const DoctorHomeScreen = ({ navigation }) => {
 
             {/* Side Menu Modal */}
             <Modal
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 visible={menuVisible}
-                onRequestClose={() => setMenuVisible(false)}
+                onRequestClose={closeMenu}
             >
                 <Pressable 
                     style={styles.menuOverlay}
-                    onPress={() => setMenuVisible(false)}
+                    onPress={closeMenu}
                 >
-                    <Pressable 
-                        style={styles.menuDrawer}
-                        onPress={(e) => e.stopPropagation()}
+                    <Animated.View 
+                        style={[
+                            styles.menuDrawer,
+                            {
+                                transform: [{ translateX: slideAnim }],
+                            }
+                        ]}
+                        onStartShouldSetResponder={() => true}
                     >
                         <LinearGradient
                             colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -535,12 +566,12 @@ const DoctorHomeScreen = ({ navigation }) => {
                                     <View style={styles.menuUserInfo}>
                                         <Text style={styles.menuUserName}>{user?.name || 'Doctor'}</Text>
                                         <Text style={styles.menuUserRole}>{user?.specialization || 'General Physician'}</Text>
-                                        <Text style={styles.menuUserId}>ID: {user?._id?.slice(-6) || 'DOC001'}</Text>
+                                        <Text style={styles.menuUserId}>ID: {user?.userId || 'DOC001'}</Text>
                                     </View>
                                 </View>
                                 <TouchableOpacity 
                                     style={styles.menuCloseButton}
-                                    onPress={() => setMenuVisible(false)}
+                                    onPress={closeMenu}
                                 >
                                     <Ionicons name="close" size={28} color="#FFFFFF" />
                                 </TouchableOpacity>
@@ -555,8 +586,10 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('DoctorTabs', { screen: 'DoctorHome' });
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            navigation.navigate('DoctorTabs', { screen: 'Dashboard' });
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="home" size={22} color={healthColors.primary.main} />
@@ -567,8 +600,10 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('DoctorTabs', { screen: 'DoctorAppointments' });
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            navigation.navigate('DoctorTabs', { screen: 'TodaysAppointments' });
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="calendar" size={22} color={healthColors.secondary.main} />
@@ -584,8 +619,10 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('PatientManagement');
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            navigation.navigate('PatientManagement');
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="people" size={22} color={healthColors.accent.aqua} />
@@ -644,8 +681,10 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('Settings');
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            navigation.navigate('Settings');
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="settings" size={22} color={healthColors.text.secondary} />
@@ -656,8 +695,10 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={styles.menuItem}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        Alert.alert('Help & Support', 'Contact: support@aayucare.com\nPhone: 1800-XXX-XXXX');
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            Alert.alert('Help & Support', 'Contact: support@aayucare.com\nPhone: 1800-XXX-XXXX');
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="help-circle" size={22} color={healthColors.info.main} />
@@ -668,8 +709,10 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <TouchableOpacity 
                                     style={[styles.menuItem, styles.menuItemDanger]}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        handleLogout();
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            handleLogout();
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="log-out" size={22} color={healthColors.error.main} />
@@ -683,7 +726,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 <Text style={styles.menuFooterText}>© 2025 AayuCare Hospital</Text>
                             </View>
                         </ScrollView>
-                    </Pressable>
+                    </Animated.View>
                 </Pressable>
             </Modal>
         </SafeAreaView>
@@ -700,7 +743,8 @@ const styles = StyleSheet.create({
         paddingBottom: moderateScale(20),
         borderBottomLeftRadius: moderateScale(24),
         borderBottomRightRadius: moderateScale(24),
-        ...createShadow(4),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     bannerTopRow: {
         flexDirection: 'row',
@@ -799,7 +843,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     scheduleHeader: {
         flexDirection: 'row',
@@ -898,9 +943,8 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(12),
         paddingHorizontal: moderateScale(16),
         paddingVertical: moderateScale(12),
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: healthColors.border.light,
-        ...createShadow(1),
     },
     searchIcon: {
         marginRight: moderateScale(8),
@@ -914,7 +958,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         marginTop: moderateScale(8),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     searchResultItem: {
         flexDirection: 'row',
@@ -943,7 +988,8 @@ const styles = StyleSheet.create({
         padding: moderateScale(32),
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
-        ...createShadow(1),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     emptyStateText: {
         fontSize: scaledFontSize(14),
@@ -958,7 +1004,8 @@ const styles = StyleSheet.create({
         marginBottom: moderateScale(12),
         borderLeftWidth: 4,
         borderLeftColor: healthColors.primary.main,
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     appointmentHeader: {
         flexDirection: 'row',
@@ -1046,7 +1093,6 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: healthColors.primary.main,
         borderStyle: 'dashed',
-        ...createShadow(1),
     },
     addWalkinText: {
         fontSize: scaledFontSize(15),
@@ -1100,7 +1146,8 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
         alignItems: 'center',
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
         minHeight: moderateScale(110),
         justifyContent: 'center',
     },
@@ -1130,7 +1177,8 @@ const styles = StyleSheet.create({
         maxWidth: moderateScale(320),
         height: '100%',
         backgroundColor: healthColors.background.card,
-        ...createShadow(8),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     menuHeader: {
         paddingTop: moderateScale(50),

@@ -37,6 +37,9 @@ import {
   PatientManagementScreen,
   EnhancedPrescriptionScreen,
   WalkInPatientScreen,
+  ReportsScreen,
+  AppointmentsScreen,
+  AdminSettingsScreen,
 } from '../screens/hospital';
 
 import {
@@ -175,6 +178,10 @@ const AppNavigator = () => {
                 <Stack.Screen name="ManagePatients" component={ManagePatientsScreen} />
                 <Stack.Screen name="PatientManagement" component={PatientManagementScreen} />
                 <Stack.Screen name="CreatePrescription" component={EnhancedPrescriptionScreen} />
+                <Stack.Screen name="Reports" component={ReportsScreen} />
+                <Stack.Screen name="Appointments" component={AppointmentsScreen} />
+                <Stack.Screen name="AdminSettings" component={AdminSettingsScreen} />
+                <Stack.Screen name="SettingsAccessibility" component={SettingsAccessibilityScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}
@@ -185,6 +192,7 @@ const AppNavigator = () => {
                 <Stack.Screen name="WalkInPatient" component={WalkInPatientScreen} />
                 <Stack.Screen name="PatientManagement" component={PatientManagementScreen} />
                 <Stack.Screen name="CreatePrescription" component={EnhancedPrescriptionScreen} />
+                <Stack.Screen name="SettingsAccessibility" component={SettingsAccessibilityScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
               </>
             )}

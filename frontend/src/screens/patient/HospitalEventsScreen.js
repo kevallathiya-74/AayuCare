@@ -38,7 +38,6 @@ const HospitalEventsScreen = ({ navigation }) => {
             venue: 'Community Hall, Block A',
             description: 'Help save lives! Donate blood and receive free health checkup.',
             color: '#E91E63',
-            emoji: '🩸',
             spots: 45,
         },
         {
@@ -50,7 +49,6 @@ const HospitalEventsScreen = ({ navigation }) => {
             venue: 'Outpatient Department',
             description: 'Free blood sugar testing and consultation with diabetologist.',
             color: '#FF9800',
-            emoji: '🩺',
             spots: 30,
         },
         {
@@ -62,7 +60,6 @@ const HospitalEventsScreen = ({ navigation }) => {
             venue: 'Pediatric Ward',
             description: 'Children vaccination program - Measles, Polio, and COVID-19 booster.',
             color: '#4CAF50',
-            emoji: '💉',
             spots: 60,
         },
         {
@@ -74,7 +71,6 @@ const HospitalEventsScreen = ({ navigation }) => {
             venue: 'Auditorium',
             description: 'Learn about healthy lifestyle, nutrition, and disease prevention.',
             color: '#2196F3',
-            emoji: '📚',
             spots: 100,
         },
     ];
@@ -138,7 +134,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerIcon}>🏥</Text>
+                    <Ionicons name="business-outline" size={32} color="#FFF" />
                     <View style={styles.headerText}>
                         <Text style={styles.headerTitle}>Hospital Events</Text>
                         <Text style={styles.headerSubtitle}>Health camps & workshops</Text>
@@ -165,14 +161,17 @@ const HospitalEventsScreen = ({ navigation }) => {
                 </View>
 
                 {/* Upcoming Events */}
-                <Text style={styles.sectionTitle}>📅 UPCOMING EVENTS ({upcomingEvents.length})</Text>
+                <View style={styles.sectionTitleContainer}>
+                    <Ionicons name="calendar-outline" size={20} color={healthColors.primary.main} />
+                    <Text style={styles.sectionTitle}>UPCOMING EVENTS ({upcomingEvents.length})</Text>
+                </View>
 
                 {upcomingEvents.map((event, index) => (
                     <View key={event.id} style={styles.eventCard}>
                         {/* Event Header */}
                         <View style={styles.eventHeader}>
                             <View style={[styles.eventIconContainer, { backgroundColor: event.color + '20' }]}>
-                                <Text style={styles.eventEmoji}>{event.emoji}</Text>
+                                <Ionicons name={event.icon} size={28} color={event.color} />
                             </View>
                             <View style={styles.eventHeaderText}>
                                 <Text style={styles.eventTitle}>{event.title}</Text>
@@ -226,7 +225,10 @@ const HospitalEventsScreen = ({ navigation }) => {
 
                 {/* Past Events */}
                 <View style={styles.pastEventsSection}>
-                    <Text style={styles.sectionTitle}>📖 PAST EVENTS</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="book-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>PAST EVENTS</Text>
+                    </View>
                     <TouchableOpacity style={styles.viewPastButton}>
                         <Text style={styles.viewPastText}>View All Past Events</Text>
                         <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
@@ -235,7 +237,10 @@ const HospitalEventsScreen = ({ navigation }) => {
 
                 {/* Feedback Section */}
                 <View style={styles.feedbackCard}>
-                    <Text style={styles.feedbackTitle}>💭 Share Your Feedback</Text>
+                    <View style={styles.feedbackTitleContainer}>
+                        <Ionicons name="chatbubble-ellipses-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.feedbackTitle}>Share Your Feedback</Text>
+                    </View>
                     <Text style={styles.feedbackText}>
                         Help us improve by sharing your experience at our events
                     </Text>
@@ -276,9 +281,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: indianDesign.spacing.md,
     },
-    headerIcon: {
-        fontSize: 32,
-    },
     headerText: {
         flex: 1,
     },
@@ -295,14 +297,15 @@ const styles = StyleSheet.create({
         padding: getScreenPadding(),
     },
     notificationBanner: {
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: indianDesign.spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: indianDesign.spacing.xl,
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     notificationContent: {
         flexDirection: 'row',
@@ -334,18 +337,24 @@ const styles = StyleSheet.create({
         fontWeight: indianDesign.fontWeight.semibold,
         color: '#FFF',
     },
+    sectionTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+        marginBottom: indianDesign.spacing.md,
+    },
     sectionTitle: {
         fontSize: scaledFontSize(16),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.md,
     },
     eventCard: {
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: 16,
         padding: indianDesign.spacing.lg,
         marginBottom: indianDesign.spacing.lg,
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     eventHeader: {
         flexDirection: 'row',
@@ -359,9 +368,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: indianDesign.spacing.md,
-    },
-    eventEmoji: {
-        fontSize: 32,
     },
     eventHeaderText: {
         flex: 1,
@@ -421,7 +427,6 @@ const styles = StyleSheet.create({
     registerButton: {
         borderRadius: indianDesign.borderRadius.small,
         overflow: 'hidden',
-        ...createShadow(2),
     },
     registerGradient: {
         flexDirection: 'row',
@@ -443,10 +448,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: 12,
         padding: indianDesign.spacing.md,
-        ...createShadow(1),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     viewPastText: {
         fontSize: scaledFontSize(14),
@@ -461,11 +467,16 @@ const styles = StyleSheet.create({
         marginTop: indianDesign.spacing.lg,
         alignItems: 'center',
     },
+    feedbackTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+        marginBottom: indianDesign.spacing.xs,
+    },
     feedbackTitle: {
         fontSize: scaledFontSize(16),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.xs,
     },
     feedbackText: {
         fontSize: scaledFontSize(13),
@@ -476,7 +487,6 @@ const styles = StyleSheet.create({
     feedbackButton: {
         borderRadius: indianDesign.borderRadius.medium,
         overflow: 'hidden',
-        ...createShadow(2),
     },
     feedbackGradient: {
         flexDirection: 'row',

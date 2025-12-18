@@ -20,7 +20,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
-import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
 import { prescriptionService, patientService } from '../../services';
 import { logError } from '../../utils/errorHandler';
@@ -383,7 +382,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: getScreenPadding(),
         paddingVertical: moderateScale(12),
         backgroundColor: healthColors.background.card,
-        ...createShadow(2),
+        borderBottomWidth: 2,
+        borderBottomColor: healthColors.border.light,
     },
     backButton: {
         padding: moderateScale(4),
@@ -412,7 +412,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     infoRow: {
         flexDirection: 'row',
@@ -435,7 +436,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     medicationItem: {
         marginBottom: moderateScale(16),
@@ -511,7 +513,8 @@ const styles = StyleSheet.create({
         color: healthColors.text.primary,
         textAlignVertical: 'top',
         minHeight: moderateScale(100),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     dateSelector: {
         flexDirection: 'row',
@@ -520,7 +523,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     dateText: {
         flex: 1,
@@ -539,7 +543,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     checkboxRow: {
         flexDirection: 'row',
@@ -556,7 +561,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     costRow: {
         flexDirection: 'row',
@@ -598,7 +604,6 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(12),
         paddingVertical: moderateScale(18),
         alignItems: 'center',
-        ...createShadow(3),
     },
     saveAndSendText: {
         fontSize: scaledFontSize(16),

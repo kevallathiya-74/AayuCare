@@ -42,7 +42,7 @@ const ProfileScreen = ({ navigation }) => {
             icon: 'person-outline',
             data: [
                 { label: 'Full Name', value: user?.name || 'N/A' },
-                { label: 'Patient ID', value: user?._id || 'N/A' },
+                { label: 'Patient ID', value: user?.userId || 'N/A' },
                 { label: 'Email', value: user?.email || 'N/A' },
                 { label: 'Phone', value: user?.phone || 'N/A' },
                 { label: 'Age', value: user?.age ? `${user.age} years` : 'N/A' },
@@ -74,31 +74,31 @@ const ProfileScreen = ({ navigation }) => {
         {
             title: 'Edit Profile',
             icon: 'create-outline',
-            color: healthColors.primary,
+            color: healthColors.primary.main,
             onPress: () => console.log('Edit Profile'),
         },
         {
             title: 'Change Password',
             icon: 'lock-closed-outline',
-            color: healthColors.info,
+            color: healthColors.info.main,
             onPress: () => console.log('Change Password'),
         },
         {
             title: 'Privacy Settings',
             icon: 'shield-checkmark-outline',
-            color: healthColors.success,
+            color: healthColors.success.main,
             onPress: () => console.log('Privacy Settings'),
         },
         {
             title: 'Help & Support',
             icon: 'help-circle-outline',
-            color: healthColors.warning,
+            color: healthColors.warning.main,
             onPress: () => console.log('Help & Support'),
         },
         {
             title: 'Logout',
             icon: 'log-out-outline',
-            color: healthColors.error,
+            color: healthColors.error.main,
             onPress: handleLogout,
         },
     ];
@@ -123,18 +123,43 @@ const ProfileScreen = ({ navigation }) => {
                     
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatar}>
-                            <Ionicons name="person" size={60} color={healthColors.primary} />
+                            <Ionicons name="person" size={60} color={healthColors.primary.main} />
                         </View>
                         <Text style={styles.userName}>{user?.name || 'User'}</Text>
                         <Text style={styles.userRole}>{user?.role || 'Patient'}</Text>
+                        <View style={styles.userIdBadge}>
+                            <Ionicons name="card-outline" size={14} color="rgba(255, 255, 255, 0.9)" />
+                            <Text style={styles.userIdText}>ID: {user?.userId || 'PAT001'}</Text>
+                        </View>
                     </View>
                 </LinearGradient>
+
+                {/* Quick Stats */}
+                <View style={styles.statsContainer}>
+                    <View style={styles.statCard}>
+                        <Ionicons name="calendar-outline" size={24} color={healthColors.primary.main} />
+                        <Text style={styles.statValue}>12</Text>
+                        <Text style={styles.statLabel}>Appointments</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Ionicons name="document-text-outline" size={24} color={healthColors.success.main} />
+                        <Text style={styles.statValue}>8</Text>
+                        <Text style={styles.statLabel}>Records</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <Ionicons name="medkit-outline" size={24} color={healthColors.info.main} />
+                        <Text style={styles.statValue}>5</Text>
+                        <Text style={styles.statLabel}>Prescriptions</Text>
+                    </View>
+                </View>
 
                 {/* Profile Sections */}
                 {profileSections.map((section, index) => (
                     <View key={index} style={styles.section}>
                         <View style={styles.sectionHeader}>
-                            <Ionicons name={section.icon} size={20} color={healthColors.primary} />
+                            <View style={styles.sectionIconContainer}>
+                                <Ionicons name={section.icon} size={20} color={healthColors.primary.main} />
+                            </View>
                             <Text style={styles.sectionTitle}>{section.title}</Text>
                         </View>
                         <Card style={styles.card}>
@@ -153,7 +178,9 @@ const ProfileScreen = ({ navigation }) => {
                 {/* Action Items */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="settings-outline" size={20} color={healthColors.primary} />
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name="settings-outline" size={20} color={healthColors.primary.main} />
+                        </View>
                         <Text style={styles.sectionTitle}>Account Actions</Text>
                     </View>
                     <Card style={styles.card}>
@@ -185,7 +212,7 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: healthColors.background,
+        backgroundColor: healthColors.background.secondary,
     },
     scrollContent: {
         paddingBottom: spacing.xl,
@@ -230,6 +257,47 @@ const styles = StyleSheet.create({
         color: 'rgba(255, 255, 255, 0.8)',
         textTransform: 'capitalize',
     },
+    userIdBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
+        marginTop: spacing.xs,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingHorizontal: moderateScale(12),
+        paddingVertical: moderateScale(6),
+        borderRadius: moderateScale(16),
+    },
+    userIdText: {
+        fontSize: scaledFontSize(13),
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontWeight: '600',
+    },
+    statsContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: spacing.lg,
+        marginTop: -moderateScale(30),
+        gap: moderateScale(12),
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderRadius: moderateScale(16),
+        padding: moderateScale(16),
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
+    },
+    statValue: {
+        fontSize: scaledFontSize(24),
+        fontWeight: '700',
+        color: healthColors.text.primary,
+        marginTop: moderateScale(8),
+    },
+    statLabel: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(4),
+    },
     section: {
         marginTop: spacing.lg,
         paddingHorizontal: spacing.lg,
@@ -239,46 +307,63 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: spacing.md,
     },
+    sectionIconContainer: {
+        width: moderateScale(36),
+        height: moderateScale(36),
+        borderRadius: moderateScale(18),
+        backgroundColor: healthColors.primary.main + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     sectionTitle: {
         ...textStyles.h3,
-        color: healthColors.text,
+        color: healthColors.text.primary,
         marginLeft: spacing.sm,
+        fontSize: scaledFontSize(16),
+        fontWeight: '700',
     },
     card: {
         padding: spacing.md,
+        backgroundColor: '#FFFFFF',
+        borderRadius: moderateScale(16),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     infoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: spacing.sm,
+        paddingVertical: moderateScale(12),
         borderBottomWidth: 1,
-        borderBottomColor: healthColors.border,
+        borderBottomColor: healthColors.border.light,
     },
     infoLabel: {
         ...textStyles.body,
-        color: healthColors.textSecondary,
+        color: healthColors.text.secondary,
         flex: 1,
+        fontSize: scaledFontSize(14),
     },
     infoValue: {
         ...textStyles.body,
-        color: healthColors.text,
+        color: healthColors.text.primary,
         fontWeight: '600',
         flex: 1,
         textAlign: 'right',
+        fontSize: scaledFontSize(14),
     },
     actionItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: spacing.md,
+        paddingVertical: moderateScale(14),
+        paddingHorizontal: moderateScale(4),
     },
     actionItemBorder: {
         borderBottomWidth: 1,
-        borderBottomColor: healthColors.border,
+        borderBottomColor: healthColors.border.light,
     },
     actionIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: moderateScale(44),
+        height: moderateScale(44),
+        borderRadius: moderateScale(22),
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: spacing.md,
@@ -286,7 +371,8 @@ const styles = StyleSheet.create({
     actionText: {
         ...textStyles.body,
         flex: 1,
-        fontWeight: '500',
+        fontWeight: '600',
+        fontSize: scaledFontSize(15),
     },
 });
 

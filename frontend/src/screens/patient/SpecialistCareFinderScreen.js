@@ -34,12 +34,12 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     const [feeRange, setFeeRange] = useState([0, 1000]);
 
     const specialties = [
-        { id: 1, name: 'Cardiology', icon: '❤️' },
-        { id: 2, name: 'Pulmonology', icon: '🫁' },
-        { id: 3, name: 'Neurology', icon: '🧠' },
-        { id: 4, name: 'Pediatrics', icon: '👶' },
-        { id: 5, name: "Women's Health", icon: '🌸' },
-        { id: 6, name: 'Orthopedics', icon: '🦴' },
+        { id: 1, name: 'Cardiology', icon: 'heart-outline' },
+        { id: 2, name: 'Pulmonology', icon: 'fitness-outline' },
+        { id: 3, name: 'Neurology', icon: 'bulb-outline' },
+        { id: 4, name: 'Pediatrics', icon: 'happy-outline' },
+        { id: 5, name: "Women's Health", icon: 'rose-outline' },
+        { id: 6, name: 'Orthopedics', icon: 'body-outline' },
     ];
 
     const doctors = [
@@ -119,8 +119,14 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                         </Text>
                     </View>
                     <View style={styles.doctorDetails}>
-                        <Text style={styles.feeText}>💰 ₹{doctor.fee}</Text>
-                        <Text style={styles.availabilityText}>⏰ {doctor.availability}</Text>
+                        <View style={styles.detailItem}>
+                            <Ionicons name="cash-outline" size={14} color={healthColors.success.main} />
+                            <Text style={styles.feeText}>₹{doctor.fee}</Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                            <Ionicons name="time-outline" size={14} color={healthColors.primary.main} />
+                            <Text style={styles.availabilityText}>{doctor.availability}</Text>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -135,8 +141,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 <View style={[styles.consultationType, doctor.hasTelemedicine && styles.consultationTypeActive]}>
                     <Ionicons name="videocam" size={18} color={doctor.hasTelemedicine ? healthColors.primary.main : healthColors.text.disabled} />
                     <Text style={[styles.consultationTypeText, doctor.hasTelemedicine && styles.consultationTypeTextActive]}>
-                        TELEMEDICINE {doctor.hasTelemedicine && '✓'}
+                        TELEMEDICINE
                     </Text>
+                    {doctor.hasTelemedicine && <Ionicons name="checkmark-circle" size={16} color={healthColors.success.main} />}
                 </View>
             </View>
 
@@ -192,28 +199,38 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Title */}
                 <View style={styles.titleSection}>
-                    <Text style={styles.title}>👨‍⚕️ FIND YOUR SPECIALIST</Text>
+                    <Ionicons name="medkit-outline" size={20} color={healthColors.primary.main} />
+                    <Text style={styles.title}>FIND YOUR SPECIALIST</Text>
                 </View>
 
                 {/* Filters */}
                 <View style={styles.filtersSection}>
                     <View style={styles.filterCard}>
                         <View style={styles.filterRow}>
-                            <Text style={styles.filterLabel}>🏥 Specialty:</Text>
+                            <View style={styles.filterLabelContainer}>
+                                <Ionicons name="medical-outline" size={18} color={healthColors.primary.main} />
+                                <Text style={styles.filterLabel}>Specialty:</Text>
+                            </View>
                             <TouchableOpacity style={styles.filterDropdown}>
                                 <Text style={styles.filterValue}>{selectedSpecialty}</Text>
                                 <Ionicons name="chevron-down" size={20} color={healthColors.text.secondary} />
                             </TouchableOpacity>
                         </View>
                         <View style={styles.filterRow}>
-                            <Text style={styles.filterLabel}>📅 Availability:</Text>
+                            <View style={styles.filterLabelContainer}>
+                                <Ionicons name="calendar-outline" size={18} color={healthColors.primary.main} />
+                                <Text style={styles.filterLabel}>Availability:</Text>
+                            </View>
                             <TouchableOpacity style={styles.filterDropdown}>
                                 <Text style={styles.filterValue}>{selectedAvailability}</Text>
                                 <Ionicons name="chevron-down" size={20} color={healthColors.text.secondary} />
                             </TouchableOpacity>
                         </View>
                         <View style={styles.filterRow}>
-                            <Text style={styles.filterLabel}>💰 Fee Range:</Text>
+                            <View style={styles.filterLabelContainer}>
+                                <Ionicons name="cash-outline" size={18} color={healthColors.primary.main} />
+                                <Text style={styles.filterLabel}>Fee Range:</Text>
+                            </View>
                             <Text style={styles.feeRangeText}>
                                 ₹{feeRange[0]} - ₹{feeRange[1]}
                             </Text>
@@ -231,7 +248,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                                 style={styles.specialtyChip}
                                 activeOpacity={0.7}
                             >
-                                <Text style={styles.specialtyIcon}>{specialty.icon}</Text>
+                                <Ionicons name={specialty.icon} size={20} color={healthColors.primary.main} />
                                 <Text style={styles.specialtyText}>{specialty.name}</Text>
                             </TouchableOpacity>
                         ))}
@@ -267,8 +284,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: getScreenPadding(),
         paddingVertical: moderateScale(12),
-        backgroundColor: healthColors.background.card,
-        ...createShadow(2),
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
     },
     backButton: {
         padding: moderateScale(4),
@@ -284,6 +302,9 @@ const styles = StyleSheet.create({
         padding: moderateScale(4),
     },
     titleSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
         padding: getScreenPadding(),
         paddingBottom: moderateScale(8),
     },
@@ -297,16 +318,22 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(16),
     },
     filterCard: {
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     filterRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: moderateScale(12),
+        marginBottom: moderateScale(16),
+    },
+    filterLabelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(6),
     },
     filterLabel: {
         fontSize: scaledFontSize(14),
@@ -349,14 +376,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: moderateScale(6),
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: moderateScale(16),
         paddingVertical: moderateScale(10),
         borderRadius: moderateScale(20),
-        ...createShadow(1),
-    },
-    specialtyIcon: {
-        fontSize: moderateScale(18),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     specialtyText: {
         fontSize: scaledFontSize(13),
@@ -368,11 +393,12 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(16),
     },
     doctorCard: {
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
         marginBottom: moderateScale(12),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     doctorHeader: {
         flexDirection: 'row',
@@ -414,6 +440,11 @@ const styles = StyleSheet.create({
     doctorDetails: {
         flexDirection: 'row',
         gap: moderateScale(12),
+    },
+    detailItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(4),
     },
     feeText: {
         fontSize: scaledFontSize(13),
@@ -463,7 +494,6 @@ const styles = StyleSheet.create({
         paddingVertical: moderateScale(12),
         borderRadius: moderateScale(8),
         alignItems: 'center',
-        ...createShadow(2),
     },
     actionButtonText: {
         fontSize: scaledFontSize(14),
@@ -491,9 +521,10 @@ const styles = StyleSheet.create({
         gap: moderateScale(8),
         marginHorizontal: getScreenPadding(),
         paddingVertical: moderateScale(16),
-        backgroundColor: healthColors.background.card,
+        backgroundColor: '#FFFFFF',
         borderRadius: moderateScale(12),
-        ...createShadow(1),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     viewAllText: {
         fontSize: scaledFontSize(14),

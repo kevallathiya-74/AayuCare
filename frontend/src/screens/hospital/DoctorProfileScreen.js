@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
-import { indianDesign, createShadow } from '../../theme/indianDesign';
+import { indianDesign } from '../../theme/indianDesign';
 import { 
     getScreenPadding, 
     moderateScale, 
@@ -147,7 +147,7 @@ const DoctorProfileScreen = ({ navigation }) => {
                     <View style={styles.profileInfo}>
                         <Text style={styles.doctorName}>{user?.name || 'Doctor'}</Text>
                         <Text style={styles.specialization}>{user?.specialization || 'Specialist'} • {user?.department || 'OPD'}</Text>
-                        <Text style={styles.doctorId}>ID: {user?.employeeId || user?._id?.slice(-6) || 'N/A'}</Text>
+                        <Text style={styles.doctorId}>ID: {user?.userId || user?.employeeId || 'DOC001'}</Text>
                     </View>
                     
                     <View style={styles.statsRow}>
@@ -263,7 +263,8 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(16),
         padding: moderateScale(20),
         alignItems: 'center',
-        ...createShadow(3),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     profileInfo: {
         alignItems: 'center',
@@ -317,7 +318,8 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(20),
         borderRadius: moderateScale(12),
         overflow: 'hidden',
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     optionItem: {
         flexDirection: 'row',
@@ -356,9 +358,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         padding: moderateScale(16),
         borderRadius: moderateScale(12),
-        borderWidth: 1.5,
+        borderWidth: 2,
         borderColor: healthColors.error,
-        ...createShadow(1),
     },
     logoutText: {
         fontSize: scaledFontSize(16),

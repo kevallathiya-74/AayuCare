@@ -4,7 +4,7 @@
  * Features: Real-time stats, system health, trend indicators, organized action cards
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
     View,
     Text,
@@ -19,13 +19,13 @@ import {
     Platform,
     Modal,
     Pressable,
+    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector, useDispatch } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
-import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
 import LanguageSelector from '../../components/common/LanguageSelector';
 import { logoutUser } from '../../store/slices/authSlice';
@@ -42,6 +42,7 @@ const AdminHomeScreen = ({ navigation }) => {
     const [error, setError] = useState(null);
     const [showProfile, setShowProfile] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
+    const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
     const [stats, setStats] = useState({
         appointments: { total: 0, today: 0, pending: 0, completed: 0, trend: 0 },
         doctors: { total: 0, active: 0, onDuty: 0, trend: 0 },
@@ -128,22 +129,38 @@ const AdminHomeScreen = ({ navigation }) => {
         );
     }, [dispatch]);
 
-    // Get time-based greeting
-    const getTimeBasedGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour >= 5 && hour < 12) {
-            return 'Good Morning';
-        } else if (hour >= 12 && hour < 17) {
-            return 'Good Afternoon';
-        } else if (hour >= 17 && hour < 21) {
-            return 'Good Evening';
+    // Menu animation handlers
+    useEffect(() => {
+        if (menuVisible) {
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
         } else {
-            return 'Good Night';
+            Animated.timing(slideAnim, {
+                toValue: -width * 0.8,
+                duration: 250,
+                useNativeDriver: true,
+            }).start();
         }
-    };
+    }, [menuVisible, slideAnim]);
 
-    // Render stat card with gradient
-    const renderStatCard = (stat, index) => (
+    const closeMenu = useCallback(() => {
+        setMenuVisible(false);
+    }, []);
+
+    // Get time-based greeting (memoized)
+    const greeting = useMemo(() => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'Good Morning';
+        if (hour >= 12 && hour < 17) return 'Good Afternoon';
+        if (hour >= 17 && hour < 21) return 'Good Evening';
+        return 'Good Night';
+    }, []);
+
+    // Render stat card with gradient (memoized)
+    const renderStatCard = useCallback((stat, index) => (
         <View key={index} style={styles.statCardWrapper}>
             <LinearGradient
                 colors={stat.gradient}
@@ -171,10 +188,10 @@ const AdminHomeScreen = ({ navigation }) => {
                 <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
             </LinearGradient>
         </View>
-    );
+    ), []);
 
-    // Render action section
-    const renderActionSection = (title, actions) => (
+    // Render action section (memoized)
+    const renderActionSection = useCallback((title, actions) => (
         <View style={styles.actionSection}>
             <Text style={styles.actionSectionTitle}>{title}</Text>
             <View style={styles.actionGrid}>
@@ -209,10 +226,10 @@ const AdminHomeScreen = ({ navigation }) => {
                 ))}
             </View>
         </View>
-    );
+    ), [navigation]);
 
-    // Render system health indicator
-    const SystemHealthBanner = () => {
+    // Render system health indicator (memoized)
+    const SystemHealthBanner = useMemo(() => {
         const healthStatus = {
             good: { icon: 'checkmark-circle', color: healthColors.success.main, text: 'System Status: All Good' },
             warning: { icon: 'warning', color: healthColors.warning.main, text: 'System Status: Warning' },
@@ -237,7 +254,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 )}
             </View>
         );
-    };
+    }, [systemHealth.status, systemHealth.issues, navigation]);
 
     const quickActions = useMemo(() => ({
         management: [
@@ -284,6 +301,25 @@ const AdminHomeScreen = ({ navigation }) => {
             trend: stats.prescriptions.trend,
         },
     ], [stats]);
+
+    // Memoize menu navigation handlers
+    const handleMenuNavigation = useCallback((screen, isTabScreen = false) => {
+        closeMenu();
+        setTimeout(() => {
+            if (isTabScreen) {
+                navigation.navigate('AdminTabs', { screen });
+            } else {
+                navigation.navigate(screen);
+            }
+        }, 100);
+    }, [navigation, closeMenu]);
+
+    const handleProfileOpen = useCallback(() => {
+        closeMenu();
+        setTimeout(() => {
+            setShowProfile(true);
+        }, 100);
+    }, [closeMenu]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -333,6 +369,9 @@ const AdminHomeScreen = ({ navigation }) => {
                 <ScrollView 
                     showsVerticalScrollIndicator={false}
                     style={styles.profileContainer}
+                    removeClippedSubviews={true}
+                    scrollEventThrottle={16}
+                    decelerationRate="fast"
                 >
                     {/* Profile Header */}
                     <LinearGradient
@@ -358,6 +397,14 @@ const AdminHomeScreen = ({ navigation }) => {
                     <View style={styles.profileSection}>
                         <Text style={styles.profileSectionTitle}>Personal Information</Text>
                         <View style={styles.profileCard}>
+                            <View style={styles.profileInfoRow}>
+                                <Ionicons name="id-card-outline" size={20} color={healthColors.primary.main} />
+                                <View style={styles.profileInfoContent}>
+                                    <Text style={styles.profileInfoLabel}>Admin ID</Text>
+                                    <Text style={styles.profileInfoValue}>{user?.userId || user?.employeeId || 'ADM001'}</Text>
+                                </View>
+                            </View>
+                            <View style={styles.profileDivider} />
                             <View style={styles.profileInfoRow}>
                                 <Ionicons name="person-outline" size={20} color={healthColors.primary.main} />
                                 <View style={styles.profileInfoContent}>
@@ -468,6 +515,9 @@ const AdminHomeScreen = ({ navigation }) => {
             ) : (
             <ScrollView
                 showsVerticalScrollIndicator={false}
+                removeClippedSubviews={true}
+                scrollEventThrottle={16}
+                decelerationRate="fast"
                 refreshControl={
                     <RefreshControl 
                         refreshing={refreshing} 
@@ -485,7 +535,7 @@ const AdminHomeScreen = ({ navigation }) => {
                     style={styles.welcomeBanner}
                 >
                     <View style={styles.welcomeContent}>
-                        <Text style={styles.timeGreeting}>{getTimeBasedGreeting()}</Text>
+                        <Text style={styles.timeGreeting}>{greeting}</Text>
                         <Text style={styles.welcomeGreeting}>Welcome{user?.name ? ` ${user.name}` : ''}</Text>
                         <View style={styles.roleInfoRow}>
                             <Text style={styles.roleInfoText}>{user?.role?.toUpperCase() || 'ADMIN'}</Text>
@@ -503,6 +553,9 @@ const AdminHomeScreen = ({ navigation }) => {
                         horizontal 
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.statCardsContainer}
+                        removeClippedSubviews={true}
+                        scrollEventThrottle={16}
+                        decelerationRate="fast"
                     >
                         {statCards.map((stat, index) => renderStatCard(stat, index))}
                     </ScrollView>
@@ -551,16 +604,21 @@ const AdminHomeScreen = ({ navigation }) => {
             <Modal
                 visible={menuVisible}
                 transparent
-                animationType="slide"
-                onRequestClose={() => setMenuVisible(false)}
+                animationType="fade"
+                onRequestClose={closeMenu}
             >
                 <Pressable 
                     style={styles.menuOverlay}
-                    onPress={() => setMenuVisible(false)}
+                    onPress={closeMenu}
                 >
-                    <Pressable 
-                        style={styles.menuDrawer}
-                        onPress={(e) => e.stopPropagation()}
+                    <Animated.View 
+                        style={[
+                            styles.menuDrawer,
+                            {
+                                transform: [{ translateX: slideAnim }],
+                            }
+                        ]}
+                        onStartShouldSetResponder={() => true}
                     >
                         {/* Menu Header */}
                         <LinearGradient
@@ -579,24 +637,32 @@ const AdminHomeScreen = ({ navigation }) => {
                             </View>
                             <Pressable 
                                 style={styles.menuCloseButton}
-                                onPress={() => setMenuVisible(false)}
+                                onPress={closeMenu}
                             >
                                 <Ionicons name="close" size={24} color="white" />
                             </Pressable>
                         </LinearGradient>
 
                         {/* Menu Content */}
-                        <ScrollView style={styles.menuContent}>
+                        <ScrollView 
+                            style={styles.menuContent}
+                            showsVerticalScrollIndicator={false}
+                            removeClippedSubviews={Platform.OS === 'android'}
+                            scrollEventThrottle={16}
+                            decelerationRate="fast"
+                            bounces={false}
+                            overScrollMode="never"
+                            nestedScrollEnabled={true}
+                            persistentScrollbar={false}
+                            keyboardShouldPersistTaps="handled"
+                        >
                             {/* System Management */}
                             <View style={styles.menuSection}>
                                 <Text style={styles.menuSectionTitle}>SYSTEM MANAGEMENT</Text>
                                 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminHome');
-                                    }}
+                                    onPress={() => handleMenuNavigation('Dashboard', true)}
                                 >
                                     <Ionicons name="home-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Dashboard</Text>
@@ -605,10 +671,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminDoctors');
-                                    }}
+                                    onPress={() => handleMenuNavigation('ManageDoctors', false)}
                                 >
                                     <Ionicons name="medical-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Manage Doctors</Text>
@@ -617,10 +680,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminPatients');
-                                    }}
+                                    onPress={() => handleMenuNavigation('ManagePatients', false)}
                                 >
                                     <Ionicons name="people-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Manage Patients</Text>
@@ -629,10 +689,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminAppointments');
-                                    }}
+                                    onPress={() => handleMenuNavigation('Appointments', true)}
                                 >
                                     <Ionicons name="calendar-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Appointments</Text>
@@ -641,10 +698,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminReports');
-                                    }}
+                                    onPress={() => handleMenuNavigation('Reports', true)}
                                 >
                                     <Ionicons name="bar-chart-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Reports & Analytics</Text>
@@ -658,7 +712,7 @@ const AdminHomeScreen = ({ navigation }) => {
                                 
                                 <View style={styles.menuStatCard}>
                                     <Ionicons name="people" size={20} color={healthColors.primary.main} />
-                                    <View style={{ flex: 1 }}>
+                                    <View style={styles.menuStatContent}>
                                         <Text style={styles.menuStatLabel}>Active Users</Text>
                                         <Text style={styles.menuStatValue}>
                                             {stats.doctors.active + stats.patients.total}
@@ -668,7 +722,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <View style={styles.menuStatCard}>
                                     <Ionicons name="calendar" size={20} color={healthColors.success.main} />
-                                    <View style={{ flex: 1 }}>
+                                    <View style={styles.menuStatContent}>
                                         <Text style={styles.menuStatLabel}>Today's Appointments</Text>
                                         <Text style={styles.menuStatValue}>{stats.appointments.today}</Text>
                                     </View>
@@ -676,7 +730,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <View style={styles.menuStatCard}>
                                     <Ionicons name="cash" size={20} color={healthColors.warning.main} />
-                                    <View style={{ flex: 1 }}>
+                                    <View style={styles.menuStatContent}>
                                         <Text style={styles.menuStatLabel}>Today's Revenue</Text>
                                         <Text style={styles.menuStatValue}>₹{stats.revenue.today.toLocaleString()}</Text>
                                     </View>
@@ -689,10 +743,7 @@ const AdminHomeScreen = ({ navigation }) => {
                                 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminSettings');
-                                    }}
+                                    onPress={() => handleMenuNavigation('Settings', true)}
                                 >
                                     <Ionicons name="settings-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Settings</Text>
@@ -701,10 +752,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                                 <Pressable 
                                     style={styles.menuItem}
-                                    onPress={() => {
-                                        setMenuVisible(false);
-                                        navigation.navigate('AdminProfile');
-                                    }}
+                                    onPress={handleProfileOpen}
                                 >
                                     <Ionicons name="person-outline" size={22} color={healthColors.text.primary} />
                                     <Text style={styles.menuItemText}>Profile</Text>
@@ -719,8 +767,10 @@ const AdminHomeScreen = ({ navigation }) => {
                                 <Pressable 
                                     style={[styles.menuItem, styles.menuItemDanger]}
                                     onPress={() => {
-                                        setMenuVisible(false);
-                                        handleLogout();
+                                        closeMenu();
+                                        setTimeout(() => {
+                                            handleLogout();
+                                        }, 100);
                                     }}
                                 >
                                     <Ionicons name="log-out-outline" size={22} color={healthColors.error.main} />
@@ -734,7 +784,7 @@ const AdminHomeScreen = ({ navigation }) => {
                                 <Text style={styles.menuFooterText}>© 2024 AayuCare Health</Text>
                             </View>
                         </ScrollView>
-                    </Pressable>
+                    </Animated.View>
                 </Pressable>
             </Modal>
         </SafeAreaView>
@@ -754,7 +804,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: getScreenPadding(),
         paddingVertical: moderateScale(12),
         backgroundColor: healthColors.background.card,
-        ...createShadow(2),
+        borderBottomWidth: 2,
+        borderBottomColor: healthColors.border.light,
     },
     menuButton: {
         padding: moderateScale(4),
@@ -866,7 +917,8 @@ const styles = StyleSheet.create({
         padding: moderateScale(14),
         borderRadius: moderateScale(12),
         gap: moderateScale(10),
-        ...createShadow(1),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     healthText: {
         flex: 1,
@@ -915,7 +967,6 @@ const styles = StyleSheet.create({
     statCard: {
         borderRadius: moderateScale(16),
         padding: moderateScale(20),
-        ...createShadow(4),
         minHeight: moderateScale(160),
         justifyContent: 'space-between',
     },
@@ -986,7 +1037,8 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(14),
         padding: moderateScale(16),
         alignItems: 'center',
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     actionIconWrapper: {
         width: moderateScale(60),
@@ -1028,7 +1080,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(14),
         padding: moderateScale(18),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     activityItem: {
         flexDirection: 'row',
@@ -1154,7 +1207,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(14),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     profileInfoRow: {
         flexDirection: 'row',
@@ -1200,9 +1254,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         paddingVertical: moderateScale(16),
         borderRadius: moderateScale(14),
-        ...createShadow(2),
-        borderWidth: 1,
-        borderColor: healthColors.error.light,
+        borderWidth: 2,
+        borderColor: healthColors.error.main,
     },
     logoutButtonText: {
         fontSize: scaledFontSize(16),
@@ -1213,19 +1266,34 @@ const styles = StyleSheet.create({
     menuOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
+        justifyContent: 'flex-start',
     },
     menuDrawer: {
-        width: '85%',
+        width: '80%',
+        maxWidth: moderateScale(320),
         height: '100%',
         backgroundColor: 'white',
         borderTopRightRadius: moderateScale(20),
         borderBottomRightRadius: moderateScale(20),
-        ...createShadow(8),
+        borderWidth: 2,
+        borderLeftWidth: 0,
+        borderColor: healthColors.border.light,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 4,
+            },
+        }),
     },
     menuHeader: {
         padding: moderateScale(20),
-        paddingTop: moderateScale(40),
+        paddingTop: moderateScale(50),
+        paddingBottom: moderateScale(24),
         borderTopRightRadius: moderateScale(20),
     },
     menuProfileSection: {
@@ -1264,12 +1332,12 @@ const styles = StyleSheet.create({
     },
     menuCloseButton: {
         position: 'absolute',
-        top: moderateScale(40),
-        right: moderateScale(20),
-        width: moderateScale(36),
-        height: moderateScale(36),
-        borderRadius: moderateScale(18),
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        top: moderateScale(50),
+        right: moderateScale(16),
+        width: moderateScale(32),
+        height: moderateScale(32),
+        borderRadius: moderateScale(16),
+        backgroundColor: 'rgba(255,255,255,0.25)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -1334,6 +1402,11 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(8),
         gap: moderateScale(12),
         marginBottom: moderateScale(8),
+        borderWidth: 1,
+        borderColor: healthColors.border.light,
+    },
+    menuStatContent: {
+        flex: 1,
     },
     menuStatLabel: {
         fontSize: scaledFontSize(12),

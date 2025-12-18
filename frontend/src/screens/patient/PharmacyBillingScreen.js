@@ -105,7 +105,7 @@ const PharmacyBillingScreen = ({ navigation }) => {
                     <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
                 <View style={styles.headerContent}>
-                    <Text style={styles.headerIcon}>💊</Text>
+                    <Ionicons name="medical-outline" size={32} color="#FFF" />
                     <View style={styles.headerText}>
                         <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
                         <Text style={styles.headerSubtitle}>Medicine purchase & payment</Text>
@@ -119,7 +119,10 @@ const PharmacyBillingScreen = ({ navigation }) => {
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Prescription Info */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>📋 PRESCRIPTION DETAILS</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="document-text-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>PRESCRIPTION DETAILS</Text>
+                    </View>
                     <View style={styles.card}>
                         <View style={styles.prescriptionHeader}>
                             <View>
@@ -136,12 +139,15 @@ const PharmacyBillingScreen = ({ navigation }) => {
 
                 {/* Medicines List */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>💊 MEDICINES ({prescription.medicines.length})</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="medkit-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>MEDICINES ({prescription.medicines.length})</Text>
+                    </View>
                     <View style={styles.card}>
                         {prescription.medicines.map((medicine, index) => (
                             <View key={index} style={styles.medicineItem}>
                                 <View style={styles.medicineIcon}>
-                                    <Text style={styles.medicineEmoji}>💊</Text>
+                                    <Ionicons name="medical" size={24} color={healthColors.primary.main} />
                                 </View>
                                 <View style={styles.medicineInfo}>
                                     <Text style={styles.medicineName}>{medicine.name}</Text>
@@ -160,7 +166,10 @@ const PharmacyBillingScreen = ({ navigation }) => {
 
                 {/* Purchase Options */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🏥 PURCHASE OPTIONS</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="business-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>PURCHASE OPTIONS</Text>
+                    </View>
                     <View style={styles.card}>
                         <TouchableOpacity
                             style={[
@@ -215,7 +224,10 @@ const PharmacyBillingScreen = ({ navigation }) => {
 
                 {/* Billing Summary */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>💰 BILLING SUMMARY</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="calculator-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>BILLING SUMMARY</Text>
+                    </View>
                     <View style={styles.card}>
                         <View style={styles.billingRow}>
                             <Text style={styles.billingLabel}>Subtotal:</Text>
@@ -244,7 +256,10 @@ const PharmacyBillingScreen = ({ navigation }) => {
 
                 {/* Payment Methods */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>💳 PAYMENT METHOD</Text>
+                    <View style={styles.sectionTitleContainer}>
+                        <Ionicons name="card-outline" size={20} color={healthColors.primary.main} />
+                        <Text style={styles.sectionTitle}>PAYMENT METHOD</Text>
+                    </View>
                     <View style={styles.card}>
                         {paymentMethods.map((method) => (
                             <TouchableOpacity
@@ -322,9 +337,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: indianDesign.spacing.md,
     },
-    headerIcon: {
-        fontSize: 32,
-    },
     headerText: {
         flex: 1,
     },
@@ -343,11 +355,16 @@ const styles = StyleSheet.create({
     section: {
         marginBottom: indianDesign.spacing.xl,
     },
+    sectionTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: moderateScale(8),
+        marginBottom: indianDesign.spacing.md,
+    },
     sectionTitle: {
         fontSize: scaledFontSize(16),
         fontWeight: indianDesign.fontWeight.bold,
         color: healthColors.text.primary,
-        marginBottom: indianDesign.spacing.md,
     },
     card: {
         backgroundColor: healthColors.background.card,

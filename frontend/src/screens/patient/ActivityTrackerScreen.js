@@ -44,7 +44,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
 
     const stressActivities = [
         { icon: 'fitness', name: 'Breathing Exercise', duration: '5 min', color: '#4CAF50' },
-        { icon: 'body', name: 'Yoga Session', duration: '15 min', color: '#9C27B0' },
+        { icon: 'hand-left-outline', name: 'Yoga Session', duration: '15 min', color: '#9C27B0' },
         { icon: 'musical-notes', name: 'Meditation', duration: '10 min', color: '#2196F3' },
     ];
 

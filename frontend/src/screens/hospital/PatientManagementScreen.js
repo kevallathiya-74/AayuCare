@@ -19,7 +19,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
-import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
 import { patientService, prescriptionService, appointmentService, medicalRecordService } from '../../services';
 import { logError } from '../../utils/errorHandler';
@@ -390,7 +389,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: getScreenPadding(),
         paddingVertical: moderateScale(12),
         backgroundColor: healthColors.background.card,
-        ...createShadow(2),
+        borderBottomWidth: 2,
+        borderBottomColor: healthColors.border.light,
     },
     backButton: {
         padding: moderateScale(4),
@@ -428,7 +428,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: moderateScale(16),
         paddingVertical: moderateScale(12),
         gap: moderateScale(8),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     searchInput: {
         flex: 1,
@@ -442,7 +443,6 @@ const styles = StyleSheet.create({
         height: moderateScale(48),
         justifyContent: 'center',
         alignItems: 'center',
-        ...createShadow(2),
     },
     loadingContainer: {
         alignItems: 'center',
@@ -457,7 +457,8 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.card,
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     patientHeader: {
         flexDirection: 'row',
@@ -523,7 +524,8 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(12),
         padding: moderateScale(16),
         marginBottom: moderateScale(12),
-        ...createShadow(2),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
     },
     historyHeader: {
         flexDirection: 'row',
@@ -595,7 +597,6 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.primary.main,
         paddingVertical: moderateScale(16),
         borderRadius: moderateScale(12),
-        ...createShadow(2),
     },
     printButton: {
         backgroundColor: healthColors.background.card,

@@ -31,4 +31,9 @@ router.get('/:patientId/profile', patientController.getPatientProfile);
 // @access  Private (Patient own data or Admin)
 router.patch('/:patientId/profile', patientController.updatePatientProfile);
 
+// @route   GET /api/patients/:patientId/health-metrics
+// @desc    Get health metrics for a patient
+// @access  Private (Patient own data, Doctor, or Admin)
+router.get('/:patientId/health-metrics', patientController.getHealthMetrics);
+
 module.exports = router;

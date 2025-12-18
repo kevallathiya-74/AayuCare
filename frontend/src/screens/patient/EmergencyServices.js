@@ -98,7 +98,7 @@ const EmergencyServices = ({ navigation }) => {
     const handleAmbulanceCall = async () => {
         try {
             Alert.alert(
-                '🚨 Call Ambulance?',
+                'Call Ambulance?',
                 'This will immediately dial 108 for emergency medical assistance',
                 [
                     { text: 'Cancel', style: 'cancel' },

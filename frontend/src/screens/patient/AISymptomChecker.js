@@ -45,10 +45,10 @@ const AISymptomChecker = ({ navigation }) => {
 
     const commonSymptoms = [
         { id: 1, name: 'Fever', icon: 'thermometer' },
-        { id: 2, name: 'Headache', icon: 'head' },
+        { id: 2, name: 'Headache', icon: 'skull-outline' },
         { id: 3, name: 'Cough', icon: 'medical' },
         { id: 4, name: 'Fatigue', icon: 'battery-dead' },
-        { id: 5, name: 'Body ache', icon: 'body' },
+        { id: 5, name: 'Body ache', icon: 'fitness-outline' },
         { id: 6, name: 'Sore throat', icon: 'mic-off' },
         { id: 7, name: 'Runny nose', icon: 'water' },
         { id: 8, name: 'Nausea', icon: 'sad' },

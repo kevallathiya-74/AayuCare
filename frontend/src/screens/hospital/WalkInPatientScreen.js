@@ -19,7 +19,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
-import { createShadow } from '../../theme/indianDesign';
 import { moderateScale, scaledFontSize, getScreenPadding } from '../../utils/responsive';
 import { Card } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
@@ -426,7 +425,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         overflow: 'hidden',
         marginBottom: 24,
-        ...createShadow(4),
     },
     registerButtonDisabled: {
         opacity: 0.6,
