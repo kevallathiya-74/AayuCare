@@ -1,5 +1,7 @@
 const appointmentService = require('../services/appointmentService');
 const { AppError } = require('../middleware/errorHandler');
+const User = require('../models/User');
+const Appointment = require('../models/Appointment');
 
 /**
  * @desc    Create new appointment
@@ -233,3 +235,38 @@ exports.getAppointmentStats = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * @desc    Get appointments for a specific patient
+ * @route   GET /api/appointments/patient/:patientId
+ * @access  Private (Doctor, Admin)
+ */
+exports.getPatientAppointments = async (req, res, next) => {
+    try {
+        const { patientId } = req.params;
+
+        // Find patient by userId to get ObjectId
+        const patient = await User.findOne({ userId: patientId, role: 'patient' }).select('_id');
+        
+        if (!patient) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Patient not found'
+            });
+        }
+
+        // Find appointments using the ObjectId
+        const appointments = await Appointment.find({ patientId: patient._id })
+            .populate('doctorId', 'name specialization')
+            .populate('patientId', 'name email phone')
+            .sort({ appointmentDate: -1 });
+
+        res.status(200).json({
+            status: 'success',
+            data: { appointments }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+

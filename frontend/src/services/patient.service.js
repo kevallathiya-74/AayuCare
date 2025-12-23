@@ -29,7 +29,7 @@ class PatientService {
      */
     async getPatientById(patientId) {
         try {
-            const response = await api.get(`/patients/${patientId}`);
+            const response = await api.get(`/patients/${patientId}/profile`);
             return response.data;
         } catch (error) {
             logError(error, { context: 'PatientService.getPatientById', patientId });

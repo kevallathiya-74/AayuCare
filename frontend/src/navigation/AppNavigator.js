@@ -97,7 +97,14 @@ const AppNavigator = () => {
   // Auto-navigate after successful login
   useEffect(() => {
     if (isAuthenticated && user && navigationRef.current) {
+      const currentRoute = navigationRef.current.getCurrentRoute();
       const userRole = user.role;
+
+      // Don't auto-navigate if on splash screen (let splash handle it)
+      if (currentRoute && currentRoute.name === 'SplashScreen') {
+        console.log('[AppNavigator] On splash screen, letting it handle navigation');
+        return;
+      }
 
       // Navigate to appropriate tab navigator based on role
       setTimeout(() => {

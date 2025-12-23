@@ -1,5 +1,6 @@
 const authService = require('../services/authService');
 const { AppError } = require('../middleware/errorHandler');
+const User = require('../models/User');
 
 exports.register = async (req, res, next) => {
     try {

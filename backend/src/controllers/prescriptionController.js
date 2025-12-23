@@ -92,7 +92,16 @@ exports.getPatientPrescriptions = async (req, res) => {
             });
         }
 
-        const prescriptions = await Prescription.find({ patientId })
+        // Find patient by userId to get ObjectId
+        const patient = await User.findOne({ userId: patientId, role: 'patient' }).select('_id');
+        if (!patient) {
+            return res.status(404).json({
+                success: false,
+                message: 'Patient not found',
+            });
+        }
+
+        const prescriptions = await Prescription.find({ patientId: patient._id })
             .populate('doctorId', 'name specialization userId')
             .sort({ createdAt: -1 });
 

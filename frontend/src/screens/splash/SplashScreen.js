@@ -11,6 +11,7 @@ import {
     Animated,
     Easing,
 } from 'react-native';
+import { useSelector } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
@@ -21,6 +22,9 @@ const SplashScreen = ({ navigation }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.5)).current;
     const loadingAnim = useRef(new Animated.Value(0)).current;
+    const hasNavigated = useRef(false);
+    
+    const { isAuthenticated, isLoading, user } = useSelector((state) => state.auth || {});
 
     console.log('[SplashScreen] Rendering...');
 
@@ -53,30 +57,55 @@ const SplashScreen = ({ navigation }) => {
                 })
             ).start();
 
-            console.log('[SplashScreen] Animations started, scheduling navigation...');
-
-            // Navigate to box selection after 3 seconds
-            const timer = setTimeout(() => {
-                try {
-                    console.log('[SplashScreen] Navigating to BoxSelection...');
-                    navigation.replace('BoxSelection');
-                } catch (navError) {
-                    console.error('[SplashScreen] Navigation error:', navError);
-                }
-            }, 3000);
-
-            return () => {
-                console.log('[SplashScreen] Cleanup...');
-                clearTimeout(timer);
-            };
+            console.log('[SplashScreen] Animations started');
         } catch (error) {
-            console.error('[SplashScreen] ═══════════════════════════════════');
-            console.error('[SplashScreen] Error:', error);
-            console.error('[SplashScreen] Error message:', error?.message);
-            console.error('[SplashScreen] Error stack:', error?.stack);
-            console.error('[SplashScreen] ═══════════════════════════════════');
+            console.error('[SplashScreen] Animation error:', error);
         }
     }, []);
+
+    // Handle navigation after auth check completes
+    useEffect(() => {
+        if (hasNavigated.current) return;
+        
+        // Wait for auth loading to complete
+        if (isLoading) {
+            console.log('[SplashScreen] Waiting for auth check...');
+            return;
+        }
+
+        console.log('[SplashScreen] Auth check complete:', { isAuthenticated, user: user?.userId });
+
+        // Navigate based on auth status
+        const timer = setTimeout(() => {
+            if (hasNavigated.current) return;
+            hasNavigated.current = true;
+
+            try {
+                if (isAuthenticated && user) {
+                    console.log('[SplashScreen] User authenticated, navigating to role tabs');
+                    // Navigate based on user role
+                    const userRole = user.role;
+                    if (userRole === 'admin') {
+                        navigation.replace('AdminTabs');
+                    } else if (userRole === 'doctor') {
+                        navigation.replace('DoctorTabs');
+                    } else if (userRole === 'patient') {
+                        navigation.replace('PatientTabs');
+                    } else {
+                        console.warn('[SplashScreen] Unknown role:', userRole);
+                        navigation.replace('BoxSelection');
+                    }
+                } else {
+                    console.log('[SplashScreen] Not authenticated, navigating to BoxSelection');
+                    navigation.replace('BoxSelection');
+                }
+            } catch (navError) {
+                console.error('[SplashScreen] Navigation error:', navError);
+            }
+        }, 1500); // Reduced time since we already waited for auth
+
+        return () => clearTimeout(timer);
+    }, [isLoading, isAuthenticated, user]);
 
     const dotTranslateY = loadingAnim.interpolate({
         inputRange: [0, 0.25, 0.5, 0.75, 1],

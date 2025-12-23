@@ -83,6 +83,13 @@ api.interceptors.request.use(
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        if (__DEV__) {
+          console.log(`🔑 Token: ${token.substring(0, 20)}...`);
+        }
+      } else {
+        if (__DEV__) {
+          console.log('⚠️ No auth token found in storage');
+        }
       }
 
       if (__DEV__) {
@@ -114,29 +121,46 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        console.log('[API] 401 error, attempting token refresh...');
         const refreshToken = await storage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (refreshToken) {
+          console.log('[API] Refresh token found, calling refresh endpoint');
           const response = await axios.post(`${getBaseURL()}/auth/refresh`, {
             refreshToken,
           });
 
           const { token } = response.data.data;
+          console.log('[API] New token received, updating storage');
 
           // Save new token
           await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${token}`;
+          console.log('[API] Retrying original request with new token');
           return api(originalRequest);
+        } else {
+          console.log('[API] No refresh token found, clearing storage');
+          // No refresh token - Clear storage and force re-login
+          await storage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+          await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
+          await storage.deleteItem(STORAGE_KEYS.USER_DATA);
+          
+          const authError = new Error('Session expired. Please login again.');
+          authError.code = 'AUTH_EXPIRED';
+          return Promise.reject(authError);
         }
       } catch (refreshError) {
+        console.log('[API] Token refresh failed:', refreshError.message);
         // Refresh failed - Clear storage and redirect to login
         await storage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
         await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
         await storage.deleteItem(STORAGE_KEYS.USER_DATA);
 
-        return Promise.reject(refreshError);
+        const authError = new Error('Session expired. Please login again.');
+        authError.code = 'AUTH_EXPIRED';
+        return Promise.reject(authError);
       }
     }
 

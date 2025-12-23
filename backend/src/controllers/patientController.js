@@ -45,7 +45,8 @@ exports.searchPatients = async (req, res) => {
         res.json({
             success: true,
             count: patients.length,
-            patients,
+            data: patients, // Changed from 'patients' to 'data' for consistency
+            patients, // Keep both for backward compatibility
         });
     } catch (error) {
         logger.error('Patient search error:', { error: error.message, stack: error.stack });
@@ -90,20 +91,23 @@ exports.getCompleteHistory = async (req, res) => {
             });
         }
 
+        // Use MongoDB _id for querying related collections
+        const patientObjectId = patient._id;
+
         // Get all medical records (sorted by most recent)
-        const medicalRecords = await MedicalRecord.find({ patientId })
+        const medicalRecords = await MedicalRecord.find({ patientId: patientObjectId })
             .populate('doctorId', 'name specialization userId')
             .sort({ createdAt: -1 })
             .lean();
 
         // Get all appointments (sorted by most recent)
-        const appointments = await Appointment.find({ patientId })
+        const appointments = await Appointment.find({ patientId: patientObjectId })
             .populate('doctorId', 'name specialization userId')
             .sort({ appointmentDate: -1 })
             .lean();
 
         // Get all prescriptions (sorted by most recent)
-        const prescriptions = await Prescription.find({ patientId })
+        const prescriptions = await Prescription.find({ patientId: patientObjectId })
             .populate('doctorId', 'name specialization userId')
             .sort({ createdAt: -1 })
             .lean();
@@ -191,11 +195,11 @@ exports.getPatientProfile = async (req, res) => {
             });
         }
 
-        // Get quick stats
+        // Get quick stats using patient._id
         const [recordCount, appointmentCount, prescriptionCount] = await Promise.all([
-            MedicalRecord.countDocuments({ patientId }),
-            Appointment.countDocuments({ patientId }),
-            Prescription.countDocuments({ patientId }),
+            MedicalRecord.countDocuments({ patientId: patient._id }),
+            Appointment.countDocuments({ patientId: patient._id }),
+            Prescription.countDocuments({ patientId: patient._id }),
         ]);
 
         res.json({

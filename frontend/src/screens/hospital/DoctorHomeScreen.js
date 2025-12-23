@@ -391,16 +391,18 @@ const DoctorHomeScreen = ({ navigation }) => {
                         <View style={styles.searchResultsContainer}>
                             {searchResults.map((patient) => (
                                 <TouchableOpacity 
-                                    key={patient._id}
+                                    key={patient._id || patient.id}
                                     style={styles.searchResultItem}
-                                    onPress={() => navigation.navigate('PatientManagement', { patientId: patient._id })}
+                                    onPress={() => navigation.navigate('PatientManagement', { 
+                                        patientId: patient.userId || patient._id 
+                                    })}
                                     accessibilityRole="button"
-                                    accessibilityLabel={`View ${patient.name}, ${patient.age} years old`}
+                                    accessibilityLabel={`View ${patient.name}, ${patient.age || 'Unknown age'} years old`}
                                 >
                                     <View style={styles.searchResultInfo}>
-                                        <Text style={styles.searchResultName}>{patient.name}</Text>
+                                        <Text style={styles.searchResultName}>{patient.name || 'Unknown Patient'}</Text>
                                         <Text style={styles.searchResultDetails}>
-                                            Age: {patient.age} | ID: {patient._id?.slice(-6)}
+                                            {patient.age ? `Age: ${patient.age} | ` : ''}ID: {patient.userId || patient._id?.slice(-6)}
                                         </Text>
                                     </View>
                                     <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />

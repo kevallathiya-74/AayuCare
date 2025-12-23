@@ -82,14 +82,22 @@ exports.createMedicalRecord = async (req, res, next) => {
             files,
         } = req.body;
 
-        // Verify patient exists
-        const patient = await User.findById(patientId);
-        if (!patient || patient.role !== 'patient') {
+        // Find patient by userId (string like "PAT001") or ObjectId
+        let patient;
+        if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+            // It's an ObjectId
+            patient = await User.findById(patientId);
+        } else {
+            // It's a userId string like "PAT001"
+            patient = await User.findOne({ userId: patientId, role: 'patient' });
+        }
+
+        if (!patient) {
             return next(new AppError('Patient not found', 404));
         }
 
         const medicalRecord = await MedicalRecord.create({
-            patientId,
+            patientId: patient._id, // Use ObjectId from found patient
             doctorId: req.user.id,
             hospitalId: req.user.hospitalId || 'MAIN',
             recordType,
@@ -127,8 +135,17 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
         const { patientId } = req.params;
         const { recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
 
+        // Find patient by userId to get ObjectId
+        const patient = await User.findOne({ userId: patientId, role: 'patient' }).select('_id');
+        if (!patient) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Patient not found',
+            });
+        }
+
         // Build query
-        const query = { patientId };
+        const query = { patientId: patient._id };
 
         if (recordType) {
             query.recordType = recordType;
@@ -271,12 +288,13 @@ exports.getPatientHistory = async (req, res, next) => {
     try {
         const { patientId } = req.params;
 
-        const patient = await User.findById(patientId);
+        // Find patient by userId to get ObjectId
+        const patient = await User.findOne({ userId: patientId, role: 'patient' });
         if (!patient) {
             return next(new AppError('Patient not found', 404));
         }
 
-        const medicalRecords = await MedicalRecord.find({ patientId })
+        const medicalRecords = await MedicalRecord.find({ patientId: patient._id })
             .populate('doctorId', 'name specialization')
             .sort({ date: -1 });
 

@@ -80,8 +80,8 @@ exports.getHealthInsights = async (req, res) => {
             });
         }
 
-        // Get recent medical records
-        const records = await MedicalRecord.find({ patientId })
+        // Get recent medical records using patient._id
+        const records = await MedicalRecord.find({ patientId: patient._id })
             .sort({ createdAt: -1 })
             .limit(10);
 

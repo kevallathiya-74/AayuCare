@@ -3,7 +3,7 @@
  * ONE-CLICK ACCESS - Instant search with auto-load full history
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import {
     ActivityIndicator,
     RefreshControl,
     Alert,
+    Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,12 +24,23 @@ import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '
 import { patientService, prescriptionService, appointmentService, medicalRecordService } from '../../services';
 import { logError } from '../../utils/errorHandler';
 
-const PatientManagementScreen = ({ navigation }) => {
+const PatientManagementScreen = ({ navigation, route }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
+    const [showAddRecordModal, setShowAddRecordModal] = useState(false);
+    const [newRecord, setNewRecord] = useState({
+        recordType: 'doctor_visit',
+        title: '',
+        description: '',
+        diagnosis: '',
+    });
+    const [submitting, setSubmitting] = useState(false);
+    
+    // Get patientId from navigation params
+    const patientIdFromRoute = route?.params?.patientId;
 
     const fetchPatientData = useCallback(async (patientId) => {
         try {
@@ -41,9 +53,16 @@ const PatientManagementScreen = ({ navigation }) => {
             ]);
 
             const patient = patientRes.status === 'fulfilled' ? patientRes.value?.data : null;
-            const prescriptions = prescriptionsRes.status === 'fulfilled' ? prescriptionsRes.value?.data || [] : [];
-            const appointments = appointmentsRes.status === 'fulfilled' ? appointmentsRes.value?.data || [] : [];
-            const records = recordsRes.status === 'fulfilled' ? recordsRes.value?.data || [] : [];
+            
+            // Handle different response structures from backend
+            const prescriptionsData = prescriptionsRes.status === 'fulfilled' ? prescriptionsRes.value?.data : null;
+            const prescriptions = Array.isArray(prescriptionsData) ? prescriptionsData : [];
+            
+            const appointmentsData = appointmentsRes.status === 'fulfilled' ? appointmentsRes.value?.data : null;
+            const appointments = appointmentsData?.appointments || (Array.isArray(appointmentsData) ? appointmentsData : []);
+            
+            const recordsData = recordsRes.status === 'fulfilled' ? recordsRes.value?.data : null;
+            const records = recordsData?.medicalRecords || (Array.isArray(recordsData) ? recordsData : []);
 
             if (!patient) {
                 return null;
@@ -87,6 +106,28 @@ const PatientManagementScreen = ({ navigation }) => {
         }
     }, []);
 
+    // Load patient data if patientId is passed via navigation
+    useEffect(() => {
+        if (patientIdFromRoute) {
+            setLoading(true);
+            setError(null);
+            fetchPatientData(patientIdFromRoute)
+                .then(data => {
+                    if (data) {
+                        setSelectedPatient(data);
+                        setSearchQuery(data.name); // Pre-fill search with patient name
+                    } else {
+                        setError('Patient not found');
+                    }
+                })
+                .catch(err => {
+                    logError(err, { context: 'PatientManagementScreen.loadFromRoute', patientId: patientIdFromRoute });
+                    setError('Failed to load patient data');
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [patientIdFromRoute, fetchPatientData]);
+
     const handleSearch = useCallback(async () => {
         if (!searchQuery.trim()) {
             Alert.alert('Search Required', 'Please enter a patient name or ID');
@@ -99,7 +140,9 @@ const PatientManagementScreen = ({ navigation }) => {
         try {
             // Search for patients
             const searchRes = await patientService.searchPatients(searchQuery.trim());
-            const patients = searchRes?.data || [];
+            const patients = searchRes?.patients || searchRes?.data || [];
+
+            console.log('🔍 Search results:', { query: searchQuery, count: patients.length, patients });
 
             if (patients.length === 0) {
                 setSelectedPatient(null);
@@ -107,14 +150,21 @@ const PatientManagementScreen = ({ navigation }) => {
                 return;
             }
 
-            // Get full data for first matching patient
-            const patientData = await fetchPatientData(patients[0]._id);
+            // Get full data for first matching patient using userId
+            const firstPatient = patients[0];
+            const patientId = firstPatient.userId || firstPatient._id;
+            
+            console.log('📋 Fetching patient data for:', patientId);
+            
+            const patientData = await fetchPatientData(patientId);
             if (patientData) {
                 setSelectedPatient(patientData);
+                console.log('✅ Patient data loaded:', patientData.name);
             } else {
                 setError('Failed to load patient details');
             }
         } catch (err) {
+            console.error('❌ Search error:', err);
             logError(err, { context: 'PatientManagementScreen.handleSearch' });
             setError('Search failed. Please try again.');
         } finally {
@@ -143,8 +193,55 @@ const PatientManagementScreen = ({ navigation }) => {
             Alert.alert('Error', 'Please select a patient first');
             return;
         }
-        navigation.navigate('AddMedicalRecord', { patientId: selectedPatient.id });
-    }, [navigation, selectedPatient?.id]);
+        setShowAddRecordModal(true);
+    }, [selectedPatient?.id]);
+
+    const handleSubmitRecord = useCallback(async () => {
+        if (!newRecord.title.trim()) {
+            Alert.alert('Required', 'Please enter a title for the record');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const result = await medicalRecordService.createMedicalRecord({
+                patientId: selectedPatient.id,
+                recordType: newRecord.recordType,
+                title: newRecord.title.trim(),
+                description: newRecord.description.trim(),
+                diagnosis: newRecord.diagnosis.trim(),
+            });
+
+            console.log('✅ Medical record created:', result);
+            
+            Alert.alert(
+                'Success', 
+                `Medical record "${newRecord.title}" has been created successfully!`,
+                [{ text: 'OK' }]
+            );
+            
+            setShowAddRecordModal(false);
+            setNewRecord({
+                recordType: 'doctor_visit',
+                title: '',
+                description: '',
+                diagnosis: '',
+            });
+            
+            // Refresh patient data to show new record
+            setTimeout(() => {
+                onRefresh();
+            }, 500);
+        } catch (err) {
+            console.error('❌ Create record error:', err);
+            logError(err, { context: 'handleSubmitRecord' });
+            
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to create medical record';
+            Alert.alert('Error', errorMessage);
+        } finally {
+            setSubmitting(false);
+        }
+    }, [newRecord, selectedPatient, onRefresh]);
 
     const handlePrintSummary = useCallback(() => {
         if (!selectedPatient) {
@@ -191,7 +288,7 @@ const PatientManagementScreen = ({ navigation }) => {
             >
                 {/* Search Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🔍 Search by Name or ID</Text>
+                    <Text style={styles.sectionTitle}>Search by Name or ID</Text>
                     <View style={styles.searchContainer}>
                         <View style={styles.searchInputWrapper}>
                             <Ionicons name="search" size={20} color={healthColors.text.secondary} />
@@ -267,15 +364,6 @@ const PatientManagementScreen = ({ navigation }) => {
                                         </Text>
                                     </View>
                                 </View>
-
-                                <View style={styles.quickActions}>
-                                    <TouchableOpacity style={styles.quickActionButton} onPress={() => navigation.navigate('PatientHistory', { patient: selectedPatient })}>
-                                        <Text style={styles.quickActionText}>View Full History</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.quickActionButton, styles.addRecordButton]} onPress={handleAddRecord}>
-                                        <Text style={styles.quickActionTextWhite}>Add Record</Text>
-                                    </TouchableOpacity>
-                                </View>
                             </View>
                         </View>
 
@@ -287,7 +375,7 @@ const PatientManagementScreen = ({ navigation }) => {
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="document-text" size={20} color={healthColors.primary.main} />
-                                    <Text style={styles.historyTitle}>📋 MEDICAL RECORDS</Text>
+                                    <Text style={styles.historyTitle}>MEDICAL RECORDS</Text>
                                 </View>
                                 {selectedPatient.medicalRecords.map((record) => (
                                     <TouchableOpacity key={record.id} style={styles.historyItem}>
@@ -303,7 +391,7 @@ const PatientManagementScreen = ({ navigation }) => {
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="medkit" size={20} color={healthColors.success.main} />
-                                    <Text style={styles.historyTitle}>💊 PRESCRIPTIONS ({selectedPatient.prescriptions.length})</Text>
+                                    <Text style={styles.historyTitle}>PRESCRIPTIONS ({selectedPatient.prescriptions.length})</Text>
                                 </View>
                                 {selectedPatient.prescriptions.map((prescription) => (
                                     <View key={prescription.id} style={styles.historyItem}>
@@ -319,7 +407,7 @@ const PatientManagementScreen = ({ navigation }) => {
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="calendar" size={20} color={healthColors.info.main} />
-                                    <Text style={styles.historyTitle}>📅 APPOINTMENT HISTORY ({selectedPatient.appointments.length})</Text>
+                                    <Text style={styles.historyTitle}>APPOINTMENT HISTORY ({selectedPatient.appointments.length})</Text>
                                 </View>
                                 {selectedPatient.appointments.map((appointment) => (
                                     <View key={appointment.id} style={styles.historyItem}>
@@ -373,6 +461,103 @@ const PatientManagementScreen = ({ navigation }) => {
 
                 <View style={{ height: 80 }} />
             </ScrollView>
+
+            {/* Add Medical Record Modal */}
+            <Modal
+                visible={showAddRecordModal}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowAddRecordModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Add Medical Record</Text>
+                            <TouchableOpacity onPress={() => setShowAddRecordModal(false)}>
+                                <Ionicons name="close" size={24} color={healthColors.text.primary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.modalBody}>
+                            {/* Record Type */}
+                            <Text style={styles.formLabel}>Record Type *</Text>
+                            <View style={styles.pickerContainer}>
+                                {['doctor_visit', 'lab_report', 'test_result', 'imaging', 'other'].map((type) => (
+                                    <TouchableOpacity
+                                        key={type}
+                                        style={[
+                                            styles.pickerOption,
+                                            newRecord.recordType === type && styles.pickerOptionSelected
+                                        ]}
+                                        onPress={() => setNewRecord({ ...newRecord, recordType: type })}
+                                    >
+                                        <Text style={[
+                                            styles.pickerOptionText,
+                                            newRecord.recordType === type && styles.pickerOptionTextSelected
+                                        ]}>
+                                            {type.replace('_', ' ').toUpperCase()}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            {/* Title */}
+                            <Text style={styles.formLabel}>Title *</Text>
+                            <TextInput
+                                style={styles.formInput}
+                                placeholder="e.g., Routine Checkup, Blood Test Results"
+                                value={newRecord.title}
+                                onChangeText={(text) => setNewRecord({ ...newRecord, title: text })}
+                            />
+
+                            {/* Description */}
+                            <Text style={styles.formLabel}>Description</Text>
+                            <TextInput
+                                style={[styles.formInput, styles.formTextArea]}
+                                placeholder="Enter detailed description..."
+                                value={newRecord.description}
+                                onChangeText={(text) => setNewRecord({ ...newRecord, description: text })}
+                                multiline
+                                numberOfLines={4}
+                            />
+
+                            {/* Diagnosis */}
+                            <Text style={styles.formLabel}>Diagnosis/Findings</Text>
+                            <TextInput
+                                style={[styles.formInput, styles.formTextArea]}
+                                placeholder="Enter diagnosis or findings..."
+                                value={newRecord.diagnosis}
+                                onChangeText={(text) => setNewRecord({ ...newRecord, diagnosis: text })}
+                                multiline
+                                numberOfLines={3}
+                            />
+                            
+                            {/* Bottom spacing to prevent cut-off */}
+                            <View style={{ height: moderateScale(20) }} />
+                        </ScrollView>
+
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalCancelButton]}
+                                onPress={() => setShowAddRecordModal(false)}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalSubmitButton]}
+                                onPress={handleSubmitRecord}
+                                disabled={submitting}
+                            >
+                                {submitting ? (
+                                    <ActivityIndicator color="#FFFFFF" />
+                                ) : (
+                                    <Text style={styles.modalSubmitButtonText}>Create Record</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -633,6 +818,129 @@ const styles = StyleSheet.create({
         color: healthColors.error.main,
         marginTop: moderateScale(8),
         textAlign: 'center',
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: moderateScale(20),
+    },
+    modalContent: {
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(20),
+        width: '100%',
+        maxHeight: '85%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        overflow: 'hidden', 
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: moderateScale(20),
+        paddingVertical: moderateScale(16),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+        backgroundColor: healthColors.background.card,
+    },
+    modalTitle: {
+        fontSize: scaledFontSize(20),
+        fontWeight: '700',
+        color: healthColors.text.primary,
+    },
+    modalBody: {
+        paddingHorizontal: moderateScale(20),
+        paddingVertical: moderateScale(12),
+    },
+    formLabel: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+        marginBottom: moderateScale(6),
+        marginTop: moderateScale(12),
+    },
+    formInput: {
+        backgroundColor: healthColors.background.primary,
+        borderWidth: 1,
+        borderColor: healthColors.border.light,
+        borderRadius: moderateScale(12),
+        paddingHorizontal: moderateScale(14),
+        paddingVertical: moderateScale(12),
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.primary,
+        minHeight: moderateScale(44),
+    },
+    formTextArea: {
+        height: moderateScale(80),
+        textAlignVertical: 'top',
+        paddingTop: moderateScale(12),
+    },
+    pickerContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: moderateScale(8),
+    },
+    pickerOption: {
+        paddingVertical: moderateScale(8),
+        paddingHorizontal: moderateScale(16),
+        borderRadius: moderateScale(20),
+        borderWidth: 1,
+        borderColor: healthColors.border.light,
+        backgroundColor: healthColors.background.primary,
+    },
+    pickerOptionSelected: {
+        backgroundColor: healthColors.primary.main,
+        borderColor: healthColors.primary.main,
+    },
+    pickerOptionText: {
+        fontSize: scaledFontSize(12),
+        fontWeight: '600',
+        color: healthColors.text.secondary,
+    },
+    pickerOptionTextSelected: {
+        color: '#FFFFFF',
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        paddingHorizontal: moderateScale(20),
+        paddingVertical: moderateScale(16),
+        paddingBottom: moderateScale(20),
+        gap: moderateScale(12),
+        borderTopWidth: 1,
+        borderTopColor: healthColors.border.light,
+        backgroundColor: healthColors.background.card,
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: moderateScale(14),
+        borderRadius: moderateScale(12),
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: moderateScale(48),
+    },
+    modalCancelButton: {
+        backgroundColor: healthColors.background.primary,
+        borderWidth: 1,
+        borderColor: healthColors.border.light,
+    },
+    modalSubmitButton: {
+        backgroundColor: healthColors.primary.main,
+    },
+    modalCancelButtonText: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+    },
+    modalSubmitButtonText: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: '#FFFFFF',
     },
 });
 

@@ -14,6 +14,13 @@ router.use(protect);
 router.get('/stats', appointmentController.getAppointmentStats);
 
 /**
+ * @route   GET /api/appointments/patient/:patientId
+ * @desc    Get appointments for a specific patient
+ * @access  Private (Doctor, Admin)
+ */
+router.get('/patient/:patientId', authorize('doctor', 'admin'), appointmentController.getPatientAppointments);
+
+/**
  * @route   GET /api/appointments/slots/:doctorId
  * @desc    Get available time slots for a doctor
  * @access  Private

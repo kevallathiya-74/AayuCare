@@ -80,9 +80,18 @@ export const loadUser = createAsyncThunk(
         return null;
       }
       
-      const user = await authService.getStoredUser();
-      console.log('[authSlice] Loaded user:', user?.userId);
-      return user;
+      // Verify token is valid by making an API call
+      try {
+        console.log('[authSlice] Verifying token with API call');
+        const response = await authService.getCurrentUser();
+        console.log('[authSlice] Token verified, user data received:', response.user?.userId);
+        return response.user;
+      } catch (error) {
+        console.log('[authSlice] Token verification failed:', error.message);
+        // Token is invalid - clear storage and return null
+        await authService.logout();
+        return null;
+      }
     } catch (error) {
       console.log('[authSlice] Load user error:', error);
       return rejectWithValue(error.message || 'Failed to load user');

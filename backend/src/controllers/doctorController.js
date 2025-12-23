@@ -291,6 +291,8 @@ exports.searchPatients = async (req, res) => {
         const doctorId = req.user._id;
         const { q } = req.query;
 
+        logger.info('Search patients request:', { doctorId, userId: req.user.userId, query: q });
+
         if (!q || q.length < 2) {
             return res.json({
                 success: true,
@@ -303,6 +305,8 @@ exports.searchPatients = async (req, res) => {
 
         // Find patients who have appointments with this doctor
         const patientIds = await Appointment.distinct('patientId', { doctorId });
+        
+        logger.info('Found patient IDs:', { patientIds, count: patientIds.length });
 
         const patients = await User.find({
             _id: { $in: patientIds },
@@ -312,9 +316,11 @@ exports.searchPatients = async (req, res) => {
                 { phone: { $regex: sanitizedQuery, $options: 'i' } },
             ],
         })
-            .select('name userId age gender phone email')
+            .select('name userId age gender phone email dateOfBirth')
             .limit(10)
-            .lean();
+            .lean({ virtuals: true });
+
+        logger.info('Search results:', { count: patients.length, patients });
 
         res.json({
             success: true,
