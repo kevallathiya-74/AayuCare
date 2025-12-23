@@ -38,6 +38,8 @@ const PatientManagementScreen = ({ navigation, route }) => {
         diagnosis: '',
     });
     const [submitting, setSubmitting] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
+    const [showRecordDetailModal, setShowRecordDetailModal] = useState(false);
     
     // Get patientId from navigation params
     const patientIdFromRoute = route?.params?.patientId;
@@ -78,9 +80,12 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 vitals: patient.vitals || { bp: 'N/A', sugar: 'N/A', status: 'Unknown' },
                 medicalRecords: records.slice(0, 10).map(rec => ({
                     id: rec._id,
+                    title: rec.title || 'Untitled Record',
                     type: rec.recordType || rec.type || 'Record',
-                    date: new Date(rec.createdAt).toLocaleDateString('en-IN'),
-                    icon: rec.recordType === 'Blood Test' ? 'water' : 'document',
+                    description: rec.description || '',
+                    diagnosis: rec.diagnosis || '',
+                    date: new Date(rec.date || rec.createdAt).toLocaleDateString('en-IN'),
+                    icon: rec.recordType === 'lab_report' ? 'flask' : rec.recordType === 'test_result' ? 'medical' : 'document-text',
                 })),
                 prescriptions: prescriptions.slice(0, 10).map(presc => ({
                     id: presc._id,
@@ -346,7 +351,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                     <>
                         {/* Instant Results Section */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>⚡ INSTANT RESULTS:</Text>
+                            <Text style={styles.sectionTitle}>INSTANT RESULTS:</Text>
                             <View style={styles.patientCard}>
                                 <View style={styles.patientHeader}>
                                     <View style={styles.patientAvatar}>
@@ -369,38 +374,59 @@ const PatientManagementScreen = ({ navigation, route }) => {
 
                         {/* Patient Full History */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>PATIENT FULL HISTORY (Auto-Load):</Text>
+                            <Text style={styles.sectionTitle}>PATIENT FULL HISTORY:</Text>
 
                             {/* Medical Records */}
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="document-text" size={20} color={healthColors.primary.main} />
-                                    <Text style={styles.historyTitle}>MEDICAL RECORDS</Text>
+                                    <Text style={styles.historyTitle}>📋 MEDICAL RECORDS ({selectedPatient.medicalRecords.length})</Text>
                                 </View>
-                                {selectedPatient.medicalRecords.map((record) => (
-                                    <TouchableOpacity key={record.id} style={styles.historyItem}>
-                                        <Ionicons name={record.icon} size={18} color={healthColors.text.secondary} />
-                                        <Text style={styles.historyItemText}>
-                                            • {record.type}  - {record.date}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
+                                {selectedPatient.medicalRecords.length > 0 ? (
+                                    selectedPatient.medicalRecords.map((record) => (
+                                        <TouchableOpacity 
+                                            key={record.id} 
+                                            style={styles.historyItem}
+                                            onPress={() => {
+                                                setSelectedRecord(record);
+                                                setShowRecordDetailModal(true);
+                                            }}
+                                        >
+                                            <Ionicons name={record.icon} size={18} color={healthColors.primary.main} />
+                                            <View style={{ flex: 1, marginLeft: 8 }}>
+                                                <Text style={styles.historyItemText}>
+                                                    {record.title} - {record.type.replace('_', ' ').toUpperCase()}
+                                                </Text>
+                                                <Text style={styles.historyItemSubtext}>
+                                                    {record.date}
+                                                </Text>
+                                            </View>
+                                            <Ionicons name="chevron-forward" size={18} color={healthColors.text.disabled} />
+                                        </TouchableOpacity>
+                                    ))
+                                ) : (
+                                    <Text style={styles.emptyHistoryText}>No medical records found</Text>
+                                )}
                             </View>
 
                             {/* Prescriptions */}
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="medkit" size={20} color={healthColors.success.main} />
-                                    <Text style={styles.historyTitle}>PRESCRIPTIONS ({selectedPatient.prescriptions.length})</Text>
+                                    <Text style={styles.historyTitle}>💊 PRESCRIPTIONS ({selectedPatient.prescriptions.length})</Text>
                                 </View>
-                                {selectedPatient.prescriptions.map((prescription) => (
-                                    <View key={prescription.id} style={styles.historyItem}>
-                                        <View style={[styles.statusDot, prescription.status === 'Current' && styles.statusDotActive]} />
-                                        <Text style={styles.historyItemText}>
-                                            • {prescription.medicine} ({prescription.status})
-                                        </Text>
-                                    </View>
-                                ))}
+                                {selectedPatient.prescriptions.length > 0 ? (
+                                    selectedPatient.prescriptions.map((prescription) => (
+                                        <View key={prescription.id} style={styles.historyItem}>
+                                            <View style={[styles.statusDot, prescription.status === 'Active' && styles.statusDotActive]} />
+                                            <Text style={styles.historyItemText}>
+                                                • {prescription.medicine} ({prescription.status}) - {prescription.date}
+                                            </Text>
+                                        </View>
+                                    ))
+                                ) : (
+                                    <Text style={styles.emptyHistoryText}>No prescriptions found</Text>
+                                )}
                             </View>
 
                             {/* Appointment History */}
@@ -553,6 +579,83 @@ const PatientManagementScreen = ({ navigation, route }) => {
                                 ) : (
                                     <Text style={styles.modalSubmitButtonText}>Create Record</Text>
                                 )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Medical Record Detail Modal */}
+            <Modal
+                visible={showRecordDetailModal}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowRecordDetailModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Medical Record Details</Text>
+                            <TouchableOpacity onPress={() => setShowRecordDetailModal(false)}>
+                                <Ionicons name="close" size={24} color={healthColors.text.primary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.modalBody}>
+                            {selectedRecord && (
+                                <>
+                                    {/* Record Type & Date */}
+                                    <View style={styles.recordDetailHeader}>
+                                        <View style={styles.recordTypeBadge}>
+                                            <Ionicons name={selectedRecord.icon} size={20} color={healthColors.primary.main} />
+                                            <Text style={styles.recordTypeBadgeText}>
+                                                {selectedRecord.type.replace('_', ' ').toUpperCase()}
+                                            </Text>
+                                        </View>
+                                        <Text style={styles.recordDetailDate}>{selectedRecord.date}</Text>
+                                    </View>
+
+                                    {/* Title */}
+                                    <View style={styles.recordDetailSection}>
+                                        <Text style={styles.recordDetailLabel}>Title</Text>
+                                        <Text style={styles.recordDetailValue}>{selectedRecord.title}</Text>
+                                    </View>
+
+                                    {/* Description */}
+                                    {selectedRecord.description && (
+                                        <View style={styles.recordDetailSection}>
+                                            <Text style={styles.recordDetailLabel}>Description</Text>
+                                            <Text style={styles.recordDetailValue}>{selectedRecord.description}</Text>
+                                        </View>
+                                    )}
+
+                                    {/* Diagnosis */}
+                                    {selectedRecord.diagnosis && (
+                                        <View style={styles.recordDetailSection}>
+                                            <Text style={styles.recordDetailLabel}>Diagnosis/Findings</Text>
+                                            <Text style={styles.recordDetailValue}>{selectedRecord.diagnosis}</Text>
+                                        </View>
+                                    )}
+
+                                    {/* Doctor Info */}
+                                    {selectedRecord.doctorName && (
+                                        <View style={styles.recordDetailSection}>
+                                            <Text style={styles.recordDetailLabel}>Recorded By</Text>
+                                            <Text style={styles.recordDetailValue}>Dr. {selectedRecord.doctorName}</Text>
+                                        </View>
+                                    )}
+
+                                    <View style={{ height: moderateScale(20) }} />
+                                </>
+                            )}
+                        </ScrollView>
+
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalSubmitButton, { flex: 1 }]}
+                                onPress={() => setShowRecordDetailModal(false)}
+                            >
+                                <Text style={styles.modalSubmitButtonText}>Close</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -736,6 +839,64 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(14),
         color: healthColors.text.primary,
         flex: 1,
+    },
+    historyItemSubtext: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(2),
+    },
+    emptyHistoryText: {
+        fontSize: scaledFontSize(13),
+        color: healthColors.text.disabled,
+        fontStyle: 'italic',
+        textAlign: 'center',
+        paddingVertical: moderateScale(12),
+    },
+    // Record Detail Modal Styles
+    recordDetailHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: moderateScale(20),
+        paddingBottom: moderateScale(16),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    recordTypeBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: healthColors.primary.background,
+        paddingHorizontal: moderateScale(12),
+        paddingVertical: moderateScale(6),
+        borderRadius: moderateScale(20),
+        gap: moderateScale(6),
+    },
+    recordTypeBadgeText: {
+        fontSize: scaledFontSize(12),
+        fontWeight: '600',
+        color: healthColors.primary.main,
+    },
+    recordDetailDate: {
+        fontSize: scaledFontSize(13),
+        color: healthColors.text.secondary,
+        fontWeight: '500',
+    },
+    recordDetailSection: {
+        marginBottom: moderateScale(20),
+    },
+    recordDetailLabel: {
+        fontSize: scaledFontSize(13),
+        fontWeight: '600',
+        color: healthColors.text.secondary,
+        marginBottom: moderateScale(6),
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    recordDetailValue: {
+        fontSize: scaledFontSize(15),
+        fontWeight: '400',
+        color: healthColors.text.primary,
+        lineHeight: scaledFontSize(22),
     },
     statusDot: {
         width: moderateScale(8),
