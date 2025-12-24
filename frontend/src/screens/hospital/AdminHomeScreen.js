@@ -99,8 +99,20 @@ const AdminHomeScreen = ({ navigation }) => {
                 setRecentActivities(activitiesResponse.data);
             }
             
-            // Mock system health (replace with real API call)
-            setSystemHealth({ status: 'good', issues: 0 });
+            // Fetch system health from API
+            try {
+                const healthResponse = await adminService.getSystemHealth();
+                if (healthResponse?.success) {
+                    setSystemHealth(healthResponse.data);
+                } else {
+                    // Fallback if API doesn't return expected data
+                    setSystemHealth({ status: 'good', issues: 0 });
+                }
+            } catch (healthErr) {
+                // Non-critical error, use fallback
+                setSystemHealth({ status: 'good', issues: 0 });
+                console.warn('System health check failed:', healthErr.message);
+            }
         } catch (err) {
             const errorMessage = err.response?.data?.message || err.message || 'Failed to load dashboard';
             setError(errorMessage);

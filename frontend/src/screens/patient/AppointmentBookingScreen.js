@@ -3,7 +3,7 @@
  * Multi-step appointment booking with specialist selection
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -26,6 +26,7 @@ import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '
 import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import { doctorService, appointmentService } from '../../services';
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
     const [selectedSpecialty, setSelectedSpecialty] = useState('Cardiology');
@@ -37,34 +38,83 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     const [reason, setReason] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
+    
+    // API integration states
+    const [doctors, setDoctors] = useState([]);
+    const [specialties, setSpecialties] = useState(['Cardiology', 'Pulmonology', 'Neurology', 'Pediatrics', 'Orthopedics']);
+    const [timeSlots, setTimeSlots] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [loadingDoctors, setLoadingDoctors] = useState(false);
+    const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
+    const [error, setError] = useState(null);
+    const { isConnected } = useNetworkStatus();
 
-    const specialties = ['Cardiology', 'Pulmonology', 'Neurology', 'Pediatrics', 'Orthopedics'];
+    // Fetch doctors by specialty
+    const fetchDoctors = useCallback(async (specialty) => {
+        if (!isConnected) {
+            showError('No internet connection');
+            return;
+        }
 
-    const doctors = [
-        {
-            id: 1,
-            name: 'Dr. Rajesh Shah',
-            specialty: 'Cardiologist',
-            experience: '15 years exp',
-            rating: 4.8,
-            reviews: 240,
-            fee: 500,
-        },
-        {
-            id: 2,
-            name: 'Dr. Priya Mehta',
-            specialty: 'Cardiologist',
-            experience: '12 years exp',
-            rating: 4.9,
-            reviews: 180,
-            fee: 600,
-        },
-    ];
+        setLoadingDoctors(true);
+        setError(null);
+        try {
+            const response = await doctorService.getDoctors({ specialization: specialty });
+            if (response?.data?.doctors) {
+                setDoctors(response.data.doctors);
+            } else {
+                setDoctors([]);
+            }
+        } catch (err) {
+            logError(err, { context: 'AppointmentBookingScreen.fetchDoctors', specialty });
+            setError('Failed to load doctors');
+            showError('Failed to load doctors. Please try again.');
+        } finally {
+            setLoadingDoctors(false);
+        }
+    }, [isConnected]);
 
-    const timeSlots = [
-        '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', 
-        '12:00 PM', '2:00 PM', '2:30 PM', '3:00 PM'
-    ];
+    // Fetch available time slots for selected doctor and date
+    const fetchTimeSlots = useCallback(async (doctorId, appointmentDate) => {
+        if (!doctorId || !appointmentDate) return;
+
+        setLoadingTimeSlots(true);
+        try {
+            const response = await appointmentService.getAvailableSlots(doctorId, appointmentDate);
+            if (response?.data?.slots) {
+                setTimeSlots(response.data.slots);
+            } else {
+                // Fallback to default slots if API doesn't provide them
+                setTimeSlots([
+                    '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', 
+                    '12:00 PM', '2:00 PM', '2:30 PM', '3:00 PM'
+                ]);
+            }
+        } catch (err) {
+            logError(err, { context: 'AppointmentBookingScreen.fetchTimeSlots', doctorId, appointmentDate });
+            // Use fallback slots on error
+            setTimeSlots([
+                '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', 
+                '12:00 PM', '2:00 PM', '2:30 PM', '3:00 PM'
+            ]);
+        } finally {
+            setLoadingTimeSlots(false);
+        }
+    }, []);
+
+    // Load doctors when specialty changes
+    useEffect(() => {
+        if (selectedSpecialty) {
+            fetchDoctors(selectedSpecialty);
+        }
+    }, [selectedSpecialty, fetchDoctors]);
+
+    // Load time slots when doctor or date changes
+    useEffect(() => {
+        if (selectedDoctor && date) {
+            fetchTimeSlots(selectedDoctor._id, date.toISOString());
+        }
+    }, [selectedDoctor, date, fetchTimeSlots]);
 
     const formatDate = (date) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -84,18 +134,57 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         }
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!selectedDoctor || !selectedTime) {
-            alert('Please select a doctor and time slot');
+            Alert.alert('Missing Information', 'Please select a doctor and time slot');
             return;
         }
-        // Show confirmation alert
-        Alert.alert(
-            'Appointment Booked',
-            `Your appointment with ${selectedDoctor} has been scheduled for ${selectedDate} at ${selectedTime}`,
-            [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
-        // Note: Removed navigation to non-existent AppointmentConfirmation screen
+
+        if (!reason.trim()) {
+            Alert.alert('Missing Information', 'Please enter a reason for the appointment');
+            return;
+        }
+
+        if (!isConnected) {
+            showError('No internet connection');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // Prepare appointment data
+            const appointmentData = {
+                doctorId: selectedDoctor._id,
+                appointmentDate: date.toISOString(),
+                appointmentTime: selectedTime,
+                appointmentType,
+                reason: reason.trim(),
+                specialty: selectedSpecialty,
+            };
+
+            const response = await appointmentService.createAppointment(appointmentData);
+
+            if (response?.success) {
+                Alert.alert(
+                    'Appointment Booked!',
+                    `Your appointment with ${selectedDoctor.name} has been scheduled for ${selectedDate} at ${selectedTime}`,
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => navigation.navigate('PatientTabs', { screen: 'Home' })
+                        }
+                    ]
+                );
+            } else {
+                throw new Error(response?.message || 'Failed to book appointment');
+            }
+        } catch (err) {
+            logError(err, { context: 'AppointmentBookingScreen.handleConfirm' });
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to book appointment';
+            Alert.alert('Booking Failed', errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -186,42 +275,55 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                         </View>
                         <Text style={styles.stepTitle}>CHOOSE DOCTOR:</Text>
                     </View>
-                    {doctors.map((doctor) => (
-                        <TouchableOpacity
-                            key={doctor.id}
-                            style={[
-                                styles.doctorCard,
-                                selectedDoctor?.id === doctor.id && styles.doctorCardSelected,
-                            ]}
-                            onPress={() => setSelectedDoctor(doctor)}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.doctorAvatar}>
-                                <Ionicons name="person" size={24} color={healthColors.primary.main} />
-                            </View>
-                            <View style={styles.doctorInfo}>
-                                <Text style={styles.doctorName}>{doctor.name}</Text>
-                                <Text style={styles.doctorDetails}>
-                                    {doctor.specialty} • {doctor.experience}
-                                </Text>
-                                <View style={styles.doctorStats}>
-                                    <View style={styles.ratingContainer}>
-                                        <Ionicons name="star" size={14} color="#FFB800" />
-                                        <Text style={styles.ratingText}>
-                                            {doctor.rating} ({doctor.reviews} reviews)
-                                        </Text>
-                                    </View>
-                                    <View style={styles.feeContainer}>
-                                        <Ionicons name="cash-outline" size={14} color={healthColors.success.main} />
-                                        <Text style={styles.feeText}>Consultation: ₹{doctor.fee}</Text>
+                    
+                    {loadingDoctors ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={healthColors.primary.main} />
+                            <Text style={styles.loadingText}>Loading doctors...</Text>
+                        </View>
+                    ) : doctors.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Ionicons name="medkit-outline" size={48} color={healthColors.text.disabled} />
+                            <Text style={styles.emptyStateText}>No doctors available for {selectedSpecialty}</Text>
+                        </View>
+                    ) : (
+                        doctors.map((doctor) => (
+                            <TouchableOpacity
+                                key={doctor._id || doctor.id}
+                                style={[
+                                    styles.doctorCard,
+                                    selectedDoctor?._id === doctor._id && styles.doctorCardSelected,
+                                ]}
+                                onPress={() => setSelectedDoctor(doctor)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.doctorAvatar}>
+                                    <Ionicons name="person" size={24} color={healthColors.primary.main} />
+                                </View>
+                                <View style={styles.doctorInfo}>
+                                    <Text style={styles.doctorName}>{doctor.name}</Text>
+                                    <Text style={styles.doctorDetails}>
+                                        {doctor.specialization || doctor.specialty} • {doctor.experience} years exp
+                                    </Text>
+                                    <View style={styles.doctorStats}>
+                                        <View style={styles.ratingContainer}>
+                                            <Ionicons name="star" size={14} color="#FFB800" />
+                                            <Text style={styles.ratingText}>
+                                                {doctor.rating || '4.5'} reviews
+                                            </Text>
+                                        </View>
+                                        <View style={styles.feeContainer}>
+                                            <Ionicons name="cash-outline" size={14} color={healthColors.success.main} />
+                                            <Text style={styles.feeText}>Consultation: ₹{doctor.consultationFee || 500}</Text>
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
-                            {selectedDoctor?.id === doctor.id && (
-                                <Ionicons name="checkmark-circle" size={24} color={healthColors.success.main} />
-                            )}
-                        </TouchableOpacity>
-                    ))}
+                                {selectedDoctor?._id === doctor._id && (
+                                    <Ionicons name="checkmark-circle" size={24} color={healthColors.success.main} />
+                                )}
+                            </TouchableOpacity>
+                        ))
+                    )}
                 </View>
 
                 {/* Step 3: Appointment Type */}
@@ -400,10 +502,23 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
 
                 {/* Confirm Button */}
                 <View style={styles.section}>
-                    <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+                    <TouchableOpacity 
+                        style={[styles.confirmButton, loading && styles.confirmButtonDisabled]} 
+                        onPress={handleConfirm}
+                        disabled={loading}
+                    >
                         <View style={styles.confirmButtonContent}>
-                            <Text style={styles.confirmButtonText}>CONFIRM APPOINTMENT</Text>
-                            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                            {loading ? (
+                                <>
+                                    <ActivityIndicator size="small" color="#FFFFFF" />
+                                    <Text style={[styles.confirmButtonText, { marginLeft: moderateScale(8) }]}>BOOKING...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.confirmButtonText}>CONFIRM APPOINTMENT</Text>
+                                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                                </>
+                            )}
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -759,6 +874,32 @@ const styles = StyleSheet.create({
         color: healthColors.text.secondary,
         textAlign: 'center',
         marginTop: moderateScale(12),
+    },
+    loadingContainer: {
+        padding: moderateScale(40),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loadingText: {
+        marginTop: moderateScale(12),
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+    },
+    emptyState: {
+        padding: moderateScale(40),
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(12),
+    },
+    emptyStateText: {
+        marginTop: moderateScale(12),
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        textAlign: 'center',
+    },
+    confirmButtonDisabled: {
+        opacity: 0.6,
     },
 });
 

@@ -4,7 +4,7 @@
  * Categorized by type and date
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,46 +14,121 @@ import {
     StatusBar,
     ActivityIndicator,
     Alert,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import { medicalRecordService } from '../../services';
 
 const MyReportsScreen = ({ navigation }) => {
-    const reports = [
-        {
-            id: '1',
-            title: 'Blood Test Report',
-            type: 'Lab Report',
-            date: 'Dec 5, 2025',
-            doctor: 'Dr. Sharma',
-            fileType: 'PDF',
-        },
-        {
-            id: '2',
-            title: 'X-Ray Chest',
-            type: 'Imaging',
-            date: 'Nov 28, 2025',
-            doctor: 'Dr. Patel',
-            fileType: 'Image',
-        },
-        {
-            id: '3',
-            title: 'ECG Report',
-            type: 'Diagnostic',
-            date: 'Nov 20, 2025',
-            doctor: 'Dr. Kumar',
-            fileType: 'PDF',
-        },
-    ];
+    const [reports, setReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
+    const user = useSelector((state) => state.auth.user);
+    const { isConnected } = useNetworkStatus();
+
+    // Fetch reports from API
+    const fetchReports = useCallback(async () => {
+        if (!user?._id) {
+            setError('User not found');
+            setLoading(false);
+            return;
+        }
+
+        if (!isConnected) {
+            showError('No internet connection');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setError(null);
+            const response = await medicalRecordService.getPatientRecords(user._id);
+            const records = response?.data?.medicalRecords || response?.medicalRecords || [];
+            
+            // Format records as reports
+            const formattedReports = records.map(record => ({
+                id: record._id,
+                title: record.title || 'Medical Report',
+                type: formatRecordType(record.recordType || 'general'),
+                date: new Date(record.createdAt || record.date).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }),
+                doctor: record.doctorId?.name || record.doctorName || 'Unknown Doctor',
+                fileType: determineFileType(record),
+                recordData: record,
+            }));
+            
+            setReports(formattedReports);
+        } catch (err) {
+            logError(err, { context: 'MyReportsScreen.fetchReports' });
+            setError('Failed to load reports');
+            showError('Failed to load reports. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    }, [user, isConnected]);
+
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchReports();
+        setRefreshing(false);
+    }, [fetchReports]);
+
+    const formatRecordType = (type) => {
+        const typeMap = {
+            'lab_report': 'Lab Report',
+            'imaging': 'Imaging',
+            'test_result': 'Test Result',
+            'doctor_visit': 'Doctor Visit',
+            'prescription': 'Prescription',
+        };
+        return typeMap[type] || 'Medical Report';
+    };
+
+    const determineFileType = (record) => {
+        if (record.attachments && record.attachments.length > 0) {
+            const ext = record.attachments[0].split('.').pop().toLowerCase();
+            return ['jpg', 'jpeg', 'png', 'gif'].includes(ext) ? 'Image' : 'PDF';
+        }
+        return record.recordType === 'imaging' ? 'Image' : 'PDF';
+    };
 
     const getFileIcon = (fileType) => {
         return fileType === 'PDF' ? 'document-text' : 'image';
     };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+                <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>My Reports</Text>
+                    <View style={{ width: 24 }} />
+                </View>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={healthColors.primary.main} />
+                    <Text style={styles.loadingText}>Loading reports...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     const renderReport = ({ item }) => (
         <TouchableOpacity
@@ -116,8 +191,28 @@ const MyReportsScreen = ({ navigation }) => {
                 data={reports}
                 renderItem={renderReport}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[
+                    styles.listContent,
+                    reports.length === 0 && styles.emptyListContent
+                ]}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyState}>
+                        <Ionicons name="document-text-outline" size={64} color={healthColors.text.disabled} />
+                        <Text style={styles.emptyStateTitle}>No Reports Found</Text>
+                        <Text style={styles.emptyStateText}>
+                            Your medical reports will appear here once they are uploaded by your doctor.
+                        </Text>
+                    </View>
+                }
             />
         </SafeAreaView>
     );
@@ -235,6 +330,39 @@ const styles = StyleSheet.create({
         backgroundColor: healthColors.background.tertiary,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
+    },
+    emptyListContent: {
+        flexGrow: 1,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: indianDesign.spacing.xl,
+        minHeight: 400,
+    },
+    emptyStateTitle: {
+        fontSize: indianDesign.fontSize.large,
+        fontWeight: indianDesign.fontWeight.semibold,
+        color: healthColors.text.primary,
+        marginTop: indianDesign.spacing.md,
+        marginBottom: indianDesign.spacing.xs,
+    },
+    emptyStateText: {
+        fontSize: indianDesign.fontSize.medium,
+        color: healthColors.text.secondary,
+        textAlign: 'center',
+        lineHeight: 20,
     },
 });
 

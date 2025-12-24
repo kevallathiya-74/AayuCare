@@ -4,7 +4,7 @@
  * Full user profile page with personal information and account settings
  */
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,6 +12,8 @@ import {
     ScrollView,
     TouchableOpacity,
     Image,
+    ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,10 +25,60 @@ import { spacing } from '../../theme/spacing';
 import { moderateScale, scaledFontSize } from '../../utils/responsive';
 import { Card } from '../../components/common';
 import { logoutUser } from '../../store/slices/authSlice';
+import { appointmentService, medicalRecordService, prescriptionService } from '../../services';
+import { logError } from '../../utils/errorHandler';
 
 const ProfileScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth.user);
+    
+    // Statistics states
+    const [stats, setStats] = useState({
+        appointments: 0,
+        records: 0,
+        prescriptions: 0,
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Fetch user statistics
+    const fetchStats = useCallback(async () => {
+        if (!user?._id) return;
+
+        try {
+            const [appointmentsRes, recordsRes, prescriptionsRes] = await Promise.allSettled([
+                appointmentService.getPatientAppointments(user._id),
+                medicalRecordService.getPatientRecords(user._id),
+                prescriptionService.getPatientPrescriptions(user._id),
+            ]);
+
+            setStats({
+                appointments: appointmentsRes.status === 'fulfilled' 
+                    ? (appointmentsRes.value?.data?.appointments?.length || appointmentsRes.value?.data?.length || 0)
+                    : 0,
+                records: recordsRes.status === 'fulfilled'
+                    ? (recordsRes.value?.data?.medicalRecords?.length || recordsRes.value?.data?.length || 0)
+                    : 0,
+                prescriptions: prescriptionsRes.status === 'fulfilled'
+                    ? (prescriptionsRes.value?.data?.prescriptions?.length || prescriptionsRes.value?.data?.length || 0)
+                    : 0,
+            });
+        } catch (err) {
+            logError(err, { context: 'ProfileScreen.fetchStats' });
+        } finally {
+            setLoadingStats(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchStats();
+        setRefreshing(false);
+    }, [fetchStats]);
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -108,6 +160,14 @@ const ProfileScreen = ({ navigation }) => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
             >
                 {/* Header */}
                 <LinearGradient
@@ -138,17 +198,29 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.statsContainer}>
                     <View style={styles.statCard}>
                         <Ionicons name="calendar-outline" size={24} color={healthColors.primary.main} />
-                        <Text style={styles.statValue}>12</Text>
+                        {loadingStats ? (
+                            <ActivityIndicator size="small" color={healthColors.primary.main} />
+                        ) : (
+                            <Text style={styles.statValue}>{stats.appointments}</Text>
+                        )}
                         <Text style={styles.statLabel}>Appointments</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="document-text-outline" size={24} color={healthColors.success.main} />
-                        <Text style={styles.statValue}>8</Text>
+                        {loadingStats ? (
+                            <ActivityIndicator size="small" color={healthColors.success.main} />
+                        ) : (
+                            <Text style={styles.statValue}>{stats.records}</Text>
+                        )}
                         <Text style={styles.statLabel}>Records</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="medkit-outline" size={24} color={healthColors.info.main} />
-                        <Text style={styles.statValue}>5</Text>
+                        {loadingStats ? (
+                            <ActivityIndicator size="small" color={healthColors.info.main} />
+                        ) : (
+                            <Text style={styles.statValue}>{stats.prescriptions}</Text>
+                        )}
                         <Text style={styles.statLabel}>Prescriptions</Text>
                     </View>
                 </View>

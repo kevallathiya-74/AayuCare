@@ -19,6 +19,7 @@ import {
     Modal,
     Pressable,
     Animated,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +37,8 @@ import {
     scaledFontSize,
     getGridColumns,
 } from '../../utils/responsive';
+import { healthMetricsService } from '../../services';
+import { logError, showError } from '../../utils/errorHandler';
 
 const { width } = Dimensions.get('window');
 
@@ -43,7 +46,107 @@ const PatientDashboard = ({ navigation }) => {
     const dispatch = useDispatch();
     const { user, loading } = useSelector((state) => state.auth);
     const [menuVisible, setMenuVisible] = useState(false);
+    const [healthMetrics, setHealthMetrics] = useState(null);
+    const [loadingMetrics, setLoadingMetrics] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
+
+    // Fetch health metrics
+    useEffect(() => {
+        if (user?._id) {
+            fetchHealthMetrics();
+        }
+    }, [user?._id]);
+
+    const fetchHealthMetrics = async () => {
+        try {
+            setLoadingMetrics(true);
+            const response = await healthMetricsService.getMetrics(user._id);
+            setHealthMetrics(response.data);
+        } catch (error) {
+            logError(error, { context: 'PatientDashboard.fetchHealthMetrics' });
+            // Don't show error to user for non-critical health metrics
+        } finally {
+            setLoadingMetrics(false);
+        }
+    };
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchHealthMetrics();
+        setRefreshing(false);
+    }, [user?._id]);
+
+    // Get latest metric value by type
+    const getLatestMetric = (type) => {
+        if (!healthMetrics || !Array.isArray(healthMetrics)) return null;
+        const metricsOfType = healthMetrics.filter(m => m.type === type);
+        if (metricsOfType.length === 0) return null;
+        return metricsOfType.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    };
+
+    // Format blood pressure
+    const formatBP = () => {
+        const bpMetric = getLatestMetric('bp');
+        if (!bpMetric?.value) return 'N/A';
+        return `${bpMetric.value.systolic}/${bpMetric.value.diastolic}`;
+    };
+
+    // Format blood sugar
+    const formatSugar = () => {
+        const sugarMetric = getLatestMetric('sugar');
+        if (!sugarMetric?.value) return 'N/A';
+        return `${sugarMetric.value}`;
+    };
+
+    // Format temperature
+    const formatTemp = () => {
+        const tempMetric = getLatestMetric('temperature');
+        if (!tempMetric?.value) return 'N/A';
+        return `${tempMetric.value}°F`;
+    };
+
+    // Get health status
+    const getHealthStatus = () => {
+        if (!healthMetrics || healthMetrics.length === 0) {
+            return { status: 'UNKNOWN', riskScore: 'N/A' };
+        }
+        // Simple risk assessment based on latest metrics
+        const bp = getLatestMetric('bp');
+        const sugar = getLatestMetric('sugar');
+        let riskScore = 0;
+        
+        if (bp?.value) {
+            const { systolic, diastolic } = bp.value;
+            if (systolic > 140 || diastolic > 90) riskScore += 30;
+            else if (systolic > 130 || diastolic > 85) riskScore += 15;
+        }
+        
+        if (sugar?.value) {
+            if (sugar.value > 140) riskScore += 30;
+            else if (sugar.value > 110) riskScore += 15;
+        }
+        
+        if (riskScore < 20) return { status: 'HEALTHY', riskScore };
+        if (riskScore < 40) return { status: 'MONITOR', riskScore };
+        return { status: 'CONSULT DOCTOR', riskScore };
+    };
+
+    // Get last update time
+    const getLastUpdateTime = () => {
+        if (!healthMetrics || healthMetrics.length === 0) return 'No data';
+        const latestMetric = healthMetrics.sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+        )[0];
+        const date = new Date(latestMetric.timestamp);
+        const today = new Date();
+        const isToday = date.toDateString() === today.toDateString();
+        
+        if (isToday) {
+            return `Today ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+        }
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
 
     // Menu animation handlers
     useEffect(() => {
@@ -248,6 +351,14 @@ const PatientDashboard = ({ navigation }) => {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
             >
                 {/* Health Status Card */}
                 <View style={styles.healthStatusSection}>
@@ -255,34 +366,53 @@ const PatientDashboard = ({ navigation }) => {
                         <Ionicons name="heart-circle" size={20} color={healthColors.primary.main} />
                         <Text style={styles.healthStatusTitle}>HEALTH STATUS</Text>
                     </View>
-                    <View style={styles.healthCard}>
-                        <View style={styles.healthCardLeft}>
-                            <View style={styles.healthIconCircle}>
-                                <Ionicons name="fitness" size={32} color={healthColors.success.main} />
-                            </View>
-                            <View style={styles.healthCardText}>
-                                <Text style={styles.healthCardTitle}>HEALTHY  Risk Score: 25/100</Text>
-                                <View style={styles.healthMetrics}>
-                                    <View style={styles.metricItem}>
-                                        <Ionicons name="pulse" size={14} color={healthColors.info.main} />
-                                        <Text style={styles.healthCardDetail}>BP: 130/85</Text>
-                                    </View>
-                                    <View style={styles.metricItem}>
-                                        <Ionicons name="water" size={14} color={healthColors.warning.main} />
-                                        <Text style={styles.healthCardDetail}>Sugar: 110</Text>
-                                    </View>
-                                    <View style={styles.metricItem}>
-                                        <Ionicons name="thermometer" size={14} color={healthColors.error.main} />
-                                        <Text style={styles.healthCardDetail}>Temp: 98.6°F</Text>
-                                    </View>
+                    {loadingMetrics ? (
+                        <View style={styles.healthCard}>
+                            <ActivityIndicator size="large" color={healthColors.primary.main} />
+                            <Text style={styles.loadingText}>Loading health data...</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.healthCard}>
+                            <View style={styles.healthCardLeft}>
+                                <View style={styles.healthIconCircle}>
+                                    <Ionicons 
+                                        name="fitness" 
+                                        size={32} 
+                                        color={
+                                            getHealthStatus().status === 'HEALTHY' 
+                                                ? healthColors.success.main 
+                                                : getHealthStatus().status === 'MONITOR'
+                                                ? healthColors.warning.main
+                                                : healthColors.error.main
+                                        } 
+                                    />
                                 </View>
-                                <View style={styles.healthCardUpdateRow}>
-                                    <Ionicons name="time-outline" size={12} color={healthColors.text.secondary} />
-                                    <Text style={styles.healthCardUpdated}>Last Updated: Today 9:00 AM</Text>
+                                <View style={styles.healthCardText}>
+                                    <Text style={styles.healthCardTitle}>
+                                        {getHealthStatus().status}  Risk Score: {getHealthStatus().riskScore}/100
+                                    </Text>
+                                    <View style={styles.healthMetrics}>
+                                        <View style={styles.metricItem}>
+                                            <Ionicons name="pulse" size={14} color={healthColors.info.main} />
+                                            <Text style={styles.healthCardDetail}>BP: {formatBP()}</Text>
+                                        </View>
+                                        <View style={styles.metricItem}>
+                                            <Ionicons name="water" size={14} color={healthColors.warning.main} />
+                                            <Text style={styles.healthCardDetail}>Sugar: {formatSugar()}</Text>
+                                        </View>
+                                        <View style={styles.metricItem}>
+                                            <Ionicons name="thermometer" size={14} color={healthColors.error.main} />
+                                            <Text style={styles.healthCardDetail}>Temp: {formatTemp()}</Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.healthCardUpdateRow}>
+                                        <Ionicons name="time-outline" size={12} color={healthColors.text.secondary} />
+                                        <Text style={styles.healthCardUpdated}>Last Updated: {getLastUpdateTime()}</Text>
+                                    </View>
                                 </View>
                             </View>
                         </View>
-                    </View>
+                    )}
                 </View>
 
                 {/* Quick Emergency Buttons */}
@@ -1147,6 +1277,12 @@ const styles = StyleSheet.create({
         fontSize: scaledFontSize(12),
         color: healthColors.text.secondary,
         marginBottom: moderateScale(4),
+    },
+    loadingText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(12),
+        textAlign: 'center',
     },
 });
 
