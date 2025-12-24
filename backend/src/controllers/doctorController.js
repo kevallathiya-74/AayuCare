@@ -429,3 +429,82 @@ exports.getDoctorProfileStats = async (req, res) => {
         });
     }
 };
+
+/**
+ * @desc    Register walk-in patient
+ * @route   POST /api/doctors/walk-in-patient
+ * @access  Private (Doctor only)
+ */
+exports.registerWalkInPatient = async (req, res) => {
+    try {
+        const { name, age, gender, phone, bloodGroup, symptoms, address } = req.body;
+        const doctorId = req.user._id;
+
+        // Validate required fields
+        if (!name || !age || !gender || !phone) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name, age, gender, and phone are required',
+            });
+        }
+
+        // Check if patient with this phone already exists
+        let patient = await User.findOne({ phone, role: 'patient' });
+
+        if (patient) {
+            // Patient exists, return existing patient
+            return res.status(200).json({
+                success: true,
+                message: 'Patient already registered',
+                data: patient,
+                isExisting: true,
+            });
+        }
+
+        // Generate unique userId
+        const patientCount = await User.countDocuments({ role: 'patient' });
+        const userId = `P${String(patientCount + 1).padStart(6, '0')}`;
+
+        // Create new walk-in patient
+        patient = await User.create({
+            name,
+            userId,
+            phone,
+            role: 'patient',
+            age,
+            gender,
+            bloodGroup,
+            address,
+            isWalkIn: true,
+            registeredBy: doctorId,
+            // No password needed for walk-in patients (admin creates later if needed)
+        });
+
+        // Create appointment immediately if needed
+        if (symptoms) {
+            await Appointment.create({
+                patientId: patient._id,
+                doctorId,
+                appointmentDate: new Date(),
+                appointmentTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                reason: symptoms,
+                status: 'pending',
+                type: 'walk-in',
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: 'Walk-in patient registered successfully',
+            data: patient,
+            isExisting: false,
+        });
+    } catch (error) {
+        logger.error('Register walk-in patient error:', { error: error.message, stack: error.stack, doctorId: req.user?._id });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to register walk-in patient',
+            error: error.message,
+        });
+    }
+};

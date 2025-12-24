@@ -162,6 +162,19 @@ class DoctorService {
             throw error;
         }
     }
+
+    /**
+     * Register walk-in patient
+     */
+    async registerWalkInPatient(patientData) {
+        try {
+            const response = await api.post('/doctors/me/walk-in-patient', patientData);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'DoctorService.registerWalkInPatient' });
+            throw error;
+        }
+    }
 }
 
 export default new DoctorService();

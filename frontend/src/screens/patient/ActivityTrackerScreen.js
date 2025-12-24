@@ -3,7 +3,7 @@
  * Track steps, sleep, water intake, and stress relief activities
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -11,54 +11,85 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSelector } from 'react-redux';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign, createShadow } from '../../theme/indianDesign';
 import { getScreenPadding, scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
 import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import { activityService } from '../../services';
 
 const ActivityTrackerScreen = ({ navigation }) => {
-    const [loading, setLoading] = useState(false);
+    const { user } = useSelector((state) => state.auth);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const { isConnected } = useNetworkStatus();
-    const [waterGlasses, setWaterGlasses] = useState(6);
+    const [waterGlasses, setWaterGlasses] = useState(0);
+    const [stepsData, setStepsData] = useState({ current: 0, target: 10000, percentage: 0 });
+    const [sleepData, setSleepData] = useState({ duration: 'N/A', quality: 'N/A', bedtime: 'N/A', wakeTime: 'N/A' });
+    const [stressActivities, setStressActivities] = useState([]);
     const targetGlasses = 8;
     
-    const stepsData = {
-        current: 6543,
-        target: 10000,
-        percentage: 65,
-    };
-
-    const sleepData = {
-        duration: '7h 30m',
-        quality: 'GOOD',
-        bedtime: '10:30 PM',
-        wakeTime: '6:00 AM',
-    };
-
-    const stressActivities = [
-        { icon: 'fitness', name: 'Breathing Exercise', duration: '5 min', color: '#4CAF50' },
-        { icon: 'hand-left-outline', name: 'Yoga Session', duration: '15 min', color: '#9C27B0' },
-        { icon: 'musical-notes', name: 'Meditation', duration: '10 min', color: '#2196F3' },
-    ];
-
     useEffect(() => {
-        fetchActivityData();
-    }, []);
+        if (user?._id) {
+            fetchActivityData();
+        }
+    }, [user?._id]);
 
     const fetchActivityData = async () => {
         try {
+            if (!isConnected) {
+                showError('No internet connection');
+                return;
+            }
+            
             setLoading(true);
             setError(null);
-            // TODO: Replace with actual API call
-            // const response = await activityService.getActivityData();
-            // Update state with response data
+            
+            const response = await activityService.getActivityData(user._id);
+            const { latest, today } = response.data;
+            
+            // Update steps
+            if (latest.steps) {
+                const current = latest.steps.value || 0;
+                const target = 10000;
+                setStepsData({
+                    current,
+                    target,
+                    percentage: Math.min(Math.round((current / target) * 100), 100),
+                });
+            }
+            
+            // Update sleep
+            if (latest.sleep) {
+                setSleepData({
+                    duration: latest.sleep.value.duration || 'N/A',
+                    quality: latest.sleep.value.quality || 'N/A',
+                    bedtime: latest.sleep.value.bedtime || 'N/A',
+                    wakeTime: latest.sleep.value.wakeTime || 'N/A',
+                });
+            }
+            
+            // Update water
+            if (latest.water) {
+                setWaterGlasses(latest.water.value || 0);
+            }
+            
+            // Update stress activities from today's data
+            const todayExercise = today.filter(m => m.type === 'exercise');
+            setStressActivities(todayExercise.map(e => ({
+                icon: e.metadata?.icon || 'fitness',
+                name: e.value.name || 'Activity',
+                duration: e.value.duration || 'N/A',
+                color: e.metadata?.color || '#4CAF50',
+            })));
         } catch (err) {
             const errorMessage = 'Failed to load activity data';
             setError(errorMessage);
@@ -69,14 +100,30 @@ const ActivityTrackerScreen = ({ navigation }) => {
         }
     };
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchActivityData();
+        setRefreshing(false);
+    }, [user?._id]);
+
     const handleRetry = () => {
         setError(null);
         fetchActivityData();
     };
 
-    const addWaterGlass = () => {
+    const addWaterGlass = async () => {
         if (waterGlasses < targetGlasses) {
-            setWaterGlasses(waterGlasses + 1);
+            const newCount = waterGlasses + 1;
+            setWaterGlasses(newCount);
+            
+            try {
+                await activityService.addWater(user._id, newCount);
+            } catch (err) {
+                logError(err, { context: 'ActivityTrackerScreen.addWaterGlass' });
+                showError('Failed to update water intake');
+                // Revert on error
+                setWaterGlasses(waterGlasses);
+            }
         }
     };
 
@@ -118,7 +165,17 @@ const ActivityTrackerScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView 
+                contentContainerStyle={styles.content}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+            >
                 {/* Steps Tracker */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>🚶 STEPS TODAY:</Text>

@@ -7,6 +7,7 @@ const User = require('../models/User');
 const MedicalRecord = require('../models/MedicalRecord');
 const Appointment = require('../models/Appointment');
 const Prescription = require('../models/Prescription');
+const HealthMetric = require('../models/HealthMetric');
 const logger = require('../utils/logger');
 
 /**
@@ -308,44 +309,173 @@ exports.getHealthMetrics = async (req, res) => {
             });
         }
 
-        // For now, return mock data
-        // TODO: Create HealthMetrics model and fetch real data
-        const mockMetrics = {
-            bp: {
-                current: '120/80',
-                status: 'normal',
-                trend: 'stable',
-                history: []
-            },
-            sugar: {
-                current: 95,
-                status: 'normal',
-                trend: 'stable',
-                history: []
-            },
-            weight: {
-                current: 70,
-                status: 'normal',
-                trend: 'stable',
-                history: []
-            },
-            bmi: {
-                current: 22.5,
-                status: 'normal',
-                category: 'Normal',
-                history: []
-            }
-        };
+        // Fetch all metrics for the patient
+        const metrics = await HealthMetric.find({ patient: patientId })
+            .sort({ timestamp: -1 })
+            .limit(100)
+            .lean();
 
         res.json({
             success: true,
-            data: mockMetrics,
+            count: metrics.length,
+            data: metrics,
         });
     } catch (error) {
         logger.error('Get health metrics error:', { error: error.message, stack: error.stack, patientId: req.params.patientId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch health metrics',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Add health metric
+ * @route   POST /api/patients/:patientId/health-metrics
+ * @access  Private
+ */
+exports.addHealthMetric = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        const { type, value, notes, timestamp } = req.body;
+
+        // Check access rights
+        if (
+            req.user.role !== 'admin' &&
+            req.user.role !== 'doctor' &&
+            req.user.userId !== patientId
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to add metrics for this patient',
+            });
+        }
+
+        const metric = await HealthMetric.create({
+            patient: patientId,
+            type,
+            value,
+            notes,
+            timestamp: timestamp || Date.now(),
+            recordedBy: req.user._id,
+            source: req.user.role === 'doctor' ? 'doctor' : 'manual',
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Health metric added successfully',
+            data: metric,
+        });
+    } catch (error) {
+        logger.error('Add health metric error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to add health metric',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Get activity tracking data (steps, sleep, water, stress)
+ * @route   GET /api/patients/:patientId/activity
+ * @access  Private
+ */
+exports.getActivityData = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+
+        // Check access rights
+        if (
+            req.user.role !== 'admin' &&
+            req.user.role !== 'doctor' &&
+            req.user.userId !== patientId
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to view this patient data',
+            });
+        }
+
+        const activityTypes = ['steps', 'sleep', 'water', 'exercise', 'stress'];
+        
+        // Get latest activity metrics
+        const latestMetrics = await HealthMetric.getLatestMetrics(patientId, activityTypes);
+        
+        // Get today's metrics for comparison
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const todayMetrics = await HealthMetric.find({
+            patient: patientId,
+            type: { $in: activityTypes },
+            timestamp: { $gte: today },
+        }).lean();
+
+        res.json({
+            success: true,
+            data: {
+                latest: latestMetrics,
+                today: todayMetrics,
+            },
+        });
+    } catch (error) {
+        logger.error('Get activity data error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch activity data',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * @desc    Update activity data (steps, water, etc.)
+ * @route   POST /api/patients/:patientId/activity
+ * @access  Private
+ */
+exports.updateActivityData = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        const { type, value, notes } = req.body;
+
+        // Check access rights
+        if (req.user.userId !== patientId && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to update activity for this patient',
+            });
+        }
+
+        // Validate activity type
+        const validTypes = ['steps', 'sleep', 'water', 'exercise', 'stress'];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid activity type',
+            });
+        }
+
+        const metric = await HealthMetric.create({
+            patient: patientId,
+            type,
+            value,
+            notes,
+            recordedBy: req.user._id,
+            source: 'app',
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Activity data updated successfully',
+            data: metric,
+        });
+    } catch (error) {
+        logger.error('Update activity data error:', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update activity data',
             error: error.message,
         });
     }

@@ -72,25 +72,27 @@ const WalkInPatientScreen = ({ navigation }) => {
             
             // Create patient data
             const patientData = {
-                ...formData,
+                name: formData.name.trim(),
                 age: parseInt(formData.age),
-                registeredBy: user._id,
-                registrationType: 'walk-in',
-                registrationDate: new Date().toISOString(),
+                gender: formData.gender,
+                phone: formData.phone.trim(),
+                bloodGroup: formData.bloodGroup || undefined,
+                symptoms: formData.chiefComplaint.trim(),
+                address: formData.emergencyContact || undefined,
             };
 
-            // TODO: Replace with actual API call
-            // const response = await doctorService.registerWalkInPatient(patientData);
+            const response = await doctorService.registerWalkInPatient(patientData);
             
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const { data, isExisting } = response;
 
             Alert.alert(
                 'Success',
-                `${formData.name} has been registered as a walk-in patient`,
+                isExisting 
+                    ? `${data.name} (${data.userId}) - Patient already registered. Added to today's queue.`
+                    : `${data.name} (${data.userId}) has been registered as a walk-in patient and added to today's queue.`,
                 [
                     {
-                        text: 'Add to Today\'s Queue',
+                        text: 'View Queue',
                         onPress: () => {
                             navigation.navigate('DoctorTabs', { screen: 'Today' });
                         },

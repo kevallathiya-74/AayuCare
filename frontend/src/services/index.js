@@ -12,4 +12,6 @@ export { default as patientService } from './patient.service';
 export { default as prescriptionService } from './prescription.service';
 export { default as healthMetricsService } from './healthMetrics.service';
 export { default as adminService } from './admin.service';
+export { default as eventService } from './event.service';
+export { default as activityService } from './activity.service';
 export { default as api } from './api';

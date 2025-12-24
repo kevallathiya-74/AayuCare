@@ -18,6 +18,7 @@ const aiRoutes = require('./src/routes/aiRoutes');
 const patientRoutes = require('./src/routes/patientRoutes');
 const prescriptionRoutes = require('./src/routes/prescriptionRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
+const eventRoutes = require('./src/routes/eventRoutes');
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/events', eventRoutes);
 
 // API Root route
 app.get('/api', (req, res) => {

@@ -3,7 +3,7 @@
  * Find doctors by specialty with filters and booking
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import {
     Image,
     Alert,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,51 +25,26 @@ import { moderateScale, verticalScale, scaledFontSize, getScreenPadding } from '
 import { ErrorRecovery, NetworkStatusIndicator } from '../../components/common';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import { doctorService } from '../../services';
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const { isConnected } = useNetworkStatus();
     const [selectedSpecialty, setSelectedSpecialty] = useState('All');
     const [selectedAvailability, setSelectedAvailability] = useState('Today');
     const [feeRange, setFeeRange] = useState([0, 1000]);
+    const [doctors, setDoctors] = useState([]);
 
     const specialties = [
-        { id: 1, name: 'Cardiology', icon: 'heart-outline' },
-        { id: 2, name: 'Pulmonology', icon: 'fitness-outline' },
-        { id: 3, name: 'Neurology', icon: 'bulb-outline' },
-        { id: 4, name: 'Pediatrics', icon: 'happy-outline' },
-        { id: 5, name: "Women's Health", icon: 'rose-outline' },
-        { id: 6, name: 'Orthopedics', icon: 'body-outline' },
-    ];
-
-    const doctors = [
-        {
-            id: 1,
-            name: 'Dr. Rajesh Shah',
-            specialty: 'Cardiologist',
-            experience: '15 yrs exp',
-            rating: 4.8,
-            reviews: 240,
-            fee: 500,
-            availability: 'Today 10:30 AM',
-            hasClinic: true,
-            hasTelemedicine: true,
-            image: null,
-        },
-        {
-            id: 2,
-            name: 'Dr. Priya Mehta',
-            specialty: 'Gynecologist',
-            experience: '12 yrs exp',
-            rating: 4.9,
-            reviews: 180,
-            fee: 600,
-            availability: 'Tomorrow 11:00 AM',
-            hasClinic: true,
-            hasTelemedicine: false,
-            image: null,
-        },
+        { id: 1, name: 'All', icon: 'apps-outline' },
+        { id: 2, name: 'Cardiology', icon: 'heart-outline' },
+        { id: 3, name: 'Pulmonology', icon: 'fitness-outline' },
+        { id: 4, name: 'Neurology', icon: 'bulb-outline' },
+        { id: 5, name: 'Pediatrics', icon: 'happy-outline' },
+        { id: 6, name: "Women's Health", icon: 'rose-outline' },
+        { id: 7, name: 'Orthopedics', icon: 'body-outline' },
     ];
 
     useEffect(() => {
@@ -77,15 +53,31 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
     const fetchDoctors = async () => {
         try {
+            if (!isConnected) {
+                showError('No internet connection');
+                return;
+            }
+            
             setLoading(true);
             setError(null);
-            // TODO: Replace with actual API call
-            // const response = await doctorService.findSpecialists({
-            //     specialty: selectedSpecialty,
-            //     availability: selectedAvailability,
-            //     feeRange: feeRange,
-            // });
-            // Update doctors list with response data
+            
+            // Fetch doctors with optional specialty filter
+            const filters = {};
+            if (selectedSpecialty !== 'All') {
+                filters.specialization = selectedSpecialty;
+            }
+            
+            const response = await doctorService.getDoctors(filters);
+            
+            // Filter by fee range
+            let filteredDoctors = response.data || [];
+            if (feeRange && feeRange.length === 2) {
+                filteredDoctors = filteredDoctors.filter(
+                    doc => doc.consultationFee >= feeRange[0] && doc.consultationFee <= feeRange[1]
+                );
+            }
+            
+            setDoctors(filteredDoctors);
         } catch (err) {
             const errorMessage = 'Failed to load specialists';
             setError(errorMessage);
@@ -96,13 +88,19 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         }
     };
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchDoctors();
+        setRefreshing(false);
+    }, [selectedSpecialty, feeRange]);
+
     const handleRetry = () => {
         setError(null);
         fetchDoctors();
     };
 
     const renderDoctorCard = (doctor) => (
-        <View key={doctor.id} style={styles.doctorCard}>
+        <View key={doctor._id || doctor.id} style={styles.doctorCard}>
             <View style={styles.doctorHeader}>
                 <View style={styles.doctorAvatar}>
                     <Ionicons name="person" size={32} color={healthColors.primary.main} />
@@ -110,47 +108,47 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 <View style={styles.doctorInfo}>
                     <Text style={styles.doctorName}>{doctor.name}</Text>
                     <Text style={styles.doctorSpecialty}>
-                        {doctor.specialty} • {doctor.experience}
+                        {doctor.specialization || doctor.specialty} • {doctor.experience || 'N/A'}
                     </Text>
                     <View style={styles.ratingContainer}>
                         <Ionicons name="star" size={16} color="#FFB800" />
                         <Text style={styles.ratingText}>
-                            {doctor.rating} ({doctor.reviews} reviews)
+                            {doctor.rating || 'N/A'} ({doctor.reviews || 0} reviews)
                         </Text>
                     </View>
                     <View style={styles.doctorDetails}>
                         <View style={styles.detailItem}>
                             <Ionicons name="cash-outline" size={14} color={healthColors.success.main} />
-                            <Text style={styles.feeText}>₹{doctor.fee}</Text>
+                            <Text style={styles.feeText}>₹{doctor.consultationFee || doctor.fee}</Text>
                         </View>
                         <View style={styles.detailItem}>
                             <Ionicons name="time-outline" size={14} color={healthColors.primary.main} />
-                            <Text style={styles.availabilityText}>{doctor.availability}</Text>
+                            <Text style={styles.availabilityText}>{doctor.availability || 'Check availability'}</Text>
                         </View>
                     </View>
                 </View>
             </View>
 
             <View style={styles.consultationTypes}>
-                <View style={[styles.consultationType, doctor.hasClinic && styles.consultationTypeActive]}>
-                    <Ionicons name="business" size={18} color={doctor.hasClinic ? healthColors.primary.main : healthColors.text.disabled} />
-                    <Text style={[styles.consultationTypeText, doctor.hasClinic && styles.consultationTypeTextActive]}>
+                <View style={[styles.consultationType, (doctor.availability || doctor.schedule || doctor.hasClinic) && styles.consultationTypeActive]}>
+                    <Ionicons name="business" size={18} color={(doctor.availability || doctor.schedule || doctor.hasClinic) ? healthColors.primary.main : healthColors.text.disabled} />
+                    <Text style={[styles.consultationTypeText, (doctor.availability || doctor.schedule || doctor.hasClinic) && styles.consultationTypeTextActive]}>
                         CLINIC
                     </Text>
                 </View>
-                <View style={[styles.consultationType, doctor.hasTelemedicine && styles.consultationTypeActive]}>
-                    <Ionicons name="videocam" size={18} color={doctor.hasTelemedicine ? healthColors.primary.main : healthColors.text.disabled} />
-                    <Text style={[styles.consultationTypeText, doctor.hasTelemedicine && styles.consultationTypeTextActive]}>
+                <View style={[styles.consultationType, (doctor.telemedicine || doctor.hasTelemedicine) && styles.consultationTypeActive]}>
+                    <Ionicons name="videocam" size={18} color={(doctor.telemedicine || doctor.hasTelemedicine) ? healthColors.primary.main : healthColors.text.disabled} />
+                    <Text style={[styles.consultationTypeText, (doctor.telemedicine || doctor.hasTelemedicine) && styles.consultationTypeTextActive]}>
                         TELEMEDICINE
                     </Text>
-                    {doctor.hasTelemedicine && <Ionicons name="checkmark-circle" size={16} color={healthColors.success.main} />}
+                    {(doctor.telemedicine || doctor.hasTelemedicine) && <Ionicons name="checkmark-circle" size={16} color={healthColors.success.main} />}
                 </View>
             </View>
 
             <View style={styles.doctorActions}>
                 <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => navigation.navigate('AppointmentBooking', { doctor })}
+                    onPress={() => navigation.navigate('AppointmentBooking', { doctorId: doctor._id || doctor.id })}
                 >
                     <Text style={styles.actionButtonText}>Book Appointment</Text>
                 </TouchableOpacity>
@@ -196,7 +194,17 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+            >
                 {/* Title */}
                 <View style={styles.titleSection}>
                     <Ionicons name="medkit-outline" size={20} color={healthColors.primary.main} />
@@ -258,14 +266,30 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 {/* Doctor List */}
                 <View style={styles.doctorsSection}>
                     <Text style={styles.sectionTitle}>DOCTOR LIST:</Text>
-                    {doctors.map(renderDoctorCard)}
+                    {loading ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color={healthColors.primary.main} />
+                            <Text style={styles.loadingText}>Loading specialists...</Text>
+                        </View>
+                    ) : doctors.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Ionicons name="medical-outline" size={64} color={healthColors.text.disabled} />
+                            <Text style={styles.emptyStateTitle}>No Specialists Found</Text>
+                            <Text style={styles.emptyStateText}>
+                                Try adjusting your filters or check back later.
+                            </Text>
+                        </View>
+                    ) : (
+                        <>
+                            {doctors.map(renderDoctorCard)}
+                            <View style={styles.doctorCountContainer}>
+                                <Text style={styles.doctorCountText}>
+                                    Showing {doctors.length} specialist{doctors.length !== 1 ? 's' : ''}
+                                </Text>
+                            </View>
+                        </>
+                    )}
                 </View>
-
-                {/* View All Button */}
-                <TouchableOpacity style={styles.viewAllButton}>
-                    <Ionicons name="list" size={20} color={healthColors.primary.main} />
-                    <Text style={styles.viewAllText}>View All Doctors (45)</Text>
-                </TouchableOpacity>
 
                 <View style={{ height: 80 }} />
             </ScrollView>
@@ -514,22 +538,42 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: healthColors.text.primary,
     },
-    viewAllButton: {
-        flexDirection: 'row',
+    loadingContainer: {
+        paddingVertical: moderateScale(48),
         alignItems: 'center',
         justifyContent: 'center',
-        gap: moderateScale(8),
-        marginHorizontal: getScreenPadding(),
-        paddingVertical: moderateScale(16),
-        backgroundColor: '#FFFFFF',
-        borderRadius: moderateScale(12),
-        borderWidth: 2,
-        borderColor: healthColors.border.light,
     },
-    viewAllText: {
+    loadingText: {
         fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(12),
+    },
+    emptyState: {
+        paddingVertical: moderateScale(48),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyStateTitle: {
+        fontSize: scaledFontSize(18),
         fontWeight: '600',
-        color: healthColors.primary.main,
+        color: healthColors.text.primary,
+        marginTop: moderateScale(16),
+        marginBottom: moderateScale(8),
+    },
+    emptyStateText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        textAlign: 'center',
+        paddingHorizontal: getScreenPadding(),
+    },
+    doctorCountContainer: {
+        paddingVertical: moderateScale(16),
+        alignItems: 'center',
+    },
+    doctorCountText: {
+        fontSize: scaledFontSize(13),
+        color: healthColors.text.secondary,
+        fontWeight: '500',
     },
 });
 

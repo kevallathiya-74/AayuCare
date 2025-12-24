@@ -68,6 +68,13 @@ router.patch('/me/appointments/:id/status', protect, authorize('doctor'), doctor
 router.get('/me/profile/stats', protect, authorize('doctor'), doctorController.getDoctorProfileStats);
 
 /**
+ * @route   POST /api/doctors/walk-in-patient
+ * @desc    Register walk-in patient
+ * @access  Private (Doctor)
+ */
+router.post('/me/walk-in-patient', protect, authorize('doctor'), doctorController.registerWalkInPatient);
+
+/**
  * @route   GET /api/doctors/:id/stats
  * @desc    Get doctor statistics
  * @access  Private (Doctor, Admin)

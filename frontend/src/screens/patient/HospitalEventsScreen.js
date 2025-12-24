@@ -3,7 +3,7 @@
  * Blood donation, diabetes screening, vaccination, health workshops
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,58 +23,46 @@ import NetworkStatusIndicator from '../../components/common/NetworkStatusIndicat
 import ErrorRecovery from '../../components/common/ErrorRecovery';
 import { showError, logError } from '../../utils/errorHandler';
 import { useNetworkStatus } from '../../utils/offlineHandler';
+import { eventService } from '../../services';
 
 const HospitalEventsScreen = ({ navigation }) => {
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const { isConnected } = useNetworkStatus();
+    const [events, setEvents] = useState([]);
 
-    const upcomingEvents = [
-        {
-            id: 1,
-            icon: 'water',
-            title: 'Blood Donation Camp',
-            date: '22 Dec 2024',
-            time: '9:00 AM - 4:00 PM',
-            venue: 'Community Hall, Block A',
-            description: 'Help save lives! Donate blood and receive free health checkup.',
-            color: '#E91E63',
-            spots: 45,
-        },
-        {
-            id: 2,
-            icon: 'fitness',
-            title: 'Diabetes Screening Camp',
-            date: '25 Dec 2024',
-            time: '8:00 AM - 12:00 PM',
-            venue: 'Outpatient Department',
-            description: 'Free blood sugar testing and consultation with diabetologist.',
-            color: '#FF9800',
-            spots: 30,
-        },
-        {
-            id: 3,
-            icon: 'medical',
-            title: 'Vaccination Drive',
-            date: '28 Dec 2024',
-            time: '10:00 AM - 3:00 PM',
-            venue: 'Pediatric Ward',
-            description: 'Children vaccination program - Measles, Polio, and COVID-19 booster.',
-            color: '#4CAF50',
-            spots: 60,
-        },
-        {
-            id: 4,
-            icon: 'school',
-            title: 'Health Workshop',
-            date: '30 Dec 2024',
-            time: '3:00 PM - 5:00 PM',
-            venue: 'Auditorium',
-            description: 'Learn about healthy lifestyle, nutrition, and disease prevention.',
-            color: '#2196F3',
-            spots: 100,
-        },
-    ];
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    const fetchEvents = async () => {
+        try {
+            if (!isConnected) {
+                showError('No internet connection');
+                return;
+            }
+            
+            setLoading(true);
+            setError(null);
+            
+            const response = await eventService.getUpcomingEvents({ limit: 20 });
+            setEvents(response.data || []);
+        } catch (err) {
+            const errorMessage = 'Failed to load events';
+            setError(errorMessage);
+            logError(err, { context: 'HospitalEventsScreen.fetchEvents' });
+            showError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchEvents();
+        setRefreshing(false);
+    }, []);
 
     const handleRegister = async (event) => {
         try {
@@ -85,14 +74,16 @@ const HospitalEventsScreen = ({ navigation }) => {
             setLoading(true);
             setError(null);
 
-            // Simulate registration process
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            alert(`Registration for "${event.title}" will open soon!`);
+            await eventService.registerForEvent(event._id);
+            
+            alert(`Successfully registered for "${event.title}"!`);
+            // Refresh events list to show updated registration count
+            await fetchEvents();
         } catch (err) {
-            logError(err, { context: 'HospitalEventsScreen.handleRegister', eventId: event.id });
-            setError(err.message || 'Failed to register for event');
-            showError('Failed to register for event. Please try again.');
+            logError(err, { context: 'HospitalEventsScreen.handleRegister', eventId: event._id });
+            const errorMsg = err.response?.data?.message || 'Failed to register for event';
+            setError(errorMsg);
+            showError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -100,6 +91,7 @@ const HospitalEventsScreen = ({ navigation }) => {
 
     const handleRetry = () => {
         setError(null);
+        fetchEvents();
     };
 
     if (error) {
@@ -145,7 +137,17 @@ const HospitalEventsScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView 
+                contentContainerStyle={styles.content}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[healthColors.primary.main]}
+                        tintColor={healthColors.primary.main}
+                    />
+                }
+            >
                 {/* Notification Banner */}
                 <View style={styles.notificationBanner}>
                     <View style={styles.notificationContent}>
@@ -163,11 +165,34 @@ const HospitalEventsScreen = ({ navigation }) => {
                 {/* Upcoming Events */}
                 <View style={styles.sectionTitleContainer}>
                     <Ionicons name="calendar-outline" size={20} color={healthColors.primary.main} />
-                    <Text style={styles.sectionTitle}>UPCOMING EVENTS ({upcomingEvents.length})</Text>
+                    <Text style={styles.sectionTitle}>UPCOMING EVENTS ({events.length})</Text>
                 </View>
 
-                {upcomingEvents.map((event, index) => (
-                    <View key={event.id} style={styles.eventCard}>
+                {loading && !refreshing ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={healthColors.primary.main} />
+                        <Text style={styles.loadingText}>Loading events...</Text>
+                    </View>
+                ) : events.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <Ionicons name="calendar-outline" size={64} color={healthColors.text.disabled} />
+                        <Text style={styles.emptyStateTitle}>No Upcoming Events</Text>
+                        <Text style={styles.emptyStateText}>
+                            Check back later for new health camps and workshops.
+                        </Text>
+                    </View>
+                ) : (
+                    events.map((event, index) => {
+                        const eventDate = new Date(event.date);
+                        const formattedDate = eventDate.toLocaleDateString('en-US', { 
+                            day: 'numeric', 
+                            month: 'short', 
+                            year: 'numeric' 
+                        });
+                        const spotsRemaining = event.spotsRemaining || (event.availableSpots - event.registeredCount);
+                        
+                        return (
+                            <View key={event._id} style={styles.eventCard}>
                         {/* Event Header */}
                         <View style={styles.eventHeader}>
                             <View style={[styles.eventIconContainer, { backgroundColor: event.color + '20' }]}>
@@ -177,7 +202,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                                 <Text style={styles.eventTitle}>{event.title}</Text>
                                 <View style={styles.eventDateRow}>
                                     <Ionicons name="calendar" size={14} color={healthColors.text.tertiary} />
-                                    <Text style={styles.eventDate}>{event.date}</Text>
+                                    <Text style={styles.eventDate}>{formattedDate}</Text>
                                 </View>
                             </View>
                         </View>
@@ -186,7 +211,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                         <View style={styles.eventDetails}>
                             <View style={styles.eventDetailRow}>
                                 <Ionicons name="time" size={16} color={event.color} />
-                                <Text style={styles.eventDetailText}>{event.time}</Text>
+                                <Text style={styles.eventDetailText}>{event.startTime} - {event.endTime}</Text>
                             </View>
                             <View style={styles.eventDetailRow}>
                                 <Ionicons name="location" size={16} color={event.color} />
@@ -202,12 +227,13 @@ const HospitalEventsScreen = ({ navigation }) => {
                             <View style={styles.spotsInfo}>
                                 <Ionicons name="people" size={18} color={event.color} />
                                 <Text style={styles.spotsText}>
-                                    {event.spots} spots available
+                                    {spotsRemaining > 0 ? `${spotsRemaining} spots available` : 'Event full'}
                                 </Text>
                             </View>
                             <TouchableOpacity
                                 style={styles.registerButton}
                                 onPress={() => handleRegister(event)}
+                                disabled={spotsRemaining === 0 || loading}
                             >
                                 <LinearGradient
                                     colors={[event.color, event.color + 'DD']}
@@ -221,7 +247,9 @@ const HospitalEventsScreen = ({ navigation }) => {
                             </TouchableOpacity>
                         </View>
                     </View>
-                ))}
+                        );
+                    })
+                )}
 
                 {/* Past Events */}
                 <View style={styles.pastEventsSection}>
@@ -510,6 +538,34 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
+    },
+    loadingContainer: {
+        paddingVertical: moderateScale(48),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loadingText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        marginTop: moderateScale(12),
+    },
+    emptyState: {
+        paddingVertical: moderateScale(48),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    emptyStateTitle: {
+        fontSize: scaledFontSize(18),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+        marginTop: moderateScale(16),
+        marginBottom: moderateScale(8),
+    },
+    emptyStateText: {
+        fontSize: scaledFontSize(14),
+        color: healthColors.text.secondary,
+        textAlign: 'center',
+        paddingHorizontal: getScreenPadding(),
     },
 });
 

@@ -36,4 +36,19 @@ router.patch('/:patientId/profile', patientController.updatePatientProfile);
 // @access  Private (Patient own data, Doctor, or Admin)
 router.get('/:patientId/health-metrics', patientController.getHealthMetrics);
 
+// @route   POST /api/patients/:patientId/health-metrics
+// @desc    Add health metric for a patient
+// @access  Private (Patient own data, Doctor, or Admin)
+router.post('/:patientId/health-metrics', patientController.addHealthMetric);
+
+// @route   GET /api/patients/:patientId/activity
+// @desc    Get activity tracking data (steps, sleep, water, stress)
+// @access  Private (Patient own data, Doctor, or Admin)
+router.get('/:patientId/activity', patientController.getActivityData);
+
+// @route   POST /api/patients/:patientId/activity
+// @desc    Update activity data
+// @access  Private (Patient own data or Admin)
+router.post('/:patientId/activity', patientController.updateActivityData);
+
 module.exports = router;
