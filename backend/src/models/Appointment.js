@@ -34,7 +34,7 @@ const appointmentSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['clinic_visit', 'telemedicine', 'emergency', 'follow_up'],
+        enum: ['clinic_visit', 'telemedicine', 'emergency', 'follow_up', 'walk-in'],
         required: true,
     },
     symptoms: [String],
