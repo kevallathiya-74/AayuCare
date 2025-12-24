@@ -13,14 +13,14 @@ const Prescription = require('../src/models/Prescription');
 const seedDashboardData = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
-        console.log('✅ Connected to MongoDB');
+        console.log('[SUCCESS] Connected to MongoDB');
 
         // Get doctor and patient
         const doctor = await User.findOne({ userId: 'DOC001' });
         const patient = await User.findOne({ userId: 'PAT001' });
 
         if (!doctor || !patient) {
-            console.error('❌ Doctor or Patient not found');
+            console.error('[ERROR] Doctor or Patient not found');
             process.exit(1);
         }
 
@@ -30,7 +30,7 @@ const seedDashboardData = async () => {
         // Clear existing appointments and prescriptions
         await Appointment.deleteMany({ doctorId: doctor._id });
         await Prescription.deleteMany({ doctorId: doctor._id });
-        console.log('🗑️  Cleared existing data');
+        console.log('[CLEANUP] Cleared existing data');
 
         // Create today's date at different times
         const today = new Date();
@@ -97,7 +97,7 @@ const seedDashboardData = async () => {
         ];
 
         const createdAppointments = await Appointment.insertMany(appointments);
-        console.log(`✅ Created ${createdAppointments.length} appointments`);
+        console.log(`[SUCCESS] Created ${createdAppointments.length} appointments`);
 
         // Create prescriptions
         const prescriptions = [
@@ -129,20 +129,20 @@ const seedDashboardData = async () => {
         ];
 
         const createdPrescriptions = await Prescription.insertMany(prescriptions);
-        console.log(`✅ Created ${createdPrescriptions.length} prescriptions`);
+        console.log(`[SUCCESS] Created ${createdPrescriptions.length} prescriptions`);
 
-        console.log('\n✅ Dashboard data seeded successfully!');
-        console.log('📊 Summary:');
+        console.log('\n[SUCCESS] Dashboard data seeded successfully!');
+        console.log('[STATS] Summary:');
         console.log(`   - Appointments: ${createdAppointments.length}`);
         console.log(`   - Today's Appointments: ${createdAppointments.filter(a => a.appointmentDate >= today && a.appointmentDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)).length}`);
         console.log(`   - Prescriptions: ${createdPrescriptions.length}`);
 
     } catch (error) {
-        console.error('❌ Error seeding data:', error);
+        console.error('[ERROR] Error seeding data:', error);
         process.exit(1);
     } finally {
         await mongoose.disconnect();
-        console.log('👋 Disconnected from MongoDB');
+        console.log('[SHUTDOWN] Disconnected from MongoDB');
         process.exit(0);
     }
 };

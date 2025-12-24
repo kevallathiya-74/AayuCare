@@ -48,7 +48,7 @@ const BoxSelectionScreen = ({ navigation }) => {
 
   const handleUserPress = () => {
     // Coming soon - User section not available yet
-    alert('🚧 User Section Coming Soon!\n\nThis feature is currently under development. Please use the Hospital login for now.');
+    alert('[UNDER CONSTRUCTION] User Section Coming Soon!\n\nThis feature is currently under development. Please use the Hospital login for now.');
   };
 
   return (

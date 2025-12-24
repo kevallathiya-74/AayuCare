@@ -36,12 +36,12 @@ const getBaseURL = () => {
         const ngrokUrl = Constants.expoConfig?.extra?.backendUrl;
         
         if (ngrokUrl) {
-          console.log('🌐 Using ngrok backend:', ngrokUrl);
+          console.log('[API] Using ngrok backend:', ngrokUrl);
           return ngrokUrl;
         }
         
         // Fallback: Use computer's local IP (change this to your IP)
-        const fallbackIP = '10.9.15.29'; // ✅ Updated to current IP
+        const fallbackIP = '10.9.15.29'; // Updated to current IP
         console.warn('⚠️ Tunnel mode: Using fallback IP for backend:', fallbackIP);
         return `http://${fallbackIP}:5000/api`;
       }
@@ -70,9 +70,9 @@ const api = axios.create({
 
 // Log API URL in development
 if (__DEV__) {
-  console.log('📡 API Base URL:', api.defaults.baseURL);
-  console.log('📱 Platform:', Platform.OS);
-  console.log('🔧 Debug Host:', Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || 'Not available');
+  console.log('[API] API Base URL:', api.defaults.baseURL);
+  console.log('[MOBILE] Platform:', Platform.OS);
+  console.log('[DEBUG] Debug Host:', Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || 'Not available');
 }
 
 // Request interceptor - Add auth token
@@ -84,7 +84,7 @@ api.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
         if (__DEV__) {
-          console.log(`🔑 Token: ${token.substring(0, 20)}...`);
+          console.log(`[TOKEN] Token: ${token.substring(0, 20)}...`);
         }
       } else {
         if (__DEV__) {
@@ -93,17 +93,17 @@ api.interceptors.request.use(
       }
 
       if (__DEV__) {
-        console.log(`🌐 ${config.method?.toUpperCase()} ${config.url}`);
+        console.log(`[REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
       }
 
       return config;
     } catch (error) {
-      console.error('❌ Error getting auth token:', error);
+      console.error('[ERROR] Error getting auth token:', error);
       return config;
     }
   },
   (error) => {
-    console.error('❌ Request interceptor error:', error);
+    console.error('[ERROR] Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -184,15 +184,15 @@ api.interceptors.response.use(
       }
       
       const networkError = new Error(errorMsg);
-      console.error('❌ Network Error:', networkError.message);
-      console.error('🔍 Attempted URL:', error.config?.baseURL + error.config?.url);
-      console.error('🌐 Debug Host:', debugHost);
+      console.error('[NETWORK] Network Error:', networkError.message);
+      console.error('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
+      console.error('[INFO] Debug Host:', debugHost);
       return Promise.reject(networkError);
     }
 
     // Extract error message from response
     const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
-    console.error('❌ API Error:', errorMessage);
+    console.error('[ERROR] API Error:', errorMessage);
 
     return Promise.reject(new Error(errorMessage));
   }
@@ -202,10 +202,10 @@ api.interceptors.response.use(
 export const testConnection = async () => {
   try {
     const response = await api.get('/health');
-    console.log('✅ Backend connection successful:', response.data);
+    console.log('[SUCCESS] Backend connection successful:', response.data);
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('❌ Backend connection failed:', error.message);
+    console.error('[ERROR] Backend connection failed:', error.message);
     return { success: false, error: error.message };
   }
 };

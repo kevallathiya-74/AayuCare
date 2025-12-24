@@ -19,12 +19,13 @@ const Prescription = require('../src/models/Prescription');
 const MedicalRecord = require('../src/models/MedicalRecord');
 const HealthMetric = require('../src/models/HealthMetric');
 const Event = require('../src/models/Event');
+const Notification = require('../src/models/Notification');
 const bcrypt = require('bcryptjs');
 
 const seedComprehensiveData = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
-        console.log('✅ Connected to MongoDB');
+        console.log('[SUCCESS] Connected to MongoDB');
 
         // Clear existing data
         await User.deleteMany({ userId: { $regex: /^(PAT00[2-9]|DOC00[2-5]|ADM002)/ } });
@@ -33,7 +34,8 @@ const seedComprehensiveData = async () => {
         await MedicalRecord.deleteMany({});
         await HealthMetric.deleteMany({});
         await Event.deleteMany({});
-        console.log('🗑️  Cleared existing test data');
+        await Notification.deleteMany({});
+        console.log('[CLEANUP] Cleared existing test data');
 
         // Get or create base users
         let admin = await User.findOne({ userId: 'ADM001' });
@@ -126,7 +128,7 @@ const seedComprehensiveData = async () => {
         ];
 
         const createdDoctors = await User.insertMany(doctors);
-        console.log(`✅ Created ${createdDoctors.length} additional doctors`);
+        console.log(`[SUCCESS] Created ${createdDoctors.length} additional doctors`);
         const allDoctors = [doctor1, ...createdDoctors];
 
         // Get or create base patient
@@ -231,7 +233,7 @@ const seedComprehensiveData = async () => {
         ];
 
         const createdPatients = await User.insertMany(patients);
-        console.log(`✅ Created ${createdPatients.length} additional patients (including walk-ins)`);
+        console.log(`[SUCCESS] Created ${createdPatients.length} additional patients (including walk-ins)`);
         const allPatients = [patient1, ...createdPatients];
 
         // Create appointments with various statuses
@@ -285,7 +287,7 @@ const seedComprehensiveData = async () => {
         }
 
         const createdAppointments = await Appointment.insertMany(appointments);
-        console.log(`✅ Created ${createdAppointments.length} appointments`);
+        console.log(`[SUCCESS] Created ${createdAppointments.length} appointments`);
 
         // Create medical records
         const recordTypes = ['doctor_visit', 'lab_report', 'test_result', 'imaging', 'prescription', 'other'];
@@ -309,7 +311,7 @@ const seedComprehensiveData = async () => {
         }
 
         const createdRecords = await MedicalRecord.insertMany(medicalRecords);
-        console.log(`✅ Created ${createdRecords.length} medical records`);
+        console.log(`[SUCCESS] Created ${createdRecords.length} medical records`);
 
         // Create health metrics
         const metricTypes = ['bp', 'sugar', 'weight', 'temperature', 'steps', 'sleep', 'water', 'heart-rate', 'oxygen'];
@@ -374,7 +376,7 @@ const seedComprehensiveData = async () => {
         }
 
         const createdMetrics = await HealthMetric.insertMany(healthMetrics);
-        console.log(`✅ Created ${createdMetrics.length} health metrics`);
+        console.log(`[SUCCESS] Created ${createdMetrics.length} health metrics`);
 
         // Create hospital events
         const eventTypes = ['blood-donation', 'screening', 'vaccination', 'workshop', 'health-camp'];
@@ -415,7 +417,7 @@ const seedComprehensiveData = async () => {
         }
 
         const createdEvents = await Event.insertMany(events);
-        console.log(`✅ Created ${createdEvents.length} events`);
+        console.log(`[SUCCESS] Created ${createdEvents.length} events`);
 
         // Create prescriptions for completed appointments
         const completedAppts = createdAppointments.filter(apt => apt.status === 'completed');
@@ -439,10 +441,90 @@ const seedComprehensiveData = async () => {
         }));
 
         const createdPrescriptions = await Prescription.insertMany(prescriptions);
-        console.log(`✅ Created ${createdPrescriptions.length} prescriptions`);
+        console.log(`[SUCCESS] Created ${createdPrescriptions.length} prescriptions`);
+// Create notifications
+        const notificationTypes = ['appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert'];
+        const priorities = ['low', 'medium', 'high', 'urgent'];
+        const notifications = [];
 
-        console.log('\n✅ Comprehensive data seeded successfully!');
-        console.log('📊 Summary:');
+        // Create notifications for each patient
+        for (let i = 0; i < Math.min(5, allPatients.length); i++) {
+            const patient = allPatients[i];
+            const notifCount = 5 + Math.floor(Math.random() * 10); // 5-15 notifications per patient
+
+            for (let j = 0; j < notifCount; j++) {
+                const daysAgo = Math.floor(Math.random() * 7);
+                const type = notificationTypes[j % notificationTypes.length];
+                const priority = j < 3 ? priorities[Math.floor(Math.random() * priorities.length)] : 'medium';
+                const isRead = Math.random() > 0.4; // 60% read, 40% unread
+
+                const titles = {
+                    appointment: ['Upcoming Appointment', 'Appointment Reminder', 'Appointment Confirmed'],
+                    prescription: ['New Prescription Available', 'Prescription Ready', 'Refill Reminder'],
+                    lab_report: ['Lab Results Ready', 'Test Results Available', 'Lab Report Published'],
+                    event: ['Health Camp Tomorrow', 'Blood Donation Drive', 'Free Checkup Event'],
+                    reminder: ['Take Your Medicine', 'Health Checkup Due', 'Follow-up Reminder'],
+                    system: ['App Update Available', 'New Features Added', 'Maintenance Notice'],
+                    alert: ['Urgent: Check Vitals', 'High Blood Pressure Alert', 'Important Health Notice'],
+                };
+
+                const messages = {
+                    appointment: ['Your appointment is scheduled for tomorrow at 10 AM', 'Please arrive 15 minutes early', 'Dr. Kumar will see you at 2 PM'],
+                    prescription: ['Your prescription is ready for pickup', 'Refill needed for your medication', 'New medication prescribed'],
+                    lab_report: ['Your blood test results are now available', 'Check your latest lab reports', 'All test results are normal'],
+                    event: ['Free health screening camp tomorrow', 'Blood donation drive on Dec 25', 'Join our health awareness workshop'],
+                    reminder: ['Time to take your evening medication', 'Schedule your annual checkup', 'Follow-up appointment needed'],
+                    system: ['New health tracking features available', 'App version 2.0 is here', 'System maintenance scheduled'],
+                    alert: ['Please monitor your blood pressure', 'Irregular heart rate detected', 'Consult your doctor immediately'],
+                };
+
+                notifications.push({
+                    userId: patient._id,
+                    title: titles[type][j % titles[type].length],
+                    message: messages[type][j % messages[type].length],
+                    type,
+                    priority,
+                    read: isRead,
+                    icon: type === 'appointment' ? 'calendar' : type === 'prescription' ? 'medical' : type === 'alert' ? 'warning' : 'notifications',
+                    createdAt: new Date(today.getTime() - daysAgo * 24 * 60 * 60 * 1000 - j * 60 * 60 * 1000),
+                });
+            }
+        }
+
+        // Add some doctor notifications
+        for (let i = 0; i < Math.min(3, allDoctors.length); i++) {
+            const doctor = allDoctors[i];
+            
+            notifications.push(
+                {
+                    userId: doctor._id,
+                    title: 'New Patient Appointment',
+                    message: 'You have 3 new appointments scheduled for today',
+                    type: 'appointment',
+                    priority: 'high',
+                    read: false,
+                    icon: 'calendar',
+                    createdAt: new Date(today.getTime() - 2 * 60 * 60 * 1000),
+                },
+                {
+                    userId: doctor._id,
+                    title: 'Lab Results Uploaded',
+                    message: 'Patient lab results are ready for review',
+                    type: 'lab_report',
+                    priority: 'medium',
+                    read: true,
+                    icon: 'flask',
+                    createdAt: new Date(today.getTime() - 5 * 60 * 60 * 1000),
+                }
+            );
+        }
+
+        const createdNotifications = await Notification.insertMany(notifications);
+        console.log(`[SUCCESS] Created ${createdNotifications.length} notifications`);
+
+        
+        console.log('\n[SUCCESS] Comprehensive data seeded successfully!');
+        console.log('[STATS] Summary:');
         console.log(`   - Doctors: ${allDoctors.length} (including base doctor)`);
         console.log(`   - Patients: ${allPatients.length} (including 2 walk-ins)`);
         console.log(`   - Appointments: ${createdAppointments.length} (today: ${appointments.filter(a => a.appointmentDate >= today && a.appointmentDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)).length})`);
@@ -450,14 +532,15 @@ const seedComprehensiveData = async () => {
         console.log(`   - Health Metrics: ${createdMetrics.length}`);
         console.log(`   - Events: ${createdEvents.length}`);
         console.log(`   - Prescriptions: ${createdPrescriptions.length}`);
+        console.log(`   - Notifications: ${createdNotifications.length}`);
 
     } catch (error) {
-        console.error('❌ Error seeding comprehensive data:', error);
+        console.error('[ERROR] Error seeding comprehensive data:', error);
         console.error(error.stack);
         process.exit(1);
     } finally {
         await mongoose.disconnect();
-        console.log('👋 Disconnected from MongoDB');
+        console.log('[SHUTDOWN] Disconnected from MongoDB');
         process.exit(0);
     }
 };

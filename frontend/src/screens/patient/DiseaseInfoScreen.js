@@ -271,7 +271,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                                     {/* Symptoms */}
                                     <View style={styles.detailSection}>
-                                        <Text style={styles.detailTitle}>🩺 SYMPTOMS:</Text>
+                                        <Text style={styles.detailTitle}>SYMPTOMS:</Text>
                                         {selectedDisease.symptoms.map((symptom, index) => (
                                             <View key={index} style={styles.listItem}>
                                                 <Text style={styles.listBullet}>•</Text>
@@ -492,7 +492,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                             {/* Important Notes */}
                             <View style={styles.notesBox}>
-                                <Text style={styles.notesTitle}>⚠️ IMPORTANT NOTES:</Text>
+                                <Text style={styles.notesTitle}>IMPORTANT NOTES:</Text>
                                 <Text style={styles.notesText}>• Drink 8-10 glasses of water daily</Text>
                                 <Text style={styles.notesText}>• Avoid sugary drinks and processed foods</Text>
                                 <Text style={styles.notesText}>• Eat at regular intervals</Text>
@@ -578,7 +578,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
                             {/* Tips */}
                             <View style={styles.notesBox}>
-                                <Text style={styles.notesTitle}>💡 EXERCISE TIPS:</Text>
+                                <Text style={styles.notesTitle}>EXERCISE TIPS:</Text>
                                 <Text style={styles.notesText}>• Start slowly and gradually increase intensity</Text>
                                 <Text style={styles.notesText}>• Check blood sugar before and after exercise</Text>
                                 <Text style={styles.notesText}>• Stay hydrated during workouts</Text>

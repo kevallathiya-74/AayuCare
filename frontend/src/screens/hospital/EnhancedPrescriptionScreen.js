@@ -128,7 +128,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             if (response?.success) {
                 Alert.alert(
                     'Prescription Saved',
-                    `Prescription has been saved and will be sent to:\n${sendOptions.patientApp ? '✓ Patient Mobile App\n' : ''}${sendOptions.hospitalPharmacy ? '✓ Hospital Pharmacy\n' : ''}${sendOptions.externalPharmacy ? '✓ External Pharmacy' : ''}`,
+                    `Prescription has been saved and will be sent to:\n${sendOptions.patientApp ? 'Patient Mobile App\n' : ''}${sendOptions.hospitalPharmacy ? 'Hospital Pharmacy\n' : ''}${sendOptions.externalPharmacy ? 'External Pharmacy' : ''}`,
                     [
                         {
                             text: 'OK',
@@ -350,7 +350,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 {/* Save Button */}
                 <View style={styles.section}>
                     <TouchableOpacity style={styles.saveAndSendButton} onPress={handleSavePrescription}>
-                        <Text style={styles.saveAndSendText}>SAVE & SEND PRESCRIPTION ➜</Text>
+                        <Text style={styles.saveAndSendText}>SAVE & SEND PRESCRIPTION</Text>
                     </TouchableOpacity>
                 </View>
 

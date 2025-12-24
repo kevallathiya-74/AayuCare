@@ -211,7 +211,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                             {/* Allergies */}
                             {patientHistory.summary.allergies.length > 0 && (
                                 <View style={styles.section}>
-                                    <Text style={styles.sectionTitle}>⚠️ Allergies</Text>
+                                    <Text style={styles.sectionTitle}>Allergies</Text>
                                     <View style={styles.alertCard}>
                                         {patientHistory.summary.allergies.map((allergy, index) => (
                                             <Text key={index} style={styles.allergyText}>
@@ -225,7 +225,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                             {/* Chronic Conditions */}
                             {patientHistory.summary.chronicConditions.length > 0 && (
                                 <View style={styles.section}>
-                                    <Text style={styles.sectionTitle}>🏥 Chronic Conditions</Text>
+                                    <Text style={styles.sectionTitle}>Chronic Conditions</Text>
                                     <View style={styles.conditionsCard}>
                                         {patientHistory.summary.chronicConditions.map((condition, index) => (
                                             <View key={index} style={styles.conditionChip}>
@@ -238,7 +238,7 @@ const ManagePatientsScreen = ({ navigation }) => {
 
                             {/* Recent Medical Records */}
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>📋 Recent Records</Text>
+                                <Text style={styles.sectionTitle}>Recent Records</Text>
                                 {patientHistory.medicalRecords.slice(0, 5).map((record, index) => (
                                     <View key={index} style={styles.recordCard}>
                                         <View style={styles.recordHeader}>
@@ -268,7 +268,7 @@ const ManagePatientsScreen = ({ navigation }) => {
 
                             {/* Recent Prescriptions */}
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>💊 Recent Prescriptions</Text>
+                                <Text style={styles.sectionTitle}>Recent Prescriptions</Text>
                                 {patientHistory.prescriptions.slice(0, 5).map((prescription, index) => (
                                     <View key={index} style={styles.prescriptionCard}>
                                         <View style={styles.prescriptionHeader}>

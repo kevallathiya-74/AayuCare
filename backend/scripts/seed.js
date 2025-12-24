@@ -50,20 +50,20 @@ const seedDatabase = async () => {
     try {
         // Connect to MongoDB
         await mongoose.connect(process.env.MONGODB_URI);
-        console.log('✅ Connected to MongoDB');
+        console.log('[SUCCESS] Connected to MongoDB');
 
         // Clear existing test users
         await User.deleteMany({ userId: { $in: ['ADM001', 'DOC001', 'PAT001'] } });
-        console.log('🗑️  Cleared existing test users');
+        console.log('[CLEANUP] Cleared existing test users');
 
         // Create new users with hashed passwords
         for (const userData of testUsers) {
             const user = await User.create(userData);
-            console.log(`✅ Created ${user.role.toUpperCase()}: ${user.userId} - ${user.name}`);
+            console.log(`[SUCCESS] Created ${user.role.toUpperCase()}: ${user.userId} - ${user.name}`);
         }
 
-        console.log('\n🎉 Database seeding completed!');
-        console.log('\n📋 Test Credentials:');
+        console.log('\n[COMPLETE] Database seeding completed!');
+        console.log('\n[RECORDS] Test Credentials:');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('ADMIN:');
         console.log('  User ID:  ADM001');
@@ -80,12 +80,12 @@ const seedDatabase = async () => {
         console.log('  Password: patient123');
         console.log('  Email:    patient@aayucare.com');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-        console.log('✅ Passwords are securely hashed in MongoDB');
-        console.log('✅ You can now login with these credentials\n');
+        console.log('[OK] Passwords are securely hashed in MongoDB');
+        console.log('[OK] You can now login with these credentials\n');
 
         process.exit(0);
     } catch (error) {
-        console.error('❌ Error seeding database:', error);
+        console.error('[ERROR] Error seeding database:', error);
         process.exit(1);
     }
 };

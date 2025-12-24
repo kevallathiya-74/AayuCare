@@ -40,19 +40,19 @@ const AIHealthAssistantScreen = ({ navigation }) => {
     const scrollViewRef = useRef();
 
     const quickSuggestions = [
-        { id: 1, text: '💊 Medicine side effects?', icon: 'medical' },
-        { id: 2, text: '🥗 Diet plan for diabetes?', icon: 'restaurant' },
-        { id: 3, text: '🧘 Stress relief exercises?', icon: 'fitness' },
+        { id: 1, text: 'Medicine side effects?', icon: 'medical' },
+        { id: 2, text: 'Diet plan for diabetes?', icon: 'restaurant' },
+        { id: 3, text: 'Stress relief exercises?', icon: 'fitness' },
     ];
 
     const healthInsights = {
         bp: {
             value: '130/85',
             recommendations: [
-                '✅ DIET: Low salt, more vegetables',
-                '✅ EXERCISE: 30 min walk daily',
-                '✅ WATER: 8-10 glasses per day',
-                '✅ SLEEP: 7-8 hours recommended',
+                'DIET: Low salt, more vegetables',
+                'EXERCISE: 30 min walk daily',
+                'WATER: 8-10 glasses per day',
+                'SLEEP: 7-8 hours recommended',
             ],
             risk: 'MODERATE (25/100)',
             preventiveCare: 'Regular checkups',
@@ -213,7 +213,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                                 </View>
 
                                 <View style={styles.riskContainer}>
-                                    <Text style={styles.riskLabel}>⚠️ Risk Level: {healthInsights.bp.risk}</Text>
+                                    <Text style={styles.riskLabel}>Risk Level: {healthInsights.bp.risk}</Text>
                                     <Text style={styles.preventiveText}>
                                         Preventive Care: {healthInsights.bp.preventiveCare}
                                     </Text>

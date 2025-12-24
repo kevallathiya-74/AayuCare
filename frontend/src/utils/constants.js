@@ -109,15 +109,15 @@ export const TIME_SLOTS = [
 
 // Language Options
 export const LANGUAGE_OPTIONS = [
-  { label: 'English', value: 'en', flag: '🇬🇧' },
-  { label: 'हिंदी', value: 'hi', flag: '🇮🇳' },
-  { label: 'தமிழ்', value: 'ta', flag: '🇮🇳' },
-  { label: 'తెలుగు', value: 'te', flag: '🇮🇳' },
-  { label: 'ಕನ್ನಡ', value: 'kn', flag: '🇮🇳' },
-  { label: 'മലയാളം', value: 'ml', flag: '🇮🇳' },
-  { label: 'मराठी', value: 'mr', flag: '🇮🇳' },
-  { label: 'বাংলা', value: 'bn', flag: '🇮🇳' },
-  { label: 'ગુજરાતી', value: 'gu', flag: '🇮🇳' },
+  { label: 'English', value: 'en', flag: 'GB' },
+  { label: 'हिंदी', value: 'hi', flag: 'IN' },
+  { label: 'தமிழ்', value: 'ta', flag: 'IN' },
+  { label: 'తెలుగు', value: 'te', flag: 'IN' },
+  { label: 'ಕನ್ನಡ', value: 'kn', flag: 'IN' },
+  { label: 'മലയാളം', value: 'ml', flag: 'IN' },
+  { label: 'मराठी', value: 'mr', flag: 'IN' },
+  { label: 'বাংলা', value: 'bn', flag: 'IN' },
+  { label: 'ગુજરાતી', value: 'gu', flag: 'IN' },
 ];
 
 // Notification Types

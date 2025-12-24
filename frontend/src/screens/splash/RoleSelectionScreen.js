@@ -73,7 +73,7 @@ const RoleSelectionScreen = ({ navigation }) => {
                             <View style={styles.roleIcon}>
                                 <Ionicons name="business" size={48} color="#FFF" />
                             </View>
-                            <Text style={styles.roleTitle}>🏥 HOSPITAL</Text>
+                            <Text style={styles.roleTitle}>HOSPITAL</Text>
                             <Text style={styles.roleSubtitle}>Admin/Doctor</Text>
                             <View style={styles.roleArrow}>
                                 <Ionicons name="arrow-forward" size={24} color="#FFF" />
@@ -96,7 +96,7 @@ const RoleSelectionScreen = ({ navigation }) => {
                             <View style={styles.roleIcon}>
                                 <Ionicons name="person" size={48} color="#FFF" />
                             </View>
-                            <Text style={styles.roleTitle}>👤 PATIENT</Text>
+                            <Text style={styles.roleTitle}>PATIENT</Text>
                             <Text style={styles.roleSubtitle}>Book & Manage</Text>
                             <View style={styles.roleArrow}>
                                 <Ionicons name="arrow-forward" size={24} color="#FFF" />

@@ -236,19 +236,19 @@ export const createValidatedStyles = (styles, componentName = 'Component') => {
 export const generateStyleValidationReport = () => {
     const report = validateThemeStructure(healthColors);
     
-    console.group('📊 Style Validation Report');
+    console.group('[REPORT] Style Validation Report');
     console.log(`Coverage: ${report.coverage.toFixed(1)}%`);
     console.log(`Valid Paths: ${report.validPaths.length}`);
     console.log(`Missing Paths: ${report.missingPaths.length}`);
     
     if (report.missingPaths.length > 0) {
-        console.group('❌ Missing Paths:');
+        console.group('[ERROR] Missing Paths:');
         report.missingPaths.forEach(path => console.error(`  - ${path}`));
         console.groupEnd();
     }
     
     if (report.validPaths.length > 0) {
-        console.group('✅ Valid Paths:');
+        console.group('[SUCCESS] Valid Paths:');
         report.validPaths.forEach(path => console.log(`  - ${path}`));
         console.groupEnd();
     }

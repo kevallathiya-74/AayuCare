@@ -178,7 +178,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
             >
                 {/* Steps Tracker */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🚶 STEPS TODAY:</Text>
+                    <Text style={styles.sectionTitle}>STEPS TODAY:</Text>
                     <View style={styles.card}>
                         <View style={styles.stepsHeader}>
                             <Text style={styles.stepsCount}>
@@ -189,14 +189,14 @@ const ActivityTrackerScreen = ({ navigation }) => {
                             <View style={[styles.progressFill, { width: `${stepsData.percentage}%` }]} />
                         </View>
                         <Text style={styles.progressText}>
-                            📊 {stepsData.target - stepsData.current} steps to go!
+                            {stepsData.target - stepsData.current} steps to go!
                         </Text>
                     </View>
                 </View>
 
                 {/* Sleep Tracker */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>💤 SLEEP TRACKER:</Text>
+                    <Text style={styles.sectionTitle}>SLEEP TRACKER:</Text>
                     <View style={styles.card}>
                         <View style={styles.sleepRow}>
                             <Text style={styles.sleepLabel}>Last Night:</Text>
@@ -213,11 +213,11 @@ const ActivityTrackerScreen = ({ navigation }) => {
                         </View>
                         <View style={styles.sleepDetails}>
                             <View style={styles.sleepTime}>
-                                <Text style={styles.sleepTimeLabel}>🌙 Bedtime:</Text>
+                                <Text style={styles.sleepTimeLabel}>Bedtime:</Text>
                                 <Text style={styles.sleepTimeValue}>{sleepData.bedtime}</Text>
                             </View>
                             <View style={styles.sleepTime}>
-                                <Text style={styles.sleepTimeLabel}>☀️ Wake:</Text>
+                                <Text style={styles.sleepTimeLabel}>Wake:</Text>
                                 <Text style={styles.sleepTimeValue}>{sleepData.wakeTime}</Text>
                             </View>
                         </View>
@@ -230,7 +230,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
 
                 {/* Water Intake */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>💧 WATER INTAKE:</Text>
+                    <Text style={styles.sectionTitle}>WATER INTAKE:</Text>
                     <View style={styles.card}>
                         <Text style={styles.waterCount}>
                             {waterGlasses} / {targetGlasses} glasses today
@@ -244,7 +244,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
                                         { opacity: index < waterGlasses ? 1 : 0.3 },
                                     ]}
                                 >
-                                    <Text style={styles.glassEmoji}>💧</Text>
+                                    <Ionicons name="water" size={24} color="#2196F3" />
                                 </View>
                             ))}
                         </View>
@@ -263,13 +263,13 @@ const ActivityTrackerScreen = ({ navigation }) => {
                                 <Text style={styles.addGlassText}>Add Glass</Text>
                             </LinearGradient>
                         </TouchableOpacity>
-                        <Text style={styles.reminderText}>⏰ Reminder every 2 hours</Text>
+                        <Text style={styles.reminderText}>Reminder every 2 hours</Text>
                     </View>
                 </View>
 
                 {/* Stress Relief */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>🧘 STRESS RELIEF:</Text>
+                    <Text style={styles.sectionTitle}>STRESS RELIEF:</Text>
                     <View style={styles.card}>
                         {stressActivities.map((activity, index) => (
                             <TouchableOpacity key={index} style={styles.activityItem}>
@@ -295,7 +295,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
                         end={{ x: 1, y: 0 }}
                     >
                         <Ionicons name="stats-chart" size={24} color="#FFF" />
-                        <Text style={styles.progressButtonText}>📊 View 30-Day Progress</Text>
+                        <Text style={styles.progressButtonText}>View 30-Day Progress</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </ScrollView>

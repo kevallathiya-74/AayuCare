@@ -19,6 +19,7 @@ const patientRoutes = require('./src/routes/patientRoutes');
 const prescriptionRoutes = require('./src/routes/prescriptionRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // API Root route
 app.get('/api', (req, res) => {
@@ -135,15 +137,15 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  logger.info(`🌐 API URL: http://localhost:${PORT}`);
-  logger.info(`📱 Expo Go will auto-detect your computer's IP address`);
-  logger.info(`💡 Make sure phone and computer are on the same WiFi network`);
+  logger.info(`[SUCCESS] Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  logger.info(`[API] API URL: http://localhost:${PORT}`);
+  logger.info(`[MOBILE] Expo Go will auto-detect your computer's IP address`);
+  logger.info(`[INFO] Make sure phone and computer are on the same WiFi network`);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  logger.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  logger.error('UNHANDLED REJECTION! [FATAL] Shutting down...');
   logger.error(err.name, err.message);
   server.close(() => {
     process.exit(1);
@@ -152,9 +154,9 @@ process.on('unhandledRejection', (err) => {
 
 // Handle SIGTERM
 process.on('SIGTERM', () => {
-  logger.info('👋 SIGTERM RECEIVED. Shutting down gracefully');
+  logger.info('[SHUTDOWN] SIGTERM RECEIVED. Shutting down gracefully');
   server.close(() => {
-    logger.info('💥 Process terminated!');
+    logger.info('[SHUTDOWN] Process terminated!');
   });
 });
 

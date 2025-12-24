@@ -134,7 +134,7 @@ const SplashScreen = ({ navigation }) => {
                 </View>
 
                 {/* App Name */}
-                <Text style={styles.appName}>🏥 AayuCare</Text>
+                <Text style={styles.appName}>AayuCare</Text>
 
                 {/* Tagline */}
                 <Text style={styles.tagline}>Smart Healthcare</Text>

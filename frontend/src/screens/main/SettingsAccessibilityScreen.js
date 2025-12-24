@@ -86,7 +86,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Title */}
                 <View style={styles.titleSection}>
-                    <Text style={styles.title}>⚙️ APP SETTINGS</Text>
+                    <Text style={styles.title}>APP SETTINGS</Text>
                 </View>
 
                 {/* Language Section */}

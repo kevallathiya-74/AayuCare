@@ -151,7 +151,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                     setSearchResults(patients);
                     setShowSearchResults(patients.length > 0);
                 } catch (err) {
-                    console.error('❌ Real-time search error:', err);
+                    console.error('[ERROR] Real-time search error:', err);
                     logError(err, { context: 'PatientManagementScreen.realtimeSearch' });
                     setSearchResults([]);
                     setShowSearchResults(false);
@@ -176,17 +176,17 @@ const PatientManagementScreen = ({ navigation, route }) => {
 
         try {
             const patientId = patient.userId || patient._id;
-            console.log('📋 Fetching patient data for:', patientId);
+            console.log('[INFO] Fetching patient data for:', patientId);
             
             const patientData = await fetchPatientData(patientId);
             if (patientData) {
                 setSelectedPatient(patientData);
-                console.log('✅ Patient data loaded:', patientData.name);
+                console.log('[SUCCESS] Patient data loaded:', patientData.name);
             } else {
                 setError('Failed to load patient details');
             }
         } catch (err) {
-            console.error('❌ Select patient error:', err);
+            console.error('[ERROR] Select patient error:', err);
             logError(err, { context: 'PatientManagementScreen.handleSelectPatient' });
             setError('Failed to load patient details');
         } finally {
@@ -208,7 +208,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
             const searchRes = await patientService.searchPatients(searchQuery.trim());
             const patients = searchRes?.patients || searchRes?.data || [];
 
-            console.log('🔍 Search results:', { query: searchQuery, count: patients.length, patients });
+            console.log('[SEARCH] Search results:', { query: searchQuery, count: patients.length, patients });
 
             if (patients.length === 0) {
                 setSelectedPatient(null);
@@ -220,17 +220,17 @@ const PatientManagementScreen = ({ navigation, route }) => {
             const firstPatient = patients[0];
             const patientId = firstPatient.userId || firstPatient._id;
             
-            console.log('📋 Fetching patient data for:', patientId);
+            console.log('[INFO] Fetching patient data for:', patientId);
             
             const patientData = await fetchPatientData(patientId);
             if (patientData) {
                 setSelectedPatient(patientData);
-                console.log('✅ Patient data loaded:', patientData.name);
+                console.log('[SUCCESS] Patient data loaded:', patientData.name);
             } else {
                 setError('Failed to load patient details');
             }
         } catch (err) {
-            console.error('❌ Search error:', err);
+            console.error('[ERROR] Search error:', err);
             logError(err, { context: 'PatientManagementScreen.handleSearch' });
             setError('Search failed. Please try again.');
         } finally {
@@ -278,7 +278,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 diagnosis: newRecord.diagnosis.trim(),
             });
 
-            console.log('✅ Medical record created:', result);
+            console.log('[SUCCESS] Medical record created:', result);
             
             Alert.alert(
                 'Success', 
@@ -299,7 +299,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 onRefresh();
             }, 500);
         } catch (err) {
-            console.error('❌ Create record error:', err);
+            console.error('[ERROR] Create record error:', err);
             logError(err, { context: 'handleSubmitRecord' });
             
             const errorMessage = err.response?.data?.message || err.message || 'Failed to create medical record';
@@ -451,13 +451,13 @@ const PatientManagementScreen = ({ navigation, route }) => {
                                     </View>
                                     <View style={styles.patientBasicInfo}>
                                         <Text style={styles.patientName}>
-                                            👤 {selectedPatient.name}  ID: {selectedPatient.id}  Age: {selectedPatient.age}
+                                            {selectedPatient.name}  ID: {selectedPatient.id}  Age: {selectedPatient.age}
                                         </Text>
                                         <Text style={styles.patientDetail}>
-                                            📍 Last Visit: {selectedPatient.lastVisit}
+                                            Last Visit: {selectedPatient.lastVisit}
                                         </Text>
                                         <Text style={styles.patientVitals}>
-                                            🩺 BP: {selectedPatient.vitals.bp}  Sugar: {selectedPatient.vitals.sugar}  {selectedPatient.vitals.status}
+                                            BP: {selectedPatient.vitals.bp}  Sugar: {selectedPatient.vitals.sugar}  {selectedPatient.vitals.status}
                                         </Text>
                                     </View>
                                 </View>
@@ -472,7 +472,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="document-text" size={20} color={healthColors.primary.main} />
-                                    <Text style={styles.historyTitle}>📋 MEDICAL RECORDS ({selectedPatient.medicalRecords.length})</Text>
+                                    <Text style={styles.historyTitle}>MEDICAL RECORDS ({selectedPatient.medicalRecords.length})</Text>
                                 </View>
                                 {selectedPatient.medicalRecords.length > 0 ? (
                                     selectedPatient.medicalRecords.map((record) => (
@@ -505,7 +505,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                             <View style={styles.historyCard}>
                                 <View style={styles.historyHeader}>
                                     <Ionicons name="medkit" size={20} color={healthColors.success.main} />
-                                    <Text style={styles.historyTitle}>💊 PRESCRIPTIONS ({selectedPatient.prescriptions.length})</Text>
+                                    <Text style={styles.historyTitle}>PRESCRIPTIONS ({selectedPatient.prescriptions.length})</Text>
                                 </View>
                                 {selectedPatient.prescriptions.length > 0 ? (
                                     selectedPatient.prescriptions.map((prescription) => (
@@ -540,11 +540,11 @@ const PatientManagementScreen = ({ navigation, route }) => {
                             {/* Critical Info */}
                             <View style={styles.criticalInfoCard}>
                                 <View style={styles.criticalInfoRow}>
-                                    <Text style={styles.criticalInfoLabel}>🚨 ALLERGIES:</Text>
+                                    <Text style={styles.criticalInfoLabel}>ALLERGIES:</Text>
                                     <Text style={styles.criticalInfoValue}>{selectedPatient.allergies.join(', ')}</Text>
                                 </View>
                                 <View style={styles.criticalInfoRow}>
-                                    <Text style={styles.criticalInfoLabel}>🩸 BLOOD GROUP:</Text>
+                                    <Text style={styles.criticalInfoLabel}>BLOOD GROUP:</Text>
                                     <Text style={styles.criticalInfoValue}>{selectedPatient.bloodGroup}</Text>
                                 </View>
                             </View>
