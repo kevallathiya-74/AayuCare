@@ -293,7 +293,7 @@ exports.searchPatients = async (req, res) => {
 
         logger.info('Search patients request:', { doctorId, userId: req.user.userId, query: q });
 
-        if (!q || q.length < 2) {
+        if (!q || q.length < 1) {
             return res.json({
                 success: true,
                 data: [],

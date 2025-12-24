@@ -49,7 +49,6 @@ const DoctorHomeScreen = ({ navigation }) => {
     const [searchResults, setSearchResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [error, setError] = useState(null);
-    const [notificationCount] = useState(3);
     const [menuVisible, setMenuVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
     
@@ -62,6 +61,9 @@ const DoctorHomeScreen = ({ navigation }) => {
     });
 
     const [todaysAppointments, setTodaysAppointments] = useState([]);
+
+    // Calculate notification count from pending appointments
+    const notificationCount = schedule.pending || 0;
 
     const fetchDashboardData = useCallback(async () => {
         try {
@@ -90,23 +92,27 @@ const DoctorHomeScreen = ({ navigation }) => {
         setRefreshing(false);
     }, [fetchDashboardData]);
 
-    const handleSearch = useCallback(async (query) => {
-        setSearchQuery(query);
-        if (query.length < 2) {
-            setSearchResults([]);
-            return;
-        }
+    // Real-time search with debouncing (triggers after 1 character)
+    useEffect(() => {
+        const delaySearch = setTimeout(async () => {
+            if (searchQuery.trim().length >= 1) {
+                setSearching(true);
+                try {
+                    const response = await doctorService.searchMyPatients(searchQuery.trim());
+                    setSearchResults(response?.data || []);
+                } catch (err) {
+                    logError(err, { context: 'DoctorHomeScreen.realtimeSearch' });
+                    setSearchResults([]);
+                } finally {
+                    setSearching(false);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        }, 500); // 500ms debounce
 
-        setSearching(true);
-        try {
-            const response = await doctorService.searchMyPatients(query);
-            setSearchResults(response?.data || []);
-        } catch (err) {
-            logError(err, { context: 'DoctorHomeScreen.handleSearch' });
-        } finally {
-            setSearching(false);
-        }
-    }, []);
+        return () => clearTimeout(delaySearch);
+    }, [searchQuery]);
 
     // Menu animation handlers
     useEffect(() => {
@@ -249,9 +255,9 @@ const DoctorHomeScreen = ({ navigation }) => {
                         <View style={styles.bannerRightIcons}>
                             <TouchableOpacity 
                                 style={styles.bannerIconButton}
-                                onPress={() => Alert.alert('Notifications', `You have ${notificationCount} new notifications`)}
+                                onPress={() => Alert.alert('Notifications', notificationCount > 0 ? `You have ${notificationCount} pending appointment${notificationCount > 1 ? 's' : ''}` : 'No pending appointments')}
                                 accessibilityRole="button"
-                                accessibilityLabel={`${notificationCount} notifications`}
+                                accessibilityLabel={notificationCount > 0 ? `${notificationCount} pending appointments` : 'No notifications'}
                             >
                                 <Ionicons name="notifications" size={24} color="#FFFFFF" />
                                 {notificationCount > 0 && (
@@ -367,7 +373,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                             placeholder="Enter patient name..."
                             placeholderTextColor={healthColors.text.secondary}
                             value={searchQuery}
-                            onChangeText={handleSearch}
+                            onChangeText={setSearchQuery}
                             accessibilityLabel="Search patients by name"
                             accessibilityHint="Type patient name to search"
                         />
@@ -423,15 +429,15 @@ const DoctorHomeScreen = ({ navigation }) => {
                     ) : (
                         todaysAppointments.map((appointment) => (
                             <View 
-                                key={appointment._id || appointment.id} 
+                                key={appointment.id} 
                                 style={styles.appointmentCard}
                                 accessible={true}
-                                accessibilityLabel={`Appointment with ${appointment.patientName || appointment.patient?.name} at ${appointment.time || appointment.timeSlot}, Status: ${getStatusLabel(appointment.status)}`}
+                                accessibilityLabel={`Appointment with ${appointment.patientName} at ${appointment.time}, Status: ${getStatusLabel(appointment.status)}`}
                             >
                                 <View style={styles.appointmentHeader}>
                                     <View style={styles.appointmentTime}>
                                         <Ionicons name="time-outline" size={16} color={healthColors.primary.main} />
-                                        <Text style={styles.appointmentTimeText}>{appointment.time || appointment.timeSlot}</Text>
+                                        <Text style={styles.appointmentTimeText}>{appointment.time}</Text>
                                     </View>
                                     <View style={styles.appointmentTypeBadge}>
                                         <Ionicons 
@@ -443,7 +449,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                                 </View>
                                 
                                 <View style={styles.appointmentPatientRow}>
-                                    <Text style={styles.appointmentPatient}>{appointment.patientName || appointment.patient?.name}</Text>
+                                    <Text style={styles.appointmentPatient}>{appointment.patientName}</Text>
                                     <View style={[styles.statusBadge, { backgroundColor: getStatusColor(appointment.status) + '20' }]}>
                                         <Text style={[styles.statusText, { color: getStatusColor(appointment.status) }]}>
                                             {getStatusLabel(appointment.status)}
@@ -451,15 +457,15 @@ const DoctorHomeScreen = ({ navigation }) => {
                                     </View>
                                 </View>
                                 <Text style={styles.appointmentReason}>
-                                    ID: {appointment.patientId || appointment.patient?._id?.slice(-6)} | Age: {appointment.age || appointment.patient?.age || 'N/A'} | {appointment.reason || appointment.reasonForVisit}
+                                    ID: {appointment.patientId} | Age: {appointment.age} | {appointment.reason}
                                 </Text>
                                 
                                 <View style={styles.appointmentActions}>
                                     <TouchableOpacity 
                                         style={styles.actionButtonSecondary}
-                                        onPress={() => navigation.navigate('PatientManagement', { patientId: appointment.patient?._id })}
+                                        onPress={() => navigation.navigate('PatientManagement', { patientId: appointment.patientId })}
                                         accessibilityRole="button"
-                                        accessibilityLabel={`View history for ${appointment.patientName || appointment.patient?.name}`}
+                                        accessibilityLabel={`View history for ${appointment.patientName}`}
                                     >
                                         <Text style={styles.actionButtonSecondaryText}>View History</Text>
                                     </TouchableOpacity>
@@ -467,7 +473,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                                         style={styles.actionButtonPrimary}
                                         onPress={() => handleStartConsultation(appointment)}
                                         accessibilityRole="button"
-                                        accessibilityLabel={`Start consultation with ${appointment.patientName || appointment.patient?.name}`}
+                                        accessibilityLabel={`Start consultation with ${appointment.patientName}`}
                                     >
                                         <Text style={styles.actionButtonPrimaryText}>Start Consultation</Text>
                                     </TouchableOpacity>

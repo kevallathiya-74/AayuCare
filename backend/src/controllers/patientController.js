@@ -18,10 +18,10 @@ exports.searchPatients = async (req, res) => {
     try {
         const { q } = req.query;
 
-        if (!q || q.trim().length < 2) {
+        if (!q || q.trim().length < 1) {
             return res.status(400).json({
                 success: false,
-                message: 'Search query must be at least 2 characters',
+                message: 'Search query must be at least 1 character',
             });
         }
 

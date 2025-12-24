@@ -41,6 +41,11 @@ const PatientManagementScreen = ({ navigation, route }) => {
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [showRecordDetailModal, setShowRecordDetailModal] = useState(false);
     
+    // New state for real-time search
+    const [searchResults, setSearchResults] = useState([]);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+    
     // Get patientId from navigation params
     const patientIdFromRoute = route?.params?.patientId;
 
@@ -132,6 +137,62 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 .finally(() => setLoading(false));
         }
     }, [patientIdFromRoute, fetchPatientData]);
+
+    // Real-time search with debouncing
+    useEffect(() => {
+        const delaySearch = setTimeout(async () => {
+            // Only show dropdown if no patient is selected yet
+            if (searchQuery.trim().length >= 1 && !selectedPatient) {
+                setSearchLoading(true);
+                setError(null);
+                try {
+                    const searchRes = await patientService.searchPatients(searchQuery.trim());
+                    const patients = searchRes?.patients || searchRes?.data || [];
+                    setSearchResults(patients);
+                    setShowSearchResults(patients.length > 0);
+                } catch (err) {
+                    console.error('❌ Real-time search error:', err);
+                    logError(err, { context: 'PatientManagementScreen.realtimeSearch' });
+                    setSearchResults([]);
+                    setShowSearchResults(false);
+                } finally {
+                    setSearchLoading(false);
+                }
+            } else {
+                setSearchResults([]);
+                setShowSearchResults(false);
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(delaySearch);
+    }, [searchQuery, selectedPatient]);
+
+    // Handle selecting a patient from search results
+    const handleSelectPatient = useCallback(async (patient) => {
+        setShowSearchResults(false);
+        setSearchQuery(patient.name);
+        setLoading(true);
+        setError(null);
+
+        try {
+            const patientId = patient.userId || patient._id;
+            console.log('📋 Fetching patient data for:', patientId);
+            
+            const patientData = await fetchPatientData(patientId);
+            if (patientData) {
+                setSelectedPatient(patientData);
+                console.log('✅ Patient data loaded:', patientData.name);
+            } else {
+                setError('Failed to load patient details');
+            }
+        } catch (err) {
+            console.error('❌ Select patient error:', err);
+            logError(err, { context: 'PatientManagementScreen.handleSelectPatient' });
+            setError('Failed to load patient details');
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchPatientData]);
 
     const handleSearch = useCallback(async () => {
         if (!searchQuery.trim()) {
@@ -294,45 +355,76 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 {/* Search Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Search by Name or ID</Text>
-                    <View style={styles.searchContainer}>
-                        <View style={styles.searchInputWrapper}>
-                            <Ionicons name="search" size={20} color={healthColors.text.secondary} />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Enter patient name/ID..."
-                                placeholderTextColor={healthColors.text.disabled}
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                onSubmitEditing={handleSearch}
-                                returnKeyType="search"
-                                accessibilityLabel="Search patients"
-                                accessibilityHint="Enter patient name or ID to search"
-                            />
-                            {searchQuery.length > 0 && (
-                                <TouchableOpacity 
-                                    onPress={() => setSearchQuery('')}
-                                    accessibilityRole="button"
-                                    accessibilityLabel="Clear search"
-                                >
-                                    <Ionicons name="close-circle" size={20} color={healthColors.text.disabled} />
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                        <TouchableOpacity 
-                            style={styles.searchButton} 
-                            onPress={handleSearch}
-                            disabled={loading}
-                            accessibilityRole="button"
-                            accessibilityLabel="Search"
-                            accessibilityState={{ disabled: loading }}
-                        >
-                            {loading ? (
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                            ) : (
-                                <Ionicons name="search" size={20} color="#FFFFFF" />
-                            )}
-                        </TouchableOpacity>
+                    <View style={styles.searchInputWrapper}>
+                        <Ionicons name="search" size={20} color={healthColors.text.secondary} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Enter patient name/ID..."
+                            placeholderTextColor={healthColors.text.disabled}
+                            value={searchQuery}
+                            onChangeText={(text) => {
+                                setSearchQuery(text);
+                                // Clear selected patient when starting new search
+                                if (selectedPatient) {
+                                    setSelectedPatient(null);
+                                }
+                                if (text.trim().length < 1) {
+                                    setShowSearchResults(false);
+                                }
+                            }}
+                            onSubmitEditing={handleSearch}
+                            returnKeyType="search"
+                            accessibilityLabel="Search patients"
+                            accessibilityHint="Enter patient name or ID to search"
+                        />
+                        {searchLoading && (
+                            <ActivityIndicator size="small" color={healthColors.primary.main} />
+                        )}
+                        {searchQuery.length > 0 && !searchLoading && (
+                            <TouchableOpacity 
+                                onPress={() => {
+                                    setSearchQuery('');
+                                    setShowSearchResults(false);
+                                    setSearchResults([]);
+                                    setSelectedPatient(null);
+                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel="Clear search"
+                            >
+                                <Ionicons name="close-circle" size={20} color={healthColors.text.disabled} />
+                            </TouchableOpacity>
+                        )}
                     </View>
+                    
+                    {/* Real-time Search Results Dropdown */}
+                    {showSearchResults && searchResults.length > 0 && (
+                        <View style={styles.searchResultsDropdown}>
+                            {searchResults.map((patient) => (
+                                <TouchableOpacity
+                                    key={patient._id || patient.userId}
+                                    style={styles.searchResultItem}
+                                    onPress={() => handleSelectPatient(patient)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Select patient ${patient.name}`}
+                                >
+                                    <View style={styles.searchResultContent}>
+                                        <Ionicons name="person-circle-outline" size={32} color={healthColors.primary.main} />
+                                        <View style={styles.searchResultInfo}>
+                                            <Text style={styles.searchResultName}>{patient.name}</Text>
+                                            <Text style={styles.searchResultDetails}>
+                                                {patient.userId || patient._id} • {patient.age ? `${patient.age} yrs` : 'Age N/A'} • {patient.bloodGroup || 'Blood Group N/A'}
+                                            </Text>
+                                            {patient.phone && (
+                                                <Text style={styles.searchResultPhone}>{patient.phone}</Text>
+                                            )}
+                                        </View>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={20} color={healthColors.text.secondary} />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
+                    
                     {error && (
                         <Text style={styles.errorText}>{error}</Text>
                     )}
@@ -731,6 +823,52 @@ const styles = StyleSheet.create({
         height: moderateScale(48),
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    searchResultsDropdown: {
+        backgroundColor: healthColors.background.card,
+        borderRadius: moderateScale(12),
+        marginTop: moderateScale(8),
+        borderWidth: 2,
+        borderColor: healthColors.border.light,
+        maxHeight: moderateScale(300),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    searchResultItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: moderateScale(12),
+        paddingHorizontal: moderateScale(16),
+        borderBottomWidth: 1,
+        borderBottomColor: healthColors.border.light,
+    },
+    searchResultContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: moderateScale(12),
+    },
+    searchResultInfo: {
+        flex: 1,
+    },
+    searchResultName: {
+        fontSize: scaledFontSize(14),
+        fontWeight: '600',
+        color: healthColors.text.primary,
+        marginBottom: moderateScale(2),
+    },
+    searchResultDetails: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
+        marginBottom: moderateScale(2),
+    },
+    searchResultPhone: {
+        fontSize: scaledFontSize(12),
+        color: healthColors.text.secondary,
     },
     loadingContainer: {
         alignItems: 'center',
