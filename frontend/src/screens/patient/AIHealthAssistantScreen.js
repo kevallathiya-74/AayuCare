@@ -16,7 +16,10 @@ import {
   StatusBar,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
@@ -37,6 +40,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
+  const insets = useSafeAreaInsets();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([
     {
@@ -207,7 +211,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 56 : 0}
       >
         <ScrollView
           ref={scrollViewRef}

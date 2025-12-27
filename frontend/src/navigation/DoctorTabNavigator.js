@@ -9,6 +9,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { Platform } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme/healthColors";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import {
@@ -30,6 +31,8 @@ const Tab = createBottomTabNavigator();
 const DoctorTabsInner = () => {
   const { todayCount, refreshCount } = useDoctorAppointments();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 56 + Math.max(insets.bottom, 8);
 
   // Refresh count when navigator gains focus (e.g., returning from other screens)
   useEffect(() => {
@@ -63,9 +66,9 @@ const DoctorTabsInner = () => {
           backgroundColor: healthColors.background.card,
           borderTopWidth: 1,
           borderTopColor: healthColors.border.light,
-          paddingBottom: Platform.OS === "ios" ? 20 : 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 8,
-          height: Platform.OS === "ios" ? 85 : 65,
+          height: tabBarHeight,
           elevation: 8,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -2 },
