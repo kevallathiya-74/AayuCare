@@ -1,30 +1,30 @@
 /**
  * AayuCare - Component Library Index
- * 
+ *
  * Export all common components
  */
 
-export { default as Avatar } from './Avatar';
-export { default as Badge } from './Badge';
-export { default as Button } from './Button';
-export { default as Card } from './Card';
-export { default as Input } from './Input';
-export { default as SkeletonLoader } from './SkeletonLoader';
-export { default as Chip } from './Chip';
-export { default as Toast } from './Toast';
-export { default as FloatingActionButton } from './FloatingActionButton';
-export { default as SearchBar } from './SearchBar';
-export { default as Tabs } from './Tabs';
-export { default as ListItem } from './ListItem';
-export { default as EmptyState } from './EmptyState';
-export { default as LoadingOverlay } from './LoadingOverlay';
-export { default as ProgressBar } from './ProgressBar';
-export { default as ErrorBoundary } from './ErrorBoundary';
-export { default as ErrorRecovery } from './ErrorRecovery';
-export { default as LargeActionCard } from './LargeActionCard';
-export { default as LoadingIndicator } from './LoadingIndicator';
-export { default as NetworkStatusIndicator } from './NetworkStatusIndicator';
-export { default as AITagline } from './AITagline';
-export * from './CustomIcons';
-
-
+export { default as Avatar } from "./Avatar";
+export { default as Badge } from "./Badge";
+export { default as Button } from "./Button";
+export { default as Card } from "./Card";
+export { default as Input } from "./Input";
+export { default as SkeletonLoader } from "./SkeletonLoader";
+export { default as Chip } from "./Chip";
+export { default as Toast } from "./Toast";
+export { default as FloatingActionButton } from "./FloatingActionButton";
+export { default as SearchBar } from "./SearchBar";
+export { default as Tabs } from "./Tabs";
+export { default as ListItem } from "./ListItem";
+export { default as EmptyState } from "./EmptyState";
+export { default as LoadingOverlay } from "./LoadingOverlay";
+export { default as ProgressBar } from "./ProgressBar";
+export { default as ErrorBoundary } from "./ErrorBoundary";
+export { default as ErrorRecovery } from "./ErrorRecovery";
+export { default as LargeActionCard } from "./LargeActionCard";
+export { default as LoadingIndicator } from "./LoadingIndicator";
+export { default as NetworkStatusIndicator } from "./NetworkStatusIndicator";
+export { default as AITagline } from "./AITagline";
+export { default as SlideMenu } from "./SlideMenu";
+export { default as LanguageSelector } from "./LanguageSelector";
+export * from "./CustomIcons";
