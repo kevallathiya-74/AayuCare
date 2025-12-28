@@ -173,11 +173,14 @@ const SplashScreen = ({ navigation }) => {
       </Animated.View>
 
       {/* Footer */}
-      <Text
-        style={[styles.footer, { bottom: Math.max(insets.bottom, 24) + 16 }]}
+      <View
+        style={[
+          styles.footerContainer,
+          { paddingBottom: Math.max(insets.bottom, 16) },
+        ]}
       >
-        Your health, enhanced by intelligence
-      </Text>
+        <Text style={styles.footer}>Your health, enhanced by intelligence</Text>
+      </View>
     </LinearGradient>
   );
 };
@@ -223,11 +226,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: healthColors.white,
   },
-  footer: {
+  footerContainer: {
     position: "absolute",
-    bottom: 40,
+    bottom: 0,
     left: 0,
     right: 0,
+    alignItems: "center",
+    paddingHorizontal: moderateScale(24),
+  },
+  footer: {
     fontSize: scaledFontSize(12),
     color: "rgba(255, 255, 255, 0.8)",
     textAlign: "center",

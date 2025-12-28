@@ -16,7 +16,10 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { healthColors } from "../../theme/healthColors";
@@ -30,6 +33,7 @@ const AppointmentsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const insets = useSafeAreaInsets();
 
   // Get context to sync badge count
   const { refreshCount } = useAdminAppointments();
@@ -178,10 +182,7 @@ const AppointmentsScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -222,7 +223,10 @@ const AppointmentsScreen = ({ navigation }) => {
           data={appointments}
           renderItem={renderAppointment}
           keyExtractor={(item) => item._id || String(Math.random())}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: Math.max(insets.bottom, 20) },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

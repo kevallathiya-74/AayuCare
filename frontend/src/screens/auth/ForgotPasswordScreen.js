@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -7,21 +7,30 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
-import { healthColors } from '../../theme/healthColors';
-import { createShadow } from '../../utils/platformStyles';
-import { showError, showSuccess, validateEmail, validatePhone } from '../../utils/errorHandler';
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import Input from "../../components/common/Input";
+import Button from "../../components/common/Button";
+import { healthColors } from "../../theme/healthColors";
+import { createShadow } from "../../utils/platformStyles";
+import {
+  showError,
+  showSuccess,
+  validateEmail,
+  validatePhone,
+} from "../../utils/errorHandler";
 
 const ForgotPasswordScreen = ({ navigation, route }) => {
-  const userType = route?.params?.userType || 'user';
-  const isHospital = userType === 'hospital';
-  
-  const [email, setEmail] = useState('');
+  const userType = route?.params?.userType || "user";
+  const isHospital = userType === "hospital";
+  const insets = useSafeAreaInsets();
+
+  const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
   const [emailSent, setEmailSent] = useState(false);
 
@@ -29,34 +38,36 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     // Validation
     const newErrors = {};
     if (!email) {
-      newErrors.email = isHospital ? 'Hospital ID or Email is required' : 'Email or Phone is required';
+      newErrors.email = isHospital
+        ? "Hospital ID or Email is required"
+        : "Email or Phone is required";
       setErrors(newErrors);
       return;
     }
 
     // Validate email or phone format
-    if (!isHospital && email.includes('@')) {
+    if (!isHospital && email.includes("@")) {
       if (!validateEmail(email)) {
-        showError('Please enter a valid email address');
+        showError("Please enter a valid email address");
         return;
       }
-    } else if (!isHospital && !email.includes('@')) {
+    } else if (!isHospital && !email.includes("@")) {
       if (!validatePhone(email)) {
-        showError('Please enter a valid phone number');
+        showError("Please enter a valid phone number");
         return;
       }
     }
 
     // Show success message
     showSuccess(
-      `OTP sent successfully to ${email}. Please check your ${email.includes('@') ? 'email' : 'phone'}.`,
-      'OTP Sent'
+      `OTP sent successfully to ${email}. Please check your ${email.includes("@") ? "email" : "phone"}.`,
+      "OTP Sent"
     );
     setEmailSent(true);
-    
+
     // Navigate to reset password or OTP verification
     setTimeout(() => {
-      navigation.navigate('ResetPassword', { email, userType });
+      navigation.navigate("ResetPassword", { email, userType });
     }, 1500);
   };
 
@@ -64,19 +75,26 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      const loginScreen = 'Login'; // Unified login screen for all user types
+      const loginScreen = "Login"; // Unified login screen for all user types
       navigation.navigate(loginScreen);
     }
   };
 
-  const gradientColors = isHospital ? ['#E8F5E9', '#FFFFFF'] : ['#E3F2FD', '#FFFFFF'];
-  const iconColor = isHospital ? '#2E7D32' : '#29B6F6';
-  const iconGradient = isHospital ? ['#66BB6A', '#43A047'] : ['#4FC3F7', '#29B6F6'];
+  const gradientColors = isHospital
+    ? ["#E8F5E9", "#FFFFFF"]
+    : ["#E3F2FD", "#FFFFFF"];
+  const iconColor = isHospital ? "#2E7D32" : "#29B6F6";
+  const iconGradient = isHospital
+    ? ["#66BB6A", "#43A047"]
+    : ["#4FC3F7", "#29B6F6"];
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right"]}
+    >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
         <LinearGradient
@@ -85,102 +103,131 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
           end={{ x: 0, y: 1 }}
           style={styles.gradient}
         >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Back Button */}
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Feather name="arrow-left" size={24} color={iconColor} />
-          </TouchableOpacity>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: Math.max(insets.bottom, 20) },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Back Button */}
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Feather name="arrow-left" size={24} color={iconColor} />
+            </TouchableOpacity>
 
-          {/* Header Section */}
-          <View style={styles.header}>
-            <View style={styles.iconWrapper}>
-              <LinearGradient
-                colors={iconGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.iconGradient}
-              >
-                <Feather name="key" size={36} color="#FFFFFF" />
-              </LinearGradient>
-            </View>
-            <Text style={[styles.title, isHospital && styles.hospitalText]}>
-              Forgot Password?
-            </Text>
-            <Text style={[styles.subtitle, isHospital && styles.hospitalSubtext]}>
-              {emailSent 
-                ? 'Check your email for reset instructions'
-                : `Enter your ${isHospital ? 'Hospital ID or email' : 'registered email or phone'} to reset password`}
-            </Text>
-          </View>
-
-          {!emailSent ? (
-            <>
-              {/* Form Section */}
-              <View style={styles.form}>
-                <Input
-                  label={isHospital ? "Hospital ID or Email" : "Email or Phone"}
-                  placeholder={isHospital ? "HOS123456" : "example@email.com"}
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    setErrors({ ...errors, email: '' });
-                  }}
-                  error={errors.email}
-                  leftIcon={<Feather name="mail" size={20} color={iconColor} />}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-
-                <Button
-                  variant="primary"
-                  size="large"
-                  onPress={handleSendOTP}
-                  style={[styles.sendButton, isHospital && styles.hospitalButton]}
+            {/* Header Section */}
+            <View style={styles.header}>
+              <View style={styles.iconWrapper}>
+                <LinearGradient
+                  colors={iconGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.iconGradient}
                 >
-                  Send Reset Link
-                </Button>
+                  <Feather name="key" size={36} color="#FFFFFF" />
+                </LinearGradient>
               </View>
-
-              {/* Back to Login */}
-              <View style={styles.backToLogin}>
-                <Text style={styles.backToLoginText}>Remember your password?</Text>
-                <TouchableOpacity onPress={handleBack}>
-                  <Text style={[styles.backToLoginLink, isHospital && styles.hospitalLink]}>
-                    Back to Login
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <View style={styles.successContainer}>
-              <View style={styles.successIcon}>
-                <Feather name="check-circle" size={64} color={iconColor} />
-              </View>
-              <Text style={styles.successText}>Email Sent Successfully!</Text>
-              <Text style={styles.successSubtext}>
-                We've sent password reset instructions to {email}
+              <Text style={[styles.title, isHospital && styles.hospitalText]}>
+                Forgot Password?
+              </Text>
+              <Text
+                style={[styles.subtitle, isHospital && styles.hospitalSubtext]}
+              >
+                {emailSent
+                  ? "Check your email for reset instructions"
+                  : `Enter your ${isHospital ? "Hospital ID or email" : "registered email or phone"} to reset password`}
               </Text>
             </View>
-          )}
 
-          {/* Footer Info */}
-          <View style={styles.footer}>
-            {isHospital ? (
-              <MaterialCommunityIcons name="shield-check" size={20} color="#2E7D32" />
+            {!emailSent ? (
+              <>
+                {/* Form Section */}
+                <View style={styles.form}>
+                  <Input
+                    label={
+                      isHospital ? "Hospital ID or Email" : "Email or Phone"
+                    }
+                    placeholder={isHospital ? "HOS123456" : "example@email.com"}
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      setErrors({ ...errors, email: "" });
+                    }}
+                    error={errors.email}
+                    leftIcon={
+                      <Feather name="mail" size={20} color={iconColor} />
+                    }
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+
+                  <Button
+                    variant="primary"
+                    size="large"
+                    onPress={handleSendOTP}
+                    style={[
+                      styles.sendButton,
+                      isHospital && styles.hospitalButton,
+                    ]}
+                  >
+                    Send Reset Link
+                  </Button>
+                </View>
+
+                {/* Back to Login */}
+                <View style={styles.backToLogin}>
+                  <Text style={styles.backToLoginText}>
+                    Remember your password?
+                  </Text>
+                  <TouchableOpacity onPress={handleBack}>
+                    <Text
+                      style={[
+                        styles.backToLoginLink,
+                        isHospital && styles.hospitalLink,
+                      ]}
+                    >
+                      Back to Login
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             ) : (
-              <Feather name="shield" size={16} color={healthColors.textSecondary} />
+              <View style={styles.successContainer}>
+                <View style={styles.successIcon}>
+                  <Feather name="check-circle" size={64} color={iconColor} />
+                </View>
+                <Text style={styles.successText}>Email Sent Successfully!</Text>
+                <Text style={styles.successSubtext}>
+                  We've sent password reset instructions to {email}
+                </Text>
+              </View>
             )}
-            <Text style={[styles.footerText, isHospital && styles.hospitalFooter]}>
-              Secure password reset process
-            </Text>
-          </View>
-        </ScrollView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+
+            {/* Footer Info */}
+            <View style={styles.footer}>
+              {isHospital ? (
+                <MaterialCommunityIcons
+                  name="shield-check"
+                  size={20}
+                  color="#2E7D32"
+                />
+              ) : (
+                <Feather
+                  name="shield"
+                  size={16}
+                  color={healthColors.textSecondary}
+                />
+              )}
+              <Text
+                style={[styles.footerText, isHospital && styles.hospitalFooter]}
+              >
+                Secure password reset process
+              </Text>
+            </View>
+          </ScrollView>
+        </LinearGradient>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -207,13 +254,19 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: healthColors.background.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
-    ...createShadow({ color: '#000', offset: { width: 0, height: 2 }, opacity: 0.08, radius: 8, elevation: 2 }),
+    ...createShadow({
+      color: "#000",
+      offset: { width: 0, height: 2 },
+      opacity: 0.08,
+      radius: 8,
+      elevation: 2,
+    }),
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 48,
   },
   iconWrapper: {
@@ -223,31 +276,36 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...createShadow({ offset: { width: 0, height: 6 }, opacity: 0.25, radius: 12, elevation: 8 }),
+    justifyContent: "center",
+    alignItems: "center",
+    ...createShadow({
+      offset: { width: 0, height: 6 },
+      opacity: 0.25,
+      radius: 12,
+      elevation: 8,
+    }),
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: "700",
     color: healthColors.text.primary,
     marginBottom: 10,
     letterSpacing: 0.3,
   },
   hospitalText: {
-    color: '#1B5E20',
+    color: "#1B5E20",
   },
   subtitle: {
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: "400",
     color: healthColors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 0.2,
     paddingHorizontal: 20,
     lineHeight: 22,
   },
   hospitalSubtext: {
-    color: '#2E7D32',
+    color: "#2E7D32",
   },
   form: {
     marginBottom: 36,
@@ -260,27 +318,27 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.success.dark,
   },
   backToLogin: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 28,
   },
   backToLoginText: {
     fontSize: 14,
-    fontWeight: '400',
+    fontWeight: "400",
     color: healthColors.text.secondary,
   },
   backToLoginLink: {
     marginLeft: 6,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     color: healthColors.primary.main,
   },
   hospitalLink: {
-    color: '#2E7D32',
+    color: "#2E7D32",
   },
   successContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 48,
   },
   successIcon: {
@@ -288,22 +346,22 @@ const styles = StyleSheet.create({
   },
   successText: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: healthColors.text.primary,
     marginBottom: 14,
   },
   successSubtext: {
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: "400",
     color: healthColors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
     paddingHorizontal: 20,
     lineHeight: 22,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 44,
     paddingTop: 28,
     borderTopWidth: 1,
@@ -312,13 +370,13 @@ const styles = StyleSheet.create({
   footerText: {
     marginLeft: 10,
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
     color: healthColors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 18,
   },
   hospitalFooter: {
-    color: '#2E7D32',
+    color: "#2E7D32",
   },
 });
 

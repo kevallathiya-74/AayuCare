@@ -13,7 +13,10 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
@@ -39,6 +42,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
+  const insets = useSafeAreaInsets();
 
   // Get prescription from route params or fetch latest
   const [prescription, setPrescription] = useState(
@@ -147,10 +151,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
   if (error) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <ErrorRecovery
           error={error}
@@ -164,10 +165,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   // Loading state
   if (fetchingPrescription) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
@@ -184,10 +182,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     prescription.medicines.length === 0
   ) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <LinearGradient
           colors={["#00897B", "#00695C"]}
@@ -232,10 +227,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <NetworkStatusIndicator />
       {/* Header */}
       <LinearGradient
@@ -261,7 +253,12 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 20) },
+        ]}
+      >
         {/* Prescription Info */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>

@@ -64,10 +64,7 @@ const AnimatedSplashScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={healthColors.primary.main}

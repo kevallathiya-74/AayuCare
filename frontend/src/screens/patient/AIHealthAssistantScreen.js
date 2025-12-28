@@ -161,10 +161,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
 
   if (error) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <StatusBar
           barStyle="dark-content"
           backgroundColor={healthColors.background.primary}
@@ -180,10 +177,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -216,7 +210,10 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         <ScrollView
           ref={scrollViewRef}
           style={styles.messagesContainer}
-          contentContainerStyle={styles.messagesContent}
+          contentContainerStyle={[
+            styles.messagesContent,
+            { paddingBottom: Math.max(insets.bottom, 20) },
+          ]}
           onContentSizeChange={() =>
             scrollViewRef.current?.scrollToEnd({ animated: true })
           }

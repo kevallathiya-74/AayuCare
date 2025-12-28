@@ -14,7 +14,10 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
@@ -31,6 +34,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const { isConnected } = useNetworkStatus();
+  const insets = useSafeAreaInsets();
 
   const fetchPrescriptions = useCallback(async () => {
     if (!user?._id) {
@@ -167,10 +171,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
 
   if (error && !prescriptions.length) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <ErrorRecovery
           error={error}
           onRetry={fetchPrescriptions}
@@ -181,10 +182,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -222,6 +220,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           contentContainerStyle={[
             styles.content,
             prescriptions.length === 0 && styles.emptyContent,
+            { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           ListEmptyComponent={renderEmptyState}
           refreshControl={

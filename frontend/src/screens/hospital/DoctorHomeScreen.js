@@ -26,7 +26,10 @@ import {
   Animated,
   Dimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
@@ -59,6 +62,7 @@ const DoctorHomeScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
+  const insets = useSafeAreaInsets();
 
   const [schedule, setSchedule] = useState({
     totalAppointments: 0,
@@ -240,10 +244,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
           <Text style={styles.loadingText}>Loading dashboard...</Text>
@@ -253,10 +254,7 @@ const DoctorHomeScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.main}

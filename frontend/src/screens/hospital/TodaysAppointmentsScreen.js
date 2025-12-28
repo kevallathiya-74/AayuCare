@@ -17,7 +17,10 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { healthColors } from "../../theme/healthColors";
@@ -32,6 +35,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const insets = useSafeAreaInsets();
 
   // Get context to sync badge count
   const { refreshCount } = useDoctorAppointments();
@@ -254,10 +258,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={["top", "left", "right", "bottom"]}
-      >
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
           <Text style={styles.loadingText}>Loading appointments...</Text>
@@ -267,10 +268,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -351,7 +349,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         data={appointments}
         renderItem={renderAppointmentCard}
         keyExtractor={(item) => item._id || item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: Math.max(insets.bottom, 20) },
+        ]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
         refreshControl={

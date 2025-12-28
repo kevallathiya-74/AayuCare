@@ -27,7 +27,10 @@ import {
   Animated,
   RefreshControl,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
@@ -57,6 +60,7 @@ const PatientDashboard = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
+  const insets = useSafeAreaInsets();
 
   // Fetch health metrics
   useEffect(() => {
@@ -289,10 +293,7 @@ const PatientDashboard = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -1201,7 +1202,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: moderateScale(16),
-    paddingBottom: verticalScale(32),
   },
   grid: {
     flexDirection: "row",

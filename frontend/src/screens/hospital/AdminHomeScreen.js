@@ -27,7 +27,10 @@ import {
   Pressable,
   Animated,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
@@ -60,6 +63,7 @@ const AdminHomeScreen = ({ navigation }) => {
   const [showProfile, setShowProfile] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
+  const insets = useSafeAreaInsets();
   const [stats, setStats] = useState({
     appointments: { total: 0, today: 0, pending: 0, completed: 0, trend: 0 },
     doctors: { total: 0, active: 0, onDuty: 0, trend: 0 },
@@ -466,10 +470,7 @@ const AdminHomeScreen = ({ navigation }) => {
   }, [closeMenu]);
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -531,6 +532,7 @@ const AdminHomeScreen = ({ navigation }) => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.profileContainer}
+          contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
           removeClippedSubviews={true}
           scrollEventThrottle={16}
           decelerationRate="fast"
@@ -768,6 +770,7 @@ const AdminHomeScreen = ({ navigation }) => {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
           removeClippedSubviews={true}
           scrollEventThrottle={16}
           decelerationRate="fast"

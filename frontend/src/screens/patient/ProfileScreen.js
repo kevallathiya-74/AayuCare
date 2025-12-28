@@ -16,7 +16,10 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
@@ -36,6 +39,7 @@ import { logError } from "../../utils/errorHandler";
 const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+  const insets = useSafeAreaInsets();
 
   // Statistics states
   const [stats, setStats] = useState({
@@ -198,13 +202,13 @@ const ProfileScreen = ({ navigation }) => {
   ];
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(insets.bottom, 20) },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

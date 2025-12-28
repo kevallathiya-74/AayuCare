@@ -18,7 +18,10 @@ import {
   ActivityIndicator,
   Animated,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { healthColors } from "../../theme/healthColors";
@@ -45,6 +48,7 @@ const DEV_CREDENTIALS = __DEV__
 const UnifiedLoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
+  const insets = useSafeAreaInsets();
 
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
@@ -122,7 +126,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
   return (
     <SafeAreaView
       style={styles.container}
-      edges={["top", "left", "right", "bottom"]}
+      edges={["top", "left", "right"]}
     >
       <StatusBar
         barStyle="light-content"
@@ -134,7 +138,10 @@ const UnifiedLoginScreen = ({ navigation }) => {
         style={styles.keyboardView}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, moderateScale(20)) },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
