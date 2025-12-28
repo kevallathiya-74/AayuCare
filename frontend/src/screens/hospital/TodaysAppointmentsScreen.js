@@ -164,9 +164,15 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   const renderAppointmentCard = ({ item }) => (
     <TouchableOpacity
       style={styles.appointmentCard}
-      onPress={() =>
-        navigation.navigate("AppointmentDetails", { appointmentId: item._id })
-      }
+      onPress={() => {
+        // TODO: Create AppointmentDetails screen
+        Alert.alert(
+          "Appointment Details",
+          `Patient: ${item.patient?.name || item.patientName}\nTime: ${item.timeSlot || item.time}`,
+          [{ text: "OK" }]
+        );
+        // navigation.navigate("AppointmentDetails", { appointmentId: item._id });
+      }}
       activeOpacity={0.7}
       accessible={true}
       accessibilityRole="button"
@@ -197,9 +203,13 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.actionButton}
           activeOpacity={0.7}
-          onPress={() =>
-            navigation.navigate("VideoCall", { appointmentId: item._id })
-          }
+          onPress={() => {
+            // TODO: Implement video call functionality
+            Alert.alert("Video Call", "Video call feature coming soon!", [
+              { text: "OK" },
+            ]);
+            // navigation.navigate("VideoCall", { appointmentId: item._id });
+          }}
           accessibilityRole="button"
           accessibilityLabel="Start video call"
         >

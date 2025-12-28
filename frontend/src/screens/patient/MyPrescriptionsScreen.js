@@ -88,9 +88,15 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     <TouchableOpacity
       style={styles.prescriptionCard}
       activeOpacity={0.7}
-      onPress={() =>
-        navigation.navigate("PrescriptionDetails", { prescription: item })
-      }
+      onPress={() => {
+        // TODO: Create PrescriptionDetails screen
+        Alert.alert(
+          "Prescription Details",
+          `Doctor: ${item.doctorName}\nMedications: ${item.medications?.length || 0}`,
+          [{ text: "OK" }]
+        );
+        // navigation.navigate("PrescriptionDetails", { prescription: item });
+      }}
     >
       <View style={styles.prescriptionHeader}>
         <View style={styles.prescriptionIcon}>

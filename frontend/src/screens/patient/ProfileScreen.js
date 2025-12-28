@@ -189,7 +189,7 @@ const ProfileScreen = ({ navigation }) => {
       onPress: () =>
         Alert.alert(
           "Help & Support",
-          "For assistance, please contact:\n\nEmail: support@aayucare.com\nPhone: 1800-XXX-XXXX\n\nAvailable 24/7",
+          "For assistance, please contact:\n\nEmail: support@aayucare.com\nPhone: 1800-123-4567\n\nAvailable 24/7",
           [{ text: "OK" }]
         ),
     },

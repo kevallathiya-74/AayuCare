@@ -980,7 +980,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                     setTimeout(() => {
                       Alert.alert(
                         "Help & Support",
-                        "Contact: support@aayucare.com\nPhone: 1800-XXX-XXXX"
+                        "Contact: support@aayucare.com\nPhone: 1800-123-4567"
                       );
                     }, 100);
                   }}

@@ -103,10 +103,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -338,7 +335,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
                 size={18}
                 color={healthColors.primary.main}
               />
-              <Text style={styles.supportText}>• Call: 1800-XXX-XXXX</Text>
+              <Text style={styles.supportText}>• Call: 1800-123-4567</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.supportItem} activeOpacity={0.7}>
               <Ionicons
