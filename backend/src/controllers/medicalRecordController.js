@@ -1,7 +1,7 @@
-const MedicalRecord = require('../models/MedicalRecord');
-const User = require('../models/User');
-const { AppError } = require('../middleware/errorHandler');
-const logger = require('../utils/logger');
+const MedicalRecord = require("../models/MedicalRecord");
+const User = require("../models/User");
+const { AppError } = require("../middleware/errorHandler");
+const logger = require("../utils/logger");
 
 /**
  * @desc    Get all medical records (admin only with filters)
@@ -9,57 +9,65 @@ const logger = require('../utils/logger');
  * @access  Private (Admin)
  */
 exports.getAllMedicalRecords = async (req, res, next) => {
-    try {
-        const { patientId, doctorId, recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
+  try {
+    const {
+      patientId,
+      doctorId,
+      recordType,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-        // Build query
-        const query = {};
+    // Build query
+    const query = {};
 
-        if (patientId) {
-            query.patientId = patientId;
-        }
-
-        if (doctorId) {
-            query.doctorId = doctorId;
-        }
-
-        if (recordType) {
-            query.recordType = recordType;
-        }
-
-        if (startDate || endDate) {
-            query.date = {};
-            if (startDate) query.date.$gte = new Date(startDate);
-            if (endDate) query.date.$lte = new Date(endDate);
-        }
-
-        // Pagination
-        const skip = (page - 1) * limit;
-
-        const medicalRecords = await MedicalRecord.find(query)
-            .populate('patientId', 'name userId email phone')
-            .populate('doctorId', 'name specialization')
-            .sort({ date: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const total = await MedicalRecord.countDocuments(query);
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                medicalRecords,
-                pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total,
-                    pages: Math.ceil(total / limit),
-                },
-            },
-        });
-    } catch (error) {
-        next(error);
+    if (patientId) {
+      query.patientId = patientId;
     }
+
+    if (doctorId) {
+      query.doctorId = doctorId;
+    }
+
+    if (recordType) {
+      query.recordType = recordType;
+    }
+
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    // Pagination
+    const skip = (page - 1) * limit;
+
+    const medicalRecords = await MedicalRecord.find(query)
+      .populate("patientId", "name userId email phone")
+      .populate("doctorId", "name specialization")
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await MedicalRecord.countDocuments(query);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        medicalRecords,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -68,121 +76,136 @@ exports.getAllMedicalRecords = async (req, res, next) => {
  * @access  Private (Doctor)
  */
 exports.createMedicalRecord = async (req, res, next) => {
-    try {
-        const {
-            patientId,
-            recordType,
-            title,
-            description,
-            date,
-            diagnosis,
-            symptoms,
-            medications,
-            labResults,
-            files,
-        } = req.body;
+  try {
+    const {
+      patientId,
+      recordType,
+      title,
+      description,
+      date,
+      diagnosis,
+      symptoms,
+      medications,
+      labResults,
+      files,
+    } = req.body;
 
-        // Find patient by userId (string like "PAT001") or ObjectId
-        let patient;
-        if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-            // It's an ObjectId
-            patient = await User.findById(patientId);
-        } else {
-            // It's a userId string like "PAT001"
-            patient = await User.findOne({ userId: patientId, role: 'patient' });
-        }
-
-        if (!patient) {
-            return next(new AppError('Patient not found', 404));
-        }
-
-        const medicalRecord = await MedicalRecord.create({
-            patientId: patient._id, // Use ObjectId from found patient
-            doctorId: req.user.id,
-            hospitalId: req.user.hospitalId || 'MAIN',
-            recordType,
-            title,
-            description,
-            date: date || Date.now(),
-            diagnosis,
-            symptoms,
-            medications,
-            labResults,
-            files,
-        });
-
-        logger.info(`Medical record created by ${req.user.userId} for patient ${patient.userId}`);
-
-        res.status(201).json({
-            status: 'success',
-            message: 'Medical record created successfully',
-            data: {
-                medicalRecord,
-            },
-        });
-    } catch (error) {
-        next(error);
+    // Find patient by userId (string like "PAT001") or ObjectId
+    let patient;
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      // It's an ObjectId
+      patient = await User.findById(patientId);
+    } else {
+      // It's a userId string like "PAT001"
+      patient = await User.findOne({ userId: patientId, role: "patient" });
     }
+
+    if (!patient) {
+      return next(new AppError("Patient not found", 404));
+    }
+
+    const medicalRecord = await MedicalRecord.create({
+      patientId: patient._id, // Use ObjectId from found patient
+      doctorId: req.user._id,
+      hospitalId: req.user.hospitalId || "MAIN",
+      recordType,
+      title,
+      description,
+      date: date || Date.now(),
+      diagnosis,
+      symptoms,
+      medications,
+      labResults,
+      files,
+    });
+
+    logger.info(
+      `Medical record created by ${req.user.userId} for patient ${patient.userId}`
+    );
+
+    res.status(201).json({
+      status: "success",
+      message: "Medical record created successfully",
+      data: {
+        medicalRecord,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
  * @desc    Get all medical records for a patient
  * @route   GET /api/medical-records/patient/:patientId
- * @access  Private (Patient, Doctor, Admin)
+ * @access  Private (Patient own data, Doctor, Admin)
  */
 exports.getPatientMedicalRecords = async (req, res, next) => {
-    try {
-        const { patientId } = req.params;
-        const { recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
+  try {
+    const { patientId } = req.params;
+    const { recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
 
-        // Find patient by userId to get ObjectId
-        const patient = await User.findOne({ userId: patientId, role: 'patient' }).select('_id');
-        if (!patient) {
-            return res.status(404).json({
-                status: 'error',
-                message: 'Patient not found',
-            });
-        }
-
-        // Build query
-        const query = { patientId: patient._id };
-
-        if (recordType) {
-            query.recordType = recordType;
-        }
-
-        if (startDate || endDate) {
-            query.date = {};
-            if (startDate) query.date.$gte = new Date(startDate);
-            if (endDate) query.date.$lte = new Date(endDate);
-        }
-
-        // Pagination
-        const skip = (page - 1) * limit;
-
-        const medicalRecords = await MedicalRecord.find(query)
-            .populate('doctorId', 'name specialization')
-            .sort({ date: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const total = await MedicalRecord.countDocuments(query);
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                medicalRecords,
-                pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total,
-                    pages: Math.ceil(total / limit),
-                },
-            },
-        });
-    } catch (error) {
-        next(error);
+    // Check authorization - allow patient to view own data, doctors and admins can view any
+    const isOwnData =
+      req.user.userId === patientId || req.user._id.toString() === patientId;
+    if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
+      return res.status(403).json({
+        status: "error",
+        message: "Not authorized to view these medical records",
+      });
     }
+
+    // Find patient by either userId or _id
+    const patient = await User.findOne({
+      role: "patient",
+      $or: [{ userId: patientId }, { _id: patientId }],
+    }).select("_id");
+    if (!patient) {
+      return res.status(404).json({
+        status: "error",
+        message: "Patient not found",
+      });
+    }
+
+    // Build query
+    const query = { patientId: patient._id };
+
+    if (recordType) {
+      query.recordType = recordType;
+    }
+
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    // Pagination
+    const skip = (page - 1) * limit;
+
+    const medicalRecords = await MedicalRecord.find(query)
+      .populate("doctorId", "name specialization")
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await MedicalRecord.countDocuments(query);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        medicalRecords,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -191,24 +214,24 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
  * @access  Private
  */
 exports.getMedicalRecord = async (req, res, next) => {
-    try {
-        const medicalRecord = await MedicalRecord.findById(req.params.id)
-            .populate('patientId', 'name userId email phone')
-            .populate('doctorId', 'name specialization qualification');
+  try {
+    const medicalRecord = await MedicalRecord.findById(req.params.id)
+      .populate("patientId", "name userId email phone")
+      .populate("doctorId", "name specialization qualification");
 
-        if (!medicalRecord) {
-            return next(new AppError('Medical record not found', 404));
-        }
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                medicalRecord,
-            },
-        });
-    } catch (error) {
-        next(error);
+    if (!medicalRecord) {
+      return next(new AppError("Medical record not found", 404));
     }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        medicalRecord,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -217,35 +240,40 @@ exports.getMedicalRecord = async (req, res, next) => {
  * @access  Private (Doctor)
  */
 exports.updateMedicalRecord = async (req, res, next) => {
-    try {
-        const medicalRecord = await MedicalRecord.findById(req.params.id);
+  try {
+    const medicalRecord = await MedicalRecord.findById(req.params.id);
 
-        if (!medicalRecord) {
-            return next(new AppError('Medical record not found', 404));
-        }
-
-        // Only the doctor who created it can update
-        if (medicalRecord.doctorId.toString() !== req.user.id && req.user.role !== 'admin') {
-            return next(new AppError('Not authorized to update this record', 403));
-        }
-
-        const updatedRecord = await MedicalRecord.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        );
-
-        logger.info(`Medical record ${req.params.id} updated by ${req.user.userId}`);
-
-        res.status(200).json({
-            status: 'success',
-            data: {
-                medicalRecord: updatedRecord,
-            },
-        });
-    } catch (error) {
-        next(error);
+    if (!medicalRecord) {
+      return next(new AppError("Medical record not found", 404));
     }
+
+    // Only the doctor who created it can update
+    if (
+      medicalRecord.doctorId.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return next(new AppError("Not authorized to update this record", 403));
+    }
+
+    const updatedRecord = await MedicalRecord.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    logger.info(
+      `Medical record ${req.params.id} updated by ${req.user.userId}`
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        medicalRecord: updatedRecord,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -254,29 +282,34 @@ exports.updateMedicalRecord = async (req, res, next) => {
  * @access  Private (Doctor, Admin)
  */
 exports.deleteMedicalRecord = async (req, res, next) => {
-    try {
-        const medicalRecord = await MedicalRecord.findById(req.params.id);
+  try {
+    const medicalRecord = await MedicalRecord.findById(req.params.id);
 
-        if (!medicalRecord) {
-            return next(new AppError('Medical record not found', 404));
-        }
-
-        // Only the doctor who created it or admin can delete
-        if (medicalRecord.doctorId.toString() !== req.user.id && req.user.role !== 'admin') {
-            return next(new AppError('Not authorized to delete this record', 403));
-        }
-
-        await medicalRecord.deleteOne();
-
-        logger.info(`Medical record ${req.params.id} deleted by ${req.user.userId}`);
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Medical record deleted successfully',
-        });
-    } catch (error) {
-        next(error);
+    if (!medicalRecord) {
+      return next(new AppError("Medical record not found", 404));
     }
+
+    // Only the doctor who created it or admin can delete
+    if (
+      medicalRecord.doctorId.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return next(new AppError("Not authorized to delete this record", 403));
+    }
+
+    await medicalRecord.deleteOne();
+
+    logger.info(
+      `Medical record ${req.params.id} deleted by ${req.user.userId}`
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Medical record deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -285,44 +318,53 @@ exports.deleteMedicalRecord = async (req, res, next) => {
  * @access  Private (Doctor, Admin)
  */
 exports.getPatientHistory = async (req, res, next) => {
-    try {
-        const { patientId } = req.params;
+  try {
+    const { patientId } = req.params;
 
-        // Find patient by userId to get ObjectId
-        const patient = await User.findOne({ userId: patientId, role: 'patient' });
-        if (!patient) {
-            return next(new AppError('Patient not found', 404));
-        }
-
-        const medicalRecords = await MedicalRecord.find({ patientId: patient._id })
-            .populate('doctorId', 'name specialization')
-            .sort({ date: -1 });
-
-        // Group by record type
-        const history = {
-            patient: {
-                name: patient.name,
-                userId: patient.userId,
-                dateOfBirth: patient.dateOfBirth,
-                bloodGroup: patient.bloodGroup,
-                allergies: patient.allergies,
-                medicalHistory: patient.medicalHistory,
-            },
-            records: {
-                labReports: medicalRecords.filter(r => r.recordType === 'lab_report'),
-                prescriptions: medicalRecords.filter(r => r.recordType === 'prescription'),
-                doctorVisits: medicalRecords.filter(r => r.recordType === 'doctor_visit'),
-                testResults: medicalRecords.filter(r => r.recordType === 'test_result'),
-                imaging: medicalRecords.filter(r => r.recordType === 'imaging'),
-            },
-            totalRecords: medicalRecords.length,
-        };
-
-        res.status(200).json({
-            status: 'success',
-            data: history,
-        });
-    } catch (error) {
-        next(error);
+    // Find patient by either userId or _id
+    const patient = await User.findOne({
+      role: "patient",
+      $or: [{ userId: patientId }, { _id: patientId }],
+    });
+    if (!patient) {
+      return next(new AppError("Patient not found", 404));
     }
+
+    const medicalRecords = await MedicalRecord.find({ patientId: patient._id })
+      .populate("doctorId", "name specialization")
+      .sort({ date: -1 });
+
+    // Group by record type
+    const history = {
+      patient: {
+        name: patient.name,
+        userId: patient.userId,
+        dateOfBirth: patient.dateOfBirth,
+        bloodGroup: patient.bloodGroup,
+        allergies: patient.allergies,
+        medicalHistory: patient.medicalHistory,
+      },
+      records: {
+        labReports: medicalRecords.filter((r) => r.recordType === "lab_report"),
+        prescriptions: medicalRecords.filter(
+          (r) => r.recordType === "prescription"
+        ),
+        doctorVisits: medicalRecords.filter(
+          (r) => r.recordType === "doctor_visit"
+        ),
+        testResults: medicalRecords.filter(
+          (r) => r.recordType === "test_result"
+        ),
+        imaging: medicalRecords.filter((r) => r.recordType === "imaging"),
+      },
+      totalRecords: medicalRecords.length,
+    };
+
+    res.status(200).json({
+      status: "success",
+      data: history,
+    });
+  } catch (error) {
+    next(error);
+  }
 };

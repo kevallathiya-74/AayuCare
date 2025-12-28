@@ -1,10 +1,10 @@
 /**
  * Premium Box Selection Screen
  * Vibrant, beautiful design with enhanced colors
- * Optimized for Indian users
+ * Optimized for Indian users with proper typography system
  */
 
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -13,59 +13,117 @@ import {
   StatusBar,
   Dimensions,
   Image,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { healthColors } from '../../theme/healthColors';
-import { indianDesign } from '../../theme/indianDesign';
-import { createShadow, createTextShadow } from '../../utils/platformStyles';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { healthColors } from "../../theme/healthColors";
+import { indianDesign } from "../../theme/indianDesign";
+import { fontFamilies, fontWeights, lineHeights } from "../../theme/typography";
+import {
+  moderateScale,
+  scaledFontSize,
+  verticalScale,
+} from "../../utils/responsive";
+import { createShadow, createTextShadow } from "../../utils/platformStyles";
 
 // Verify imports loaded correctly
 if (!healthColors || !indianDesign) {
-  console.error('[BoxSelectionScreen] ═══════════════════════════════════');
-  console.error('[BoxSelectionScreen] Missing theme imports!');
-  console.error('[BoxSelectionScreen] healthColors:', !!healthColors);
-  console.error('[BoxSelectionScreen] indianDesign:', !!indianDesign);
-  console.error('[BoxSelectionScreen] ═══════════════════════════════════');
+  console.error("[BoxSelectionScreen] ═══════════════════════════════════");
+  console.error("[BoxSelectionScreen] Missing theme imports!");
+  console.error("[BoxSelectionScreen] healthColors:", !!healthColors);
+  console.error("[BoxSelectionScreen] indianDesign:", !!indianDesign);
+  console.error("[BoxSelectionScreen] ═══════════════════════════════════");
 }
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
+
+// Check if it's a small screen (height < 700)
+const isSmallScreen = height < 700;
+const isMediumScreen = height >= 700 && height < 850;
+
+// Responsive font sizes for cross-device consistency
+const responsiveFonts = {
+  // Primary heading - "Continue as"
+  title: scaledFontSize(isSmallScreen ? 24 : 28),
+  titleLineHeight: scaledFontSize(isSmallScreen ? 24 : 28) * lineHeights.tight,
+
+  // Secondary text - description
+  subtitle: scaledFontSize(isSmallScreen ? 13 : 15),
+  subtitleLineHeight:
+    scaledFontSize(isSmallScreen ? 13 : 15) * lineHeights.normal,
+
+  // Card title - "Hospital", "User"
+  cardTitle: scaledFontSize(isSmallScreen ? 22 : 26),
+  cardTitleLineHeight:
+    scaledFontSize(isSmallScreen ? 22 : 26) * lineHeights.tight,
+
+  // Card subtitle - description
+  cardSubtitle: scaledFontSize(isSmallScreen ? 12 : 14),
+  cardSubtitleLineHeight:
+    scaledFontSize(isSmallScreen ? 12 : 14) * lineHeights.normal,
+
+  // Badge text - "Coming Soon"
+  badge: scaledFontSize(10),
+  badgeLineHeight: scaledFontSize(10) * lineHeights.normal,
+
+  // Footer text
+  footer: scaledFontSize(isSmallScreen ? 11 : 13),
+  footerLineHeight:
+    scaledFontSize(isSmallScreen ? 11 : 13) * lineHeights.normal,
+};
+
+// Responsive dimensions - scale based on screen size
+const responsiveSizes = {
+  logoContainer: moderateScale(isSmallScreen ? 70 : 85),
+  logo: moderateScale(isSmallScreen ? 50 : 60),
+  iconCircle: moderateScale(isSmallScreen ? 65 : 80),
+  iconSize: moderateScale(isSmallScreen ? 32 : 40),
+  arrowCircle: moderateScale(isSmallScreen ? 44 : 54),
+  arrowSize: moderateScale(isSmallScreen ? 20 : 24),
+  footerDot: moderateScale(6),
+};
 
 const BoxSelectionScreen = ({ navigation }) => {
-  console.log('[BoxSelectionScreen] Rendering...');
-  console.log('[BoxSelectionScreen] Navigation available:', !!navigation);
+  const insets = useSafeAreaInsets();
 
   const handleHospitalPress = () => {
     try {
-      console.log('[BoxSelectionScreen] Hospital button pressed');
-      navigation.navigate('Login');
+      navigation.navigate("Login");
     } catch (error) {
-      console.error('[BoxSelectionScreen] Navigation error:', error);
+      console.error("[BoxSelectionScreen] Navigation error:", error);
     }
   };
 
   const handleUserPress = () => {
     // Coming soon - User section not available yet
-    alert('[UNDER CONSTRUCTION] User Section Coming Soon!\n\nThis feature is currently under development. Please use the Hospital login for now.');
+    alert(
+      "[UNDER CONSTRUCTION] User Section Coming Soon!\n\nThis feature is currently under development. Please use the Hospital login for now."
+    );
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.primary}
+      />
 
       {/* Header with Logo */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../../assets/images/aayucare-logo.png')}
+            source={require("../../../assets/images/aayucare-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.title}>Continue as</Text>
-        <Text style={styles.subtitle}>Choose your role to get started</Text>
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+          Continue as
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={2}>
+          Choose your role to get started
+        </Text>
       </View>
 
       {/* Selection Cards */}
@@ -75,6 +133,8 @@ const BoxSelectionScreen = ({ navigation }) => {
           style={styles.card}
           onPress={handleHospitalPress}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Continue as Hospital user"
         >
           <LinearGradient
             colors={healthColors.hospital.gradient}
@@ -86,7 +146,7 @@ const BoxSelectionScreen = ({ navigation }) => {
             <View style={styles.iconCircle}>
               <Ionicons
                 name="business"
-                size={44}
+                size={responsiveSizes.iconSize}
                 color="#FFFFFF"
               />
             </View>
@@ -103,7 +163,7 @@ const BoxSelectionScreen = ({ navigation }) => {
             <View style={styles.arrowCircle}>
               <Ionicons
                 name="arrow-forward"
-                size={26}
+                size={responsiveSizes.arrowSize}
                 color="#FFFFFF"
               />
             </View>
@@ -122,6 +182,8 @@ const BoxSelectionScreen = ({ navigation }) => {
           style={[styles.card, styles.disabledCard]}
           onPress={handleUserPress}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="User section - Coming Soon"
         >
           <LinearGradient
             colors={healthColors.secondary.gradient}
@@ -138,7 +200,7 @@ const BoxSelectionScreen = ({ navigation }) => {
             <View style={styles.iconCircle}>
               <Ionicons
                 name="person"
-                size={44}
+                size={responsiveSizes.iconSize}
                 color="#FFFFFF"
               />
             </View>
@@ -146,9 +208,7 @@ const BoxSelectionScreen = ({ navigation }) => {
             {/* Card Content */}
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>User</Text>
-              <Text style={styles.cardSubtitle}>
-                General Health Services
-              </Text>
+              <Text style={styles.cardSubtitle}>General Health Services</Text>
             </View>
 
             {/* Decorative Elements */}
@@ -159,14 +219,17 @@ const BoxSelectionScreen = ({ navigation }) => {
       </View>
 
       {/* Footer */}
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: Math.max(insets.bottom, moderateScale(16)) },
+        ]}
+      >
         <View style={styles.footerDot} />
         <View style={styles.footerSpacer} />
-        <Text style={styles.footerText}>
-          Secure • Private • Trusted
-        </Text>
+        <Text style={styles.footerText}>Secure • Private • Trusted</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -176,23 +239,23 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   header: {
-    paddingTop: Platform.OS === 'web' ? indianDesign.spacing.xxxl + 20 : indianDesign.spacing.xxxl + 20,
-    paddingHorizontal: indianDesign.spacing.xl,
-    marginBottom: indianDesign.spacing.xxl,
-    alignItems: 'center',
+    paddingTop: isSmallScreen ? moderateScale(16) : moderateScale(24),
+    paddingHorizontal: moderateScale(24),
+    marginBottom: isSmallScreen ? moderateScale(16) : moderateScale(20),
+    alignItems: "center",
   },
   logoContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: responsiveSizes.logoContainer,
+    height: responsiveSizes.logoContainer,
+    borderRadius: responsiveSizes.logoContainer / 2,
     backgroundColor: healthColors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: indianDesign.spacing.lg,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: isSmallScreen ? moderateScale(12) : moderateScale(16),
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: "#F0F0F0",
     ...createShadow({
-      color: '#000',
+      color: "#000",
       offset: { width: 0, height: 4 },
       opacity: 0.08,
       radius: 12,
@@ -200,35 +263,46 @@ const styles = StyleSheet.create({
     }),
   },
   logo: {
-    width: 65,
-    height: 65,
+    width: responsiveSizes.logo,
+    height: responsiveSizes.logo,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: indianDesign.spacing.xs,
+    fontFamily: fontFamilies.heading,
+    fontSize: responsiveFonts.title,
+    lineHeight: responsiveFonts.titleLineHeight,
+    fontWeight: fontWeights.bold,
+    color: "#2C3E50",
+    marginBottom: moderateScale(4),
+    textAlign: "center",
+    includeFontPadding: false, // Android fix for font alignment
   },
   subtitle: {
-    fontSize: indianDesign.fontSize.medium,
-    color: '#7F8C8D',
-    fontWeight: '500',
+    fontFamily: fontFamilies.body,
+    fontSize: responsiveFonts.subtitle,
+    lineHeight: responsiveFonts.subtitleLineHeight,
+    fontWeight: fontWeights.medium,
+    color: "#7F8C8D",
+    textAlign: "center",
+    includeFontPadding: false,
   },
   cardsContainer: {
     flex: 1,
-    paddingHorizontal: indianDesign.spacing.xl,
-    justifyContent: 'center',
-    paddingBottom: indianDesign.spacing.xxxl,
+    paddingHorizontal: moderateScale(20),
+    justifyContent: "center",
+    paddingBottom: isSmallScreen ? moderateScale(16) : moderateScale(24),
   },
   cardSpacer: {
-    height: indianDesign.spacing.lg,
+    height: isSmallScreen ? moderateScale(12) : moderateScale(16),
   },
   card: {
-    height: 190,
-    borderRadius: 20,
-    overflow: 'hidden',
+    // Use flex proportions instead of fixed height for better responsiveness
+    flexBasis: isSmallScreen ? "42%" : "48%",
+    minHeight: 140, // Absolute minimum for small devices
+    maxHeight: isSmallScreen ? 160 : 200, // Prevent excessive height
+    borderRadius: moderateScale(20),
+    overflow: "hidden",
     ...createShadow({
-      color: '#000',
+      color: "#000",
       offset: { width: 0, height: 8 },
       opacity: 0.12,
       radius: 20,
@@ -240,69 +314,75 @@ const styles = StyleSheet.create({
   },
   cardGradient: {
     flex: 1,
-    padding: indianDesign.spacing.xl,
-    justifyContent: 'center',
-    position: 'relative',
+    padding: moderateScale(20),
+    justifyContent: "center",
+    position: "relative",
   },
   iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: indianDesign.spacing.md,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    width: responsiveSizes.iconCircle,
+    height: responsiveSizes.iconCircle,
+    borderRadius: responsiveSizes.iconCircle / 2,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: moderateScale(10),
+    borderWidth: moderateScale(2.5),
+    borderColor: "rgba(255, 255, 255, 0.4)",
   },
   cardContent: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontFamily: fontFamilies.heading,
+    fontSize: responsiveFonts.cardTitle,
+    lineHeight: responsiveFonts.cardTitleLineHeight,
+    fontWeight: fontWeights.bold,
     color: healthColors.white,
-    marginBottom: 4,
+    marginBottom: moderateScale(2),
+    includeFontPadding: false,
     ...createTextShadow({
-      color: 'rgba(0, 0, 0, 0.15)',
+      color: "rgba(0, 0, 0, 0.15)",
       offset: { width: 0, height: 2 },
       radius: 8,
     }),
   },
   cardSubtitle: {
-    fontSize: 16,
+    fontFamily: fontFamilies.body,
+    fontSize: responsiveFonts.cardSubtitle,
+    lineHeight: responsiveFonts.cardSubtitleLineHeight,
+    fontWeight: fontWeights.medium,
     color: healthColors.white,
     opacity: 0.98,
-    fontWeight: '500',
+    includeFontPadding: false,
     ...createTextShadow({
-      color: 'rgba(0, 0, 0, 0.1)',
+      color: "rgba(0, 0, 0, 0.1)",
       offset: { width: 0, height: 1 },
       radius: 4,
     }),
   },
   arrowCircle: {
-    position: 'absolute',
-    bottom: indianDesign.spacing.xl,
-    right: indianDesign.spacing.xl,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    position: "absolute",
+    bottom: moderateScale(20),
+    right: moderateScale(20),
+    width: responsiveSizes.arrowCircle,
+    height: responsiveSizes.arrowCircle,
+    borderRadius: responsiveSizes.arrowCircle / 2,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: moderateScale(2.5),
+    borderColor: "rgba(255, 255, 255, 0.4)",
   },
   comingSoonBadge: {
-    position: 'absolute',
-    top: indianDesign.spacing.lg,
-    right: indianDesign.spacing.lg,
+    position: "absolute",
+    top: moderateScale(14),
+    right: moderateScale(14),
     backgroundColor: healthColors.warning.main,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(6),
+    borderRadius: moderateScale(16),
     ...createShadow({
-      color: '#000',
+      color: "#000",
       offset: { width: 0, height: 3 },
       opacity: 0.2,
       radius: 8,
@@ -310,47 +390,56 @@ const styles = StyleSheet.create({
     }),
   },
   comingSoonText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fontFamilies.body,
+    fontSize: responsiveFonts.badge,
+    lineHeight: responsiveFonts.badgeLineHeight,
+    fontWeight: fontWeights.bold,
     color: healthColors.white,
+    includeFontPadding: false,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   decorCircle1: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    position: "absolute",
+    top: moderateScale(-35),
+    right: moderateScale(-35),
+    width: moderateScale(110),
+    height: moderateScale(110),
+    borderRadius: moderateScale(55),
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
   },
   decorCircle2: {
-    position: 'absolute',
-    bottom: -30,
-    left: -30,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    position: "absolute",
+    bottom: moderateScale(-25),
+    left: moderateScale(-25),
+    width: moderateScale(90),
+    height: moderateScale(90),
+    borderRadius: moderateScale(45),
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: indianDesign.spacing.xl,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: isSmallScreen ? moderateScale(12) : moderateScale(16),
   },
   footerSpacer: {
-    width: indianDesign.spacing.sm,
+    width: moderateScale(8),
   },
   footerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: responsiveSizes.footerDot,
+    height: responsiveSizes.footerDot,
+    borderRadius: responsiveSizes.footerDot / 2,
     backgroundColor: healthColors.success.main,
   },
   footerText: {
-    fontSize: 14,
-    color: '#95A5A6',
-    fontWeight: '500',
+    fontFamily: fontFamilies.body,
+    fontSize: responsiveFonts.footer,
+    lineHeight: responsiveFonts.footerLineHeight,
+    fontWeight: fontWeights.medium,
+    color: "#95A5A6",
+    includeFontPadding: false,
+    letterSpacing: 0.3,
   },
 });
 

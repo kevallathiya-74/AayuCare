@@ -23,13 +23,9 @@ router.get("/stats", appointmentController.getAppointmentStats);
 /**
  * @route   GET /api/appointments/patient/:patientId
  * @desc    Get appointments for a specific patient
- * @access  Private (Doctor, Admin)
+ * @access  Private (Patient own data, Doctor, Admin)
  */
-router.get(
-  "/patient/:patientId",
-  authorize("doctor", "admin"),
-  appointmentController.getPatientAppointments
-);
+router.get("/patient/:patientId", appointmentController.getPatientAppointments);
 
 /**
  * @route   GET /api/appointments/slots/:doctorId
