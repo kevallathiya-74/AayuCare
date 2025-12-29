@@ -52,14 +52,14 @@ const ProfileScreen = ({ navigation }) => {
 
   // Fetch user statistics
   const fetchStats = useCallback(async () => {
-    if (!user?._id) return;
+    if (!user?.userId) return;
 
     try {
       const [appointmentsRes, recordsRes, prescriptionsRes] =
         await Promise.allSettled([
-          appointmentService.getPatientAppointments(user._id),
-          medicalRecordService.getPatientRecords(user._id),
-          prescriptionService.getPatientPrescriptions(user._id),
+          appointmentService.getPatientAppointments(user.userId),
+          medicalRecordService.getPatientRecords(user.userId),
+          prescriptionService.getPatientPrescriptions(user.userId),
         ]);
 
       setStats({

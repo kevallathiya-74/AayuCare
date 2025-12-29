@@ -74,10 +74,13 @@ exports.getHealthInsights = async (req, res) => {
     }
 
     // Get patient data - supports both userId and _id
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    });
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query);
     if (!patient) {
       return res.status(404).json({
         success: false,

@@ -107,8 +107,14 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   const handleStartConsultation = useCallback(
     async (appointment) => {
       try {
+        const appointmentId = appointment.id || appointment._id;
+        if (!appointmentId) {
+          Alert.alert("Error", "Invalid appointment ID");
+          return;
+        }
+
         const response = await doctorService.updateAppointmentStatus(
-          appointment._id,
+          appointmentId,
           "in-progress"
         );
         if (response?.success) {
@@ -166,12 +172,13 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       style={styles.appointmentCard}
       onPress={() => {
         // TODO: Create AppointmentDetails screen
+        const appointmentId = item.id || item._id;
         Alert.alert(
           "Appointment Details",
           `Patient: ${item.patient?.name || item.patientName}\nTime: ${item.timeSlot || item.time}`,
           [{ text: "OK" }]
         );
-        // navigation.navigate("AppointmentDetails", { appointmentId: item._id });
+        // navigation.navigate("AppointmentDetails", { appointmentId });
       }}
       activeOpacity={0.7}
       accessible={true}
@@ -205,10 +212,11 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           activeOpacity={0.7}
           onPress={() => {
             // TODO: Implement video call functionality
+            const appointmentId = item.id || item._id;
             Alert.alert("Video Call", "Video call feature coming soon!", [
               { text: "OK" },
             ]);
-            // navigation.navigate("VideoCall", { appointmentId: item._id });
+            // navigation.navigate("VideoCall", { appointmentId });
           }}
           accessibilityRole="button"
           accessibilityLabel="Start video call"
@@ -358,7 +366,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       <FlatList
         data={appointments}
         renderItem={renderAppointmentCard}
-        keyExtractor={(item) => item._id || item.id}
+        keyExtractor={(item) => item.id || item._id || String(Math.random())}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: Math.max(insets.bottom, 20) },

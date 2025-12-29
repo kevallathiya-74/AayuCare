@@ -101,12 +101,13 @@ exports.getCompleteHistory = async (req, res) => {
     }
 
     // Get patient profile - try both userId and _id
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    })
-      .select("-password")
-      .lean();
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("-password").lean();
 
     if (!patient) {
       return res.status(404).json({
@@ -218,12 +219,13 @@ exports.getPatientProfile = async (req, res) => {
       });
     }
 
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    })
-      .select("-password")
-      .lean();
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("-password").lean();
 
     if (!patient) {
       return res.status(404).json({
@@ -355,10 +357,13 @@ exports.getHealthMetrics = async (req, res) => {
     }
 
     // Fetch all metrics for the patient - handle both _id and userId
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    }).select("_id");
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
 
     const patientObjectId = patient ? patient._id : patientId;
     const metrics = await HealthMetric.find({ patient: patientObjectId })
@@ -408,10 +413,13 @@ exports.addHealthMetric = async (req, res) => {
     }
 
     // Get patient ObjectId for storing metric
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    }).select("_id");
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
 
     const patientObjectId = patient ? patient._id : patientId;
     const metric = await HealthMetric.create({
@@ -464,10 +472,13 @@ exports.getActivityData = async (req, res) => {
     }
 
     // Get patient ObjectId for querying metrics
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    }).select("_id");
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
 
     const patientObjectId = patient ? patient._id : patientId;
     const activityTypes = ["steps", "sleep", "water", "exercise", "stress"];
@@ -536,10 +547,13 @@ exports.updateActivityData = async (req, res) => {
     }
 
     // Get patient ObjectId for storing metric
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    }).select("_id");
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
 
     const patientObjectId = patient ? patient._id : patientId;
     const metric = await HealthMetric.create({

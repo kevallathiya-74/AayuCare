@@ -33,10 +33,13 @@ exports.createPrescription = async (req, res) => {
     }
 
     // Verify patient exists - supports both userId and _id
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    });
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query);
     if (!patient) {
       return res.status(404).json({
         success: false,
@@ -97,10 +100,13 @@ exports.getPatientPrescriptions = async (req, res) => {
     }
 
     // Find patient by either userId or _id
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    }).select("_id");
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
     if (!patient) {
       return res.status(404).json({
         success: false,

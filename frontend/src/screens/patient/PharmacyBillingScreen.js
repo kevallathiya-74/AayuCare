@@ -57,7 +57,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
     try {
       const response = await prescriptionService.getPatientPrescriptions(
-        user._id
+        user.userId
       );
       if (response.success && response.data?.length > 0) {
         // Get the most recent prescription

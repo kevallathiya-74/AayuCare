@@ -19,7 +19,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSelector } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
 import {
@@ -27,7 +26,6 @@ import {
   scaledFontSize,
   getScreenPadding,
 } from "../../utils/responsive";
-import { Card } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { doctorService } from "../../services";
 
@@ -134,24 +132,31 @@ const WalkInPatientScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
-      <LinearGradient
-        colors={[healthColors.primary.main, healthColors.primary.dark]}
-        style={styles.header}
-      >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="person-add" size={28} color="#FFF" />
           <Text style={styles.headerTitle}>Walk-in Patient</Text>
+          <Text style={styles.headerSubtitle}>Quick Registration</Text>
         </View>
-        <View style={{ width: 24 }} />
-      </LinearGradient>
+        <View style={styles.headerIconContainer}>
+          <Ionicons
+            name="person-add"
+            size={24}
+            color={healthColors.primary.main}
+          />
+        </View>
+      </View>
 
       <ScrollView
         contentContainerStyle={[
@@ -160,42 +165,72 @@ const WalkInPatientScreen = ({ navigation }) => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.subtitle}>Quick Registration</Text>
-
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
+        {/* Basic Information Section */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color={healthColors.primary.main}
+              />
+            </View>
+            <Text style={styles.sectionTitle}>Basic Information</Text>
+          </View>
 
           {/* Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Patient Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter full name"
-              value={formData.name}
-              onChangeText={(value) => handleInputChange("name", value)}
-              placeholderTextColor={healthColors.text.disabled}
-            />
+            <Text style={styles.label}>
+              Patient Name <Text style={styles.required}>*</Text>
+            </Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="person"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter full name"
+                value={formData.name}
+                onChangeText={(value) => handleInputChange("name", value)}
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
           </View>
 
           {/* Age & Gender */}
           <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>Age *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Age"
-                value={formData.age}
-                onChangeText={(value) =>
-                  handleInputChange("age", value.replace(/[^0-9]/g, ""))
-                }
-                keyboardType="numeric"
-                maxLength={3}
-                placeholderTextColor={healthColors.text.disabled}
-              />
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>
+                Age <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={healthColors.text.disabled}
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Age"
+                  value={formData.age}
+                  onChangeText={(value) =>
+                    handleInputChange("age", value.replace(/[^0-9]/g, ""))
+                  }
+                  keyboardType="numeric"
+                  maxLength={3}
+                  placeholderTextColor={healthColors.text.disabled}
+                />
+              </View>
             </View>
 
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.label}>Gender *</Text>
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>
+                Gender <Text style={styles.required}>*</Text>
+              </Text>
               <View style={styles.genderRow}>
                 {genderOptions.map((option) => (
                   <TouchableOpacity
@@ -205,14 +240,30 @@ const WalkInPatientScreen = ({ navigation }) => {
                       formData.gender === option && styles.genderButtonActive,
                     ]}
                     onPress={() => handleInputChange("gender", option)}
+                    activeOpacity={0.7}
                   >
+                    <Ionicons
+                      name={
+                        option === "male"
+                          ? "male"
+                          : option === "female"
+                            ? "female"
+                            : "male-female"
+                      }
+                      size={14}
+                      color={
+                        formData.gender === option
+                          ? "#FFF"
+                          : healthColors.text.secondary
+                      }
+                    />
                     <Text
                       style={[
                         styles.genderText,
                         formData.gender === option && styles.genderTextActive,
                       ]}
                     >
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                      {option.charAt(0).toUpperCase()}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -222,92 +273,148 @@ const WalkInPatientScreen = ({ navigation }) => {
 
           {/* Phone */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="10-digit mobile number"
-              value={formData.phone}
-              onChangeText={(value) =>
-                handleInputChange("phone", value.replace(/[^0-9]/g, ""))
-              }
-              keyboardType="phone-pad"
-              maxLength={10}
-              placeholderTextColor={healthColors.text.disabled}
-            />
+            <Text style={styles.label}>
+              Phone Number <Text style={styles.required}>*</Text>
+            </Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="call-outline"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="10-digit mobile number"
+                value={formData.phone}
+                onChangeText={(value) =>
+                  handleInputChange("phone", value.replace(/[^0-9]/g, ""))
+                }
+                keyboardType="phone-pad"
+                maxLength={10}
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
           </View>
 
           {/* Blood Group */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Blood Group</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.bloodGroupRow}>
-                {bloodGroups.map((group) => (
-                  <TouchableOpacity
-                    key={group}
+            <View style={styles.bloodGroupContainer}>
+              {bloodGroups.map((group) => (
+                <TouchableOpacity
+                  key={group}
+                  style={[
+                    styles.bloodGroupButton,
+                    formData.bloodGroup === group &&
+                      styles.bloodGroupButtonActive,
+                  ]}
+                  onPress={() => handleInputChange("bloodGroup", group)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="water"
+                    size={14}
+                    color={
+                      formData.bloodGroup === group
+                        ? "#FFF"
+                        : healthColors.error.main
+                    }
+                  />
+                  <Text
                     style={[
-                      styles.bloodGroupButton,
+                      styles.bloodGroupText,
                       formData.bloodGroup === group &&
-                        styles.bloodGroupButtonActive,
+                        styles.bloodGroupTextActive,
                     ]}
-                    onPress={() => handleInputChange("bloodGroup", group)}
                   >
-                    <Text
-                      style={[
-                        styles.bloodGroupText,
-                        formData.bloodGroup === group &&
-                          styles.bloodGroupTextActive,
-                      ]}
-                    >
-                      {group}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+                    {group}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Emergency Contact */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Emergency Contact</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Emergency contact number"
-              value={formData.emergencyContact}
-              onChangeText={(value) =>
-                handleInputChange(
-                  "emergencyContact",
-                  value.replace(/[^0-9]/g, "")
-                )
-              }
-              keyboardType="phone-pad"
-              maxLength={10}
-              placeholderTextColor={healthColors.text.disabled}
-            />
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="alert-circle-outline"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Emergency contact number"
+                value={formData.emergencyContact}
+                onChangeText={(value) =>
+                  handleInputChange(
+                    "emergencyContact",
+                    value.replace(/[^0-9]/g, "")
+                  )
+                }
+                keyboardType="phone-pad"
+                maxLength={10}
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
           </View>
-        </Card>
+        </View>
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Medical Information</Text>
+        {/* Medical Information Section */}
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Ionicons
+                name="medical-outline"
+                size={20}
+                color={healthColors.primary.main}
+              />
+            </View>
+            <Text style={styles.sectionTitle}>Medical Information</Text>
+          </View>
 
           {/* Chief Complaint */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Chief Complaint / Symptoms *</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Describe the symptoms or reason for visit"
-              value={formData.chiefComplaint}
-              onChangeText={(value) =>
-                handleInputChange("chiefComplaint", value)
-              }
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              placeholderTextColor={healthColors.text.disabled}
-            />
+            <Text style={styles.label}>
+              Chief Complaint / Symptoms <Text style={styles.required}>*</Text>
+            </Text>
+            <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
+              <Ionicons
+                name="document-text-outline"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIconTop}
+              />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Describe the symptoms or reason for visit"
+                value={formData.chiefComplaint}
+                onChangeText={(value) =>
+                  handleInputChange("chiefComplaint", value)
+                }
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
           </View>
-        </Card>
+        </View>
 
-        <Text style={styles.note}>* Required fields</Text>
+        <View style={styles.noteContainer}>
+          <Ionicons
+            name="information-circle-outline"
+            size={14}
+            color={healthColors.text.disabled}
+          />
+          <Text style={styles.note}>
+            Fields marked with <Text style={styles.required}>*</Text> are
+            required
+          </Text>
+        </View>
 
         {/* Register Button */}
         <TouchableOpacity
@@ -319,23 +426,14 @@ const WalkInPatientScreen = ({ navigation }) => {
           disabled={loading}
           activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={
-              loading
-                ? [healthColors.button.disabled, healthColors.button.disabled]
-                : [healthColors.success.main, healthColors.success.dark]
-            }
-            style={styles.registerButtonGradient}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFF" size="small" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={24} color="#FFF" />
-                <Text style={styles.registerButtonText}>Register Patient</Text>
-              </>
-            )}
-          </LinearGradient>
+          {loading ? (
+            <ActivityIndicator color="#FFF" size="small" />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle" size={22} color="#FFF" />
+              <Text style={styles.registerButtonText}>Register Patient</Text>
+            </>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -345,106 +443,168 @@ const WalkInPatientScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: healthColors.background.primary,
+    backgroundColor: healthColors.background.secondary,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: 16,
+    paddingVertical: moderateScale(16),
+    backgroundColor: healthColors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  backButton: {
+    padding: moderateScale(4),
   },
   headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    flex: 1,
+    marginLeft: moderateScale(12),
   },
   headerTitle: {
     fontSize: scaledFontSize(20),
     fontWeight: "700",
-    color: "#FFF",
-    marginLeft: 12,
+    color: healthColors.text.primary,
+  },
+  headerSubtitle: {
+    fontSize: scaledFontSize(13),
+    color: healthColors.text.secondary,
+    marginTop: moderateScale(2),
+  },
+  headerIconContainer: {
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(20),
+    backgroundColor: healthColors.primary.background,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     padding: getScreenPadding(),
   },
-  subtitle: {
-    fontSize: scaledFontSize(16),
-    color: healthColors.text.secondary,
-    marginBottom: 16,
+  formSection: {
+    backgroundColor: healthColors.background.card,
+    borderRadius: moderateScale(16),
+    padding: moderateScale(20),
+    marginBottom: moderateScale(16),
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
   },
-  section: {
-    marginBottom: 16,
-    padding: 16,
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: moderateScale(20),
+    paddingBottom: moderateScale(12),
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  sectionIconContainer: {
+    width: moderateScale(32),
+    height: moderateScale(32),
+    borderRadius: moderateScale(8),
+    backgroundColor: healthColors.primary.background,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: moderateScale(10),
   },
   sectionTitle: {
     fontSize: scaledFontSize(16),
-    fontWeight: "600",
+    fontWeight: "700",
     color: healthColors.text.primary,
-    marginBottom: 16,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: moderateScale(18),
   },
   label: {
     fontSize: scaledFontSize(14),
-    fontWeight: "500",
-    color: healthColors.text.secondary,
-    marginBottom: 8,
+    fontWeight: "600",
+    color: healthColors.text.primary,
+    marginBottom: moderateScale(8),
+  },
+  required: {
+    color: healthColors.error.main,
+    fontSize: scaledFontSize(14),
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    borderRadius: moderateScale(12),
+    backgroundColor: healthColors.background.primary,
+    paddingHorizontal: moderateScale(14),
+  },
+  inputIcon: {
+    marginRight: moderateScale(10),
+  },
+  inputIconTop: {
+    marginRight: moderateScale(10),
+    marginTop: moderateScale(12),
   },
   input: {
-    borderWidth: 1,
-    borderColor: healthColors.border.main,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flex: 1,
+    paddingVertical: moderateScale(14),
     fontSize: scaledFontSize(15),
     color: healthColors.text.primary,
-    backgroundColor: healthColors.background.primary,
+  },
+  textAreaWrapper: {
+    alignItems: "flex-start",
   },
   textArea: {
-    height: 100,
-    paddingTop: 12,
+    height: moderateScale(100),
+    paddingTop: moderateScale(12),
   },
   row: {
     flexDirection: "row",
+    gap: moderateScale(12),
+  },
+  halfWidth: {
+    flex: 1,
   },
   genderRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: moderateScale(8),
   },
   genderButton: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: healthColors.border.main,
-    backgroundColor: healthColors.background.primary,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: moderateScale(12),
+    borderRadius: moderateScale(10),
+    borderWidth: 2,
+    borderColor: healthColors.border.light,
+    backgroundColor: healthColors.background.primary,
+    gap: moderateScale(4),
   },
   genderButtonActive: {
     backgroundColor: healthColors.primary.main,
     borderColor: healthColors.primary.main,
   },
   genderText: {
-    fontSize: scaledFontSize(13),
+    fontSize: scaledFontSize(12),
     color: healthColors.text.secondary,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   genderTextActive: {
     color: "#FFF",
   },
-  bloodGroupRow: {
+  bloodGroupContainer: {
     flexDirection: "row",
-    gap: 8,
+    flexWrap: "wrap",
+    gap: moderateScale(8),
   },
   bloodGroupButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: healthColors.border.main,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: moderateScale(14),
+    borderRadius: moderateScale(10),
+    borderWidth: 2,
+    borderColor: healthColors.border.light,
     backgroundColor: healthColors.background.primary,
+    gap: moderateScale(6),
   },
   bloodGroupButtonActive: {
     backgroundColor: healthColors.error.main,
@@ -452,32 +612,46 @@ const styles = StyleSheet.create({
   },
   bloodGroupText: {
     fontSize: scaledFontSize(14),
-    color: healthColors.text.secondary,
+    color: healthColors.text.primary,
     fontWeight: "600",
   },
   bloodGroupTextActive: {
     color: "#FFF",
   },
+  noteContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: healthColors.background.card,
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: moderateScale(12),
+    borderRadius: moderateScale(10),
+    marginBottom: moderateScale(20),
+    gap: moderateScale(8),
+  },
   note: {
     fontSize: scaledFontSize(12),
-    color: healthColors.text.disabled,
-    fontStyle: "italic",
-    marginBottom: 16,
+    color: healthColors.text.secondary,
+    flex: 1,
   },
   registerButton: {
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 24,
-  },
-  registerButtonDisabled: {
-    opacity: 0.6,
-  },
-  registerButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    gap: 8,
+    backgroundColor: healthColors.success.main,
+    borderRadius: moderateScale(14),
+    paddingVertical: moderateScale(16),
+    marginBottom: moderateScale(24),
+    gap: moderateScale(10),
+    shadowColor: healthColors.success.main,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  registerButtonDisabled: {
+    opacity: 0.5,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   registerButtonText: {
     fontSize: scaledFontSize(16),

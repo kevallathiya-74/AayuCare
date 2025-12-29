@@ -54,7 +54,9 @@ const MyReportsScreen = ({ navigation }) => {
 
     try {
       setError(null);
-      const response = await medicalRecordService.getPatientRecords(user._id);
+      const response = await medicalRecordService.getPatientRecords(
+        user.userId
+      );
       const records =
         response?.data?.medicalRecords || response?.medicalRecords || [];
 

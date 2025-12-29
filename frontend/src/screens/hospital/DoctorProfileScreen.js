@@ -89,28 +89,19 @@ const DoctorProfileScreen = ({ navigation }) => {
       id: 1,
       title: "Edit Profile",
       icon: "create-outline",
-      onPress: () =>
-        Alert.alert("Edit Profile", "Profile editing feature coming soon!"),
+      onPress: () => navigation.navigate("EditProfile"),
     },
     {
       id: 2,
       title: "Schedule & Availability",
       icon: "calendar-outline",
-      onPress: () =>
-        Alert.alert(
-          "Schedule Management",
-          "Schedule management feature coming soon!"
-        ),
+      onPress: () => navigation.navigate("ScheduleAvailability"),
     },
     {
       id: 3,
       title: "Consultation History",
       icon: "time-outline",
-      onPress: () =>
-        Alert.alert(
-          "Consultation History",
-          "Consultation history feature coming soon!"
-        ),
+      onPress: () => navigation.navigate("ConsultationHistory"),
     },
     {
       id: 4,

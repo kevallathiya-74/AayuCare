@@ -14,3 +14,6 @@ export { default as AdminSettingsScreen } from "./AdminSettingsScreen";
 export { default as AdminHomeScreen } from "./AdminHomeScreen";
 export { default as PatientManagementScreen } from "./PatientManagementScreen";
 export { default as WalkInPatientScreen } from "./WalkInPatientScreen";
+export { default as EditProfileScreen } from "./EditProfileScreen";
+export { default as ConsultationHistoryScreen } from "./ConsultationHistoryScreen";
+export { default as ScheduleAvailabilityScreen } from "./ScheduleAvailabilityScreen";

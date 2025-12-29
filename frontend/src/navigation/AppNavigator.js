@@ -39,6 +39,11 @@ import {
   AdminSettingsScreen,
 } from "../screens/hospital";
 
+// Doctor Profile Screens
+import EditProfileScreen from "../screens/hospital/EditProfileScreen";
+import ConsultationHistoryScreen from "../screens/hospital/ConsultationHistoryScreen";
+import ScheduleAvailabilityScreen from "../screens/hospital/ScheduleAvailabilityScreen";
+
 import { MyPrescriptionsScreen, ProfileScreen } from "../screens/patient";
 
 // New Patient Screens
@@ -212,6 +217,18 @@ const AppNavigator = () => {
                 <Stack.Screen
                   name="DoctorTabs"
                   component={DoctorTabNavigator}
+                />
+                <Stack.Screen
+                  name="EditProfile"
+                  component={EditProfileScreen}
+                />
+                <Stack.Screen
+                  name="ConsultationHistory"
+                  component={ConsultationHistoryScreen}
+                />
+                <Stack.Screen
+                  name="ScheduleAvailability"
+                  component={ScheduleAvailabilityScreen}
                 />
                 <Stack.Screen
                   name="WalkInPatient"

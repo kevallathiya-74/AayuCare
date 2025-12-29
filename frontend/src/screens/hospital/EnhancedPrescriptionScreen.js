@@ -62,7 +62,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const fetchPatientDetails = useCallback(async () => {
     if (!patientId) {
       setLoading(false);
-      Alert.alert("Error", "Patient information is required");
+      // Don't show alert on mount - handle gracefully with UI
       return;
     }
 
@@ -115,8 +115,21 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       return;
     }
 
-    if (!patient?._id) {
-      Alert.alert("Error", "Patient information is required");
+    if (!patient?._id || !patientId) {
+      Alert.alert(
+        "Patient Required",
+        "Please select a patient from Today's Appointments or Patient Management before creating a prescription.",
+        [
+          {
+            text: "Go to Appointments",
+            onPress: () => navigation.navigate("TodaysAppointments"),
+          },
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+        ]
+      );
       return;
     }
 
@@ -124,7 +137,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     try {
       const prescriptionData = {
         patient: patient._id,
-        doctor: user._id,
+        doctor: user.userId,
         appointment: appointmentId,
         medications: medications.map((med) => ({
           name: med.name,
@@ -220,219 +233,279 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
       >
-        {/* Basic Info */}
-        <View style={styles.section}>
-          <View
-            style={styles.infoCard}
-            accessible={true}
-            accessibilityLabel={`Prescription for ${patient?.name || "Patient"}`}
-          >
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Patient:</Text>
-              <Text style={styles.infoValue}>
-                {patient?.name || "N/A"} ({patient?._id?.slice(-6) || "N/A"})
+        {/* No Patient Selected State */}
+        {!loading && !patientId && (
+          <View style={styles.emptyStateContainer}>
+            <Ionicons
+              name="person-add-outline"
+              size={80}
+              color={healthColors.text.disabled}
+            />
+            <Text style={styles.emptyStateTitle}>No Patient Selected</Text>
+            <Text style={styles.emptyStateText}>
+              Please select a patient from Today's Appointments or Patient
+              Management to create a prescription.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyStateButton}
+              onPress={() => navigation.navigate("TodaysAppointments")}
+            >
+              <Ionicons name="calendar" size={20} color="#FFFFFF" />
+              <Text style={styles.emptyStateButtonText}>View Appointments</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.emptyStateButton,
+                styles.emptyStateButtonSecondary,
+              ]}
+              onPress={() => navigation.navigate("PatientManagement")}
+            >
+              <Ionicons
+                name="people"
+                size={20}
+                color={healthColors.primary.main}
+              />
+              <Text
+                style={[
+                  styles.emptyStateButtonText,
+                  styles.emptyStateButtonTextSecondary,
+                ]}
+              >
+                Patient Management
               </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Doctor:</Text>
-              <Text style={styles.infoValue}>
-                {user?.name || "Doctor"} ({user?.specialization || "Specialist"}
-                )
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date:</Text>
-              <Text style={styles.infoValue}>{date}</Text>
-            </View>
+            </TouchableOpacity>
           </View>
-        </View>
+        )}
 
-        {/* Medications */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>MEDICATIONS:</Text>
-          <View style={styles.medicationsCard}>
-            {medications.map((med, index) => (
-              <View key={med.id} style={styles.medicationItem}>
-                <View style={styles.medicationHeader}>
-                  <Text style={styles.medicationNumber}>{index + 1}.</Text>
-                  <View style={styles.medicationInfo}>
-                    <Text style={styles.medicationName}>{med.name}</Text>
-                    <Text style={styles.medicationDosage}>
-                      Dosage: {med.dosage} Duration: {med.duration}
-                    </Text>
-                    <View style={styles.timingsRow}>
-                      {med.timings.morning && (
-                        <View style={styles.timingChip}>
-                          <Text style={styles.timingText}>Morning</Text>
-                        </View>
-                      )}
-                      {med.timings.afternoon && (
-                        <View style={styles.timingChip}>
-                          <Text style={styles.timingText}>Afternoon</Text>
-                        </View>
-                      )}
-                      {med.timings.evening && (
-                        <View style={styles.timingChip}>
-                          <Text style={styles.timingText}>Evening</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveMedicine(med.id)}
-                  >
-                    <Ionicons
-                      name="close-circle"
-                      size={24}
-                      color={healthColors.error.main}
-                    />
-                  </TouchableOpacity>
+        {/* Patient Selected - Show Form */}
+        {!loading && patientId && patient && (
+          <>
+            {/* Basic Info */}
+            <View style={styles.section}>
+              <View
+                style={styles.infoCard}
+                accessible={true}
+                accessibilityLabel={`Prescription for ${patient?.name || "Patient"}`}
+              >
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Patient:</Text>
+                  <Text style={styles.infoValue}>
+                    {patient?.name || "N/A"} ({patient?._id?.slice(-6) || "N/A"}
+                    )
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Doctor:</Text>
+                  <Text style={styles.infoValue}>
+                    {user?.name || "Doctor"} (
+                    {user?.specialization || "Specialist"})
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Date:</Text>
+                  <Text style={styles.infoValue}>{date}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={styles.addMedicineButton}
-            onPress={handleAddMedicine}
-          >
-            <Ionicons
-              name="add-circle"
-              size={20}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.addMedicineText}>Add Medicine</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Instructions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>INSTRUCTIONS:</Text>
-          <TextInput
-            style={styles.instructionsInput}
-            placeholder="Enter instructions for patient..."
-            placeholderTextColor={healthColors.text.disabled}
-            value={instructions}
-            onChangeText={setInstructions}
-            multiline
-            numberOfLines={4}
-          />
-        </View>
-
-        {/* Next Visit */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>NEXT VISIT:</Text>
-          <TouchableOpacity style={styles.dateSelector}>
-            <Ionicons
-              name="calendar"
-              size={20}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.dateText}>{nextVisit}</Text>
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={healthColors.text.secondary}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Send Options */}
-        <View style={styles.section}>
-          <View style={styles.sendOptionsHeader}>
-            <Ionicons
-              name="checkmark-circle"
-              size={20}
-              color={healthColors.success.main}
-            />
-            <Text style={styles.sectionTitle}>SEND TO OPTIONS:</Text>
-          </View>
-          <View style={styles.sendOptionsCard}>
-            <TouchableOpacity
-              style={styles.checkboxRow}
-              onPress={() => toggleSendOption("patientApp")}
-            >
-              <Ionicons
-                name={sendOptions.patientApp ? "checkbox" : "square-outline"}
-                size={24}
-                color={
-                  sendOptions.patientApp
-                    ? healthColors.primary.main
-                    : healthColors.text.disabled
-                }
-              />
-              <Text style={styles.checkboxLabel}>
-                Patient Mobile App (Auto-Sync)
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.checkboxRow}
-              onPress={() => toggleSendOption("hospitalPharmacy")}
-            >
-              <Ionicons
-                name={
-                  sendOptions.hospitalPharmacy ? "checkbox" : "square-outline"
-                }
-                size={24}
-                color={
-                  sendOptions.hospitalPharmacy
-                    ? healthColors.primary.main
-                    : healthColors.text.disabled
-                }
-              />
-              <Text style={styles.checkboxLabel}>Hospital Pharmacy</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.checkboxRow}
-              onPress={() => toggleSendOption("externalPharmacy")}
-            >
-              <Ionicons
-                name={
-                  sendOptions.externalPharmacy ? "checkbox" : "square-outline"
-                }
-                size={24}
-                color={
-                  sendOptions.externalPharmacy
-                    ? healthColors.primary.main
-                    : healthColors.text.disabled
-                }
-              />
-              <Text style={styles.checkboxLabel}>
-                External Pharmacy (Patient Choice)
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Cost Summary */}
-        <View style={styles.section}>
-          <View style={styles.costCard}>
-            <View style={styles.costRow}>
-              <Text style={styles.costLabel}>Estimated Cost:</Text>
-              <Text style={styles.costValue}>₹{estimatedCost}</Text>
             </View>
-            <View style={styles.costRow}>
-              <Text style={styles.costLabel}>Hospital Pharmacy Discount:</Text>
-              <Text style={styles.discountValue}>{discount}%</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.costRow}>
-              <Text style={styles.finalCostLabel}>Final Amount:</Text>
-              <Text style={styles.finalCostValue}>₹{finalCost}</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Save Button */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.saveAndSendButton}
-            onPress={handleSavePrescription}
-          >
-            <Text style={styles.saveAndSendText}>SAVE & SEND PRESCRIPTION</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Medications */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>MEDICATIONS:</Text>
+              <View style={styles.medicationsCard}>
+                {medications.map((med, index) => (
+                  <View key={med.id} style={styles.medicationItem}>
+                    <View style={styles.medicationHeader}>
+                      <Text style={styles.medicationNumber}>{index + 1}.</Text>
+                      <View style={styles.medicationInfo}>
+                        <Text style={styles.medicationName}>{med.name}</Text>
+                        <Text style={styles.medicationDosage}>
+                          Dosage: {med.dosage} Duration: {med.duration}
+                        </Text>
+                        <View style={styles.timingsRow}>
+                          {med.timings.morning && (
+                            <View style={styles.timingChip}>
+                              <Text style={styles.timingText}>Morning</Text>
+                            </View>
+                          )}
+                          {med.timings.afternoon && (
+                            <View style={styles.timingChip}>
+                              <Text style={styles.timingText}>Afternoon</Text>
+                            </View>
+                          )}
+                          {med.timings.evening && (
+                            <View style={styles.timingChip}>
+                              <Text style={styles.timingText}>Evening</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={() => handleRemoveMedicine(med.id)}
+                      >
+                        <Ionicons
+                          name="close-circle"
+                          size={24}
+                          color={healthColors.error.main}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.addMedicineButton}
+                onPress={handleAddMedicine}
+              >
+                <Ionicons
+                  name="add-circle"
+                  size={20}
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.addMedicineText}>Add Medicine</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Instructions */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>INSTRUCTIONS:</Text>
+              <TextInput
+                style={styles.instructionsInput}
+                placeholder="Enter instructions for patient..."
+                placeholderTextColor={healthColors.text.disabled}
+                value={instructions}
+                onChangeText={setInstructions}
+                multiline
+                numberOfLines={4}
+              />
+            </View>
+
+            {/* Next Visit */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>NEXT VISIT:</Text>
+              <TouchableOpacity style={styles.dateSelector}>
+                <Ionicons
+                  name="calendar"
+                  size={20}
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.dateText}>{nextVisit}</Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={healthColors.text.secondary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Send Options */}
+            <View style={styles.section}>
+              <View style={styles.sendOptionsHeader}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color={healthColors.success.main}
+                />
+                <Text style={styles.sectionTitle}>SEND TO OPTIONS:</Text>
+              </View>
+              <View style={styles.sendOptionsCard}>
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => toggleSendOption("patientApp")}
+                >
+                  <Ionicons
+                    name={
+                      sendOptions.patientApp ? "checkbox" : "square-outline"
+                    }
+                    size={24}
+                    color={
+                      sendOptions.patientApp
+                        ? healthColors.primary.main
+                        : healthColors.text.disabled
+                    }
+                  />
+                  <Text style={styles.checkboxLabel}>
+                    Patient Mobile App (Auto-Sync)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => toggleSendOption("hospitalPharmacy")}
+                >
+                  <Ionicons
+                    name={
+                      sendOptions.hospitalPharmacy
+                        ? "checkbox"
+                        : "square-outline"
+                    }
+                    size={24}
+                    color={
+                      sendOptions.hospitalPharmacy
+                        ? healthColors.primary.main
+                        : healthColors.text.disabled
+                    }
+                  />
+                  <Text style={styles.checkboxLabel}>Hospital Pharmacy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.checkboxRow}
+                  onPress={() => toggleSendOption("externalPharmacy")}
+                >
+                  <Ionicons
+                    name={
+                      sendOptions.externalPharmacy
+                        ? "checkbox"
+                        : "square-outline"
+                    }
+                    size={24}
+                    color={
+                      sendOptions.externalPharmacy
+                        ? healthColors.primary.main
+                        : healthColors.text.disabled
+                    }
+                  />
+                  <Text style={styles.checkboxLabel}>
+                    External Pharmacy (Patient Choice)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Cost Summary */}
+            <View style={styles.section}>
+              <View style={styles.costCard}>
+                <View style={styles.costRow}>
+                  <Text style={styles.costLabel}>Estimated Cost:</Text>
+                  <Text style={styles.costValue}>₹{estimatedCost}</Text>
+                </View>
+                <View style={styles.costRow}>
+                  <Text style={styles.costLabel}>
+                    Hospital Pharmacy Discount:
+                  </Text>
+                  <Text style={styles.discountValue}>{discount}%</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.costRow}>
+                  <Text style={styles.finalCostLabel}>Final Amount:</Text>
+                  <Text style={styles.finalCostValue}>₹{finalCost}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Save Button */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.saveAndSendButton}
+                onPress={handleSavePrescription}
+              >
+                <Text style={styles.saveAndSendText}>
+                  SAVE & SEND PRESCRIPTION
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -689,6 +762,54 @@ const styles = StyleSheet.create({
     fontSize: scaledFontSize(16),
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: getScreenPadding(),
+    paddingVertical: verticalScale(80),
+  },
+  emptyStateTitle: {
+    fontSize: scaledFontSize(20),
+    fontWeight: "700",
+    color: healthColors.text.primary,
+    marginTop: moderateScale(20),
+    marginBottom: moderateScale(8),
+    textAlign: "center",
+  },
+  emptyStateText: {
+    fontSize: scaledFontSize(14),
+    color: healthColors.text.secondary,
+    textAlign: "center",
+    lineHeight: scaledFontSize(20),
+    marginBottom: moderateScale(32),
+    maxWidth: "80%",
+  },
+  emptyStateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: healthColors.primary.main,
+    paddingVertical: moderateScale(14),
+    paddingHorizontal: moderateScale(24),
+    borderRadius: moderateScale(12),
+    marginBottom: moderateScale(12),
+    minWidth: "70%",
+    gap: moderateScale(8),
+  },
+  emptyStateButtonSecondary: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: healthColors.primary.main,
+  },
+  emptyStateButtonText: {
+    fontSize: scaledFontSize(15),
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  emptyStateButtonTextSecondary: {
+    color: healthColors.primary.main,
   },
 });
 

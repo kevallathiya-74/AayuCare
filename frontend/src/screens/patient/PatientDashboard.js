@@ -83,7 +83,7 @@ const PatientDashboard = ({ navigation }) => {
   const fetchHealthMetrics = async () => {
     try {
       setLoadingMetrics(true);
-      const response = await healthMetricsService.getMetrics(user._id);
+      const response = await healthMetricsService.getMetrics(user.userId);
       setHealthMetrics(response.data);
     } catch (error) {
       logError(error, { context: "PatientDashboard.fetchHealthMetrics" });

@@ -13,7 +13,6 @@ import {
   TextInput,
   StatusBar,
   ActivityIndicator,
-  RefreshControl,
   Alert,
   Modal,
 } from "react-native";
@@ -376,10 +375,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
   }, [selectedPatient]);
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -416,14 +412,6 @@ const PatientManagementScreen = ({ navigation, route }) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[healthColors.primary.main]}
-            tintColor={healthColors.primary.main}
-          />
-        }
       >
         {/* Search Section */}
         <View style={styles.section}>
@@ -483,59 +471,110 @@ const PatientManagementScreen = ({ navigation, route }) => {
           {/* Real-time Search Results Dropdown */}
           {showSearchResults && searchResults.length > 0 && (
             <View style={styles.searchResultsDropdown}>
-              {searchResults.map((patient) => (
-                <TouchableOpacity
-                  key={patient._id || patient.userId}
-                  style={styles.searchResultItem}
-                  onPress={() => handleSelectPatient(patient)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select patient ${patient.name}`}
-                >
-                  <View style={styles.searchResultContent}>
-                    <Ionicons
-                      name="person-circle-outline"
-                      size={32}
-                      color={healthColors.primary.main}
-                    />
+              <ScrollView
+                style={styles.searchResultsScroll}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                {searchResults.map((patient, index) => (
+                  <TouchableOpacity
+                    key={patient._id || patient.userId}
+                    style={[
+                      styles.searchResultItem,
+                      index === searchResults.length - 1 &&
+                        styles.searchResultItemLast,
+                    ]}
+                    onPress={() => handleSelectPatient(patient)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select patient ${patient.name}`}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.searchResultAvatar}>
+                      <Ionicons
+                        name="person-circle"
+                        size={48}
+                        color={healthColors.primary.main}
+                      />
+                    </View>
+
                     <View style={styles.searchResultInfo}>
-                      <Text style={styles.searchResultName}>
+                      {/* Primary: Patient Name */}
+                      <Text style={styles.searchResultName} numberOfLines={1}>
                         {patient.name}
                       </Text>
-                      <Text style={styles.searchResultDetails}>
-                        {patient.userId || patient._id} •{" "}
-                        {patient.age ? `${patient.age} yrs` : "Age N/A"} •{" "}
-                        {patient.bloodGroup || "Blood Group N/A"}
+
+                      {/* Secondary: Patient ID */}
+                      <Text style={styles.searchResultId} numberOfLines={1}>
+                        ID: {patient.userId || patient._id}
                       </Text>
-                      {patient.phone && (
-                        <Text style={styles.searchResultPhone}>
-                          {patient.phone}
-                        </Text>
-                      )}
+
+                      {/* Tertiary: Age, Gender, Blood Group */}
+                      <View style={styles.searchResultMetaRow}>
+                        {patient.age && (
+                          <View style={styles.searchResultMetaItem}>
+                            <Ionicons
+                              name="calendar-outline"
+                              size={12}
+                              color={healthColors.text.disabled}
+                            />
+                            <Text style={styles.searchResultMetaText}>
+                              {patient.age} yrs
+                            </Text>
+                          </View>
+                        )}
+
+                        {patient.gender && (
+                          <View style={styles.searchResultMetaItem}>
+                            <Ionicons
+                              name={
+                                patient.gender === "male" ? "male" : "female"
+                              }
+                              size={12}
+                              color={healthColors.text.disabled}
+                            />
+                            <Text style={styles.searchResultMetaText}>
+                              {patient.gender === "male"
+                                ? "M"
+                                : patient.gender === "female"
+                                  ? "F"
+                                  : patient.gender}
+                            </Text>
+                          </View>
+                        )}
+
+                        {patient.bloodGroup && (
+                          <View style={styles.searchResultMetaItem}>
+                            <Ionicons
+                              name="water-outline"
+                              size={12}
+                              color={healthColors.text.disabled}
+                            />
+                            <Text style={styles.searchResultMetaText}>
+                              {patient.bloodGroup}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={healthColors.text.secondary}
-                  />
-                </TouchableOpacity>
-              ))}
+
+                    <Ionicons
+                      name="chevron-forward"
+                      size={22}
+                      color={healthColors.text.disabled}
+                      style={styles.searchResultChevron}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
 
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
 
-        {/* Loading State */}
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={healthColors.primary.main} />
-            <Text style={styles.loadingText}>Searching patient records...</Text>
-          </View>
-        )}
-
         {/* Patient Results */}
-        {selectedPatient && !loading && (
+        {selectedPatient && (
           <>
             {/* Instant Results Section */}
             <View style={styles.section}>
@@ -731,7 +770,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
         )}
 
         {/* Empty State */}
-        {!selectedPatient && !loading && (
+        {!selectedPatient && !loading && searchQuery.trim().length === 0 && (
           <View style={styles.emptyState}>
             <Ionicons
               name="search"
@@ -1004,6 +1043,8 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: getScreenPadding(),
     marginTop: verticalScale(20),
+    position: "relative",
+    zIndex: 1,
   },
   sectionTitle: {
     fontSize: scaledFontSize(14),
@@ -1042,49 +1083,80 @@ const styles = StyleSheet.create({
   },
   searchResultsDropdown: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    marginTop: moderateScale(8),
-    borderWidth: 2,
+    borderRadius: moderateScale(16),
+    marginTop: moderateScale(12),
+    borderWidth: 1,
     borderColor: healthColors.border.light,
-    maxHeight: moderateScale(300),
+    maxHeight: verticalScale(400),
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 1000,
+    position: "relative",
+  },
+  searchResultsScroll: {
+    maxHeight: verticalScale(400),
   },
   searchResultItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: moderateScale(12),
+    paddingVertical: moderateScale(16),
     paddingHorizontal: moderateScale(16),
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
+    backgroundColor: healthColors.background.card,
+    minHeight: moderateScale(90),
   },
-  searchResultContent: {
-    flexDirection: "row",
+  searchResultItemLast: {
+    borderBottomWidth: 0,
+  },
+  searchResultAvatar: {
+    width: moderateScale(48),
+    height: moderateScale(48),
     alignItems: "center",
-    flex: 1,
-    gap: moderateScale(12),
+    justifyContent: "center",
+    marginRight: moderateScale(14),
   },
   searchResultInfo: {
     flex: 1,
+    justifyContent: "center",
+    paddingRight: moderateScale(8),
   },
   searchResultName: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: scaledFontSize(16),
+    fontWeight: "700",
     color: healthColors.text.primary,
-    marginBottom: moderateScale(2),
+    marginBottom: moderateScale(4),
+    lineHeight: scaledFontSize(20),
   },
-  searchResultDetails: {
-    fontSize: scaledFontSize(12),
+  searchResultId: {
+    fontSize: scaledFontSize(13),
+    fontWeight: "500",
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(2),
+    marginBottom: moderateScale(6),
+    lineHeight: scaledFontSize(16),
   },
-  searchResultPhone: {
+  searchResultMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: moderateScale(12),
+  },
+  searchResultMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: moderateScale(4),
+  },
+  searchResultMetaText: {
     fontSize: scaledFontSize(12),
-    color: healthColors.text.secondary,
+    fontWeight: "500",
+    color: healthColors.text.disabled,
+    lineHeight: scaledFontSize(14),
+  },
+  searchResultChevron: {
+    marginLeft: moderateScale(8),
   },
   loadingContainer: {
     alignItems: "center",

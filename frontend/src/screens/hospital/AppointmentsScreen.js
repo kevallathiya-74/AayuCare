@@ -75,6 +75,8 @@ const AppointmentsScreen = ({ navigation }) => {
       case "confirmed":
       case "completed":
         return healthColors.success.main;
+      case "in-progress":
+        return healthColors.primary.main;
       case "cancelled":
         return healthColors.error.main;
       case "pending":

@@ -75,7 +75,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
       const recordType = recordTypeMap[activeTab];
-      const data = await getPatientMedicalRecords(user._id, { recordType });
+      const data = await getPatientMedicalRecords(user.userId, { recordType });
       setRecords(data.medicalRecords || []);
     } catch (err) {
       logError(err, "MedicalRecordsScreen - fetchRecords");

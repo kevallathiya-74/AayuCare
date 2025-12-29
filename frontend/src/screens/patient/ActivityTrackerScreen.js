@@ -71,7 +71,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
 
-      const response = await activityService.getActivityData(user._id);
+      const response = await activityService.getActivityData(user.userId);
       const { latest, today } = response.data;
 
       // Update steps
@@ -137,7 +137,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
       setWaterGlasses(newCount);
 
       try {
-        await activityService.addWater(user._id, newCount);
+        await activityService.addWater(user.userId, newCount);
       } catch (err) {
         logError(err, { context: "ActivityTrackerScreen.addWaterGlass" });
         showError("Failed to update water intake");

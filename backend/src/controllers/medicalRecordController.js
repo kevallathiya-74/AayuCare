@@ -156,10 +156,13 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     }
 
     // Find patient by either userId or _id
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    }).select("_id");
+    const patientQuery = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      patientQuery.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      patientQuery.userId = patientId;
+    }
+    const patient = await User.findOne(patientQuery).select("_id");
     if (!patient) {
       return res.status(404).json({
         status: "error",
@@ -322,10 +325,13 @@ exports.getPatientHistory = async (req, res, next) => {
     const { patientId } = req.params;
 
     // Find patient by either userId or _id
-    const patient = await User.findOne({
-      role: "patient",
-      $or: [{ userId: patientId }, { _id: patientId }],
-    });
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query);
     if (!patient) {
       return next(new AppError("Patient not found", 404));
     }
