@@ -39,9 +39,9 @@ import { showError, validateRequiredFields } from "../../utils/errorHandler";
 // Development auto-fill credentials (only available in __DEV__ mode)
 const DEV_CREDENTIALS = __DEV__
   ? {
-      patient: { userId: "PAT001", password: "patient123" },
-      doctor: { userId: "DOC001", password: "doctor123" },
-      admin: { userId: "ADM001", password: "admin123" },
+      patient: { userId: "PAT001", password: "password123" },
+      doctor: { userId: "DOC001", password: "password123" },
+      admin: { userId: "ADM001", password: "password123" },
     }
   : null;
 
@@ -59,19 +59,6 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
   const passwordInputRef = useRef(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  // Auto-fill on component mount (development only)
-  useEffect(() => {
-    if (__DEV__ && DEV_CREDENTIALS) {
-      // Automatically fill in patient credentials when screen appears
-      const autoFillDelay = setTimeout(() => {
-        setUserId(DEV_CREDENTIALS.patient.userId);
-        setPassword(DEV_CREDENTIALS.patient.password);
-      }, 300); // Small delay for smooth appearance
-
-      return () => clearTimeout(autoFillDelay);
-    }
-  }, []);
 
   const handleAutoFill = (role) => {
     const credentials = DEV_CREDENTIALS[role];
@@ -394,15 +381,15 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 <Text style={styles.demoTitle}>Development Credentials:</Text>
                 <View style={styles.demoRow}>
                   <Text style={styles.demoLabel}>Admin:</Text>
-                  <Text style={styles.demoValue}>ADM001 / admin123</Text>
+                  <Text style={styles.demoValue}>ADM001 / password123</Text>
                 </View>
                 <View style={styles.demoRow}>
                   <Text style={styles.demoLabel}>Doctor:</Text>
-                  <Text style={styles.demoValue}>DOC001 / doctor123</Text>
+                  <Text style={styles.demoValue}>DOC001 / password123</Text>
                 </View>
                 <View style={styles.demoRow}>
                   <Text style={styles.demoLabel}>Patient:</Text>
-                  <Text style={styles.demoValue}>PAT001 / patient123</Text>
+                  <Text style={styles.demoValue}>PAT001 / password123</Text>
                 </View>
               </View>
             )}

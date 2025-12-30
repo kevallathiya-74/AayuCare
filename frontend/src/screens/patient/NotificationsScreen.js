@@ -40,13 +40,20 @@ const NotificationsScreen = ({ navigation }) => {
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
+    console.log('[NotificationsScreen] Fetching notifications...');
+    console.log('[NotificationsScreen] User:', user);
+    console.log('[NotificationsScreen] User ID:', user?._id);
+    console.log('[NotificationsScreen] Is Connected:', isConnected);
+    
     if (!user?._id) {
+      console.error('[NotificationsScreen] User not found or no user ID');
       setError("User not found");
       setLoading(false);
       return;
     }
 
     if (!isConnected) {
+      console.error('[NotificationsScreen] No internet connection');
       showError("No internet connection");
       setLoading(false);
       return;
@@ -54,15 +61,22 @@ const NotificationsScreen = ({ navigation }) => {
 
     try {
       setError(null);
+      console.log('[NotificationsScreen] Calling notification service...');
       const response = await notificationService.getNotifications(1, 50);
+      console.log('[NotificationsScreen] Response:', response);
 
       if (response?.success) {
-        setNotifications(response.data || []);
+        // Backend returns { success, data: [...], unreadCount }
+        const notificationData = response.data || [];
+        console.log('[NotificationsScreen] Notifications count:', notificationData.length);
+        setNotifications(notificationData);
         setUnreadCount(response.unreadCount || 0);
       } else {
+        console.error('[NotificationsScreen] Response not successful:', response);
         setError("Failed to load notifications");
       }
     } catch (err) {
+      console.error('[NotificationsScreen] Error fetching notifications:', err);
       logError(err, { context: "NotificationsScreen.fetchNotifications" });
       setError("Unable to fetch notifications");
     } finally {

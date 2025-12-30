@@ -17,9 +17,14 @@ class DoctorService {
      * Get all doctors with filters
      */
     async getDoctors(filters = {}) {
-        const { specialization, search, page = 1, limit = 10, sortBy = 'name' } = filters;
+        const { specialization, search, page = 1, limit = 10, sortBy = 'name', includeInactive = false } = filters;
 
-        const query = { role: 'doctor', isActive: true };
+        const query = { role: 'doctor' };
+
+        // Only filter by isActive if not explicitly requesting inactive doctors
+        if (!includeInactive) {
+            query.isActive = true;
+        }
 
         if (specialization) {
             query.specialization = specialization;
@@ -37,7 +42,7 @@ class DoctorService {
         const skip = (page - 1) * limit;
 
         const doctors = await User.find(query)
-            .select('name specialization qualification experience consultationFee avatar userId')
+            .select('name specialization qualification experience consultationFee avatar userId email phone isActive')
             .sort(sortBy)
             .skip(skip)
             .limit(parseInt(limit));

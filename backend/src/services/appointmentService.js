@@ -77,7 +77,12 @@ class AppointmentService {
         }
 
         if (status) {
-            query.status = status;
+            // Handle comma-separated status values (e.g., "scheduled,confirmed")
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
         }
 
         if (startDate || endDate) {
@@ -117,7 +122,12 @@ class AppointmentService {
         const query = { patientId };
 
         if (status) {
-            query.status = status;
+            // Handle comma-separated status values (e.g., "scheduled,confirmed")
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
         }
 
         if (startDate || endDate) {
@@ -157,7 +167,12 @@ class AppointmentService {
         const query = { doctorId };
 
         if (status) {
-            query.status = status;
+            // Handle comma-separated status values (e.g., "scheduled,confirmed")
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
         }
 
         if (date) {

@@ -47,6 +47,7 @@ import ScheduleAvailabilityScreen from "../screens/hospital/ScheduleAvailability
 import { MyPrescriptionsScreen, ProfileScreen } from "../screens/patient";
 
 // New Patient Screens
+import NotificationsScreen from "../screens/patient/NotificationsScreen";
 import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
 import WomensHealthScreen from "../screens/patient/WomensHealthScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
@@ -203,6 +204,14 @@ const AppNavigator = () => {
                 <Stack.Screen
                   name="AdminSettings"
                   component={AdminSettingsScreen}
+                />
+                <Stack.Screen
+                  name="NotificationsScreen"
+                  component={NotificationsScreen}
+                />
+                <Stack.Screen
+                  name="HospitalEventsScreen"
+                  component={HospitalEventsScreen}
                 />
                 <Stack.Screen
                   name="SettingsAccessibility"

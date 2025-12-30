@@ -48,6 +48,7 @@ const seedComprehensiveData = async () => {
                 password: hashedPassword,
                 role: 'admin',
                 phone: '9876543210',
+                department: 'Administration',
                 isActive: true,
             });
         }

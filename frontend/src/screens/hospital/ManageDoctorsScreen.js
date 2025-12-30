@@ -15,6 +15,7 @@ import {
   RefreshControl,
   Alert,
   Switch,
+  TextInput,
 } from "react-native";
 import {
   SafeAreaView,
@@ -34,19 +35,31 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const fetchDoctors = useCallback(async () => {
+  const fetchDoctors = useCallback(async (searchTerm = "") => {
     try {
       setError(null);
-      const response = await doctorService.getAllDoctors();
-      setDoctors(response?.data || []);
+      if (searchTerm) {
+        setSearchLoading(true);
+      }
+      const response = await doctorService.getAllDoctors(searchTerm ? { search: searchTerm } : {});
+      console.log('[ManageDoctors] API Response:', response);
+      console.log('[ManageDoctors] Data:', response?.data);
+      
+      // Backend returns { status, data: { doctors: [], pagination: {} } }
+      const doctorsList = response?.data?.doctors || response?.data || [];
+      console.log('[ManageDoctors] Doctors list:', doctorsList);
+      setDoctors(doctorsList);
     } catch (err) {
       logError(err, { context: "ManageDoctorsScreen.fetchDoctors" });
       setError("Failed to load doctors");
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setSearchLoading(false);
     }
   }, []);
 
@@ -54,10 +67,23 @@ const ManageDoctorsScreen = ({ navigation }) => {
     fetchDoctors();
   }, [fetchDoctors]);
 
+  // Real-time search with debouncing
+  useEffect(() => {
+    const delaySearch = setTimeout(() => {
+      if (searchQuery.trim().length >= 1) {
+        fetchDoctors(searchQuery.trim());
+      } else if (searchQuery.trim().length === 0) {
+        fetchDoctors("");
+      }
+    }, 500);
+
+    return () => clearTimeout(delaySearch);
+  }, [searchQuery]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchDoctors();
-  }, [fetchDoctors]);
+    fetchDoctors(searchQuery.trim());
+  }, [fetchDoctors, searchQuery]);
 
   const handleToggleStatus = useCallback(async (doctor) => {
     const newStatus = !doctor.isActive;
@@ -257,6 +283,45 @@ const ManageDoctorsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Search Section */}
+      <View style={styles.searchSection}>
+        <View style={styles.searchInputWrapper}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={healthColors.text.secondary}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name, specialization..."
+            placeholderTextColor={healthColors.text.disabled}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            accessibilityLabel="Search doctors"
+          />
+          {searchLoading && (
+            <ActivityIndicator
+              size="small"
+              color={healthColors.primary.main}
+            />
+          )}
+          {searchQuery.length > 0 && !searchLoading && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={healthColors.text.disabled}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
@@ -325,6 +390,29 @@ const styles = StyleSheet.create({
     fontSize: indianDesign.fontSize.large,
     fontWeight: indianDesign.fontWeight.bold,
     color: healthColors.text.primary,
+  },
+  searchSection: {
+    paddingHorizontal: indianDesign.spacing.lg,
+    paddingTop: indianDesign.spacing.md,
+    paddingBottom: indianDesign.spacing.sm,
+    backgroundColor: healthColors.background.primary,
+  },
+  searchInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: healthColors.background.card,
+    borderRadius: indianDesign.borderRadius.medium,
+    paddingHorizontal: indianDesign.spacing.md,
+    paddingVertical: indianDesign.spacing.sm,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: indianDesign.fontSize.medium,
+    color: healthColors.text.primary,
+    paddingVertical: 8,
   },
   listContent: {
     padding: indianDesign.spacing.lg,

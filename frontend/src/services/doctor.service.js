@@ -24,8 +24,8 @@ class DoctorService {
   /**
    * Get all doctors (alias for admin screens)
    */
-  async getAllDoctors() {
-    return this.getDoctors({ limit: 100 });
+  async getAllDoctors(additionalFilters = {}) {
+    return this.getDoctors({ limit: 100, includeInactive: true, ...additionalFilters });
   }
 
   /**

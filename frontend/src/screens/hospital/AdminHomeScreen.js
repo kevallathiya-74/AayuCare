@@ -50,6 +50,8 @@ import {
   logError,
 } from "../../utils/errorHandler";
 import adminService from "../../services/admin.service";
+import notificationService from "../../services/notification.service";
+import eventService from "../../services/event.service";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 
 const { width } = Dimensions.get("window");
@@ -76,15 +78,19 @@ const AdminHomeScreen = ({ navigation }) => {
     status: "good",
     issues: 0,
   });
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
 
   const fetchDashboardData = useCallback(async () => {
     try {
       setError(null);
 
-      // Fetch stats and activities in parallel
-      const [statsResponse, activitiesResponse] = await Promise.all([
+      // Fetch stats, activities, notifications, and events in parallel
+      const [statsResponse, activitiesResponse, notificationsResponse, eventsResponse] = await Promise.all([
         adminService.getDashboardStats().catch(() => null),
         adminService.getRecentActivities(5).catch(() => null),
+        notificationService.getUnreadCount().catch(() => null),
+        eventService.getUpcomingEvents({ limit: 100 }).catch(() => null),
       ]);
 
       if (statsResponse?.success) {
@@ -133,6 +139,14 @@ const AdminHomeScreen = ({ navigation }) => {
 
       if (activitiesResponse?.success) {
         setRecentActivities(activitiesResponse.data);
+      }
+
+      if (notificationsResponse?.success) {
+        setNotificationCount(notificationsResponse.data?.count || 0);
+      }
+
+      if (eventsResponse?.success) {
+        setUpcomingEventsCount(eventsResponse.data?.length || 0);
       }
 
       // Fetch system health from API
@@ -225,7 +239,21 @@ const AdminHomeScreen = ({ navigation }) => {
   // Render stat card with gradient (memoized)
   const renderStatCard = useCallback(
     (stat, index) => (
-      <View key={index} style={styles.statCardWrapper}>
+      <TouchableOpacity 
+        key={index} 
+        style={styles.statCardWrapper}
+        onPress={() => {
+          // Navigate based on card type
+          if (stat.screen) {
+            if (stat.isTabScreen) {
+              navigation.navigate("AdminTabs", { screen: stat.screen });
+            } else {
+              navigation.navigate(stat.screen);
+            }
+          }
+        }}
+        activeOpacity={0.8}
+      >
         <LinearGradient
           colors={stat.gradient}
           start={{ x: 0, y: 0 }}
@@ -251,9 +279,9 @@ const AdminHomeScreen = ({ navigation }) => {
           <Text style={styles.statTitle}>{stat.title}</Text>
           <Text style={styles.statSubtitle}>{stat.subtitle}</Text>
         </LinearGradient>
-      </View>
+      </TouchableOpacity>
     ),
-    []
+    [navigation]
   );
 
   // Render action section (memoized)
@@ -395,27 +423,21 @@ const AdminHomeScreen = ({ navigation }) => {
           title: "Pharmacy",
           icon: "medkit",
           color: healthColors.accent.purple,
-          action: () =>
-            Alert.alert(
-              "Coming Soon",
-              "Pharmacy management feature is under development"
-            ),
-          badge: null,
+          screen: "Reports",
+          isTabScreen: true,
+          badge: stats.prescriptions.today > 0 ? stats.prescriptions.today : null,
         },
         {
           title: "Events",
           icon: "calendar-outline",
           color: healthColors.accent.green,
-          action: () =>
-            Alert.alert(
-              "Coming Soon",
-              "Hospital events feature is under development"
-            ),
-          badge: null,
+          screen: "HospitalEventsScreen",
+          isTabScreen: false,
+          badge: upcomingEventsCount > 0 ? upcomingEventsCount : null,
         },
       ],
     }),
-    [stats.appointments.pending, navigation]
+    [stats.appointments.pending, stats.prescriptions.today, upcomingEventsCount, navigation]
   );
 
   const statCards = useMemo(
@@ -427,6 +449,8 @@ const AdminHomeScreen = ({ navigation }) => {
         icon: "calendar",
         gradient: [healthColors.primary.main, healthColors.primary.dark],
         trend: stats.appointments.trend,
+        screen: "Appointments",
+        isTabScreen: true,
       },
       {
         title: "Active Doctors",
@@ -435,6 +459,8 @@ const AdminHomeScreen = ({ navigation }) => {
         icon: "medical",
         gradient: [healthColors.secondary.main, healthColors.secondary.dark],
         trend: stats.doctors.trend,
+        screen: "ManageDoctors",
+        isTabScreen: false,
       },
       {
         title: "Total Patients",
@@ -443,6 +469,8 @@ const AdminHomeScreen = ({ navigation }) => {
         icon: "people",
         gradient: [healthColors.accent.coral, "#D84B6F"],
         trend: stats.patients.trend,
+        screen: "PatientManagement",
+        isTabScreen: false,
       },
       {
         title: "Prescriptions",
@@ -451,6 +479,8 @@ const AdminHomeScreen = ({ navigation }) => {
         icon: "medkit",
         gradient: [healthColors.info.main, healthColors.info.dark],
         trend: stats.prescriptions.trend,
+        screen: "Reports",
+        isTabScreen: true,
       },
     ],
     [stats]
@@ -501,9 +531,7 @@ const AdminHomeScreen = ({ navigation }) => {
           <LanguageSelector compact iconColor={healthColors.primary.main} />
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() =>
-              Alert.alert("Notifications", "Notification center coming soon!")
-            }
+            onPress={() => navigation.navigate("NotificationsScreen")}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
             accessibilityHint="Opens notification list"
@@ -513,7 +541,11 @@ const AdminHomeScreen = ({ navigation }) => {
               size={24}
               color={healthColors.text.primary}
             />
-            <View style={styles.notificationDot} />
+            {notificationCount > 0 && (
+              <View style={styles.notificationDot}>
+                <Text style={styles.notificationDotText}>{notificationCount > 9 ? '9+' : notificationCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
@@ -1200,12 +1232,21 @@ const styles = StyleSheet.create({
   },
   notificationDot: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: healthColors.error.main,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: healthColors.background.primary,
+  },
+  notificationDotText: {
+    fontSize: scaledFontSize(10),
+    fontWeight: "700",
+    color: "white",
   },
   // Welcome Banner Styles
   welcomeBanner: {

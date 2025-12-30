@@ -14,7 +14,7 @@ const testUsers = [
         name: 'Admin User',
         email: 'admin@aayucare.com',
         phone: '+919876543210',
-        password: 'admin123',
+        password: 'password123',
         role: 'admin',
         department: 'Administration',
     },
@@ -24,7 +24,7 @@ const testUsers = [
         name: 'Dr. Rajesh Kumar',
         email: 'doctor@aayucare.com',
         phone: '+919876543211',
-        password: 'doctor123',
+        password: 'password123',
         role: 'doctor',
         specialization: 'Cardiology',
         qualification: 'MBBS, MD (Cardiology)',
@@ -37,7 +37,7 @@ const testUsers = [
         name: 'Amit Patel',
         email: 'patient@aayucare.com',
         phone: '+919876543212',
-        password: 'patient123',
+        password: 'password123',
         role: 'patient',
         dateOfBirth: new Date('1990-01-15'),
         gender: 'male',
@@ -67,17 +67,17 @@ const seedDatabase = async () => {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('ADMIN:');
         console.log('  User ID:  ADM001');
-        console.log('  Password: admin123');
+        console.log('  Password: password123');
         console.log('  Email:    admin@aayucare.com');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('DOCTOR:');
         console.log('  User ID:  DOC001');
-        console.log('  Password: doctor123');
+        console.log('  Password: password123');
         console.log('  Email:    doctor@aayucare.com');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('PATIENT:');
         console.log('  User ID:  PAT001');
-        console.log('  Password: patient123');
+        console.log('  Password: password123');
         console.log('  Email:    patient@aayucare.com');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
         console.log('[OK] Passwords are securely hashed in MongoDB');

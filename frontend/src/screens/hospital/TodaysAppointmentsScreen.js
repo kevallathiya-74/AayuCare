@@ -61,7 +61,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         }
 
         if (response?.success) {
-          setAppointments(response.data || []);
+          // Backend returns { success, data: { appointments: [] } or data: [...] }
+          setAppointments(response.data?.appointments || response.data || []);
         } else {
           setError("Failed to load appointments");
         }

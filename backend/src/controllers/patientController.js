@@ -26,7 +26,7 @@ const isOwnPatientData = (user, patientId) => {
 };
 
 /**
- * @desc    Search patients by name, ID, phone, or email
+ * @desc    Search patients by name, ID, phone, or email (or get all if no query)
  * @route   GET /api/patients/search?q=query
  * @access  Private (Doctor/Admin)
  */
@@ -34,30 +34,29 @@ exports.searchPatients = async (req, res) => {
   try {
     const { q } = req.query;
 
-    if (!q || q.trim().length < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Search query must be at least 1 character",
-      });
-    }
+    let query = { role: "patient" };
 
-    // Sanitize search query to prevent regex injection
-    const searchQuery = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // If search query provided, add search conditions
+    if (q && q.trim().length >= 1) {
+      // Sanitize search query to prevent regex injection
+      const searchQuery = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    // Search in multiple fields
-    const patients = await User.find({
-      role: "patient",
-      $or: [
+      // Search in multiple fields
+      query.$or = [
         { userId: { $regex: searchQuery, $options: "i" } },
         { name: { $regex: searchQuery, $options: "i" } },
         { email: { $regex: searchQuery, $options: "i" } },
         { phone: { $regex: searchQuery, $options: "i" } },
-      ],
-    })
+      ];
+    }
+
+    // Get patients (all if no query, filtered if query provided)
+    const patients = await User.find(query)
       .select(
         "userId name email phone age gender bloodGroup allergies medicalHistory createdAt"
       )
-      .limit(20)
+      .sort({ createdAt: -1 })
+      .limit(50)
       .lean();
 
     res.json({

@@ -145,14 +145,26 @@ exports.validateGetAppointments = [
 
   query("status")
     .optional()
-    .isIn([
-      "scheduled",
-      "confirmed",
-      "completed",
-      "cancelled",
-      "no_show",
-      "all",
-    ])
+    .custom((value) => {
+      // Allow comma-separated status values
+      const validStatuses = [
+        "scheduled",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "no_show",
+        "all",
+      ];
+      
+      // Split by comma and check each status
+      const statuses = value.split(',').map(s => s.trim());
+      const allValid = statuses.every(status => validStatuses.includes(status));
+      
+      if (!allValid) {
+        throw new Error("Invalid status filter. Allowed values: " + validStatuses.join(", "));
+      }
+      return true;
+    })
     .withMessage("Invalid status filter"),
 
   query("startDate").optional().custom(isValidDate),

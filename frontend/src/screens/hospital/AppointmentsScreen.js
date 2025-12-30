@@ -41,8 +41,13 @@ const AppointmentsScreen = ({ navigation }) => {
   const fetchAppointments = useCallback(async () => {
     try {
       setError(null);
-      const response = await appointmentService.getAllAppointments();
-      setAppointments(response?.data || []);
+      // Fetch with higher limit and pending status to match badge count
+      const response = await appointmentService.getAllAppointments({
+        limit: 50, // Increased from default 10 to show more appointments
+        status: 'scheduled,confirmed' // Only pending appointments
+      });
+      // Backend returns { status, data: { appointments: [], pagination: {} } }
+      setAppointments(response?.data?.appointments || response?.data || []);
     } catch (err) {
       logError(err, { context: "AppointmentsScreen.fetchAppointments" });
       setError("Failed to load appointments");

@@ -36,7 +36,8 @@ const ReportsScreen = ({ navigation }) => {
     try {
       setError(null);
       const response = await medicalRecordService.getAllRecords();
-      setReports(response?.data || []);
+      // Backend returns { status, data: { medicalRecords: [], pagination: {} } or data: [...] }
+      setReports(response?.data?.medicalRecords || response?.data || []);
     } catch (err) {
       logError(err, { context: "ReportsScreen.fetchReports" });
       setError("Failed to load reports");

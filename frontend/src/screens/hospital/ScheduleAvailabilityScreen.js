@@ -50,7 +50,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const response = await doctorService.getSchedule();
-      setSchedules(response.data || []);
+      // Backend returns { status, data: { schedules: [] } or data: [...] }
+      setSchedules(response.data?.schedules || response.data || []);
     } catch (error) {
       Alert.alert("Error", "Failed to load schedule");
     } finally {

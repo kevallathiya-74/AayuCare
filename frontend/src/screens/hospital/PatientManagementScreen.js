@@ -58,9 +58,36 @@ const PatientManagementScreen = ({ navigation, route }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  
+  // State for all patients list
+  const [allPatients, setAllPatients] = useState([]);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Get patientId from navigation params
   const patientIdFromRoute = route?.params?.patientId;
+
+  // Fetch all patients on initial load
+  const fetchAllPatients = useCallback(async () => {
+    try {
+      setInitialLoading(true);
+      setError(null);
+      const response = await patientService.getAllPatients();
+      const patients = response?.patients || response?.data || [];
+      setAllPatients(patients);
+      console.log(`[SUCCESS] Loaded ${patients.length} patients`);
+    } catch (err) {
+      console.error("[ERROR] Failed to load patients:", err);
+      logError(err, { context: "PatientManagementScreen.fetchAllPatients" });
+      setError("Failed to load patients");
+    } finally {
+      setInitialLoading(false);
+    }
+  }, []);
+
+  // Load all patients on mount
+  useEffect(() => {
+    fetchAllPatients();
+  }, [fetchAllPatients]);
 
   const fetchPatientData = useCallback(async (patientId) => {
     try {
@@ -573,6 +600,126 @@ const PatientManagementScreen = ({ navigation, route }) => {
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
 
+        {/* All Patients List - Show when no patient selected and no search active */}
+        {!selectedPatient && searchQuery.trim().length === 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>All Patients ({allPatients.length})</Text>
+            {initialLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator
+                  size="large"
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.loadingText}>Loading patients...</Text>
+              </View>
+            ) : allPatients.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons
+                  name="people-outline"
+                  size={64}
+                  color={healthColors.text.disabled}
+                />
+                <Text style={styles.emptyText}>No patients found</Text>
+                <Text style={styles.emptySubtext}>
+                  Patients will appear here once registered
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.patientsListContainer}>
+                {allPatients.map((patient, index) => (
+                  <TouchableOpacity
+                    key={patient._id || patient.userId}
+                    style={[
+                      styles.patientListItem,
+                      index === allPatients.length - 1 &&
+                        styles.patientListItemLast,
+                    ]}
+                    onPress={() => handleSelectPatient(patient)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`View ${patient.name}'s details`}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.patientListAvatar}>
+                      <Ionicons
+                        name="person-circle"
+                        size={48}
+                        color={healthColors.primary.main}
+                      />
+                    </View>
+
+                    <View style={styles.patientListInfo}>
+                      {/* Primary: Patient Name */}
+                      <Text style={styles.patientListName} numberOfLines={1}>
+                        {patient.name}
+                      </Text>
+
+                      {/* Secondary: Patient ID */}
+                      <Text style={styles.patientListId} numberOfLines={1}>
+                        ID: {patient.userId || patient._id}
+                      </Text>
+
+                      {/* Tertiary: Age, Gender, Blood Group */}
+                      <View style={styles.patientListMetaRow}>
+                        {patient.age && (
+                          <View style={styles.patientListMetaItem}>
+                            <Ionicons
+                              name="calendar-outline"
+                              size={12}
+                              color={healthColors.text.disabled}
+                            />
+                            <Text style={styles.patientListMetaText}>
+                              {patient.age} yrs
+                            </Text>
+                          </View>
+                        )}
+
+                        {patient.gender && (
+                          <View style={styles.patientListMetaItem}>
+                            <Ionicons
+                              name={
+                                patient.gender === "male" ? "male" : "female"
+                              }
+                              size={12}
+                              color={healthColors.text.disabled}
+                            />
+                            <Text style={styles.patientListMetaText}>
+                              {patient.gender === "male"
+                                ? "M"
+                                : patient.gender === "female"
+                                  ? "F"
+                                  : patient.gender}
+                            </Text>
+                          </View>
+                        )}
+
+                        {patient.bloodGroup && (
+                          <View style={styles.patientListMetaItem}>
+                            <Ionicons
+                              name="water-outline"
+                              size={12}
+                              color={healthColors.text.disabled}
+                            />
+                            <Text style={styles.patientListMetaText}>
+                              {patient.bloodGroup}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+
+                    <Ionicons
+                      name="chevron-forward"
+                      size={22}
+                      color={healthColors.text.disabled}
+                      style={styles.patientListChevron}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Patient Results */}
         {selectedPatient && (
           <>
@@ -767,21 +914,6 @@ const PatientManagementScreen = ({ navigation, route }) => {
               </View>
             </View>
           </>
-        )}
-
-        {/* Empty State */}
-        {!selectedPatient && !loading && searchQuery.trim().length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="search"
-              size={64}
-              color={healthColors.text.disabled}
-            />
-            <Text style={styles.emptyStateTitle}>Search for a Patient</Text>
-            <Text style={styles.emptyStateText}>
-              Enter patient name or ID to view complete medical history
-            </Text>
-          </View>
         )}
 
         <View style={{ height: 80 }} />
@@ -1157,6 +1289,90 @@ const styles = StyleSheet.create({
   },
   searchResultChevron: {
     marginLeft: moderateScale(8),
+  },
+  // Patient List Styles (for all patients view)
+  patientsListContainer: {
+    backgroundColor: healthColors.background.card,
+    borderRadius: moderateScale(12),
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  patientListItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: moderateScale(16),
+    paddingHorizontal: moderateScale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+    backgroundColor: healthColors.background.card,
+    minHeight: moderateScale(90),
+  },
+  patientListItemLast: {
+    borderBottomWidth: 0,
+  },
+  patientListAvatar: {
+    width: moderateScale(48),
+    height: moderateScale(48),
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: moderateScale(14),
+  },
+  patientListInfo: {
+    flex: 1,
+    justifyContent: "center",
+    paddingRight: moderateScale(8),
+  },
+  patientListName: {
+    fontSize: scaledFontSize(16),
+    fontWeight: "700",
+    color: healthColors.text.primary,
+    marginBottom: moderateScale(4),
+    lineHeight: scaledFontSize(20),
+  },
+  patientListId: {
+    fontSize: scaledFontSize(13),
+    fontWeight: "500",
+    color: healthColors.text.secondary,
+    marginBottom: moderateScale(6),
+    lineHeight: scaledFontSize(16),
+  },
+  patientListMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: moderateScale(12),
+  },
+  patientListMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: moderateScale(4),
+  },
+  patientListMetaText: {
+    fontSize: scaledFontSize(12),
+    fontWeight: "500",
+    color: healthColors.text.disabled,
+    lineHeight: scaledFontSize(14),
+  },
+  patientListChevron: {
+    marginLeft: moderateScale(8),
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: verticalScale(40),
+    paddingHorizontal: moderateScale(20),
+  },
+  emptyText: {
+    fontSize: scaledFontSize(16),
+    fontWeight: "600",
+    color: healthColors.text.secondary,
+    marginTop: moderateScale(16),
+    marginBottom: moderateScale(8),
+  },
+  emptySubtext: {
+    fontSize: scaledFontSize(14),
+    color: healthColors.text.disabled,
+    textAlign: "center",
   },
   loadingContainer: {
     alignItems: "center",

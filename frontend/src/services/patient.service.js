@@ -8,6 +8,20 @@ import { logError } from '../utils/errorHandler';
 
 class PatientService {
     /**
+     * Get all patients
+     * @returns {Promise<Array>} - List of all patients
+     */
+    async getAllPatients() {
+        try {
+            const response = await api.get('/patients/search');
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'PatientService.getAllPatients' });
+            throw this.handleError(error);
+        }
+    }
+
+    /**
      * Search patients by name, ID, phone, or email
      * @param {String} query - Search query
      * @returns {Promise<Array>} - List of matching patients

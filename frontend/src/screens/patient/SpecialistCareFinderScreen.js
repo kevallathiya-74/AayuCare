@@ -78,8 +78,10 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
       const response = await doctorService.getDoctors(filters);
 
+      // Backend returns { status, data: { doctors: [], pagination: {} } }
+      let filteredDoctors = response?.data?.doctors || [];
+      
       // Filter by fee range
-      let filteredDoctors = response.data || [];
       if (feeRange && feeRange.length === 2) {
         filteredDoctors = filteredDoctors.filter(
           (doc) =>

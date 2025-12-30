@@ -42,6 +42,7 @@ export const AdminAppointmentProvider = ({ children }) => {
         // Extract counts from response
         const appointments = data.appointments;
         if (typeof appointments === "object") {
+          // Badge shows pending appointments (scheduled + confirmed status)
           setPendingCount(appointments.pending || 0);
           setTodayCount(appointments.today || 0);
         } else {
