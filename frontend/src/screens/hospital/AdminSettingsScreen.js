@@ -86,13 +86,15 @@ const AdminSettingsScreen = ({ navigation }) => {
           {
             icon: "document-text",
             label: "Medical Reports",
-            screen: "AdminReports",
+            screen: "Reports",
+            isTabScreen: true,
             color: healthColors.warning.main,
           },
           {
             icon: "analytics",
             label: "Error Analytics",
-            screen: "ErrorAnalytics",
+            screen: "Analytics",
+            isTabScreen: true,
             color: healthColors.error.main,
           },
         ],
@@ -101,17 +103,10 @@ const AdminSettingsScreen = ({ navigation }) => {
         title: "System",
         items: [
           {
-            icon: "notifications",
-            label: "Notifications",
-            action: () =>
-              Alert.alert("Coming Soon", "Notification settings coming soon"),
-            color: healthColors.primary.main,
-          },
-          {
             icon: "shield-checkmark",
             label: "Security",
-            action: () =>
-              Alert.alert("Coming Soon", "Security settings coming soon"),
+            screen: "SecuritySettings",
+            isTabScreen: false,
             color: healthColors.success.main,
           },
           {

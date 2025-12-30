@@ -13,6 +13,9 @@ const {
     updateUserRole,
     bulkUpdateUsers,
     getSystemHealth,
+    getSecuritySettings,
+    changePassword,
+    logoutAllDevices,
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -32,5 +35,10 @@ router.post('/users/bulk', bulkUpdateUsers);
 
 // System routes
 router.get('/system/health', getSystemHealth);
+
+// Security routes
+router.get('/security', getSecuritySettings);
+router.post('/security/change-password', changePassword);
+router.post('/security/logout-all', logoutAllDevices);
 
 module.exports = router;

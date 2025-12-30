@@ -143,6 +143,53 @@ const adminService = {
             throw error;
         }
     },
+
+    /**
+     * Get security settings and statistics
+     * @returns {Promise} - Security settings data
+     */
+    async getSecuritySettings() {
+        try {
+            const response = await api.get('/admin/security');
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.getSecuritySettings' });
+            throw error;
+        }
+    },
+
+    /**
+     * Change password
+     * @param {string} currentPassword - Current password
+     * @param {string} newPassword - New password
+     * @returns {Promise} - Success message
+     */
+    async changePassword(currentPassword, newPassword) {
+        try {
+            const response = await api.post('/admin/security/change-password', {
+                currentPassword,
+                newPassword,
+            });
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.changePassword' });
+            throw error;
+        }
+    },
+
+    /**
+     * Logout from all devices
+     * @returns {Promise} - Success message
+     */
+    async logoutAllDevices() {
+        try {
+            const response = await api.post('/admin/security/logout-all');
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.logoutAllDevices' });
+            throw error;
+        }
+    },
 };
 
 export default adminService;

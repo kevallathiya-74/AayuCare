@@ -493,6 +493,192 @@ exports.getSystemHealth = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get security settings and statistics
+ * @route   GET /api/admin/security
+ * @access  Private (Admin only)
+ */
+exports.getSecuritySettings = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get current user security info
+    const user = await User.findOne({ userId }).select(
+      'tokenVersion lastLogin isVerified createdAt revokedTokens'
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Get security statistics
+    const [
+      totalActiveSessions,
+      recentLoginAttempts,
+      totalUsers,
+      verifiedUsers,
+    ] = await Promise.all([
+      // Active sessions (users with tokens not revoked)
+      User.countDocuments({ 
+        isActive: true,
+        lastLogin: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+      }),
+      // Recent login attempts (users who logged in today)
+      User.countDocuments({
+        lastLogin: { 
+          $gte: new Date(new Date().setHours(0, 0, 0, 0)) 
+        }
+      }),
+      // Total users
+      User.countDocuments(),
+      // Verified users
+      User.countDocuments({ isVerified: true }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          tokenVersion: user.tokenVersion,
+          lastLogin: user.lastLogin,
+          isVerified: user.isVerified,
+          accountCreated: user.createdAt,
+          revokedTokensCount: user.revokedTokens?.length || 0,
+        },
+        statistics: {
+          activeSessions: totalActiveSessions,
+          recentLogins: recentLoginAttempts,
+          totalUsers,
+          verifiedUsers,
+          unverifiedUsers: totalUsers - verifiedUsers,
+          twoFactorEnabled: false, // Placeholder for future 2FA feature
+        },
+        lastActivity: user.lastLogin ? getTimeAgo(user.lastLogin) : 'Never',
+      },
+    });
+  } catch (error) {
+    logger.error('Security settings error:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch security settings',
+    });
+  }
+};
+
+/**
+ * @desc    Change password
+ * @route   POST /api/admin/security/change-password
+ * @access  Private (Admin only)
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.userId;
+
+    // Validation
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password and new password are required',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters',
+      });
+    }
+
+    // Get user with password field
+    const user = await User.findOne({ userId }).select('+password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        error: 'Current password is incorrect',
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.tokenVersion += 1; // Invalidate all existing tokens
+    await user.save();
+
+    logger.info(`Password changed for user: ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully. Please login again.',
+    });
+  } catch (error) {
+    logger.error('Change password error:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to change password',
+    });
+  }
+};
+
+/**
+ * @desc    Logout from all devices
+ * @route   POST /api/admin/security/logout-all
+ * @access  Private (Admin only)
+ */
+exports.logoutAllDevices = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findOne({ userId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Increment token version to invalidate all tokens
+    user.tokenVersion += 1;
+    user.refreshToken = null;
+    await user.save();
+
+    logger.info(`Logged out all devices for user: ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Successfully logged out from all devices',
+    });
+  } catch (error) {
+    logger.error('Logout all devices error:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to logout from all devices',
+    });
+  }
+};
+
 // Helper function
 function getTimeAgo(date) {
   const now = new Date();

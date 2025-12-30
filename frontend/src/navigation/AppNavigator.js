@@ -39,6 +39,8 @@ import {
   AdminSettingsScreen,
 } from "../screens/hospital";
 
+import SecuritySettingsScreen from "../screens/hospital/SecuritySettingsScreen";
+
 // Doctor Profile Screens
 import EditProfileScreen from "../screens/hospital/EditProfileScreen";
 import ConsultationHistoryScreen from "../screens/hospital/ConsultationHistoryScreen";
@@ -204,6 +206,10 @@ const AppNavigator = () => {
                 <Stack.Screen
                   name="AdminSettings"
                   component={AdminSettingsScreen}
+                />
+                <Stack.Screen
+                  name="SecuritySettings"
+                  component={SecuritySettingsScreen}
                 />
                 <Stack.Screen
                   name="NotificationsScreen"
