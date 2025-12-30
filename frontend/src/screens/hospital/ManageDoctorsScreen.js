@@ -25,6 +25,7 @@ import { healthColors } from "../../theme/healthColors";
 import { indianDesign, createShadow } from "../../theme/indianDesign";
 import { doctorService, adminService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import AddDoctorModal from "./AddDoctorModal";
 
 const ManageDoctorsScreen = ({ navigation }) => {
   const [doctors, setDoctors] = useState([]);
@@ -32,6 +33,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const insets = useSafeAreaInsets();
 
   const fetchDoctors = useCallback(async () => {
@@ -246,9 +248,8 @@ const ManageDoctorsScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Manage Doctors</Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() =>
-            Alert.alert("Add Doctor", "Add doctor feature coming soon")
-          }
+          onPress={() => setShowAddModal(true)}
+          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Add new doctor"
         >
@@ -279,6 +280,13 @@ const ManageDoctorsScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Add Doctor Modal */}
+      <AddDoctorModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={fetchDoctors}
+      />
     </SafeAreaView>
   );
 };

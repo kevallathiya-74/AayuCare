@@ -61,18 +61,21 @@ const AdminSettingsScreen = ({ navigation }) => {
             icon: "people",
             label: "Manage Doctors",
             screen: "ManageDoctors",
+            isTabScreen: false,
             color: healthColors.primary.main,
           },
           {
             icon: "person-add",
             label: "Patient Management",
             screen: "PatientManagement",
+            isTabScreen: false,
             color: healthColors.success.main,
           },
           {
             icon: "calendar",
             label: "Appointments",
-            screen: "AdminAppointments",
+            screen: "Appointments",
+            isTabScreen: true,
             color: healthColors.info.main,
           },
         ],
@@ -130,7 +133,12 @@ const AdminSettingsScreen = ({ navigation }) => {
   const handleSettingPress = useCallback(
     (item) => {
       if (item.screen) {
-        navigation.navigate(item.screen);
+        // Navigate to tab screens via AdminTabs, others directly
+        if (item.isTabScreen) {
+          navigation.navigate("AdminTabs", { screen: item.screen });
+        } else {
+          navigation.navigate(item.screen);
+        }
       } else if (item.action) {
         item.action();
       }

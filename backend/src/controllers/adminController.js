@@ -3,6 +3,7 @@
  * Handles admin dashboard stats, user management, and system operations
  */
 
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
 const Prescription = require("../models/Prescription");
@@ -467,7 +468,8 @@ exports.bulkUpdateUsers = async (req, res) => {
  */
 exports.getSystemHealth = async (req, res) => {
   try {
-    const dbStatus = await User.db.admin().ping();
+    // Properly access MongoDB connection through mongoose
+    const dbStatus = await mongoose.connection.db.admin().ping();
 
     res.json({
       success: true,
@@ -481,7 +483,7 @@ exports.getSystemHealth = async (req, res) => {
   } catch (error) {
     logger.error("System health check error:", { error: error.message });
     res.status(500).json({
-      success: true,
+      success: false,
       data: {
         status: "degraded",
         database: "error",

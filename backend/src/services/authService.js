@@ -66,7 +66,7 @@ class AuthService {
         });
 
         // Generate tokens
-        const { accessToken, refreshToken } = this.generateTokens(user._id, user.role);
+        const { accessToken, refreshToken } = await this.generateTokens(user._id, user.role);
 
         // Save refresh token
         user.refreshToken = refreshToken;
@@ -213,7 +213,9 @@ class AuthService {
      */
     validateRoleData(role, data) {
         if (role === 'doctor') {
-            if (!data.specialization || !data.qualification || !data.experience || !data.consultationFee) {
+            if (!data.specialization || !data.qualification || 
+                typeof data.experience !== 'number' || data.experience < 0 ||
+                typeof data.consultationFee !== 'number' || data.consultationFee < 0) {
                 throw new AppError('Doctor registration requires specialization, qualification, experience, and consultation fee', 400);
             }
         } else if (role === 'patient') {

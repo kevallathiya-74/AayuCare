@@ -271,7 +271,12 @@ const AdminHomeScreen = ({ navigation }) => {
                   if (action.action) {
                     action.action();
                   } else if (action.screen) {
-                    navigation.navigate(action.screen);
+                    // Navigate to tab screens via AdminTabs, others directly
+                    if (action.isTabScreen) {
+                      navigation.navigate("AdminTabs", { screen: action.screen });
+                    } else {
+                      navigation.navigate(action.screen);
+                    }
                   }
                 } catch (error) {
                   console.error("[AdminHomeScreen] Navigation error:", error);
@@ -358,7 +363,8 @@ const AdminHomeScreen = ({ navigation }) => {
           title: "Patients",
           icon: "people",
           color: healthColors.primary.main,
-          screen: "ManagePatients",
+          screen: "PatientManagement",
+          isTabScreen: false,
           badge: null,
         },
         {
@@ -366,6 +372,7 @@ const AdminHomeScreen = ({ navigation }) => {
           icon: "medical",
           color: healthColors.secondary.main,
           screen: "ManageDoctors",
+          isTabScreen: false,
           badge: null,
         },
         {
@@ -373,6 +380,7 @@ const AdminHomeScreen = ({ navigation }) => {
           icon: "calendar",
           color: healthColors.accent.coral,
           screen: "Appointments",
+          isTabScreen: true,
           badge: stats.appointments.pending,
         },
         {
@@ -380,6 +388,7 @@ const AdminHomeScreen = ({ navigation }) => {
           icon: "document-text",
           color: healthColors.info.main,
           screen: "Reports",
+          isTabScreen: true,
           badge: null,
         },
         {
@@ -984,7 +993,7 @@ const AdminHomeScreen = ({ navigation }) => {
 
                 <Pressable
                   style={styles.menuItem}
-                  onPress={() => handleMenuNavigation("ManagePatients", false)}
+                  onPress={() => handleMenuNavigation("PatientManagement", false)}
                 >
                   <Ionicons
                     name="people-outline"
