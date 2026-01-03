@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "seed": "node scripts/seed.js",
     "seed:comprehensive": "node scripts/seedComprehensiveData.js",
-    "seed:dashboard": "node scripts/seedDashboardData.js"
+    "seed:dashboard": "node scripts/seedDashboardData.js",
+    "migrate": "node scripts/addHospitalIdMigration.js"
   },
   "keywords": [],
   "author": "",
@@ -27,7 +28,9 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
     "morgan": "^1.10.1",
+    "nodemailer": "^7.0.12",
     "react-i18next": "^16.4.0",
+    "twilio": "^4.23.0",
     "winston": "^3.18.3"
   },
   "devDependencies": {

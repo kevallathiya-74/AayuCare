@@ -42,7 +42,12 @@ class AuthService {
      * Register new user
      */
     async register(userData) {
-        const { userId, email, phone, role, ...rest } = userData;
+        const { userId, email, phone, role, hospitalId, hospitalName, ...rest } = userData;
+
+        // Validate hospitalId is provided (required for multi-tenancy)
+        if (!hospitalId) {
+            throw new AppError('Hospital ID is required for registration', 400);
+        }
 
         // Check if user already exists
         const existingUser = await User.findOne({
@@ -56,12 +61,14 @@ class AuthService {
         // Validate role-specific data
         this.validateRoleData(role, rest);
 
-        // Create user
+        // Create user with hospital association
         const user = await User.create({
             userId,
             email,
             phone,
             role,
+            hospitalId,
+            hospitalName: hospitalName || 'Hospital',
             ...rest,
         });
 
@@ -73,7 +80,7 @@ class AuthService {
         user.lastLogin = new Date();
         await user.save();
 
-        logger.info(`New ${role} registered: ${user.userId}`);
+        logger.info(`New ${role} registered: ${user.userId} at hospital ${hospitalId}`);
 
         return { user, accessToken, refreshToken };
     }

@@ -19,6 +19,7 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSelector } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
 import { indianDesign, createShadow } from "../../theme/indianDesign";
 import authService from "../../services/auth.service";
@@ -42,6 +43,7 @@ const SPECIALIZATIONS = [
 ];
 
 const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
+  const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   const [showSpecializationPicker, setShowSpecializationPicker] = useState(false);
   const [formData, setFormData] = useState({
@@ -132,6 +134,8 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         consultationFee: 500, // Default consultation fee
         department: formData.department.trim() || formData.specialization || "General",
         isActive: true,
+        hospitalId: user?.hospitalId,
+        hospitalName: user?.hospitalName,
       };
 
       // Call register API with doctor role

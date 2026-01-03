@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme/healthColors";
 import { textStyles } from "../theme/typography";
 import { spacing } from "../theme/spacing";
+import { moderateScale, scaledFontSize, verticalScale } from "../utils/responsive";
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();

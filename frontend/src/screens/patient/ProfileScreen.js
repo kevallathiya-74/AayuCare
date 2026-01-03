@@ -26,7 +26,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
 import { textStyles } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
-import { moderateScale, scaledFontSize } from "../../utils/responsive";
+import { moderateScale, scaledFontSize, getSafeAreaEdges, verticalScale } from "../../utils/responsive";
 import { Card } from "../../components/common";
 import { logoutUser } from "../../store/slices/authSlice";
 import {
@@ -202,7 +202,10 @@ const ProfileScreen = ({ navigation }) => {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={getSafeAreaEdges('withTabBar')}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[

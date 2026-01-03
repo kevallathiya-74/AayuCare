@@ -18,10 +18,12 @@ const {
     logoutAllDevices,
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
+const { attachHospitalId } = require('../middleware/hospitalMiddleware');
 
 // Apply auth middleware to all routes
 router.use(protect);
-router.use(authorize('admin'));
+router.use(authorize('admin', 'super_admin'));
+router.use(attachHospitalId);
 
 // Dashboard routes
 router.get('/dashboard/stats', getDashboardStats);

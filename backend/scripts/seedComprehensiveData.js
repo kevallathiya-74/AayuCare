@@ -50,6 +50,8 @@ const seedComprehensiveData = async () => {
                 phone: '9876543210',
                 department: 'Administration',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             });
         }
 
@@ -68,6 +70,8 @@ const seedComprehensiveData = async () => {
                 isActive: true,
                 experience: 15,
                 consultationFee: 500,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             });
         }
 
@@ -86,6 +90,8 @@ const seedComprehensiveData = async () => {
                 isActive: true,
                 experience: 10,
                 consultationFee: 400,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'DOC003',
@@ -99,6 +105,8 @@ const seedComprehensiveData = async () => {
                 isActive: true,
                 experience: 12,
                 consultationFee: 600,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'DOC004',
@@ -112,6 +120,8 @@ const seedComprehensiveData = async () => {
                 isActive: true,
                 experience: 8,
                 consultationFee: 450,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'DOC005',
@@ -125,6 +135,8 @@ const seedComprehensiveData = async () => {
                 isActive: true,
                 experience: 20,
                 consultationFee: 350,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
         ];
 
@@ -147,6 +159,8 @@ const seedComprehensiveData = async () => {
                 gender: 'male',
                 bloodGroup: 'O+',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             });
         }
 
@@ -164,6 +178,8 @@ const seedComprehensiveData = async () => {
                 gender: 'female',
                 bloodGroup: 'A+',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'PAT003',
@@ -177,6 +193,8 @@ const seedComprehensiveData = async () => {
                 gender: 'male',
                 bloodGroup: 'B+',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'PAT004',
@@ -190,6 +208,8 @@ const seedComprehensiveData = async () => {
                 gender: 'female',
                 bloodGroup: 'AB+',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'PAT005',
@@ -203,6 +223,8 @@ const seedComprehensiveData = async () => {
                 gender: 'male',
                 bloodGroup: 'O-',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             // Walk-in patients (minimal required fields)
             {
@@ -217,6 +239,8 @@ const seedComprehensiveData = async () => {
                 gender: 'male',
                 bloodGroup: 'A-',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
             {
                 userId: 'PAT007',
@@ -230,6 +254,8 @@ const seedComprehensiveData = async () => {
                 gender: 'female',
                 bloodGroup: 'B-',
                 isActive: true,
+                hospitalId: 'HSP001',
+                hospitalName: 'AayuCare Main Hospital',
             },
         ];
 
@@ -331,6 +357,7 @@ const seedComprehensiveData = async () => {
                         unit: 'mmHg',
                         timestamp: date,
                         recordedBy: allDoctors[0]._id,
+                        hospitalId: 'HSP001',
                     },
                     {
                         patient: allPatients[patientIndex]._id,
@@ -339,6 +366,7 @@ const seedComprehensiveData = async () => {
                         unit: 'mg/dL',
                         timestamp: date,
                         recordedBy: allDoctors[0]._id,
+                        hospitalId: 'HSP001',
                     },
                     {
                         patient: allPatients[patientIndex]._id,
@@ -347,6 +375,7 @@ const seedComprehensiveData = async () => {
                         unit: 'kg',
                         timestamp: date,
                         recordedBy: allPatients[patientIndex]._id,
+                        hospitalId: 'HSP001',
                     },
                     {
                         patient: allPatients[patientIndex]._id,
@@ -355,6 +384,7 @@ const seedComprehensiveData = async () => {
                         unit: 'steps',
                         timestamp: date,
                         recordedBy: allPatients[patientIndex]._id,
+                        hospitalId: 'HSP001',
                     },
                     {
                         patient: allPatients[patientIndex]._id,
@@ -363,6 +393,7 @@ const seedComprehensiveData = async () => {
                         unit: 'hours',
                         timestamp: date,
                         recordedBy: allPatients[patientIndex]._id,
+                        hospitalId: 'HSP001',
                     },
                     {
                         patient: allPatients[patientIndex]._id,
@@ -371,6 +402,7 @@ const seedComprehensiveData = async () => {
                         unit: 'glasses',
                         timestamp: date,
                         recordedBy: allPatients[patientIndex]._id,
+                        hospitalId: 'HSP001',
                     }
                 );
             }
@@ -401,6 +433,7 @@ const seedComprehensiveData = async () => {
                 maxSpots,
                 registrations: [],
                 status: i === 0 ? 'ongoing' : 'upcoming',
+                hospitalId: 'HSP001',
             };
 
             // Add some registrations for past/ongoing events

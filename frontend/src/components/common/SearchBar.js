@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import { moderateScale, scaledFontSize, getInputHeight } from '../../utils/responsive';
 
 const SearchBar = ({
     value,
@@ -80,6 +81,8 @@ const SearchBar = ({
                 placeholderTextColor={healthColors.input.placeholder}
                 style={styles.input}
                 returnKeyType="search"
+                accessibilityLabel={placeholder}
+                accessibilityRole="search"
             />
 
             {value?.length > 0 && (

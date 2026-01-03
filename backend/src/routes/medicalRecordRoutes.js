@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const medicalRecordController = require('../controllers/medicalRecordController');
 const { protect, restrictTo } = require('../middleware/auth');
+const { attachHospitalId } = require('../middleware/hospitalMiddleware');
 
 // All routes require authentication
 router.use(protect);
+router.use(attachHospitalId);
 
 // Get all medical records (Admin only) - must be before /:id route
 router.get(

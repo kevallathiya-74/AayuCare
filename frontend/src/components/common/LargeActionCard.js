@@ -19,6 +19,7 @@ import {
     verticalScale, 
     scaledFontSize,
     getCardHeight,
+    touchTargets,
 } from '../../utils/responsive';
 
 const LargeActionCard = memo(({

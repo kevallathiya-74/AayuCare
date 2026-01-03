@@ -89,6 +89,7 @@ const WalkInPatientScreen = ({ navigation }) => {
         bloodGroup: formData.bloodGroup || undefined,
         symptoms: formData.chiefComplaint.trim(),
         address: formData.emergencyContact || undefined,
+        hospitalId: user?.hospitalId,
       };
 
       const response = await doctorService.registerWalkInPatient(patientData);

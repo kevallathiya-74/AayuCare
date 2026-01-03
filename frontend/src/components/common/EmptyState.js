@@ -1,16 +1,10 @@
-/**
- * AayuCare - EmptyState Component
- * 
- * Illustration + message for empty screens
- * Features: animated entrance, action button
- */
-
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import { moderateScale, scaledFontSize, verticalScale } from '../../utils/responsive';
 import Button from './Button';
 
 const EmptyState = ({
@@ -67,25 +61,29 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: spacing.xl,
+        paddingHorizontal: moderateScale(spacing.xl),
+        paddingVertical: verticalScale(spacing.xxl),
     },
     iconContainer: {
-        marginBottom: spacing.lg,
+        marginBottom: moderateScale(spacing.lg),
     },
     title: {
-        ...textStyles.h3,
+        fontSize: scaledFontSize(18),
+        fontWeight: '700',
         color: healthColors.text.primary,
         textAlign: 'center',
-        marginBottom: spacing.sm,
+        marginBottom: moderateScale(spacing.sm),
     },
     message: {
-        ...textStyles.bodyMedium,
+        fontSize: scaledFontSize(14),
         color: healthColors.text.secondary,
         textAlign: 'center',
-        marginBottom: spacing.lg,
+        marginBottom: moderateScale(spacing.lg),
+        lineHeight: scaledFontSize(14) * 1.5,
     },
     button: {
-        marginTop: spacing.md,
+        marginTop: moderateScale(spacing.md),
+        minWidth: moderateScale(160),
     },
 });
 

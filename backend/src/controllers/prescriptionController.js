@@ -51,7 +51,7 @@ exports.createPrescription = async (req, res) => {
     const prescription = await Prescription.create({
       patientId: patient._id,
       doctorId: req.user._id,
-      hospitalId: req.user.hospitalId || "MAIN",
+      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       medicines: medications,
       diagnosis,
       instructions: notes,
@@ -114,7 +114,13 @@ exports.getPatientPrescriptions = async (req, res) => {
       });
     }
 
-    const prescriptions = await Prescription.find({ patientId: patient._id })
+    const prescriptionQuery = { patientId: patient._id };
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      prescriptionQuery.hospitalId = req.hospitalId;
+    }
+    
+    const prescriptions = await Prescription.find(prescriptionQuery)
       .populate("doctorId", "name specialization userId")
       .sort({ createdAt: -1 });
 
@@ -169,7 +175,13 @@ exports.getDoctorPrescriptions = async (req, res) => {
       });
     }
 
-    const prescriptions = await Prescription.find({ doctorId: doctor._id })
+    const prescriptionQuery = { doctorId: doctor._id };
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      prescriptionQuery.hospitalId = req.hospitalId;
+    }
+    
+    const prescriptions = await Prescription.find(prescriptionQuery)
       .populate("patientId", "name userId age gender")
       .sort({ createdAt: -1 });
 

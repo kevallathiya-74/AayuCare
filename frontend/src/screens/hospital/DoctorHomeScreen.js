@@ -41,6 +41,9 @@ import {
   moderateScale,
   verticalScale,
   scaledFontSize,
+  getSafeAreaEdges,
+  getContainerWidth,
+  isTablet,
 } from "../../utils/responsive";
 import Avatar from "../../components/common/Avatar";
 import LanguageSelector from "../../components/common/LanguageSelector";
@@ -244,8 +247,10 @@ const DoctorHomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View style={styles.loadingContainer}>
+      <SafeAreaView 
+        style={styles.container} 
+        edges={getSafeAreaEdges('withTabBar')}
+      >        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
           <Text style={styles.loadingText}>Loading dashboard...</Text>
         </View>
@@ -254,7 +259,10 @@ const DoctorHomeScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={getSafeAreaEdges('withTabBar')}
+    >
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.main}
@@ -1250,7 +1258,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.card,
     borderRadius: moderateScale(12),
     paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(12),
+    minHeight: moderateScale(48), // Minimum touch target
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },

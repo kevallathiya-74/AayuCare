@@ -41,6 +41,9 @@ import {
   verticalScale,
   scaledFontSize,
   getScreenPadding,
+  getSafeAreaEdges,
+  isTablet,
+  getContainerWidth,
 } from "../../utils/responsive";
 import LanguageSelector from "../../components/common/LanguageSelector";
 import { logoutUser } from "../../store/slices/authSlice";
@@ -509,7 +512,10 @@ const AdminHomeScreen = ({ navigation }) => {
   }, [closeMenu]);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={getSafeAreaEdges('withTabBar')}
+    >
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}

@@ -11,6 +11,7 @@ import { Platform } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme/healthColors";
+import { moderateScale, scaledFontSize, getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import {
   AdminAppointmentProvider,
@@ -33,7 +34,7 @@ const AdminTabsInner = () => {
   const { pendingCount, refreshCount } = useAdminAppointments();
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = 56 + Math.max(insets.bottom, 8);
+  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom, moderateScale(8));
 
   // Refresh count when navigator gains focus
   useEffect(() => {

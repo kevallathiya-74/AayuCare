@@ -12,7 +12,16 @@ const logger = require("../utils/logger");
  */
 exports.getDoctors = async (req, res, next) => {
   try {
-    const result = await doctorService.getDoctors(req.query);
+    // Add hospitalId filter for multi-tenancy
+    // If user is authenticated, filter by their hospital
+    const filters = { ...req.query };
+    
+    // For authenticated users, filter by their hospital (skip for super_admin)
+    if (req.hospitalId && (!req.user || req.user.role !== "super_admin")) {
+      filters.hospitalId = req.hospitalId;
+    }
+    
+    const result = await doctorService.getDoctors(filters);
 
     res.status(200).json({
       status: "success",
@@ -72,6 +81,12 @@ exports.getDoctorDashboard = async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // Build query base with hospitalId filter
+    const baseQuery = { doctorId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      baseQuery.hospitalId = req.hospitalId;
+    }
+
     // Run all queries in parallel
     const [
       todaysAppointments,
@@ -82,7 +97,7 @@ exports.getDoctorDashboard = async (req, res) => {
     ] = await Promise.all([
       // Today's appointments
       Appointment.find({
-        doctorId,
+        ...baseQuery,
         appointmentDate: { $gte: today, $lt: tomorrow },
       })
         .populate("patientId", "name userId age gender phone")
@@ -90,20 +105,20 @@ exports.getDoctorDashboard = async (req, res) => {
         .lean(),
       // Completed today
       Appointment.countDocuments({
-        doctorId,
+        ...baseQuery,
         appointmentDate: { $gte: today, $lt: tomorrow },
         status: "completed",
       }),
       // Total unique patients
-      Appointment.distinct("patientId", { doctorId }),
+      Appointment.distinct("patientId", baseQuery),
       // Upcoming appointments (next 7 days)
       Appointment.countDocuments({
-        doctorId,
+        ...baseQuery,
         appointmentDate: { $gte: today },
         status: { $in: ["scheduled", "confirmed"] },
       }),
       // Recent prescriptions
-      Prescription.find({ doctorId })
+      Prescription.find(req.hospitalId && req.user.role !== "super_admin" ? { doctorId, hospitalId: req.hospitalId } : { doctorId })
         .sort({ createdAt: -1 })
         .limit(5)
         .populate("patientId", "name userId")
@@ -196,6 +211,11 @@ exports.getTodaysAppointments = async (req, res) => {
       doctorId,
       appointmentDate: { $gte: today, $lt: tomorrow },
     };
+    
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
 
     // Apply filter
     if (filter === "completed") {
@@ -263,6 +283,11 @@ exports.getUpcomingAppointments = async (req, res) => {
       appointmentDate: { $gte: tomorrow },
       status: { $in: ["scheduled", "confirmed"] },
     };
+    
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -340,7 +365,11 @@ exports.searchPatients = async (req, res) => {
     const sanitizedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     // Find patients who have appointments with this doctor
-    const patientIds = await Appointment.distinct("patientId", { doctorId });
+    const appointmentQuery = { doctorId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      appointmentQuery.hospitalId = req.hospitalId;
+    }
+    const patientIds = await Appointment.distinct("patientId", appointmentQuery);
 
     logger.info("Found patient IDs:", { patientIds, count: patientIds.length });
 
@@ -529,6 +558,7 @@ exports.registerWalkInPatient = async (req, res) => {
       gender,
       bloodGroup,
       address,
+      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       isWalkIn: true,
       registeredBy: doctorId,
       // No password needed for walk-in patients (admin creates later if needed)
@@ -539,6 +569,7 @@ exports.registerWalkInPatient = async (req, res) => {
       await Appointment.create({
         patientId: patient._id,
         doctorId,
+        hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
         appointmentDate: new Date(),
         appointmentTime: new Date().toLocaleTimeString("en-US", {
           hour: "2-digit",
@@ -580,10 +611,14 @@ exports.getProfileStats = async (req, res, next) => {
     const doctorId = req.user._id;
 
     // Get total unique patients treated
-    const uniquePatients = await Appointment.distinct("patientId", {
+    const statsQuery = {
       doctorId,
       status: { $in: ["completed", "confirmed"] },
-    });
+    };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      statsQuery.hospitalId = req.hospitalId;
+    }
+    const uniquePatients = await Appointment.distinct("patientId", statsQuery);
 
     // Get years of experience from user profile
     const doctor = await User.findById(doctorId);
@@ -675,6 +710,11 @@ exports.getConsultationHistory = async (req, res, next) => {
     const { page = 1, limit = 20, status, startDate, endDate } = req.query;
 
     const query = { doctorId };
+
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
 
     if (status) {
       query.status = status;

@@ -12,6 +12,7 @@ import { createShadow } from '../../utils/platformStyles';
 import { 
     moderateScale,
     borderRadius as responsiveBorderRadius,
+    verticalScale,
 } from '../../utils/responsive';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -64,6 +65,8 @@ const Card = ({
         onPressOut: handlePressOut,
         onPress,
         style: { transform: [{ scale: scaleAnim }] },
+        accessibilityRole: 'button',
+        accessible: true,
       }
     : {};
 

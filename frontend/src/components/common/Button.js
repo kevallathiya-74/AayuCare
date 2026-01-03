@@ -16,6 +16,7 @@ import {
     scaledFontSize,
     touchTargets,
     borderRadius as responsiveBorderRadius,
+    getButtonHeight,
 } from '../../utils/responsive';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -127,6 +128,9 @@ const Button = ({
         onPressOut={handlePressOut}
         disabled={disabled || loading}
         style={[{ transform: [{ scale: scaleAnim }] }, getButtonStyle(), style]}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: disabled || loading, busy: loading }}
+        accessibilityLabel={typeof children === 'string' ? children : undefined}
         {...props}
       >
         <LinearGradient
@@ -148,6 +152,9 @@ const Button = ({
       onPressOut={handlePressOut}
       disabled={disabled || loading}
       style={[{ transform: [{ scale: scaleAnim }] }, getButtonStyle(), style]}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      accessibilityLabel={typeof children === 'string' ? children : undefined}
       {...props}
     >
       {renderContent()}
@@ -166,17 +173,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   
-  // Sizes (responsive)
+  // Sizes (responsive with minimum accessibility targets)
   small: {
-    height: Math.max(36, moderateScale(36)),
+    height: getButtonHeight('small'),
     paddingHorizontal: moderateScale(spacing.md),
   },
   medium: {
-    height: touchTargets.medium,
+    height: getButtonHeight('medium'),
     paddingHorizontal: moderateScale(spacing.lg),
   },
   large: {
-    height: touchTargets.large,
+    height: getButtonHeight('large'),
     paddingHorizontal: moderateScale(spacing.xl),
   },
   

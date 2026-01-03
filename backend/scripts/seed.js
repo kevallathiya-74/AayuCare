@@ -17,6 +17,8 @@ const testUsers = [
         password: 'password123',
         role: 'admin',
         department: 'Administration',
+        hospitalId: 'HSP001',
+        hospitalName: 'AayuCare Main Hospital',
     },
     // Doctor User
     {
@@ -30,6 +32,8 @@ const testUsers = [
         qualification: 'MBBS, MD (Cardiology)',
         experience: 10,
         consultationFee: 500,
+        hospitalId: 'HSP001',
+        hospitalName: 'AayuCare Main Hospital',
     },
     // Patient User
     {
@@ -43,6 +47,8 @@ const testUsers = [
         gender: 'male',
         bloodGroup: 'O+',
         address: 'Mumbai, Maharashtra, India',
+        hospitalId: 'HSP001',
+        hospitalName: 'AayuCare Main Hospital',
     },
 ];
 

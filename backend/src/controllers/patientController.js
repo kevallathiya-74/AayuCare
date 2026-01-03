@@ -36,6 +36,11 @@ exports.searchPatients = async (req, res) => {
 
     let query = { role: "patient" };
 
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+
     // If search query provided, add search conditions
     if (q && q.trim().length >= 1) {
       // Sanitize search query to prevent regex injection
@@ -106,6 +111,11 @@ exports.getCompleteHistory = async (req, res) => {
     } else {
       query.userId = patientId;
     }
+    
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
     const patient = await User.findOne(query).select("-password").lean();
 
     if (!patient) {
@@ -119,23 +129,31 @@ exports.getCompleteHistory = async (req, res) => {
     const patientObjectId = patient._id;
 
     // Get all medical records (sorted by most recent)
-    const medicalRecords = await MedicalRecord.find({
-      patientId: patientObjectId,
-    })
+    const recordQuery = { patientId: patientObjectId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      recordQuery.hospitalId = req.hospitalId;
+    }
+    const medicalRecords = await MedicalRecord.find(recordQuery)
       .populate("doctorId", "name specialization userId")
       .sort({ createdAt: -1 })
       .lean();
 
     // Get all appointments (sorted by most recent)
-    const appointments = await Appointment.find({ patientId: patientObjectId })
+    const appointmentQuery = { patientId: patientObjectId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      appointmentQuery.hospitalId = req.hospitalId;
+    }
+    const appointments = await Appointment.find(appointmentQuery)
       .populate("doctorId", "name specialization userId")
       .sort({ appointmentDate: -1 })
       .lean();
 
     // Get all prescriptions (sorted by most recent)
-    const prescriptions = await Prescription.find({
-      patientId: patientObjectId,
-    })
+    const prescriptionQuery = { patientId: patientObjectId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      prescriptionQuery.hospitalId = req.hospitalId;
+    }
+    const prescriptions = await Prescription.find(prescriptionQuery)
       .populate("doctorId", "name specialization userId")
       .sort({ createdAt: -1 })
       .lean();
@@ -224,6 +242,12 @@ exports.getPatientProfile = async (req, res) => {
     } else {
       query.userId = patientId;
     }
+    
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+    
     const patient = await User.findOne(query).select("-password").lean();
 
     if (!patient) {
@@ -234,11 +258,16 @@ exports.getPatientProfile = async (req, res) => {
     }
 
     // Get quick stats using patient._id
+    const statsQuery = { patientId: patient._id };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      statsQuery.hospitalId = req.hospitalId;
+    }
+    
     const [recordCount, appointmentCount, prescriptionCount] =
       await Promise.all([
-        MedicalRecord.countDocuments({ patientId: patient._id }),
-        Appointment.countDocuments({ patientId: patient._id }),
-        Prescription.countDocuments({ patientId: patient._id }),
+        MedicalRecord.countDocuments(statsQuery),
+        Appointment.countDocuments(statsQuery),
+        Prescription.countDocuments(statsQuery),
       ]);
 
     res.json({
@@ -365,7 +394,12 @@ exports.getHealthMetrics = async (req, res) => {
     const patient = await User.findOne(query).select("_id");
 
     const patientObjectId = patient ? patient._id : patientId;
-    const metrics = await HealthMetric.find({ patient: patientObjectId })
+    const metricsQuery = { patient: patientObjectId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      metricsQuery.hospitalId = req.hospitalId;
+    }
+    
+    const metrics = await HealthMetric.find(metricsQuery)
       .sort({ timestamp: -1 })
       .limit(100)
       .lean();
@@ -423,6 +457,7 @@ exports.addHealthMetric = async (req, res) => {
     const patientObjectId = patient ? patient._id : patientId;
     const metric = await HealthMetric.create({
       patient: patientObjectId,
+      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       type,
       value,
       notes,
@@ -492,11 +527,16 @@ exports.getActivityData = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayMetrics = await HealthMetric.find({
+    const todayMetricsQuery = {
       patient: patientObjectId,
       type: { $in: activityTypes },
       timestamp: { $gte: today },
-    }).lean();
+    };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      todayMetricsQuery.hospitalId = req.hospitalId;
+    }
+    
+    const todayMetrics = await HealthMetric.find(todayMetricsQuery).lean();
 
     res.json({
       success: true,
@@ -557,6 +597,7 @@ exports.updateActivityData = async (req, res) => {
     const patientObjectId = patient ? patient._id : patientId;
     const metric = await HealthMetric.create({
       patient: patientObjectId,
+      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       type,
       value,
       notes,

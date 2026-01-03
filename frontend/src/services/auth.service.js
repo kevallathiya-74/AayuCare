@@ -12,7 +12,7 @@ import { STORAGE_KEYS } from '../utils/constants';
  */
 export const register = async (userData) => {
   try {
-    console.log('[authService] Sending register request:', userData.userId);
+    console.log('[authService] Sending register request:', userData.userId, 'hospitalId:', userData.hospitalId);
     const response = await api.post('/auth/register', userData);
     console.log('[authService] Raw register response:', JSON.stringify(response.data, null, 2));
     

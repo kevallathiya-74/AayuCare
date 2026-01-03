@@ -15,11 +15,17 @@ const sanitizeRegex = (str) => {
 class DoctorService {
     /**
      * Get all doctors with filters
+     * @param {Object} filters - Filter options including hospitalId for multi-tenancy
      */
     async getDoctors(filters = {}) {
-        const { specialization, search, page = 1, limit = 10, sortBy = 'name', includeInactive = false } = filters;
+        const { specialization, search, page = 1, limit = 10, sortBy = 'name', includeInactive = false, hospitalId } = filters;
 
         const query = { role: 'doctor' };
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
 
         // Only filter by isActive if not explicitly requesting inactive doctors
         if (!includeInactive) {
@@ -42,7 +48,7 @@ class DoctorService {
         const skip = (page - 1) * limit;
 
         const doctors = await User.find(query)
-            .select('name specialization qualification experience consultationFee avatar userId email phone isActive')
+            .select('name specialization qualification experience consultationFee avatar userId email phone isActive hospitalId hospitalName')
             .sort(sortBy)
             .skip(skip)
             .limit(parseInt(limit));

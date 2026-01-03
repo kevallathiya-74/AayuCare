@@ -23,7 +23,7 @@ import { indianDesign, createShadow } from "../../theme/indianDesign";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { verticalScale } from "../../utils/responsive";
+import { verticalScale, moderateScale, scaledFontSize, getSafeAreaEdges } from "../../utils/responsive";
 import appointmentService from "../../services/appointment.service";
 
 const MyAppointmentsScreen = ({ navigation }) => {

@@ -22,6 +22,12 @@ exports.getDashboardStats = async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    // Build base query with hospitalId filter (skip for super_admin)
+    const baseQuery = {};
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      baseQuery.hospitalId = req.hospitalId;
+    }
+
     // Run all queries in parallel for performance
     const [
       totalAppointments,
@@ -36,28 +42,33 @@ exports.getDashboardStats = async (req, res) => {
       prescriptionsToday,
     ] = await Promise.all([
       // Appointment stats
-      Appointment.countDocuments(),
+      Appointment.countDocuments(baseQuery),
       Appointment.countDocuments({
+        ...baseQuery,
         appointmentDate: { $gte: today, $lt: tomorrow },
       }),
       Appointment.countDocuments({
+        ...baseQuery,
         status: { $in: ["scheduled", "confirmed"] },
       }),
       Appointment.countDocuments({
+        ...baseQuery,
         status: "completed",
       }),
       // Doctor stats
-      User.countDocuments({ role: "doctor" }),
-      User.countDocuments({ role: "doctor", isActive: true }),
+      User.countDocuments({ ...baseQuery, role: "doctor" }),
+      User.countDocuments({ ...baseQuery, role: "doctor", isActive: true }),
       // Patient stats
-      User.countDocuments({ role: "patient" }),
+      User.countDocuments({ ...baseQuery, role: "patient" }),
       User.countDocuments({
+        ...baseQuery,
         role: "patient",
         createdAt: { $gte: new Date(new Date().setDate(1)) }, // First of this month
       }),
       // Prescription stats
-      Prescription.countDocuments(),
+      Prescription.countDocuments(baseQuery),
       Prescription.countDocuments({
+        ...baseQuery,
         createdAt: { $gte: today },
       }),
     ]);
@@ -114,8 +125,14 @@ exports.getRecentActivities = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
 
+    // Build base query with hospitalId filter (skip for super_admin)
+    const baseQuery = {};
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      baseQuery.hospitalId = req.hospitalId;
+    }
+
     // Get recent appointments
-    const recentAppointments = await Appointment.find()
+    const recentAppointments = await Appointment.find(baseQuery)
       .populate("patientId", "name userId")
       .populate("doctorId", "name userId")
       .sort({ createdAt: -1 })
@@ -123,7 +140,7 @@ exports.getRecentActivities = async (req, res) => {
       .lean();
 
     // Get recent prescriptions
-    const recentPrescriptions = await Prescription.find()
+    const recentPrescriptions = await Prescription.find(baseQuery)
       .populate("doctorId", "name userId")
       .populate("patientId", "name userId")
       .sort({ createdAt: -1 })
@@ -186,6 +203,11 @@ exports.getUsers = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const query = {};
+
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
 
     if (role) {
       query.role = role;

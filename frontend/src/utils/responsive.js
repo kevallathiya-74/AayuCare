@@ -236,6 +236,58 @@ export const normalize = (size) => {
     return Math.round(PixelRatio.roundToNearestPixel(newSize)) / scale;
 };
 
+// SafeAreaView edges configuration
+export const getSafeAreaEdges = (screen = 'default') => {
+    const configs = {
+        default: ['top', 'left', 'right', 'bottom'],
+        withTabBar: ['top', 'left', 'right'], // Bottom handled by tab bar
+        modal: ['top'],
+        none: [],
+    };
+    return configs[screen] || configs.default;
+};
+
+// KeyboardAvoidingView configuration
+export const getKeyboardConfig = () => ({
+    behavior: isIOS ? 'padding' : 'height',
+    keyboardVerticalOffset: isIOS ? getStatusBarHeight() : 0,
+});
+
+// Input field height
+export const getInputHeight = (multiline = false) => {
+    if (multiline) return verticalScale(100);
+    return Math.max(48, moderateScale(48)); // Minimum 48px for accessibility
+};
+
+// Button height
+export const getButtonHeight = (size = 'medium') => {
+    const heights = {
+        small: Math.max(36, moderateScale(36)),
+        medium: Math.max(48, moderateScale(48)),
+        large: Math.max(56, moderateScale(56)),
+    };
+    return heights[size] || heights.medium;
+};
+
+// Responsive container width
+export const getContainerWidth = (maxWidth = 600) => {
+    const { width } = getWindowDimensions();
+    if (isTablet()) {
+        return Math.min(width * 0.85, maxWidth);
+    }
+    return width - (getScreenPadding() * 2);
+};
+
+// List item height
+export const getListItemHeight = (variant = 'default') => {
+    const heights = {
+        compact: verticalScale(56),
+        default: verticalScale(72),
+        comfortable: verticalScale(88),
+    };
+    return heights[variant] || heights.default;
+};
+
 // Export all utilities
 export default {
     getWindowDimensions,
@@ -264,4 +316,10 @@ export default {
     isAndroid,
     isWeb,
     normalize,
+    getSafeAreaEdges,
+    getKeyboardConfig,
+    getInputHeight,
+    getButtonHeight,
+    getContainerWidth,
+    getListItemHeight,
 };

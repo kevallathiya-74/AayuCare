@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const appointmentController = require("../controllers/appointmentController");
 const { protect, authorize } = require("../middleware/auth");
+const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const {
   validateCreateAppointment,
   validateUpdateAppointmentStatus,
@@ -12,6 +13,7 @@ const {
 
 // All routes require authentication
 router.use(protect);
+router.use(attachHospitalId);
 
 /**
  * @route   GET /api/appointments/stats

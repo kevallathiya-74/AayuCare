@@ -7,9 +7,11 @@ const express = require('express');
 const router = express.Router();
 const prescriptionController = require('../controllers/prescriptionController');
 const { protect, authorize } = require('../middleware/auth');
+const { attachHospitalId } = require('../middleware/hospitalMiddleware');
 
 // All routes require authentication
 router.use(protect);
+router.use(attachHospitalId);
 
 // @route   POST /api/prescriptions
 // @desc    Create a new prescription

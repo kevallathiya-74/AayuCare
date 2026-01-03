@@ -29,6 +29,8 @@ import {
   scaledFontSize,
   moderateScale,
   verticalScale,
+  getSafeAreaEdges,
+  isTablet,
 } from "../../utils/responsive";
 import AITagline from "../../components/common/AITagline";
 import { HealthMetricsIcon } from "../../components/common/CustomIcons";

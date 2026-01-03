@@ -45,6 +45,9 @@ import {
   verticalScale,
   scaledFontSize,
   getGridColumns,
+  getSafeAreaEdges,
+  getContainerWidth,
+  isTablet,
 } from "../../utils/responsive";
 import { healthMetricsService, notificationService } from "../../services";
 import { logError, showError } from "../../utils/errorHandler";
@@ -293,7 +296,10 @@ const PatientDashboard = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={getSafeAreaEdges('withTabBar')}
+    >
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -550,10 +556,19 @@ const PatientDashboard = ({ navigation }) => {
             <Text style={styles.emergencyTitle}>MAIN FEATURES</Text>
           </View>
 
-          {/* Action Cards */}
-          <View style={styles.grid}>
+          {/* Action Cards - Responsive Grid */}
+          <View style={[
+            styles.grid,
+            { maxWidth: isTablet() ? getContainerWidth(1200) : '100%' }
+          ]}>
             {actionCards.map((card, index) => (
-              <View key={index} style={styles.gridItem}>
+              <View 
+                key={index} 
+                style={[
+                  styles.gridItem,
+                  { width: `${100 / Math.min(getGridColumns(), 3)}%` }
+                ]}
+              >
                 <LargeActionCard
                   title={card.title}
                   icon={card.icon}
@@ -1202,17 +1217,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: moderateScale(16),
+    paddingBottom: verticalScale(24),
+    flexGrow: 1,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     width: "100%",
+    alignSelf: 'center',
   },
   gridItem: {
-    paddingHorizontal: getScreenPadding(),
-    width: "48%",
-    aspectRatio: 1.2,
+    paddingHorizontal: moderateScale(8),
+    paddingBottom: moderateScale(16),
+    minHeight: verticalScale(120),
+  },
     marginBottom: moderateScale(12),
   },
   loadingContainer: {
@@ -1337,7 +1356,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   menuDrawer: {
-    width: "85%",
+    width: Math.min(width * 0.85, 400), // Max 400px for tablets
     height: "100%",
     backgroundColor: "#FFFFFF",
     borderTopRightRadius: moderateScale(20),

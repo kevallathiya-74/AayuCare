@@ -22,6 +22,7 @@ import {
     scaledFontSize,
     touchTargets,
     borderRadius as responsiveBorderRadius,
+    getInputHeight,
 } from '../../utils/responsive';
 
 const Input = ({
@@ -122,6 +123,9 @@ const Input = ({
           numberOfLines={numberOfLines}
           autoCorrect={false}
           autoCapitalize="none"
+          accessibilityLabel={label || placeholder}
+          accessibilityHint={helperText}
+          accessibilityState={{ disabled }}
           style={[
             styles.input,
             leftIcon && styles.inputWithLeftIcon,
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: healthColors.input.border,
     borderRadius: responsiveBorderRadius.medium,
-    height: touchTargets.medium,
+    minHeight: getInputHeight(),
   },
   containerFocused: {
     borderColor: healthColors.input.borderFocused,

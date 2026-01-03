@@ -30,6 +30,8 @@ import {
   verticalScale,
   scaledFontSize,
   getScreenPadding,
+  getSafeAreaEdges,
+  getKeyboardConfig,
 } from "../../utils/responsive";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
@@ -254,7 +256,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={getSafeAreaEdges('default')}
+    >
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}

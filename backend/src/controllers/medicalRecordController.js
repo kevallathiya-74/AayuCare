@@ -23,6 +23,11 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     // Build query
     const query = {};
 
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+
     if (patientId) {
       query.patientId = patientId;
     }
@@ -107,7 +112,7 @@ exports.createMedicalRecord = async (req, res, next) => {
     const medicalRecord = await MedicalRecord.create({
       patientId: patient._id, // Use ObjectId from found patient
       doctorId: req.user._id,
-      hospitalId: req.user.hospitalId || "MAIN",
+      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       recordType,
       title,
       description,
@@ -172,6 +177,11 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
 
     // Build query
     const query = { patientId: patient._id };
+
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
 
     if (recordType) {
       query.recordType = recordType;
@@ -336,7 +346,13 @@ exports.getPatientHistory = async (req, res, next) => {
       return next(new AppError("Patient not found", 404));
     }
 
-    const medicalRecords = await MedicalRecord.find({ patientId: patient._id })
+    const historyQuery = { patientId: patient._id };
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      historyQuery.hospitalId = req.hospitalId;
+    }
+    
+    const medicalRecords = await MedicalRecord.find(historyQuery)
       .populate("doctorId", "name specialization")
       .sort({ date: -1 });
 

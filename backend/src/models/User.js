@@ -38,6 +38,21 @@ const userSchema = new mongoose.Schema({
         enum: ['admin', 'doctor', 'patient'],
         required: [true, 'Role is required'],
     },
+    // Hospital association for multi-tenancy
+    hospitalId: {
+        type: String,
+        required: function () { 
+            // All users except super admin need hospitalId
+            return this.role !== 'super_admin'; 
+        },
+        index: true,
+        trim: true,
+        uppercase: true,
+    },
+    hospitalName: {
+        type: String,
+        trim: true,
+    },
     // Admin specific fields
     department: {
         type: String,

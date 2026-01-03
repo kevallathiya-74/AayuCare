@@ -6,6 +6,13 @@
 const mongoose = require('mongoose');
 
 const healthMetricSchema = new mongoose.Schema({
+    hospitalId: {
+        type: String,
+        required: [true, 'Hospital ID is required'],
+        index: true,
+        trim: true,
+        uppercase: true,
+    },
     patient: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

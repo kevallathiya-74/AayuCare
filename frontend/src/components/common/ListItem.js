@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import { moderateScale, scaledFontSize, getListItemHeight } from '../../utils/responsive';
 import Avatar from './Avatar';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -55,6 +56,9 @@ const ListItem = ({
             onPressOut: handlePressOut,
             activeOpacity: 0.95,
             style: { transform: [{ scale }] },
+            accessibilityRole: 'button',
+            accessibilityLabel: title,
+            accessibilityHint: subtitle,
         }
         : {};
 

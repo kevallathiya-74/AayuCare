@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { indianDesign } from '../../theme/indianDesign';
-import { scaledFontSize, moderateScale } from '../../utils/responsive';
+import { scaledFontSize, moderateScale, verticalScale } from '../../utils/responsive';
 
 const LoadingIndicator = ({ 
     message = 'Loading...', 

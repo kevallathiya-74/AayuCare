@@ -6,6 +6,13 @@
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
+    hospitalId: {
+        type: String,
+        required: [true, 'Hospital ID is required'],
+        index: true,
+        trim: true,
+        uppercase: true,
+    },
     title: {
         type: String,
         required: [true, 'Event title is required'],
@@ -92,9 +99,9 @@ const eventSchema = new mongoose.Schema({
 });
 
 // Indexes for efficient queries
-eventSchema.index({ date: 1, status: 1 });
-eventSchema.index({ type: 1 });
-eventSchema.index({ isActive: 1 });
+eventSchema.index({ hospitalId: 1, date: 1, status: 1 });
+eventSchema.index({ hospitalId: 1, type: 1 });
+eventSchema.index({ hospitalId: 1, isActive: 1 });
 
 // Virtual for checking if event is full
 eventSchema.virtual('isFull').get(function() {

@@ -26,6 +26,11 @@ class AppointmentService {
             throw new AppError('Doctor not found', 404);
         }
 
+        // Verify patient and doctor belong to same hospital (multi-tenancy)
+        if (patient.hospitalId !== doctor.hospitalId) {
+            throw new AppError('Cannot book appointment with doctor from different hospital', 400);
+        }
+
         // Check if slot is available
         const existingAppointment = await Appointment.findOne({
             doctorId,
@@ -38,11 +43,11 @@ class AppointmentService {
             throw new AppError('This time slot is already booked', 400);
         }
 
-        // Create appointment
+        // Create appointment with doctor's hospitalId
         const appointment = await Appointment.create({
             patientId,
             doctorId,
-            hospitalId: doctor.hospitalId || 'MAIN',
+            hospitalId: doctor.hospitalId,
             appointmentDate: new Date(appointmentDate),
             appointmentTime,
             type,
@@ -50,23 +55,29 @@ class AppointmentService {
             chiefComplaint,
             status: 'scheduled',
             payment: {
-                amount: doctor.consultationFee,
+                amount: doctor.consultationFee || 0,
                 status: 'pending'
             }
         });
 
-        logger.info(`Appointment created: ${appointment._id} for patient ${patient.userId} with doctor ${doctor.userId}`);
+        logger.info(`Appointment created: ${appointment._id} for patient ${patient.userId} with doctor ${doctor.userId} at hospital ${doctor.hospitalId}`);
 
         return appointment;
     }
 
     /**
      * Get all appointments (admin only)
+     * @param {Object} filters - Filter options including hospitalId for multi-tenancy
      */
     async getAllAppointments(filters = {}) {
-        const { status, startDate, endDate, page = 1, limit = 10, patientId, doctorId } = filters;
+        const { status, startDate, endDate, page = 1, limit = 10, patientId, doctorId, hospitalId } = filters;
 
         const query = {};
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
 
         if (patientId) {
             query.patientId = patientId;

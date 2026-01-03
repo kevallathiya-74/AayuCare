@@ -33,6 +33,11 @@ import {
   moderateScale,
   verticalScale,
   scaledFontSize,
+  getSafeAreaEdges,
+  getKeyboardConfig,
+  getInputHeight,
+  getContainerWidth,
+  isTablet,
 } from "../../utils/responsive";
 import { showError, validateRequiredFields } from "../../utils/errorHandler";
 
@@ -113,7 +118,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
   return (
     <SafeAreaView
       style={styles.container}
-      edges={["top", "left", "right"]}
+      edges={getSafeAreaEdges('default')}
     >
       <StatusBar
         barStyle="light-content"
@@ -121,7 +126,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
       />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={getKeyboardConfig().behavior}
+        keyboardVerticalOffset={getKeyboardConfig().keyboardVerticalOffset}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -457,9 +463,12 @@ const styles = StyleSheet.create({
   formCard: {
     marginTop: -30,
     marginHorizontal: getScreenPadding(),
+    maxWidth: isTablet() ? getContainerWidth(500) : undefined,
+    alignSelf: isTablet() ? 'center' : undefined,
+    width: isTablet() ? '100%' : undefined,
     backgroundColor: healthColors.background.card,
     borderRadius: 20,
-    padding: indianDesign.spacing.xl,
+    padding: moderateScale(24),
     ...createShadow(5),
   },
   welcomeText: {
@@ -507,8 +516,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.card.border,
-    paddingHorizontal: indianDesign.spacing.md,
-    height: moderateScale(50),
+    paddingHorizontal: moderateScale(16),
+    minHeight: getInputHeight(),
   },
   inputWrapperFocused: {
     borderColor: healthColors.primary.main,

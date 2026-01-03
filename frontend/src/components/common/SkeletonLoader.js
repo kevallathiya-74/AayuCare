@@ -8,11 +8,12 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { healthColors } from '../../theme/healthColors';
 import { spacing, componentSpacing } from '../../theme/spacing';
+import { moderateScale, borderRadius as responsiveBorderRadius } from '../../utils/responsive';
 
 const SkeletonLoader = ({
   width = '100%',
   height = 20,
-  borderRadius = healthColors.borderRadius.small,
+  borderRadius = responsiveBorderRadius.small,
   style,
 }) => {
   const opacity = useRef(new Animated.Value(0.3)).current;

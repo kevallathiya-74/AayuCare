@@ -14,6 +14,7 @@ exports.createAppointment = async (req, res, next) => {
       ...req.body,
       patientId:
         req.user.role === "patient" ? req.user._id : req.body.patientId,
+      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
     };
 
     const appointment = await appointmentService.createAppointment(
@@ -37,7 +38,13 @@ exports.createAppointment = async (req, res, next) => {
  */
 exports.getAllAppointments = async (req, res, next) => {
   try {
-    const result = await appointmentService.getAllAppointments(req.query);
+    // Add hospitalId from authenticated user for multi-tenancy
+    const filters = { ...req.query };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      filters.hospitalId = req.hospitalId;
+    }
+    
+    const result = await appointmentService.getAllAppointments(filters);
 
     res.status(200).json({
       status: "success",
@@ -293,7 +300,13 @@ exports.getPatientAppointments = async (req, res, next) => {
     }
 
     // Find appointments using the ObjectId
-    const appointments = await Appointment.find({ patientId: patient._id })
+    const appointmentQuery = { patientId: patient._id };
+    // Add hospitalId filter for multi-tenancy (skip for super_admin)
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      appointmentQuery.hospitalId = req.hospitalId;
+    }
+    
+    const appointments = await Appointment.find(appointmentQuery)
       .populate("doctorId", "name specialization")
       .populate("patientId", "name email phone")
       .sort({ appointmentDate: -1 });

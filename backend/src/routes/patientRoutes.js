@@ -7,9 +7,11 @@ const express = require('express');
 const router = express.Router();
 const patientController = require('../controllers/patientController');
 const { protect, authorize } = require('../middleware/auth');
+const { attachHospitalId } = require('../middleware/hospitalMiddleware');
 
 // All routes require authentication
 router.use(protect);
+router.use(attachHospitalId);
 
 // @route   GET /api/patients/search
 // @desc    Search patients by name, ID, or phone

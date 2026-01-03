@@ -41,6 +41,16 @@ exports.validateRegister = [
         .notEmpty().withMessage('Role is required')
         .isIn(['admin', 'doctor', 'patient']).withMessage('Invalid role. Must be admin, doctor, or patient'),
 
+    body('hospitalId')
+        .trim()
+        .notEmpty().withMessage('Hospital ID is required')
+        .isLength({ min: 3, max: 20 }).withMessage('Hospital ID must be between 3 and 20 characters'),
+
+    body('hospitalName')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 }).withMessage('Hospital name must be between 2 and 100 characters'),
+
     validate,
 ];
 
