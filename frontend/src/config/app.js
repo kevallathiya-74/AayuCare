@@ -34,6 +34,13 @@ const getApiBaseUrl = () => {
     return envUrl;
   }
 
+  // ALWAYS use production backend (Render) for now
+  // This ensures the app works in both Expo Go and production APK
+  const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
+  console.log('[Config] Using production backend:', prodUrl);
+  return prodUrl;
+
+  /* OLD CODE - Commented out for now
   // Production mode - use production API
   if (!__DEV__) {
     const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
@@ -89,6 +96,7 @@ const getApiBaseUrl = () => {
   
   console.warn('[Config] No debugger host - falling back to:', fallbackUrl);
   return fallbackUrl;
+  */
 };
 
 /**
