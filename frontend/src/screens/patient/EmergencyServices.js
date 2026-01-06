@@ -356,12 +356,12 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
     flex: 1,
     marginLeft: indianDesign.spacing.md,
   },
   headerText: {
     flex: 1,
+    marginLeft: indianDesign.spacing.md,
   },
   headerTitle: {
     fontSize: scaledFontSize(20),
@@ -385,7 +385,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: indianDesign.spacing.xl,
-    gap: indianDesign.spacing.lg,
   },
   ambulanceIcon: {
     width: moderateScale(80),
@@ -394,9 +393,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
+    marginRight: indianDesign.spacing.lg,
   },
   ambulanceText: {
     flex: 1,
+    marginRight: indianDesign.spacing.lg,
   },
   ambulanceTitle: {
     fontSize: scaledFontSize(18),
@@ -436,7 +437,6 @@ const styles = StyleSheet.create({
   numbersGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: indianDesign.spacing.md,
   },
   numberCard: {
     width: "48%",
@@ -445,6 +445,8 @@ const styles = StyleSheet.create({
     padding: indianDesign.spacing.md,
     alignItems: "center",
     ...createShadow(2),
+    marginRight: indianDesign.spacing.md,
+    marginBottom: indianDesign.spacing.md,
   },
   numberIcon: {
     width: moderateScale(60),
@@ -489,7 +491,6 @@ const styles = StyleSheet.create({
   hospitalHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.xs,
     marginBottom: 4,
   },
   hospitalName: {
@@ -497,6 +498,7 @@ const styles = StyleSheet.create({
     fontWeight: indianDesign.fontWeight.semibold,
     color: healthColors.text.primary,
     flex: 1,
+    marginRight: indianDesign.spacing.xs,
   },
   emergencyBadge: {
     backgroundColor: healthColors.success.main,
@@ -512,11 +514,11 @@ const styles = StyleSheet.create({
   hospitalDetails: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
   },
   hospitalDistance: {
     fontSize: scaledFontSize(12),
     color: healthColors.text.tertiary,
+    marginLeft: 4,
   },
   callButton: {
     width: moderateScale(40),
@@ -535,7 +537,6 @@ const styles = StyleSheet.create({
   tipItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: indianDesign.spacing.sm,
     marginBottom: indianDesign.spacing.sm,
   },
   tipText: {
@@ -543,11 +544,11 @@ const styles = StyleSheet.create({
     fontSize: scaledFontSize(13),
     color: healthColors.text.secondary,
     lineHeight: 20,
+    marginLeft: indianDesign.spacing.sm,
   },
   disclaimer: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: indianDesign.spacing.sm,
     backgroundColor: healthColors.background.tertiary,
     padding: indianDesign.spacing.md,
     borderRadius: 12,
@@ -558,6 +559,7 @@ const styles = StyleSheet.create({
     fontSize: scaledFontSize(11),
     color: healthColors.text.tertiary,
     lineHeight: 16,
+    marginLeft: indianDesign.spacing.sm,
   },
 });
 

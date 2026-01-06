@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing } from "react-native";
+import { View, Text, StyleSheet, Animated, Easing, Image } from "react-native";
 import { useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -133,9 +133,13 @@ const SplashScreen = ({ navigation }) => {
           },
         ]}
       >
-        {/* Hospital Icon */}
-        <View style={styles.iconContainer}>
-          <Ionicons name="medical" size={80} color="#FFF" />
+        {/* Logo Image */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../../../assets/images/aayucare-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
         {/* App Name */}
@@ -194,6 +198,20 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
   },
+  logoContainer: {
+    width: moderateScale(140),
+    height: moderateScale(140),
+    borderRadius: moderateScale(70),
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: indianDesign.spacing.xl,
+    padding: moderateScale(20),
+  },
+  logo: {
+    width: "100%",
+    height: "100%",
+  },
   iconContainer: {
     width: moderateScale(120),
     height: moderateScale(120),
@@ -218,13 +236,13 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flexDirection: "row",
     marginTop: indianDesign.spacing.xl,
-    gap: indianDesign.spacing.sm,
   },
   dot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     backgroundColor: healthColors.white,
+    marginRight: indianDesign.spacing.sm,
   },
   footerContainer: {
     position: "absolute",

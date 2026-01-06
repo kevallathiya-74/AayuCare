@@ -209,7 +209,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   onChangeText={setUserId}
                   onFocus={() => setUserIdFocused(true)}
                   onBlur={() => setUserIdFocused(false)}
-                  placeholder="Enter your ID (e.g., ADM001, DOC001, PAT001)"
+                  placeholder="Enter your ID"
                   placeholderTextColor={healthColors.text.tertiary}
                   autoCapitalize="characters"
                   autoCorrect={false}

@@ -796,13 +796,13 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
     flex: 1,
     marginLeft: indianDesign.spacing.md,
   },
   headerText: {
     flex: 1,
     marginLeft: indianDesign.spacing.sm,
+    marginRight: indianDesign.spacing.md,
   },
   headerTitle: {
     fontSize: scaledFontSize(20),
@@ -849,13 +849,13 @@ const styles = StyleSheet.create({
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.xs,
     marginBottom: indianDesign.spacing.md,
   },
   sectionTitle: {
     fontSize: scaledFontSize(16),
     fontWeight: indianDesign.fontWeight.bold,
     color: healthColors.text.primary,
+    marginLeft: indianDesign.spacing.xs,
   },
   quickAccessCard: {
     backgroundColor: healthColors.background.card,
@@ -867,13 +867,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: indianDesign.spacing.md,
-    gap: indianDesign.spacing.md,
   },
   quickAccessText: {
     flex: 1,
     fontSize: scaledFontSize(14),
     fontWeight: indianDesign.fontWeight.medium,
     color: healthColors.text.primary,
+    marginLeft: indianDesign.spacing.md,
+    marginRight: indianDesign.spacing.md,
   },
   card: {
     backgroundColor: healthColors.background.card,
@@ -885,7 +886,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -894,11 +894,13 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: healthColors.primary.dark,
+    marginRight: indianDesign.spacing.md,
   },
   topicText: {
     flex: 1,
     fontSize: scaledFontSize(14),
     color: healthColors.text.primary,
+    marginRight: indianDesign.spacing.md,
   },
   modalOverlay: {
     flex: 1,
@@ -920,7 +922,6 @@ const styles = StyleSheet.create({
   modalTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
     marginBottom: indianDesign.spacing.sm,
   },
   modalIconContainer: {
@@ -929,9 +930,11 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
+    marginRight: indianDesign.spacing.md,
   },
   modalTitleText: {
     flex: 1,
+    marginRight: indianDesign.spacing.md,
   },
   modalTitle: {
     fontSize: scaledFontSize(20),
@@ -962,7 +965,6 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    gap: indianDesign.spacing.md,
     paddingHorizontal: indianDesign.spacing.lg,
     marginBottom: indianDesign.spacing.lg,
   },
@@ -972,6 +974,7 @@ const styles = StyleSheet.create({
     padding: indianDesign.spacing.md,
     borderRadius: indianDesign.borderRadius.medium,
     alignItems: "center",
+    marginRight: indianDesign.spacing.md,
   },
   statLabel: {
     fontSize: scaledFontSize(12),
@@ -990,13 +993,13 @@ const styles = StyleSheet.create({
   detailTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
     marginBottom: indianDesign.spacing.sm,
   },
   detailTitle: {
     fontSize: scaledFontSize(14),
     fontWeight: indianDesign.fontWeight.bold,
     color: healthColors.text.primary,
+    marginLeft: moderateScale(6),
   },
   listItem: {
     flexDirection: "row",
@@ -1016,7 +1019,6 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: "row",
-    gap: indianDesign.spacing.md,
     paddingHorizontal: indianDesign.spacing.lg,
     paddingBottom: indianDesign.spacing.lg,
   },
@@ -1025,18 +1027,19 @@ const styles = StyleSheet.create({
     borderRadius: indianDesign.borderRadius.medium,
     overflow: "hidden",
     ...createShadow(2),
+    marginRight: indianDesign.spacing.md,
   },
   actionGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: moderateScale(8),
     paddingVertical: indianDesign.spacing.md,
   },
   actionButtonText: {
     fontSize: scaledFontSize(14),
     fontWeight: indianDesign.fontWeight.semibold,
     color: "#FFF",
+    marginLeft: moderateScale(8),
   },
   loadingOverlay: {
     position: "absolute",
@@ -1081,7 +1084,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     padding: indianDesign.spacing.md,
-    gap: indianDesign.spacing.md,
   },
   galleryItem: {
     width: "30%",
@@ -1092,6 +1094,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: healthColors.border.light,
+    marginRight: indianDesign.spacing.md,
+    marginBottom: indianDesign.spacing.md,
   },
   galleryItemText: {
     fontSize: scaledFontSize(11),
@@ -1107,13 +1111,13 @@ const styles = StyleSheet.create({
   dietMealTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
     marginBottom: indianDesign.spacing.sm,
   },
   dietMealTitle: {
     fontSize: scaledFontSize(14),
     fontWeight: indianDesign.fontWeight.bold,
     color: healthColors.text.primary,
+    marginLeft: moderateScale(6),
   },
   dietItem: {
     flexDirection: "row",
@@ -1174,11 +1178,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 8,
-    gap: indianDesign.spacing.sm,
   },
   exerciseText: {
     fontSize: scaledFontSize(13),
     color: healthColors.text.secondary,
+    marginLeft: indianDesign.spacing.sm,
   },
 });
 

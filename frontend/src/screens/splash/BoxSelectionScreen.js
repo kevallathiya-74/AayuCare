@@ -75,8 +75,8 @@ const responsiveFonts = {
 
 // Responsive dimensions - scale based on screen size
 const responsiveSizes = {
-  logoContainer: moderateScale(isSmallScreen ? 70 : 85),
-  logo: moderateScale(isSmallScreen ? 50 : 60),
+  logoContainer: moderateScale(isSmallScreen ? 90 : 110),
+  logo: moderateScale(isSmallScreen ? 80 : 100),
   iconCircle: moderateScale(isSmallScreen ? 65 : 80),
   iconSize: moderateScale(isSmallScreen ? 32 : 40),
   arrowCircle: moderateScale(isSmallScreen ? 44 : 54),
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.white,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: isSmallScreen ? moderateScale(12) : moderateScale(16),
+    marginBottom: isSmallScreen ? moderateScale(16) : moderateScale(20),
     borderWidth: 1,
     borderColor: "#F0F0F0",
     ...createShadow({
@@ -265,6 +265,7 @@ const styles = StyleSheet.create({
   logo: {
     width: responsiveSizes.logo,
     height: responsiveSizes.logo,
+    marginBottom: moderateScale(16),
   },
   title: {
     fontFamily: fontFamilies.heading,

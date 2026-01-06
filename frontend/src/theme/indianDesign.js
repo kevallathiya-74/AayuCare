@@ -143,8 +143,6 @@ export const indianDesign = {
     // Grid Layout
     grid: {
         columns: 2,
-        gap: 16,
-        cardWidth: (width - 48) / 2, // 2 columns with padding
     },
 
     // Bottom Tab Bar

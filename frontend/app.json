@@ -32,7 +32,6 @@
         "backgroundColor": "#4DD0E1"
       },
       "package": "com.aayucare.app",
-      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -40,21 +39,18 @@
       ],
       "jsEngine": "hermes"
     },
-    "web": {
-      "favicon": "./assets/images/aayucare-logo.png",
-      "bundler": "metro"
-    },
     "updates": {
       "enabled": false,
       "checkAutomatically": "ON_ERROR_RECOVERY",
       "fallbackToCacheTimeout": 0
     },
     "extra": {
-      "sentryDSN": null,
+      "sentryDSN": {},
+      "API_BASE_URL": "https://aayucare-backend.onrender.com/api",
+      "PRODUCTION_API_URL": "https://aayucare-backend.onrender.com/api",
       "eas": {
-        "projectId": "aayucare-healthcare-app"
-      },
-      "API_BASE_URL": "https://your-backend-url.com/api"
+        "projectId": "31972ca4-e87a-4c14-862f-330973332013"
+      }
     },
     "plugins": [
       "expo-asset"

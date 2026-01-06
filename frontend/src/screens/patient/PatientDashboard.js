@@ -976,6 +976,7 @@ const styles = StyleSheet.create({
     height: moderateScale(40),
     justifyContent: "center",
     alignItems: "center",
+    marginRight: moderateScale(8),
   },
   appTitle: {
     fontSize: scaledFontSize(18),
@@ -985,7 +986,6 @@ const styles = StyleSheet.create({
   bannerRightIcons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
   },
   bannerNotificationBadge: {
     position: "absolute",
@@ -1054,13 +1054,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
     marginBottom: moderateScale(12),
   },
   healthStatusTitle: {
     fontSize: scaledFontSize(14),
     fontWeight: "700",
     color: healthColors.text.primary,
+    marginLeft: moderateScale(8),
   },
   healthCard: {
     flexDirection: "row",
@@ -1075,7 +1075,6 @@ const styles = StyleSheet.create({
   healthCardLeft: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: moderateScale(12),
     flex: 1,
   },
   healthIconCircle: {
@@ -1085,9 +1084,11 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.success.main + "20",
     justifyContent: "center",
     alignItems: "center",
+    marginRight: moderateScale(12),
   },
   healthCardText: {
     flex: 1,
+    marginRight: moderateScale(12),
   },
   healthCardTitle: {
     fontSize: scaledFontSize(14),
@@ -1098,27 +1099,28 @@ const styles = StyleSheet.create({
   healthMetrics: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: moderateScale(12),
     marginBottom: moderateScale(8),
   },
   metricItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
+    marginRight: moderateScale(12),
+    marginBottom: moderateScale(4),
   },
   healthCardDetail: {
     fontSize: scaledFontSize(12),
     color: healthColors.text.primary,
     fontWeight: "500",
+    marginLeft: moderateScale(4),
   },
   healthCardUpdateRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
   },
   healthCardUpdated: {
     fontSize: scaledFontSize(11),
     color: healthColors.text.secondary,
+    marginLeft: moderateScale(4),
   },
   emergencySection: {
     paddingHorizontal: getScreenPadding(),
@@ -1135,13 +1137,13 @@ const styles = StyleSheet.create({
   },
   emergencyButtons: {
     flexDirection: "row",
-    gap: moderateScale(12),
   },
   emergencyButton: {
     flex: 1,
     borderRadius: moderateScale(12),
     overflow: "hidden",
     ...createShadow(3),
+    marginRight: moderateScale(12),
   },
   emergencyButtonGradient: {
     padding: moderateScale(16),
@@ -1183,37 +1185,37 @@ const styles = StyleSheet.create({
   notificationsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
     marginBottom: moderateScale(12),
   },
   notificationsTitle: {
     fontSize: scaledFontSize(14),
     fontWeight: "700",
     color: healthColors.text.primary,
+    marginLeft: moderateScale(8),
   },
   notificationsList: {
-    gap: moderateScale(8),
   },
   notificationRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    marginBottom: moderateScale(8),
   },
   notificationItem: {
     flex: 1,
     fontSize: scaledFontSize(13),
     color: healthColors.text.primary,
     lineHeight: scaledFontSize(18),
+    marginRight: moderateScale(8),
   },
   viewButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
   },
   viewButtonText: {
     fontSize: scaledFontSize(13),
     fontWeight: "600",
     color: healthColors.primary.main,
+    marginRight: moderateScale(4),
   },
   scrollContent: {
     paddingTop: moderateScale(16),
@@ -1231,18 +1233,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(8),
     paddingBottom: moderateScale(16),
     minHeight: verticalScale(120),
-  },
     marginBottom: moderateScale(12),
   },
   loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
   },
   loadingText: {
     fontSize: scaledFontSize(14),
     color: healthColors.text.secondary,
     fontWeight: "500",
+    marginLeft: moderateScale(8),
   },
   // Profile Styles
   profileHeader: {
@@ -1378,7 +1379,6 @@ const styles = StyleSheet.create({
   menuProfileSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(12),
     marginRight: moderateScale(40),
   },
   menuAvatar: {
@@ -1390,6 +1390,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.5)",
+    marginRight: moderateScale(12),
   },
   menuUserInfo: {
     flex: 1,
@@ -1444,7 +1445,6 @@ const styles = StyleSheet.create({
     paddingVertical: moderateScale(14),
     paddingHorizontal: moderateScale(12),
     borderRadius: moderateScale(10),
-    gap: moderateScale(12),
     marginBottom: moderateScale(6),
     backgroundColor: "transparent",
   },
@@ -1453,6 +1453,7 @@ const styles = StyleSheet.create({
     fontSize: scaledFontSize(15),
     fontWeight: "500",
     color: healthColors.text.primary,
+    marginLeft: moderateScale(12),
   },
   menuItemDanger: {
     backgroundColor: "rgba(244, 67, 54, 0.08)",
@@ -1484,7 +1485,6 @@ const styles = StyleSheet.create({
     padding: moderateScale(12),
     backgroundColor: healthColors.background.secondary,
     borderRadius: moderateScale(8),
-    gap: moderateScale(12),
     marginBottom: moderateScale(8),
   },
   menuStatLabel: {
