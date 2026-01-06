@@ -36,7 +36,7 @@ const getApiBaseUrl = () => {
 
   // Production mode - use production API
   if (!__DEV__) {
-    const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://api.aayucare.com/api");
+    const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
     console.log('[Config] Production mode - API URL:', prodUrl);
     return prodUrl;
   }
