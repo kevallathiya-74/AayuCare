@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: aayucare-backend
+    env: node
+    region: oregon # Change to your preferred region (singapore, oregon, frankfurt)
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false # Set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true # Render will auto-generate
+      - key: JWT_EXPIRE
+        value: 30d
+      - key: JWT_REFRESH_SECRET
+        generateValue: true # Render will auto-generate
+      - key: JWT_REFRESH_EXPIRE
+        value: 7d
+      - key: FRONTEND_URL
+        value: https://your-frontend-url.com
+      - key: BCRYPT_ROUNDS
+        value: 12
+      - key: RATE_LIMIT_WINDOW
+        value: 15
+      - key: RATE_LIMIT_MAX
+        value: 100
