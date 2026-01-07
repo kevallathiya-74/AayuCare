@@ -2,14 +2,8 @@
  * AayuCare - Application Constants
  *
  * Centralized constants for the app.
+ * Note: API Configuration is in config/app.js (AppConfig)
  */
-
-// API Configuration
-export const API_BASE_URL = __DEV__
-  ? "http://10.9.15.29:5000/api" // Use computer IP for Expo Go
-  : "https://api.aayucare.com/api"; // Replace with production URL
-
-export const API_TIMEOUT = 30000; // 30 seconds
 
 // Storage Keys - SecureStore compatible (alphanumeric, dots, dashes, underscores only)
 export const STORAGE_KEYS = {
@@ -302,8 +296,6 @@ export const INDIAN_STATES = [
 ];
 
 export default {
-  API_BASE_URL,
-  API_TIMEOUT,
   STORAGE_KEYS,
   APP_CONFIG,
   GENDER_OPTIONS,

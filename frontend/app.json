@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/aayucare-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#4A90E2"
+      "backgroundColor": "#00ACC1"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -29,10 +29,11 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/aayucare-logo.png",
-        "backgroundColor": "#4DD0E1"
+        "backgroundColor": "#00ACC1"
       },
       "package": "com.aayucare.app",
       "permissions": [
+        "INTERNET",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"

@@ -211,7 +211,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   onBlur={() => setUserIdFocused(false)}
                   placeholder="Enter your ID"
                   placeholderTextColor={healthColors.text.tertiary}
-                  autoCapitalize="characters"
+                  autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
                   onSubmitEditing={() => passwordInputRef.current?.focus()}

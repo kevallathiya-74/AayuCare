@@ -39,64 +39,6 @@ const getApiBaseUrl = () => {
   const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
   console.log('[Config] Using production backend:', prodUrl);
   return prodUrl;
-
-  /* OLD CODE - Commented out for now
-  // Production mode - use production API
-  if (!__DEV__) {
-    const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
-    console.log('[Config] Production mode - API URL:', prodUrl);
-    return prodUrl;
-  }
-
-  // Development mode - auto-detect host
-  const debuggerHost =
-    Constants.expoConfig?.hostUri ||
-    Constants.manifest?.debuggerHost ||
-    Constants.manifest2?.extra?.expoGo?.debuggerHost;
-
-  console.log('[Config] Debugger Host detected:', debuggerHost);
-
-  if (debuggerHost) {
-    const host = debuggerHost.split(":")[0];
-
-    // Check if using tunnel mode
-    if (
-      host.includes("exp.direct") ||
-      host.includes("ngrok") ||
-      host.includes("expo.dev")
-    ) {
-      console.warn('[Config] ⚠️ Tunnel mode detected - backend must be exposed via ngrok');
-      console.warn('[Config] Set API_BASE_URL in app.json extra or use LAN mode');
-      
-      // Check for ngrok URL in config
-      const ngrokUrl = getEnvVar("BACKEND_NGROK_URL");
-      if (ngrokUrl) {
-        console.log('[Config] Using ngrok URL:', ngrokUrl);
-        return ngrokUrl;
-      }
-      
-      // Fallback to localhost for Android emulator
-      const fallbackUrl = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
-      console.warn('[Config] Falling back to:', fallbackUrl);
-      return fallbackUrl;
-    }
-
-    // LAN mode - use detected IP
-    const lanUrl = `http://${host}:5000/api`;
-    console.log('[Config] LAN mode - API URL:', lanUrl);
-    return lanUrl;
-  }
-
-  // Fallback for development
-  const fallbackUrl = Platform.OS === "web"
-    ? "http://localhost:5000/api"
-    : Platform.OS === "android"
-    ? "http://10.0.2.2:5000/api"  // Android emulator
-    : "http://localhost:5000/api";
-  
-  console.warn('[Config] No debugger host - falling back to:', fallbackUrl);
-  return fallbackUrl;
-  */
 };
 
 /**
