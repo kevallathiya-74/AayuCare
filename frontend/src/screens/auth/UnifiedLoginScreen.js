@@ -431,10 +431,10 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: verticalScale(30),
-    paddingBottom: verticalScale(50),
+    paddingBottom: verticalScale(40), // spacing.lg
     alignItems: "center",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 16, // Standard border radius
+    borderBottomRightRadius: 16,
   },
   logoContainer: {
     alignItems: "center",
@@ -463,12 +463,11 @@ const styles = StyleSheet.create({
   formCard: {
     marginTop: -30,
     marginHorizontal: getScreenPadding(),
-    maxWidth: isTablet() ? getContainerWidth(500) : undefined,
-    alignSelf: isTablet() ? 'center' : undefined,
-    width: isTablet() ? '100%' : undefined,
+    maxWidth: isTablet() ? getContainerWidth(600) : '100%', // Constrain on all devices
+    alignSelf: 'center',
     backgroundColor: healthColors.background.card,
-    borderRadius: 20,
-    padding: moderateScale(24),
+    borderRadius: 16, // Standard border radius
+    padding: moderateScale(24), // spacing.lg
     ...createShadow(5),
   },
   welcomeText: {
@@ -498,12 +497,12 @@ const styles = StyleSheet.create({
     fontWeight: indianDesign.fontWeight.medium,
   },
   inputContainer: {
-    marginBottom: indianDesign.spacing.lg,
+    marginBottom: moderateScale(16), // Consistent with spacing.md (8px grid)
   },
   label: {
     fontSize: scaledFontSize(12),
     color: healthColors.text.tertiary,
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: moderateScale(8), // spacing.sm
     fontWeight: indianDesign.fontWeight.medium,
   },
   labelFocused: {
@@ -516,28 +515,31 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.card.border,
-    paddingHorizontal: moderateScale(16),
-    minHeight: getInputHeight(),
+    paddingHorizontal: moderateScale(16), // spacing.md
+    paddingVertical: moderateScale(12), // Ensure 48dp minimum touch target
+    minHeight: Math.max(getInputHeight(), 48), // Enforce accessibility
   },
   inputWrapperFocused: {
     borderColor: healthColors.primary.main,
     backgroundColor: healthColors.background.card,
   },
   inputIcon: {
-    marginRight: indianDesign.spacing.sm,
+    marginRight: moderateScale(8), // spacing.sm
   },
   input: {
     flex: 1,
     fontSize: scaledFontSize(14),
     color: healthColors.text.primary,
     fontWeight: indianDesign.fontWeight.regular,
+    paddingVertical: 0, // Remove default TextInput padding
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: moderateScale(32), // spacing.xl for button spacing
+    marginTop: moderateScale(8), // spacing.sm
   },
   forgotPasswordText: {
-    fontSize: scaledFontSize(13),
+    fontSize: scaledFontSize(12),
     color: healthColors.primary.main,
     fontWeight: indianDesign.fontWeight.medium,
   },
@@ -545,13 +547,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     ...createShadow(3),
+    minHeight: 48, // Enforce minimum touch target
   },
   loginButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.sm,
+    paddingVertical: moderateScale(12), // spacing.md
+    paddingHorizontal: moderateScale(24), // spacing.lg
+    gap: moderateScale(8), // spacing.sm
   },
   loginButtonDisabled: {
     opacity: 0.6,

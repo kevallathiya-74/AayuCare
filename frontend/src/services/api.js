@@ -32,7 +32,7 @@ api.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
         if (__DEV__) {
-          console.log(`[TOKEN] Token: ${token.substring(0, 20)}...`);
+          console.log('[TOKEN] Authorization header set');
         }
       } else {
         if (__DEV__) {

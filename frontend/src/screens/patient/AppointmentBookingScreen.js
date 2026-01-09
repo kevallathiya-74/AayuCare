@@ -16,6 +16,7 @@ import {
   Alert,
   Platform,
   Modal,
+  KeyboardAvoidingView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import {
@@ -287,10 +288,16 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
+      <KeyboardAvoidingView
+        behavior={getKeyboardConfig().behavior}
+        keyboardVerticalOffset={getKeyboardConfig().keyboardVerticalOffset}
+        style={styles.keyboardView}
       >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, moderateScale(24)) }}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Step 1: Select Specialty */}
         <View style={styles.section}>
           <View style={styles.stepHeader}>
@@ -697,6 +704,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
 
         <View style={{ height: 80 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -705,6 +713,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
+  },
+  keyboardView: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -729,7 +740,7 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(24), // spacing.lg
   },
   stepHeader: {
     flexDirection: "row",
@@ -763,8 +774,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: moderateScale(16),
     borderRadius: moderateScale(12),
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
+    minHeight: 56, // Comfortable touch target
   },
   specialtyText: {
     flex: 1,
@@ -779,12 +791,12 @@ const styles = StyleSheet.create({
     padding: moderateScale(16),
     borderRadius: moderateScale(12),
     marginBottom: moderateScale(12),
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   doctorCardSelected: {
     borderColor: healthColors.success.main,
-    borderWidth: 3,
+    borderWidth: 2,
     backgroundColor: "#FFFFFF",
   },
   doctorAvatar: {

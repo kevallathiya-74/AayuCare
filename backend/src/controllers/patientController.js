@@ -41,7 +41,8 @@ exports.searchPatients = async (req, res) => {
       query.hospitalId = req.hospitalId;
     }
 
-    // If search query provided, add search conditions
+    // If search query provided, add search conditions (minimum 1 character)
+    // Otherwise return empty results for empty search
     if (q && q.trim().length >= 1) {
       // Sanitize search query to prevent regex injection
       const searchQuery = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -53,6 +54,14 @@ exports.searchPatients = async (req, res) => {
         { email: { $regex: searchQuery, $options: "i" } },
         { phone: { $regex: searchQuery, $options: "i" } },
       ];
+    } else if (!q) {
+      // If no query parameter at all, return empty results (not all patients)
+      return res.json({
+        success: true,
+        count: 0,
+        data: [],
+        patients: [],
+      });
     }
 
     // Get patients (all if no query, filtered if query provided)
@@ -618,6 +627,133 @@ exports.updateActivityData = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update activity data",
+      error: error.message,
+    });
+  }
+};
+/**
+ * @desc    Get latest health metric by type
+ * @route   GET /api/patients/:patientId/health-metrics/latest/:type
+ * @access  Private
+ */
+exports.getLatestHealthMetric = async (req, res) => {
+  try {
+    const { patientId, type } = req.params;
+
+    // Check access rights - supports both _id and userId formats
+    if (
+      req.user.role !== "admin" &&
+      req.user.role !== "doctor" &&
+      !isOwnPatientData(req.user, patientId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view this patient data",
+      });
+    }
+
+    // Get patient ObjectId
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
+
+    const patientObjectId = patient ? patient._id : patientId;
+    const metricsQuery = { patient: patientObjectId, type };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      metricsQuery.hospitalId = req.hospitalId;
+    }
+    
+    const latestMetric = await HealthMetric.findOne(metricsQuery)
+      .sort({ timestamp: -1 })
+      .lean();
+
+    if (!latestMetric) {
+      return res.status(404).json({
+        success: false,
+        message: `No ${type} metrics found for this patient`,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: latestMetric,
+    });
+  } catch (error) {
+    logger.error("Get latest health metric error:", {
+      error: error.message,
+      stack: error.stack,
+      patientId: req.params.patientId,
+      type: req.params.type,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch latest health metric",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Delete health metric
+ * @route   DELETE /api/patients/:patientId/health-metrics/:metricId
+ * @access  Private (Patient own data or Admin)
+ */
+exports.deleteHealthMetric = async (req, res) => {
+  try {
+    const { patientId, metricId } = req.params;
+
+    // Check access rights - supports both _id and userId formats
+    if (
+      req.user.role !== "admin" &&
+      !isOwnPatientData(req.user, patientId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete metrics for this patient",
+      });
+    }
+
+    // Get patient ObjectId
+    const query = { role: "patient" };
+    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
+      query.$or = [{ userId: patientId }, { _id: patientId }];
+    } else {
+      query.userId = patientId;
+    }
+    const patient = await User.findOne(query).select("_id");
+
+    const patientObjectId = patient ? patient._id : patientId;
+    
+    const metric = await HealthMetric.findOneAndDelete({
+      _id: metricId,
+      patient: patientObjectId,
+    });
+
+    if (!metric) {
+      return res.status(404).json({
+        success: false,
+        message: "Metric not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Health metric deleted successfully",
+      data: metric,
+    });
+  } catch (error) {
+    logger.error("Delete health metric error:", {
+      error: error.message,
+      stack: error.stack,
+      metricId: req.params.metricId,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete health metric",
       error: error.message,
     });
   }

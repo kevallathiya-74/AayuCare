@@ -22,7 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
 import { indianDesign, createShadow } from "../../theme/indianDesign";
-import { logout } from "../../store/slices/authSlice";
+import { logoutUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
 
 const AdminSettingsScreen = ({ navigation }) => {
@@ -40,7 +40,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         onPress: async () => {
           setLoggingOut(true);
           try {
-            await dispatch(logout()).unwrap();
+            await dispatch(logoutUser()).unwrap();
           } catch (err) {
             logError(err, { context: "AdminSettingsScreen.handleLogout" });
             Alert.alert("Error", "Failed to logout. Please try again.");

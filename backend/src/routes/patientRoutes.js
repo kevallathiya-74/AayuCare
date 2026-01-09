@@ -38,10 +38,20 @@ router.patch('/:patientId/profile', patientController.updatePatientProfile);
 // @access  Private (Patient own data, Doctor, or Admin)
 router.get('/:patientId/health-metrics', patientController.getHealthMetrics);
 
+// @route   GET /api/patients/:patientId/health-metrics/latest/:type
+// @desc    Get latest health metric value by type (bp, sugar, weight, temp)
+// @access  Private (Patient own data, Doctor, or Admin)
+router.get('/:patientId/health-metrics/latest/:type', patientController.getLatestHealthMetric);
+
 // @route   POST /api/patients/:patientId/health-metrics
 // @desc    Add health metric for a patient
 // @access  Private (Patient own data, Doctor, or Admin)
 router.post('/:patientId/health-metrics', patientController.addHealthMetric);
+
+// @route   DELETE /api/patients/:patientId/health-metrics/:metricId
+// @desc    Delete a specific health metric entry
+// @access  Private (Patient own data or Admin)
+router.delete('/:patientId/health-metrics/:metricId', patientController.deleteHealthMetric);
 
 // @route   GET /api/patients/:patientId/activity
 // @desc    Get activity tracking data (steps, sleep, water, stress)

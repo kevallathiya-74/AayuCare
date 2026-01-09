@@ -113,7 +113,7 @@ const Input = ({
             setHasValue(!!text);
             onChangeText && onChangeText(text);
           }}
-          placeholder={!label || isFocused || value ? placeholder : ''}
+          placeholder={label && !isFocused && !value ? '' : placeholder}
           placeholderTextColor={healthColors.input.placeholder}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -175,7 +175,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: healthColors.input.border,
     borderRadius: responsiveBorderRadius.medium,
-    minHeight: getInputHeight(),
+    minHeight: Math.max(getInputHeight(), touchTargets.minimum), // Enforce 48dp minimum
+    paddingVertical: moderateScale(4), // Internal padding for better alignment
   },
   containerFocused: {
     borderColor: healthColors.input.borderFocused,

@@ -1261,20 +1261,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: moderateScale(16),
+    marginBottom: moderateScale(24), // spacing.lg for section separation
   },
   welcomeContent: {
     flex: 1,
   },
   timeGreeting: {
-    fontSize: scaledFontSize(14),
+    fontSize: scaledFontSize(12),
     fontWeight: "500",
     color: "rgba(255,255,255,0.9)",
     marginBottom: moderateScale(4),
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   welcomeGreeting: {
-    fontSize: scaledFontSize(24),
+    fontSize: scaledFontSize(20),
     fontWeight: "700",
     color: "white",
     marginBottom: moderateScale(8),
@@ -1409,9 +1409,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: moderateScale(4),
     backgroundColor: "rgba(255,255,255,0.3)",
-    paddingHorizontal: moderateScale(10),
+    paddingHorizontal: moderateScale(8),
     paddingVertical: moderateScale(4),
-    borderRadius: moderateScale(12),
+    borderRadius: moderateScale(8), // Standard small border radius
   },
   trendText: {
     fontSize: scaledFontSize(12),
@@ -1437,10 +1437,10 @@ const styles = StyleSheet.create({
   // Action Section
   actionSection: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(24),
+    marginBottom: moderateScale(24), // spacing.lg for consistent section separation
   },
   actionSectionTitle: {
-    fontSize: scaledFontSize(16),
+    fontSize: scaledFontSize(14),
     fontWeight: "700",
     color: healthColors.text.primary,
     marginBottom: moderateScale(12),
@@ -1454,16 +1454,17 @@ const styles = StyleSheet.create({
   actionCard: {
     width: (width - getScreenPadding() * 2 - moderateScale(12)) / 2,
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(14),
+    borderRadius: moderateScale(12), // Standard medium border radius
     padding: moderateScale(16),
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 1, // Reduced from 2 for subtlety
     borderColor: healthColors.border.light,
+    minHeight: moderateScale(140),
   },
   actionIconWrapper: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(28),
     justifyContent: "center",
     alignItems: "center",
     marginBottom: moderateScale(12),
@@ -1711,10 +1712,10 @@ const styles = StyleSheet.create({
     }),
   },
   menuHeader: {
-    padding: moderateScale(20),
-    paddingTop: moderateScale(50),
+    padding: moderateScale(16),
+    paddingTop: moderateScale(48),
     paddingBottom: moderateScale(24),
-    borderTopRightRadius: moderateScale(20),
+    borderTopRightRadius: moderateScale(16), // Standard border radius
   },
   menuProfileSection: {
     flexDirection: "row",
@@ -1766,16 +1767,17 @@ const styles = StyleSheet.create({
   },
   menuSection: {
     paddingVertical: moderateScale(16),
-    paddingHorizontal: moderateScale(20),
+    paddingHorizontal: moderateScale(16), // spacing.md for consistency
     borderBottomWidth: 1,
     borderBottomColor: healthColors.background.secondary,
   },
   menuSectionTitle: {
-    fontSize: scaledFontSize(12),
+    fontSize: scaledFontSize(10),
     fontWeight: "700",
     color: healthColors.text.secondary,
     marginBottom: moderateScale(12),
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   menuItem: {
     flexDirection: "row",
@@ -1784,7 +1786,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(12),
     borderRadius: moderateScale(8),
     gap: moderateScale(12),
-    marginBottom: moderateScale(4),
+    marginBottom: moderateScale(8), // spacing.sm for better separation
+    minHeight: 48, // Enforce minimum touch target
   },
   menuItemText: {
     flex: 1,
@@ -1819,7 +1822,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: moderateScale(12),
     backgroundColor: healthColors.background.secondary,
-    borderRadius: moderateScale(8),
+    borderRadius: moderateScale(12), // Standard medium border radius
     gap: moderateScale(12),
     marginBottom: moderateScale(8),
     borderWidth: 1,
@@ -1839,9 +1842,9 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   menuFooter: {
-    padding: moderateScale(20),
+    padding: moderateScale(16),
     alignItems: "center",
-    marginTop: moderateScale(20),
+    marginTop: moderateScale(24), // spacing.lg
   },
   menuFooterText: {
     fontSize: scaledFontSize(12),

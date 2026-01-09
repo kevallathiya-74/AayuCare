@@ -86,7 +86,14 @@ const DoctorHomeScreen = ({ navigation }) => {
       const response = await doctorService.getDashboard();
 
       if (response?.success) {
-        setSchedule(response.data.schedule);
+        // Ensure all schedule fields have safe fallback values
+        setSchedule({
+          totalAppointments: response.data.schedule?.totalAppointments || 0,
+          completed: response.data.schedule?.completed || 0,
+          pending: response.data.schedule?.pending || 0,
+          nextPatient: response.data.schedule?.nextPatient || "No upcoming patients",
+          nextTime: response.data.schedule?.nextTime || "--:--",
+        });
         setTodaysAppointments(response.data.todaysAppointments || []);
       }
     } catch (err) {
@@ -332,7 +339,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                 {notificationCount > 0 && (
                   <View style={styles.bannerNotificationBadge}>
                     <Text style={styles.bannerNotificationBadgeText}>
-                      {notificationCount}
+                      {String(notificationCount)}
                     </Text>
                   </View>
                 )}
@@ -405,7 +412,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                   />
                 </View>
                 <Text style={styles.scheduleStatValue}>
-                  {schedule.totalAppointments}
+                  {String(schedule.totalAppointments)}
                 </Text>
                 <Text style={styles.scheduleStatLabel}>Appointments</Text>
               </View>
@@ -433,7 +440,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                     color={healthColors.success.main}
                   />
                   <Text style={styles.progressLabel}>
-                    Completed: {schedule.completed}
+                    Completed: {String(schedule.completed)}
                   </Text>
                 </View>
                 <View style={styles.progressItem}>
@@ -443,7 +450,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                     color={healthColors.warning.main}
                   />
                   <Text style={styles.progressLabel}>
-                    Pending: {schedule.pending}
+                    Pending: {String(schedule.pending)}
                   </Text>
                 </View>
               </View>
@@ -562,7 +569,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           ) : (
             todaysAppointments.map((appointment) => (
               <View
-                key={appointment.id}
+                key={appointment._id || appointment.id}
                 style={styles.appointmentCard}
                 accessible={true}
                 accessibilityLabel={`Appointment with ${appointment.patientName} at ${appointment.time}, Status: ${getStatusLabel(appointment.status)}`}
@@ -575,7 +582,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                       color={healthColors.primary.main}
                     />
                     <Text style={styles.appointmentTimeText}>
-                      {appointment.time}
+                      {appointment.time || '--:--'}
                     </Text>
                   </View>
                   <View style={styles.appointmentTypeBadge}>
@@ -597,7 +604,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 
                 <View style={styles.appointmentPatientRow}>
                   <Text style={styles.appointmentPatient}>
-                    {appointment.patientName}
+                    {appointment.patientName || 'Unknown Patient'}
                   </Text>
                   <View
                     style={[
@@ -619,8 +626,8 @@ const DoctorHomeScreen = ({ navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.appointmentReason}>
-                  ID: {appointment.patientId} | Age: {appointment.age} |{" "}
-                  {appointment.reason}
+                  ID: {appointment.patientId || 'N/A'} | Age: {appointment.age || 'N/A'} |{" "}
+                  {appointment.reason || 'General Consultation'}
                 </Text>
 
                 <View style={styles.appointmentActions}>
@@ -858,7 +865,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                   {schedule.pending > 0 && (
                     <View style={styles.menuBadge}>
                       <Text style={styles.menuBadgeText}>
-                        {schedule.pending}
+                        {String(schedule.pending)}
                       </Text>
                     </View>
                   )}
@@ -938,18 +945,18 @@ const DoctorHomeScreen = ({ navigation }) => {
                 <View style={styles.menuStatsGrid}>
                   <View style={styles.menuStatCard}>
                     <Text style={styles.menuStatValue}>
-                      {schedule.totalAppointments}
+                      {String(schedule.totalAppointments)}
                     </Text>
                     <Text style={styles.menuStatLabel}>Appointments</Text>
                   </View>
                   <View style={styles.menuStatCard}>
                     <Text style={styles.menuStatValue}>
-                      {schedule.completed}
+                      {String(schedule.completed)}
                     </Text>
                     <Text style={styles.menuStatLabel}>Completed</Text>
                   </View>
                   <View style={styles.menuStatCard}>
-                    <Text style={styles.menuStatValue}>{schedule.pending}</Text>
+                    <Text style={styles.menuStatValue}>{String(schedule.pending)}</Text>
                     <Text style={styles.menuStatLabel}>Pending</Text>
                   </View>
                 </View>
@@ -1109,20 +1116,20 @@ const styles = StyleSheet.create({
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: moderateScale(16), // spacing.md
   },
   greetingIcon: {
     marginRight: moderateScale(12),
   },
   bannerTimeGreeting: {
-    fontSize: scaledFontSize(14),
+    fontSize: scaledFontSize(12),
     fontWeight: "500",
     color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: moderateScale(2),
-    letterSpacing: 0.5,
+    marginBottom: moderateScale(4),
+    letterSpacing: 0.3,
   },
   bannerWelcomeText: {
-    fontSize: scaledFontSize(24),
+    fontSize: scaledFontSize(20),
     fontWeight: "700",
     color: "#FFFFFF",
   },
@@ -1139,14 +1146,14 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(6),
   },
   bannerInfoText: {
-    fontSize: scaledFontSize(14),
+    fontSize: scaledFontSize(13),
     color: "#FFFFFF",
     marginLeft: moderateScale(8),
     fontWeight: "500",
   },
   section: {
     paddingHorizontal: getScreenPadding(),
-    marginTop: verticalScale(16),
+    marginTop: verticalScale(24), // spacing.lg for better section separation
   },
   sectionTitle: {
     fontSize: scaledFontSize(14),
@@ -1159,7 +1166,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.card,
     borderRadius: moderateScale(12),
     padding: moderateScale(16),
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   scheduleHeader: {
@@ -1258,8 +1265,9 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.card,
     borderRadius: moderateScale(12),
     paddingHorizontal: moderateScale(16),
-    minHeight: moderateScale(48), // Minimum touch target
-    borderWidth: 2,
+    paddingVertical: moderateScale(12), // Ensure proper internal padding
+    minHeight: Math.max(moderateScale(48), 48), // Enforce 48dp minimum
+    borderWidth: 1, // Reduced from 2 for subtlety
     borderColor: healthColors.border.light,
   },
   searchIcon: {
@@ -1269,12 +1277,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: scaledFontSize(14),
     color: healthColors.text.primary,
+    paddingVertical: 0, // Remove default TextInput padding
   },
   searchResultsContainer: {
     backgroundColor: healthColors.background.card,
     borderRadius: moderateScale(12),
     marginTop: moderateScale(8),
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   searchResultItem: {
@@ -1284,6 +1293,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(12),
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
+    minHeight: 48, // Enforce minimum touch target
   },
   searchResultInfo: {
     flex: 1,
@@ -1304,7 +1314,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(32),
     backgroundColor: healthColors.background.card,
     borderRadius: moderateScale(12),
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   emptyStateText: {
@@ -1320,7 +1330,7 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(12),
     borderLeftWidth: 4,
     borderLeftColor: healthColors.primary.main,
-    borderWidth: 2,
+    borderWidth: 1, // Reduced from 2 for subtlety
     borderColor: healthColors.border.light,
   },
   appointmentHeader: {

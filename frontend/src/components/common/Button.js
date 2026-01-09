@@ -173,17 +173,17 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   
-  // Sizes (responsive with minimum accessibility targets)
+  // Sizes (responsive with minimum 48dp accessibility targets)
   small: {
-    height: getButtonHeight('small'),
+    height: Math.max(getButtonHeight('small'), touchTargets.minimum), // Enforce minimum 48dp
     paddingHorizontal: moderateScale(spacing.md),
   },
   medium: {
-    height: getButtonHeight('medium'),
+    height: Math.max(getButtonHeight('medium'), touchTargets.minimum), // Enforce minimum 48dp
     paddingHorizontal: moderateScale(spacing.lg),
   },
   large: {
-    height: getButtonHeight('large'),
+    height: Math.max(getButtonHeight('large'), touchTargets.comfortable), // Larger minimum for large buttons
     paddingHorizontal: moderateScale(spacing.xl),
   },
   
