@@ -140,15 +140,17 @@ app.get("/api", (req, res) => {
 
 // Health check
 app.get("/api/health", (req, res) => {
-  const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  
+  const mongoStatus =
+    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+
   res.json({
     status: "success",
     message: "AayuCare Backend Server is running",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     mongodb: mongoStatus,
-    betterAuth: typeof getAuth === 'function' ? 'initialized' : 'not initialized',
+    betterAuth:
+      typeof getAuth === "function" ? "initialized" : "not initialized",
   });
 });
 

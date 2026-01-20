@@ -15,25 +15,25 @@ const mongoose = require("mongoose");
  */
 exports.getEmailByUserId = async (req, res, next) => {
   try {
-    console.log('[AuthController] getEmailByUserId called');
-    console.log('[AuthController] Request body:', req.body);
-    
+    console.log("[AuthController] getEmailByUserId called");
+    console.log("[AuthController] Request body:", req.body);
+
     const { userId } = req.body;
 
     if (!userId) {
-      console.error('[AuthController] Missing userId in request');
+      console.error("[AuthController] Missing userId in request");
       return res.status(400).json({
         status: "error",
-        message: "User ID is required"
+        message: "User ID is required",
       });
     }
 
     // Check MongoDB connection
     if (!mongoose.connection || mongoose.connection.readyState !== 1) {
-      console.error('[AuthController] MongoDB not connected');
+      console.error("[AuthController] MongoDB not connected");
       return res.status(503).json({
         status: "error",
-        message: "Database not available"
+        message: "Database not available",
       });
     }
 
@@ -41,27 +41,27 @@ exports.getEmailByUserId = async (req, res, next) => {
     const db = mongoose.connection.getClient().db("test");
     const userCollection = db.collection("user");
 
-    console.log('[AuthController] Searching for userId:', userId);
+    console.log("[AuthController] Searching for userId:", userId);
     const user = await userCollection.findOne({ userId: userId });
 
     if (!user) {
-      console.log('[AuthController] User not found:', userId);
+      console.log("[AuthController] User not found:", userId);
       return res.status(404).json({
         status: "error",
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    console.log('[AuthController] User found:', user.email);
+    console.log("[AuthController] User found:", user.email);
     res.status(200).json({
       status: "success",
       email: user.email,
     });
   } catch (error) {
-    console.error('[AuthController] Error in getEmailByUserId:', error);
+    console.error("[AuthController] Error in getEmailByUserId:", error);
     res.status(500).json({
       status: "error",
-      message: error.message || "Internal server error"
+      message: error.message || "Internal server error",
     });
   }
 };

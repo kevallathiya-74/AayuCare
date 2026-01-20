@@ -96,9 +96,9 @@ export const login = async (credentials) => {
           `${AppConfig.api.baseURL}/user/email-by-userid`,
           {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify({ userId: userInput }),
             signal: controller.signal,
@@ -123,20 +123,26 @@ export const login = async (credentials) => {
         }
 
         const data = await response.json();
-        
+
         if (!data.email) {
           throw new Error("No email in response");
         }
-        
+
         emailToUse = data.email;
         console.log("[BetterAuth] - Found email:", emailToUse);
       } catch (err) {
-        console.error("[BetterAuth] Failed to fetch email - Error:", err.name, err.message);
-        
-        if (err.name === 'AbortError') {
-          throw new Error("Backend is starting (cold start on Render). Please wait 30 seconds and try again.");
+        console.error(
+          "[BetterAuth] Failed to fetch email - Error:",
+          err.name,
+          err.message
+        );
+
+        if (err.name === "AbortError") {
+          throw new Error(
+            "Backend is starting (cold start on Render). Please wait 30 seconds and try again."
+          );
         }
-        
+
         throw new Error(`Could not find user: ${userInput}. ${err.message}`);
         console.error(
           "[BetterAuth] Failed to fetch email:",
