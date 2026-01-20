@@ -5,17 +5,61 @@
 
 const { getAuth } = require("../lib/auth");
 const { AppError } = require("./errorHandler");
+const mongoose = require("mongoose");
 
 /**
  * Protect routes - requires valid Better Auth session
+ * Supports both cookie-based (web) and token-based (mobile) authentication
  */
 exports.protect = async (req, res, next) => {
   try {
     const auth = getAuth();
-    const session = await auth.api.getSession({
-      headers: req.headers,
-    });
+    let session = null;
 
+    // Try cookie-based session first (for web clients)
+    try {
+      session = await auth.api.getSession({
+        headers: req.headers,
+      });
+    } catch (cookieError) {
+      // Cookie session failed, will try Bearer token
+    }
+
+    // If no cookie session, try Bearer token (for mobile clients)
+    if (!session || !session.user) {
+      const authHeader = req.headers.authorization;
+
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7); // Remove "Bearer " prefix
+
+        // Query session directly from MongoDB
+        try {
+          const db = mongoose.connection.getClient().db("test");
+          const sessionDoc = await db.collection("session").findOne({ token });
+
+          if (sessionDoc && sessionDoc.expiresAt > new Date()) {
+            // Session is valid, get user
+            const userDoc = await db.collection("user").findOne({
+              id: sessionDoc.userId,
+            });
+
+            if (userDoc) {
+              session = {
+                user: userDoc,
+                session: sessionDoc,
+              };
+            }
+          }
+        } catch (tokenError) {
+          console.error(
+            "[Auth] Token verification failed:",
+            tokenError.message
+          );
+        }
+      }
+    }
+
+    // Check if we have a valid session
     if (!session || !session.user) {
       return next(new AppError("Authentication required", 401));
     }
@@ -30,6 +74,7 @@ exports.protect = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error("[Auth] Protection error:", error.message);
     return next(new AppError("Authentication failed", 401));
   }
 };

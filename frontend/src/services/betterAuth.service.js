@@ -7,6 +7,7 @@ import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import * as SecureStore from "expo-secure-store";
 import { AppConfig } from "../config/app";
+import { STORAGE_KEYS } from "../utils/constants";
 
 // Better Auth expects base URL WITHOUT /api suffix
 // Backend Better Auth is mounted at: /api/auth/*
@@ -187,9 +188,10 @@ export const login = async (credentials) => {
       throw new Error(result.error.message || result.error || "Login failed");
     }
 
-    // Extract user and session from Better Auth response
+    // Extract user and token from Better Auth response
+    // Better Auth returns: { data: { user, token }, error }
     const user = result.data?.user;
-    const session = result.data?.session;
+    const token = result.data?.token;
 
     if (!user) {
       console.error("[BetterAuth] No user in response");
@@ -201,26 +203,44 @@ export const login = async (credentials) => {
     }
 
     console.log("[BetterAuth] User data:", JSON.stringify(user, null, 2));
-    console.log(
-      "[BetterAuth] Session token:",
-      session?.token ? "exists" : "missing"
-    );
+    console.log("[BetterAuth] Session token:", token ? token : "missing");
 
     // Store session in SecureStore for persistence
-    if (session?.token) {
+    // Save to both Better Auth location and standard API location
+    if (token) {
       console.log("[BetterAuth] Saving session to SecureStore...");
-      await SecureStore.setItemAsync(`aayucare.session.token`, session.token);
-      await SecureStore.setItemAsync(`aayucare.user`, JSON.stringify(user));
+
+      // Save to standard location for API service
+      await SecureStore.setItemAsync(STORAGE_KEYS.AUTH_TOKEN, token);
+
+      // Save user data
+      await SecureStore.setItemAsync(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(user)
+      );
+
       console.log("[BetterAuth] Session saved to SecureStore");
+      console.log("[BetterAuth] Token saved to:", STORAGE_KEYS.AUTH_TOKEN);
     } else {
       console.warn("[BetterAuth] No session token to save");
     }
 
     // Return in format expected by authSlice
     console.log("[BetterAuth] Returning user and token to authSlice");
+
+    // Convert Date objects to strings for Redux serialization
+    const serializedUser = {
+      ...user,
+      createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
+      updatedAt: user.updatedAt ? new Date(user.updatedAt).toISOString() : null,
+      dateOfBirth: user.dateOfBirth
+        ? new Date(user.dateOfBirth).toISOString()
+        : null,
+    };
+
     return {
-      user: user,
-      token: session?.token || null,
+      user: serializedUser,
+      token: token || null,
     };
   } catch (error) {
     console.error("[BetterAuth] Login error caught:", error);
@@ -236,46 +256,47 @@ export const login = async (credentials) => {
 export const logout = async () => {
   try {
     console.log("[BetterAuth] Logging out...");
+
+    // Call Better Auth signOut
     await signOut();
-    console.log("[BetterAuth] Logout complete");
+
+    // Clear all stored auth data
+    await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+    await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA);
+    await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+
+    console.log("[BetterAuth] Logout complete - all tokens cleared");
     return { success: true };
   } catch (error) {
     console.error("[BetterAuth] Logout error:", error);
+    // Still try to clear local data even if API call fails
+    try {
+      await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+      await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_DATA);
+      await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+    } catch (clearError) {
+      console.error("[BetterAuth] Error clearing storage:", clearError);
+    }
     return { success: true }; // Always succeed locally
   }
 };
 
 /**
  * Get current session from Better Auth
- * Uses Better Auth's built-in session retrieval (checks local storage first)
+ * Reads from standard storage location
  */
 export const getSession = async () => {
   try {
-    // Better Auth expo client stores session in SecureStore automatically
-    // Read directly from storage with correct key format
-    const storagePrefix = "aayucare";
+    // Get token from standard location
+    const token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
 
-    // Try to get session token from storage
-    const sessionData = await SecureStore.getItemAsync(
-      `${storagePrefix}.session.token`
-    );
-
-    if (!sessionData) {
+    if (!token) {
       console.log("[BetterAuth] No session found in storage");
       return null;
     }
 
-    // Parse session data if it's JSON string
-    let token = sessionData;
-    try {
-      const parsed = JSON.parse(sessionData);
-      token = parsed.token || sessionData;
-    } catch {
-      // sessionData is already a plain token string
-    }
-
-    // Try to get user data from storage
-    const userDataStr = await SecureStore.getItemAsync(`${storagePrefix}.user`);
+    // Get user data from standard location
+    const userDataStr = await SecureStore.getItemAsync(STORAGE_KEYS.USER_DATA);
 
     if (userDataStr) {
       try {
@@ -286,10 +307,11 @@ export const getSession = async () => {
         );
         return { user, token };
       } catch (parseError) {
-        console.warn("[BetterAuth] Could not parse user data, token only");
+        console.error("[BetterAuth] Error parsing user data:", parseError);
       }
     }
 
+    // If no user data but have token, return just token
     console.log("[BetterAuth] Token found but no user data");
     return { token };
   } catch (error) {
