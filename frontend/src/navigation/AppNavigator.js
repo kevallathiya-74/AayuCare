@@ -116,6 +116,12 @@ const AppNavigator = () => {
       const currentRoute = navigationRef.current.getCurrentRoute();
       const userRole = user.role;
 
+      console.log(
+        "[AppNavigator] User authenticated, current route:",
+        currentRoute?.name
+      );
+      console.log("[AppNavigator] User role:", userRole);
+
       // Don't auto-navigate if on splash screen (let splash handle it)
       if (currentRoute && currentRoute.name === "SplashScreen") {
         console.log(
@@ -124,16 +130,39 @@ const AppNavigator = () => {
         return;
       }
 
+      // Don't navigate if already on correct tab screen
+      const roleScreens = {
+        admin: "AdminTabs",
+        doctor: "DoctorTabs",
+        patient: "PatientTabs",
+      };
+
+      const targetScreen = roleScreens[userRole];
+      if (currentRoute && currentRoute.name === targetScreen) {
+        console.log("[AppNavigator] Already on correct screen:", targetScreen);
+        return;
+      }
+
       // Navigate to appropriate tab navigator based on role
+      console.log("[AppNavigator] Navigating to:", targetScreen);
       setTimeout(() => {
         if (userRole === "admin") {
-          navigationRef.current?.navigate("AdminTabs");
+          navigationRef.current?.reset({
+            index: 0,
+            routes: [{ name: "AdminTabs" }],
+          });
         } else if (userRole === "doctor") {
-          navigationRef.current?.navigate("DoctorTabs");
+          navigationRef.current?.reset({
+            index: 0,
+            routes: [{ name: "DoctorTabs" }],
+          });
         } else if (userRole === "patient") {
-          navigationRef.current?.navigate("PatientTabs");
+          navigationRef.current?.reset({
+            index: 0,
+            routes: [{ name: "PatientTabs" }],
+          });
         }
-      }, 100); // Small delay to ensure navigation is ready
+      }, 300); // Slightly longer delay to ensure state is fully updated
     }
   }, [isAuthenticated, user]);
 

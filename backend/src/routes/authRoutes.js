@@ -10,6 +10,9 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 
+// Public routes
+router.post("/email-by-userid", authController.getEmailByUserId);
+
 // Protected routes
 router.use(protect);
 

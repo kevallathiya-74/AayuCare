@@ -8,8 +8,16 @@ import { expoClient } from "@better-auth/expo/client";
 import * as SecureStore from "expo-secure-store";
 import { AppConfig } from "../config/app";
 
+// Better Auth expects base URL WITHOUT /api suffix
+// Backend Better Auth is mounted at: /api/auth/*
+// So we need: https://aayucare-backend.onrender.com (Better Auth will append /api/auth)
+const getAuthBaseURL = () => {
+  const baseURL = AppConfig.api.baseURL; // https://aayucare-backend.onrender.com/api
+  return baseURL.replace(/\/api$/, ""); // Remove trailing /api -> https://aayucare-backend.onrender.com
+};
+
 export const authClient = createAuthClient({
-  baseURL: AppConfig.api.baseURL,
+  baseURL: getAuthBaseURL(),
   plugins: [
     expoClient({
       scheme: "aayucare",
@@ -61,18 +69,137 @@ export const register = async (userData) => {
  */
 export const login = async (credentials) => {
   try {
-    console.log("[BetterAuth] Login:", credentials.userId || credentials.email);
+    console.log("[BetterAuth] Login started");
+    const userInput = credentials.userId || credentials.email;
+    console.log("[BetterAuth] - Input:", userInput);
 
+    // Check if input is email format or userId
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInput);
+    let emailToUse = userInput;
+
+    // If not an email, assume it's a userId and fetch the email
+    if (!isEmail) {
+      console.log(
+        "[BetterAuth] - Input is userId, fetching email from database..."
+      );
+      console.log(
+        "[BetterAuth] - Calling:",
+        `${AppConfig.api.baseURL}/user/email-by-userid`
+      );
+
+      try {
+        // Call backend API to get user email by userId with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+        const response = await fetch(
+          `${AppConfig.api.baseURL}/user/email-by-userid`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: userInput }),
+            signal: controller.signal,
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        console.log(
+          "[BetterAuth] - Email lookup response status:",
+          response.status
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(
+            "[BetterAuth] - Email lookup failed:",
+            response.status,
+            errorText
+          );
+          throw new Error(`User not found (${response.status})`);
+        }
+
+        const data = await response.json();
+        emailToUse = data.email;
+        console.log("[BetterAuth] - Found email:", emailToUse);
+      } catch (err) {
+        console.error(
+          "[BetterAuth] Failed to fetch email:",
+          err.message || err
+        );
+        if (err.name === "AbortError") {
+          throw new Error(
+            "Request timeout. Please check your internet connection."
+          );
+        }
+        throw new Error("User not found. Please check your User ID.");
+      }
+    }
+
+    console.log("[BetterAuth] - Auth Base URL:", getAuthBaseURL());
+    console.log(
+      "[BetterAuth] - Will call:",
+      getAuthBaseURL() + "/api/auth/sign-in/email"
+    );
+    console.log("[BetterAuth] - Using email:", emailToUse);
+
+    console.log("[BetterAuth] - Calling Better Auth signIn.email()...");
     const result = await signIn.email({
-      email: credentials.email || credentials.userId,
+      email: emailToUse,
       password: credentials.password,
     });
 
-    console.log("[BetterAuth] Login complete");
-    return result;
+    console.log(
+      "[BetterAuth] Login complete, result:",
+      JSON.stringify(result, null, 2)
+    );
+
+    // Better Auth returns { data, error }
+    if (result.error) {
+      console.error("[BetterAuth] Login error from Better Auth:", result.error);
+      throw new Error(result.error.message || result.error || "Login failed");
+    }
+
+    // Extract user and session from Better Auth response
+    const user = result.data?.user;
+    const session = result.data?.session;
+
+    if (!user) {
+      console.error("[BetterAuth] No user in response");
+      console.error(
+        "[BetterAuth] Full result:",
+        JSON.stringify(result, null, 2)
+      );
+      throw new Error("Login failed - no user data");
+    }
+
+    console.log("[BetterAuth] User data:", JSON.stringify(user, null, 2));
+    console.log(
+      "[BetterAuth] Session token:",
+      session?.token ? "exists" : "missing"
+    );
+
+    // Store session in SecureStore for persistence
+    if (session?.token) {
+      console.log("[BetterAuth] Saving session to SecureStore...");
+      await SecureStore.setItemAsync(`aayucare.session.token`, session.token);
+      await SecureStore.setItemAsync(`aayucare.user`, JSON.stringify(user));
+      console.log("[BetterAuth] Session saved to SecureStore");
+    } else {
+      console.warn("[BetterAuth] No session token to save");
+    }
+
+    // Return in format expected by authSlice
+    console.log("[BetterAuth] Returning user and token to authSlice");
+    return {
+      user: user,
+      token: session?.token || null,
+    };
   } catch (error) {
-    console.error("[BetterAuth] Login error:", error);
-    throw new Error(error.message || "Login failed");
+    console.error("[BetterAuth] Login error caught:", error);
+    console.error("[BetterAuth] Error type:", error?.name);
+    console.error("[BetterAuth] Error message:", error?.message);
+    throw error;
   }
 };
 

@@ -32,9 +32,11 @@ export const loginUser = createAsyncThunk(
       console.log("[authSlice] Token:", response?.token ? "exists" : "missing");
       return response;
     } catch (error) {
-      console.log("[authSlice] Login error:", error);
-      // Error is already a string message from auth service
-      return rejectWithValue(error || "Login failed");
+      console.error("[authSlice] Login error:", error);
+      const errorMessage =
+        error?.message || error?.toString() || "Login failed";
+      console.error("[authSlice] Error message:", errorMessage);
+      return rejectWithValue(errorMessage);
     }
   }
 );

@@ -42,17 +42,18 @@ import {
 import { showError, validateRequiredFields } from "../../utils/errorHandler";
 
 // Development auto-fill credentials (only available in __DEV__ mode)
+// These match the actual users in the database
 const DEV_CREDENTIALS = __DEV__
   ? {
-      patient: { userId: "PAT001", password: "password123" },
-      doctor: { userId: "DOC001", password: "password123" },
-      admin: { userId: "ADM001", password: "password123" },
+      patient: { userId: "TESTPAT124", password: "password123" },
+      doctor: { userId: "TESTDOC002", password: "password123" },
+      admin: { userId: "TESTUSR001", password: "password123" },
     }
   : null;
 
 const UnifiedLoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { isLoading, error } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
 
   const [userId, setUserId] = useState("");
@@ -218,7 +219,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   autoCorrect={false}
                   returnKeyType="next"
                   onSubmitEditing={() => passwordInputRef.current?.focus()}
-                  editable={!loading}
+                  editable={!isLoading}
                 />
               </View>
             </View>
@@ -261,7 +262,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   secureTextEntry={!showPassword}
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
-                  editable={!loading}
+                  editable={!isLoading}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -353,11 +354,11 @@ const UnifiedLoginScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={[
                   styles.loginButton,
-                  loading && styles.loginButtonDisabled,
+                  isLoading && styles.loginButtonDisabled,
                 ]}
                 onPress={handleLogin}
                 activeOpacity={0.8}
-                disabled={loading}
+                disabled={isLoading}
               >
                 <LinearGradient
                   colors={[
@@ -368,7 +369,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <ActivityIndicator color={healthColors.neutral.white} />
                   ) : (
                     <>
@@ -389,16 +390,16 @@ const UnifiedLoginScreen = ({ navigation }) => {
               <View style={styles.demoSection}>
                 <Text style={styles.demoTitle}>Development Credentials:</Text>
                 <View style={styles.demoRow}>
-                  <Text style={styles.demoLabel}>Admin:</Text>
-                  <Text style={styles.demoValue}>ADM001 / password123</Text>
+                  <Text style={styles.demoLabel}>Patient:</Text>
+                  <Text style={styles.demoValue}>TESTPAT124 / password123</Text>
                 </View>
                 <View style={styles.demoRow}>
                   <Text style={styles.demoLabel}>Doctor:</Text>
-                  <Text style={styles.demoValue}>DOC001 / password123</Text>
+                  <Text style={styles.demoValue}>TESTDOC002 / password123</Text>
                 </View>
                 <View style={styles.demoRow}>
-                  <Text style={styles.demoLabel}>Patient:</Text>
-                  <Text style={styles.demoValue}>PAT001 / password123</Text>
+                  <Text style={styles.demoLabel}>Test User:</Text>
+                  <Text style={styles.demoValue}>TESTUSR001 / password123</Text>
                 </View>
               </View>
             )}
