@@ -53,13 +53,17 @@ const initAuth = () => {
         cookieSameSite: "lax",
         cookieSecure: process.env.NODE_ENV === "production",
         useSecureCookies: process.env.NODE_ENV === "production",
+        // Allow requests without Origin header (for React Native/Expo mobile apps)
+        requireOriginHeader: false,
       },
 
       trustedOrigins: [
         process.env.FRONTEND_URL,
         "http://localhost:3000",
         "http://localhost:19006",
+        "http://localhost:8081",
         "exp://192.168.137.1:8081",
+        "*", // Allow all origins for mobile app
       ].filter(Boolean),
 
       user: {

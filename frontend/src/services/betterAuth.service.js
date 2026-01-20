@@ -18,6 +18,12 @@ const getAuthBaseURL = () => {
 
 export const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
+  fetchOptions: {
+    credentials: "include",
+    headers: {
+      Origin: "https://aayucare-app.com", // Add Origin header for Better Auth
+    },
+  },
   plugins: [
     expoClient({
       scheme: "aayucare",
