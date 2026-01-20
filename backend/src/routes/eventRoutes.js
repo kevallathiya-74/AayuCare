@@ -6,7 +6,7 @@
 const express = require("express");
 const router = express.Router();
 const eventController = require("../controllers/eventController");
-const { protect, authorize } = require("../middleware/betterAuth");
+const { protect, authorize } = require("../middleware/auth");
 
 // Public routes
 // @route   GET /api/events

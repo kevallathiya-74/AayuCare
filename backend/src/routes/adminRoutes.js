@@ -17,7 +17,7 @@ const {
   changePassword,
   logoutAllDevices,
 } = require("../controllers/adminController");
-const { protect, authorize } = require("../middleware/betterAuth");
+const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 
 // Apply auth middleware to all routes

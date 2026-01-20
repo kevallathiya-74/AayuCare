@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const doctorController = require("../controllers/doctorController");
-const { protect, authorize } = require("../middleware/betterAuth");
+const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 
 /**

@@ -8,7 +8,8 @@ require("dotenv").config();
 const connectDB = require("./src/config/database");
 const { errorHandler } = require("./src/middleware/errorHandler");
 const logger = require("./src/utils/logger");
-const { auth } = require("./src/config/betterAuth");
+const { initAuth, getAuth } = require("./src/lib/auth");
+const { toNodeHandler } = require("better-auth/node");
 
 // Routes
 const authRoutes = require("./src/routes/authRoutes");
@@ -24,8 +25,16 @@ const notificationRoutes = require("./src/routes/notificationRoutes");
 
 const app = express();
 
-// Connect to MongoDB FIRST (Better Auth needs DB connection)
-connectDB();
+// Connect to MongoDB FIRST
+connectDB().then(() => {
+  // Initialize Better Auth after DB connection
+  try {
+    initAuth();
+    logger.info("✅ Better Auth initialized");
+  } catch (error) {
+    logger.error("❌ Better Auth initialization failed:", error);
+  }
+});
 
 // Security Middleware
 app.use(helmet());
@@ -87,17 +96,26 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Better Auth Handler - Must come BEFORE other API routes
-app.all("/api/auth/better/*", async (req, res, next) => {
+// Better Auth Handler - MUST come BEFORE express.json() and other routes
+app.all("/api/auth/*", (req, res, next) => {
   try {
-    return await auth.handler(req, res);
+    const auth = getAuth();
+    return toNodeHandler(auth)(req, res, next);
   } catch (error) {
-    next(error);
+    logger.error("Better Auth handler error:", error);
+    return res
+      .status(500)
+      .json({ error: "Authentication service unavailable" });
   }
 });
 
-// API Routes
-app.use("/api/auth", authRoutes);
+// Body parser - AFTER Better Auth handler
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// API Routes (custom routes that extend Better Auth)
+// Mount custom auth endpoints on /api/user to avoid conflict with Better Auth's /api/auth/*
+app.use("/api/user", authRoutes);
 app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/doctors", doctorRoutes);

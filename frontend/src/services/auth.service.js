@@ -1,13 +1,11 @@
 /**
  * AayuCare - Authentication Service
- * Now using Better Auth for modern, secure authentication
- * Maintains backwards compatibility with existing code
+ * Production-grade JWT auth for React Native / Expo
  */
 
-// Import and re-export Better Auth service
-import betterAuthService from "./betterAuth.service";
+import authService from "./betterAuth.service";
 
-// Re-export all functions for backwards compatibility
+// Re-export all functions
 export const {
   register,
   login,
@@ -18,16 +16,15 @@ export const {
   getAuthToken,
   getUserData,
   updateProfile,
-  authClient,
-} = betterAuthService;
+  changePassword,
+} = authService;
 
-// Also export legacy function names for compatibility
+// Legacy function names for compatibility
 export const getCurrentUser = async () => {
-  const session = await betterAuthService.getSession();
+  const session = await authService.getSession();
   return session ? { user: session.user } : null;
 };
 
-export const getStoredUser = betterAuthService.getUserData;
+export const getStoredUser = authService.getUserData;
 
-// Export default
-export default betterAuthService;
+export default authService;

@@ -5,7 +5,7 @@
 const express = require("express");
 const router = express.Router();
 const notificationController = require("../controllers/notificationController");
-const { protect, authorize } = require("../middleware/betterAuth");
+const { protect, authorize } = require("../middleware/auth");
 
 // Protected routes (all users)
 router.use(protect);
