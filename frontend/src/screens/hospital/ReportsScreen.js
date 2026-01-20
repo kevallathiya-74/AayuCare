@@ -68,15 +68,6 @@ const ReportsScreen = ({ navigation }) => {
     return icons[type?.toLowerCase()] || "document";
   };
 
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   const handleReportPress = (report) => {
     Alert.alert(
       "Report Details",

@@ -26,7 +26,6 @@ import {
   IconWithBackground,
 } from "../../components/common/CustomIcons";
 import AITagline from "../../components/common/AITagline";
-import LoadingIndicator from "../../components/common/LoadingIndicator";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
 import { showError, logError } from "../../utils/errorHandler";
@@ -451,7 +450,8 @@ const AISymptomChecker = ({ navigation }) => {
 
         {loading && (
           <View style={styles.loadingContainer}>
-            <LoadingIndicator type="medical" message="Analyzing symptoms..." />
+            <ActivityIndicator size="large" color={healthColors.primary.main} />
+            <Text style={styles.loadingText}>Analyzing symptoms...</Text>
           </View>
         )}
       </ScrollView>
@@ -609,6 +609,12 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: indianDesign.spacing.xl,
     alignItems: "center",
+  },
+  loadingText: {
+    marginTop: indianDesign.spacing.md,
+    fontSize: scaledFontSize(14),
+    color: healthColors.text.secondary,
+    fontWeight: indianDesign.fontWeight.medium,
   },
   resultsContainer: {
     padding: getScreenPadding(),

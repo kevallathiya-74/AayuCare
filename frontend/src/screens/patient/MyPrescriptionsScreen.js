@@ -25,6 +25,7 @@ import { indianDesign, createShadow } from "../../theme/indianDesign";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { formatDate } from "../../utils/helpers";
 import { prescriptionService } from "../../services";
 
 const MyPrescriptionsScreen = ({ navigation }) => {
@@ -73,16 +74,6 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     setRefreshing(true);
     fetchPrescriptions();
   }, [fetchPrescriptions]);
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
 
   const renderPrescription = ({ item }) => (
     <TouchableOpacity

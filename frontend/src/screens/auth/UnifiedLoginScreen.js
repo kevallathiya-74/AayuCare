@@ -116,10 +116,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={getSafeAreaEdges('default')}
-    >
+    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={healthColors.primary.main}
@@ -140,7 +137,11 @@ const UnifiedLoginScreen = ({ navigation }) => {
         >
           {/* Header with Gradient */}
           <LinearGradient
-            colors={[healthColors.primary.main, healthColors.primary.dark]}
+            colors={[
+              healthColors.primary.main,
+              healthColors.primary.dark,
+              "#1565C0",
+            ]}
             style={styles.header}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -160,10 +161,12 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
           {/* Login Form Card */}
           <View style={styles.formCard}>
-            <Text style={styles.welcomeText}>Welcome Back!</Text>
-            <Text style={styles.subtitleText}>
-              Login with your User ID & Password
-            </Text>
+            <View style={styles.welcomeSection}>
+              <Text style={styles.welcomeText}>Welcome Back!</Text>
+              <Text style={styles.subtitleText}>
+                Sign in to access your healthcare dashboard
+              </Text>
+            </View>
 
             {/* Role Indicator */}
             <View style={styles.roleIndicator}>
@@ -430,79 +433,95 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    paddingTop: verticalScale(30),
-    paddingBottom: verticalScale(40), // spacing.lg
+    paddingTop: moderateScale(40),
+    paddingBottom: moderateScale(50),
     alignItems: "center",
-    borderBottomLeftRadius: 16, // Standard border radius
-    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: moderateScale(32),
+    borderBottomRightRadius: moderateScale(32),
+    ...createShadow(8),
   },
   logoContainer: {
     alignItems: "center",
   },
   logo: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: moderateScale(90),
+    height: moderateScale(90),
+    borderRadius: moderateScale(45),
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.md,
-    ...createShadow(3),
+    marginBottom: moderateScale(16),
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    ...createShadow(4),
   },
   appName: {
     fontSize: scaledFontSize(32),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontWeight: "700",
     color: healthColors.neutral.white,
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: moderateScale(6),
+    letterSpacing: 0.5,
   },
   tagline: {
     fontSize: scaledFontSize(14),
-    color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: indianDesign.fontWeight.regular,
+    color: "rgba(255, 255, 255, 0.95)",
+    fontWeight: "400",
+    letterSpacing: 0.3,
   },
   formCard: {
-    marginTop: -30,
+    marginTop: moderateScale(-32),
     marginHorizontal: getScreenPadding(),
-    maxWidth: isTablet() ? getContainerWidth(600) : '100%', // Constrain on all devices
-    alignSelf: 'center',
+    maxWidth: isTablet() ? moderateScale(500) : moderateScale(420),
+    width: "100%",
+    alignSelf: "center",
     backgroundColor: healthColors.background.card,
-    borderRadius: 16, // Standard border radius
-    padding: moderateScale(24), // spacing.lg
-    ...createShadow(5),
+    borderRadius: moderateScale(24),
+    padding: moderateScale(28),
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.05)",
+    ...createShadow(8),
+  },
+  welcomeSection: {
+    marginBottom: moderateScale(24),
   },
   welcomeText: {
-    fontSize: scaledFontSize(24),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: scaledFontSize(26),
+    fontWeight: "700",
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: moderateScale(8),
+    letterSpacing: 0.3,
   },
   subtitleText: {
     fontSize: scaledFontSize(14),
     color: healthColors.text.secondary,
-    marginBottom: indianDesign.spacing.lg,
+    fontWeight: "400",
+    lineHeight: scaledFontSize(20),
+    letterSpacing: 0.2,
   },
   roleIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.primary.main + "10",
-    paddingHorizontal: indianDesign.spacing.md,
-    paddingVertical: indianDesign.spacing.sm,
-    borderRadius: 8,
-    marginBottom: indianDesign.spacing.lg,
+    backgroundColor: healthColors.primary.main + "08",
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateScale(10),
+    borderRadius: moderateScale(12),
+    marginBottom: moderateScale(24),
+    borderWidth: 1,
+    borderColor: healthColors.primary.main + "15",
   },
   roleText: {
-    fontSize: scaledFontSize(12),
+    fontSize: scaledFontSize(11),
     color: healthColors.primary.main,
-    marginLeft: indianDesign.spacing.xs,
+    marginLeft: moderateScale(6),
     fontWeight: indianDesign.fontWeight.medium,
   },
   inputContainer: {
-    marginBottom: moderateScale(16), // Consistent with spacing.md (8px grid)
+    marginBottom: moderateScale(16),
   },
   label: {
     fontSize: scaledFontSize(12),
     color: healthColors.text.tertiary,
-    marginBottom: moderateScale(8), // spacing.sm
+    marginBottom: moderateScale(6),
     fontWeight: indianDesign.fontWeight.medium,
   },
   labelFocused: {
@@ -512,31 +531,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.background.tertiary,
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: moderateScale(14),
+    borderWidth: 1.5,
     borderColor: healthColors.card.border,
-    paddingHorizontal: moderateScale(16), // spacing.md
-    paddingVertical: moderateScale(12), // Ensure 48dp minimum touch target
-    minHeight: Math.max(getInputHeight(), 48), // Enforce accessibility
+    paddingHorizontal: moderateScale(16),
+    paddingVertical:
+      Platform.OS === "ios" ? moderateScale(14) : moderateScale(10),
+    minHeight: moderateScale(52),
+    ...createShadow(1),
   },
   inputWrapperFocused: {
     borderColor: healthColors.primary.main,
     backgroundColor: healthColors.background.card,
+    borderWidth: 2,
+    ...createShadow(2),
   },
   inputIcon: {
-    marginRight: moderateScale(8), // spacing.sm
+    marginRight: moderateScale(10),
   },
   input: {
     flex: 1,
     fontSize: scaledFontSize(14),
     color: healthColors.text.primary,
     fontWeight: indianDesign.fontWeight.regular,
-    paddingVertical: 0, // Remove default TextInput padding
+    paddingVertical: 0,
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    marginBottom: moderateScale(32), // spacing.xl for button spacing
-    marginTop: moderateScale(8), // spacing.sm
+    marginBottom: moderateScale(24),
+    marginTop: moderateScale(8),
+    paddingVertical: moderateScale(4),
   },
   forgotPasswordText: {
     fontSize: scaledFontSize(12),
@@ -544,32 +568,33 @@ const styles = StyleSheet.create({
     fontWeight: indianDesign.fontWeight.medium,
   },
   loginButton: {
-    borderRadius: 12,
+    borderRadius: moderateScale(14),
     overflow: "hidden",
-    ...createShadow(3),
-    minHeight: 48, // Enforce minimum touch target
+    ...createShadow(4),
+    minHeight: moderateScale(54),
   },
   loginButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: moderateScale(12), // spacing.md
-    paddingHorizontal: moderateScale(24), // spacing.lg
-    gap: moderateScale(8), // spacing.sm
+    paddingVertical: moderateScale(16),
+    paddingHorizontal: moderateScale(28),
+    gap: moderateScale(10),
   },
   loginButtonDisabled: {
     opacity: 0.6,
   },
   loginButtonText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: scaledFontSize(17),
+    fontWeight: "700",
     color: healthColors.neutral.white,
+    letterSpacing: 0.5,
   },
   demoSection: {
-    marginTop: indianDesign.spacing.xl,
-    padding: indianDesign.spacing.md,
+    marginTop: moderateScale(20),
+    padding: moderateScale(16),
     backgroundColor: healthColors.background.tertiary,
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
     borderWidth: 1,
     borderColor: healthColors.card.border,
     borderStyle: "dashed",
@@ -578,12 +603,12 @@ const styles = StyleSheet.create({
     fontSize: scaledFontSize(12),
     fontWeight: indianDesign.fontWeight.bold,
     color: healthColors.text.secondary,
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: moderateScale(8),
   },
   demoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: moderateScale(6),
   },
   demoLabel: {
     fontSize: scaledFontSize(11),
@@ -600,11 +625,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: indianDesign.spacing.xl,
-    gap: indianDesign.spacing.xs,
+    paddingVertical: moderateScale(24),
+    paddingHorizontal: moderateScale(16),
+    gap: moderateScale(6),
   },
   footerText: {
-    fontSize: scaledFontSize(12),
+    fontSize: scaledFontSize(11),
     color: healthColors.text.tertiary,
   },
   // Development Helper Styles

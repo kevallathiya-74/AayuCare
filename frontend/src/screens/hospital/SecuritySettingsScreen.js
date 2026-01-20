@@ -3,7 +3,7 @@
  * Password management, session control, and security statistics
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,24 +15,24 @@ import {
   Alert,
   TextInput,
   StatusBar,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { healthColors } from '../../theme/healthColors';
-import { indianDesign, createShadow } from '../../theme/indianDesign';
-import { moderateScale, scaledFontSize } from '../../utils/responsive';
-import { showError, logError } from '../../utils/errorHandler';
-import adminService from '../../services/admin.service';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { healthColors } from "../../theme/healthColors";
+import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { moderateScale, scaledFontSize } from "../../utils/responsive";
+import { showError, logError } from "../../utils/errorHandler";
+import adminService from "../../services/admin.service";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [securityData, setSecurityData] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -43,8 +43,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
       const response = await adminService.getSecuritySettings();
       setSecurityData(response.data);
     } catch (error) {
-      logError(error, { context: 'SecuritySettingsScreen.fetchSecurityData' });
-      showError('Failed to load security settings');
+      logError(error, { context: "SecuritySettingsScreen.fetchSecurityData" });
+      showError("Failed to load security settings");
     } finally {
       setLoading(false);
     }
@@ -62,52 +62,59 @@ const SecuritySettingsScreen = ({ navigation }) => {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all password fields');
+      Alert.alert("Error", "Please fill all password fields");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      Alert.alert("Error", "New passwords do not match");
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert('Error', 'New password must be at least 6 characters');
+      Alert.alert("Error", "New password must be at least 6 characters");
       return;
     }
 
     Alert.alert(
-      'Change Password',
-      'Are you sure you want to change your password? You will be logged out.',
+      "Change Password",
+      "Are you sure you want to change your password? You will be logged out.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Change',
-          style: 'destructive',
+          text: "Change",
+          style: "destructive",
           onPress: async () => {
             try {
               setPasswordLoading(true);
               await adminService.changePassword(currentPassword, newPassword);
-              Alert.alert('Success', 'Password changed successfully. Please login again.', [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    // Navigate to login screen
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'LoginScreen' }],
-                    });
+              Alert.alert(
+                "Success",
+                "Password changed successfully. Please login again.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      // Navigate to login screen
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "LoginScreen" }],
+                      });
+                    },
                   },
-                },
-              ]);
+                ]
+              );
               setShowPasswordModal(false);
-              setCurrentPassword('');
-              setNewPassword('');
-              setConfirmPassword('');
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
             } catch (error) {
-              const errorMessage = error.response?.data?.error || 'Failed to change password';
-              Alert.alert('Error', errorMessage);
-              logError(error, { context: 'SecuritySettingsScreen.handleChangePassword' });
+              const errorMessage =
+                error.response?.data?.error || "Failed to change password";
+              Alert.alert("Error", errorMessage);
+              logError(error, {
+                context: "SecuritySettingsScreen.handleChangePassword",
+              });
             } finally {
               setPasswordLoading(false);
             }
@@ -119,31 +126,37 @@ const SecuritySettingsScreen = ({ navigation }) => {
 
   const handleLogoutAll = () => {
     Alert.alert(
-      'Logout All Devices',
-      'This will logout all devices including this one. You will need to login again.',
+      "Logout All Devices",
+      "This will logout all devices including this one. You will need to login again.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Logout All',
-          style: 'destructive',
+          text: "Logout All",
+          style: "destructive",
           onPress: async () => {
             try {
               setLoading(true);
               await adminService.logoutAllDevices();
-              Alert.alert('Success', 'Logged out from all devices successfully', [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'LoginScreen' }],
-                    });
+              Alert.alert(
+                "Success",
+                "Logged out from all devices successfully",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: "LoginScreen" }],
+                      });
+                    },
                   },
-                },
-              ]);
+                ]
+              );
             } catch (error) {
-              showError('Failed to logout from all devices');
-              logError(error, { context: 'SecuritySettingsScreen.handleLogoutAll' });
+              showError("Failed to logout from all devices");
+              logError(error, {
+                context: "SecuritySettingsScreen.handleLogoutAll",
+              });
             } finally {
               setLoading(false);
             }
@@ -153,21 +166,11 @@ const SecuritySettingsScreen = ({ navigation }) => {
     );
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const renderStatCard = (title, value, icon, color) => (
     <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
+      <View
+        style={[styles.statIconContainer, { backgroundColor: color + "15" }]}
+      >
         <Ionicons name={icon} size={24} color={color} />
       </View>
       <View style={styles.statContent}>
@@ -179,11 +182,18 @@ const SecuritySettingsScreen = ({ navigation }) => {
 
   if (loading && !securityData) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={healthColors.text.primary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Security Settings</Text>
           <View style={styles.backButton} />
@@ -197,20 +207,35 @@ const SecuritySettingsScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Security Settings</Text>
-        <TouchableOpacity style={styles.backButton} onPress={onRefresh} disabled={refreshing}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={onRefresh}
+          disabled={refreshing}
+        >
           {refreshing ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <Ionicons name="refresh" size={24} color={healthColors.primary.main} />
+            <Ionicons
+              name="refresh"
+              size={24}
+              color={healthColors.primary.main}
+            />
           )}
         </TouchableOpacity>
       </View>
@@ -231,33 +256,60 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Account Security</Text>
           <View style={styles.statusCard}>
             <View style={styles.statusHeader}>
-              <View style={[styles.statusIcon, { backgroundColor: healthColors.success.main + '15' }]}>
-                <Ionicons name="shield-checkmark" size={32} color={healthColors.success.main} />
+              <View
+                style={[
+                  styles.statusIcon,
+                  { backgroundColor: healthColors.success.main + "15" },
+                ]}
+              >
+                <Ionicons
+                  name="shield-checkmark"
+                  size={32}
+                  color={healthColors.success.main}
+                />
               </View>
               <View style={styles.statusContent}>
                 <Text style={styles.statusTitle}>Account Status</Text>
                 <Text style={styles.statusSubtitle}>
-                  {securityData?.user?.isVerified ? 'Verified Account' : 'Not Verified'}
+                  {securityData?.user?.isVerified
+                    ? "Verified Account"
+                    : "Not Verified"}
                 </Text>
               </View>
             </View>
             <View style={styles.statusDetails}>
               <View style={styles.statusRow}>
-                <Ionicons name="time-outline" size={18} color={healthColors.text.secondary} />
+                <Ionicons
+                  name="time-outline"
+                  size={18}
+                  color={healthColors.text.secondary}
+                />
                 <Text style={styles.statusLabel}>Last Login:</Text>
-                <Text style={styles.statusValue}>{securityData?.lastActivity}</Text>
+                <Text style={styles.statusValue}>
+                  {securityData?.lastActivity}
+                </Text>
               </View>
               <View style={styles.statusRow}>
-                <Ionicons name="calendar-outline" size={18} color={healthColors.text.secondary} />
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={healthColors.text.secondary}
+                />
                 <Text style={styles.statusLabel}>Account Created:</Text>
                 <Text style={styles.statusValue}>
                   {formatDate(securityData?.user?.accountCreated)}
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Ionicons name="key-outline" size={18} color={healthColors.text.secondary} />
+                <Ionicons
+                  name="key-outline"
+                  size={18}
+                  color={healthColors.text.secondary}
+                />
                 <Text style={styles.statusLabel}>Token Version:</Text>
-                <Text style={styles.statusValue}>{securityData?.user?.tokenVersion}</Text>
+                <Text style={styles.statusValue}>
+                  {securityData?.user?.tokenVersion}
+                </Text>
               </View>
             </View>
           </View>
@@ -268,27 +320,27 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Security Statistics</Text>
           <View style={styles.statsGrid}>
             {renderStatCard(
-              'Active Sessions',
+              "Active Sessions",
               securityData?.statistics?.activeSessions || 0,
-              'people',
+              "people",
               healthColors.success.main
             )}
             {renderStatCard(
-              'Recent Logins',
+              "Recent Logins",
               securityData?.statistics?.recentLogins || 0,
-              'log-in',
+              "log-in",
               healthColors.info.main
             )}
             {renderStatCard(
-              'Verified Users',
+              "Verified Users",
               securityData?.statistics?.verifiedUsers || 0,
-              'checkmark-circle',
+              "checkmark-circle",
               healthColors.primary.main
             )}
             {renderStatCard(
-              'Unverified Users',
+              "Unverified Users",
               securityData?.statistics?.unverifiedUsers || 0,
-              'alert-circle',
+              "alert-circle",
               healthColors.warning.main
             )}
           </View>
@@ -303,26 +355,54 @@ const SecuritySettingsScreen = ({ navigation }) => {
             style={styles.actionCard}
             onPress={() => setShowPasswordModal(true)}
           >
-            <View style={[styles.actionIcon, { backgroundColor: healthColors.primary.main + '15' }]}>
-              <Ionicons name="lock-closed" size={24} color={healthColors.primary.main} />
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: healthColors.primary.main + "15" },
+              ]}
+            >
+              <Ionicons
+                name="lock-closed"
+                size={24}
+                color={healthColors.primary.main}
+              />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Change Password</Text>
-              <Text style={styles.actionSubtitle}>Update your account password</Text>
+              <Text style={styles.actionSubtitle}>
+                Update your account password
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color={healthColors.text.tertiary} />
+            <Ionicons
+              name="chevron-forward"
+              size={24}
+              color={healthColors.text.tertiary}
+            />
           </TouchableOpacity>
 
           {/* Logout All Devices */}
           <TouchableOpacity style={styles.actionCard} onPress={handleLogoutAll}>
-            <View style={[styles.actionIcon, { backgroundColor: healthColors.error.main + '15' }]}>
-              <Ionicons name="log-out" size={24} color={healthColors.error.main} />
+            <View
+              style={[
+                styles.actionIcon,
+                { backgroundColor: healthColors.error.main + "15" },
+              ]}
+            >
+              <Ionicons
+                name="log-out"
+                size={24}
+                color={healthColors.error.main}
+              />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Logout All Devices</Text>
               <Text style={styles.actionSubtitle}>End all active sessions</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color={healthColors.text.tertiary} />
+            <Ionicons
+              name="chevron-forward"
+              size={24}
+              color={healthColors.text.tertiary}
+            />
           </TouchableOpacity>
         </View>
 
@@ -333,7 +413,11 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
                 <TouchableOpacity onPress={() => setShowPasswordModal(false)}>
-                  <Ionicons name="close" size={24} color={healthColors.text.primary} />
+                  <Ionicons
+                    name="close"
+                    size={24}
+                    color={healthColors.text.primary}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -348,9 +432,11 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     placeholder="Enter current password"
                     placeholderTextColor={healthColors.text.disabled}
                   />
-                  <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
+                  <TouchableOpacity
+                    onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
                     <Ionicons
-                      name={showCurrentPassword ? 'eye-off' : 'eye'}
+                      name={showCurrentPassword ? "eye-off" : "eye"}
                       size={20}
                       color={healthColors.text.secondary}
                     />
@@ -369,9 +455,11 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     placeholder="Enter new password"
                     placeholderTextColor={healthColors.text.disabled}
                   />
-                  <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+                  <TouchableOpacity
+                    onPress={() => setShowNewPassword(!showNewPassword)}
+                  >
                     <Ionicons
-                      name={showNewPassword ? 'eye-off' : 'eye'}
+                      name={showNewPassword ? "eye-off" : "eye"}
                       size={20}
                       color={healthColors.text.secondary}
                     />
@@ -424,9 +512,9 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: indianDesign.spacing.lg,
     paddingVertical: indianDesign.spacing.md,
     backgroundColor: healthColors.background.card,
@@ -437,8 +525,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: healthColors.background.tertiary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: scaledFontSize(18),
@@ -447,8 +535,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     fontSize: scaledFontSize(14),
@@ -476,16 +564,16 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: indianDesign.spacing.md,
   },
   statusIcon: {
     width: moderateScale(60),
     height: moderateScale(60),
     borderRadius: moderateScale(30),
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: indianDesign.spacing.md,
   },
   statusContent: {
@@ -508,8 +596,8 @@ const styles = StyleSheet.create({
     gap: indianDesign.spacing.sm,
   },
   statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: indianDesign.spacing.sm,
   },
   statusLabel: {
@@ -523,18 +611,18 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: indianDesign.spacing.md,
   },
   statCard: {
     flex: 1,
-    minWidth: '45%',
+    minWidth: "45%",
     backgroundColor: healthColors.background.card,
     borderRadius: indianDesign.borderRadius.medium,
     padding: indianDesign.spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     ...createShadow(1),
     borderWidth: 1,
     borderColor: healthColors.border.light,
@@ -544,8 +632,8 @@ const styles = StyleSheet.create({
     width: moderateScale(48),
     height: moderateScale(48),
     borderRadius: moderateScale(24),
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: indianDesign.spacing.sm,
   },
   statContent: {
@@ -562,8 +650,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: healthColors.background.card,
     borderRadius: indianDesign.borderRadius.medium,
     padding: indianDesign.spacing.lg,
@@ -576,8 +664,8 @@ const styles = StyleSheet.create({
     width: moderateScale(48),
     height: moderateScale(48),
     borderRadius: moderateScale(24),
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: indianDesign.spacing.md,
   },
   actionContent: {
@@ -594,28 +682,28 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
   },
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: indianDesign.spacing.lg,
   },
   modalContent: {
     backgroundColor: healthColors.background.card,
     borderRadius: indianDesign.borderRadius.large,
     padding: indianDesign.spacing.xl,
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     ...createShadow(5),
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: indianDesign.spacing.lg,
   },
   modalTitle: {
@@ -633,8 +721,8 @@ const styles = StyleSheet.create({
     marginBottom: indianDesign.spacing.xs,
   },
   passwordInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: healthColors.background.primary,
     borderRadius: indianDesign.borderRadius.small,
     paddingHorizontal: indianDesign.spacing.md,
@@ -648,7 +736,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: indianDesign.spacing.md,
     marginTop: indianDesign.spacing.lg,
   },
@@ -657,7 +745,7 @@ const styles = StyleSheet.create({
     paddingVertical: indianDesign.spacing.md,
     borderRadius: indianDesign.borderRadius.small,
     backgroundColor: healthColors.background.tertiary,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
     fontSize: scaledFontSize(14),
@@ -669,12 +757,12 @@ const styles = StyleSheet.create({
     paddingVertical: indianDesign.spacing.md,
     borderRadius: indianDesign.borderRadius.small,
     backgroundColor: healthColors.primary.main,
-    alignItems: 'center',
+    alignItems: "center",
   },
   submitButtonText: {
     fontSize: scaledFontSize(14),
     fontWeight: indianDesign.fontWeight.bold,
-    color: '#FFF',
+    color: "#FFF",
   },
 });
 

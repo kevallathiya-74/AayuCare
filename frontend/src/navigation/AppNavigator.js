@@ -74,33 +74,41 @@ const AppNavigator = () => {
     (state) => state.auth || {}
   );
   const navigationRef = useRef(null);
+  const authInitialized = useRef(false); // Prevent multiple auth checks
 
-  console.log("[AppNavigator] Initializing...");
-  console.log("[AppNavigator] Auth state:", {
+  console.log("[AppNavigator] Rendering - Auth state:", {
     isAuthenticated,
     user: user?.userId,
     isLoading,
+    authInitialized: authInitialized.current,
   });
 
   useEffect(() => {
+    // Prevent multiple auth initializations
+    if (authInitialized.current) {
+      console.log("[AppNavigator] Auth already initialized, skipping");
+      return;
+    }
+
+    authInitialized.current = true;
+
     // Load user asynchronously with error handling
     const initAuth = async () => {
       try {
-        console.log("[AppNavigator] Loading user...");
-        await dispatch(loadUser());
-        console.log("[AppNavigator] User loaded successfully");
+        console.log("[AppNavigator] Initializing auth (ONCE)...");
+        await dispatch(loadUser()).unwrap();
+        console.log("[AppNavigator] Auth initialized successfully");
       } catch (error) {
-        console.error("[AppNavigator] ═══════════════════════════════════");
-        console.error("[AppNavigator] Error loading user:", error);
-        console.error("[AppNavigator] Error message:", error?.message);
-        console.error("[AppNavigator] Error stack:", error?.stack);
-        console.error("[AppNavigator] ═══════════════════════════════════");
+        console.error(
+          "[AppNavigator] Auth initialization error:",
+          error?.message || error
+        );
         // Continue anyway - auth will default to logged out state
       }
     };
 
     initAuth();
-  }, [dispatch]);
+  }, []); // Empty deps - run ONCE on mount
 
   // Auto-navigate after successful login
   useEffect(() => {

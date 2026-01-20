@@ -37,6 +37,7 @@ import {
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { formatDate, formatTime } from "../../utils/helpers";
 import { doctorService, appointmentService } from "../../services";
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
@@ -161,27 +162,6 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     }
   }, [selectedDoctor, date, fetchTimeSlots]);
 
-  const formatDate = (date) => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
-  };
-
   const handleDateChange = (event, selectedDate) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
@@ -257,10 +237,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={getSafeAreaEdges('default')}
-    >
+    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
@@ -295,415 +272,421 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, moderateScale(24)) }}
+          contentContainerStyle={{
+            paddingBottom: Math.max(insets.bottom, moderateScale(24)),
+          }}
           keyboardShouldPersistTaps="handled"
         >
-        {/* Step 1: Select Specialty */}
-        <View style={styles.section}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepNumberBox}>
-              <Text style={styles.stepNumberText}>1</Text>
-            </View>
-            <Text style={styles.stepTitle}>SELECT SPECIALTY:</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.specialtyCard}
-            onPress={() => setShowSpecialtyModal(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="medical-outline"
-              size={22}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.specialtyText}>{selectedSpecialty}</Text>
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={healthColors.text.secondary}
-            />
-          </TouchableOpacity>
-
-          {/* Specialty Selection Modal */}
-          <Modal
-            visible={showSpecialtyModal}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowSpecialtyModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Select Specialty</Text>
-                  <TouchableOpacity
-                    onPress={() => setShowSpecialtyModal(false)}
-                  >
-                    <Ionicons
-                      name="close"
-                      size={24}
-                      color={healthColors.text.primary}
-                    />
-                  </TouchableOpacity>
-                </View>
-                <ScrollView style={styles.modalBody}>
-                  {specialties.map((specialty) => (
-                    <TouchableOpacity
-                      key={specialty}
-                      style={[
-                        styles.specialtyOption,
-                        selectedSpecialty === specialty &&
-                          styles.specialtyOptionSelected,
-                      ]}
-                      onPress={() => {
-                        setSelectedSpecialty(specialty);
-                        setShowSpecialtyModal(false);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.specialtyOptionText,
-                          selectedSpecialty === specialty &&
-                            styles.specialtyOptionTextSelected,
-                        ]}
-                      >
-                        {specialty}
-                      </Text>
-                      {selectedSpecialty === specialty && (
-                        <Ionicons
-                          name="checkmark-circle"
-                          size={22}
-                          color={healthColors.primary.main}
-                        />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+          {/* Step 1: Select Specialty */}
+          <View style={styles.section}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepNumberBox}>
+                <Text style={styles.stepNumberText}>1</Text>
               </View>
+              <Text style={styles.stepTitle}>SELECT SPECIALTY:</Text>
             </View>
-          </Modal>
-        </View>
-
-        {/* Step 2: Choose Doctor */}
-        <View style={styles.section}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepNumberBox}>
-              <Text style={styles.stepNumberText}>2</Text>
-            </View>
-            <Text style={styles.stepTitle}>CHOOSE DOCTOR:</Text>
-          </View>
-
-          {loadingDoctors ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator
-                size="large"
+            <TouchableOpacity
+              style={styles.specialtyCard}
+              onPress={() => setShowSpecialtyModal(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="medical-outline"
+                size={22}
                 color={healthColors.primary.main}
               />
-              <Text style={styles.loadingText}>Loading doctors...</Text>
-            </View>
-          ) : doctors.length === 0 ? (
-            <View style={styles.emptyState}>
+              <Text style={styles.specialtyText}>{selectedSpecialty}</Text>
               <Ionicons
-                name="medkit-outline"
-                size={48}
-                color={healthColors.text.disabled}
+                name="chevron-down"
+                size={20}
+                color={healthColors.text.secondary}
               />
-              <Text style={styles.emptyStateText}>
-                No doctors available for {selectedSpecialty}
-              </Text>
-            </View>
-          ) : (
-            doctors.map((doctor) => (
-              <TouchableOpacity
-                key={doctor._id || doctor.id}
-                style={[
-                  styles.doctorCard,
-                  selectedDoctor?._id === doctor._id &&
-                    styles.doctorCardSelected,
-                ]}
-                onPress={() => setSelectedDoctor(doctor)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.doctorAvatar}>
-                  <Ionicons
-                    name="person"
-                    size={24}
-                    color={healthColors.primary.main}
-                  />
-                </View>
-                <View style={styles.doctorInfo}>
-                  <Text style={styles.doctorName}>{doctor.name}</Text>
-                  <Text style={styles.doctorDetails}>
-                    {doctor.specialization || doctor.specialty} •{" "}
-                    {doctor.experience} years exp
-                  </Text>
-                  <View style={styles.doctorStats}>
-                    <View style={styles.ratingContainer}>
-                      <Ionicons name="star" size={14} color="#FFB800" />
-                      <Text style={styles.ratingText}>
-                        {doctor.rating || "4.5"} reviews
-                      </Text>
-                    </View>
-                    <View style={styles.feeContainer}>
-                      <Ionicons
-                        name="cash-outline"
-                        size={14}
-                        color={healthColors.success.main}
-                      />
-                      <Text style={styles.feeText}>
-                        Consultation: ₹{doctor.consultationFee || 500}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                {selectedDoctor?._id === doctor._id && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={24}
-                    color={healthColors.success.main}
-                  />
-                )}
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-
-        {/* Step 3: Appointment Type */}
-        <View style={styles.section}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepNumberBox}>
-              <Text style={styles.stepNumberText}>3</Text>
-            </View>
-            <Text style={styles.stepTitle}>APPOINTMENT TYPE:</Text>
-          </View>
-          <View style={styles.typeRow}>
-            <TouchableOpacity
-              style={[
-                styles.typeCard,
-                appointmentType === "in-person" && styles.typeCardSelected,
-              ]}
-              onPress={() => setAppointmentType("in-person")}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.typeIconBox,
-                  appointmentType === "in-person" && styles.typeIconBoxSelected,
-                ]}
-              >
-                <Ionicons
-                  name="business-outline"
-                  size={32}
-                  color={
-                    appointmentType === "in-person"
-                      ? healthColors.primary.main
-                      : healthColors.text.secondary
-                  }
-                />
-              </View>
-              <Text
-                style={[
-                  styles.typeTitle,
-                  appointmentType === "in-person" && styles.typeTextSelected,
-                ]}
-              >
-                IN-PERSON
-              </Text>
-              <Text style={styles.typeSubtitle}>Visit Clinic</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.typeCard,
-                appointmentType === "telemedicine" && styles.typeCardSelected,
-              ]}
-              onPress={() => setAppointmentType("telemedicine")}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.typeIconBox,
-                  appointmentType === "telemedicine" &&
-                    styles.typeIconBoxSelected,
-                ]}
-              >
-                <Ionicons
-                  name="videocam-outline"
-                  size={32}
-                  color={
-                    appointmentType === "telemedicine"
-                      ? healthColors.primary.main
-                      : healthColors.text.secondary
-                  }
-                />
-              </View>
-              <Text
-                style={[
-                  styles.typeTitle,
-                  appointmentType === "telemedicine" && styles.typeTextSelected,
-                ]}
-              >
-                TELEMEDICINE
-              </Text>
-              <Text style={styles.typeSubtitle}>Video Call</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Step 4: Select Date & Time */}
-        <View style={styles.section}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepNumberBox}>
-              <Text style={styles.stepNumberText}>4</Text>
-            </View>
-            <Text style={styles.stepTitle}>SELECT DATE & TIME:</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.dateCard}
-            onPress={() => setShowDatePicker(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="calendar-outline"
-              size={22}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.dateText}>{selectedDate}</Text>
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={healthColors.text.secondary}
-            />
-          </TouchableOpacity>
-
-          {/* Date Picker */}
-          {Platform.OS === "ios" ? (
+            {/* Specialty Selection Modal */}
             <Modal
-              visible={showDatePicker}
+              visible={showSpecialtyModal}
               transparent
               animationType="slide"
-              onRequestClose={() => setShowDatePicker(false)}
+              onRequestClose={() => setShowSpecialtyModal(false)}
             >
-              <View style={styles.datePickerModal}>
-                <View style={styles.datePickerContainer}>
-                  <View style={styles.datePickerHeader}>
-                    <Text style={styles.datePickerTitle}>Select Date</Text>
-                    <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                      <Text style={styles.datePickerDone}>Done</Text>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Select Specialty</Text>
+                    <TouchableOpacity
+                      onPress={() => setShowSpecialtyModal(false)}
+                    >
+                      <Ionicons
+                        name="close"
+                        size={24}
+                        color={healthColors.text.primary}
+                      />
                     </TouchableOpacity>
                   </View>
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="spinner"
-                    onChange={handleDateChange}
-                    minimumDate={new Date()}
-                    textColor={healthColors.text.primary}
-                  />
+                  <ScrollView style={styles.modalBody}>
+                    {specialties.map((specialty) => (
+                      <TouchableOpacity
+                        key={specialty}
+                        style={[
+                          styles.specialtyOption,
+                          selectedSpecialty === specialty &&
+                            styles.specialtyOptionSelected,
+                        ]}
+                        onPress={() => {
+                          setSelectedSpecialty(specialty);
+                          setShowSpecialtyModal(false);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.specialtyOptionText,
+                            selectedSpecialty === specialty &&
+                              styles.specialtyOptionTextSelected,
+                          ]}
+                        >
+                          {specialty}
+                        </Text>
+                        {selectedSpecialty === specialty && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={22}
+                            color={healthColors.primary.main}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               </View>
             </Modal>
-          ) : (
-            showDatePicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                display="default"
-                onChange={handleDateChange}
-                minimumDate={new Date()}
-              />
-            )
-          )}
-          <View style={styles.timeLabelRow}>
-            <Ionicons
-              name="time-outline"
-              size={18}
-              color={healthColors.text.primary}
-            />
-            <Text style={styles.timeLabel}>Available Slots:</Text>
           </View>
-          <View style={styles.timeSlotsGrid}>
-            {timeSlots.map((slot) => (
+
+          {/* Step 2: Choose Doctor */}
+          <View style={styles.section}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepNumberBox}>
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <Text style={styles.stepTitle}>CHOOSE DOCTOR:</Text>
+            </View>
+
+            {loadingDoctors ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator
+                  size="large"
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.loadingText}>Loading doctors...</Text>
+              </View>
+            ) : doctors.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons
+                  name="medkit-outline"
+                  size={48}
+                  color={healthColors.text.disabled}
+                />
+                <Text style={styles.emptyStateText}>
+                  No doctors available for {selectedSpecialty}
+                </Text>
+              </View>
+            ) : (
+              doctors.map((doctor) => (
+                <TouchableOpacity
+                  key={doctor._id || doctor.id}
+                  style={[
+                    styles.doctorCard,
+                    selectedDoctor?._id === doctor._id &&
+                      styles.doctorCardSelected,
+                  ]}
+                  onPress={() => setSelectedDoctor(doctor)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.doctorAvatar}>
+                    <Ionicons
+                      name="person"
+                      size={24}
+                      color={healthColors.primary.main}
+                    />
+                  </View>
+                  <View style={styles.doctorInfo}>
+                    <Text style={styles.doctorName}>{doctor.name}</Text>
+                    <Text style={styles.doctorDetails}>
+                      {doctor.specialization || doctor.specialty} •{" "}
+                      {doctor.experience} years exp
+                    </Text>
+                    <View style={styles.doctorStats}>
+                      <View style={styles.ratingContainer}>
+                        <Ionicons name="star" size={14} color="#FFB800" />
+                        <Text style={styles.ratingText}>
+                          {doctor.rating || "4.5"} reviews
+                        </Text>
+                      </View>
+                      <View style={styles.feeContainer}>
+                        <Ionicons
+                          name="cash-outline"
+                          size={14}
+                          color={healthColors.success.main}
+                        />
+                        <Text style={styles.feeText}>
+                          Consultation: ₹{doctor.consultationFee || 500}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  {selectedDoctor?._id === doctor._id && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={24}
+                      color={healthColors.success.main}
+                    />
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+
+          {/* Step 3: Appointment Type */}
+          <View style={styles.section}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepNumberBox}>
+                <Text style={styles.stepNumberText}>3</Text>
+              </View>
+              <Text style={styles.stepTitle}>APPOINTMENT TYPE:</Text>
+            </View>
+            <View style={styles.typeRow}>
               <TouchableOpacity
-                key={slot}
                 style={[
-                  styles.timeSlot,
-                  selectedTime === slot && styles.timeSlotSelected,
+                  styles.typeCard,
+                  appointmentType === "in-person" && styles.typeCardSelected,
                 ]}
-                onPress={() => setSelectedTime(slot)}
+                onPress={() => setAppointmentType("in-person")}
                 activeOpacity={0.7}
               >
-                <Text
+                <View
                   style={[
-                    styles.timeSlotText,
-                    selectedTime === slot && styles.timeSlotTextSelected,
+                    styles.typeIconBox,
+                    appointmentType === "in-person" &&
+                      styles.typeIconBoxSelected,
                   ]}
                 >
-                  {slot}
+                  <Ionicons
+                    name="business-outline"
+                    size={32}
+                    color={
+                      appointmentType === "in-person"
+                        ? healthColors.primary.main
+                        : healthColors.text.secondary
+                    }
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.typeTitle,
+                    appointmentType === "in-person" && styles.typeTextSelected,
+                  ]}
+                >
+                  IN-PERSON
                 </Text>
-                {selectedTime === slot && (
-                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                )}
+                <Text style={styles.typeSubtitle}>Visit Clinic</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Step 5: Reason for Visit */}
-        <View style={styles.section}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepNumberBox}>
-              <Text style={styles.stepNumberText}>5</Text>
+              <TouchableOpacity
+                style={[
+                  styles.typeCard,
+                  appointmentType === "telemedicine" && styles.typeCardSelected,
+                ]}
+                onPress={() => setAppointmentType("telemedicine")}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.typeIconBox,
+                    appointmentType === "telemedicine" &&
+                      styles.typeIconBoxSelected,
+                  ]}
+                >
+                  <Ionicons
+                    name="videocam-outline"
+                    size={32}
+                    color={
+                      appointmentType === "telemedicine"
+                        ? healthColors.primary.main
+                        : healthColors.text.secondary
+                    }
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.typeTitle,
+                    appointmentType === "telemedicine" &&
+                      styles.typeTextSelected,
+                  ]}
+                >
+                  TELEMEDICINE
+                </Text>
+                <Text style={styles.typeSubtitle}>Video Call</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.stepTitle}>REASON FOR VISIT:</Text>
           </View>
-          <TextInput
-            style={styles.reasonInput}
-            placeholder="Enter reason for visit..."
-            placeholderTextColor={healthColors.text.disabled}
-            value={reason}
-            onChangeText={setReason}
-            multiline
-            numberOfLines={3}
-          />
-        </View>
 
-        {/* Confirm Button */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[
-              styles.confirmButton,
-              loading && styles.confirmButtonDisabled,
-            ]}
-            onPress={handleConfirm}
-            disabled={loading}
-          >
-            <View style={styles.confirmButtonContent}>
-              {loading ? (
-                <>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+          {/* Step 4: Select Date & Time */}
+          <View style={styles.section}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepNumberBox}>
+                <Text style={styles.stepNumberText}>4</Text>
+              </View>
+              <Text style={styles.stepTitle}>SELECT DATE & TIME:</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.dateCard}
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={22}
+                color={healthColors.primary.main}
+              />
+              <Text style={styles.dateText}>{selectedDate}</Text>
+              <Ionicons
+                name="chevron-down"
+                size={20}
+                color={healthColors.text.secondary}
+              />
+            </TouchableOpacity>
+
+            {/* Date Picker */}
+            {Platform.OS === "ios" ? (
+              <Modal
+                visible={showDatePicker}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.datePickerModal}>
+                  <View style={styles.datePickerContainer}>
+                    <View style={styles.datePickerHeader}>
+                      <Text style={styles.datePickerTitle}>Select Date</Text>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={styles.datePickerDone}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={date}
+                      mode="date"
+                      display="spinner"
+                      onChange={handleDateChange}
+                      minimumDate={new Date()}
+                      textColor={healthColors.text.primary}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                />
+              )
+            )}
+            <View style={styles.timeLabelRow}>
+              <Ionicons
+                name="time-outline"
+                size={18}
+                color={healthColors.text.primary}
+              />
+              <Text style={styles.timeLabel}>Available Slots:</Text>
+            </View>
+            <View style={styles.timeSlotsGrid}>
+              {timeSlots.map((slot) => (
+                <TouchableOpacity
+                  key={slot}
+                  style={[
+                    styles.timeSlot,
+                    selectedTime === slot && styles.timeSlotSelected,
+                  ]}
+                  onPress={() => setSelectedTime(slot)}
+                  activeOpacity={0.7}
+                >
                   <Text
                     style={[
-                      styles.confirmButtonText,
-                      { marginLeft: moderateScale(8) },
+                      styles.timeSlotText,
+                      selectedTime === slot && styles.timeSlotTextSelected,
                     ]}
                   >
-                    BOOKING...
+                    {slot}
                   </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.confirmButtonText}>
-                    CONFIRM APPOINTMENT
-                  </Text>
-                  <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-                </>
-              )}
+                  {selectedTime === slot && (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  )}
+                </TouchableOpacity>
+              ))}
             </View>
-          </TouchableOpacity>
-        </View>
+          </View>
 
-        <View style={{ height: 80 }} />
-      </ScrollView>
+          {/* Step 5: Reason for Visit */}
+          <View style={styles.section}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepNumberBox}>
+                <Text style={styles.stepNumberText}>5</Text>
+              </View>
+              <Text style={styles.stepTitle}>REASON FOR VISIT:</Text>
+            </View>
+            <TextInput
+              style={styles.reasonInput}
+              placeholder="Enter reason for visit..."
+              placeholderTextColor={healthColors.text.disabled}
+              value={reason}
+              onChangeText={setReason}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+
+          {/* Confirm Button */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[
+                styles.confirmButton,
+                loading && styles.confirmButtonDisabled,
+              ]}
+              onPress={handleConfirm}
+              disabled={loading}
+            >
+              <View style={styles.confirmButtonContent}>
+                {loading ? (
+                  <>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text
+                      style={[
+                        styles.confirmButtonText,
+                        { marginLeft: moderateScale(8) },
+                      ]}
+                    >
+                      BOOKING...
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.confirmButtonText}>
+                      CONFIRM APPOINTMENT
+                    </Text>
+                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                  </>
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ height: 80 }} />
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

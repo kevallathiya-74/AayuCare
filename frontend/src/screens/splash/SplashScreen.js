@@ -63,11 +63,15 @@ const SplashScreen = ({ navigation }) => {
 
   // Handle navigation after auth check completes
   useEffect(() => {
-    if (hasNavigated.current) return;
+    // Prevent multiple navigations
+    if (hasNavigated.current) {
+      console.log("[SplashScreen] Already navigated, skipping");
+      return;
+    }
 
     // Wait for auth loading to complete
     if (isLoading) {
-      console.log("[SplashScreen] Waiting for auth check...");
+      console.log("[SplashScreen] Auth still loading...");
       return;
     }
 
@@ -76,41 +80,51 @@ const SplashScreen = ({ navigation }) => {
       user: user?.userId,
     });
 
-    // Navigate based on auth status
+    // Navigate based on auth status with small delay for animation
     const timer = setTimeout(() => {
-      if (hasNavigated.current) return;
+      // Set navigation flag inside timer to prevent race conditions
+      if (hasNavigated.current) {
+        console.log("[SplashScreen] Already navigated in timer, skipping");
+        return;
+      }
       hasNavigated.current = true;
 
-      try {
-        if (isAuthenticated && user) {
-          console.log(
-            "[SplashScreen] User authenticated, navigating to role tabs"
-          );
-          // Navigate based on user role
-          const userRole = user.role;
-          if (userRole === "admin") {
-            navigation.replace("AdminTabs");
-          } else if (userRole === "doctor") {
-            navigation.replace("DoctorTabs");
-          } else if (userRole === "patient") {
-            navigation.replace("PatientTabs");
-          } else {
-            console.warn("[SplashScreen] Unknown role:", userRole);
-            navigation.replace("BoxSelection");
-          }
-        } else {
-          console.log(
-            "[SplashScreen] Not authenticated, navigating to BoxSelection"
-          );
-          navigation.replace("BoxSelection");
-        }
-      } catch (navError) {
-        console.error("[SplashScreen] Navigation error:", navError);
+      if (!navigation) {
+        console.error("[SplashScreen] Navigation prop missing!");
+        return;
       }
-    }, 1500); // Reduced time since we already waited for auth
+
+      if (isAuthenticated && user) {
+        console.log(
+          "[SplashScreen] Authenticated - navigating based on role:",
+          user.role
+        );
+
+        // Navigate to role-specific tab navigator
+        switch (user.role) {
+          case "admin":
+            navigation.replace("AdminTabs");
+            break;
+          case "doctor":
+            navigation.replace("DoctorTabs");
+            break;
+          case "patient":
+            navigation.replace("PatientTabs");
+            break;
+          default:
+            console.warn("[SplashScreen] Unknown role:", user.role);
+            navigation.replace("BoxSelection");
+        }
+      } else {
+        console.log(
+          "[SplashScreen] Not authenticated - navigating to BoxSelection"
+        );
+        navigation.replace("BoxSelection");
+      }
+    }, 1500); // 1.5s for splash animation
 
     return () => clearTimeout(timer);
-  }, [isLoading, isAuthenticated, user]);
+  }, [isLoading, isAuthenticated, user, navigation]); // Only re-run if auth state changes
 
   const dotTranslateY = loadingAnim.interpolate({
     inputRange: [0, 0.25, 0.5, 0.75, 1],

@@ -44,7 +44,7 @@ const AppointmentsScreen = ({ navigation }) => {
       // Fetch with higher limit and pending status to match badge count
       const response = await appointmentService.getAllAppointments({
         limit: 50, // Increased from default 10 to show more appointments
-        status: 'scheduled,confirmed' // Only pending appointments
+        status: "scheduled,confirmed", // Only pending appointments
       });
       // Backend returns { status, data: { appointments: [], pagination: {} } }
       setAppointments(response?.data?.appointments || response?.data || []);
@@ -90,17 +90,6 @@ const AppointmentsScreen = ({ navigation }) => {
       default:
         return healthColors.text.secondary;
     }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const handleAppointmentPress = (appointment) => {

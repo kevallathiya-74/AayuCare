@@ -6,10 +6,10 @@
 import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import * as SecureStore from "expo-secure-store";
-import config from "../config/app";
+import { AppConfig } from "../config/app";
 
 export const authClient = createAuthClient({
-  baseURL: config.API_BASE_URL || "http://localhost:5000",
+  baseURL: AppConfig.api.baseURL,
   plugins: [
     expoClient({
       scheme: "aayucare",
@@ -92,24 +92,70 @@ export const logout = async () => {
 };
 
 /**
- * Get current session
+ * Get current session from Better Auth
+ * Uses Better Auth's built-in session retrieval (checks local storage first)
  */
 export const getSession = async () => {
   try {
-    const session = await $fetch("/api/auth/get-session");
-    return session;
+    // Better Auth expo client stores session in SecureStore automatically
+    // Read directly from storage with correct key format
+    const storagePrefix = "aayucare";
+
+    // Try to get session token from storage
+    const sessionData = await SecureStore.getItemAsync(
+      `${storagePrefix}.session.token`
+    );
+
+    if (!sessionData) {
+      console.log("[BetterAuth] No session found in storage");
+      return null;
+    }
+
+    // Parse session data if it's JSON string
+    let token = sessionData;
+    try {
+      const parsed = JSON.parse(sessionData);
+      token = parsed.token || sessionData;
+    } catch {
+      // sessionData is already a plain token string
+    }
+
+    // Try to get user data from storage
+    const userDataStr = await SecureStore.getItemAsync(`${storagePrefix}.user`);
+
+    if (userDataStr) {
+      try {
+        const user = JSON.parse(userDataStr);
+        console.log(
+          "[BetterAuth] Session loaded from storage:",
+          user?.userId || user?.email
+        );
+        return { user, token };
+      } catch (parseError) {
+        console.warn("[BetterAuth] Could not parse user data, token only");
+      }
+    }
+
+    console.log("[BetterAuth] Token found but no user data");
+    return { token };
   } catch (error) {
-    console.error("[BetterAuth] Get session error:", error);
+    console.error("[BetterAuth] Get session error:", error?.message || error);
+    // Return null instead of throwing - allows app to continue
     return null;
   }
 };
 
 /**
- * Check if user is authenticated
+ * Check if user is authenticated (instant, no network call)
  */
 export const isAuthenticated = async () => {
-  const session = await getSession();
-  return !!session?.user;
+  try {
+    const session = await getSession();
+    return !!session?.user || !!session?.token;
+  } catch (error) {
+    console.error("[BetterAuth] isAuthenticated error:", error?.message);
+    return false;
+  }
 };
 
 /**
