@@ -1,23 +1,24 @@
-const authService = require('../services/authService');
-const { AppError } = require('../middleware/errorHandler');
-const User = require('../models/User');
+const authService = require("../services/betterAuthService");
+const { AppError } = require("../middleware/errorHandler");
+const User = require("../models/User");
 
 exports.register = async (req, res, next) => {
-    try {
-        const { user, accessToken, refreshToken } = await authService.register(req.body);
+  try {
+    const { user, session } = await authService.register(req.body);
 
-        res.status(201).json({
-            status: 'success',
-            message: 'Registration successful',
-            data: {
-                user,
-                token: accessToken,
-                refreshToken,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(201).json({
+      status: "success",
+      message: "Registration successful",
+      data: {
+        user,
+        token: session.token,
+        refreshToken: session.token, // Better Auth uses same token
+        session,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -26,30 +27,26 @@ exports.register = async (req, res, next) => {
  * @access  Public
  */
 exports.login = async (req, res, next) => {
-    try {
-        const { userId, password } = req.body;
-        const { user, accessToken, refreshToken } = await authService.login(userId, password);
-        
-        console.log(`[authController] Received from service: user=${!!user}, accessToken=${!!accessToken}, refreshToken=${!!refreshToken}`);
-        console.log(`[authController] accessToken type: ${typeof accessToken}, value: ${accessToken ? 'exists' : 'missing'}`);
-        console.log(`[authController] refreshToken type: ${typeof refreshToken}, value: ${refreshToken ? 'exists' : 'missing'}`);
+  try {
+    const { userId, password } = req.body;
+    const { user, session, token, refreshToken } = await authService.login(
+      userId,
+      password
+    );
 
-        const responseData = {
-            user,
-            token: accessToken,
-            refreshToken,
-        };
-        
-        console.log(`[authController] Sending response:`, JSON.stringify(responseData, null, 2));
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Login successful',
-            data: responseData,
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      status: "success",
+      message: "Login successful",
+      data: {
+        user,
+        token: token || session?.token,
+        refreshToken: refreshToken || session?.token,
+        session,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -58,19 +55,20 @@ exports.login = async (req, res, next) => {
  * @access  Public
  */
 exports.refreshToken = async (req, res, next) => {
-    try {
-        const { refreshToken } = req.body;
-        const { accessToken } = await authService.refreshAccessToken(refreshToken);
+  try {
+    const { refreshToken } = req.body;
+    await authService.refreshSession(refreshToken);
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                token: accessToken,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      status: "success",
+      message: "Session refreshed successfully",
+      data: {
+        token: refreshToken, // Better Auth manages refresh automatically
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -79,16 +77,17 @@ exports.refreshToken = async (req, res, next) => {
  * @access  Private
  */
 exports.logout = async (req, res, next) => {
-    try {
-        await authService.logout(req.user.id);
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    await authService.logout(token);
 
-        res.status(200).json({
-            status: 'success',
-            message: 'Logout successful',
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      status: "success",
+      message: "Logout successful",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -97,18 +96,18 @@ exports.logout = async (req, res, next) => {
  * @access  Private
  */
 exports.getMe = async (req, res, next) => {
-    try {
-        const user = await User.findById(req.user.id);
+  try {
+    const user = await User.findById(req.user.id);
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                user,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -117,16 +116,16 @@ exports.getMe = async (req, res, next) => {
  * @access  Private
  */
 exports.updateProfile = async (req, res, next) => {
-    try {
-        const user = await authService.updateProfile(req.user.id, req.body);
+  try {
+    const user = await authService.updateProfile(req.user.id, req.body);
 
-        res.status(200).json({
-            status: 'success',
-            data: {
-                user,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };

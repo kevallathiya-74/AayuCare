@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const appointmentController = require("../controllers/appointmentController");
-const { protect, authorize } = require("../middleware/auth");
+const { protect, authorize } = require("../middleware/betterAuth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const {
   validateCreateAppointment,

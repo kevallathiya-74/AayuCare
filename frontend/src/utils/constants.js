@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: "aayucare_auth_token",
   REFRESH_TOKEN: "aayucare_refresh_token",
   USER_DATA: "aayucare_user_data",
+  SESSION_DATA: "aayucare_session_data",
   ONBOARDING_COMPLETED: "aayucare_onboarding_completed",
   LANGUAGE: "aayucare_language",
   THEME: "aayucare_theme",

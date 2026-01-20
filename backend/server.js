@@ -1,29 +1,30 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
+require("dotenv").config();
 
-const connectDB = require('./src/config/database');
-const { errorHandler } = require('./src/middleware/errorHandler');
-const logger = require('./src/utils/logger');
+const connectDB = require("./src/config/database");
+const { errorHandler } = require("./src/middleware/errorHandler");
+const logger = require("./src/utils/logger");
+const { auth } = require("./src/config/betterAuth");
 
 // Routes
-const authRoutes = require('./src/routes/authRoutes');
-const medicalRecordRoutes = require('./src/routes/medicalRecordRoutes');
-const appointmentRoutes = require('./src/routes/appointmentRoutes');
-const doctorRoutes = require('./src/routes/doctorRoutes');
-const aiRoutes = require('./src/routes/aiRoutes');
-const patientRoutes = require('./src/routes/patientRoutes');
-const prescriptionRoutes = require('./src/routes/prescriptionRoutes');
-const adminRoutes = require('./src/routes/adminRoutes');
-const eventRoutes = require('./src/routes/eventRoutes');
-const notificationRoutes = require('./src/routes/notificationRoutes');
+const authRoutes = require("./src/routes/authRoutes");
+const medicalRecordRoutes = require("./src/routes/medicalRecordRoutes");
+const appointmentRoutes = require("./src/routes/appointmentRoutes");
+const doctorRoutes = require("./src/routes/doctorRoutes");
+const aiRoutes = require("./src/routes/aiRoutes");
+const patientRoutes = require("./src/routes/patientRoutes");
+const prescriptionRoutes = require("./src/routes/prescriptionRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
+const eventRoutes = require("./src/routes/eventRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes");
 
 const app = express();
 
-// Connect to MongoDB
+// Connect to MongoDB FIRST (Better Auth needs DB connection)
 connectDB();
 
 // Security Middleware
@@ -31,110 +32,121 @@ app.use(helmet());
 
 // CORS - Whitelist specific origins
 const allowedOrigins = [
-  'exp://192.168.137.1:8081', // Expo Go (update with your IP)
-  'http://localhost:19006',  // Expo web
-  'http://localhost:3000',   // Development frontend
-  process.env.FRONTEND_URL,  // Production frontend
+  "exp://192.168.137.1:8081", // Expo Go (update with your IP)
+  "http://localhost:19006", // Expo web
+  "http://localhost:3000", // Development frontend
+  process.env.FRONTEND_URL, // Production frontend
 ].filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // In production with mobile apps, allow requests with no origin
-    if (!origin) {
-      return callback(null, true);
-    }
-    // Allow all origins in development
-    if (process.env.NODE_ENV === 'development') {
-      return callback(null, true);
-    }
-    // In production, check whitelist
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // In production with mobile apps, allow requests with no origin
+      if (!origin) {
+        return callback(null, true);
+      }
+      // Allow all origins in development
+      if (process.env.NODE_ENV === "development") {
+        return callback(null, true);
+      }
+      // In production, check whitelist
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Rate limiting - General API
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
-  message: 'Too many requests from this IP, please try again later',
+  message: "Too many requests from this IP, please try again later",
 });
-app.use('/api/', limiter);
+app.use("/api/", limiter);
 
 // Strict rate limiting for auth endpoints (prevent brute force)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Only 5 login attempts per 15 minutes
-  message: 'Too many login attempts, please try again after 15 minutes',
+  message: "Too many login attempts, please try again after 15 minutes",
   skipSuccessfulRequests: true, // Don't count successful logins
 });
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
 // Body parser
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Logging
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
 }
 
+// Better Auth Handler - Must come BEFORE other API routes
+app.all("/api/auth/better/*", async (req, res, next) => {
+  try {
+    return await auth.handler(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/medical-records', medicalRecordRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/doctors', doctorRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/patients', patientRoutes);
-app.use('/api/prescriptions', prescriptionRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/medical-records", medicalRecordRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/doctors", doctorRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // API Root route
-app.get('/api', (req, res) => {
+app.get("/api", (req, res) => {
   res.json({
-    status: 'success',
-    message: 'Welcome to AayuCare API',
-    version: '1.0.0',
+    status: "success",
+    message: "Welcome to AayuCare API",
+    version: "1.0.0",
     endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      appointments: '/api/appointments',
-      doctors: '/api/doctors',
-      medicalRecords: '/api/medical-records',
+      health: "/api/health",
+      auth: "/api/auth",
+      appointments: "/api/appointments",
+      doctors: "/api/doctors",
+      medicalRecords: "/api/medical-records",
     },
   });
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({
-    status: 'success',
-    message: 'AayuCare Backend Server is running',
+    status: "success",
+    message: "AayuCare Backend Server is running",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
   });
 });
 
 // Root route
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.json({
-    message: 'Welcome to AayuCare API',
-    version: '1.0.0',
-    documentation: '/api/docs',
+    message: "Welcome to AayuCare API",
+    version: "1.0.0",
+    documentation: "/api/docs",
   });
 });
 
 // 404 handler
-app.all('*', (req, res) => {
+app.all("*", (req, res) => {
   res.status(404).json({
-    status: 'fail',
+    status: "fail",
     message: `Can't find ${req.originalUrl} on this server!`,
   });
 });
@@ -144,27 +156,31 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`[SUCCESS] Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  logger.info(`[API] API URL: http://localhost:${PORT}`);
-  logger.info(`[MOBILE] Expo Go will auto-detect your computer's IP address`);
-  logger.info(`[INFO] Make sure phone and computer are on the same WiFi network`);
+const server = app.listen(PORT, "0.0.0.0", () => {
+  logger.info(
+    `🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+  );
+  logger.info(`🌐 API URL: http://localhost:${PORT}`);
+  logger.info(`📱 Expo Go will auto-detect your computer's IP address`);
+  logger.info(`ℹ️  Make sure phone and computer are on the same WiFi network`);
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  logger.error('UNHANDLED REJECTION! [FATAL] Shutting down...');
-  logger.error(err.name, err.message);
+process.on("unhandledRejection", (err) => {
+  logger.error("❌ UNHANDLED REJECTION! [FATAL] Shutting down...");
+  logger.error(`Error Name: ${err.name}`);
+  logger.error(`Error Message: ${err.message}`);
+  logger.error(`Stack: ${err.stack}`);
   server.close(() => {
     process.exit(1);
   });
 });
 
 // Handle SIGTERM
-process.on('SIGTERM', () => {
-  logger.info('[SHUTDOWN] SIGTERM RECEIVED. Shutting down gracefully');
+process.on("SIGTERM", () => {
+  logger.info("🛑 SIGTERM RECEIVED. Shutting down gracefully");
   server.close(() => {
-    logger.info('[SHUTDOWN] Process terminated!');
+    logger.info("✅ Process terminated!");
   });
 });
 
