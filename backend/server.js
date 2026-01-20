@@ -87,16 +87,12 @@ const authLimiter = rateLimit({
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 
-// Body parser
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
 // Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Better Auth Handler - MUST come BEFORE express.json() and other routes
+// Better Auth Handler - MUST come BEFORE custom routes
 app.all("/api/auth/*", (req, res, next) => {
   try {
     const auth = getAuth();
@@ -109,7 +105,7 @@ app.all("/api/auth/*", (req, res, next) => {
   }
 });
 
-// Body parser - AFTER Better Auth handler
+// Body parser - MUST come AFTER Better Auth but BEFORE custom routes
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -144,11 +140,15 @@ app.get("/api", (req, res) => {
 
 // Health check
 app.get("/api/health", (req, res) => {
+  const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  
   res.json({
     status: "success",
     message: "AayuCare Backend Server is running",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
+    mongodb: mongoStatus,
+    betterAuth: typeof getAuth === 'function' ? 'initialized' : 'not initialized',
   });
 });
 

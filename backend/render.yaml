@@ -7,6 +7,9 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
+    autoDeploy: true
+    # Keep service warm with health checks
+    numInstances: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -16,6 +19,10 @@ services:
         sync: false # Set manually in Render dashboard
       - key: JWT_SECRET
         generateValue: true # Render will auto-generate
+      - key: BETTER_AUTH_SECRET
+        generateValue: true # Render will auto-generate for Better Auth
+      - key: BACKEND_URL
+        value: https://aayucare-backend.onrender.com
       - key: JWT_EXPIRE
         value: 30d
       - key: JWT_REFRESH_SECRET

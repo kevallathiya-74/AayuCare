@@ -90,13 +90,16 @@ export const login = async (credentials) => {
       try {
         // Call backend API to get user email by userId with timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout for Render cold start
 
         const response = await fetch(
           `${AppConfig.api.baseURL}/user/email-by-userid`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
             body: JSON.stringify({ userId: userInput }),
             signal: controller.signal,
           }
@@ -116,13 +119,25 @@ export const login = async (credentials) => {
             response.status,
             errorText
           );
-          throw new Error(`User not found (${response.status})`);
+          throw new Error(`User not found (${response.status}): ${errorText}`);
         }
 
         const data = await response.json();
+        
+        if (!data.email) {
+          throw new Error("No email in response");
+        }
+        
         emailToUse = data.email;
         console.log("[BetterAuth] - Found email:", emailToUse);
       } catch (err) {
+        console.error("[BetterAuth] Failed to fetch email - Error:", err.name, err.message);
+        
+        if (err.name === 'AbortError') {
+          throw new Error("Backend is starting (cold start on Render). Please wait 30 seconds and try again.");
+        }
+        
+        throw new Error(`Could not find user: ${userInput}. ${err.message}`);
         console.error(
           "[BetterAuth] Failed to fetch email:",
           err.message || err
