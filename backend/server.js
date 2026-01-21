@@ -26,6 +26,10 @@ const notificationRoutes = require("./src/routes/notificationRoutes");
 
 const app = express();
 
+// Trust proxy - Required for Render.com and reverse proxies
+// Must be set BEFORE rate limiter to correctly identify client IPs
+app.set('trust proxy', 1);
+
 // Connect to MongoDB FIRST
 connectDB().then(() => {
   // Initialize Better Auth after DB connection

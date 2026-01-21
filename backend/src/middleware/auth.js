@@ -38,9 +38,9 @@ exports.protect = async (req, res, next) => {
           const sessionDoc = await db.collection("session").findOne({ token });
 
           if (sessionDoc && sessionDoc.expiresAt > new Date()) {
-            // Session is valid, get user
+            // Session is valid, get user by _id (not id field)
             const userDoc = await db.collection("user").findOne({
-              id: sessionDoc.userId,
+              _id: sessionDoc.userId,
             });
 
             if (userDoc) {
