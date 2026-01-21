@@ -42,12 +42,12 @@ import {
 import { showError, validateRequiredFields } from "../../utils/errorHandler";
 
 // Development auto-fill credentials (only available in __DEV__ mode)
-// These match the actual users in the database
+// Simple test credentials for easy development
 const DEV_CREDENTIALS = __DEV__
   ? {
-      patient: { userId: "TESTPAT124", password: "password123" },
-      doctor: { userId: "TESTDOC002", password: "password123" },
-      admin: { userId: "TESTUSR001", password: "password123" },
+      patient: { userId: "patient", password: "password123" },
+      doctor: { userId: "doctor", password: "password123" },
+      admin: { userId: "admin", password: "password123" },
     }
   : null;
 
@@ -391,15 +391,15 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 <Text style={styles.demoTitle}>Development Credentials:</Text>
                 <View style={styles.demoRow}>
                   <Text style={styles.demoLabel}>Patient:</Text>
-                  <Text style={styles.demoValue}>TESTPAT124 / password123</Text>
+                  <Text style={styles.demoValue}>patient / password123</Text>
                 </View>
                 <View style={styles.demoRow}>
                   <Text style={styles.demoLabel}>Doctor:</Text>
-                  <Text style={styles.demoValue}>TESTDOC002 / password123</Text>
+                  <Text style={styles.demoValue}>doctor / password123</Text>
                 </View>
                 <View style={styles.demoRow}>
-                  <Text style={styles.demoLabel}>Test User:</Text>
-                  <Text style={styles.demoValue}>TESTUSR001 / password123</Text>
+                  <Text style={styles.demoLabel}>Admin:</Text>
+                  <Text style={styles.demoValue}>admin / password123</Text>
                 </View>
               </View>
             )}
