@@ -257,7 +257,8 @@ const DoctorHomeScreen = ({ navigation }) => {
       <SafeAreaView 
         style={styles.container} 
         edges={getSafeAreaEdges('withTabBar')}
-      >        <View style={styles.loadingContainer}>
+      >
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
           <Text style={styles.loadingText}>Loading dashboard...</Text>
         </View>
