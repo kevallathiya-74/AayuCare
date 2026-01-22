@@ -91,7 +91,8 @@ const DoctorHomeScreen = ({ navigation }) => {
           totalAppointments: response.data.schedule?.totalAppointments || 0,
           completed: response.data.schedule?.completed || 0,
           pending: response.data.schedule?.pending || 0,
-          nextPatient: response.data.schedule?.nextPatient || "No upcoming patients",
+          nextPatient:
+            response.data.schedule?.nextPatient || "No upcoming patients",
           nextTime: response.data.schedule?.nextTime || "--:--",
         });
         setTodaysAppointments(response.data.todaysAppointments || []);
@@ -254,9 +255,9 @@ const DoctorHomeScreen = ({ navigation }) => {
 
   if (loading) {
     return (
-      <SafeAreaView 
-        style={styles.container} 
-        edges={getSafeAreaEdges('withTabBar')}
+      <SafeAreaView
+        style={styles.container}
+        edges={getSafeAreaEdges("withTabBar")}
       >
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
@@ -267,9 +268,9 @@ const DoctorHomeScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={getSafeAreaEdges('withTabBar')}
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
     >
       <StatusBar
         barStyle="dark-content"
@@ -583,7 +584,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                       color={healthColors.primary.main}
                     />
                     <Text style={styles.appointmentTimeText}>
-                      {appointment.time || '--:--'}
+                      {appointment.time || "--:--"}
                     </Text>
                   </View>
                   <View style={styles.appointmentTypeBadge}>
@@ -605,7 +606,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 
                 <View style={styles.appointmentPatientRow}>
                   <Text style={styles.appointmentPatient}>
-                    {appointment.patientName || 'Unknown Patient'}
+                    {appointment.patientName || "Unknown Patient"}
                   </Text>
                   <View
                     style={[
@@ -627,8 +628,9 @@ const DoctorHomeScreen = ({ navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.appointmentReason}>
-                  ID: {appointment.patientId || 'N/A'} | Age: {appointment.age || 'N/A'} |{" "}
-                  {appointment.reason || 'General Consultation'}
+                  ID: {appointment.patientId || "N/A"} | Age:{" "}
+                  {appointment.age || "N/A"} |{" "}
+                  {appointment.reason || "General Consultation"}
                 </Text>
 
                 <View style={styles.appointmentActions}>
@@ -957,7 +959,9 @@ const DoctorHomeScreen = ({ navigation }) => {
                     <Text style={styles.menuStatLabel}>Completed</Text>
                   </View>
                   <View style={styles.menuStatCard}>
-                    <Text style={styles.menuStatValue}>{String(schedule.pending)}</Text>
+                    <Text style={styles.menuStatValue}>
+                      {String(schedule.pending)}
+                    </Text>
                     <Text style={styles.menuStatLabel}>Pending</Text>
                   </View>
                 </View>

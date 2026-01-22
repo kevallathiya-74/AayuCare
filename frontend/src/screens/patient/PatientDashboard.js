@@ -36,7 +36,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { healthColors } from "../../theme/healthColors";
 import { indianDesign, createShadow } from "../../theme/indianDesign";
-import LargeActionCard from "../../components/common/LargeActionCard";
+import CompactActionCard from "../../components/common/CompactActionCard";
 import LanguageSelector from "../../components/common/LanguageSelector";
 import { logoutUser } from "../../store/slices/authSlice";
 import {
@@ -65,15 +65,7 @@ const PatientDashboard = ({ navigation }) => {
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
   const insets = useSafeAreaInsets();
 
-  // Fetch health metrics
-  useEffect(() => {
-    if (user?._id) {
-      fetchHealthMetrics();
-      fetchUnreadNotifications();
-    }
-  }, [user?._id]);
-
-  const fetchUnreadNotifications = async () => {
+  const fetchUnreadNotifications = useCallback(async () => {
     try {
       const response = await notificationService.getUnreadCount();
       setUnreadNotifications(response?.data?.count || 0);
@@ -81,26 +73,37 @@ const PatientDashboard = ({ navigation }) => {
       logError(error, { context: "PatientDashboard.fetchUnreadNotifications" });
       // Silently fail - notification count is not critical
     }
-  };
+  }, []);
 
-  const fetchHealthMetrics = async () => {
+  const fetchHealthMetrics = useCallback(async () => {
+    if (!user?.userId) return;
+
     try {
       setLoadingMetrics(true);
       const response = await healthMetricsService.getMetrics(user.userId);
-      setHealthMetrics(response.data);
+      setHealthMetrics(response.data || []);
     } catch (error) {
       logError(error, { context: "PatientDashboard.fetchHealthMetrics" });
-      // Don't show error to user for non-critical health metrics
+      // Set empty array on error - don't show error to user for non-critical health metrics
+      setHealthMetrics([]);
     } finally {
       setLoadingMetrics(false);
     }
-  };
+  }, [user?.userId]);
+
+  // Fetch health metrics on mount
+  useEffect(() => {
+    if (user?._id) {
+      fetchHealthMetrics();
+      fetchUnreadNotifications();
+    }
+  }, [user?._id, fetchHealthMetrics, fetchUnreadNotifications]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([fetchHealthMetrics(), fetchUnreadNotifications()]);
     setRefreshing(false);
-  }, [user?._id]);
+  }, [fetchHealthMetrics, fetchUnreadNotifications]);
 
   // Get latest metric value by type
   const getLatestMetric = (type) => {
@@ -296,9 +299,9 @@ const PatientDashboard = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={getSafeAreaEdges('withTabBar')}
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
     >
       <StatusBar
         barStyle="dark-content"
@@ -409,11 +412,6 @@ const PatientDashboard = ({ navigation }) => {
         {/* Health Status Card */}
         <View style={styles.healthStatusSection}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="heart-circle"
-              size={20}
-              color={healthColors.primary.main}
-            />
             <Text style={styles.healthStatusTitle}>HEALTH STATUS</Text>
           </View>
           {loadingMetrics ? (
@@ -493,90 +491,23 @@ const PatientDashboard = ({ navigation }) => {
           )}
         </View>
 
-        {/* Quick Emergency Buttons */}
-        <View style={styles.emergencySection}>
-          <View style={styles.sectionHeader}>
-            <Ionicons
-              name="warning"
-              size={20}
-              color={healthColors.error.main}
-            />
-            <Text style={styles.emergencyTitle}>QUICK EMERGENCY</Text>
-          </View>
-          <View style={styles.emergencyButtons}>
-            <TouchableOpacity
-              style={[styles.emergencyButton, styles.ambulanceButton]}
-              onPress={() => navigation.navigate("Emergency")}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Call ambulance"
-            >
-              <LinearGradient
-                colors={[healthColors.error.main, healthColors.error.dark]}
-                style={styles.emergencyButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.emergencyIconCircle}>
-                  <Ionicons name="medkit" size={28} color="#FFFFFF" />
-                </View>
-                <Text style={styles.emergencyButtonTitle}>CALL AMBULANCE</Text>
-                <Text style={styles.emergencyButtonSubtitle}>ONE CLICK</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.emergencyButton, styles.doctorButton]}
-              onPress={() =>
-                Alert.alert("Emergency Helpline", "Calling doctor helpline...")
-              }
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Call doctor helpline"
-            >
-              <LinearGradient
-                colors={[healthColors.primary.main, healthColors.primary.dark]}
-                style={styles.emergencyButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.emergencyIconCircle}>
-                  <Ionicons name="call" size={28} color="#FFFFFF" />
-                </View>
-                <Text style={styles.emergencyButtonTitle}>CALL DOCTOR</Text>
-                <Text style={styles.emergencyButtonSubtitle}>HELPLINE</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Main Features Section */}
         <View style={styles.mainFeaturesSection}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="grid" size={20} color={healthColors.primary.main} />
             <Text style={styles.emergencyTitle}>MAIN FEATURES</Text>
           </View>
 
-          {/* Action Cards - Responsive Grid */}
-          <View style={[
-            styles.grid,
-            { maxWidth: isTablet() ? getContainerWidth(1200) : '100%' }
-          ]}>
+          {/* Action Cards - 2-Column Grid matching Doctor Quick Actions */}
+          <View style={styles.quickActionsGrid}>
             {actionCards.map((card, index) => (
-              <View 
-                key={index} 
-                style={[
-                  styles.gridItem,
-                  { width: `${100 / Math.min(getGridColumns(), 3)}%` }
-                ]}
-              >
-                <LargeActionCard
-                  title={card.title}
-                  icon={card.icon}
-                  iconColor={card.iconColor}
-                  onPress={card.onPress}
-                  badge={card.badge}
-                />
-              </View>
+              <CompactActionCard
+                key={index}
+                title={card.title}
+                icon={card.icon}
+                iconColor={card.iconColor}
+                onPress={card.onPress}
+                badge={card.badge}
+              />
             ))}
           </View>
         </View>
@@ -1196,8 +1127,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
     marginLeft: moderateScale(8), // spacing.sm
   },
-  notificationsList: {
-  },
+  notificationsList: {},
   notificationRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1225,16 +1155,22 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(32), // spacing.xxxl for proper footer spacing
     flexGrow: 1,
   },
+  quickActionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: moderateScale(12),
+    justifyContent: "space-between",
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     width: "100%",
     paddingHorizontal: getScreenPadding(),
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   gridItem: {
-    width: `${(100 / getGridColumns(Dimensions.get('window').width)) - 2}%`,
+    width: `${100 / getGridColumns(Dimensions.get("window").width) - 2}%`,
     marginBottom: moderateScale(16), // spacing.md
     paddingHorizontal: moderateScale(4), // Small gap between items
   },
