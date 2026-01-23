@@ -20,7 +20,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import { textStyles } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
 import {
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   recordTitle: {
     ...textStyles.bodyLarge,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   recordDate: {
@@ -364,9 +364,10 @@ const styles = StyleSheet.create({
   },
   riskText: {
     ...textStyles.bodySmall,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     marginLeft: spacing.xs,
   },
 });
 
 export default MedicalRecordsScreen;
+

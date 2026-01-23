@@ -9,10 +9,7 @@ import { useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign } from "../../theme/indianDesign";
-import { scaledFontSize, moderateScale } from "../../utils/responsive";
-
+import { theme, healthColors } from "../../theme";
 const SplashScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -213,50 +210,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logoContainer: {
-    width: moderateScale(140),
-    height: moderateScale(140),
-    borderRadius: moderateScale(70),
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     backgroundColor: "rgba(255, 255, 255, 0.95)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.xl,
-    padding: moderateScale(20),
+    marginBottom: theme.spacing.xl,
+    padding: 20,
   },
   logo: {
     width: "100%",
     height: "100%",
   },
   iconContainer: {
-    width: moderateScale(120),
-    height: moderateScale(120),
-    borderRadius: moderateScale(60),
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   appName: {
-    fontSize: scaledFontSize(36),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 36,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   tagline: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.medium,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.medium,
     color: "rgba(255, 255, 255, 0.9)",
     marginBottom: 4,
   },
   loadingContainer: {
     flexDirection: "row",
-    marginTop: indianDesign.spacing.xl,
+    marginTop: theme.spacing.xl,
   },
   dot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     backgroundColor: healthColors.white,
-    marginRight: indianDesign.spacing.sm,
+    marginRight: theme.spacing.sm,
   },
   footerContainer: {
     position: "absolute",
@@ -264,13 +261,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
-    paddingHorizontal: moderateScale(24),
+    paddingHorizontal: 24,
   },
   footer: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "rgba(255, 255, 255, 0.8)",
     textAlign: "center",
   },
 });
 
 export default SplashScreen;
+
+
+

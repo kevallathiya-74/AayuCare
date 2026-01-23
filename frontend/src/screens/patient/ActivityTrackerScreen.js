@@ -20,12 +20,9 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  scaledFontSize,
-  moderateScale,
   verticalScale,
 } from "../../utils/responsive";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
@@ -367,46 +364,46 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
     flex: 1,
-    marginLeft: indianDesign.spacing.md,
+    marginLeft: theme.spacing.md,
   },
   headerText: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   headerSubtitle: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
     padding: getScreenPadding(),
   },
   section: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
-    padding: indianDesign.spacing.lg,
-    ...createShadow(2),
+    padding: theme.spacing.lg,
+    ...theme.shadows.md,
   },
   stepsHeader: {
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   stepsCount: {
-    fontSize: scaledFontSize(18),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     textAlign: "center",
   },
@@ -415,14 +412,14 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.tertiary,
     borderRadius: 6,
     overflow: "hidden",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   progressFill: {
     height: "100%",
     backgroundColor: healthColors.primary.main,
   },
   progressText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
@@ -430,31 +427,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   sleepLabel: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
   },
   sleepValue: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.xs,
+    gap: theme.spacing.xs,
   },
   sleepDuration: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   sleepQuality: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
   },
   sleepDetails: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginVertical: indianDesign.spacing.md,
-    paddingVertical: indianDesign.spacing.md,
+    marginVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: healthColors.border.light,
@@ -463,39 +460,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sleepTimeLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
     marginBottom: 4,
   },
   sleepTimeValue: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   reportButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: indianDesign.spacing.xs,
-    marginTop: indianDesign.spacing.sm,
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
   reportButtonText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontWeight: theme.typography.weights.medium,
   },
   waterCount: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     textAlign: "center",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   waterGlasses: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: indianDesign.spacing.xs,
-    marginBottom: indianDesign.spacing.lg,
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.lg,
   },
   glassIcon: {
     alignItems: "center",
@@ -504,74 +501,77 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   addGlassButton: {
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
     overflow: "hidden",
-    marginBottom: indianDesign.spacing.md,
-    ...createShadow(2),
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   addGlassGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.sm,
-    gap: indianDesign.spacing.xs,
+    paddingVertical: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
   addGlassText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: "#FFF",
   },
   reminderText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
     textAlign: "center",
   },
   activityItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     backgroundColor: healthColors.background.primary,
-    borderRadius: indianDesign.borderRadius.medium,
-    marginBottom: indianDesign.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
   },
   activityIcon: {
-    width: moderateScale(48),
-    height: moderateScale(48),
-    borderRadius: moderateScale(24),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   activityInfo: {
     flex: 1,
   },
   activityName: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   activityDuration: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
   },
   progressButton: {
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
     overflow: "hidden",
-    marginTop: indianDesign.spacing.lg,
-    ...createShadow(4),
+    marginTop: theme.spacing.lg,
+    ...theme.shadows.lg,
   },
   progressGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   progressButtonText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
 });
 
 export default ActivityTrackerScreen;
+
+
+

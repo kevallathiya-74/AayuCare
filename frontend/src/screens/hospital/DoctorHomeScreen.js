@@ -34,13 +34,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  moderateScale,
   verticalScale,
-  scaledFontSize,
   getSafeAreaEdges,
   getContainerWidth,
   isTablet,
@@ -317,7 +314,7 @@ const DoctorHomeScreen = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Open menu"
             >
-              <Ionicons name="menu" size={24} color="#FFFFFF" />
+              <Ionicons name="menu" size={24} color={theme.colors.text.white} />
             </TouchableOpacity>
             <View style={styles.bannerRightIcons}>
               <TouchableOpacity
@@ -337,7 +334,11 @@ const DoctorHomeScreen = ({ navigation }) => {
                     : "No notifications"
                 }
               >
-                <Ionicons name="notifications" size={24} color="#FFFFFF" />
+                <Ionicons
+                  name="notifications"
+                  size={24}
+                  color={theme.colors.text.white}
+                />
                 {notificationCount > 0 && (
                   <View style={styles.bannerNotificationBadge}>
                     <Text style={styles.bannerNotificationBadgeText}>
@@ -346,14 +347,18 @@ const DoctorHomeScreen = ({ navigation }) => {
                   </View>
                 )}
               </TouchableOpacity>
-              <LanguageSelector compact iconColor="#FFFFFF" />
+              <LanguageSelector compact iconColor={theme.colors.text.white} />
               <TouchableOpacity
                 style={styles.bannerIconButton}
                 onPress={() => navigation.navigate("Profile")}
                 accessibilityRole="button"
                 accessibilityLabel="View profile"
               >
-                <Ionicons name="person" size={24} color="#FFFFFF" />
+                <Ionicons
+                  name="person"
+                  size={24}
+                  color={theme.colors.text.white}
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -364,7 +369,7 @@ const DoctorHomeScreen = ({ navigation }) => {
               <Ionicons
                 name={getGreetingIcon()}
                 size={28}
-                color="#FFFFFF"
+                color={theme.colors.text.white}
                 style={styles.greetingIcon}
               />
               <View>
@@ -376,13 +381,21 @@ const DoctorHomeScreen = ({ navigation }) => {
             </View>
             <View style={styles.bannerInfoCard}>
               <View style={styles.bannerInfoRow}>
-                <Ionicons name="medical" size={16} color="#FFFFFF" />
+                <Ionicons
+                  name="medical"
+                  size={16}
+                  color={theme.colors.text.white}
+                />
                 <Text style={styles.bannerInfoText}>
                   {user?.specialization || "General Physician"}
                 </Text>
               </View>
               <View style={styles.bannerInfoRow}>
-                <Ionicons name="business" size={16} color="#FFFFFF" />
+                <Ionicons
+                  name="business"
+                  size={16}
+                  color={theme.colors.text.white}
+                />
                 <Text style={styles.bannerInfoText}>
                   {user?.department || "OPD"}
                 </Text>
@@ -793,7 +806,11 @@ const DoctorHomeScreen = ({ navigation }) => {
               <View style={styles.menuHeaderContent}>
                 <View style={styles.menuProfileSection}>
                   <View style={styles.menuAvatar}>
-                    <Ionicons name="person" size={32} color="#FFFFFF" />
+                    <Ionicons
+                      name="person"
+                      size={32}
+                      color={theme.colors.text.white}
+                    />
                   </View>
                   <View style={styles.menuUserInfo}>
                     <Text style={styles.menuUserName}>
@@ -811,7 +828,11 @@ const DoctorHomeScreen = ({ navigation }) => {
                   style={styles.menuCloseButton}
                   onPress={closeMenu}
                 >
-                  <Ionicons name="close" size={28} color="#FFFFFF" />
+                  <Ionicons
+                    name="close"
+                    size={28}
+                    color={theme.colors.text.white}
+                  />
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -1067,10 +1088,10 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.main,
   },
   welcomeBanner: {
-    paddingTop: moderateScale(12),
-    paddingBottom: moderateScale(20),
-    borderBottomLeftRadius: moderateScale(24),
-    borderBottomRightRadius: moderateScale(24),
+    paddingTop: 12,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
@@ -1079,41 +1100,41 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   bannerRightIcons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    gap: 8,
   },
   bannerIconButton: {
-    padding: moderateScale(8),
+    padding: 8,
     position: "relative",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: moderateScale(20),
-    width: moderateScale(40),
-    height: moderateScale(40),
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
+    borderRadius: 20,
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
   },
   bannerNotificationBadge: {
     position: "absolute",
-    top: moderateScale(2),
-    right: moderateScale(2),
+    top: 2,
+    right: 2,
     backgroundColor: healthColors.error.main,
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(18),
-    height: moderateScale(18),
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: moderateScale(4),
+    paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: theme.colors.text.white,
   },
   bannerNotificationBadgeText: {
-    fontSize: scaledFontSize(10),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
   bannerGreeting: {
     paddingHorizontal: getScreenPadding(),
@@ -1121,173 +1142,173 @@ const styles = StyleSheet.create({
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(16), // spacing.md
+    marginBottom: 16, // spacing.md
   },
   greetingIcon: {
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   bannerTimeGreeting: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: moderateScale(4),
+    fontSize: 12,
+    fontWeight: theme.typography.weights.medium,
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
+    marginBottom: 4,
     letterSpacing: 0.3,
   },
   bannerWelcomeText: {
-    fontSize: scaledFontSize(20),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
   bannerInfoCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: moderateScale(12),
-    padding: moderateScale(12),
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.15),
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: theme.withOpacity(theme.colors.text.white, 0.2),
   },
   bannerInfoRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(6),
+    marginBottom: 6,
   },
   bannerInfoText: {
-    fontSize: scaledFontSize(13),
-    color: "#FFFFFF",
-    marginLeft: moderateScale(8),
-    fontWeight: "500",
+    fontSize: 13,
+    color: theme.colors.text.white,
+    marginLeft: 8,
+    fontWeight: theme.typography.weights.medium,
   },
   section: {
     paddingHorizontal: getScreenPadding(),
     marginTop: verticalScale(24), // spacing.lg for better section separation
   },
   sectionTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     letterSpacing: 0.5,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   scheduleCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   scheduleHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    gap: 8,
   },
   scheduleTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     letterSpacing: 0.5,
   },
   divider: {
     height: 1,
     backgroundColor: healthColors.border.light,
-    marginVertical: moderateScale(12),
+    marginVertical: 12,
   },
   scheduleStats: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   scheduleStat: {
     alignItems: "center",
   },
   scheduleIconCircle: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: moderateScale(8),
+    marginBottom: 8,
   },
   scheduleStatValue: {
-    fontSize: scaledFontSize(20),
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: moderateScale(4),
+    marginTop: 4,
   },
   scheduleStatLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(4),
+    marginTop: 4,
   },
   progressContainer: {
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   progressRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: moderateScale(8),
+    marginBottom: 8,
   },
   progressItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
+    gap: 6,
   },
   progressLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   progressBar: {
-    height: moderateScale(8),
+    height: 8,
     backgroundColor: healthColors.border.light,
-    borderRadius: moderateScale(4),
+    borderRadius: 4,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
     backgroundColor: healthColors.success,
-    borderRadius: moderateScale(4),
+    borderRadius: 4,
   },
   nextPatientCard: {
     backgroundColor: healthColors.primary.main + "10",
-    padding: moderateScale(12),
-    borderRadius: moderateScale(8),
+    padding: 12,
+    borderRadius: 8,
     borderLeftWidth: 3,
     borderLeftColor: healthColors.primary.main,
   },
   nextPatientLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   nextPatientName: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(12), // Ensure proper internal padding
-    minHeight: Math.max(moderateScale(48), 48), // Enforce 48dp minimum
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12, // Ensure proper internal padding
+    minHeight: Math.max(48, 48), // Enforce 48dp minimum
     borderWidth: 1, // Reduced from 2 for subtlety
     borderColor: healthColors.border.light,
   },
   searchIcon: {
-    marginRight: moderateScale(8),
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
     paddingVertical: 0, // Remove default TextInput padding
   },
   searchResultsContainer: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    marginTop: moderateScale(8),
+    borderRadius: 12,
+    marginTop: 8,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
@@ -1295,7 +1316,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: moderateScale(12),
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
     minHeight: 48, // Enforce minimum touch target
@@ -1304,35 +1325,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchResultName: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   searchResultDetails: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(2),
+    marginTop: 2,
   },
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
-    padding: moderateScale(32),
+    padding: 32,
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   emptyStateText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(12),
+    marginTop: 12,
     textAlign: "center",
   },
   appointmentCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginBottom: moderateScale(12),
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderLeftWidth: 4,
     borderLeftColor: healthColors.primary.main,
     borderWidth: 1, // Reduced from 2 for subtlety
@@ -1342,76 +1363,76 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   appointmentTime: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
+    gap: 4,
   },
   appointmentTimeText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   appointmentTypeBadge: {
-    padding: moderateScale(6),
-    borderRadius: moderateScale(8),
+    padding: 6,
+    borderRadius: 8,
     backgroundColor: healthColors.background.main,
   },
   appointmentPatientRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   statusBadge: {
-    paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(4),
-    borderRadius: moderateScale(6),
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   statusText: {
-    fontSize: scaledFontSize(11),
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: theme.typography.weights.semiBold,
   },
   appointmentPatient: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   appointmentReason: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   appointmentActions: {
     flexDirection: "row",
-    gap: moderateScale(12),
+    gap: 12,
   },
   actionButtonSecondary: {
     flex: 1,
-    paddingVertical: moderateScale(10),
-    borderRadius: moderateScale(8),
+    paddingVertical: 10,
+    borderRadius: 8,
     backgroundColor: healthColors.background.main,
     borderWidth: 1,
     borderColor: healthColors.primary.main,
     alignItems: "center",
   },
   actionButtonSecondaryText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
   actionButtonPrimary: {
     flex: 1,
-    paddingVertical: moderateScale(10),
-    borderRadius: moderateScale(8),
+    paddingVertical: 10,
+    borderRadius: 8,
     backgroundColor: healthColors.primary.main,
     alignItems: "center",
   },
   actionButtonPrimaryText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.background.card,
   },
   addWalkinButton: {
@@ -1419,102 +1440,102 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.background.card,
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: healthColors.primary.main,
     borderStyle: "dashed",
   },
   addWalkinText: {
-    fontSize: scaledFontSize(15),
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
-    marginLeft: moderateScale(8),
+    marginLeft: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: moderateScale(12),
+    gap: 12,
   },
   loadingText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
   },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.error.main + "15",
     marginHorizontal: getScreenPadding(),
-    marginTop: moderateScale(12),
-    padding: moderateScale(12),
-    borderRadius: moderateScale(8),
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 8,
     borderLeftWidth: 3,
     borderLeftColor: healthColors.error.main,
-    gap: moderateScale(8),
+    gap: 8,
   },
   errorText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.error.main,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
   },
   retryText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.primary.main,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   quickActionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: moderateScale(12),
+    gap: 12,
     justifyContent: "space-between",
   },
   quickActionCard: {
     width: "48%",
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
+    borderRadius: 12,
+    padding: 16,
     alignItems: "center",
     borderWidth: 2,
     borderColor: healthColors.border.light,
-    minHeight: moderateScale(110),
+    minHeight: 110,
     justifyContent: "center",
   },
   quickActionIcon: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   quickActionTitle: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     textAlign: "center",
-    lineHeight: scaledFontSize(16),
+    lineHeight: 16,
   },
   // Menu Drawer Styles
   menuOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: theme.withOpacity(theme.colors.grays.black, 0.5),
     justifyContent: "flex-start",
   },
   menuDrawer: {
     width: "80%",
-    maxWidth: moderateScale(320),
+    maxWidth: 320,
     height: "100%",
     backgroundColor: healthColors.background.card,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   menuHeader: {
-    paddingTop: moderateScale(50),
-    paddingBottom: moderateScale(20),
-    paddingHorizontal: moderateScale(16),
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
   },
   menuHeaderContent: {
     flexDirection: "row",
@@ -1524,67 +1545,67 @@ const styles = StyleSheet.create({
   menuProfileSection: {
     flex: 1,
     flexDirection: "row",
-    gap: moderateScale(12),
+    gap: 12,
   },
   menuAvatar: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: theme.withOpacity(theme.colors.text.white, 0.3),
   },
   menuUserInfo: {
     flex: 1,
     justifyContent: "center",
   },
   menuUserName: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: moderateScale(2),
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+    marginBottom: 2,
   },
   menuUserRole: {
-    fontSize: scaledFontSize(13),
-    color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: moderateScale(2),
+    fontSize: 13,
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
+    marginBottom: 2,
   },
   menuUserId: {
-    fontSize: scaledFontSize(11),
-    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 11,
+    color: theme.withOpacity(theme.colors.text.white, 0.7),
   },
   menuCloseButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   menuContent: {
     flex: 1,
   },
   menuSection: {
-    paddingVertical: moderateScale(16),
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   menuSectionTitle: {
-    fontSize: scaledFontSize(11),
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.tertiary,
-    paddingHorizontal: moderateScale(16),
-    marginBottom: moderateScale(8),
+    paddingHorizontal: 16,
+    marginBottom: 8,
     letterSpacing: 0.5,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(12),
-    paddingHorizontal: moderateScale(16),
-    gap: moderateScale(12),
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
   },
   menuItemText: {
     flex: 1,
-    fontSize: scaledFontSize(14),
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
   menuItemDanger: {
@@ -1592,56 +1613,59 @@ const styles = StyleSheet.create({
   },
   menuItemTextDanger: {
     color: healthColors.error.main,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   menuBadge: {
     backgroundColor: healthColors.error.main,
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(20),
-    height: moderateScale(20),
-    paddingHorizontal: moderateScale(6),
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
     alignItems: "center",
     justifyContent: "center",
   },
   menuBadgeText: {
-    fontSize: scaledFontSize(11),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
   menuStatsGrid: {
     flexDirection: "row",
-    gap: moderateScale(12),
-    paddingHorizontal: moderateScale(16),
+    gap: 12,
+    paddingHorizontal: 16,
   },
   menuStatCard: {
     flex: 1,
     backgroundColor: healthColors.primary.main + "10",
-    borderRadius: moderateScale(8),
-    padding: moderateScale(12),
+    borderRadius: 8,
+    padding: 12,
     alignItems: "center",
     borderWidth: 1,
     borderColor: healthColors.primary.main + "20",
   },
   menuStatValue: {
-    fontSize: scaledFontSize(20),
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   menuStatLabel: {
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
   menuFooter: {
-    padding: moderateScale(16),
+    padding: 16,
     alignItems: "center",
-    gap: moderateScale(4),
+    gap: 4,
   },
   menuFooterText: {
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.tertiary,
   },
 });
 
 export default DoctorHomeScreen;
+
+
+

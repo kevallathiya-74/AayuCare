@@ -14,8 +14,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
-import { moderateScale, scaledFontSize } from '../../utils/responsive';
-
 // Available hospitals in the system
 const HOSPITALS = [
   { id: 'ALL', name: 'All Hospitals' },
@@ -129,12 +127,12 @@ const HospitalSelector = ({ selectedHospitalId, onSelectHospital, userRole }) =>
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: moderateScale(10),
+    marginVertical: 10,
   },
   selectorButton: {
     backgroundColor: healthColors.neutral.white,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(12),
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: healthColors.neutral.border,
     shadowColor: '#000',
@@ -150,8 +148,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     flex: 1,
-    marginLeft: moderateScale(10),
-    fontSize: scaledFontSize(14),
+    marginLeft: 10,
+    fontSize: 14,
     fontWeight: '600',
     color: healthColors.text.primary,
   },
@@ -162,21 +160,21 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: healthColors.neutral.white,
-    borderTopLeftRadius: moderateScale(20),
-    borderTopRightRadius: moderateScale(20),
-    paddingBottom: moderateScale(30),
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
     maxHeight: '70%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: moderateScale(20),
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.neutral.border,
   },
   modalTitle: {
-    fontSize: scaledFontSize(18),
+    fontSize: 18,
     fontWeight: 'bold',
     color: healthColors.text.primary,
   },
@@ -184,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: moderateScale(16),
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.neutral.background,
   },
@@ -197,8 +195,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hospitalItemText: {
-    marginLeft: moderateScale(12),
-    fontSize: scaledFontSize(16),
+    marginLeft: 12,
+    fontSize: 16,
     color: healthColors.text.primary,
   },
   hospitalItemTextSelected: {
@@ -208,3 +206,6 @@ const styles = StyleSheet.create({
 });
 
 export default HospitalSelector;
+
+
+

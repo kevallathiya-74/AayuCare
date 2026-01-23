@@ -22,8 +22,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
@@ -277,10 +276,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -291,8 +290,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.xlarge,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xxxl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   filterButton: {
@@ -304,21 +303,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   listContent: {
-    padding: indianDesign.spacing.lg,
-    gap: indianDesign.spacing.md,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   reportCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.large,
-    padding: indianDesign.spacing.md,
-    ...createShadow(2),
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    ...theme.shadows.md,
   },
   reportLeft: {
     flexDirection: "row",
     flex: 1,
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
   },
   fileIcon: {
     width: 48,
@@ -338,13 +337,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   reportTitle: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   reportType: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
@@ -354,15 +353,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: indianDesign.fontSize.tiny,
+    fontSize: theme.typography.sizes.xs,
     color: healthColors.text.tertiary,
   },
   metaDivider: {
-    fontSize: indianDesign.fontSize.tiny,
+    fontSize: theme.typography.sizes.xs,
     color: healthColors.text.tertiary,
   },
   reportRight: {
-    gap: indianDesign.spacing.xs,
+    gap: theme.spacing.xs,
     justifyContent: "center",
   },
   downloadButton: {
@@ -388,7 +387,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
   },
   emptyListContent: {
@@ -398,18 +397,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: indianDesign.spacing.xl,
+    padding: theme.spacing.xl,
     minHeight: 400,
   },
   emptyStateTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.xs,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
   },
   emptyStateText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
     textAlign: "center",
     lineHeight: 20,
@@ -417,3 +416,4 @@ const styles = StyleSheet.create({
 });
 
 export default MyReportsScreen;
+

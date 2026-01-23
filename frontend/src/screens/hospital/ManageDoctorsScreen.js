@@ -22,8 +22,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import AddDoctorModal from "./AddDoctorModal";
@@ -365,10 +364,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -387,43 +386,43 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   searchSection: {
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingTop: indianDesign.spacing.md,
-    paddingBottom: indianDesign.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
     backgroundColor: healthColors.background.primary,
   },
   searchInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.medium,
-    paddingHorizontal: indianDesign.spacing.md,
-    paddingVertical: indianDesign.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderWidth: 1,
     borderColor: healthColors.border.light,
     gap: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
     paddingVertical: 8,
   },
   listContent: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     flexGrow: 1,
   },
   doctorCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.medium,
-    padding: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.md,
-    ...createShadow(2),
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   doctorHeader: {
     flexDirection: "row",
@@ -436,7 +435,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   avatarInactive: {
     backgroundColor: healthColors.border.light,
@@ -445,12 +444,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   doctorName: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   specialization: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.primary.main,
     marginTop: 2,
   },
@@ -466,7 +465,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   statusText: {
-    fontSize: indianDesign.fontSize.tiny,
+    fontSize: theme.typography.sizes.xs,
     color: healthColors.text.tertiary,
   },
   switchContainer: {
@@ -474,8 +473,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   doctorDetails: {
-    marginTop: indianDesign.spacing.md,
-    paddingTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
     gap: 6,
@@ -486,7 +485,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   detailText: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
   },
   loadingContainer: {
@@ -495,40 +494,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.md,
+    marginTop: theme.spacing.md,
   },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.xxxl,
+    paddingVertical: theme.spacing.xxxxl,
   },
   emptyTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   emptySubtitle: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.xs,
+    marginTop: theme.spacing.xs,
     textAlign: "center",
   },
   retryButton: {
-    marginTop: indianDesign.spacing.lg,
-    paddingHorizontal: indianDesign.spacing.xl,
-    paddingVertical: indianDesign.spacing.md,
+    marginTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.primary.main,
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
   },
   retryText: {
     color: "#FFFFFF",
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
 
 export default ManageDoctorsScreen;
+

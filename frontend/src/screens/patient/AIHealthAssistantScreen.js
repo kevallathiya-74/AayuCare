@@ -22,12 +22,9 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
-  moderateScale,
   verticalScale,
-  scaledFontSize,
   getScreenPadding,
 } from "../../utils/responsive";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
@@ -355,24 +352,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   headerTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   voiceButton: {
-    padding: moderateScale(8),
+    padding: 8,
     backgroundColor: healthColors.primary.main + "15",
-    borderRadius: moderateScale(20),
+    borderRadius: 20,
   },
   messagesContainer: {
     flex: 1,
@@ -385,24 +382,24 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   suggestionsTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   suggestionCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginBottom: moderateScale(8),
-    ...createShadow(1),
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    ...theme.shadows.sm,
   },
   suggestionText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
   },
   messageWrapper: {
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     maxWidth: "80%",
   },
   userMessageWrapper: {
@@ -412,19 +409,19 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   messageBubble: {
-    borderRadius: moderateScale(16),
-    padding: moderateScale(12),
+    borderRadius: 16,
+    padding: 12,
   },
   userMessage: {
     backgroundColor: healthColors.primary.main,
   },
   aiMessage: {
     backgroundColor: healthColors.background.card,
-    ...createShadow(1),
+    ...theme.shadows.sm,
   },
   messageText: {
-    fontSize: scaledFontSize(14),
-    lineHeight: scaledFontSize(20),
+    fontSize: 14,
+    lineHeight: 20,
   },
   userMessageText: {
     color: "#FFFFFF",
@@ -438,71 +435,71 @@ const styles = StyleSheet.create({
   insightsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
-    marginBottom: moderateScale(12),
+    gap: 8,
+    marginBottom: 12,
   },
   insightsTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   insightsCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    ...createShadow(2),
+    borderRadius: 12,
+    padding: 16,
+    ...theme.shadows.md,
   },
   insightsSubtitle: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   recommendationsContainer: {
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   recommendationText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(6),
-    lineHeight: scaledFontSize(20),
+    marginBottom: 6,
+    lineHeight: 20,
   },
   riskContainer: {
-    paddingTop: moderateScale(12),
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
   riskLabel: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.warning.main,
-    marginBottom: moderateScale(6),
+    marginBottom: 6,
   },
   preventiveText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
   },
   doctorButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: moderateScale(8),
+    gap: 8,
     backgroundColor: healthColors.primary.main,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginTop: moderateScale(12),
-    ...createShadow(2),
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    ...theme.shadows.md,
   },
   doctorButtonText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.semiBold,
     color: "#FFFFFF",
   },
   inputSection: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: moderateScale(8),
+    gap: 8,
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     backgroundColor: healthColors.background.card,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
@@ -512,29 +509,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     backgroundColor: healthColors.background.secondary,
-    borderRadius: moderateScale(24),
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(8),
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   input: {
     flex: 1,
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
-    maxHeight: moderateScale(100),
-    paddingVertical: moderateScale(4),
+    maxHeight: 100,
+    paddingVertical: 4,
   },
   micButton: {
-    padding: moderateScale(4),
-    marginLeft: moderateScale(4),
+    padding: 4,
+    marginLeft: 4,
   },
   sendButton: {
-    width: moderateScale(48),
-    height: moderateScale(48),
-    borderRadius: moderateScale(24),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: healthColors.primary.main,
     justifyContent: "center",
     alignItems: "center",
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   sendButtonDisabled: {
     backgroundColor: healthColors.text.disabled,
@@ -542,3 +539,6 @@ const styles = StyleSheet.create({
 });
 
 export default AIHealthAssistantScreen;
+
+
+

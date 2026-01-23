@@ -32,7 +32,7 @@
     "axios": "^1.6.2",
     "better-auth": "^1.4.16",
     "date-fns": "^3.0.6",
-    "expo": "~54.0.30",
+    "expo": "~54.0.32",
     "expo-asset": "~12.0.12",
     "expo-camera": "~17.0.10",
     "expo-constants": "^18.0.11",
@@ -63,6 +63,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@types/react": "^19.2.9",
+    "@types/react-native": "^0.72.8",
     "expo-module-scripts": "^5.0.8",
     "react-native-svg-transformer": "^1.5.2"
   },

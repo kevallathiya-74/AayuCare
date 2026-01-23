@@ -8,7 +8,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { healthColors } from '../../theme/healthColors';
 import { spacing, componentSpacing } from '../../theme/spacing';
-import { moderateScale, borderRadius as responsiveBorderRadius } from '../../utils/responsive';
+import { borderRadius as responsiveBorderRadius } from '../../utils/responsive';
 
 const SkeletonLoader = ({
   width = '100%',
@@ -111,3 +111,5 @@ const styles = StyleSheet.create({
 });
 
 export default SkeletonLoader;
+
+

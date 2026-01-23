@@ -1,26 +1,24 @@
 /**
  * AayuCare - Custom Card Component
- * 
+ *
  * Features: elevation, press animation, swipeable actions
  */
 
-import React, { useRef } from 'react';
-import { View, StyleSheet, Pressable, Animated } from 'react-native';
-import { healthColors } from '../../theme/healthColors';
-import { spacing, componentSpacing } from '../../theme/spacing';
-import { createShadow } from '../../utils/platformStyles';
-import { 
-    moderateScale,
-    borderRadius as responsiveBorderRadius,
-    verticalScale,
-} from '../../utils/responsive';
+import React, { useRef } from "react";
+import { View, StyleSheet, Pressable, Animated } from "react-native";
+import { healthColors } from "../../theme/healthColors";
+import { spacing, componentSpacing } from "../../theme/spacing";
+import {
+  borderRadius as responsiveBorderRadius,
+  verticalScale,
+} from "../../utils/responsive";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const Card = ({
   children,
   onPress,
-  elevation = 'medium', // none, small, medium, large
+  elevation = "medium", // none, small, medium, large
   padding = true,
   style,
   ...props
@@ -47,11 +45,11 @@ const Card = ({
 
   const getElevationStyle = () => {
     switch (elevation) {
-      case 'none':
+      case "none":
         return {};
-      case 'small':
+      case "small":
         return styles.elevationSmall;
-      case 'large':
+      case "large":
         return styles.elevationLarge;
       default:
         return styles.elevationMedium;
@@ -65,7 +63,7 @@ const Card = ({
         onPressOut: handlePressOut,
         onPress,
         style: { transform: [{ scale: scaleAnim }] },
-        accessibilityRole: 'button',
+        accessibilityRole: "button",
         accessible: true,
       }
     : {};
@@ -94,34 +92,16 @@ const styles = StyleSheet.create({
     borderColor: healthColors.card.border,
   },
   withPadding: {
-    padding: moderateScale(componentSpacing.cardPadding),
+    padding: theme.spacing.lg,
   },
   elevationSmall: {
-    ...createShadow({
-      color: '#000',
-      offset: { width: 0, height: 1 },
-      opacity: 0.06,
-      radius: 2,
-      elevation: 1,
-    }),
+    ...theme.shadows.sm,
   },
   elevationMedium: {
-    ...createShadow({
-      color: '#000',
-      offset: { width: 0, height: 2 },
-      opacity: 0.08,
-      radius: 4,
-      elevation: 2,
-    }),
+    ...theme.shadows.md,
   },
   elevationLarge: {
-    ...createShadow({
-      color: '#000',
-      offset: { width: 0, height: 4 },
-      opacity: 0.12,
-      radius: 8,
-      elevation: 4,
-    }),
+    ...theme.shadows.lg,
   },
 });
 

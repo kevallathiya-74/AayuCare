@@ -19,12 +19,9 @@ import {
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  scaledFontSize,
-  moderateScale,
   verticalScale,
 } from "../../utils/responsive";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
@@ -504,9 +501,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 />
               </TouchableOpacity>
             </View>
-            <ScrollView
-              contentContainerStyle={{ padding: indianDesign.spacing.lg }}
-            >
+            <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
               {/* Breakfast */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
@@ -671,9 +666,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 />
               </TouchableOpacity>
             </View>
-            <ScrollView
-              contentContainerStyle={{ padding: indianDesign.spacing.lg }}
-            >
+            <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
               {/* Weekly Plan */}
               <View style={styles.exerciseDay}>
                 <Text style={styles.exerciseDayTitle}>
@@ -797,20 +790,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    marginLeft: indianDesign.spacing.md,
+    marginLeft: theme.spacing.md,
   },
   headerText: {
     flex: 1,
-    marginLeft: indianDesign.spacing.sm,
-    marginRight: indianDesign.spacing.md,
+    marginLeft: theme.spacing.sm,
+    marginRight: theme.spacing.md,
   },
   headerTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   headerSubtitle: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
@@ -820,72 +813,72 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   categoryCard: {
     width: "48%",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
     borderRadius: 16,
     overflow: "hidden",
-    ...createShadow(3),
+    ...theme.shadows.lg,
   },
   categoryGradient: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     alignItems: "center",
-    minHeight: moderateScale(140),
+    minHeight: 140,
     justifyContent: "center",
   },
   categoryIcon: {
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   categoryName: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   section: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginLeft: indianDesign.spacing.xs,
+    marginLeft: theme.spacing.xs,
   },
   quickAccessCard: {
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
-    padding: indianDesign.spacing.sm,
-    ...createShadow(2),
+    padding: theme.spacing.sm,
+    ...theme.shadows.md,
   },
   quickAccessItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
   },
   quickAccessText: {
     flex: 1,
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.medium,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
-    marginLeft: indianDesign.spacing.md,
-    marginRight: indianDesign.spacing.md,
+    marginLeft: theme.spacing.md,
+    marginRight: theme.spacing.md,
   },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
-    padding: indianDesign.spacing.lg,
-    ...createShadow(2),
+    padding: theme.spacing.lg,
+    ...theme.shadows.md,
   },
   topicItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -894,13 +887,13 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: healthColors.primary.dark,
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   topicText: {
     flex: 1,
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   modalOverlay: {
     flex: 1,
@@ -915,14 +908,14 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(20),
   },
   modalHeader: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   modalTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   modalIconContainer: {
     width: 56,
@@ -930,116 +923,116 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   modalTitleText: {
     flex: 1,
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   modalTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   modalDescription: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
   videoSection: {
-    margin: indianDesign.spacing.lg,
+    margin: theme.spacing.lg,
     borderRadius: 16,
     overflow: "hidden",
-    ...createShadow(3),
+    ...theme.shadows.lg,
   },
   videoGradient: {
-    padding: indianDesign.spacing.xl,
+    padding: theme.spacing.xl,
     alignItems: "center",
     justifyContent: "center",
   },
   videoText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
-    marginTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.sm,
   },
   statsRow: {
     flexDirection: "row",
-    paddingHorizontal: indianDesign.spacing.lg,
-    marginBottom: indianDesign.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   statCard: {
     flex: 1,
     backgroundColor: healthColors.background.primary,
-    padding: indianDesign.spacing.md,
-    borderRadius: indianDesign.borderRadius.medium,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   statLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
     marginBottom: 4,
   },
   statValue: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   detailSection: {
-    paddingHorizontal: indianDesign.spacing.lg,
-    marginBottom: indianDesign.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   detailTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   detailTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginLeft: moderateScale(6),
+    marginLeft: 6,
   },
   listItem: {
     flexDirection: "row",
-    marginBottom: indianDesign.spacing.sm,
-    paddingLeft: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    paddingLeft: theme.spacing.sm,
   },
   listBullet: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginRight: indianDesign.spacing.sm,
+    marginRight: theme.spacing.sm,
   },
   listText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
   actionButtons: {
     flexDirection: "row",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingBottom: indianDesign.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
   },
   actionButton: {
     flex: 1,
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
     overflow: "hidden",
-    ...createShadow(2),
-    marginRight: indianDesign.spacing.md,
+    ...theme.shadows.md,
+    marginRight: theme.spacing.md,
   },
   actionGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.md,
   },
   actionButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: "#FFF",
-    marginLeft: moderateScale(8),
+    marginLeft: 8,
   },
   loadingOverlay: {
     position: "absolute",
@@ -1053,71 +1046,71 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   videoDuration: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "rgba(255, 255, 255, 0.9)",
     marginTop: 8,
   },
   videoPlayerPlaceholder: {
-    padding: indianDesign.spacing.xxxl,
+    padding: theme.spacing.xxxxl,
     alignItems: "center",
     justifyContent: "center",
   },
   placeholderText: {
-    fontSize: scaledFontSize(18),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.md,
+    marginTop: theme.spacing.md,
   },
   placeholderSubtext: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.sm,
     textAlign: "center",
   },
   placeholderNote: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
-    marginTop: indianDesign.spacing.md,
+    marginTop: theme.spacing.md,
     fontStyle: "italic",
   },
   galleryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
   },
   galleryItem: {
     width: "30%",
     aspectRatio: 1,
     backgroundColor: healthColors.background.primary,
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderColor: healthColors.border.light,
-    marginRight: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   galleryItemText: {
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.secondary,
     marginTop: 4,
   },
   dietSection: {
-    marginBottom: indianDesign.spacing.lg,
+    marginBottom: theme.spacing.lg,
     backgroundColor: healthColors.background.primary,
-    padding: indianDesign.spacing.md,
-    borderRadius: indianDesign.borderRadius.medium,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
   },
   dietMealTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   dietMealTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginLeft: moderateScale(6),
+    marginLeft: 6,
   },
   dietItem: {
     flexDirection: "row",
@@ -1129,50 +1122,50 @@ const styles = StyleSheet.create({
   },
   dietItemText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
   },
   dietCal: {
-    fontSize: scaledFontSize(12),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 12,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.success.main,
   },
   notesBox: {
     backgroundColor: "#FFF3E0",
-    padding: indianDesign.spacing.md,
-    borderRadius: indianDesign.borderRadius.medium,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     borderLeftWidth: 4,
     borderLeftColor: "#FF9800",
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   notesTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: "#E65100",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   notesText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "#E65100",
     marginBottom: 4,
   },
   exerciseDay: {
-    marginBottom: indianDesign.spacing.lg,
+    marginBottom: theme.spacing.lg,
     backgroundColor: healthColors.background.primary,
-    padding: indianDesign.spacing.md,
-    borderRadius: indianDesign.borderRadius.medium,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
   },
   exerciseDayTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: theme.spacing.xs,
   },
   exerciseCategory: {
-    fontSize: scaledFontSize(13),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   exerciseItem: {
     flexDirection: "row",
@@ -1180,10 +1173,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   exerciseText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
-    marginLeft: indianDesign.spacing.sm,
+    marginLeft: theme.spacing.sm,
   },
 });
 
 export default DiseaseInfoScreen;
+
+
+

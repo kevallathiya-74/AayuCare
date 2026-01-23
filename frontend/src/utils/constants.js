@@ -318,3 +318,4 @@ export default {
   FAQ_DATA,
   INDIAN_STATES,
 };
+

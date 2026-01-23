@@ -187,3 +187,4 @@ export default {
     addBreadcrumb,
     isEnabled: isSentryEnabled,
 };
+

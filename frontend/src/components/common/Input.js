@@ -18,8 +18,6 @@ import { healthColors } from '../../theme/healthColors';
 import { textStyles, fontFamilies } from '../../theme/typography';
 import { spacing, componentSpacing, layout } from '../../theme/spacing';
 import { 
-    moderateScale, 
-    scaledFontSize,
     touchTargets,
     borderRadius as responsiveBorderRadius,
     getInputHeight,
@@ -166,7 +164,7 @@ const Input = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: moderateScale(componentSpacing.inputMargin),
+    marginBottom: theme.spacing.lg,
   },
   container: {
     flexDirection: 'row',
@@ -176,7 +174,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.input.border,
     borderRadius: responsiveBorderRadius.medium,
     minHeight: Math.max(getInputHeight(), touchTargets.minimum), // Enforce 48dp minimum
-    paddingVertical: moderateScale(4), // Internal padding for better alignment
+    paddingVertical: 4, // Internal padding for better alignment
   },
   containerFocused: {
     borderColor: healthColors.input.borderFocused,
@@ -195,11 +193,11 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: fontFamilies.body,
-    fontSize: scaledFontSize(16),
+    fontSize: 16,
     color: healthColors.text.primary,
-    paddingHorizontal: moderateScale(spacing.md),
-    paddingVertical: moderateScale(spacing.sm),
-    paddingTop: moderateScale(10),
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    paddingTop: 10,
     outlineStyle: 'none',
     textAlign: 'left',
   },
@@ -237,3 +235,7 @@ const styles = StyleSheet.create({
 });
 
 export default Input;
+
+
+
+

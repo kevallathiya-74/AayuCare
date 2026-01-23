@@ -12,8 +12,6 @@ import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { 
-    moderateScale, 
-    scaledFontSize,
     touchTargets,
     borderRadius as responsiveBorderRadius,
     getButtonHeight,
@@ -176,15 +174,15 @@ const styles = StyleSheet.create({
   // Sizes (responsive with minimum 48dp accessibility targets)
   small: {
     height: Math.max(getButtonHeight('small'), touchTargets.minimum), // Enforce minimum 48dp
-    paddingHorizontal: moderateScale(spacing.md),
+    paddingHorizontal: theme.spacing.md,
   },
   medium: {
     height: Math.max(getButtonHeight('medium'), touchTargets.minimum), // Enforce minimum 48dp
-    paddingHorizontal: moderateScale(spacing.lg),
+    paddingHorizontal: theme.spacing.lg,
   },
   large: {
     height: Math.max(getButtonHeight('large'), touchTargets.comfortable), // Larger minimum for large buttons
-    paddingHorizontal: moderateScale(spacing.xl),
+    paddingHorizontal: theme.spacing.xl,
   },
   
   // Variants
@@ -213,13 +211,13 @@ const styles = StyleSheet.create({
     ...textStyles.button,
   },
   smallText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
   },
   mediumText: {
-    fontSize: scaledFontSize(16),
+    fontSize: 16,
   },
   largeText: {
-    fontSize: scaledFontSize(18),
+    fontSize: 18,
   },
   
   primaryText: {
@@ -259,3 +257,7 @@ const styles = StyleSheet.create({
 });
 
 export default Button;
+
+
+
+

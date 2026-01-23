@@ -23,8 +23,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
@@ -398,16 +397,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    marginTop: indianDesign.spacing.md,
-    fontSize: indianDesign.fontSize.medium,
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
     borderBottomWidth: 2,
     borderBottomColor: healthColors.border.light,
@@ -421,8 +420,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.xlarge,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xxxl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   searchButton: {
@@ -435,14 +434,14 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     flexDirection: "row",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   filterButton: {
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.sm,
-    borderRadius: indianDesign.borderRadius.pill,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
     backgroundColor: healthColors.background.card,
     borderWidth: 1,
     borderColor: healthColors.border.light,
@@ -452,65 +451,65 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   filterText: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
   filterTextActive: {
     color: healthColors.text.white,
   },
   errorContainer: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     alignItems: "center",
     backgroundColor: healthColors.error + "10",
-    marginHorizontal: indianDesign.spacing.lg,
-    borderRadius: indianDesign.borderRadius.medium,
+    marginHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
   },
   errorText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.error,
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   retryText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontWeight: theme.typography.weights.semibold,
   },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.xxl * 2,
+    paddingVertical: theme.spacing["4xl"] * 2,
   },
   emptyStateTitle: {
-    fontSize: indianDesign.fontSize.xlarge,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xxxl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   emptyStateText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.sm,
     textAlign: "center",
   },
   listContent: {
-    padding: indianDesign.spacing.lg,
-    gap: indianDesign.spacing.md,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   appointmentCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.large,
-    padding: indianDesign.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   cardLeft: {
     flexDirection: "row",
     flex: 1,
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
   },
   avatar: {
     width: 56,
@@ -525,13 +524,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   patientName: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   reason: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
@@ -541,9 +540,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   time: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontWeight: theme.typography.weights.medium,
   },
   cardRight: {
     alignItems: "flex-end",
@@ -558,14 +557,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statusBadge: {
-    paddingHorizontal: indianDesign.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
-    borderRadius: indianDesign.borderRadius.small,
+    borderRadius: theme.borderRadius.small,
   },
   statusText: {
-    fontSize: indianDesign.fontSize.tiny,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: theme.typography.sizes.xs,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
 
 export default TodaysAppointmentsScreen;
+

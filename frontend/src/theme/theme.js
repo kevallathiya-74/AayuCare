@@ -2,7 +2,7 @@ import { MD3LightTheme, configureFonts } from 'react-native-paper';
 import { healthColors } from './healthColors';
 import { fontFamilies, fontSizes, fontWeights } from './typography';
 import { spacing, componentSpacing, layout } from './spacing';
-import { elevation, shadows, createShadow } from './elevation';
+import { elevation, shadows } from './elevation';
 import { duration, easing, animations, springs } from './animations';
 
 // Ensure healthColors is loaded
@@ -131,7 +131,6 @@ export const theme = {
   // Elevation & Shadows (Material Design 3)
   elevation,
   shadows,
-  createShadow,
   
   // Border styles
   borders: {
@@ -237,3 +236,5 @@ export const commonStyles = {
 };
 
 export default theme;
+
+

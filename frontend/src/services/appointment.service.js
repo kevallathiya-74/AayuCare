@@ -105,3 +105,4 @@ class AppointmentService {
 }
 
 export default new AppointmentService();
+

@@ -15,9 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { healthColors } from "../../theme/healthColors";
-import { moderateScale, scaledFontSize } from "../../utils/responsive";
-import { createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { changeLanguage } from "../../i18n";
 
 const LANGUAGES = [
@@ -162,17 +160,17 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    gap: 8,
   },
   icon: {
-    marginRight: moderateScale(4),
+    marginRight: 4,
   },
   languageButton: {
-    paddingHorizontal: moderateScale(10),
-    paddingVertical: moderateScale(4),
-    borderRadius: moderateScale(6),
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderWidth: 1,
-    minWidth: moderateScale(38),
+    minWidth: 38,
     alignItems: "center",
   },
   languageButtonActive: {
@@ -180,7 +178,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   languageText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     fontWeight: "600",
   },
   languageTextActive: {
@@ -189,14 +187,14 @@ const styles = StyleSheet.create({
   compactButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
-    paddingHorizontal: moderateScale(10),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(20),
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   compactLabel: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     fontWeight: "600",
   },
   modalOverlay: {
@@ -207,27 +205,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: moderateScale(20),
+    padding: 20,
   },
   modalContent: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(16),
-    padding: moderateScale(20),
+    borderRadius: 16,
+    padding: 20,
     width: "85%",
-    maxWidth: moderateScale(340),
-    ...createShadow(8),
+    maxWidth: 340,
+    ...theme.shadows.xl,
   },
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(12),
-    marginBottom: moderateScale(20),
-    paddingBottom: moderateScale(16),
+    gap: 12,
+    marginBottom: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   modalTitle: {
-    fontSize: scaledFontSize(18),
+    fontSize: 18,
     fontWeight: "700",
     color: healthColors.text.primary,
     flex: 1,
@@ -236,10 +234,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: moderateScale(14),
-    paddingHorizontal: moderateScale(12),
-    borderRadius: moderateScale(10),
-    marginBottom: moderateScale(8),
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 8,
   },
   languageOptionActive: {
     backgroundColor: healthColors.primary.main + "10",
@@ -250,15 +248,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   languageLabel: {
-    fontSize: scaledFontSize(20),
+    fontSize: 20,
     fontWeight: "600",
     color: healthColors.text.primary,
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   languageName: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
   },
 });
 
 export default LanguageSelector;
+
+
+

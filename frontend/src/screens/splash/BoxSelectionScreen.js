@@ -17,22 +17,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { fontFamilies, fontWeights, lineHeights } from "../../theme/typography";
-import {
-  moderateScale,
-  scaledFontSize,
-  verticalScale,
-} from "../../utils/responsive";
-import { createShadow, createTextShadow } from "../../utils/platformStyles";
+import { createTextShadow } from "../../utils/platformStyles";
 
-// Verify imports loaded correctly
-if (!healthColors || !indianDesign) {
+if (!healthColors || !theme) {
   console.error("[BoxSelectionScreen] ═══════════════════════════════════");
   console.error("[BoxSelectionScreen] Missing theme imports!");
   console.error("[BoxSelectionScreen] healthColors:", !!healthColors);
-  console.error("[BoxSelectionScreen] indianDesign:", !!indianDesign);
+  console.error("[BoxSelectionScreen] theme:", !!theme);
   console.error("[BoxSelectionScreen] ═══════════════════════════════════");
 }
 
@@ -45,43 +38,39 @@ const isMediumScreen = height >= 700 && height < 850;
 // Responsive font sizes for cross-device consistency
 const responsiveFonts = {
   // Primary heading - "Continue as"
-  title: scaledFontSize(isSmallScreen ? 24 : 28),
-  titleLineHeight: scaledFontSize(isSmallScreen ? 24 : 28) * lineHeights.tight,
+  title: isSmallScreen ? 24 : 28,
+  titleLineHeight: (isSmallScreen ? 24 : 28) * lineHeights.tight,
 
   // Secondary text - description
-  subtitle: scaledFontSize(isSmallScreen ? 13 : 15),
-  subtitleLineHeight:
-    scaledFontSize(isSmallScreen ? 13 : 15) * lineHeights.normal,
+  subtitle: isSmallScreen ? 13 : 15,
+  subtitleLineHeight: (isSmallScreen ? 13 : 15) * lineHeights.normal,
 
   // Card title - "Hospital", "User"
-  cardTitle: scaledFontSize(isSmallScreen ? 22 : 26),
-  cardTitleLineHeight:
-    scaledFontSize(isSmallScreen ? 22 : 26) * lineHeights.tight,
+  cardTitle: isSmallScreen ? 22 : 26,
+  cardTitleLineHeight: (isSmallScreen ? 22 : 26) * lineHeights.tight,
 
   // Card subtitle - description
-  cardSubtitle: scaledFontSize(isSmallScreen ? 12 : 14),
-  cardSubtitleLineHeight:
-    scaledFontSize(isSmallScreen ? 12 : 14) * lineHeights.normal,
+  cardSubtitle: isSmallScreen ? 12 : 14,
+  cardSubtitleLineHeight: (isSmallScreen ? 12 : 14) * lineHeights.normal,
 
   // Badge text - "Coming Soon"
-  badge: scaledFontSize(10),
-  badgeLineHeight: scaledFontSize(10) * lineHeights.normal,
+  badge: 10,
+  badgeLineHeight: 10 * lineHeights.normal,
 
   // Footer text
-  footer: scaledFontSize(isSmallScreen ? 11 : 13),
-  footerLineHeight:
-    scaledFontSize(isSmallScreen ? 11 : 13) * lineHeights.normal,
+  footer: isSmallScreen ? 11 : 13,
+  footerLineHeight: (isSmallScreen ? 11 : 13) * lineHeights.normal,
 };
 
 // Responsive dimensions - scale based on screen size
 const responsiveSizes = {
-  logoContainer: moderateScale(isSmallScreen ? 90 : 110),
-  logo: moderateScale(isSmallScreen ? 80 : 100),
-  iconCircle: moderateScale(isSmallScreen ? 65 : 80),
-  iconSize: moderateScale(isSmallScreen ? 32 : 40),
-  arrowCircle: moderateScale(isSmallScreen ? 44 : 54),
-  arrowSize: moderateScale(isSmallScreen ? 20 : 24),
-  footerDot: moderateScale(6),
+  logoContainer: isSmallScreen ? 90 : 110,
+  logo: isSmallScreen ? 80 : 100,
+  iconCircle: isSmallScreen ? 65 : 80,
+  iconSize: isSmallScreen ? 32 : 40,
+  arrowCircle: isSmallScreen ? 44 : 54,
+  arrowSize: isSmallScreen ? 20 : 24,
+  footerDot: 6,
 };
 
 const BoxSelectionScreen = ({ navigation }) => {
@@ -222,7 +211,7 @@ const BoxSelectionScreen = ({ navigation }) => {
       <View
         style={[
           styles.footer,
-          { paddingBottom: Math.max(insets.bottom, moderateScale(16)) },
+          { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
         ]}
       >
         <View style={styles.footerDot} />
@@ -239,9 +228,9 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   header: {
-    paddingTop: isSmallScreen ? moderateScale(16) : moderateScale(24),
-    paddingHorizontal: moderateScale(24),
-    marginBottom: isSmallScreen ? moderateScale(16) : moderateScale(20),
+    paddingTop: isSmallScreen ? theme.spacing.lg : theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.xxl,
+    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
     alignItems: "center",
   },
   logoContainer: {
@@ -251,21 +240,15 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.white,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: isSmallScreen ? moderateScale(16) : moderateScale(20),
+    marginBottom: isSmallScreen ? 16 : 20,
     borderWidth: 1,
     borderColor: "#F0F0F0",
-    ...createShadow({
-      color: "#000",
-      offset: { width: 0, height: 4 },
-      opacity: 0.08,
-      radius: 12,
-      elevation: 4,
-    }),
+    ...theme.shadows.sm,
   },
   logo: {
     width: responsiveSizes.logo,
     height: responsiveSizes.logo,
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   title: {
     fontFamily: fontFamilies.heading,
@@ -273,7 +256,7 @@ const styles = StyleSheet.create({
     lineHeight: responsiveFonts.titleLineHeight,
     fontWeight: fontWeights.bold,
     color: "#2C3E50",
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
     textAlign: "center",
     includeFontPadding: false, // Android fix for font alignment
   },
@@ -288,34 +271,28 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     flex: 1,
-    paddingHorizontal: moderateScale(20),
+    paddingHorizontal: 20,
     justifyContent: "center",
-    paddingBottom: isSmallScreen ? moderateScale(16) : moderateScale(24),
+    paddingBottom: isSmallScreen ? 16 : 24,
   },
   cardSpacer: {
-    height: isSmallScreen ? moderateScale(12) : moderateScale(16),
+    height: isSmallScreen ? 12 : 16,
   },
   card: {
     // Use flex proportions instead of fixed height for better responsiveness
     flexBasis: isSmallScreen ? "42%" : "48%",
     minHeight: 140, // Absolute minimum for small devices
     maxHeight: isSmallScreen ? 160 : 200, // Prevent excessive height
-    borderRadius: moderateScale(20),
+    borderRadius: 20,
     overflow: "hidden",
-    ...createShadow({
-      color: "#000",
-      offset: { width: 0, height: 8 },
-      opacity: 0.12,
-      radius: 20,
-      elevation: 8,
-    }),
+    ...theme.shadows.sm,
   },
   disabledCard: {
     opacity: 0.92,
   },
   cardGradient: {
     flex: 1,
-    padding: moderateScale(20),
+    padding: 20,
     justifyContent: "center",
     position: "relative",
   },
@@ -326,8 +303,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: moderateScale(10),
-    borderWidth: moderateScale(2.5),
+    marginBottom: 10,
+    borderWidth: 2.5,
     borderColor: "rgba(255, 255, 255, 0.4)",
   },
   cardContent: {
@@ -339,7 +316,7 @@ const styles = StyleSheet.create({
     lineHeight: responsiveFonts.cardTitleLineHeight,
     fontWeight: fontWeights.bold,
     color: healthColors.white,
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
     includeFontPadding: false,
     ...createTextShadow({
       color: "rgba(0, 0, 0, 0.15)",
@@ -363,32 +340,26 @@ const styles = StyleSheet.create({
   },
   arrowCircle: {
     position: "absolute",
-    bottom: moderateScale(20),
-    right: moderateScale(20),
+    bottom: 20,
+    right: 20,
     width: responsiveSizes.arrowCircle,
     height: responsiveSizes.arrowCircle,
     borderRadius: responsiveSizes.arrowCircle / 2,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: moderateScale(2.5),
+    borderWidth: 2.5,
     borderColor: "rgba(255, 255, 255, 0.4)",
   },
   comingSoonBadge: {
     position: "absolute",
-    top: moderateScale(14),
-    right: moderateScale(14),
+    top: 14,
+    right: 14,
     backgroundColor: healthColors.warning.main,
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(16),
-    ...createShadow({
-      color: "#000",
-      offset: { width: 0, height: 3 },
-      opacity: 0.2,
-      radius: 8,
-      elevation: 5,
-    }),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    ...theme.shadows.lg,
   },
   comingSoonText: {
     fontFamily: fontFamilies.body,
@@ -402,30 +373,30 @@ const styles = StyleSheet.create({
   },
   decorCircle1: {
     position: "absolute",
-    top: moderateScale(-35),
-    right: moderateScale(-35),
-    width: moderateScale(110),
-    height: moderateScale(110),
-    borderRadius: moderateScale(55),
+    top: -35,
+    right: -35,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     backgroundColor: "rgba(255, 255, 255, 0.12)",
   },
   decorCircle2: {
     position: "absolute",
-    bottom: moderateScale(-25),
-    left: moderateScale(-25),
-    width: moderateScale(90),
-    height: moderateScale(90),
-    borderRadius: moderateScale(45),
+    bottom: -25,
+    left: -25,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: isSmallScreen ? moderateScale(12) : moderateScale(16),
+    paddingVertical: isSmallScreen ? 12 : 16,
   },
   footerSpacer: {
-    width: moderateScale(8),
+    width: 8,
   },
   footerDot: {
     width: responsiveSizes.footerDot,

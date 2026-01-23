@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
-import { moderateScale, scaledFontSize, verticalScale } from '../../utils/responsive';
+import { verticalScale } from '../../utils/responsive';
 import Button from './Button';
 
 const EmptyState = ({
@@ -61,30 +61,34 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: moderateScale(spacing.xl),
+        paddingHorizontal: theme.spacing.xl,
         paddingVertical: verticalScale(spacing.xxl),
     },
     iconContainer: {
-        marginBottom: moderateScale(spacing.lg),
+        marginBottom: theme.spacing.lg,
     },
     title: {
-        fontSize: scaledFontSize(18),
+        fontSize: 18,
         fontWeight: '700',
         color: healthColors.text.primary,
         textAlign: 'center',
-        marginBottom: moderateScale(spacing.sm),
+        marginBottom: theme.spacing.sm,
     },
     message: {
-        fontSize: scaledFontSize(14),
+        fontSize: 14,
         color: healthColors.text.secondary,
         textAlign: 'center',
-        marginBottom: moderateScale(spacing.lg),
-        lineHeight: scaledFontSize(14) * 1.5,
+        marginBottom: theme.spacing.lg,
+        lineHeight: 14 * 1.5,
     },
     button: {
-        marginTop: moderateScale(spacing.md),
-        minWidth: moderateScale(160),
+        marginTop: theme.spacing.md,
+        minWidth: 160,
     },
 });
 
 export default EmptyState;
+
+
+
+

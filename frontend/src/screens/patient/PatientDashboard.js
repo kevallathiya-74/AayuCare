@@ -34,16 +34,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import CompactActionCard from "../../components/common/CompactActionCard";
 import LanguageSelector from "../../components/common/LanguageSelector";
 import { logoutUser } from "../../store/slices/authSlice";
 import {
   getScreenPadding,
-  moderateScale,
   verticalScale,
-  scaledFontSize,
   getGridColumns,
   getSafeAreaEdges,
   getContainerWidth,
@@ -243,7 +240,7 @@ const PatientDashboard = ({ navigation }) => {
       {
         title: "Health Metrics",
         icon: "stats-chart",
-        iconColor: "#00897B",
+        iconColor: theme.colors.healthcare.teal,
         onPress: () => navigation.navigate("HealthMetrics"),
       },
       {
@@ -255,43 +252,43 @@ const PatientDashboard = ({ navigation }) => {
       {
         title: "AI Symptom Checker",
         icon: "fitness-outline",
-        iconColor: "#F44336",
+        iconColor: theme.colors.error.main,
         onPress: () => navigation.navigate("AISymptomChecker"),
       },
       {
         title: "Disease Info",
         icon: "information-circle",
-        iconColor: "#7E57C2",
+        iconColor: theme.colors.healthcare.purple,
         onPress: () => navigation.navigate("DiseaseInfo"),
       },
       {
         title: "Specialist Finder",
         icon: "people",
-        iconColor: "#2196F3",
+        iconColor: theme.colors.info.main,
         onPress: () => navigation.navigate("SpecialistCareFinder"),
       },
       {
         title: "Women's Health",
         icon: "flower",
-        iconColor: "#EC4899",
+        iconColor: theme.colors.healthcare.pink,
         onPress: () => navigation.navigate("WomensHealth"),
       },
       {
         title: "Hospital Events",
         icon: "calendar-outline",
-        iconColor: "#FF9800",
+        iconColor: theme.colors.warning.main,
         onPress: () => navigation.navigate("HospitalEvents"),
       },
       {
         title: "Pharmacy & Billing",
         icon: "cart",
-        iconColor: "#4CAF50",
+        iconColor: theme.colors.success.main,
         onPress: () => navigation.navigate("PharmacyBilling"),
       },
       {
         title: "Activity Tracker",
         icon: "walk",
-        iconColor: "#00BCD4",
+        iconColor: theme.colors.healthcare.cyan,
         onPress: () => navigation.navigate("ActivityTracker"),
       },
     ],
@@ -323,18 +320,22 @@ const PatientDashboard = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Open menu"
           >
-            <Ionicons name="menu" size={24} color="#FFFFFF" />
+            <Ionicons name="menu" size={24} color={theme.colors.text.white} />
           </TouchableOpacity>
           <Text style={styles.appTitle}>AayuCare</Text>
           <View style={styles.bannerRightIcons}>
-            <LanguageSelector compact iconColor="#FFFFFF" />
+            <LanguageSelector compact iconColor={theme.colors.text.white} />
             <TouchableOpacity
               style={styles.bannerIconButton}
               onPress={() => navigation.navigate("More")}
               accessibilityRole="button"
               accessibilityLabel="Notifications"
             >
-              <Ionicons name="notifications" size={24} color="#FFFFFF" />
+              <Ionicons
+                name="notifications"
+                size={24}
+                color={theme.colors.text.white}
+              />
               {unreadNotifications > 0 && (
                 <View style={styles.bannerNotificationBadge}>
                   <Text style={styles.bannerNotificationBadgeText}>
@@ -349,7 +350,11 @@ const PatientDashboard = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Open profile"
             >
-              <Ionicons name="person" size={24} color="#FFFFFF" />
+              <Ionicons
+                name="person"
+                size={24}
+                color={theme.colors.text.white}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -358,8 +363,10 @@ const PatientDashboard = ({ navigation }) => {
         <View style={styles.bannerGreeting}>
           {!user || loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#FFFFFF" />
-              <Text style={[styles.loadingText, { color: "#FFFFFF" }]}>
+              <ActivityIndicator size="small" color={theme.colors.text.white} />
+              <Text
+                style={[styles.loadingText, { color: theme.colors.text.white }]}
+              >
                 Loading profile...
               </Text>
             </View>
@@ -369,7 +376,7 @@ const PatientDashboard = ({ navigation }) => {
                 <Ionicons
                   name={getGreetingIcon()}
                   size={28}
-                  color="#FFFFFF"
+                  color={theme.colors.text.white}
                   style={styles.greetingIcon}
                 />
                 <View>
@@ -381,11 +388,19 @@ const PatientDashboard = ({ navigation }) => {
               </View>
               <View style={styles.bannerInfoCard}>
                 <View style={styles.bannerInfoRow}>
-                  <Ionicons name="card-outline" size={18} color="#FFFFFF" />
+                  <Ionicons
+                    name="card-outline"
+                    size={18}
+                    color={theme.colors.text.white}
+                  />
                   <Text style={styles.bannerInfoText}>ID: {user.userId}</Text>
                 </View>
                 <View style={styles.bannerInfoRow}>
-                  <Ionicons name="person-outline" size={18} color="#FFFFFF" />
+                  <Ionicons
+                    name="person-outline"
+                    size={18}
+                    color={theme.colors.text.white}
+                  />
                   <Text style={styles.bannerInfoText}>
                     Age: {user.age} • Blood: {user.bloodGroup || "N/A"}
                   </Text>
@@ -539,7 +554,11 @@ const PatientDashboard = ({ navigation }) => {
               <View style={styles.menuHeaderContent}>
                 <View style={styles.menuProfileSection}>
                   <View style={styles.menuAvatar}>
-                    <Ionicons name="person" size={32} color="#FFFFFF" />
+                    <Ionicons
+                      name="person"
+                      size={32}
+                      color={theme.colors.text.white}
+                    />
                   </View>
                   <View style={styles.menuUserInfo}>
                     <Text style={styles.menuUserName}>
@@ -555,7 +574,11 @@ const PatientDashboard = ({ navigation }) => {
                   style={styles.menuCloseButton}
                   onPress={closeMenu}
                 >
-                  <Ionicons name="close" size={28} color="#FFFFFF" />
+                  <Ionicons
+                    name="close"
+                    size={28}
+                    color={theme.colors.text.white}
+                  />
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -673,7 +696,11 @@ const PatientDashboard = ({ navigation }) => {
                     setTimeout(() => navigation.navigate("HealthMetrics"), 100);
                   }}
                 >
-                  <Ionicons name="stats-chart" size={22} color="#00897B" />
+                  <Ionicons
+                    name="stats-chart"
+                    size={22}
+                    color={theme.colors.healthcare.teal}
+                  />
                   <Text style={styles.menuItemText}>Health Metrics</Text>
                   <Ionicons
                     name="chevron-forward"
@@ -692,7 +719,11 @@ const PatientDashboard = ({ navigation }) => {
                     );
                   }}
                 >
-                  <Ionicons name="walk" size={22} color="#00BCD4" />
+                  <Ionicons
+                    name="walk"
+                    size={22}
+                    color={theme.colors.healthcare.cyan}
+                  />
                   <Text style={styles.menuItemText}>Activity Tracker</Text>
                   <Ionicons
                     name="chevron-forward"
@@ -758,7 +789,11 @@ const PatientDashboard = ({ navigation }) => {
                     );
                   }}
                 >
-                  <Ionicons name="fitness-outline" size={22} color="#F44336" />
+                  <Ionicons
+                    name="fitness-outline"
+                    size={22}
+                    color={theme.colors.error.main}
+                  />
                   <Text style={styles.menuItemText}>AI Symptom Checker</Text>
                   <Ionicons
                     name="chevron-forward"
@@ -885,34 +920,34 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.secondary,
   },
   welcomeBanner: {
-    paddingTop: moderateScale(12),
-    paddingBottom: moderateScale(24), // spacing.lg for better visual hierarchy
-    borderBottomLeftRadius: moderateScale(16), // Standard border radius
-    borderBottomRightRadius: moderateScale(16),
-    ...createShadow(3),
+    paddingTop: 12,
+    paddingBottom: 24, // spacing.lg for better visual hierarchy
+    borderBottomLeftRadius: 16, // Standard border radius
+    borderBottomRightRadius: 16,
+    ...theme.shadows.lg,
   },
   bannerTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(16), // spacing.md
+    marginBottom: 16, // spacing.md
   },
   bannerIconButton: {
-    padding: moderateScale(8),
+    padding: 8,
     position: "relative",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: moderateScale(20),
-    width: moderateScale(40),
-    height: moderateScale(40),
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
+    borderRadius: 20,
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: moderateScale(8),
+    marginRight: 8,
   },
   appTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
   bannerRightIcons: {
     flexDirection: "row",
@@ -920,22 +955,22 @@ const styles = StyleSheet.create({
   },
   bannerNotificationBadge: {
     position: "absolute",
-    top: moderateScale(2),
-    right: moderateScale(2),
+    top: 2,
+    right: 2,
     backgroundColor: healthColors.error.main,
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(18),
-    height: moderateScale(18),
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: moderateScale(4),
+    paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: theme.colors.text.white,
   },
   bannerNotificationBadgeText: {
-    fontSize: scaledFontSize(10),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
   bannerGreeting: {
     paddingHorizontal: getScreenPadding(),
@@ -943,63 +978,63 @@ const styles = StyleSheet.create({
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   greetingIcon: {
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   bannerTimeGreeting: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: moderateScale(2),
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
+    marginBottom: 2,
     letterSpacing: 0.5,
   },
   bannerWelcomeText: {
-    fontSize: scaledFontSize(24),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
   bannerInfoCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderRadius: moderateScale(12),
-    padding: moderateScale(12),
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.15),
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: theme.withOpacity(theme.colors.text.white, 0.2),
   },
   bannerInfoRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(6),
+    marginBottom: 6,
   },
   bannerInfoText: {
-    fontSize: scaledFontSize(14),
-    color: "#FFFFFF",
-    marginLeft: moderateScale(8),
-    fontWeight: "500",
+    fontSize: 14,
+    color: theme.colors.text.white,
+    marginLeft: 8,
+    fontWeight: theme.typography.weights.medium,
   },
   healthStatusSection: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(24), // spacing.lg for section separation
+    marginBottom: 24, // spacing.lg for section separation
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(12), // spacing.md
+    marginBottom: 12, // spacing.md
   },
   healthStatusTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginLeft: moderateScale(8), // spacing.sm
+    marginLeft: 8, // spacing.sm
   },
   healthCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: healthColors.success.background,
-    padding: moderateScale(16), // spacing.md
-    borderRadius: moderateScale(12),
+    padding: 16, // spacing.md
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.success.light,
   },
@@ -1009,156 +1044,156 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   healthIconCircle: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: healthColors.success.main + "20",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: moderateScale(16), // spacing.md
+    marginRight: 16, // spacing.md
   },
   healthCardText: {
     flex: 1,
-    marginRight: moderateScale(12), // spacing.md
+    marginRight: 12, // spacing.md
   },
   healthCardTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.success.main,
-    marginBottom: moderateScale(8), // spacing.sm
+    marginBottom: 8, // spacing.sm
   },
   healthMetrics: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: moderateScale(8),
+    marginBottom: 8,
   },
   metricItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: moderateScale(12),
-    marginBottom: moderateScale(4),
+    marginRight: 12,
+    marginBottom: 4,
   },
   healthCardDetail: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.primary,
-    fontWeight: "500",
-    marginLeft: moderateScale(4),
+    fontWeight: theme.typography.weights.medium,
+    marginLeft: 4,
   },
   healthCardUpdateRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   healthCardUpdated: {
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.secondary,
-    marginLeft: moderateScale(4),
+    marginLeft: 4,
   },
   emergencySection: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(24), // spacing.lg
+    marginBottom: 24, // spacing.lg
   },
   emergencyTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(12), // spacing.md
+    marginBottom: 12, // spacing.md
   },
   mainFeaturesSection: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(24), // spacing.lg
+    marginBottom: 24, // spacing.lg
   },
   emergencyButtons: {
     flexDirection: "row",
-    gap: moderateScale(12), // spacing.md
+    gap: 12, // spacing.md
   },
   emergencyButton: {
     flex: 1,
-    borderRadius: moderateScale(12),
+    borderRadius: 12,
     overflow: "hidden",
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   emergencyButtonGradient: {
-    padding: moderateScale(16), // spacing.md
+    padding: 16, // spacing.md
     alignItems: "center",
-    minHeight: moderateScale(140),
+    minHeight: 140,
   },
   emergencyIconCircle: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: moderateScale(12), // spacing.md
+    marginBottom: 12, // spacing.md
   },
   emergencyButtonTitle: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: moderateScale(4), // spacing.xs
+    fontSize: 13,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+    marginBottom: 4, // spacing.xs
   },
   emergencyButtonSubtitle: {
-    fontSize: scaledFontSize(11),
-    color: "#FFFFFF",
+    fontSize: 11,
+    color: theme.colors.text.white,
     opacity: 0.9,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   notificationsSection: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16), // spacing.md
-    marginTop: moderateScale(24), // spacing.lg
+    borderRadius: 12,
+    padding: 16, // spacing.md
+    marginTop: 24, // spacing.lg
     marginHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(24), // spacing.lg for proper ending
-    ...createShadow(2),
+    marginBottom: 24, // spacing.lg for proper ending
+    ...theme.shadows.md,
   },
   notificationsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(12), // spacing.md
+    marginBottom: 12, // spacing.md
   },
   notificationsTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginLeft: moderateScale(8), // spacing.sm
+    marginLeft: 8, // spacing.sm
   },
   notificationsList: {},
   notificationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: moderateScale(8),
+    marginBottom: 8,
   },
   notificationItem: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.primary,
-    lineHeight: scaledFontSize(18),
-    marginRight: moderateScale(8),
+    lineHeight: 18,
+    marginRight: 8,
   },
   viewButton: {
     flexDirection: "row",
     alignItems: "center",
   },
   viewButtonText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
-    marginRight: moderateScale(4),
+    marginRight: 4,
   },
   scrollContent: {
-    paddingTop: moderateScale(16),
+    paddingTop: 16,
     paddingBottom: verticalScale(32), // spacing.xxxl for proper footer spacing
     flexGrow: 1,
   },
   quickActionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: moderateScale(12),
+    gap: 12,
     justifyContent: "space-between",
   },
   grid: {
@@ -1171,123 +1206,123 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     width: `${100 / getGridColumns(Dimensions.get("window").width) - 2}%`,
-    marginBottom: moderateScale(16), // spacing.md
-    paddingHorizontal: moderateScale(4), // Small gap between items
+    marginBottom: 16, // spacing.md
+    paddingHorizontal: 4, // Small gap between items
   },
   loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   loadingText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    fontWeight: "500",
-    marginLeft: moderateScale(8),
+    fontWeight: theme.typography.weights.medium,
+    marginLeft: 8,
   },
   // Profile Styles
   profileHeader: {
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   profileHeaderGradient: {
-    padding: moderateScale(24),
+    padding: 24,
     alignItems: "center",
-    borderRadius: moderateScale(12),
+    borderRadius: 12,
     marginHorizontal: getScreenPadding(),
   },
   profileAvatarContainer: {
     alignItems: "center",
   },
   profileAvatar: {
-    width: moderateScale(80),
-    height: moderateScale(80),
-    borderRadius: moderateScale(40),
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     borderWidth: 3,
-    borderColor: "#FFFFFF",
+    borderColor: theme.colors.text.white,
   },
   profileName: {
-    fontSize: scaledFontSize(22),
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: moderateScale(4),
+    fontSize: 22,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+    marginBottom: 4,
   },
   profileId: {
-    fontSize: scaledFontSize(14),
-    color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: "500",
+    fontSize: 14,
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
+    fontWeight: theme.typography.weights.medium,
   },
   profileSection: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   profileSectionTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     letterSpacing: 0.5,
   },
   profileCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    ...createShadow(2),
+    borderRadius: 12,
+    padding: 16,
+    ...theme.shadows.md,
   },
   profileInfoRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(8),
+    paddingVertical: 8,
   },
   profileInfoContent: {
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
     flex: 1,
   },
   profileInfoLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   profileInfoValue: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   profileDivider: {
     height: 1,
     backgroundColor: healthColors.border.light,
-    marginVertical: moderateScale(4),
+    marginVertical: 4,
   },
   profileActionRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
   },
   profileActionText: {
     flex: 1,
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   logoutButtonProfile: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.background.card,
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.error.main,
-    ...createShadow(1),
+    ...theme.shadows.sm,
   },
   logoutButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.error.main,
-    marginLeft: moderateScale(8),
+    marginLeft: 8,
   },
   // Menu Styles
   menuOverlay: {
@@ -1298,19 +1333,19 @@ const styles = StyleSheet.create({
   menuDrawer: {
     width: Math.min(width * 0.85, 400), // Max 400px for tablets
     height: "100%",
-    backgroundColor: "#FFFFFF",
-    borderTopRightRadius: moderateScale(20),
-    borderBottomRightRadius: moderateScale(20),
+    backgroundColor: theme.colors.text.white,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
     borderRightWidth: 1,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: healthColors.border.light,
   },
   menuHeader: {
-    padding: moderateScale(20),
-    paddingTop: moderateScale(50),
-    paddingBottom: moderateScale(24),
-    borderTopRightRadius: moderateScale(20),
+    padding: 20,
+    paddingTop: 50,
+    paddingBottom: 24,
+    borderTopRightRadius: 20,
   },
   menuHeaderContent: {
     position: "relative",
@@ -1318,45 +1353,45 @@ const styles = StyleSheet.create({
   menuProfileSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: moderateScale(40),
+    marginRight: 40,
   },
   menuAvatar: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "rgba(255,255,255,0.3)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.5)",
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   menuUserInfo: {
     flex: 1,
   },
   menuUserName: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   menuUserRole: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.9)",
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   menuUserId: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "rgba(255,255,255,0.7)",
   },
   menuCloseButton: {
     position: "absolute",
     top: 0,
     right: 0,
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(20),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.25)",
     justifyContent: "center",
     alignItems: "center",
@@ -1365,34 +1400,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuSection: {
-    paddingTop: moderateScale(16),
-    paddingBottom: moderateScale(12),
-    paddingHorizontal: moderateScale(20),
+    paddingTop: 16,
+    paddingBottom: 12,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   menuSectionTitle: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     letterSpacing: 0.5,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(14),
-    paddingHorizontal: moderateScale(12),
-    borderRadius: moderateScale(10),
-    marginBottom: moderateScale(6),
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 6,
     backgroundColor: "transparent",
   },
   menuItemText: {
     flex: 1,
-    fontSize: scaledFontSize(15),
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   menuItemDanger: {
     backgroundColor: "rgba(244, 67, 54, 0.08)",
@@ -1401,59 +1436,62 @@ const styles = StyleSheet.create({
   },
   menuItemTextDanger: {
     flex: 1,
-    fontSize: scaledFontSize(15),
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
   menuBadge: {
     backgroundColor: healthColors.primary.main,
-    paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(2),
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(24),
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 24,
     alignItems: "center",
   },
   menuBadgeText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   menuStatCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: moderateScale(12),
+    padding: 12,
     backgroundColor: healthColors.background.secondary,
-    borderRadius: moderateScale(8),
-    marginBottom: moderateScale(8),
+    borderRadius: 8,
+    marginBottom: 8,
   },
   menuStatLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   menuStatValue: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   menuFooter: {
-    padding: moderateScale(24),
+    padding: 24,
     alignItems: "center",
-    marginTop: moderateScale(16),
+    marginTop: 16,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
   menuFooterText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   loadingText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(12),
+    marginTop: 12,
     textAlign: "center",
   },
 });
 
 export default PatientDashboard;
+
+
+

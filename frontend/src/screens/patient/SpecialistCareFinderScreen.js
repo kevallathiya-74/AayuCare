@@ -22,12 +22,9 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
-import { createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
-  moderateScale,
   verticalScale,
-  scaledFontSize,
   getScreenPadding,
 } from "../../utils/responsive";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
@@ -80,7 +77,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
       // Backend returns { status, data: { doctors: [], pagination: {} } }
       let filteredDoctors = response?.data?.doctors || [];
-      
+
       // Filter by fee range
       if (feeRange && feeRange.length === 2) {
         filteredDoctors = filteredDoctors.filter(
@@ -442,34 +439,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   backButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   headerTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   searchButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   titleSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    gap: 8,
     padding: getScreenPadding(),
-    paddingBottom: moderateScale(8),
+    paddingBottom: 8,
   },
   title: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   filtersSection: {
@@ -478,8 +475,8 @@ const styles = StyleSheet.create({
   },
   filterCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
@@ -487,65 +484,65 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: moderateScale(16),
+    marginBottom: 16,
   },
   filterLabelContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
+    gap: 6,
   },
   filterLabel: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
   },
   filterDropdown: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
+    gap: 4,
     backgroundColor: healthColors.background.secondary,
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(8),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   filterValue: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
   },
   feeRangeText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   specialtiesSection: {
     marginBottom: verticalScale(16),
   },
   sectionTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   specialtiesScroll: {
     paddingHorizontal: getScreenPadding(),
-    gap: moderateScale(8),
+    gap: 8,
   },
   specialtyChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
+    gap: 6,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(10),
-    borderRadius: moderateScale(20),
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   specialtyText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.primary,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
   },
   doctorsSection: {
     paddingHorizontal: getScreenPadding(),
@@ -553,80 +550,80 @@ const styles = StyleSheet.create({
   },
   doctorCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginBottom: moderateScale(12),
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   doctorHeader: {
     flexDirection: "row",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   doctorAvatar: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   doctorInfo: {
     flex: 1,
   },
   doctorName: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   doctorSpecialty: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(6),
+    marginBottom: 6,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
-    marginBottom: moderateScale(6),
+    gap: 4,
+    marginBottom: 6,
   },
   ratingText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.primary,
   },
   doctorDetails: {
     flexDirection: "row",
-    gap: moderateScale(12),
+    gap: 12,
   },
   detailItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
+    gap: 4,
   },
   feeText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.primary,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   availabilityText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
   },
   consultationTypes: {
     flexDirection: "row",
-    gap: moderateScale(8),
-    marginBottom: moderateScale(12),
+    gap: 8,
+    marginBottom: 12,
   },
   consultationType: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: moderateScale(6),
-    paddingVertical: moderateScale(10),
-    borderRadius: moderateScale(8),
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 8,
     backgroundColor: healthColors.background.secondary,
     borderWidth: 1,
     borderColor: healthColors.border.light,
@@ -636,8 +633,8 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   consultationTypeText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.disabled,
   },
   consultationTypeTextActive: {
@@ -645,71 +642,74 @@ const styles = StyleSheet.create({
   },
   doctorActions: {
     flexDirection: "row",
-    gap: moderateScale(8),
+    gap: 8,
   },
   actionButton: {
     flex: 1,
     backgroundColor: healthColors.primary.main,
-    paddingVertical: moderateScale(12),
-    borderRadius: moderateScale(8),
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: "center",
   },
   actionButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: "#FFFFFF",
   },
   viewProfileButton: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
-    paddingVertical: moderateScale(12),
-    borderRadius: moderateScale(8),
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: "center",
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   viewProfileText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   loadingContainer: {
-    paddingVertical: moderateScale(48),
+    paddingVertical: 48,
     alignItems: "center",
     justifyContent: "center",
   },
   loadingText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(12),
+    marginTop: 12,
   },
   emptyState: {
-    paddingVertical: moderateScale(48),
+    paddingVertical: 48,
     alignItems: "center",
     justifyContent: "center",
   },
   emptyStateTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
-    marginTop: moderateScale(16),
-    marginBottom: moderateScale(8),
+    marginTop: 16,
+    marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
     textAlign: "center",
     paddingHorizontal: getScreenPadding(),
   },
   doctorCountContainer: {
-    paddingVertical: moderateScale(16),
+    paddingVertical: 16,
     alignItems: "center",
   },
   doctorCountText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
   },
 });
 
 export default SpecialistCareFinderScreen;
+
+
+

@@ -23,10 +23,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import { textStyles } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
-import { moderateScale, scaledFontSize, getSafeAreaEdges, verticalScale } from "../../utils/responsive";
+import {
+  getSafeAreaEdges,
+  verticalScale,
+} from "../../utils/responsive";
 import { Card } from "../../components/common";
 import { logoutUser } from "../../store/slices/authSlice";
 import {
@@ -202,9 +205,9 @@ const ProfileScreen = ({ navigation }) => {
   ];
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={getSafeAreaEdges('withTabBar')}
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
     >
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -406,9 +409,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   avatar: {
-    width: moderateScale(120),
-    height: moderateScale(120),
-    borderRadius: moderateScale(60),
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
@@ -429,43 +432,43 @@ const styles = StyleSheet.create({
   userIdBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
+    gap: 6,
     marginTop: spacing.xs,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(16),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   userIdText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   statsContainer: {
     flexDirection: "row",
     paddingHorizontal: spacing.lg,
-    marginTop: -moderateScale(30),
-    gap: moderateScale(12),
+    marginTop: -30,
+    gap: 12,
   },
   statCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    borderRadius: moderateScale(16),
-    padding: moderateScale(16),
+    borderRadius: 16,
+    padding: 16,
     alignItems: "center",
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   statValue: {
-    fontSize: scaledFontSize(24),
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: moderateScale(8),
+    marginTop: 8,
   },
   statLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(4),
+    marginTop: 4,
   },
   section: {
     marginTop: spacing.lg,
@@ -477,9 +480,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionIconContainer: {
-    width: moderateScale(36),
-    height: moderateScale(36),
-    borderRadius: moderateScale(18),
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
@@ -488,20 +491,20 @@ const styles = StyleSheet.create({
     ...textStyles.h3,
     color: healthColors.text.primary,
     marginLeft: spacing.sm,
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
   },
   card: {
     padding: spacing.md,
     backgroundColor: "#FFFFFF",
-    borderRadius: moderateScale(16),
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -509,30 +512,30 @@ const styles = StyleSheet.create({
     ...textStyles.body,
     color: healthColors.text.secondary,
     flex: 1,
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
   },
   infoValue: {
     ...textStyles.body,
     color: healthColors.text.primary,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     flex: 1,
     textAlign: "right",
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
   },
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(14),
-    paddingHorizontal: moderateScale(4),
+    paddingVertical: 14,
+    paddingHorizontal: 4,
   },
   actionItemBorder: {
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   actionIcon: {
-    width: moderateScale(44),
-    height: moderateScale(44),
-    borderRadius: moderateScale(22),
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
     marginRight: spacing.md,
@@ -540,9 +543,12 @@ const styles = StyleSheet.create({
   actionText: {
     ...textStyles.body,
     flex: 1,
-    fontWeight: "600",
-    fontSize: scaledFontSize(15),
+    fontWeight: theme.typography.weights.semiBold,
+    fontSize: 15,
   },
 });
 
 export default ProfileScreen;
+
+
+

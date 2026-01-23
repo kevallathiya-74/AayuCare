@@ -14,8 +14,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { healthColors } from "../../theme/healthColors";
 import {
-  moderateScale,
-  scaledFontSize,
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
@@ -327,32 +325,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(16),
+    paddingVertical: 16,
     backgroundColor: healthColors.background.card,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   backButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   headerContent: {
     flex: 1,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   headerTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   headerSubtitle: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(2),
+    marginTop: 2,
   },
   headerIconContainer: {
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(20),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: healthColors.primary.background,
     alignItems: "center",
     justifyContent: "center",
@@ -360,14 +358,14 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: "row",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     backgroundColor: healthColors.background.card,
-    gap: moderateScale(8),
+    gap: 8,
   },
   filterButton: {
-    paddingVertical: moderateScale(8),
-    paddingHorizontal: moderateScale(16),
-    borderRadius: moderateScale(20),
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: healthColors.border.light,
     backgroundColor: healthColors.background.primary,
@@ -377,8 +375,8 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   filterText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
   },
   filterTextActive: {
@@ -389,9 +387,9 @@ const styles = StyleSheet.create({
   },
   consultationCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(14),
-    padding: moderateScale(16),
-    marginBottom: moderateScale(12),
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
@@ -399,7 +397,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   patientInfo: {
     flexDirection: "row",
@@ -407,60 +405,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarContainer: {
-    width: moderateScale(48),
-    height: moderateScale(48),
-    borderRadius: moderateScale(24),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: healthColors.primary.background,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   patientDetails: {
     flex: 1,
   },
   patientName: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   patientId: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
   },
   statusBadge: {
-    paddingHorizontal: moderateScale(10),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(12),
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   statusText: {
-    fontSize: scaledFontSize(11),
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
   },
   consultationDetails: {
-    gap: moderateScale(8),
-    marginBottom: moderateScale(12),
+    gap: 8,
+    marginBottom: 12,
   },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    gap: 8,
   },
   detailText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
     flex: 1,
   },
   contactRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: moderateScale(12),
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
-    gap: moderateScale(6),
+    gap: 6,
   },
   contactText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.disabled,
   },
   emptyState: {
@@ -469,14 +467,14 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(80),
   },
   emptyStateTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: moderateScale(16),
-    marginBottom: moderateScale(8),
+    marginTop: 16,
+    marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
@@ -487,10 +485,13 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(80),
   },
   loadingText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(12),
+    marginTop: 12,
   },
 });
 
 export default ConsultationHistoryScreen;
+
+
+

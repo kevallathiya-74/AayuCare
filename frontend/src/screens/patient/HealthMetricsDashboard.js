@@ -22,12 +22,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  scaledFontSize,
-  moderateScale,
   verticalScale,
   getSafeAreaEdges,
   isTablet,
@@ -264,10 +261,7 @@ const HealthMetricsDashboard = ({ navigation }) => {
             <Text style={styles.insightText}>{insight.text}</Text>
           </View>
         ))}
-        <AITagline
-          variant="gradient"
-          style={{ marginTop: indianDesign.spacing.md }}
-        />
+        <AITagline variant="gradient" style={{ marginTop: theme.spacing.md }} />
       </View>
     );
   };
@@ -430,20 +424,20 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
     flex: 1,
-    marginLeft: indianDesign.spacing.md,
+    marginLeft: theme.spacing.md,
   },
   headerText: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   headerSubtitle: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
@@ -452,33 +446,33 @@ const styles = StyleSheet.create({
   metricsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.xl,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
   metricCard: {
-    width: (width - getScreenPadding() * 2 - indianDesign.spacing.md) / 2,
+    width: (width - getScreenPadding() * 2 - theme.spacing.md) / 2,
     borderRadius: 16,
     overflow: "hidden",
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   metricCardSelected: {
-    ...createShadow(5),
+    ...theme.shadows.xl,
   },
   metricGradient: {
-    padding: indianDesign.spacing.md,
-    minHeight: moderateScale(140),
+    padding: theme.spacing.md,
+    minHeight: 140,
   },
   metricName: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.sm,
   },
   metricNameSelected: {
     color: "rgba(255, 255, 255, 0.9)",
   },
   metricValue: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 4,
   },
@@ -489,10 +483,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.sm,
   },
   statusText: {
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.secondary,
     textTransform: "capitalize",
   },
@@ -500,88 +494,91 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.9)",
   },
   chartSection: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   chartPlaceholder: {
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
-    padding: indianDesign.spacing.xl,
+    padding: theme.spacing.xl,
     alignItems: "center",
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   chartText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.md,
+    marginTop: theme.spacing.md,
   },
   chartSubtext: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
     marginTop: 4,
   },
   insightsSection: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   insightCard: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    marginBottom: indianDesign.spacing.sm,
-    ...createShadow(1),
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   insightText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.primary,
     lineHeight: 20,
   },
   recommendationsSection: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   recommendationItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: indianDesign.spacing.sm,
-    marginBottom: indianDesign.spacing.sm,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   recommendationText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
   actionsSection: {
     flexDirection: "row",
-    gap: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.xl,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
   actionButton: {
     flex: 1,
     borderRadius: 12,
     overflow: "hidden",
-    ...createShadow(3),
+    ...theme.shadows.lg,
   },
   actionGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   actionText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: "#FFF",
   },
 });
 
 export default HealthMetricsDashboard;
+
+
+

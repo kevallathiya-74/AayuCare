@@ -82,3 +82,4 @@ export const getAvailableLanguages = () => {
         { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
     ];
 };
+

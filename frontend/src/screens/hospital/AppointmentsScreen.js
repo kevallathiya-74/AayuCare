@@ -22,8 +22,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { appointmentService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
@@ -248,10 +247,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -270,20 +269,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   listContent: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     flexGrow: 1,
   },
   appointmentCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.medium,
-    padding: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.md,
-    ...createShadow(2),
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   appointmentHeader: {
     flexDirection: "row",
@@ -296,41 +295,41 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   appointmentInfo: {
     flex: 1,
   },
   doctorName: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   patientName: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
   appointmentTime: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.tertiary,
     marginTop: 2,
   },
   statusBadge: {
-    paddingHorizontal: indianDesign.spacing.sm,
-    paddingVertical: indianDesign.spacing.xs,
-    borderRadius: indianDesign.borderRadius.small,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.small,
   },
   statusText: {
-    fontSize: indianDesign.fontSize.small,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.medium,
     textTransform: "capitalize",
   },
   reason: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.sm,
-    paddingTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
@@ -340,40 +339,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.md,
+    marginTop: theme.spacing.md,
   },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.xxxl,
+    paddingVertical: theme.spacing.xxxxl,
   },
   emptyTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   emptySubtitle: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.xs,
+    marginTop: theme.spacing.xs,
     textAlign: "center",
   },
   retryButton: {
-    marginTop: indianDesign.spacing.lg,
-    paddingHorizontal: indianDesign.spacing.xl,
-    paddingVertical: indianDesign.spacing.md,
+    marginTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.primary.main,
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
   },
   retryText: {
     color: "#FFFFFF",
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
 
 export default AppointmentsScreen;
+

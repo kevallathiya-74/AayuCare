@@ -20,8 +20,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
@@ -244,10 +243,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -258,15 +257,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   placeholder: {
     width: 40,
   },
   content: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
   },
   emptyContent: {
     flexGrow: 1,
@@ -277,16 +276,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    marginTop: indianDesign.spacing.md,
-    fontSize: indianDesign.fontSize.medium,
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
   },
   prescriptionCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.lg,
-    padding: indianDesign.spacing.lg,
-    marginBottom: indianDesign.spacing.md,
-    ...createShadow(2),
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
   },
   prescriptionHeader: {
     flexDirection: "row",
@@ -299,56 +298,56 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.light + "20",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   prescriptionInfo: {
     flex: 1,
   },
   doctorName: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   prescriptionDate: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
   diagnosisContainer: {
     flexDirection: "row",
-    marginTop: indianDesign.spacing.md,
-    paddingTop: indianDesign.spacing.sm,
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
   diagnosisLabel: {
-    fontSize: indianDesign.fontSize.small,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
-    marginRight: indianDesign.spacing.xs,
+    marginRight: theme.spacing.xs,
   },
   diagnosisText: {
     flex: 1,
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.primary,
   },
   medicationsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: indianDesign.spacing.md,
-    gap: indianDesign.spacing.xs,
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.xs,
   },
   medicationChip: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.primary.light + "15",
-    paddingHorizontal: indianDesign.spacing.sm,
-    paddingVertical: indianDesign.spacing.xs,
-    borderRadius: indianDesign.borderRadius.md,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.md,
     gap: 4,
   },
   medicationText: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.primary.main,
     maxWidth: 100,
   },
@@ -356,27 +355,28 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.tertiary,
   },
   moreText: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
   },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.xxxl,
+    paddingVertical: theme.spacing.xxxxl,
   },
   emptyTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   emptySubtitle: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.xs,
+    marginTop: theme.spacing.xs,
     textAlign: "center",
   },
 });
 
 export default MyPrescriptionsScreen;
+

@@ -22,12 +22,9 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  scaledFontSize,
-  moderateScale,
   verticalScale,
 } from "../../utils/responsive";
 import { EmergencyIcon } from "../../components/common/CustomIcons";
@@ -357,19 +354,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    marginLeft: indianDesign.spacing.md,
+    marginLeft: theme.spacing.md,
   },
   headerText: {
     flex: 1,
-    marginLeft: indianDesign.spacing.md,
+    marginLeft: theme.spacing.md,
   },
   headerTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   headerSubtitle: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
@@ -378,61 +375,61 @@ const styles = StyleSheet.create({
   ambulanceButton: {
     borderRadius: 20,
     overflow: "hidden",
-    marginBottom: indianDesign.spacing.xl,
-    ...createShadow(5),
+    marginBottom: theme.spacing.xl,
+    ...theme.shadows.xl,
   },
   ambulanceGradient: {
     flexDirection: "row",
     alignItems: "center",
-    padding: indianDesign.spacing.xl,
+    padding: theme.spacing.xl,
   },
   ambulanceIcon: {
-    width: moderateScale(80),
-    height: moderateScale(80),
-    borderRadius: moderateScale(40),
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.lg,
+    marginRight: theme.spacing.lg,
   },
   ambulanceText: {
     flex: 1,
-    marginRight: indianDesign.spacing.lg,
+    marginRight: theme.spacing.lg,
   },
   ambulanceTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
     marginBottom: 4,
   },
   ambulanceNumber: {
-    fontSize: scaledFontSize(32),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 32,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
     marginBottom: 4,
   },
   ambulanceSubtext: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "rgba(255, 255, 255, 0.9)",
   },
   section: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   viewAllText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontWeight: theme.typography.weights.semibold,
   },
   numbersGrid: {
     flexDirection: "row",
@@ -442,48 +439,48 @@ const styles = StyleSheet.create({
     width: "48%",
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     alignItems: "center",
-    ...createShadow(2),
-    marginRight: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.md,
+    ...theme.shadows.md,
+    marginRight: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   numberIcon: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   numberName: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
     textAlign: "center",
     marginBottom: 4,
   },
   numberValue: {
-    fontSize: scaledFontSize(18),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   hospitalCard: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.background.card,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    marginBottom: indianDesign.spacing.sm,
-    ...createShadow(1),
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   hospitalIcon: {
-    width: moderateScale(48),
-    height: moderateScale(48),
-    borderRadius: moderateScale(24),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   hospitalInfo: {
     flex: 1,
@@ -494,11 +491,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   hospitalName: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     flex: 1,
-    marginRight: indianDesign.spacing.xs,
+    marginRight: theme.spacing.xs,
   },
   emergencyBadge: {
     backgroundColor: healthColors.success.main,
@@ -507,8 +504,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   emergencyBadgeText: {
-    fontSize: scaledFontSize(9),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 9,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   hospitalDetails: {
@@ -516,14 +513,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   hospitalDistance: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
     marginLeft: 4,
   },
   callButton: {
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(20),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
@@ -531,36 +528,39 @@ const styles = StyleSheet.create({
   tipsCard: {
     backgroundColor: healthColors.background.card,
     borderRadius: 12,
-    padding: indianDesign.spacing.md,
-    ...createShadow(1),
+    padding: theme.spacing.md,
+    ...theme.shadows.sm,
   },
   tipItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   tipText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     lineHeight: 20,
-    marginLeft: indianDesign.spacing.sm,
+    marginLeft: theme.spacing.sm,
   },
   disclaimer: {
     flexDirection: "row",
     alignItems: "flex-start",
     backgroundColor: healthColors.background.tertiary,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   disclaimerText: {
     flex: 1,
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.tertiary,
     lineHeight: 16,
-    marginLeft: indianDesign.spacing.sm,
+    marginLeft: theme.spacing.sm,
   },
 });
 
 export default EmergencyServices;
+
+
+

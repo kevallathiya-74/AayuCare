@@ -20,11 +20,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
-  moderateScale,
-  scaledFontSize,
   getScreenPadding,
 } from "../../utils/responsive";
 import Avatar from "./Avatar";
@@ -133,7 +130,7 @@ const SlideMenu = ({
                 <View style={styles.menuUserInfo}>
                   <Avatar
                     name={user?.name || "User"}
-                    size={moderateScale(60)}
+                    size={60}
                     source={user?.avatar}
                   />
                   <View style={styles.menuUserDetails}>
@@ -247,7 +244,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: MENU_WIDTH,
     backgroundColor: healthColors.background.card,
-    ...createShadow(5),
+    ...theme.shadows.xl,
   },
   menuSafeArea: {
     flex: 1,
@@ -256,31 +253,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuHeader: {
-    paddingTop: moderateScale(16),
-    paddingBottom: moderateScale(24),
+    paddingTop: 16,
+    paddingBottom: 24,
     paddingHorizontal: getScreenPadding(),
   },
   closeButton: {
     alignSelf: "flex-end",
-    padding: moderateScale(8),
-    marginBottom: moderateScale(8),
+    padding: 8,
+    marginBottom: 8,
   },
   menuUserInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(12),
+    gap: 12,
   },
   menuUserDetails: {
     flex: 1,
   },
   menuUserName: {
-    fontSize: scaledFontSize(18),
+    fontSize: 18,
     fontWeight: "700",
     color: "#FFFFFF",
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   menuUserId: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.8)",
   },
   menuScroll: {
@@ -291,26 +288,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   menuItemsContainer: {
-    paddingTop: moderateScale(16),
+    paddingTop: 16,
     paddingHorizontal: getScreenPadding(),
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(14),
-    paddingHorizontal: moderateScale(12),
-    marginBottom: moderateScale(4),
-    borderRadius: moderateScale(10),
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    marginBottom: 4,
+    borderRadius: 10,
     backgroundColor: healthColors.background.secondary,
-    gap: moderateScale(12),
+    gap: 12,
   },
   menuItemDanger: {
     backgroundColor: healthColors.error.background,
-    marginTop: moderateScale(8),
+    marginTop: 8,
   },
   menuItemText: {
     flex: 1,
-    fontSize: scaledFontSize(15),
+    fontSize: 15,
     fontWeight: "500",
     color: healthColors.text.primary,
   },
@@ -319,17 +316,20 @@ const styles = StyleSheet.create({
   },
   menuFooter: {
     alignItems: "center",
-    paddingVertical: moderateScale(20),
+    paddingVertical: 20,
     paddingHorizontal: getScreenPadding(),
     borderTopWidth: 1,
     borderTopColor: healthColors.border?.light || healthColors.neutral.gray200,
-    marginTop: moderateScale(16),
+    marginTop: 16,
   },
   menuFooterText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
 });
 
 export default SlideMenu;
+
+
+

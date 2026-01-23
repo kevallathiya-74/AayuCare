@@ -193,3 +193,4 @@ const healthSlice = createSlice({
 export const { clearError, setSelectedRecord, clearSelectedRecord } = healthSlice.actions;
 
 export default healthSlice.reducer;
+

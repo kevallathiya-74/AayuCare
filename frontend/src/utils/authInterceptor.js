@@ -36,3 +36,4 @@ export const handleAuthError = async () => {
     store.dispatch(logoutUser());
   }
 };
+

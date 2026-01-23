@@ -20,12 +20,9 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
-  moderateScale,
   verticalScale,
-  scaledFontSize,
   getScreenPadding,
 } from "../../utils/responsive";
 
@@ -366,30 +363,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   headerTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   placeholder: {
-    width: moderateScale(32),
+    width: 32,
   },
   titleSection: {
     padding: getScreenPadding(),
-    paddingBottom: moderateScale(8),
+    paddingBottom: 8,
   },
   title: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   section: {
@@ -399,100 +396,103 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
-    marginBottom: moderateScale(12),
+    gap: 8,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   card: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    ...createShadow(2),
+    borderRadius: 12,
+    padding: 16,
+    ...theme.shadows.md,
   },
   languageRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   languageLabel: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
   },
   changeButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     backgroundColor: healthColors.primary.main + "10",
-    borderRadius: moderateScale(8),
+    borderRadius: 8,
   },
   changeButtonText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
   languageOptions: {
     flexDirection: "row",
-    gap: moderateScale(8),
-    paddingTop: moderateScale(8),
+    gap: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
   languageChip: {
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(8),
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: healthColors.background.secondary,
-    borderRadius: moderateScale(20),
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   languageChipText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   settingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   settingLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(12),
+    gap: 12,
     flex: 1,
   },
   settingLabel: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
   },
   actionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: moderateScale(14),
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   supportItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
-    paddingVertical: moderateScale(10),
+    gap: 8,
+    paddingVertical: 10,
   },
   supportText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.primary,
   },
 });
 
 export default SettingsAccessibilityScreen;
+
+
+

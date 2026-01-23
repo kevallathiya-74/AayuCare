@@ -35,11 +35,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import {
-  moderateScale,
   verticalScale,
-  scaledFontSize,
   getScreenPadding,
   getSafeAreaEdges,
   isTablet,
@@ -89,7 +87,12 @@ const AdminHomeScreen = ({ navigation }) => {
       setError(null);
 
       // Fetch stats, activities, notifications, and events in parallel
-      const [statsResponse, activitiesResponse, notificationsResponse, eventsResponse] = await Promise.all([
+      const [
+        statsResponse,
+        activitiesResponse,
+        notificationsResponse,
+        eventsResponse,
+      ] = await Promise.all([
         adminService.getDashboardStats().catch(() => null),
         adminService.getRecentActivities(5).catch(() => null),
         notificationService.getUnreadCount().catch(() => null),
@@ -242,8 +245,8 @@ const AdminHomeScreen = ({ navigation }) => {
   // Render stat card with gradient (memoized)
   const renderStatCard = useCallback(
     (stat, index) => (
-      <TouchableOpacity 
-        key={index} 
+      <TouchableOpacity
+        key={index}
         style={styles.statCardWrapper}
         onPress={() => {
           // Navigate based on card type
@@ -304,7 +307,9 @@ const AdminHomeScreen = ({ navigation }) => {
                   } else if (action.screen) {
                     // Navigate to tab screens via AdminTabs, others directly
                     if (action.isTabScreen) {
-                      navigation.navigate("AdminTabs", { screen: action.screen });
+                      navigation.navigate("AdminTabs", {
+                        screen: action.screen,
+                      });
                     } else {
                       navigation.navigate(action.screen);
                     }
@@ -428,7 +433,8 @@ const AdminHomeScreen = ({ navigation }) => {
           color: healthColors.accent.purple,
           screen: "Reports",
           isTabScreen: true,
-          badge: stats.prescriptions.today > 0 ? stats.prescriptions.today : null,
+          badge:
+            stats.prescriptions.today > 0 ? stats.prescriptions.today : null,
         },
         {
           title: "Events",
@@ -440,7 +446,12 @@ const AdminHomeScreen = ({ navigation }) => {
         },
       ],
     }),
-    [stats.appointments.pending, stats.prescriptions.today, upcomingEventsCount, navigation]
+    [
+      stats.appointments.pending,
+      stats.prescriptions.today,
+      upcomingEventsCount,
+      navigation,
+    ]
   );
 
   const statCards = useMemo(
@@ -512,9 +523,9 @@ const AdminHomeScreen = ({ navigation }) => {
   }, [closeMenu]);
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={getSafeAreaEdges('withTabBar')}
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
     >
       <StatusBar
         barStyle="dark-content"
@@ -549,7 +560,9 @@ const AdminHomeScreen = ({ navigation }) => {
             />
             {notificationCount > 0 && (
               <View style={styles.notificationDot}>
-                <Text style={styles.notificationDotText}>{notificationCount > 9 ? '9+' : notificationCount}</Text>
+                <Text style={styles.notificationDotText}>
+                  {notificationCount > 9 ? "9+" : notificationCount}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -1031,7 +1044,9 @@ const AdminHomeScreen = ({ navigation }) => {
 
                 <Pressable
                   style={styles.menuItem}
-                  onPress={() => handleMenuNavigation("PatientManagement", false)}
+                  onPress={() =>
+                    handleMenuNavigation("PatientManagement", false)
+                  }
                 >
                   <Ionicons
                     name="people-outline"
@@ -1213,27 +1228,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     backgroundColor: healthColors.background.card,
     borderBottomWidth: 2,
     borderBottomColor: healthColors.border.light,
   },
   menuButton: {
-    padding: moderateScale(4),
+    padding: 4,
   },
   headerTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
-    marginLeft: moderateScale(12),
+    marginLeft: 12,
   },
   headerRight: {
     flexDirection: "row",
-    gap: moderateScale(8),
+    gap: 8,
   },
   iconButton: {
-    padding: moderateScale(4),
+    padding: 4,
     position: "relative",
   },
   notificationDot: {
@@ -1250,83 +1265,83 @@ const styles = StyleSheet.create({
     borderColor: healthColors.background.primary,
   },
   notificationDotText: {
-    fontSize: scaledFontSize(10),
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   // Welcome Banner Styles
   welcomeBanner: {
     paddingHorizontal: getScreenPadding(),
-    paddingVertical: moderateScale(24),
+    paddingVertical: 24,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: moderateScale(24), // spacing.lg for section separation
+    marginBottom: 24, // spacing.lg for section separation
   },
   welcomeContent: {
     flex: 1,
   },
   timeGreeting: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "500",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.9)",
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
     letterSpacing: 0.3,
   },
   welcomeGreeting: {
-    fontSize: scaledFontSize(20),
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
-    marginBottom: moderateScale(8),
+    marginBottom: 8,
   },
   roleInfoRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(8),
+    gap: 8,
   },
   roleInfoText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.95)",
     letterSpacing: 0.3,
   },
   roleDot: {
-    width: moderateScale(4),
-    height: moderateScale(4),
-    borderRadius: moderateScale(2),
+    width: 4,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: "rgba(255,255,255,0.8)",
   },
   // Legacy styles (kept for compatibility)
   welcomeName: {
-    fontSize: scaledFontSize(26),
-    fontWeight: "700",
+    fontSize: 26,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
-    marginBottom: moderateScale(8),
+    marginBottom: 8,
   },
   roleBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
+    gap: 6,
     backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(12),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     alignSelf: "flex-start",
   },
   roleText: {
-    fontSize: scaledFontSize(11),
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: theme.typography.weights.semiBold,
     color: "white",
     letterSpacing: 0.5,
   },
   logoutButton: {
-    padding: moderateScale(8),
+    padding: 8,
   },
   logoutIconWrapper: {
     backgroundColor: "rgba(255,255,255,0.2)",
-    width: moderateScale(42),
-    height: moderateScale(42),
-    borderRadius: moderateScale(21),
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1334,46 +1349,46 @@ const styles = StyleSheet.create({
   healthBanner: {
     flexDirection: "row",
     alignItems: "center",
-    padding: moderateScale(14),
-    borderRadius: moderateScale(12),
-    gap: moderateScale(10),
+    padding: 14,
+    borderRadius: 12,
+    gap: 10,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   healthText: {
     flex: 1,
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
   },
   healthButton: {
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(6),
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
     backgroundColor: "rgba(255,255,255,0.9)",
   },
   healthButtonText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "600",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.semiBold,
   },
   section: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(20),
+    marginBottom: 20,
   },
   sectionHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(10),
-    marginBottom: moderateScale(14),
+    gap: 10,
+    marginBottom: 14,
   },
   sectionTitle: {
     flex: 1,
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   viewAllText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
   // Statistics Cards
@@ -1382,92 +1397,92 @@ const styles = StyleSheet.create({
   },
   statCardWrapper: {
     width: width * 0.7,
-    marginRight: moderateScale(16),
+    marginRight: 16,
   },
   statCard: {
-    borderRadius: moderateScale(16),
-    padding: moderateScale(20),
-    minHeight: moderateScale(160),
+    borderRadius: 16,
+    padding: 20,
+    minHeight: 160,
     justifyContent: "space-between",
   },
   statCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   statIconContainer: {
     backgroundColor: "rgba(255,255,255,0.3)",
-    width: moderateScale(48),
-    height: moderateScale(48),
-    borderRadius: moderateScale(24),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
   },
   trendContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(4),
+    gap: 4,
     backgroundColor: "rgba(255,255,255,0.3)",
-    paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(4),
-    borderRadius: moderateScale(8), // Standard small border radius
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8, // Standard small border radius
   },
   trendText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   statValue: {
-    fontSize: scaledFontSize(36),
+    fontSize: 36,
     fontWeight: "800",
     color: "white",
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   statTitle: {
-    fontSize: scaledFontSize(15),
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
     color: "white",
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   statSubtitle: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "rgba(255,255,255,0.8)",
   },
   // Action Section
   actionSection: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: moderateScale(24), // spacing.lg for consistent section separation
+    marginBottom: 24, // spacing.lg for consistent section separation
   },
   actionSectionTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     letterSpacing: 0.3,
   },
   actionGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: moderateScale(12),
+    gap: 12,
   },
   actionCard: {
-    width: (width - getScreenPadding() * 2 - moderateScale(12)) / 2,
+    width: (width - getScreenPadding() * 2 - 12) / 2,
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12), // Standard medium border radius
-    padding: moderateScale(16),
+    borderRadius: 12, // Standard medium border radius
+    padding: 16,
     alignItems: "center",
     borderWidth: 1, // Reduced from 2 for subtlety
     borderColor: healthColors.border.light,
-    minHeight: moderateScale(140),
+    minHeight: 140,
   },
   actionIconWrapper: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     position: "relative",
   },
   actionBadge: {
@@ -1475,80 +1490,80 @@ const styles = StyleSheet.create({
     top: -4,
     right: -4,
     backgroundColor: healthColors.error.main,
-    minWidth: moderateScale(20),
-    height: moderateScale(20),
-    borderRadius: moderateScale(10),
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: moderateScale(6),
+    paddingHorizontal: 6,
     borderWidth: 2,
     borderColor: healthColors.background.card,
   },
   actionBadgeText: {
-    fontSize: scaledFontSize(10),
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   actionTitle: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     textAlign: "center",
-    minHeight: moderateScale(34),
+    minHeight: 34,
   },
   // Recent Activities
   activitiesCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(14),
-    padding: moderateScale(18),
+    borderRadius: 14,
+    padding: 18,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   activityItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   activityIconWrapper: {
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(20),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   activityContent: {
     flex: 1,
   },
   activityText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(4),
-    lineHeight: scaledFontSize(20),
+    marginBottom: 4,
+    lineHeight: 20,
   },
   activityTime: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
   },
   // Empty State
   emptyState: {
     alignItems: "center",
-    paddingVertical: moderateScale(32),
+    paddingVertical: 32,
   },
   emptyText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(12),
+    marginTop: 12,
   },
   emptySubtext: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.disabled,
-    marginTop: moderateScale(4),
+    marginTop: 4,
     textAlign: "center",
   },
   // Loading State
@@ -1556,11 +1571,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: moderateScale(16),
+    gap: 16,
   },
   loadingText: {
-    fontSize: scaledFontSize(15),
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
   // Profile View Styles
@@ -1578,9 +1593,9 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   profileAvatar: {
-    width: moderateScale(120),
-    height: moderateScale(120),
-    borderRadius: moderateScale(60),
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
@@ -1588,28 +1603,28 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.3)",
   },
   profileName: {
-    fontSize: scaledFontSize(24),
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
     marginBottom: verticalScale(4),
   },
   profileEmail: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: "rgba(255,255,255,0.9)",
     marginBottom: verticalScale(12),
   },
   profileRoleBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(6),
+    gap: 6,
     backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(20),
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   profileRoleText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
     letterSpacing: 1,
   },
@@ -1618,69 +1633,69 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
   },
   profileSectionTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     letterSpacing: 0.3,
   },
   profileCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(14),
-    padding: moderateScale(16),
+    borderRadius: 14,
+    padding: 16,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   profileInfoRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(12),
+    paddingVertical: 12,
   },
   profileInfoContent: {
     flex: 1,
-    marginLeft: moderateScale(16),
+    marginLeft: 16,
   },
   profileInfoLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   profileInfoValue: {
-    fontSize: scaledFontSize(15),
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   profileDivider: {
     height: 1,
     backgroundColor: healthColors.border.light,
-    marginVertical: moderateScale(4),
+    marginVertical: 4,
   },
   profileActionRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(14),
-    gap: moderateScale(12),
+    paddingVertical: 14,
+    gap: 12,
   },
   profileActionText: {
     flex: 1,
-    fontSize: scaledFontSize(15),
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
   logoutButtonProfile: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: moderateScale(10),
+    gap: 10,
     backgroundColor: healthColors.background.card,
-    paddingVertical: moderateScale(16),
-    borderRadius: moderateScale(14),
+    paddingVertical: 16,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: healthColors.error.main,
   },
   logoutButtonText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
   // Menu Styles
@@ -1691,11 +1706,11 @@ const styles = StyleSheet.create({
   },
   menuDrawer: {
     width: "80%",
-    maxWidth: moderateScale(320),
+    maxWidth: 320,
     height: "100%",
     backgroundColor: "white",
-    borderTopRightRadius: moderateScale(20),
-    borderBottomRightRadius: moderateScale(20),
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
     borderWidth: 2,
     borderLeftWidth: 0,
     borderColor: healthColors.border.light,
@@ -1712,20 +1727,20 @@ const styles = StyleSheet.create({
     }),
   },
   menuHeader: {
-    padding: moderateScale(16),
-    paddingTop: moderateScale(48),
-    paddingBottom: moderateScale(24),
-    borderTopRightRadius: moderateScale(16), // Standard border radius
+    padding: 16,
+    paddingTop: 48,
+    paddingBottom: 24,
+    borderTopRightRadius: 16, // Standard border radius
   },
   menuProfileSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: moderateScale(12),
+    gap: 12,
   },
   menuAvatar: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "rgba(255,255,255,0.3)",
     justifyContent: "center",
     alignItems: "center",
@@ -1736,28 +1751,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuUserName: {
-    fontSize: scaledFontSize(18),
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   menuUserRole: {
-    fontSize: scaledFontSize(14),
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.9)",
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   menuUserId: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "rgba(255,255,255,0.7)",
   },
   menuCloseButton: {
     position: "absolute",
-    top: moderateScale(50),
-    right: moderateScale(16),
-    width: moderateScale(32),
-    height: moderateScale(32),
-    borderRadius: moderateScale(16),
+    top: 50,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "rgba(255,255,255,0.25)",
     justifyContent: "center",
     alignItems: "center",
@@ -1766,33 +1781,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuSection: {
-    paddingVertical: moderateScale(16),
-    paddingHorizontal: moderateScale(16), // spacing.md for consistency
+    paddingVertical: 16,
+    paddingHorizontal: 16, // spacing.md for consistency
     borderBottomWidth: 1,
     borderBottomColor: healthColors.background.secondary,
   },
   menuSectionTitle: {
-    fontSize: scaledFontSize(10),
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: moderateScale(12),
-    paddingHorizontal: moderateScale(12),
-    borderRadius: moderateScale(8),
-    gap: moderateScale(12),
-    marginBottom: moderateScale(8), // spacing.sm for better separation
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 12,
+    marginBottom: 8, // spacing.sm for better separation
     minHeight: 48, // Enforce minimum touch target
   },
   menuItemText: {
     flex: 1,
-    fontSize: scaledFontSize(15),
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
   menuItemDanger: {
@@ -1800,31 +1815,31 @@ const styles = StyleSheet.create({
   },
   menuItemTextDanger: {
     flex: 1,
-    fontSize: scaledFontSize(15),
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
   menuBadge: {
     backgroundColor: healthColors.primary.main,
-    paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(2),
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(24),
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 24,
     alignItems: "center",
   },
   menuBadgeText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   menuStatCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: moderateScale(12),
+    padding: 12,
     backgroundColor: healthColors.background.secondary,
-    borderRadius: moderateScale(12), // Standard medium border radius
-    gap: moderateScale(12),
-    marginBottom: moderateScale(8),
+    borderRadius: 12, // Standard medium border radius
+    gap: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
@@ -1832,25 +1847,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuStatLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(2),
+    marginBottom: 2,
   },
   menuStatValue: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   menuFooter: {
-    padding: moderateScale(16),
+    padding: 16,
     alignItems: "center",
-    marginTop: moderateScale(24), // spacing.lg
+    marginTop: 24, // spacing.lg
   },
   menuFooterText: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
 });
 
 export default AdminHomeScreen;
+
+
+

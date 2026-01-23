@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   loadingContainer: {
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   dayLabelInactive: {
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
   timeSlotText: {
     fontSize: 12,
     color: healthColors.primary.main,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
   },
   breakTimeContainer: {
     flexDirection: "row",
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 14,
     color: healthColors.primary.main,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   modalContainer: {
     flex: 1,
@@ -584,12 +584,12 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   saveButtonText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
   modalContent: {
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 12,
   },
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 14,
     color: healthColors.primary.main,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
   },
   breakTimeEditor: {
     flexDirection: "row",
@@ -693,3 +693,4 @@ const styles = StyleSheet.create({
 });
 
 export default ScheduleAvailabilityScreen;
+

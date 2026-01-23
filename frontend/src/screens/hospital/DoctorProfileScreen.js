@@ -21,13 +21,10 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  moderateScale,
   verticalScale,
-  scaledFontSize,
 } from "../../utils/responsive";
 import Avatar from "../../components/common/Avatar";
 import { logoutUser } from "../../store/slices/authSlice";
@@ -275,48 +272,48 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: getScreenPadding(),
-    paddingBottom: moderateScale(12),
+    paddingBottom: 12,
   },
   headerTitle: {
-    fontSize: scaledFontSize(24),
-    fontWeight: "700",
+    fontSize: 24,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   profileCard: {
     backgroundColor: healthColors.background.card,
     marginHorizontal: getScreenPadding(),
     marginBottom: verticalScale(20),
-    borderRadius: moderateScale(16),
-    padding: moderateScale(20),
+    borderRadius: 16,
+    padding: 20,
     alignItems: "center",
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
   profileInfo: {
     alignItems: "center",
-    marginTop: moderateScale(16),
-    marginBottom: moderateScale(20),
+    marginTop: 16,
+    marginBottom: 20,
   },
   doctorName: {
-    fontSize: scaledFontSize(22),
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   specialization: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   doctorId: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.tertiary,
     fontFamily: "monospace",
   },
   statsRow: {
     flexDirection: "row",
     width: "100%",
-    paddingTop: moderateScale(16),
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
@@ -329,20 +326,20 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.border.light,
   },
   statValue: {
-    fontSize: scaledFontSize(20),
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
-    marginBottom: moderateScale(4),
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
   },
   optionsSection: {
     backgroundColor: healthColors.background.card,
     marginHorizontal: getScreenPadding(),
     marginBottom: verticalScale(20),
-    borderRadius: moderateScale(12),
+    borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: healthColors.border.light,
@@ -351,7 +348,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: moderateScale(16),
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -361,17 +358,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionIconContainer: {
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(10),
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: healthColors.primary.main + "15",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: moderateScale(12),
+    marginRight: 12,
   },
   optionTitle: {
-    fontSize: scaledFontSize(15),
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   logoutSection: {
@@ -382,17 +379,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.background.card,
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: healthColors.error,
   },
   logoutText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error,
-    marginLeft: moderateScale(8),
+    marginLeft: 8,
   },
 });
 
 export default DoctorProfileScreen;
+
+
+

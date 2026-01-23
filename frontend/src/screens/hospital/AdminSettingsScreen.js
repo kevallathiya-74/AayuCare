@@ -20,8 +20,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { logoutUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
 
@@ -271,10 +270,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -285,22 +284,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   placeholder: { width: 40 },
   content: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
   },
   profileCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.large,
-    padding: indianDesign.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.lg,
-    ...createShadow(2),
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.md,
   },
   avatarContainer: {
     width: 64,
@@ -309,48 +308,48 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   profileRole: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontWeight: theme.typography.weights.medium,
     marginTop: 2,
   },
   profileEmail: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
     marginTop: 4,
   },
   section: {
-    marginBottom: indianDesign.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: indianDesign.fontSize.small,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.tertiary,
     textTransform: "uppercase",
-    marginBottom: indianDesign.spacing.sm,
-    marginLeft: indianDesign.spacing.xs,
+    marginBottom: theme.spacing.sm,
+    marginLeft: theme.spacing.xs,
   },
   sectionCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.medium,
-    ...createShadow(2),
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.md,
   },
   settingItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.md,
-    paddingHorizontal: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
   },
   settingIcon: {
     width: 40,
@@ -358,13 +357,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   settingLabel: {
     flex: 1,
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontWeight: theme.typography.weights.medium,
   },
   separator: {
     height: 1,
@@ -376,17 +375,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.error.background,
-    borderRadius: indianDesign.borderRadius.medium,
-    paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.sm,
     borderWidth: 1,
     borderColor: healthColors.error.light,
   },
   logoutText: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.error.main,
   },
 });
 
 export default AdminSettingsScreen;
+

@@ -16,8 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
-import { healthColors } from "../../theme/healthColors";
-import { createShadow } from "../../utils/platformStyles";
+import { theme, healthColors } from "../../theme";
 import {
   showError,
   showSuccess,
@@ -81,18 +80,17 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   };
 
   const gradientColors = isHospital
-    ? ["#E8F5E9", "#FFFFFF"]
-    : ["#E3F2FD", "#FFFFFF"];
-  const iconColor = isHospital ? "#2E7D32" : "#29B6F6";
+    ? [theme.colors.success.background, theme.colors.background.primary]
+    : [theme.colors.info.background, theme.colors.background.primary];
+  const iconColor = isHospital
+    ? theme.colors.success.dark
+    : theme.colors.info.main;
   const iconGradient = isHospital
-    ? ["#66BB6A", "#43A047"]
-    : ["#4FC3F7", "#29B6F6"];
+    ? [theme.colors.success.light, theme.colors.success.main]
+    : [theme.colors.info.light, theme.colors.info.main];
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -125,7 +123,11 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                   end={{ x: 1, y: 1 }}
                   style={styles.iconGradient}
                 >
-                  <Feather name="key" size={36} color="#FFFFFF" />
+                  <Feather
+                    name="key"
+                    size={36}
+                    color={theme.colors.text.white}
+                  />
                 </LinearGradient>
               </View>
               <Text style={[styles.title, isHospital && styles.hospitalText]}>
@@ -210,7 +212,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 <MaterialCommunityIcons
                   name="shield-check"
                   size={20}
-                  color="#2E7D32"
+                  color={theme.colors.success.dark}
                 />
               ) : (
                 <Feather
@@ -257,13 +259,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
-    ...createShadow({
-      color: "#000",
-      offset: { width: 0, height: 2 },
-      opacity: 0.08,
-      radius: 8,
-      elevation: 2,
-    }),
+    ...theme.shadows.md,
   },
   header: {
     alignItems: "center",
@@ -278,26 +274,21 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-    ...createShadow({
-      offset: { width: 0, height: 6 },
-      opacity: 0.25,
-      radius: 12,
-      elevation: 8,
-    }),
+    ...theme.shadows.lg,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.xxl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 10,
     letterSpacing: 0.3,
   },
   hospitalText: {
-    color: "#1B5E20",
+    color: theme.colors.success.dark,
   },
   subtitle: {
-    fontSize: 15,
-    fontWeight: "400",
+    fontSize: theme.typography.sizes.base,
+    fontWeight: theme.typography.weights.regular,
     color: healthColors.text.secondary,
     textAlign: "center",
     letterSpacing: 0.2,
@@ -305,7 +296,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   hospitalSubtext: {
-    color: "#2E7D32",
+    color: theme.colors.success.dark,
   },
   form: {
     marginBottom: 36,
@@ -324,18 +315,18 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   backToLoginText: {
-    fontSize: 14,
-    fontWeight: "400",
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.regular,
     color: healthColors.text.secondary,
   },
   backToLoginLink: {
     marginLeft: 6,
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
   hospitalLink: {
-    color: "#2E7D32",
+    color: theme.colors.success.dark,
   },
   successContainer: {
     alignItems: "center",
@@ -345,14 +336,14 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   successText: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 14,
   },
   successSubtext: {
-    fontSize: 15,
-    fontWeight: "400",
+    fontSize: theme.typography.sizes.base,
+    fontWeight: theme.typography.weights.regular,
     color: healthColors.text.secondary,
     textAlign: "center",
     paddingHorizontal: 20,
@@ -369,14 +360,14 @@ const styles = StyleSheet.create({
   },
   footerText: {
     marginLeft: 10,
-    fontSize: 13,
-    fontWeight: "500",
+    fontSize: theme.typography.sizes.xs,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
     textAlign: "center",
     lineHeight: 18,
   },
   hospitalFooter: {
-    color: "#2E7D32",
+    color: theme.colors.success.dark,
   },
 });
 

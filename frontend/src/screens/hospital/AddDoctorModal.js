@@ -20,8 +20,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import authService from "../../services/auth.service";
 
 const SPECIALIZATIONS = [
@@ -45,7 +44,8 @@ const SPECIALIZATIONS = [
 const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
   const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
-  const [showSpecializationPicker, setShowSpecializationPicker] = useState(false);
+  const [showSpecializationPicker, setShowSpecializationPicker] =
+    useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -94,7 +94,10 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
 
     if (!formData.experience.trim()) {
       newErrors.experience = "Experience is required";
-    } else if (isNaN(formData.experience) || parseInt(formData.experience) < 0) {
+    } else if (
+      isNaN(formData.experience) ||
+      parseInt(formData.experience) < 0
+    ) {
       newErrors.experience = "Experience must be a positive number";
     }
 
@@ -111,13 +114,17 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     try {
       // Generate unique doctor ID (DOC + date + time + random)
       const now = new Date();
-      const dateStr = now.getFullYear().toString() + 
-                      (now.getMonth() + 1).toString().padStart(2, '0') + 
-                      now.getDate().toString().padStart(2, '0');
-      const timeStr = now.getHours().toString().padStart(2, '0') + 
-                      now.getMinutes().toString().padStart(2, '0') + 
-                      now.getSeconds().toString().padStart(2, '0');
-      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      const dateStr =
+        now.getFullYear().toString() +
+        (now.getMonth() + 1).toString().padStart(2, "0") +
+        now.getDate().toString().padStart(2, "0");
+      const timeStr =
+        now.getHours().toString().padStart(2, "0") +
+        now.getMinutes().toString().padStart(2, "0") +
+        now.getSeconds().toString().padStart(2, "0");
+      const random = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0");
       const userId = `DOC${dateStr}${timeStr}${random}`;
 
       // Prepare doctor data
@@ -132,7 +139,8 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         qualification: formData.qualification.trim(),
         experience: parseInt(formData.experience),
         consultationFee: 500, // Default consultation fee
-        department: formData.department.trim() || formData.specialization || "General",
+        department:
+          formData.department.trim() || formData.specialization || "General",
         isActive: true,
         hospitalId: user?.hospitalId,
         hospitalName: user?.hospitalName,
@@ -149,29 +157,32 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       }
     } catch (error) {
       console.error("Add doctor error:", error);
-      
+
       // Better error handling
       let errorMessage = "Failed to add doctor. Please try again.";
-      
-      if (typeof error === 'string') {
+
+      if (typeof error === "string") {
         errorMessage = error;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       // Specific handling for duplicate errors
       if (errorMessage.includes("already exists")) {
         if (errorMessage.includes("email")) {
-          errorMessage = "This email is already registered. Please use a different email.";
+          errorMessage =
+            "This email is already registered. Please use a different email.";
         } else if (errorMessage.includes("phone")) {
-          errorMessage = "This phone number is already registered. Please use a different number.";
+          errorMessage =
+            "This phone number is already registered. Please use a different number.";
         } else {
-          errorMessage = "A doctor with these details already exists. Please check email and phone number.";
+          errorMessage =
+            "A doctor with these details already exists. Please check email and phone number.";
         }
       }
-      
+
       Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
@@ -211,7 +222,9 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         <Ionicons
           name={icon}
           size={20}
-          color={errors[key] ? healthColors.error.main : healthColors.text.tertiary}
+          color={
+            errors[key] ? healthColors.error.main : healthColors.text.tertiary
+          }
           style={styles.inputIcon}
         />
         <TextInput
@@ -246,14 +259,13 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         <Ionicons
           name={icon}
           size={20}
-          color={errors[key] ? healthColors.error.main : healthColors.text.tertiary}
+          color={
+            errors[key] ? healthColors.error.main : healthColors.text.tertiary
+          }
           style={styles.inputIcon}
         />
         <Text
-          style={[
-            styles.pickerText,
-            !formData[key] && styles.placeholderText,
-          ]}
+          style={[styles.pickerText, !formData[key] && styles.placeholderText]}
         >
           {formData[key] || "Select specialization..."}
         </Text>
@@ -264,7 +276,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         />
       </TouchableOpacity>
       {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-      
+
       {/* Custom Dropdown Modal */}
       <Modal
         visible={showSpecializationPicker}
@@ -407,12 +419,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "time",
               "numeric"
             )}
-            {renderInput(
-              "department",
-              "Department",
-              "Cardiology",
-              "business"
-            )}
+            {renderInput("department", "Department", "Cardiology", "business")}
 
             <Text style={styles.noteText}>* Required fields</Text>
           </ScrollView>
@@ -452,59 +459,59 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: healthColors.background.primary,
-    borderTopLeftRadius: indianDesign.borderRadius.large,
-    borderTopRightRadius: indianDesign.borderRadius.large,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
     maxHeight: "90%",
-    ...createShadow(4),
+    ...theme.shadows.lg,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   title: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   closeButton: {
-    padding: indianDesign.spacing.xs,
+    padding: theme.spacing.xs,
   },
   formContainer: {
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     maxHeight: 500,
   },
   inputContainer: {
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   label: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: theme.spacing.xs,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.medium,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: healthColors.border.light,
-    paddingHorizontal: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.md,
   },
   inputError: {
     borderColor: healthColors.error.main,
   },
   inputIcon: {
-    marginRight: indianDesign.spacing.sm,
+    marginRight: theme.spacing.sm,
   },
   input: {
     flex: 1,
-    paddingVertical: indianDesign.spacing.md,
-    fontSize: indianDesign.fontSize.medium,
+    paddingVertical: theme.spacing.md,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
   },
   picker: {
@@ -515,8 +522,8 @@ const styles = StyleSheet.create({
   },
   pickerText: {
     flex: 1,
-    paddingVertical: indianDesign.spacing.md,
-    fontSize: indianDesign.fontSize.medium,
+    paddingVertical: theme.spacing.md,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
   },
   placeholderText: {
@@ -529,29 +536,29 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     backgroundColor: healthColors.background.primary,
-    borderTopLeftRadius: indianDesign.borderRadius.large,
-    borderTopRightRadius: indianDesign.borderRadius.large,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
     maxHeight: "60%",
-    ...createShadow(4),
+    ...theme.shadows.lg,
   },
   dropdownHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   dropdownTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   dropdownItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -559,36 +566,36 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "10",
   },
   dropdownItemText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
   },
   dropdownItemTextSelected: {
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   errorText: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.error.main,
-    marginTop: indianDesign.spacing.xs,
+    marginTop: theme.spacing.xs,
   },
   noteText: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.tertiary,
     fontStyle: "italic",
-    marginTop: indianDesign.spacing.md,
+    marginTop: theme.spacing.md,
     textAlign: "center",
   },
   footer: {
     flexDirection: "row",
-    padding: indianDesign.spacing.lg,
+    padding: theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
   },
   button: {
     flex: 1,
-    paddingVertical: indianDesign.spacing.md,
-    borderRadius: indianDesign.borderRadius.medium,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -596,18 +603,19 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.tertiary,
   },
   cancelButtonText: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
   },
   submitButton: {
     backgroundColor: healthColors.primary.main,
   },
   submitButtonText: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: "#FFFFFF",
   },
 });
 
 export default AddDoctorModal;
+

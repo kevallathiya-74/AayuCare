@@ -21,8 +21,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
@@ -423,10 +422,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -442,8 +441,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   badge: {
@@ -458,7 +457,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "#fff",
     fontSize: 12,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontWeight: theme.typography.weights.bold,
   },
   actionButton: {
     width: 40,
@@ -471,29 +470,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.sm,
-    paddingHorizontal: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    marginHorizontal: indianDesign.spacing.lg,
-    marginVertical: indianDesign.spacing.md,
-    borderRadius: indianDesign.borderRadius.md,
+    marginHorizontal: theme.spacing.lg,
+    marginVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     gap: 8,
-    ...createShadow(1),
+    ...theme.shadows.sm,
   },
   markAllText: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   listContent: {
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
   },
   notificationCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.md,
-    padding: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.md,
-    ...createShadow(1),
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.sm,
   },
   unreadCard: {
     backgroundColor: healthColors.primary.light + "10",
@@ -510,7 +509,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   textContainer: {
     flex: 1,
@@ -518,16 +517,16 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: theme.spacing.xs,
   },
   title: {
-    fontSize: indianDesign.fontSize.medium,
-    fontWeight: indianDesign.fontWeight.semiBold,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     flex: 1,
   },
   unreadTitle: {
-    fontWeight: indianDesign.fontWeight.bold,
+    fontWeight: theme.typography.weights.bold,
   },
   unreadDot: {
     width: 8,
@@ -537,18 +536,18 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   message: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
-    marginBottom: indianDesign.spacing.xs,
+    marginBottom: theme.spacing.xs,
     lineHeight: 20,
   },
   time: {
-    fontSize: indianDesign.fontSize.small,
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.tertiary,
   },
   deleteButton: {
-    padding: indianDesign.spacing.xs,
-    marginLeft: indianDesign.spacing.sm,
+    padding: theme.spacing.xs,
+    marginLeft: theme.spacing.sm,
   },
   loadingContainer: {
     flex: 1,
@@ -556,28 +555,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    marginTop: indianDesign.spacing.md,
-    fontSize: indianDesign.fontSize.medium,
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
   },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: indianDesign.spacing.xxxl,
+    paddingVertical: theme.spacing.xxxxl,
   },
   emptyTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   emptySubtitle: {
-    fontSize: indianDesign.fontSize.medium,
+    fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-    marginTop: indianDesign.spacing.xs,
+    marginTop: theme.spacing.xs,
     textAlign: "center",
   },
 });
 
 export default NotificationsScreen;
+

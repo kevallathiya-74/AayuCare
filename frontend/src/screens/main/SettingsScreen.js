@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     ...textStyles.bodyLarge,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
@@ -341,3 +341,4 @@ const styles = StyleSheet.create({
 });
 
 export default SettingsScreen;
+

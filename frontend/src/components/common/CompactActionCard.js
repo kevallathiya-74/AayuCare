@@ -7,9 +7,7 @@
 import React, { memo } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
-import { moderateScale, scaledFontSize } from "../../utils/responsive";
-
+import { theme, healthColors } from "../../theme";
 const CompactActionCard = memo(
   ({
     title,
@@ -58,49 +56,52 @@ const styles = StyleSheet.create({
   card: {
     width: "48%",
     backgroundColor: healthColors.background.card,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
+    borderRadius: 12,
+    padding: 16,
     alignItems: "center",
     borderWidth: 2,
     borderColor: healthColors.border.light,
-    minHeight: moderateScale(110),
+    minHeight: 110,
     justifyContent: "center",
   },
   disabled: {
     opacity: 0.5,
   },
   iconContainer: {
-    width: moderateScale(56),
-    height: moderateScale(56),
-    borderRadius: moderateScale(28),
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: moderateScale(12),
+    marginBottom: 12,
   },
   title: {
-    fontSize: scaledFontSize(13),
-    fontWeight: "600",
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     textAlign: "center",
-    lineHeight: scaledFontSize(16),
+    lineHeight: 16,
   },
   badge: {
     position: "absolute",
-    top: moderateScale(8),
-    right: moderateScale(8),
+    top: 8,
+    right: 8,
     backgroundColor: healthColors.error.main,
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(20),
-    height: moderateScale(20),
-    paddingHorizontal: moderateScale(6),
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
     justifyContent: "center",
     alignItems: "center",
   },
   badgeText: {
-    fontSize: scaledFontSize(11),
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
 });
 
 export default CompactActionCard;
+
+
+

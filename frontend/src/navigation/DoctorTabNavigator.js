@@ -137,3 +137,4 @@ const DoctorTabNavigator = () => {
 };
 
 export default DoctorTabNavigator;
+

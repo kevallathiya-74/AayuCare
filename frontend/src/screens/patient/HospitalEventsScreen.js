@@ -22,12 +22,9 @@ import {
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
-  moderateScale,
   verticalScale,
-  scaledFontSize,
 } from "../../utils/responsive";
 import { showError, logError } from "../../utils/errorHandler";
 import { eventService } from "../../services";
@@ -37,7 +34,7 @@ const HospitalEventsScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState("all");
   const insets = useSafeAreaInsets();
 
   const fetchEvents = useCallback(async () => {
@@ -46,15 +43,16 @@ const HospitalEventsScreen = ({ navigation }) => {
       setError(null);
 
       const response = await eventService.getUpcomingEvents({ limit: 50 });
-      console.log('[HospitalEvents] Response:', response);
-      
+      console.log("[HospitalEvents] Response:", response);
+
       const eventData = response?.data || response || [];
       const eventsArray = Array.isArray(eventData) ? eventData : [];
-      
-      console.log('[HospitalEvents] Events count:', eventsArray.length);
+
+      console.log("[HospitalEvents] Events count:", eventsArray.length);
       setEvents(eventsArray);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Failed to load events";
+      const errorMessage =
+        err.response?.data?.message || "Failed to load events";
       setError(errorMessage);
       logError(err, { context: "HospitalEventsScreen.fetchEvents" });
       showError(errorMessage);
@@ -73,76 +71,87 @@ const HospitalEventsScreen = ({ navigation }) => {
     setRefreshing(false);
   }, [fetchEvents]);
 
-  const handleRegister = useCallback(async (event) => {
-    const spotsRemaining = event.availableSpots - (event.registeredCount || 0);
-    
-    if (spotsRemaining <= 0) {
-      Alert.alert("Event Full", "Sorry, this event is fully booked.");
-      return;
-    }
+  const handleRegister = useCallback(
+    async (event) => {
+      const spotsRemaining =
+        event.availableSpots - (event.registeredCount || 0);
 
-    Alert.alert(
-      "Register for Event",
-      `Do you want to register for "${event.title}"?\n\nSpots remaining: ${spotsRemaining}`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Register",
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await eventService.registerForEvent(event._id);
-              Alert.alert("Success", `Successfully registered for "${event.title}"!`);
-              await fetchEvents();
-            } catch (err) {
-              const errorMsg = err.response?.data?.message || "Failed to register for event";
-              logError(err, { context: "HospitalEventsScreen.handleRegister", eventId: event._id });
-              Alert.alert("Error", errorMsg);
-            } finally {
-              setLoading(false);
-            }
+      if (spotsRemaining <= 0) {
+        Alert.alert("Event Full", "Sorry, this event is fully booked.");
+        return;
+      }
+
+      Alert.alert(
+        "Register for Event",
+        `Do you want to register for "${event.title}"?\n\nSpots remaining: ${spotsRemaining}`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Register",
+            onPress: async () => {
+              try {
+                setLoading(true);
+                await eventService.registerForEvent(event._id);
+                Alert.alert(
+                  "Success",
+                  `Successfully registered for "${event.title}"!`
+                );
+                await fetchEvents();
+              } catch (err) {
+                const errorMsg =
+                  err.response?.data?.message || "Failed to register for event";
+                logError(err, {
+                  context: "HospitalEventsScreen.handleRegister",
+                  eventId: event._id,
+                });
+                Alert.alert("Error", errorMsg);
+              } finally {
+                setLoading(false);
+              }
+            },
           },
-        },
-      ]
-    );
-  }, [fetchEvents]);
+        ]
+      );
+    },
+    [fetchEvents]
+  );
 
   const getEventIcon = (type) => {
     const icons = {
-      'blood-donation': 'water',
-      'screening': 'fitness',
-      'vaccination': 'medical',
-      'workshop': 'school',
-      'camp': 'business',
-      'health-checkup': 'heart',
+      "blood-donation": "water",
+      screening: "fitness",
+      vaccination: "medical",
+      workshop: "school",
+      camp: "business",
+      "health-checkup": "heart",
     };
-    return icons[type] || 'calendar';
+    return icons[type] || "calendar";
   };
 
   const getEventColor = (type) => {
     const colors = {
-      'blood-donation': healthColors.error.main,
-      'screening': healthColors.info.main,
-      'vaccination': healthColors.success.main,
-      'workshop': healthColors.warning.main,
-      'camp': healthColors.primary.main,
-      'health-checkup': healthColors.accent.coral,
+      "blood-donation": healthColors.error.main,
+      screening: healthColors.info.main,
+      vaccination: healthColors.success.main,
+      workshop: healthColors.warning.main,
+      camp: healthColors.primary.main,
+      "health-checkup": healthColors.accent.coral,
     };
     return colors[type] || healthColors.primary.main;
   };
 
   const getStatusColor = (status) => {
     const colors = {
-      'upcoming': healthColors.info.main,
-      'ongoing': healthColors.success.main,
-      'completed': healthColors.text.disabled,
-      'cancelled': healthColors.error.main,
+      upcoming: healthColors.info.main,
+      ongoing: healthColors.success.main,
+      completed: healthColors.text.disabled,
+      cancelled: healthColors.error.main,
     };
     return colors[status] || healthColors.primary.main;
   };
 
-  const filteredEvents = events.filter(event => {
-    if (filter === 'all') return true;
+  const filteredEvents = events.filter((event) => {
+    if (filter === "all") return true;
     return event.status === filter;
   });
 
@@ -160,21 +169,36 @@ const HospitalEventsScreen = ({ navigation }) => {
     return (
       <View style={styles.eventCard}>
         {/* Status Badge */}
-        <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+        <View
+          style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}
+        >
           <Text style={[styles.statusText, { color: statusColor }]}>
-            {event.status?.toUpperCase() || 'UPCOMING'}
+            {event.status?.toUpperCase() || "UPCOMING"}
           </Text>
         </View>
 
         {/* Event Header */}
         <View style={styles.eventHeader}>
-          <View style={[styles.eventIconContainer, { backgroundColor: eventColor + '20' }]}>
-            <Ionicons name={getEventIcon(event.type)} size={32} color={eventColor} />
+          <View
+            style={[
+              styles.eventIconContainer,
+              { backgroundColor: eventColor + "20" },
+            ]}
+          >
+            <Ionicons
+              name={getEventIcon(event.type)}
+              size={32}
+              color={eventColor}
+            />
           </View>
           <View style={styles.eventHeaderText}>
             <Text style={styles.eventTitle}>{event.title}</Text>
             <View style={styles.eventMetaRow}>
-              <Ionicons name="calendar" size={14} color={healthColors.text.tertiary} />
+              <Ionicons
+                name="calendar"
+                size={14}
+                color={healthColors.text.tertiary}
+              />
               <Text style={styles.eventDate}>{formattedDate}</Text>
             </View>
           </View>
@@ -195,7 +219,9 @@ const HospitalEventsScreen = ({ navigation }) => {
           <View style={styles.eventDetailRow}>
             <Ionicons name="people-outline" size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>
-              {spotsRemaining > 0 ? `${spotsRemaining} spots available` : 'Event full'}
+              {spotsRemaining > 0
+                ? `${spotsRemaining} spots available`
+                : "Event full"}
             </Text>
           </View>
         </View>
@@ -211,30 +237,45 @@ const HospitalEventsScreen = ({ navigation }) => {
         <View style={styles.eventActions}>
           <TouchableOpacity
             style={styles.detailsButton}
-            onPress={() => Alert.alert("Event Details", `Full details for "${event.title}" coming soon!`)}
+            onPress={() =>
+              Alert.alert(
+                "Event Details",
+                `Full details for "${event.title}" coming soon!`
+              )
+            }
           >
-            <Ionicons name="information-circle-outline" size={20} color={healthColors.primary.main} />
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={healthColors.primary.main}
+            />
             <Text style={styles.detailsButtonText}>Details</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.registerButton,
-              spotsRemaining <= 0 && styles.registerButtonDisabled
+              spotsRemaining <= 0 && styles.registerButtonDisabled,
             ]}
             onPress={() => handleRegister(event)}
             disabled={loading || spotsRemaining <= 0}
           >
             <LinearGradient
-              colors={spotsRemaining > 0 ? [eventColor, eventColor + 'DD'] : ['#CCCCCC', '#AAAAAA']}
+              colors={
+                spotsRemaining > 0
+                  ? [eventColor, eventColor + "DD"]
+                  : ["#CCCCCC", "#AAAAAA"]
+              }
               style={styles.registerGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
               <Text style={styles.registerButtonText}>
-                {spotsRemaining > 0 ? 'Register' : 'Full'}
+                {spotsRemaining > 0 ? "Register" : "Full"}
               </Text>
-              {spotsRemaining > 0 && <Ionicons name="arrow-forward" size={16} color="#FFF" />}
+              {spotsRemaining > 0 && (
+                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+              )}
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -246,19 +287,21 @@ const HospitalEventsScreen = ({ navigation }) => {
     <View>
       {/* Filter Tabs */}
       <View style={styles.filterContainer}>
-        {['all', 'upcoming', 'ongoing'].map((filterOption) => (
+        {["all", "upcoming", "ongoing"].map((filterOption) => (
           <TouchableOpacity
             key={filterOption}
             style={[
               styles.filterTab,
-              filter === filterOption && styles.filterTabActive
+              filter === filterOption && styles.filterTabActive,
             ]}
             onPress={() => setFilter(filterOption)}
           >
-            <Text style={[
-              styles.filterTabText,
-              filter === filterOption && styles.filterTabTextActive
-            ]}>
+            <Text
+              style={[
+                styles.filterTabText,
+                filter === filterOption && styles.filterTabTextActive,
+              ]}
+            >
               {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
             </Text>
           </TouchableOpacity>
@@ -274,17 +317,21 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="calendar-outline" size={80} color={healthColors.text.disabled} />
+      <Ionicons
+        name="calendar-outline"
+        size={80}
+        color={healthColors.text.disabled}
+      />
       <Text style={styles.emptyTitle}>No Events Found</Text>
       <Text style={styles.emptyText}>
-        {filter === 'all' 
-          ? 'No events available at the moment.'
+        {filter === "all"
+          ? "No events available at the moment."
           : `No ${filter} events at the moment.`}
       </Text>
-      {filter !== 'all' && (
+      {filter !== "all" && (
         <TouchableOpacity
           style={styles.resetFilterButton}
-          onPress={() => setFilter('all')}
+          onPress={() => setFilter("all")}
         >
           <Text style={styles.resetFilterText}>Show All Events</Text>
         </TouchableOpacity>
@@ -294,7 +341,10 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.primary}
+      />
 
       {/* Header */}
       <View style={styles.header}>
@@ -303,7 +353,11 @@ const HospitalEventsScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Hospital Events</Text>
@@ -318,7 +372,11 @@ const HospitalEventsScreen = ({ navigation }) => {
           {refreshing ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <Ionicons name="refresh" size={24} color={healthColors.primary.main} />
+            <Ionicons
+              name="refresh"
+              size={24}
+              color={healthColors.primary.main}
+            />
           )}
         </TouchableOpacity>
       </View>
@@ -331,7 +389,11 @@ const HospitalEventsScreen = ({ navigation }) => {
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={healthColors.error.main} />
+          <Ionicons
+            name="alert-circle-outline"
+            size={64}
+            color={healthColors.error.main}
+          />
           <Text style={styles.errorTitle}>Failed to Load Events</Text>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
@@ -347,7 +409,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: Math.max(insets.bottom, 20) }
+            { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           refreshControl={
             <RefreshControl
@@ -373,10 +435,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   backButton: {
     width: 40,
@@ -391,12 +453,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: indianDesign.fontSize.large,
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   headerSubtitle: {
-    fontSize: indianDesign.fontSize.tiny,
+    fontSize: theme.typography.sizes.xs,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
@@ -404,22 +466,22 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: healthColors.primary.main + '15',
+    backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
   },
   filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingTop: indianDesign.spacing.lg,
-    gap: indianDesign.spacing.sm,
+    flexDirection: "row",
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    gap: theme.spacing.sm,
   },
   filterTab: {
     flex: 1,
-    paddingVertical: indianDesign.spacing.sm,
-    borderRadius: indianDesign.borderRadius.small,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.small,
     backgroundColor: healthColors.background.card,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
@@ -428,67 +490,67 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   filterTabText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: indianDesign.fontWeight.medium,
+    fontSize: 13,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
   filterTabTextActive: {
-    color: '#FFF',
-    fontWeight: indianDesign.fontWeight.bold,
+    color: "#FFF",
+    fontWeight: theme.typography.weights.bold,
   },
   countContainer: {
-    paddingHorizontal: indianDesign.spacing.lg,
-    paddingVertical: indianDesign.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
   },
   countText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
   },
   listContent: {
-    paddingHorizontal: indianDesign.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
   eventCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: indianDesign.borderRadius.medium,
-    padding: indianDesign.spacing.lg,
-    marginBottom: indianDesign.spacing.lg,
-    ...createShadow(2),
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.md,
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
   statusBadge: {
-    position: 'absolute',
-    top: indianDesign.spacing.md,
-    right: indianDesign.spacing.md,
-    paddingHorizontal: indianDesign.spacing.sm,
+    position: "absolute",
+    top: theme.spacing.md,
+    right: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
-    borderRadius: indianDesign.borderRadius.small,
+    borderRadius: theme.borderRadius.small,
   },
   statusText: {
-    fontSize: scaledFontSize(10),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
     letterSpacing: 0.5,
   },
   eventHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   eventIconContainer: {
-    width: moderateScale(64),
-    height: moderateScale(64),
-    borderRadius: moderateScale(32),
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: indianDesign.spacing.md,
+    marginRight: theme.spacing.md,
   },
   eventHeaderText: {
     flex: 1,
   },
   eventTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 6,
   },
@@ -498,54 +560,54 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   eventDate: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.tertiary,
   },
   eventDetails: {
-    gap: indianDesign.spacing.xs,
-    marginBottom: indianDesign.spacing.md,
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
   },
   eventDetailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.sm,
+    gap: theme.spacing.sm,
   },
   eventDetailText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     flex: 1,
   },
   eventDescription: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     lineHeight: 20,
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   eventActions: {
-    flexDirection: 'row',
-    gap: indianDesign.spacing.sm,
-    paddingTop: indianDesign.spacing.md,
+    flexDirection: "row",
+    gap: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
   detailsButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    paddingVertical: indianDesign.spacing.sm,
-    borderRadius: indianDesign.borderRadius.small,
-    backgroundColor: healthColors.primary.main + '15',
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.small,
+    backgroundColor: healthColors.primary.main + "15",
   },
   detailsButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   registerButton: {
     flex: 1.5,
-    borderRadius: indianDesign.borderRadius.small,
+    borderRadius: theme.borderRadius.small,
     overflow: "hidden",
   },
   registerButtonDisabled: {
@@ -555,87 +617,90 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.sm,
+    paddingVertical: theme.spacing.sm,
     gap: 6,
   },
   registerButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: moderateScale(60),
+    paddingVertical: 60,
   },
   loadingText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    marginTop: moderateScale(12),
+    marginTop: 12,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: indianDesign.spacing.xl,
-    paddingVertical: moderateScale(60),
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: 60,
   },
   errorTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.xs,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
   },
   errorText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    textAlign: 'center',
-    marginBottom: indianDesign.spacing.lg,
+    textAlign: "center",
+    marginBottom: theme.spacing.lg,
   },
   retryButton: {
     backgroundColor: healthColors.primary.main,
-    paddingHorizontal: indianDesign.spacing.xl,
-    paddingVertical: indianDesign.spacing.sm,
-    borderRadius: indianDesign.borderRadius.small,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.small,
   },
   retryButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
-    color: '#FFF',
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
+    color: "#FFF",
   },
   emptyState: {
-    paddingVertical: moderateScale(60),
+    paddingVertical: 60,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: indianDesign.spacing.xl,
+    paddingHorizontal: theme.spacing.xl,
   },
   emptyTitle: {
-    fontSize: scaledFontSize(18),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginTop: indianDesign.spacing.md,
-    marginBottom: indianDesign.spacing.xs,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
   },
   emptyText: {
-    fontSize: scaledFontSize(14),
+    fontSize: 14,
     color: healthColors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
   },
   resetFilterButton: {
-    marginTop: indianDesign.spacing.lg,
-    paddingHorizontal: indianDesign.spacing.xl,
-    paddingVertical: indianDesign.spacing.sm,
+    marginTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.sm,
     backgroundColor: healthColors.primary.main,
-    borderRadius: indianDesign.borderRadius.small,
+    borderRadius: theme.borderRadius.small,
   },
   resetFilterText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
-    color: '#FFF',
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
+    color: "#FFF",
   },
 });
 
 export default HospitalEventsScreen;
+
+
+

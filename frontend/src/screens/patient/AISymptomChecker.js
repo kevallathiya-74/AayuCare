@@ -19,8 +19,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign, createShadow } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import {
   AIIcon,
   IconWithBackground,
@@ -33,8 +32,6 @@ import { useNetworkStatus } from "../../utils/offlineHandler";
 import aiService from "../../services/ai.service";
 import {
   getScreenPadding,
-  scaledFontSize,
-  moderateScale,
   verticalScale,
 } from "../../utils/responsive";
 
@@ -227,10 +224,7 @@ const AISymptomChecker = ({ navigation }) => {
         </View>
 
         {/* AI Tagline */}
-        <AITagline
-          variant="gradient"
-          style={{ marginTop: indianDesign.spacing.lg }}
-        />
+        <AITagline variant="gradient" style={{ marginTop: theme.spacing.lg }} />
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
@@ -477,19 +471,19 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
-    marginTop: indianDesign.spacing.lg,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
   },
   headerText: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: scaledFontSize(24),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 24,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   headerSubtitle: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: "rgba(255, 255, 255, 0.9)",
     marginTop: 4,
   },
@@ -497,25 +491,25 @@ const styles = StyleSheet.create({
     padding: getScreenPadding(),
   },
   inputSection: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   label: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   symptomsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: indianDesign.spacing.sm,
+    gap: theme.spacing.sm,
   },
   symptomChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: indianDesign.spacing.sm,
-    paddingHorizontal: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: healthColors.primary.main,
@@ -526,9 +520,9 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   symptomChipText: {
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.primary.main,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontWeight: theme.typography.weights.medium,
   },
   symptomChipTextSelected: {
     color: healthColors.neutral.white,
@@ -538,10 +532,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.card.border,
-    padding: indianDesign.spacing.md,
-    fontSize: scaledFontSize(14),
+    padding: theme.spacing.md,
+    fontSize: 14,
     color: healthColors.text.primary,
-    minHeight: moderateScale(80),
+    minHeight: 80,
     textAlignVertical: "top",
   },
   input: {
@@ -549,17 +543,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: healthColors.card.border,
-    padding: indianDesign.spacing.md,
-    fontSize: scaledFontSize(14),
+    padding: theme.spacing.md,
+    fontSize: 14,
     color: healthColors.text.primary,
   },
   severityContainer: {
     flexDirection: "row",
-    gap: indianDesign.spacing.sm,
+    gap: theme.spacing.sm,
   },
   severityButton: {
     flex: 1,
-    paddingVertical: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.md,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: healthColors.card.border,
@@ -567,8 +561,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   severityText: {
-    fontSize: scaledFontSize(13),
-    fontWeight: indianDesign.fontWeight.medium,
+    fontSize: 13,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
   severityTextSelected: {
@@ -577,44 +571,44 @@ const styles = StyleSheet.create({
   analyzeButton: {
     borderRadius: 12,
     overflow: "hidden",
-    ...createShadow(3),
+    ...theme.shadows.lg,
   },
   analyzeButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: indianDesign.spacing.md,
-    gap: indianDesign.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   analyzeButtonText: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: "#FFF",
   },
   disclaimer: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: indianDesign.spacing.xs,
-    marginTop: indianDesign.spacing.lg,
-    padding: indianDesign.spacing.md,
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.lg,
+    padding: theme.spacing.md,
     backgroundColor: healthColors.background.tertiary,
     borderRadius: 12,
   },
   disclaimerText: {
     flex: 1,
-    fontSize: scaledFontSize(11),
+    fontSize: 11,
     color: healthColors.text.tertiary,
     lineHeight: 16,
   },
   loadingContainer: {
-    padding: indianDesign.spacing.xl,
+    padding: theme.spacing.xl,
     alignItems: "center",
   },
   loadingText: {
-    marginTop: indianDesign.spacing.md,
-    fontSize: scaledFontSize(14),
+    marginTop: theme.spacing.md,
+    fontSize: 14,
     color: healthColors.text.secondary,
-    fontWeight: indianDesign.fontWeight.medium,
+    fontWeight: theme.typography.weights.medium,
   },
   resultsContainer: {
     padding: getScreenPadding(),
@@ -622,50 +616,50 @@ const styles = StyleSheet.create({
   resultHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.sm,
-    marginBottom: indianDesign.spacing.lg,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   resultTitle: {
-    fontSize: scaledFontSize(20),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   section: {
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: indianDesign.spacing.md,
+    marginBottom: theme.spacing.md,
   },
   conditionCard: {
     backgroundColor: healthColors.background.card,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    marginBottom: indianDesign.spacing.sm,
-    ...createShadow(1),
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   conditionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: indianDesign.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   conditionName: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   probabilityBadge: {
     backgroundColor: healthColors.primary.main + "20",
-    paddingHorizontal: indianDesign.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
     borderRadius: 12,
   },
   probabilityText: {
-    fontSize: scaledFontSize(12),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
   progressBar: {
@@ -682,57 +676,57 @@ const styles = StyleSheet.create({
   urgencyCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    marginBottom: indianDesign.spacing.xl,
-    ...createShadow(2),
+    marginBottom: theme.spacing.xl,
+    ...theme.shadows.md,
   },
   urgencyContent: {
     flex: 1,
   },
   urgencyLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
   },
   urgencyValue: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
   },
   recommendationItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: indianDesign.spacing.sm,
-    marginBottom: indianDesign.spacing.sm,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   recommendationText: {
     flex: 1,
-    fontSize: scaledFontSize(13),
+    fontSize: 13,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
   warningSection: {
     backgroundColor: healthColors.error.light,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#FCA5A5",
-    marginBottom: indianDesign.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
   warningHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.sm,
-    marginBottom: indianDesign.spacing.sm,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   warningTitle: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
     color: "#DC2626",
   },
   warningItem: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: "#991B1B",
     lineHeight: 18,
     marginTop: 4,
@@ -740,54 +734,57 @@ const styles = StyleSheet.create({
   recoveryCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: indianDesign.spacing.md,
+    gap: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    padding: indianDesign.spacing.md,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    ...createShadow(1),
+    ...theme.shadows.sm,
   },
   recoveryLabel: {
-    fontSize: scaledFontSize(12),
+    fontSize: 12,
     color: healthColors.text.secondary,
   },
   recoveryValue: {
-    fontSize: scaledFontSize(16),
-    fontWeight: indianDesign.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
   actionButtons: {
     flexDirection: "row",
-    gap: indianDesign.spacing.md,
-    marginTop: indianDesign.spacing.xl,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.xl,
   },
   secondaryButton: {
     flex: 1,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: healthColors.primary.main,
-    paddingVertical: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.md,
     alignItems: "center",
   },
   secondaryButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   primaryButton: {
     flex: 1,
     borderRadius: 12,
     overflow: "hidden",
-    ...createShadow(2),
+    ...theme.shadows.md,
   },
   primaryButtonGradient: {
-    paddingVertical: indianDesign.spacing.md,
+    paddingVertical: theme.spacing.md,
     alignItems: "center",
   },
   primaryButtonText: {
-    fontSize: scaledFontSize(14),
-    fontWeight: indianDesign.fontWeight.semibold,
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: "#FFF",
   },
 });
 
 export default AISymptomChecker;
+
+
+

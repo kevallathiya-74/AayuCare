@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
-import { moderateScale, scaledFontSize, getInputHeight } from '../../utils/responsive';
+import { getInputHeight } from '../../utils/responsive';
 
 const SearchBar = ({
     value,
@@ -139,3 +139,6 @@ const styles = StyleSheet.create({
 });
 
 export default SearchBar;
+
+
+

@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
-import { moderateScale, scaledFontSize, getListItemHeight } from '../../utils/responsive';
+import { getListItemHeight } from '../../utils/responsive';
 import Avatar from './Avatar';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -181,3 +181,6 @@ const styles = StyleSheet.create({
 });
 
 export default ListItem;
+
+
+

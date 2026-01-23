@@ -28,3 +28,4 @@ export const getCurrentUser = async () => {
 export const getStoredUser = authService.getUserData;
 
 export default authService;
+

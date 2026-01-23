@@ -14,13 +14,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../../theme/healthColors";
-import { indianDesign } from "../../theme/indianDesign";
+import { theme, healthColors } from "../../theme";
 import { useNetworkStatus, useRequestQueue } from "../../utils/offlineHandler";
 import {
-  moderateScale,
   verticalScale,
-  scaledFontSize,
 } from "../../utils/responsive";
 
 const NetworkStatusIndicator = ({ onPress }) => {
@@ -69,7 +66,7 @@ const NetworkStatusIndicator = ({ onPress }) => {
         {
           backgroundColor,
           transform: [{ translateY: slideAnim }],
-          paddingTop: insets.top + verticalScale(indianDesign.spacing.sm),
+          paddingTop: insets.top + theme.spacing.sm,
         },
       ]}
     >
@@ -98,34 +95,37 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 1000,
-    paddingVertical: verticalScale(indianDesign.spacing.sm),
-    paddingHorizontal: moderateScale(indianDesign.spacing.md),
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
   },
   content: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: moderateScale(indianDesign.spacing.sm),
+    gap: theme.spacing.sm,
   },
   message: {
-    fontSize: scaledFontSize(indianDesign.fontSize.small),
+    fontSize: theme.typography.sizes.sm,
     fontWeight: "600",
     color: healthColors.white,
   },
   badge: {
     backgroundColor: healthColors.white,
-    borderRadius: moderateScale(10),
-    minWidth: moderateScale(20),
-    height: moderateScale(20),
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: moderateScale(4),
+    paddingHorizontal: 4,
   },
   badgeText: {
-    fontSize: scaledFontSize(10),
+    fontSize: 10,
     fontWeight: "700",
     color: healthColors.warning.main,
   },
 });
 
 export default NetworkStatusIndicator;
+
+
+

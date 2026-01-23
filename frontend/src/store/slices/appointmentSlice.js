@@ -165,3 +165,4 @@ const appointmentSlice = createSlice({
 export const { clearError, setSelectedAppointment, clearSelectedAppointment } = appointmentSlice.actions;
 
 export default appointmentSlice.reducer;
+
