@@ -6,7 +6,7 @@
 
 import React, { useRef } from "react";
 import { View, StyleSheet, Pressable, Animated } from "react-native";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import { spacing, componentSpacing } from "../../theme/spacing";
 import {
   borderRadius as responsiveBorderRadius,

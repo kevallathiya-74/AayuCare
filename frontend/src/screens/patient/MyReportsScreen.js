@@ -39,7 +39,7 @@ const MyReportsScreen = ({ navigation }) => {
 
   // Fetch reports from API
   const fetchReports = useCallback(async () => {
-    if (!user?._id) {
+    if (!user?.id) {
       setError("User not found");
       setLoading(false);
       return;
@@ -54,7 +54,7 @@ const MyReportsScreen = ({ navigation }) => {
     try {
       setError(null);
       const response = await medicalRecordService.getPatientRecords(
-        user.userId
+        user.id
       );
       const records =
         response?.data?.medicalRecords || response?.medicalRecords || [];

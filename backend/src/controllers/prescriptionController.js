@@ -100,13 +100,21 @@ exports.getPatientPrescriptions = async (req, res) => {
     }
 
     // Find patient by either userId or _id
-    const query = { role: "patient" };
+    let patient;
     if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+      // Try finding by ObjectId first
+      patient = await User.findById(patientId).select("_id role");
+      // Verify it's actually a patient
+      if (patient && patient.role !== "patient") {
+        patient = null;
+      }
+      // If not found or wrong role, try userId
+      if (!patient) {
+        patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
+      }
     } else {
-      query.userId = patientId;
+      patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
     }
-    const patient = await User.findOne(query).select("_id");
     if (!patient) {
       return res.status(404).json({
         success: false,

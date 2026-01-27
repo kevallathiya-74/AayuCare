@@ -14,7 +14,7 @@ import {
   Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { healthColors } from '../../theme/healthColors';
+import { theme, healthColors } from '../../theme';
 import { textStyles, fontFamilies } from '../../theme/typography';
 import { spacing, componentSpacing, layout } from '../../theme/spacing';
 import { 

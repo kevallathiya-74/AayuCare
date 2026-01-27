@@ -74,7 +74,7 @@ const SplashScreen = ({ navigation }) => {
 
     console.log("[SplashScreen] Auth check complete:", {
       isAuthenticated,
-      user: user?.userId,
+      user: user?.id,
     });
 
     // Navigate based on auth status with small delay for animation
@@ -130,7 +130,7 @@ const SplashScreen = ({ navigation }) => {
 
   return (
     <LinearGradient
-      colors={[healthColors.primary.main, healthColors.primary.dark, "#1B5E20"]}
+      colors={[healthColors.primary.main, healthColors.primary.dark, theme.colors.healthcare.heartRate]}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.95),
     justifyContent: "center",
     alignItems: "center",
     marginBottom: theme.spacing.xl,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.2),
     justifyContent: "center",
     alignItems: "center",
     marginBottom: theme.spacing.xl,
@@ -235,13 +235,13 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 36,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
     marginBottom: theme.spacing.md,
   },
   tagline: {
     fontSize: 16,
     fontWeight: theme.typography.weights.medium,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
     marginBottom: 4,
   },
   loadingContainer: {
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: theme.withOpacity(theme.colors.white, 0.8),
     textAlign: "center",
   },
 });

@@ -39,13 +39,13 @@ const MyAppointmentsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (user?._id) {
+    if (user?.id) {
       fetchAppointments();
     }
   }, [user]);
 
   const fetchAppointments = useCallback(async () => {
-    if (!user?._id) {
+    if (!user?.id) {
       setError("User not authenticated");
       return;
     }
@@ -55,7 +55,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
       setError(null);
 
       const response = await appointmentService.getAppointments({
-        patientId: user.userId,
+        patientId: user.id,
         status:
           selectedTab === "upcoming"
             ? "scheduled,confirmed"
@@ -75,7 +75,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
         "Failed to load appointments";
       logError(err, {
         context: "MyAppointmentsScreen.fetchAppointments",
-        userId: user?.userId,
+        userId: user?.id,
       });
       setError(errorMessage);
       showError(errorMessage);

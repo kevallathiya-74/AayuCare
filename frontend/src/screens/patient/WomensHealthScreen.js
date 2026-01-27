@@ -58,19 +58,19 @@ const WomensHealthScreen = ({ navigation }) => {
       icon: "fitness",
       name: "Breathing Exercises",
       duration: "5 min",
-      color: "#4CAF50",
+      color: theme.colors.success.main,
     },
     {
       icon: "musical-notes",
       name: "Guided Meditation",
       duration: "10 min",
-      color: "#9C27B0",
+      color: theme.colors.healthcare.purple,
     },
     {
       icon: "call",
       name: "Counseling Support",
       action: "Call Now",
-      color: "#F44336",
+      color: theme.colors.error.main,
     },
   ];
 
@@ -96,16 +96,16 @@ const WomensHealthScreen = ({ navigation }) => {
       <NetworkStatusIndicator />
       {/* Header */}
       <LinearGradient
-        colors={["#EC4899", "#DB2777"]}
+        colors={[theme.colors.healthcare.pink, theme.colors.healthcare.pink]}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="rose-outline" size={32} color="#FFF" />
+          <Ionicons name="rose-outline" size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Women's Health</Text>
             <Text style={styles.headerSubtitle}>
@@ -114,7 +114,7 @@ const WomensHealthScreen = ({ navigation }) => {
           </View>
         </View>
         <TouchableOpacity onPress={() => {}}>
-          <Ionicons name="calendar" size={24} color="#FFF" />
+          <Ionicons name="calendar" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -161,13 +161,13 @@ const WomensHealthScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity style={styles.calendarButton}>
-              <Ionicons name="stats-chart-outline" size={18} color="#EC4899" />
+              <Ionicons name="stats-chart-outline" size={18} color={theme.colors.healthcare.pink} />
               <Text style={styles.calendarButtonText}>View Full Calendar</Text>
-              <Ionicons name="chevron-forward" size={16} color="#EC4899" />
+              <Ionicons name="chevron-forward" size={16} color={theme.colors.healthcare.pink} />
             </TouchableOpacity>
 
             <View style={styles.insightBox}>
-              <Ionicons name="bulb-outline" size={20} color="#FFA726" />
+              <Ionicons name="bulb-outline" size={20} color={theme.colors.warning.light} />
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>Today's Insight:</Text>
                 <Text style={styles.insightText}>{menstrualData.insight}</Text>
@@ -224,17 +224,17 @@ const WomensHealthScreen = ({ navigation }) => {
 
             <View style={styles.checkupInfo}>
               <View style={styles.checkupRow}>
-                <Ionicons name="medkit-outline" size={20} color="#EC4899" />
+                <Ionicons name="medkit-outline" size={20} color={theme.colors.healthcare.pink} />
                 <Text style={styles.checkupText}>
                   Next Checkup: {pregnancyData.nextCheckup}
                 </Text>
               </View>
               <TouchableOpacity style={styles.scheduleButton}>
-                <Ionicons name="medical-outline" size={18} color="#EC4899" />
+                <Ionicons name="medical-outline" size={18} color={theme.colors.healthcare.pink} />
                 <Text style={styles.scheduleButtonText}>
                   Immunization Schedule
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color="#EC4899" />
+                <Ionicons name="chevron-forward" size={16} color={theme.colors.healthcare.pink} />
               </TouchableOpacity>
             </View>
           </View>
@@ -295,12 +295,12 @@ const WomensHealthScreen = ({ navigation }) => {
         {/* Emergency Contact */}
         <TouchableOpacity style={styles.emergencyButton}>
           <LinearGradient
-            colors={["#F44336", "#D32F2F"]}
+            colors={[theme.colors.error.main, theme.colors.error.dark]}
             style={styles.emergencyGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Ionicons name="call" size={24} color="#FFF" />
+            <Ionicons name="call" size={24} color={theme.colors.white} />
             <Text style={styles.emergencyText}>Women's Helpline: 1091</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -337,11 +337,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
     padding: getScreenPadding(),
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: theme.spacing.lg,
     borderWidth: 2,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   calendarButtonText: {
     fontSize: 14,
-    color: "#EC4899",
+    color: theme.colors.healthcare.pink,
     fontWeight: theme.typography.weights.medium,
   },
   insightBox: {
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   scheduleButtonText: {
     fontSize: 14,
-    color: "#EC4899",
+    color: theme.colors.healthcare.pink,
     fontWeight: theme.typography.weights.medium,
   },
   activityItem: {
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 12,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   emergencyButton: {
     borderRadius: theme.borderRadius.md,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   emergencyText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 

@@ -226,7 +226,7 @@ export const textStyles = {
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.caption * lineHeights.normal,
-    color: '#80868B', // text.tertiary
+    color: '#80868B', // Reference: colors.text.tertiary (use in components)
   },
   
   overline: {

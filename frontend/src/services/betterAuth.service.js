@@ -303,7 +303,7 @@ export const getSession = async () => {
         const user = JSON.parse(userDataStr);
         console.log(
           "[BetterAuth] Session loaded from storage:",
-          user?.userId || user?.email
+          user?.id || user?.email
         );
         return { user, token };
       } catch (parseError) {

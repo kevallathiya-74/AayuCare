@@ -94,7 +94,7 @@ export const loadUser = createAsyncThunk(
 
       console.log(
         "[authSlice] User loaded from session:",
-        session.user.userId || session.user.email
+        session.user.id || session.user.email
       );
       return session.user;
     } catch (error) {

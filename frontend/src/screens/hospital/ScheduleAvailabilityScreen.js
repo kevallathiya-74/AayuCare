@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import doctorService from "../../services/doctor.service";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);

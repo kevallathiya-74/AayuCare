@@ -299,7 +299,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
               </View>
 
               <TouchableOpacity style={styles.doctorButton}>
-                <Ionicons name="call" size={20} color="#FFFFFF" />
+                <Ionicons name="call" size={20} color={theme.colors.white} />
                 <Text style={styles.doctorButtonText}>Talk to Real Doctor</Text>
               </TouchableOpacity>
             </View>
@@ -334,7 +334,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
             onPress={handleSend}
             disabled={!message.trim()}
           >
-            <Ionicons name="send" size={20} color="#FFFFFF" />
+            <Ionicons name="send" size={20} color={theme.colors.white} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   userMessageText: {
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   aiMessageText: {
     color: healthColors.text.primary,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   doctorButtonText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.semiBold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   inputSection: {
     flexDirection: "row",

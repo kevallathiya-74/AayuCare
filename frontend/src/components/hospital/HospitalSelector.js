@@ -13,7 +13,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { healthColors } from '../../theme/healthColors';
+import { theme } from '../../theme';
 // Available hospitals in the system
 const HOSPITALS = [
   { id: 'ALL', name: 'All Hospitals' },
@@ -47,13 +47,13 @@ const HospitalSelector = ({ selectedHospitalId, onSelectHospital, userRole }) =>
           <Ionicons
             name="business-outline"
             size={20}
-            color={healthColors.primary.main}
+            color={theme.colors.primary}
           />
           <Text style={styles.buttonText}>{selectedHospital.name}</Text>
           <Ionicons
             name="chevron-down"
             size={20}
-            color={healthColors.text.secondary}
+            color={theme.colors.text.secondary}
           />
         </View>
       </TouchableOpacity>
@@ -72,7 +72,7 @@ const HospitalSelector = ({ selectedHospitalId, onSelectHospital, userRole }) =>
                 <Ionicons
                   name="close"
                   size={24}
-                  color={healthColors.text.primary}
+                  color={theme.colors.text.primary}
                 />
               </TouchableOpacity>
             </View>
@@ -94,8 +94,8 @@ const HospitalSelector = ({ selectedHospitalId, onSelectHospital, userRole }) =>
                       size={24}
                       color={
                         item.id === selectedHospitalId
-                          ? healthColors.primary.main
-                          : healthColors.text.secondary
+                          ? theme.colors.primary
+                          : theme.colors.text.secondary
                       }
                     />
                     <Text
@@ -112,7 +112,7 @@ const HospitalSelector = ({ selectedHospitalId, onSelectHospital, userRole }) =>
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color={healthColors.primary.main}
+                      color={theme.colors.primary}
                     />
                   )}
                 </TouchableOpacity>
@@ -130,12 +130,12 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   selectorButton: {
-    backgroundColor: healthColors.neutral.white,
+    backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: healthColors.neutral.border,
-    shadowColor: '#000',
+    borderColor: theme.colors.border.light,
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     fontWeight: '600',
-    color: healthColors.text.primary,
+    color: theme.colors.text.primary,
   },
   modalOverlay: {
     flex: 1,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: healthColors.neutral.white,
+    backgroundColor: theme.colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,
@@ -171,12 +171,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: healthColors.neutral.border,
+    borderBottomColor: theme.colors.border.light,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: healthColors.text.primary,
+    color: theme.colors.text.primary,
   },
   hospitalItem: {
     flexDirection: 'row',
@@ -184,10 +184,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: healthColors.neutral.background,
+    borderBottomColor: theme.colors.background.secondary,
   },
   hospitalItemSelected: {
-    backgroundColor: healthColors.primary.light + '10',
+    backgroundColor: theme.colors.primaryLight + '10',
   },
   hospitalItemContent: {
     flexDirection: 'row',
@@ -197,11 +197,11 @@ const styles = StyleSheet.create({
   hospitalItemText: {
     marginLeft: 12,
     fontSize: 16,
-    color: healthColors.text.primary,
+    color: theme.colors.text.primary,
   },
   hospitalItemTextSelected: {
     fontWeight: '600',
-    color: healthColors.primary.main,
+    color: theme.colors.primary,
   },
 });
 

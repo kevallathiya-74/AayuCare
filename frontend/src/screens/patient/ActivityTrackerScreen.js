@@ -53,10 +53,10 @@ const ActivityTrackerScreen = ({ navigation }) => {
   const targetGlasses = 8;
 
   useEffect(() => {
-    if (user?._id) {
+    if (user?.id) {
       fetchActivityData();
     }
-  }, [user?._id]);
+  }, [user?.id]);
 
   const fetchActivityData = async () => {
     try {
@@ -68,7 +68,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
 
-      const response = await activityService.getActivityData(user.userId);
+      const response = await activityService.getActivityData(user.id);
       const { latest, today } = response.data;
 
       // Update steps
@@ -104,7 +104,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
           icon: e.metadata?.icon || "fitness",
           name: e.value.name || "Activity",
           duration: e.value.duration || "N/A",
-          color: e.metadata?.color || "#4CAF50",
+          color: e.metadata?.color || theme.colors.success.main,
         }))
       );
     } catch (err) {
@@ -121,7 +121,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
     setRefreshing(true);
     await fetchActivityData();
     setRefreshing(false);
-  }, [user?._id]);
+  }, [user?.id]);
 
   const handleRetry = () => {
     setError(null);
@@ -134,7 +134,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
       setWaterGlasses(newCount);
 
       try {
-        await activityService.addWater(user.userId, newCount);
+        await activityService.addWater(user.id, newCount);
       } catch (err) {
         logError(err, { context: "ActivityTrackerScreen.addWaterGlass" });
         showError("Failed to update water intake");
@@ -168,10 +168,10 @@ const ActivityTrackerScreen = ({ navigation }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="fitness" size={32} color="#FFF" />
+          <Ionicons name="fitness" size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Activity Tracker</Text>
             <Text style={styles.headerSubtitle}>
@@ -180,7 +180,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
           </View>
         </View>
         <TouchableOpacity onPress={() => {}}>
-          <Ionicons name="bar-chart" size={24} color="#FFF" />
+          <Ionicons name="bar-chart" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -230,12 +230,12 @@ const ActivityTrackerScreen = ({ navigation }) => {
               <Text style={styles.sleepLabel}>Last Night:</Text>
               <View style={styles.sleepValue}>
                 <Text style={styles.sleepDuration}>{sleepData.duration}</Text>
-                <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.success.main} />
               </View>
             </View>
             <View style={styles.sleepRow}>
               <Text style={styles.sleepLabel}>Quality:</Text>
-              <Text style={[styles.sleepQuality, { color: "#4CAF50" }]}>
+              <Text style={[styles.sleepQuality, { color: theme.colors.success.main }]}>
                 {sleepData.quality}
               </Text>
             </View>
@@ -276,7 +276,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
                     { opacity: index < waterGlasses ? 1 : 0.3 },
                   ]}
                 >
-                  <Ionicons name="water" size={24} color="#2196F3" />
+                  <Ionicons name="water" size={24} color={theme.colors.info.main} />
                 </View>
               ))}
             </View>
@@ -286,12 +286,12 @@ const ActivityTrackerScreen = ({ navigation }) => {
               disabled={waterGlasses >= targetGlasses}
             >
               <LinearGradient
-                colors={["#2196F3", "#1976D2"]}
+                colors={[theme.colors.info.main, theme.colors.info.dark]}
                 style={styles.addGlassGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Ionicons name="add" size={20} color="#FFF" />
+                <Ionicons name="add" size={20} color={theme.colors.white} />
                 <Text style={styles.addGlassText}>Add Glass</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -337,7 +337,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Ionicons name="stats-chart" size={24} color="#FFF" />
+            <Ionicons name="stats-chart" size={24} color={theme.colors.white} />
             <Text style={styles.progressButtonText}>View 30-Day Progress</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   headerSubtitle: {
     fontSize: 13,
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   addGlassText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   reminderText: {
     fontSize: 12,
@@ -567,11 +567,8 @@ const styles = StyleSheet.create({
   progressButtonText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 
 export default ActivityTrackerScreen;
-
-
-

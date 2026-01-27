@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: healthColors.borderRadius.medium,
-    shadowColor: "#000",
+    shadowColor: healthColors.neutral.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,

@@ -70,21 +70,48 @@ let paperTheme;
 try {
   // Import unified theme
   const { theme } = require("./src/theme");
-  const themeModule = require("./src/theme/theme");
-  paperTheme = themeModule.paperTheme;
+  
+  // Create paperTheme adapter from unified theme
+  paperTheme = {
+    colors: {
+      primary: theme.colors.primary,
+      accent: theme.colors.secondary,
+      background: theme.colors.background.main,
+      surface: theme.colors.background.paper,
+      text: theme.colors.text.primary,
+      disabled: theme.colors.grays.gray400,
+      placeholder: theme.colors.text.secondary,
+      backdrop: 'rgba(0, 0, 0, 0.5)',
+      notification: theme.colors.error.main,
+    },
+    fonts: {
+      regular: {
+        fontFamily: theme.typography.fontFamily.body,
+      },
+      medium: {
+        fontFamily: theme.typography.fontFamily.body,
+        fontWeight: '500',
+      },
+      light: {
+        fontFamily: theme.typography.fontFamily.body,
+        fontWeight: '300',
+      },
+      thin: {
+        fontFamily: theme.typography.fontFamily.body,
+        fontWeight: '100',
+      },
+    },
+  };
 
-  // Validate theme has required properties
-  if (paperTheme && paperTheme.colors && paperTheme.fonts) {
-    console.log("[App] ✅ Unified Theme System Loaded");
-    console.log("[App] Theme Colors:", Object.keys(paperTheme.colors).length);
-  } else {
-    console.warn("[App] Theme incomplete, using defaults");
-    paperTheme = paperTheme || {};
-  }
+  console.log("[App] ✅ Unified Theme System Loaded");
+  console.log("[App] Theme Colors:", Object.keys(paperTheme.colors).length);
 } catch (e) {
   console.error("[App] Theme loading failed:", e.message);
   // Use a minimal fallback theme
-  paperTheme = {};
+  paperTheme = {
+    colors: {},
+    fonts: {},
+  };
 }
 
 console.log("[App.js] Initializing Sentry...");

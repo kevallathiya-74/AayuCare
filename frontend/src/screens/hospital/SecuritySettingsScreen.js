@@ -490,7 +490,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   disabled={passwordLoading}
                 >
                   {passwordLoading ? (
-                    <ActivityIndicator size="small" color="#FFF" />
+                    <ActivityIndicator size="small" color={theme.colors.white} />
                   ) : (
                     <Text style={styles.submitButtonText}>Change Password</Text>
                   )}
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 

@@ -64,7 +64,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
   }, [activeTab]);
 
   const fetchRecords = async () => {
-    if (!user?._id) {
+    if (!user?.id) {
       const err = new Error("User information not found. Please login again.");
       setError(err);
       showError(err.message);
@@ -75,7 +75,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
       const recordType = recordTypeMap[activeTab];
-      const data = await getPatientMedicalRecords(user.userId, { recordType });
+      const data = await getPatientMedicalRecords(user.id, { recordType });
       setRecords(data.medicalRecords || []);
     } catch (err) {
       logError(err, "MedicalRecordsScreen - fetchRecords");
@@ -95,15 +95,15 @@ const MedicalRecordsScreen = ({ navigation }) => {
   const getRecordIcon = (type) => {
     switch (type) {
       case "lab_report":
-        return { name: "flask", color: "#1976D2" };
+        return { name: "flask", color: theme.colors.info.dark };
       case "prescription":
-        return { name: "pill", color: "#388E3C" };
+        return { name: "pill", color: theme.colors.success.dark };
       case "doctor_visit":
-        return { name: "stethoscope", color: "#F57C00" };
+        return { name: "stethoscope", color: theme.colors.warning.dark };
       case "test_result":
-        return { name: "clipboard-text", color: "#7B1FA2" };
+        return { name: "clipboard-text", color: theme.colors.healthcare.purple };
       case "imaging":
-        return { name: "image-outline", color: "#D32F2F" };
+        return { name: "image-outline", color: theme.colors.error.dark };
       default:
         return { name: "file-document", color: healthColors.text.secondary };
     }

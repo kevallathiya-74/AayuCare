@@ -264,7 +264,7 @@ const HospitalEventsScreen = ({ navigation }) => {
               colors={
                 spotsRemaining > 0
                   ? [eventColor, eventColor + "DD"]
-                  : ["#CCCCCC", "#AAAAAA"]
+                  : [healthColors.text.disabled, healthColors.text.disabled]
               }
               style={styles.registerGradient}
               start={{ x: 0, y: 0 }}
@@ -274,7 +274,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 {spotsRemaining > 0 ? "Register" : "Full"}
               </Text>
               {spotsRemaining > 0 && (
-                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+                <Ionicons name="arrow-forward" size={16} color={theme.colors.white} />
               )}
             </LinearGradient>
           </TouchableOpacity>
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
   },
   filterTabTextActive: {
-    color: "#FFF",
+    color: theme.colors.white,
     fontWeight: theme.typography.weights.bold,
   },
   countContainer: {
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   loadingContainer: {
     flex: 1,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   emptyState: {
     paddingVertical: 60,
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   resetFilterText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 

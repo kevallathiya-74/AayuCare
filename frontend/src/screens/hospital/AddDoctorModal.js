@@ -439,7 +439,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={theme.colors.white} />
               ) : (
                 <Text style={styles.submitButtonText}>Add Doctor</Text>
               )}
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: theme.typography.sizes.lg,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
 });
 

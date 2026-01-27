@@ -34,7 +34,7 @@ const AdminTabsInner = () => {
   const { pendingCount, refreshCount } = useAdminAppointments();
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom(8));
+  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom, 8);
 
   // Refresh count when navigator gains focus
   useEffect(() => {

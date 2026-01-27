@@ -12,7 +12,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
   verticalScale,
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
   },
   filterTextActive: {
-    color: "#FFF",
+    color: theme.colors.white,
   },
   listContent: {
     padding: getScreenPadding(),

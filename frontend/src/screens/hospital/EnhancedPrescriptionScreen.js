@@ -22,7 +22,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
   getScreenPadding,
@@ -135,7 +135,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     try {
       const prescriptionData = {
         patient: patient._id,
-        doctor: user.userId,
+        doctor: user.id,
         appointment: appointmentId,
         medications: medications.map((med) => ({
           name: med.name,
@@ -248,7 +248,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               style={styles.emptyStateButton}
               onPress={() => navigation.navigate("TodaysAppointments")}
             >
-              <Ionicons name="calendar" size={20} color="#FFFFFF" />
+              <Ionicons name="calendar" size={20} color={theme.colors.white} />
               <Text style={styles.emptyStateButtonText}>View Appointments</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   saveAndSendText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   emptyStateContainer: {
     flex: 1,
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
   emptyStateButtonText: {
     fontSize: 15,
     fontWeight: theme.typography.weights.semiBold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   emptyStateButtonTextSecondary: {
     color: healthColors.primary.main,

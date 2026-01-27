@@ -5,6 +5,8 @@
  * Note: API Configuration is in config/app.js (AppConfig)
  */
 
+import { theme } from '../theme';
+
 // Storage Keys - SecureStore compatible (alphanumeric, dots, dashes, underscores only)
 export const STORAGE_KEYS = {
   AUTH_TOKEN: "aayucare_auth_token",
@@ -66,11 +68,11 @@ export const APPOINTMENT_STATUS = {
 };
 
 export const APPOINTMENT_STATUS_OPTIONS = [
-  { label: "Pending", value: "pending", color: "#FF9800" },
-  { label: "Confirmed", value: "confirmed", color: "#4CAF50" },
-  { label: "Cancelled", value: "cancelled", color: "#F44336" },
-  { label: "Completed", value: "completed", color: "#9E9E9E" },
-  { label: "In Progress", value: "in-progress", color: "#2196F3" },
+  { label: "Pending", value: "pending", color: theme.colors.warning.main },
+  { label: "Confirmed", value: "confirmed", color: theme.colors.success.main },
+  { label: "Cancelled", value: "cancelled", color: theme.colors.error.main },
+  { label: "Completed", value: "completed", color: theme.colors.grays.gray500 },
+  { label: "In Progress", value: "in-progress", color: theme.colors.info.main },
 ];
 
 // Doctor Specializations

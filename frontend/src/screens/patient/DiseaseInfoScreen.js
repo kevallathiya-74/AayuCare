@@ -42,19 +42,19 @@ const DiseaseInfoScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   const categories = [
-    { icon: "heart", name: "Heart", color: "#E91E63" },
-    { icon: "pulse", name: "Lung", color: "#2196F3" },
-    { icon: "bulb-outline", name: "Brain", color: "#9C27B0" },
-    { icon: "water", name: "Diabetes", color: "#FF9800" },
-    { icon: "bandage-outline", name: "Bone", color: "#795548" },
-    { icon: "eye", name: "Eye", color: "#00BCD4" },
+    { icon: "heart", name: "Heart", color: healthColors.error.main },
+    { icon: "pulse", name: "Lung", color: healthColors.info.main },
+    { icon: "bulb-outline", name: "Brain", color: theme.colors.healthcare.purple },
+    { icon: "water", name: "Diabetes", color: healthColors.warning.main },
+    { icon: "bandage-outline", name: "Bone", color: healthColors.text.secondary },
+    { icon: "eye", name: "Eye", color: theme.colors.healthcare.teal },
   ];
 
   const diseaseDetails = {
     Diabetes: {
       name: "Diabetes Mellitus",
       icon: "water",
-      color: "#FF9800",
+      color: healthColors.warning.main,
       description:
         "A metabolic disorder characterized by high blood sugar levels over prolonged periods.",
       symptoms: [
@@ -131,23 +131,23 @@ const DiseaseInfoScreen = ({ navigation }) => {
       )}
       {/* Header */}
       <LinearGradient
-        colors={["#7E57C2", "#5E35B1"]}
+        colors={[theme.colors.healthcare.purple, theme.colors.healthcare.purple]}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="library" size={32} color="#FFF" />
+          <Ionicons name="library" size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Disease Info Center</Text>
             <Text style={styles.headerSubtitle}>Health Library</Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => {}}>
-          <Ionicons name="search" size={24} color="#FFF" />
+          <Ionicons name="search" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -174,7 +174,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 <Ionicons
                   name={category.icon}
                   size={48}
-                  color="#FFF"
+                  color={theme.colors.white}
                   style={styles.categoryIcon}
                 />
                 <Text style={styles.categoryName}>{category.name}</Text>
@@ -195,7 +195,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
           </View>
           <View style={styles.quickAccessCard}>
             <TouchableOpacity style={styles.quickAccessItem}>
-              <Ionicons name="videocam" size={24} color="#E91E63" />
+              <Ionicons name="videocam" size={24} color={healthColors.error.main} />
               <Text style={styles.quickAccessText}>Video Library</Text>
               <Ionicons
                 name="chevron-forward"
@@ -204,7 +204,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               />
             </TouchableOpacity>
             <TouchableOpacity style={styles.quickAccessItem}>
-              <Ionicons name="document-text" size={24} color="#2196F3" />
+              <Ionicons name="document-text" size={24} color={healthColors.info.main} />
               <Text style={styles.quickAccessText}>Articles</Text>
               <Ionicons
                 name="chevron-forward"
@@ -213,7 +213,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               />
             </TouchableOpacity>
             <TouchableOpacity style={styles.quickAccessItem}>
-              <Ionicons name="newspaper" size={24} color="#FF9800" />
+              <Ionicons name="newspaper" size={24} color={healthColors.warning.main} />
               <Text style={styles.quickAccessText}>Latest News</Text>
               <Ionicons
                 name="chevron-forward"
@@ -236,7 +236,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               <TouchableOpacity key={index} style={styles.topicItem}>
                 <View style={styles.topicDot} />
                 <Text style={styles.topicText}>{topic}</Text>
-                <Ionicons name="arrow-forward" size={18} color="#7E57C2" />
+                <Ionicons name="arrow-forward" size={18} color={theme.colors.healthcare.purple} />
               </TouchableOpacity>
             ))}
           </View>
@@ -294,10 +294,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
                     onPress={() => setVideoModalVisible(true)}
                   >
                     <LinearGradient
-                      colors={["#FF9800", "#F57C00"]}
+                      colors={[healthColors.warning.main, healthColors.warning.dark]}
                       style={styles.videoGradient}
                     >
-                      <Ionicons name="play-circle" size={64} color="#FFF" />
+                      <Ionicons name="play-circle" size={64} color={theme.colors.white} />
                       <Text style={styles.videoText}>
                         Watch Educational Video
                       </Text>
@@ -313,10 +313,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
                     onPress={() => setImageGalleryVisible(true)}
                   >
                     <LinearGradient
-                      colors={["#2196F3", "#1976D2"]}
+                      colors={[healthColors.info.main, healthColors.info.dark]}
                       style={styles.videoGradient}
                     >
-                      <Ionicons name="images" size={48} color="#FFF" />
+                      <Ionicons name="images" size={48} color={theme.colors.white} />
                       <Text style={styles.videoText}>View Images</Text>
                     </LinearGradient>
                   </TouchableOpacity>
@@ -373,13 +373,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                       onPress={() => setDietChartVisible(true)}
                     >
                       <LinearGradient
-                        colors={["#4CAF50", "#388E3C"]}
+                        colors={[healthColors.success.main, healthColors.success.dark]}
                         style={styles.actionGradient}
                       >
                         <Ionicons
                           name="restaurant-outline"
                           size={18}
-                          color="#FFF"
+                          color={theme.colors.white}
                         />
                         <Text style={styles.actionButtonText}>Diet Chart</Text>
                       </LinearGradient>
@@ -389,13 +389,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                       onPress={() => setExercisePlanVisible(true)}
                     >
                       <LinearGradient
-                        colors={["#2196F3", "#1976D2"]}
+                        colors={[healthColors.info.main, healthColors.info.dark]}
                         style={styles.actionGradient}
                       >
                         <Ionicons
                           name="fitness-outline"
                           size={18}
-                          color="#FFF"
+                          color={theme.colors.white}
                         />
                         <Text style={styles.actionButtonText}>
                           Exercise Plan
@@ -505,7 +505,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Breakfast */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons name="sunny-outline" size={18} color="#FF9800" />
+                  <Ionicons name="sunny-outline" size={18} color={healthColors.warning.main} />
                   <Text style={styles.dietMealTitle}>
                     BREAKFAST (7:00 - 8:00 AM)
                   </Text>
@@ -534,7 +534,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   <Ionicons
                     name="nutrition-outline"
                     size={18}
-                    color="#4CAF50"
+                    color={healthColors.success.main}
                   />
                   <Text style={styles.dietMealTitle}>
                     MID-MORNING (10:00 AM)
@@ -558,7 +558,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   <Ionicons
                     name="restaurant-outline"
                     size={18}
-                    color="#FF5722"
+                    color={healthColors.error.main}
                   />
                   <Text style={styles.dietMealTitle}>
                     LUNCH (12:30 - 1:30 PM)
@@ -591,7 +591,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Evening Snack */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons name="cafe-outline" size={18} color="#795548" />
+                  <Ionicons name="cafe-outline" size={18} color={healthColors.text.secondary} />
                   <Text style={styles.dietMealTitle}>EVENING (4:00 PM)</Text>
                 </View>
                 <View style={styles.dietItem}>
@@ -605,7 +605,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Dinner */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons name="moon-outline" size={18} color="#3F51B5" />
+                  <Ionicons name="moon-outline" size={18} color={healthColors.info.dark} />
                   <Text style={styles.dietMealTitle}>
                     DINNER (7:00 - 8:00 PM)
                   </Text>
@@ -674,13 +674,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 </Text>
                 <Text style={styles.exerciseCategory}>Cardio (30 minutes)</Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="walk" size={20} color="#4CAF50" />
+                  <Ionicons name="walk" size={20} color={healthColors.success.main} />
                   <Text style={styles.exerciseText}>
                     Brisk Walking - 15 min
                   </Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="bicycle" size={20} color="#4CAF50" />
+                  <Ionicons name="bicycle" size={20} color={healthColors.success.main} />
                   <Text style={styles.exerciseText}>Cycling - 15 min</Text>
                 </View>
               </View>
@@ -693,17 +693,17 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   Strength Training (30 minutes)
                 </Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="fitness" size={20} color="#2196F3" />
+                  <Ionicons name="fitness" size={20} color={healthColors.info.main} />
                   <Text style={styles.exerciseText}>
                     Push-ups - 3 sets of 10
                   </Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="fitness" size={20} color="#2196F3" />
+                  <Ionicons name="fitness" size={20} color={healthColors.info.main} />
                   <Text style={styles.exerciseText}>Squats - 3 sets of 15</Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="fitness" size={20} color="#2196F3" />
+                  <Ionicons name="fitness" size={20} color={healthColors.info.main} />
                   <Text style={styles.exerciseText}>
                     Planks - 3 sets of 30 sec
                   </Text>
@@ -721,12 +721,12 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   <Ionicons
                     name="hand-left-outline"
                     size={20}
-                    color="#9C27B0"
+                    color={theme.colors.healthcare.purple}
                   />
                   <Text style={styles.exerciseText}>Yoga - 15 min</Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="heart" size={20} color="#9C27B0" />
+                  <Ionicons name="heart" size={20} color={theme.colors.healthcare.purple} />
                   <Text style={styles.exerciseText}>Pranayama - 10 min</Text>
                 </View>
               </View>
@@ -735,13 +735,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 <Text style={styles.exerciseDayTitle}>SUNDAY</Text>
                 <Text style={styles.exerciseCategory}>Active Rest</Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="walk" size={20} color="#FF9800" />
+                  <Ionicons name="walk" size={20} color={healthColors.warning.main} />
                   <Text style={styles.exerciseText}>
                     Light walking - 20 min
                   </Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="resize-outline" size={20} color="#FF9800" />
+                  <Ionicons name="resize-outline" size={20} color={healthColors.warning.main} />
                   <Text style={styles.exerciseText}>Stretching - 10 min</Text>
                 </View>
               </View>
@@ -800,11 +800,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
     padding: getScreenPadding(),
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   section: {
     marginBottom: theme.spacing.xl,
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: theme.colors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
   videoText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
     marginTop: theme.spacing.sm,
   },
   statsRow: {
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFF",
+    color: theme.colors.white,
     marginLeft: 8,
   },
   loadingOverlay: {
@@ -1040,14 +1040,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: theme.withOpacity(theme.colors.grays.black, 0.3),
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
   },
   videoDuration: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
     marginTop: 8,
   },
   videoPlayerPlaceholder: {
@@ -1131,22 +1131,22 @@ const styles = StyleSheet.create({
     color: healthColors.success.main,
   },
   notesBox: {
-    backgroundColor: "#FFF3E0",
+    backgroundColor: theme.withOpacity(healthColors.warning.main, 0.1),
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     borderLeftWidth: 4,
-    borderLeftColor: "#FF9800",
+    borderLeftColor: healthColors.warning.main,
     marginTop: theme.spacing.lg,
   },
   notesTitle: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
-    color: "#E65100",
+    color: healthColors.warning.dark,
     marginBottom: theme.spacing.sm,
   },
   notesText: {
     fontSize: 12,
-    color: "#E65100",
+    color: healthColors.warning.dark,
     marginBottom: 4,
   },
   exerciseDay: {

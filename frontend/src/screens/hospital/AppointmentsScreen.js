@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
   },
   retryText: {
-    color: "#FFFFFF",
+    color: theme.colors.white,
     fontSize: theme.typography.sizes.lg,
     fontWeight: theme.typography.weights.semibold,
   },

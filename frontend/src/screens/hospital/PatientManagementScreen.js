@@ -21,7 +21,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
   getScreenPadding,
@@ -891,7 +891,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                   style={styles.bottomActionButton}
                   onPress={handleAddRecord}
                 >
-                  <Ionicons name="add-circle" size={20} color="#FFFFFF" />
+                  <Ionicons name="add-circle" size={20} color={theme.colors.white} />
                   <Text style={styles.bottomActionText}>Add New Record</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1026,12 +1026,12 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 disabled={submitting}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={theme.colors.white} />
                 ) : (
                   <Text style={styles.modalSubmitButtonText}>
                     Create Record
                   </Text>
-                )}
+                )})
               </TouchableOpacity>
             </View>
           </View>
@@ -1218,7 +1218,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: healthColors.border.light,
     maxHeight: verticalScale(400),
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -1445,7 +1445,7 @@ const styles = StyleSheet.create({
   quickActionTextWhite: {
     fontSize: 13,
     fontWeight: theme.typography.weights.semiBold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   historyCard: {
     backgroundColor: healthColors.background.card,
@@ -1592,7 +1592,7 @@ const styles = StyleSheet.create({
   bottomActionText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semiBold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   printButtonText: {
     color: healthColors.primary.main,
@@ -1633,7 +1633,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     width: "100%",
     maxHeight: "85%",
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1705,7 +1705,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
   },
   pickerOptionTextSelected: {
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   modalFooter: {
     flexDirection: "row",
@@ -1741,7 +1741,7 @@ const styles = StyleSheet.create({
   modalSubmitButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semiBold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
 });
 

@@ -41,10 +41,10 @@ const EmergencyServices = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   const emergencyNumbers = [
-    { name: "Ambulance", number: "108", icon: "medical", color: "#EF4444" },
-    { name: "Police", number: "100", icon: "shield", color: "#3B82F6" },
-    { name: "Fire Brigade", number: "101", icon: "flame", color: "#F59E0B" },
-    { name: "Women Helpline", number: "1091", icon: "woman", color: "#EC4899" },
+    { name: "Ambulance", number: "108", icon: "medical", color: healthColors.error.main },
+    { name: "Police", number: "100", icon: "shield", color: healthColors.info.main },
+    { name: "Fire Brigade", number: "101", icon: "flame", color: healthColors.warning.main },
+    { name: "Women Helpline", number: "1091", icon: "woman", color: healthColors.error.light },
   ];
 
   const nearbyHospitals = [
@@ -164,13 +164,13 @@ const EmergencyServices = ({ navigation }) => {
       <NetworkStatusIndicator />
       {/* Header */}
       <LinearGradient
-        colors={["#EF4444", "#DC2626"]}
+        colors={[healthColors.error.main, healthColors.error.dark]}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <EmergencyIcon size={32} />
@@ -195,13 +195,13 @@ const EmergencyServices = ({ navigation }) => {
           activeOpacity={0.9}
         >
           <LinearGradient
-            colors={["#EF4444", "#DC2626", "#B91C1C"]}
+            colors={[healthColors.error.main, healthColors.error.dark, healthColors.error.dark]}
             style={styles.ambulanceGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.ambulanceIcon}>
-              <Ionicons name="medkit" size={48} color="#FFF" />
+              <Ionicons name="medkit" size={48} color={theme.colors.white} />
             </View>
             <View style={styles.ambulanceText}>
               <Text style={styles.ambulanceTitle}>Call Ambulance</Text>
@@ -210,7 +210,7 @@ const EmergencyServices = ({ navigation }) => {
                 24/7 Emergency Service
               </Text>
             </View>
-            <Ionicons name="call" size={32} color="#FFF" />
+            <Ionicons name="call" size={32} color={theme.colors.white} />
           </LinearGradient>
         </TouchableOpacity>
 
@@ -297,19 +297,19 @@ const EmergencyServices = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Emergency Tips</Text>
           <View style={styles.tipsCard}>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Stay calm and speak clearly</Text>
             </View>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Provide exact location details</Text>
             </View>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Describe the emergency clearly</Text>
             </View>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>
                 Don't hang up until told to do so
               </Text>
@@ -363,11 +363,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
     padding: getScreenPadding(),
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.2),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.lg,
@@ -399,18 +399,18 @@ const styles = StyleSheet.create({
   ambulanceTitle: {
     fontSize: 18,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
     marginBottom: 4,
   },
   ambulanceNumber: {
     fontSize: 32,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
     marginBottom: 4,
   },
   ambulanceSubtext: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
   },
   section: {
     marginBottom: theme.spacing.xl,
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   emergencyBadgeText: {
     fontSize: 9,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   hospitalDetails: {
     flexDirection: "row",

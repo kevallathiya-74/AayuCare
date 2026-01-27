@@ -31,49 +31,49 @@ const HealthMetricCard = ({
                     label: 'Heart Rate',
                     icon: 'heart',
                     color: healthColors.health.heartRate,
-                    gradient: ['#E91E63', '#F06292'],
+                    gradient: [healthColors.health.heartRate, healthColors.error.light],
                 };
             case 'bloodPressure':
                 return {
                     label: 'Blood Pressure',
                     icon: 'water',
                     color: healthColors.health.bloodPressure,
-                    gradient: ['#9C27B0', '#BA68C8'],
+                    gradient: [healthColors.health.bloodPressure, healthColors.womens.lavender],
                 };
             case 'temperature':
                 return {
                     label: 'Temperature',
                     icon: 'thermometer',
                     color: healthColors.health.temperature,
-                    gradient: ['#FF9800', '#FFB74D'],
+                    gradient: [healthColors.health.temperature, healthColors.warning.light],
                 };
             case 'glucose':
                 return {
                     label: 'Blood Glucose',
                     icon: 'fitness',
                     color: healthColors.health.glucose,
-                    gradient: ['#4CAF50', '#66BB6A'],
+                    gradient: [healthColors.health.glucose, healthColors.success.main],
                 };
             case 'oxygen':
                 return {
                     label: 'Oxygen Level',
                     icon: 'pulse',
                     color: healthColors.health.oxygen,
-                    gradient: ['#2196F3', '#42A5F5'],
+                    gradient: [healthColors.health.oxygen, healthColors.info.light],
                 };
             case 'weight':
                 return {
                     label: 'Weight',
                     icon: 'scale',
                     color: healthColors.health.weight,
-                    gradient: ['#FF5722', '#FF7043'],
+                    gradient: [healthColors.health.weight, healthColors.error.main],
                 };
             case 'steps':
                 return {
                     label: 'Steps',
                     icon: 'walk',
                     color: healthColors.health.steps,
-                    gradient: ['#00BCD4', '#26C6DA'],
+                    gradient: [healthColors.health.steps, healthColors.fitness.aqua],
                 };
             default:
                 return {

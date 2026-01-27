@@ -26,7 +26,7 @@ const LANGUAGES = [
 
 const LanguageSelector = ({
   style,
-  iconColor = "#FFFFFF",
+  iconColor = theme.colors.white,
   compact = false,
 }) => {
   const { i18n } = useTranslation();

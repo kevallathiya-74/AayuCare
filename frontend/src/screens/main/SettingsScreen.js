@@ -18,7 +18,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import { textStyles } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
 import {

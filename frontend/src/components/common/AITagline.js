@@ -53,7 +53,7 @@ const AITagline = ({
         ]}
       >
         <LinearGradient
-          colors={["#6366F1", "#8B5CF6", "#A855F7"]}
+          colors={[theme.colors.info.main, theme.colors.healthcare.purple, theme.colors.healthcare.purple]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradientContainer}
@@ -83,7 +83,7 @@ const AITagline = ({
           },
         ]}
       >
-        <Ionicons name="sparkles" size={14} color="#8B5CF6" />
+        <Ionicons name="sparkles" size={14} color={theme.colors.healthcare.purple} />
         <Text style={styles.minimalText}>
           Your health, enhanced by intelligence.
         </Text>
@@ -104,7 +104,7 @@ const AITagline = ({
       ]}
     >
       <View style={styles.iconCircle}>
-        <Ionicons name="sparkles" size={16} color="#8B5CF6" />
+        <Ionicons name="sparkles" size={16} color={theme.colors.healthcare.purple} />
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.text}>Your health, enhanced by intelligence.</Text>
@@ -121,11 +121,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F3FF",
+    backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E9D5FF",
+    borderColor: theme.colors.border.light,
     gap: theme.spacing.sm,
   },
   iconCircle: {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.neutral.white,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#8B5CF6",
+    shadowColor: theme.colors.healthcare.purple,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 13,
-    color: "#6B21A8",
+    color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.medium,
     lineHeight: 18,
     marginBottom: 4,
@@ -160,11 +160,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#10B981",
+    backgroundColor: theme.colors.success.main,
   },
   aiLabel: {
     fontSize: 10,
-    color: "#8B5CF6",
+    color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.bold,
     letterSpacing: 0.5,
   },
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   minimalText: {
     fontSize: 11,
-    color: "#6B21A8",
+    color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.medium,
     fontStyle: "italic",
   },

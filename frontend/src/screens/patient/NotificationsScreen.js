@@ -41,10 +41,10 @@ const NotificationsScreen = ({ navigation }) => {
   const fetchNotifications = useCallback(async () => {
     console.log('[NotificationsScreen] Fetching notifications...');
     console.log('[NotificationsScreen] User:', user);
-    console.log('[NotificationsScreen] User ID:', user?._id);
+    console.log('[NotificationsScreen] User ID:', user?.id);
     console.log('[NotificationsScreen] Is Connected:', isConnected);
     
-    if (!user?._id) {
+    if (!user?.id) {
       console.error('[NotificationsScreen] User not found or no user ID');
       setError("User not found");
       setLoading(false);
@@ -82,7 +82,7 @@ const NotificationsScreen = ({ navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?._id, isConnected]);
+  }, [user?.id, isConnected]);
 
   useEffect(() => {
     fetchNotifications();
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: "#fff",
+    color: theme.colors.white,
     fontSize: 12,
     fontWeight: theme.typography.weights.bold,
   },

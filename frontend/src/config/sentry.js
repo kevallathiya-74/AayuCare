@@ -31,8 +31,8 @@ const getSentryDSN = () => {
                     Constants.expoConfig?.extra?.sentryDSN ||
                     null;
         
-        // Validate DSN format
-        if (dsn && !dsn.includes('your-dsn-here') && dsn !== 'null' && dsn !== '') {
+        // Validate DSN format - ensure dsn is a string before calling includes
+        if (dsn && typeof dsn === 'string' && !dsn.includes('your-dsn-here') && dsn !== 'null' && dsn !== '') {
             return dsn;
         }
     } catch (e) {

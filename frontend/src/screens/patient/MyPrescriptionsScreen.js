@@ -37,7 +37,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   const fetchPrescriptions = useCallback(async () => {
-    if (!user?.userId) {
+    if (!user?.id) {
       setError("User not authenticated");
       setLoading(false);
       return;
@@ -46,7 +46,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     try {
       setError(null);
       const response = await prescriptionService.getPatientPrescriptions(
-        user.userId
+        user.id
       );
       if (response.success) {
         setPrescriptions(response.data?.prescriptions || response.data || []);
@@ -56,14 +56,14 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     } catch (err) {
       logError(err, {
         context: "MyPrescriptionsScreen.fetchPrescriptions",
-        userId: user?.userId,
+        userId: user?.id,
       });
       setError(err.message || "Failed to load prescriptions");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?._id]);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchPrescriptions();

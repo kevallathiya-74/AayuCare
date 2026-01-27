@@ -55,7 +55,7 @@ export const AIIcon = (props) => (
   <IconWithBackground
     name="sparkles"
     gradient
-    gradientColors={["#6366F1", "#8B5CF6"]}
+    gradientColors={[healthColors.info.main, healthColors.secondary.main]}
     {...props}
   />
 );
@@ -73,7 +73,7 @@ export const AppointmentIcon = (props) => (
   <IconWithBackground
     name="calendar"
     gradient
-    gradientColors={["#10B981", "#059669"]}
+    gradientColors={[healthColors.success.main, healthColors.success.dark]}
     {...props}
   />
 );
@@ -82,7 +82,7 @@ export const EmergencyIcon = (props) => (
   <IconWithBackground
     name="alert-circle"
     gradient
-    gradientColors={["#EF4444", "#DC2626"]}
+    gradientColors={[healthColors.error.dark, healthColors.error.dark]}
     {...props}
   />
 );
@@ -91,7 +91,7 @@ export const HealthMetricsIcon = (props) => (
   <IconWithBackground
     name="pulse"
     gradient
-    gradientColors={["#F59E0B", "#D97706"]}
+    gradientColors={[healthColors.warning.main, healthColors.warning.dark]}
     {...props}
   />
 );
@@ -100,7 +100,7 @@ export const PharmacyIcon = (props) => (
   <IconWithBackground
     name="medical"
     gradient
-    gradientColors={["#06B6D4", "#0891B2"]}
+    gradientColors={[healthColors.fitness.aqua, healthColors.primary.main]}
     {...props}
   />
 );
@@ -109,7 +109,7 @@ export const WomensHealthIcon = (props) => (
   <IconWithBackground
     name="heart"
     gradient
-    gradientColors={["#EC4899", "#DB2777"]}
+    gradientColors={[healthColors.error.main, healthColors.error.dark]}
     {...props}
   />
 );
@@ -118,7 +118,7 @@ export const ActivityIcon = (props) => (
   <IconWithBackground
     name="walk"
     gradient
-    gradientColors={["#8B5CF6", "#7C3AED"]}
+    gradientColors={[healthColors.secondary.main, healthColors.secondary.dark]}
     {...props}
   />
 );
@@ -127,7 +127,7 @@ export const DiseaseLibraryIcon = (props) => (
   <IconWithBackground
     name="book"
     gradient
-    gradientColors={["#3B82F6", "#2563EB"]}
+    gradientColors={[healthColors.info.main, healthColors.info.dark]}
     {...props}
   />
 );
@@ -136,7 +136,7 @@ export const VoiceIcon = (props) => (
   <IconWithBackground
     name="mic"
     gradient
-    gradientColors={["#14B8A6", "#0D9488"]}
+    gradientColors={[healthColors.fitness.aqua, healthColors.primary.dark]}
     {...props}
   />
 );
@@ -145,7 +145,7 @@ export const LanguageIcon = (props) => (
   <IconWithBackground
     name="language"
     gradient
-    gradientColors={["#F97316", "#EA580C"]}
+    gradientColors={[healthColors.warning.main, healthColors.warning.dark]}
     {...props}
   />
 );
@@ -154,7 +154,7 @@ export const EventsIcon = (props) => (
   <IconWithBackground
     name="megaphone"
     gradient
-    gradientColors={["#A855F7", "#9333EA"]}
+    gradientColors={[healthColors.womens.lavender, healthColors.secondary.dark]}
     {...props}
   />
 );

@@ -124,7 +124,7 @@ const SlideMenu = ({
                   accessibilityRole="button"
                   accessibilityLabel="Close menu"
                 >
-                  <Ionicons name="close" size={24} color="#FFFFFF" />
+                  <Ionicons name="close" size={24} color={theme.colors.white} />
                 </TouchableOpacity>
 
                 <View style={styles.menuUserInfo}>
@@ -138,7 +138,7 @@ const SlideMenu = ({
                       {user?.name || "User"}
                     </Text>
                     <Text style={styles.menuUserId}>
-                      {roleLabel} • {user?.userId || "N/A"}
+                      {roleLabel} • {user?.id || "N/A"}
                     </Text>
                   </View>
                 </View>
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   menuUserName: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: theme.colors.white,
     marginBottom: 4,
   },
   menuUserId: {

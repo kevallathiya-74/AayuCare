@@ -47,14 +47,14 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   );
 
   const fetchLatestPrescription = useCallback(async () => {
-    if (!user?._id) {
+    if (!user?.id) {
       setFetchingPrescription(false);
       return;
     }
 
     try {
       const response = await prescriptionService.getPatientPrescriptions(
-        user.userId
+        user.id
       );
       if (response.success && response.data?.length > 0) {
         // Get the most recent prescription
@@ -91,7 +91,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     } finally {
       setFetchingPrescription(false);
     }
-  }, [user?._id]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!route?.params?.prescription) {
@@ -108,9 +108,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   const total = subtotal - discount;
 
   const paymentMethods = [
-    { id: "card", icon: "card", name: "Card Payment", color: "#2196F3" },
-    { id: "upi", icon: "phone-portrait", name: "UPI", color: "#4CAF50" },
-    { id: "cash", icon: "cash", name: "Cash", color: "#FF9800" },
+    { id: "card", icon: "card", name: "Card Payment", color: theme.colors.info.main },
+    { id: "upi", icon: "phone-portrait", name: "UPI", color: theme.colors.success.main },
+    { id: "cash", icon: "cash", name: "Cash", color: theme.colors.warning.main },
   ];
 
   const handlePayment = async () => {
@@ -182,16 +182,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <LinearGradient
-          colors={["#00897B", "#00695C"]}
+          colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Ionicons name="medical-outline" size={32} color="#FFF" />
+            <Ionicons name="medical-outline" size={32} color={theme.colors.white} />
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
               <Text style={styles.headerSubtitle}>
@@ -228,16 +228,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       <NetworkStatusIndicator />
       {/* Header */}
       <LinearGradient
-        colors={["#00897B", "#00695C"]}
+        colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="medical-outline" size={32} color="#FFF" />
+          <Ionicons name="medical-outline" size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
             <Text style={styles.headerSubtitle}>
@@ -246,7 +246,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           </View>
         </View>
         <TouchableOpacity onPress={() => {}}>
-          <Ionicons name="receipt" size={24} color="#FFF" />
+          <Ionicons name="receipt" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -352,7 +352,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   size={24}
                   color={
                     selectedPurchase === "hospital"
-                      ? "#00897B"
+                      ? theme.colors.healthcare.teal
                       : healthColors.text.tertiary
                   }
                 />
@@ -390,7 +390,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   size={24}
                   color={
                     selectedPurchase === "external"
-                      ? "#00897B"
+                      ? theme.colors.healthcare.teal
                       : healthColors.text.tertiary
                   }
                 />
@@ -502,16 +502,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           disabled={loading}
         >
           <LinearGradient
-            colors={["#00897B", "#00695C"]}
+            colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
             style={styles.payGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#FFF" />
+              <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
               <>
-                <Ionicons name="card" size={24} color="#FFF" />
+                <Ionicons name="card" size={24} color={theme.colors.white} />
                 <Text style={styles.payButtonText}>
                   Pay ₹{total.toFixed(2)}
                 </Text>
@@ -522,7 +522,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#2196F3" />
+          <Ionicons name="information-circle" size={20} color={theme.colors.info.main} />
           <Text style={styles.infoText}>
             Medicine will be dispensed after successful payment verification
           </Text>
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
   },
   bookButtonText: {
-    color: "#FFF",
+    color: theme.colors.white,
     fontSize: 16,
     fontWeight: theme.typography.weights.semibold,
   },
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   headerSubtitle: {
     fontSize: 13,
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: 11,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   billingRow: {
     flexDirection: "row",
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
   discountTagText: {
     fontSize: 10,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   billingDivider: {
     height: 1,
@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
   payButtonText: {
     fontSize: 18,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   infoBox: {
     flexDirection: "row",

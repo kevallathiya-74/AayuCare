@@ -55,14 +55,14 @@ const ProfileScreen = ({ navigation }) => {
 
   // Fetch user statistics
   const fetchStats = useCallback(async () => {
-    if (!user?.userId) return;
+    if (!user?.id) return;
 
     try {
       const [appointmentsRes, recordsRes, prescriptionsRes] =
         await Promise.allSettled([
-          appointmentService.getPatientAppointments(user.userId),
-          medicalRecordService.getPatientRecords(user.userId),
-          prescriptionService.getPatientPrescriptions(user.userId),
+          appointmentService.getPatientAppointments(user.id),
+          medicalRecordService.getPatientRecords(user.id),
+          prescriptionService.getPatientPrescriptions(user.id),
         ]);
 
       setStats({
@@ -90,7 +90,7 @@ const ProfileScreen = ({ navigation }) => {
     } finally {
       setLoadingStats(false);
     }
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchStats();
@@ -116,7 +116,7 @@ const ProfileScreen = ({ navigation }) => {
       icon: "person-outline",
       data: [
         { label: "Full Name", value: user?.name || "N/A" },
-        { label: "Patient ID", value: user?.userId || "N/A" },
+        { label: "Patient ID", value: user?.id || "N/A" },
         { label: "Email", value: user?.email || "N/A" },
         { label: "Phone", value: user?.phone || "N/A" },
         { label: "Age", value: user?.age ? `${user.age} years` : "N/A" },
@@ -233,7 +233,7 @@ const ProfileScreen = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
           </TouchableOpacity>
 
           <View style={styles.avatarContainer}>
@@ -253,7 +253,7 @@ const ProfileScreen = ({ navigation }) => {
                 color="rgba(255, 255, 255, 0.9)"
               />
               <Text style={styles.userIdText}>
-                ID: {user?.userId || "PAT001"}
+                ID: {user?.id || "PAT001"}
               </Text>
             </View>
           </View>
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#FFF",
+    backgroundColor: theme.colors.white,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.md,
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     ...textStyles.h1,
-    color: "#FFF",
+    color: theme.colors.white,
     marginBottom: spacing.xs,
   },
   userRole: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: spacing.md,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: healthColors.border.light,

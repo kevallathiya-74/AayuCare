@@ -78,7 +78,7 @@ const AppNavigator = () => {
 
   console.log("[AppNavigator] Rendering - Auth state:", {
     isAuthenticated,
-    user: user?.userId,
+    user: user?.id,
     isLoading,
     authInitialized: authInitialized.current,
   });

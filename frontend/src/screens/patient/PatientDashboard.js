@@ -19,7 +19,6 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
-  Alert,
   Dimensions,
   ActivityIndicator,
   Modal,
@@ -43,11 +42,9 @@ import {
   verticalScale,
   getGridColumns,
   getSafeAreaEdges,
-  getContainerWidth,
-  isTablet,
 } from "../../utils/responsive";
 import { healthMetricsService, notificationService } from "../../services";
-import { logError, showError } from "../../utils/errorHandler";
+import { logError } from "../../utils/errorHandler";
 
 const { width } = Dimensions.get("window");
 
@@ -55,7 +52,7 @@ const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user, loading } = useSelector((state) => state.auth);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [healthMetrics, setHealthMetrics] = useState(null);
+  const [healthMetrics, setHealthMetrics] = useState([]);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -73,11 +70,11 @@ const PatientDashboard = ({ navigation }) => {
   }, []);
 
   const fetchHealthMetrics = useCallback(async () => {
-    if (!user?.userId) return;
+    if (!user?.id) return;
 
     try {
       setLoadingMetrics(true);
-      const response = await healthMetricsService.getMetrics(user.userId);
+      const response = await healthMetricsService.getMetrics(user.id);
       setHealthMetrics(response.data || []);
     } catch (error) {
       logError(error, { context: "PatientDashboard.fetchHealthMetrics" });
@@ -86,15 +83,15 @@ const PatientDashboard = ({ navigation }) => {
     } finally {
       setLoadingMetrics(false);
     }
-  }, [user?.userId]);
+  }, [user?.id]);
 
   // Fetch health metrics on mount
   useEffect(() => {
-    if (user?._id) {
+    if (user?.id) {
       fetchHealthMetrics();
       fetchUnreadNotifications();
     }
-  }, [user?._id, fetchHealthMetrics, fetchUnreadNotifications]);
+  }, [user?.id, fetchHealthMetrics, fetchUnreadNotifications]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -383,7 +380,7 @@ const PatientDashboard = ({ navigation }) => {
                   <Text style={styles.bannerTimeGreeting}>
                     {getTimeBasedGreeting()}
                   </Text>
-                  <Text style={styles.bannerWelcomeText}>{user.name}</Text>
+                  <Text style={styles.bannerWelcomeText}>{user?.name || "Patient"}</Text>
                 </View>
               </View>
               <View style={styles.bannerInfoCard}>
@@ -393,7 +390,7 @@ const PatientDashboard = ({ navigation }) => {
                     size={18}
                     color={theme.colors.text.white}
                   />
-                  <Text style={styles.bannerInfoText}>ID: {user.userId}</Text>
+                  <Text style={styles.bannerInfoText}>ID: {user?.id?.slice(-8) || "N/A"}</Text>
                 </View>
                 <View style={styles.bannerInfoRow}>
                   <Ionicons
@@ -402,7 +399,7 @@ const PatientDashboard = ({ navigation }) => {
                     color={theme.colors.text.white}
                   />
                   <Text style={styles.bannerInfoText}>
-                    Age: {user.age} • Blood: {user.bloodGroup || "N/A"}
+                    Age: {user?.age || "N/A"} • Blood: {user?.bloodGroup || "N/A"}
                   </Text>
                 </View>
               </View>
@@ -566,7 +563,7 @@ const PatientDashboard = ({ navigation }) => {
                     </Text>
                     <Text style={styles.menuUserRole}>Patient Account</Text>
                     <Text style={styles.menuUserId}>
-                      ID: {user?._id?.slice(-6) || "PAT001"}
+                      ID: {user?.id?.slice(-6) || "PAT001"}
                     </Text>
                   </View>
                 </View>
@@ -1088,10 +1085,6 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     marginLeft: 4,
   },
-  emergencySection: {
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 24, // spacing.lg
-  },
   emergencyTitle: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
@@ -1102,71 +1095,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: getScreenPadding(),
     marginBottom: 24, // spacing.lg
   },
-  emergencyButtons: {
-    flexDirection: "row",
-    gap: 12, // spacing.md
-  },
-  emergencyButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden",
-    ...theme.shadows.md,
-  },
-  emergencyButtonGradient: {
-    padding: 16, // spacing.md
-    alignItems: "center",
-    minHeight: 140,
-  },
-  emergencyIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12, // spacing.md
-  },
-  emergencyButtonTitle: {
-    fontSize: 13,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-    marginBottom: 4, // spacing.xs
-  },
-  emergencyButtonSubtitle: {
-    fontSize: 11,
-    color: theme.colors.text.white,
-    opacity: 0.9,
-  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-  },
-  notificationsSection: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    padding: 16, // spacing.md
-    marginTop: 24, // spacing.lg
-    marginHorizontal: getScreenPadding(),
-    marginBottom: 24, // spacing.lg for proper ending
-    ...theme.shadows.md,
-  },
-  notificationsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12, // spacing.md
-  },
-  notificationsTitle: {
-    fontSize: 14,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: 8, // spacing.sm
-  },
-  notificationsList: {},
-  notificationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
   },
   notificationItem: {
     flex: 1,
@@ -1174,16 +1106,6 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
     lineHeight: 18,
     marginRight: 8,
-  },
-  viewButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  viewButtonText: {
-    fontSize: 13,
-    fontWeight: theme.typography.weights.semiBold,
-    color: healthColors.primary.main,
-    marginRight: 4,
   },
   scrollContent: {
     paddingTop: 16,
@@ -1196,19 +1118,6 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: "space-between",
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: getScreenPadding(),
-    alignSelf: "center",
-  },
-  gridItem: {
-    width: `${100 / getGridColumns(Dimensions.get("window").width) - 2}%`,
-    marginBottom: 16, // spacing.md
-    paddingHorizontal: 4, // Small gap between items
-  },
   loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1220,93 +1129,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   // Profile Styles
-  profileHeader: {
-    marginBottom: 16,
-  },
-  profileHeaderGradient: {
-    padding: 24,
-    alignItems: "center",
-    borderRadius: 12,
-    marginHorizontal: getScreenPadding(),
-  },
-  profileAvatarContainer: {
-    alignItems: "center",
-  },
-  profileAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-    borderWidth: 3,
-    borderColor: theme.colors.text.white,
-  },
-  profileName: {
-    fontSize: 22,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-    marginBottom: 4,
-  },
-  profileId: {
-    fontSize: 14,
-    color: theme.withOpacity(theme.colors.text.white, 0.9),
-    fontWeight: theme.typography.weights.medium,
-  },
-  profileSection: {
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 16,
-  },
-  profileSectionTitle: {
-    fontSize: 14,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  profileCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    ...theme.shadows.md,
-  },
-  profileInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  profileInfoContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  profileInfoLabel: {
-    fontSize: 12,
-    color: healthColors.text.secondary,
-    marginBottom: 2,
-  },
-  profileInfoValue: {
-    fontSize: 14,
-    fontWeight: theme.typography.weights.semiBold,
-    color: healthColors.text.primary,
-  },
-  profileDivider: {
-    height: 1,
-    backgroundColor: healthColors.border.light,
-    marginVertical: 4,
-  },
-  profileActionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  profileActionText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: theme.typography.weights.semiBold,
-    color: healthColors.text.primary,
-    marginLeft: 12,
-  },
   logoutButtonProfile: {
     flexDirection: "row",
     alignItems: "center",
@@ -1440,37 +1262,6 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
-  menuBadge: {
-    backgroundColor: healthColors.primary.main,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    minWidth: 24,
-    alignItems: "center",
-  },
-  menuBadgeText: {
-    fontSize: 12,
-    fontWeight: theme.typography.weights.bold,
-    color: "white",
-  },
-  menuStatCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: healthColors.background.secondary,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  menuStatLabel: {
-    fontSize: 12,
-    color: healthColors.text.secondary,
-    marginBottom: 2,
-  },
-  menuStatValue: {
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
   menuFooter: {
     padding: 24,
     alignItems: "center",
@@ -1492,6 +1283,3 @@ const styles = StyleSheet.create({
 });
 
 export default PatientDashboard;
-
-
-

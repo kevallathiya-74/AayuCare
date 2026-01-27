@@ -58,9 +58,9 @@ const AISymptomChecker = ({ navigation }) => {
   ];
 
   const severityLevels = [
-    { value: "mild", label: "Mild", color: "#10B981" },
-    { value: "moderate", label: "Moderate", color: "#F59E0B" },
-    { value: "severe", label: "Severe", color: "#EF4444" },
+    { value: "mild", label: "Mild", color: theme.colors.success.main },
+    { value: "moderate", label: "Moderate", color: theme.colors.warning.main },
+    { value: "severe", label: "Severe", color: theme.colors.error.main },
   ];
 
   const toggleSymptom = (symptom) => {
@@ -157,9 +157,9 @@ const AISymptomChecker = ({ navigation }) => {
                 ? "alert-circle"
                 : "information-circle"
             }
-            color={analysis.urgencyLevel === "high" ? "#EF4444" : "#F59E0B"}
+            color={analysis.urgencyLevel === "high" ? theme.colors.error.main : theme.colors.warning.main}
             backgroundColor={
-              analysis.urgencyLevel === "high" ? "#FEE2E2" : "#FEF3C7"
+              analysis.urgencyLevel === "high" ? theme.colors.error.light : theme.colors.warning.light
             }
             size={20}
             padding={8}
@@ -171,7 +171,7 @@ const AISymptomChecker = ({ navigation }) => {
                 styles.urgencyValue,
                 {
                   color:
-                    analysis.urgencyLevel === "high" ? "#EF4444" : "#F59E0B",
+                    analysis.urgencyLevel === "high" ? theme.colors.error.main : theme.colors.warning.main,
                 },
               ]}
             >
@@ -198,7 +198,7 @@ const AISymptomChecker = ({ navigation }) => {
         {/* When to Seek Help */}
         <View style={styles.warningSection}>
           <View style={styles.warningHeader}>
-            <Ionicons name="warning" size={20} color="#EF4444" />
+            <Ionicons name="warning" size={20} color={theme.colors.error.main} />
             <Text style={styles.warningTitle}>Seek Immediate Help If:</Text>
           </View>
           {analysis.whenToSeekHelp.map((item, index) => (
@@ -285,13 +285,13 @@ const AISymptomChecker = ({ navigation }) => {
       >
         {/* Header */}
         <LinearGradient
-          colors={["#6366F1", "#8B5CF6"]}
+          colors={[theme.colors.info.main, theme.colors.healthcare.purple]}
           style={styles.header}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <AIIcon size={32} />
@@ -407,16 +407,16 @@ const AISymptomChecker = ({ navigation }) => {
               disabled={loading}
             >
               <LinearGradient
-                colors={["#6366F1", "#8B5CF6"]}
+                colors={[theme.colors.info.main, theme.colors.healthcare.purple]}
                 style={styles.analyzeButtonGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
                 {loading ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color={theme.colors.white} />
                 ) : (
                   <>
-                    <Ionicons name="sparkles" size={20} color="#FFF" />
+                    <Ionicons name="sparkles" size={20} color={theme.colors.white} />
                     <Text style={styles.analyzeButtonText}>
                       Analyze with AI
                     </Text>
@@ -480,11 +480,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.white, 0.9),
     marginTop: 4,
   },
   formContainer: {
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   analyzeButtonText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
   disclaimer: {
     flexDirection: "row",
@@ -711,7 +711,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
+    borderColor: theme.colors.error.light,
     marginBottom: theme.spacing.xl,
   },
   warningHeader: {
@@ -723,11 +723,11 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
-    color: "#DC2626",
+    color: theme.colors.error.dark,
   },
   warningItem: {
     fontSize: 12,
-    color: "#991B1B",
+    color: theme.colors.error.dark,
     lineHeight: 18,
     marginTop: 4,
   },
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semibold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 

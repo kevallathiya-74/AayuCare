@@ -5,6 +5,7 @@
  */
 
 import { Dimensions, Platform } from 'react-native';
+import { theme } from '../theme';
 
 // Device dimensions
 export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -182,10 +183,10 @@ export const getRelativeTime = (date) => {
  * @returns {object} Category and color
  */
 export const getBMICategory = (bmi) => {
-  if (bmi < 18.5) return { category: 'Underweight', color: '#FF9800' };
-  if (bmi < 25) return { category: 'Normal', color: '#4CAF50' };
-  if (bmi < 30) return { category: 'Overweight', color: '#FF9800' };
-  return { category: 'Obese', color: '#F44336' };
+  if (bmi < 18.5) return { category: 'Underweight', color: theme.colors.warning.main };
+  if (bmi < 25) return { category: 'Normal', color: theme.colors.success.main };
+  if (bmi < 30) return { category: 'Overweight', color: theme.colors.warning.main };
+  return { category: 'Obese', color: theme.colors.error.main };
 };
 
 /**
@@ -196,15 +197,15 @@ export const getBMICategory = (bmi) => {
  */
 export const getBPCategory = (systolic, diastolic) => {
   if (systolic < 120 && diastolic < 80) {
-    return { category: 'Normal', color: '#4CAF50' };
+    return { category: 'Normal', color: theme.colors.success.main };
   }
   if (systolic < 130 && diastolic < 80) {
-    return { category: 'Elevated', color: '#FF9800' };
+    return { category: 'Elevated', color: theme.colors.warning.main };
   }
   if (systolic < 140 || diastolic < 90) {
-    return { category: 'High (Stage 1)', color: '#FF5722' };
+    return { category: 'High (Stage 1)', color: theme.colors.warning.dark };
   }
-  return { category: 'High (Stage 2)', color: '#F44336' };
+  return { category: 'High (Stage 2)', color: theme.colors.error.main };
 };
 
 /**
@@ -213,9 +214,9 @@ export const getBPCategory = (systolic, diastolic) => {
  * @returns {object} Category and color
  */
 export const getHeartRateCategory = (bpm) => {
-  if (bpm < 60) return { category: 'Low', color: '#2196F3' };
-  if (bpm <= 100) return { category: 'Normal', color: '#4CAF50' };
-  return { category: 'High', color: '#F44336' };
+  if (bpm < 60) return { category: 'Low', color: theme.colors.info.main };
+  if (bpm <= 100) return { category: 'Normal', color: theme.colors.success.main };
+  return { category: 'High', color: theme.colors.error.main };
 };
 
 // String utilities

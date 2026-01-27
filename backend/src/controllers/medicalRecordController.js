@@ -100,6 +100,10 @@ exports.createMedicalRecord = async (req, res, next) => {
     if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
       // It's an ObjectId
       patient = await User.findById(patientId);
+      // Verify it's actually a patient
+      if (patient && patient.role !== "patient") {
+        patient = null;
+      }
     } else {
       // It's a userId string like "PAT001"
       patient = await User.findOne({ userId: patientId, role: "patient" });
@@ -161,13 +165,21 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     }
 
     // Find patient by either userId or _id
-    const patientQuery = { role: "patient" };
+    let patient;
     if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      patientQuery.$or = [{ userId: patientId }, { _id: patientId }];
+      // Try finding by ObjectId first
+      patient = await User.findById(patientId).select("_id role");
+      // Verify it's actually a patient
+      if (patient && patient.role !== "patient") {
+        patient = null;
+      }
+      // If not found or wrong role, try userId
+      if (!patient) {
+        patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
+      }
     } else {
-      patientQuery.userId = patientId;
+      patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
     }
-    const patient = await User.findOne(patientQuery).select("_id");
     if (!patient) {
       return res.status(404).json({
         status: "error",

@@ -128,7 +128,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom(20)) },
+            { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}

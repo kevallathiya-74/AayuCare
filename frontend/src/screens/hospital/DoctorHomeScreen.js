@@ -820,7 +820,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                       {user?.specialization || "General Physician"}
                     </Text>
                     <Text style={styles.menuUserId}>
-                      ID: {user?.userId || "DOC001"}
+                      ID: {user?.id || "DOC001"}
                     </Text>
                   </View>
                 </View>

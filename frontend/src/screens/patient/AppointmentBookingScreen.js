@@ -270,7 +270,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: Math.max(insets.bottom(24)),
+            paddingBottom: Math.max(insets.bottom, 24),
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -415,7 +415,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     </Text>
                     <View style={styles.doctorStats}>
                       <View style={styles.ratingContainer}>
-                        <Ionicons name="star" size={14} color="#FFB800" />
+                        <Ionicons name="star" size={14} color={theme.colors.warning.main} />
                         <Text style={styles.ratingText}>
                           {doctor.rating || "4.5"} reviews
                         </Text>
@@ -621,7 +621,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     {slot}
                   </Text>
                   {selectedTime === slot && (
-                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color={theme.colors.white} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -660,7 +660,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.confirmButtonContent}>
                 {loading ? (
                   <>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={theme.colors.white} />
                     <Text
                       style={[
                         styles.confirmButtonText,
@@ -675,7 +675,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     <Text style={styles.confirmButtonText}>
                       CONFIRM APPOINTMENT
                     </Text>
-                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                    <Ionicons name="arrow-forward" size={20} color={theme.colors.white} />
                   </>
                 )}
               </View>
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
   stepNumberText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   stepTitle: {
     fontSize: 14,
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
   doctorCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
   doctorCardSelected: {
     borderColor: healthColors.success.main,
     borderWidth: 2,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
   },
   doctorAvatar: {
     width: 48,
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
   },
   typeCard: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     padding: 20,
     borderRadius: 16,
     alignItems: "center",
@@ -841,19 +841,19 @@ const styles = StyleSheet.create({
   typeCardSelected: {
     borderColor: healthColors.primary.main,
     borderWidth: 3,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
   },
   typeIconBox: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
   },
   typeIconBoxSelected: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
   },
   typeTitle: {
     fontSize: 13,
@@ -874,7 +874,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
@@ -923,10 +923,10 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   timeSlotTextSelected: {
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   reasonInput: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: 16,
     fontSize: 14,
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   modalOverlay: {
     flex: 1,
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "70%",
@@ -986,7 +986,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
@@ -1010,7 +1010,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   datePickerContainer: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,

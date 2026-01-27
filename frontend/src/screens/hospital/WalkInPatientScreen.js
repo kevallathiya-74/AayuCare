@@ -20,7 +20,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
 } from "../../utils/responsive";
@@ -252,7 +252,7 @@ const WalkInPatientScreen = ({ navigation }) => {
                       size={14}
                       color={
                         formData.gender === option
-                          ? "#FFF"
+                          ? theme.colors.white
                           : healthColors.text.secondary
                       }
                     />
@@ -316,7 +316,7 @@ const WalkInPatientScreen = ({ navigation }) => {
                     size={14}
                     color={
                       formData.bloodGroup === group
-                        ? "#FFF"
+                        ? theme.colors.white
                         : healthColors.error.main
                     }
                   />
@@ -426,10 +426,10 @@ const WalkInPatientScreen = ({ navigation }) => {
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#FFF" size="small" />
+            <ActivityIndicator color={theme.colors.white} size="small" />
           ) : (
             <>
-              <Ionicons name="checkmark-circle" size={22} color="#FFF" />
+              <Ionicons name="checkmark-circle" size={22} color={theme.colors.white} />
               <Text style={styles.registerButtonText}>Register Patient</Text>
             </>
           )}
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semiBold,
   },
   genderTextActive: {
-    color: "#FFF",
+    color: theme.colors.white,
   },
   bloodGroupContainer: {
     flexDirection: "row",
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semiBold,
   },
   bloodGroupTextActive: {
-    color: "#FFF",
+    color: theme.colors.white,
   },
   noteContainer: {
     flexDirection: "row",
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 

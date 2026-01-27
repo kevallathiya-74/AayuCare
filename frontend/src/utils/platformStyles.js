@@ -4,6 +4,7 @@
  */
 
 import { Platform } from "react-native";
+import { theme } from '../theme';
 
 /**
  * Creates cross-platform shadow styles
@@ -16,7 +17,7 @@ import { Platform } from "react-native";
  * @returns {Object} Platform-specific shadow styles
  */
 export const createShadow = ({
-  color = "#000",
+  color = theme.colors.black,
   offset = { width: 0, height: 0 },
   opacity = 0,
   radius = 0,
@@ -24,7 +25,7 @@ export const createShadow = ({
 }) => {
   // Validate and sanitize all inputs to prevent NaN
   if (!color || typeof color !== "string") {
-    color = "#000";
+    color = theme.colors.black;
   }
 
   // Validate offset
@@ -110,13 +111,13 @@ export const createShadow = ({
  * @returns {Object} Platform-specific text shadow styles
  */
 export const createTextShadow = ({
-  color = "#000",
+  color = theme.colors.black,
   offset = { width: 0, height: 0 },
   radius = 0,
 }) => {
   // Validate inputs
   if (!color || typeof color !== "string") {
-    color = "#000";
+    color = theme.colors.black;
   }
 
   if (Platform.OS === "web") {
@@ -137,7 +138,7 @@ export const createTextShadow = ({
  */
 export const shadows = {
   none: {
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
     shadowRadius: 0,
@@ -145,7 +146,7 @@ export const shadows = {
   },
 
   small: {
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -153,7 +154,7 @@ export const shadows = {
   },
 
   medium: {
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -161,7 +162,7 @@ export const shadows = {
   },
 
   large: {
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -169,7 +170,7 @@ export const shadows = {
   },
 
   elevated: {
-    shadowColor: "#000",
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,

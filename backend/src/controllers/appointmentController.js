@@ -63,16 +63,22 @@ exports.getAllAppointments = async (req, res, next) => {
 exports.getAppointments = async (req, res, next) => {
   try {
     let result;
+    
+    // Add hospitalId to filters for multi-tenancy (skip for super_admin)
+    const filters = { ...req.query };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      filters.hospitalId = req.hospitalId;
+    }
 
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointments(
         req.user._id,
-        req.query
+        filters
       );
     } else if (req.user.role === "doctor") {
       result = await appointmentService.getDoctorAppointments(
         req.user._id,
-        req.query
+        filters
       );
     } else if (req.user.role === "admin") {
       // Admin can view all appointments or filter by patient/doctor
@@ -80,16 +86,16 @@ exports.getAppointments = async (req, res, next) => {
       if (patientId) {
         result = await appointmentService.getPatientAppointments(
           patientId,
-          req.query
+          filters
         );
       } else if (doctorId) {
         result = await appointmentService.getDoctorAppointments(
           doctorId,
-          req.query
+          filters
         );
       } else {
         // No filters - get all appointments (admin only)
-        result = await appointmentService.getAllAppointments(req.query);
+        result = await appointmentService.getAllAppointments(filters);
       }
     }
 

@@ -15,7 +15,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector, useDispatch } from "react-redux";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
   verticalScale,
@@ -277,10 +277,10 @@ const EditProfileScreen = ({ navigation }) => {
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#FFF" size="small" />
+            <ActivityIndicator color={theme.colors.white} size="small" />
           ) : (
             <>
-              <Ionicons name="checkmark-circle" size={22} color="#FFF" />
+              <Ionicons name="checkmark-circle" size={22} color={theme.colors.white} />
               <Text style={styles.saveButtonText}>Save Changes</Text>
             </>
           )}
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    color: "#FFF",
+    color: theme.colors.white,
   },
 });
 

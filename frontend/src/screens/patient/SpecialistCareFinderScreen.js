@@ -122,7 +122,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             {doctor.experience || "N/A"}
           </Text>
           <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={16} color="#FFB800" />
+            <Ionicons name="star" size={16} color={theme.colors.warning.main} />
             <Text style={styles.ratingText}>
               {doctor.rating || "N/A"} ({doctor.reviews || 0} reviews)
             </Text>
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   filterCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   doctorCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: theme.typography.weights.semiBold,
-    color: "#FFFFFF",
+    color: theme.colors.white,
   },
   viewProfileButton: {
     flex: 1,

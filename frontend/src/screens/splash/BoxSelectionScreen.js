@@ -136,7 +136,7 @@ const BoxSelectionScreen = ({ navigation }) => {
               <Ionicons
                 name="business"
                 size={responsiveSizes.iconSize}
-                color="#FFFFFF"
+                color={theme.colors.white}
               />
             </View>
 
@@ -153,7 +153,7 @@ const BoxSelectionScreen = ({ navigation }) => {
               <Ionicons
                 name="arrow-forward"
                 size={responsiveSizes.arrowSize}
-                color="#FFFFFF"
+                color={theme.colors.white}
               />
             </View>
 
@@ -190,7 +190,7 @@ const BoxSelectionScreen = ({ navigation }) => {
               <Ionicons
                 name="person"
                 size={responsiveSizes.iconSize}
-                color="#FFFFFF"
+                color={theme.colors.white}
               />
             </View>
 
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: isSmallScreen ? 16 : 20,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: theme.colors.border.light,
     ...theme.shadows.sm,
   },
   logo: {
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     fontSize: responsiveFonts.title,
     lineHeight: responsiveFonts.titleLineHeight,
     fontWeight: fontWeights.bold,
-    color: "#2C3E50",
+    color: theme.colors.text.primary,
     marginBottom: 4,
     textAlign: "center",
     includeFontPadding: false, // Android fix for font alignment
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     fontSize: responsiveFonts.subtitle,
     lineHeight: responsiveFonts.subtitleLineHeight,
     fontWeight: fontWeights.medium,
-    color: "#7F8C8D",
+    color: theme.colors.text.secondary,
     textAlign: "center",
     includeFontPadding: false,
   },
@@ -300,12 +300,12 @@ const styles = StyleSheet.create({
     width: responsiveSizes.iconCircle,
     height: responsiveSizes.iconCircle,
     borderRadius: responsiveSizes.iconCircle / 2,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.3),
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
     borderWidth: 2.5,
-    borderColor: "rgba(255, 255, 255, 0.4)",
+    borderColor: theme.withOpacity(theme.colors.white, 0.4),
   },
   cardContent: {
     flex: 1,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     includeFontPadding: false,
     ...createTextShadow({
-      color: "rgba(0, 0, 0, 0.15)",
+      color: theme.withOpacity(theme.colors.black, 0.15),
       offset: { width: 0, height: 2 },
       radius: 8,
     }),
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     opacity: 0.98,
     includeFontPadding: false,
     ...createTextShadow({
-      color: "rgba(0, 0, 0, 0.1)",
+      color: theme.withOpacity(theme.colors.black, 0.1),
       offset: { width: 0, height: 1 },
       radius: 4,
     }),
@@ -345,11 +345,11 @@ const styles = StyleSheet.create({
     width: responsiveSizes.arrowCircle,
     height: responsiveSizes.arrowCircle,
     borderRadius: responsiveSizes.arrowCircle / 2,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.3),
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2.5,
-    borderColor: "rgba(255, 255, 255, 0.4)",
+    borderColor: theme.withOpacity(theme.colors.white, 0.4),
   },
   comingSoonBadge: {
     position: "absolute",
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.12),
   },
   decorCircle2: {
     position: "absolute",
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.1),
   },
   footer: {
     flexDirection: "row",
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     fontSize: responsiveFonts.footer,
     lineHeight: responsiveFonts.footerLineHeight,
     fontWeight: fontWeights.medium,
-    color: "#95A5A6",
+    color: theme.colors.text.tertiary,
     includeFontPadding: false,
     letterSpacing: 0.3,
   },

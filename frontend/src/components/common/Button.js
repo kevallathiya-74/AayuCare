@@ -8,7 +8,7 @@
 import React, { useRef } from 'react';
 import { Pressable, Text, StyleSheet, ActivityIndicator, View, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { healthColors } from '../../theme/healthColors';
+import { theme, healthColors } from '../../theme';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { 

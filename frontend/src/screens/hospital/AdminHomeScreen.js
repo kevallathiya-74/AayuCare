@@ -481,7 +481,7 @@ const AdminHomeScreen = ({ navigation }) => {
         value: stats.patients.total.toLocaleString(),
         subtitle: `${stats.patients.new} new • ${stats.patients.returning} returning`,
         icon: "people",
-        gradient: [healthColors.accent.coral, "#D84B6F"],
+        gradient: [healthColors.accent.coral, theme.colors.healthcare.pink],
         trend: stats.patients.trend,
         screen: "PatientManagement",
         isTabScreen: false,
@@ -634,7 +634,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 <View style={styles.profileInfoContent}>
                   <Text style={styles.profileInfoLabel}>Admin ID</Text>
                   <Text style={styles.profileInfoValue}>
-                    {user?.userId || user?.employeeId || "ADM001"}
+                    {user?.id || user?.employeeId || "ADM001"}
                   </Text>
                 </View>
               </View>
@@ -1716,7 +1716,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
+        shadowColor: theme.colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,

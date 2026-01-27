@@ -28,7 +28,7 @@ const Tab = createBottomTabNavigator();
 
 const PatientTabNavigator = () => {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom(8));
+  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom, 8);
 
   return (
     <ErrorBoundary>
@@ -56,7 +56,7 @@ const PatientTabNavigator = () => {
             backgroundColor: healthColors.background.card,
             borderTopWidth: 1,
             borderTopColor: healthColors.border.light,
-            paddingBottom: Math.max(insets.bottom(8)),
+            paddingBottom: Math.max(insets.bottom, 8),
             paddingTop: 8,
             height: tabBarHeight,
             elevation: 8,

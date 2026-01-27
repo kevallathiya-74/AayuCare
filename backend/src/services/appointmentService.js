@@ -128,9 +128,14 @@ class AppointmentService {
      * Get appointments for a patient
      */
     async getPatientAppointments(patientId, filters = {}) {
-        const { status, startDate, endDate, page = 1, limit = 10 } = filters;
+        const { status, startDate, endDate, page = 1, limit = 10, hospitalId } = filters;
 
         const query = { patientId };
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
 
         if (status) {
             // Handle comma-separated status values (e.g., "scheduled,confirmed")
@@ -173,9 +178,14 @@ class AppointmentService {
      * Get appointments for a doctor
      */
     async getDoctorAppointments(doctorId, filters = {}) {
-        const { status, date, page = 1, limit = 10 } = filters;
+        const { status, date, page = 1, limit = 10, hospitalId } = filters;
 
         const query = { doctorId };
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
 
         if (status) {
             // Handle comma-separated status values (e.g., "scheduled,confirmed")
