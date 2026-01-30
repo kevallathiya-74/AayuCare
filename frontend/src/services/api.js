@@ -4,30 +4,37 @@
  */
 
 import axios from 'axios';
-import * as storage from '../utils/secureStorage';
+import appStorage from '../utils/appStorage';
 import { STORAGE_KEYS } from '../utils/constants';
-import { AppConfig } from '../config/app';
+import { APP_CONFIG } from '../config/appConfig';
 import offlineHandler from '../utils/offlineHandler';
+
+// Runtime guard: Ensure appStorage is properly wired
+if (!appStorage || typeof appStorage.getItem !== 'function') {
+  console.error('[API] CRITICAL: appStorage module not properly loaded!');
+  console.error('[API] appStorage:', appStorage);
+  throw new Error('appStorage module is not properly initialized');
+}
 
 // Create axios instance using centralized configuration
 const api = axios.create({
-  baseURL: AppConfig.api.baseURL,
-  timeout: AppConfig.api.timeout,
+  baseURL: APP_CONFIG.api.baseURL,
+  timeout: APP_CONFIG.api.timeout,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 // Log API URL for debugging
-console.log('[API] API Base URL:', AppConfig.api.baseURL);
-console.log('[API] Environment:', AppConfig.env.isDevelopment ? 'Development' : 'Production');
-console.log('[API] Expo Go:', AppConfig.env.isExpoGo);
+console.log('[API] API Base URL:', APP_CONFIG.api.baseURL);
+console.log('[API] Environment:', APP_CONFIG.env.isDevelopment ? 'Development' : 'Production');
+console.log('[API] Expo Go:', APP_CONFIG.env.isExpoGo);
 
 // Request interceptor - Add auth token
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const token = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -75,11 +82,11 @@ api.interceptors.response.use(
 
       try {
         console.log('[API] 401 error, attempting token refresh...');
-        const refreshToken = await storage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+        const refreshToken = await appStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (refreshToken) {
           console.log('[API] Refresh token found, calling refresh endpoint');
-          const response = await axios.post(`${AppConfig.api.baseURL}/auth/refresh`, {
+          const response = await axios.post(`${APP_CONFIG.api.baseURL}/auth/refresh`, {
             refreshToken,
           });
 
@@ -87,7 +94,7 @@ api.interceptors.response.use(
           console.log('[API] New token received, updating storage');
 
           // Save new token
-          await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+          await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -96,9 +103,9 @@ api.interceptors.response.use(
         } else {
           console.log('[API] No refresh token found, clearing storage');
           // No refresh token - Clear storage and force re-login
-          await storage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-          await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
-          await storage.deleteItem(STORAGE_KEYS.USER_DATA);
+          await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+          await appStorage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
+          await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
           
           const authError = new Error('Session expired. Please login again.');
           authError.code = 'AUTH_EXPIRED';
@@ -107,9 +114,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.log('[API] Token refresh failed:', refreshError.message);
         // Refresh failed - Clear storage and redirect to login
-        await storage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-        await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
-        await storage.deleteItem(STORAGE_KEYS.USER_DATA);
+        await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+        await appStorage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
+        await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
 
         const authError = new Error('Session expired. Please login again.');
         authError.code = 'AUTH_EXPIRED';
@@ -122,7 +129,7 @@ api.interceptors.response.use(
       const networkError = new Error('Unable to connect to server. Please check your internet connection and try again.');
       console.error('[NETWORK] Network Error');
       console.error('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
-      console.error('[INFO] API Base URL:', AppConfig.api.baseURL);
+      console.error('[INFO] API Base URL:', APP_CONFIG.api.baseURL);
       return Promise.reject(networkError);
     }
 
@@ -135,34 +142,5 @@ api.interceptors.response.use(
 );
 
 // Test API connectivity (useful for debugging)
-export const testConnection = async () => {
-  try {
-    const response = await api.get('/health');
-    console.log('[SUCCESS] Backend connection successful:', response.data);
-    return { success: true, data: response.data };
-  } catch (error) {
-    console.error('[ERROR] Backend connection failed:', error.message);
-    return { success: false, error: error.message };
-  }
-};
-
-/**
- * Enhanced API call wrapper with offline support
- * Automatically queues failed requests when offline
- * @param {Object} config - Axios config object
- * @param {Object} options - Offline handler options
- * @returns {Promise} API response
- */
-export const apiCallWithOfflineSupport = async (config, options = {}) => {
-  return offlineHandler.executeWithOfflineSupport(
-    async () => api(config),
-    {
-      retryAttempts: options.retryAttempts || 3,
-      priority: options.priority || 'normal',
-      ...options,
-    }
-  );
-};
-
 export default api;
 

@@ -6,13 +6,14 @@
  */
 
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 // Lazy import Sentry to prevent crash if not available
 let Sentry = null;
 try {
     Sentry = require('@sentry/react-native');
 } catch (e) {
-    console.log('[Sentry] Module not available');
+    console.log('[Sentry] Module not available in Expo Go');
 }
 
 /**
@@ -20,6 +21,11 @@ try {
  * Expo Go doesn't support native Sentry features
  */
 const isExpoGo = Constants.appOwnership === 'expo';
+
+/**
+ * Track initialization state
+ */
+let sentryInitialized = false;
 
 /**
  * Get Sentry DSN from configuration
@@ -47,59 +53,71 @@ const getSentryDSN = () => {
  * Safe for both Expo Go and EAS builds
  */
 export const initializeSentry = () => {
-    // Skip if Sentry module is not available
+    // Skip if already initialized
+    if (sentryInitialized) {
+        console.log('[Sentry] Already initialized');
+        return;
+    }
+
+    // Skip in Expo Go
+    if (isExpoGo) {
+        console.log('[Sentry] Skipped - running in Expo Go');
+        return;
+    }
+
+    // Skip if Sentry module not available
     if (!Sentry) {
-        if (__DEV__) {
-            console.log('[Sentry] Skipped: Module not available');
-        }
+        console.log('[Sentry] Skipped - module not available');
         return;
     }
 
     const dsn = getSentryDSN();
-
-    // Skip initialization if no valid DSN
+    
+    // Skip if no DSN configured
     if (!dsn) {
-        if (__DEV__) {
-            console.log('[Sentry] Skipped: No valid DSN configured');
-        }
-        return;
-    }
-
-    // Skip in Expo Go - native modules don't work
-    if (isExpoGo) {
-        console.log('[Sentry] Skipped: Running in Expo Go');
+        console.log('[Sentry] Skipped - no DSN configured');
         return;
     }
 
     try {
         Sentry.init({
             dsn,
-            environment: __DEV__ ? 'development' : 'production',
-            tracesSampleRate: __DEV__ ? 1.0 : 0.2,
-            enableAutoSessionTracking: true,
             debug: __DEV__,
+            environment: __DEV__ ? 'development' : 'production',
+            enableAutoSessionTracking: true,
+            sessionTrackingIntervalMillis: 30000,
+            tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+            enableNative: !isExpoGo,
+            enableNativeCrashHandling: !isExpoGo,
             attachStacktrace: true,
-            enableNative: true,
-            enableNativeCrashHandling: true,
-            release: Constants.expoConfig?.version || '1.0.0',
+            beforeSend(event) {
+                // Filter out development errors
+                if (__DEV__) {
+                    console.log('[Sentry] Event captured:', event);
+                }
+                return event;
+            },
         });
-        
-        if (__DEV__) {
-            console.log('[Sentry] Initialized successfully');
-        }
+
+        sentryInitialized = true;
+        console.log('[Sentry] Initialized successfully');
     } catch (error) {
-        console.log('[Sentry] Initialization error:', error.message);
+        console.error('[Sentry] Initialization failed:', error);
     }
 };
 
 /**
+ * Check if Sentry is enabled
+ */
+export const isSentryEnabled = () => {
+    return sentryInitialized && !isExpoGo && !!Sentry;
+};
+
+/**
  * Capture exception safely
- * Works in both Expo Go and native builds
  */
 export const captureException = (error, context = {}) => {
-    const dsn = getSentryDSN();
-    
-    if (!dsn || !Sentry) {
+    if (!isSentryEnabled()) {
         // No Sentry configured, just console log
         console.error('[Error]', context, error);
         return;
@@ -122,9 +140,7 @@ export const captureException = (error, context = {}) => {
  * Capture message safely
  */
 export const captureMessage = (message, level = 'info', context = {}) => {
-    const dsn = getSentryDSN();
-    
-    if (!dsn || !Sentry) {
+    if (!isSentryEnabled()) {
         console.log(`[${level.toUpperCase()}]`, message, context);
         return;
     }
@@ -144,8 +160,7 @@ export const captureMessage = (message, level = 'info', context = {}) => {
  * Set user context
  */
 export const setUser = (user) => {
-    const dsn = getSentryDSN();
-    if (!dsn || !Sentry) return;
+    if (!isSentryEnabled()) return;
 
     try {
         Sentry.setUser(user ? {
@@ -162,23 +177,23 @@ export const setUser = (user) => {
  * Add breadcrumb
  */
 export const addBreadcrumb = (breadcrumb) => {
-    const dsn = getSentryDSN();
-    if (!dsn || !Sentry) return;
+    if (!isSentryEnabled()) return;
 
     try {
-        Sentry.addBreadcrumb(breadcrumb);
+        Sentry.addBreadcrumb({
+            message: breadcrumb.message,
+            category: breadcrumb.category || 'general',
+            level: breadcrumb.level || 'info',
+            data: breadcrumb.data || {},
+        });
     } catch (error) {
         console.error('[Sentry] Failed to add breadcrumb:', error);
     }
 };
 
 /**
- * Check if Sentry is configured and ready
+ * Default export with all methods
  */
-export const isSentryEnabled = () => {
-    return getSentryDSN() !== null && Sentry !== null;
-};
-
 export default {
     initialize: initializeSentry,
     captureException,

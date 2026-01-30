@@ -10,22 +10,23 @@ import { Dimensions, Platform, PixelRatio } from "react-native";
 const BASE_WIDTH = 375;
 const BASE_HEIGHT = 812;
 
+// Platform detection
+export const isIOS = Platform.OS === 'ios';
+export const isAndroid = Platform.OS === 'android';
+
 // Get current window dimensions
 export const getWindowDimensions = () => {
-  const { width, height } = Dimensions.get("window");
-  const scale = Dimensions.get("window").scale;
-  const fontScale = Dimensions.get("window").fontScale;
-
-  return { width, height, scale, fontScale };
-};
-
-// Get screen dimensions
-export const getScreenDimensions = () => {
-  const { width, height } = Dimensions.get("screen");
+  const { width, height } = Dimensions.get('window');
   return { width, height };
 };
 
-// Check device type
+// Get screen dimensions (full physical screen)
+export const getScreenDimensions = () => {
+  const { width, height } = Dimensions.get('screen');
+  return { width, height };
+};
+
+// Device size detection
 export const isSmallDevice = () => {
   const { width } = getWindowDimensions();
   return width < 375;
@@ -41,6 +42,7 @@ export const isLargeDevice = () => {
   return width >= 768;
 };
 
+// Check if device is a tablet
 export const isTablet = () => {
   const { width } = getWindowDimensions();
   return width >= 768;
@@ -63,7 +65,7 @@ export const scale = (size) => {
   return Math.round(size * scaleFactor);
 };
 
-// Scale vertically based on screen height
+// Scale size based on screen height
 export const verticalScale = (size) => {
   // Validate input
   if (typeof size !== "number" || isNaN(size) || !isFinite(size)) {
@@ -78,6 +80,12 @@ export const verticalScale = (size) => {
   }
 
   return Math.round(size * scaleFactor);
+};
+
+// Normalize font sizes across different pixel densities
+export const normalize = (size) => {
+  const pixelRatio = PixelRatio.get();
+  return Math.round(size * pixelRatio) / pixelRatio;
 };
 
 // Responsive spacing - static values
@@ -126,14 +134,6 @@ export const getGridColumns = () => {
 };
 
 // Calculate item width for grid
-export const getGridItemWidth = (columns = null, gap = 16) => {
-  const { width } = getWindowDimensions();
-  const cols = columns || getGridColumns();
-  const totalGap = gap * (cols + 1);
-  return (width - totalGap) / cols;
-};
-
-// Responsive padding for screens
 export const getScreenPadding = () => {
   if (isSmallDevice()) return 12;
   if (isMediumDevice()) return 16;
@@ -142,13 +142,13 @@ export const getScreenPadding = () => {
 
 // Status bar height
 export const getStatusBarHeight = () => {
-  if (Platform.OS === "ios") {
-    return Platform.Version >= 11 ? 44 : 20;
+  if (Platform.OS === 'ios') {
+    return isIOS ? 44 : 20; // iPhone X+ vs older models
   }
-  return 0; // Android handles automatically
+  return 24; // Android
 };
 
-// Bottom tab bar height
+// Tab bar height
 export const getTabBarHeight = () => {
   if (Platform.OS === "ios") {
     return 83; // With safe area
@@ -156,49 +156,39 @@ export const getTabBarHeight = () => {
   return 60;
 };
 
-// Card dimensions for consistent layouts
-export const getCardHeight = (variant = "default") => {
-  const heights = {
-    small: verticalScale(80),
-    default: verticalScale(120),
-    large: verticalScale(160),
-    xlarge: verticalScale(200),
-  };
-  return heights[variant] || heights.default;
-};
-
-// Responsive breakpoints
+// Breakpoints for responsive design
 export const breakpoints = {
-  small: 375,
-  medium: 768,
-  large: 1024,
-  xlarge: 1280,
+  xs: 0,
+  sm: 375,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
 };
 
-// Check if current device matches breakpoint
+// Check if current width matches breakpoint
 export const matchesBreakpoint = (breakpoint) => {
   const { width } = getWindowDimensions();
   return width >= breakpoints[breakpoint];
 };
 
-// Platform-specific helper
-export const isIOS = Platform.OS === "ios";
-export const isAndroid = Platform.OS === "android";
-export const isWeb = Platform.OS === "web";
-
-// Normalize pixel density differences
-export const normalize = (size) => {
-  const { scale } = getWindowDimensions();
-  const newSize = size * scale;
-
-  if (Platform.OS === "ios") {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize)) / scale;
-  }
-
-  return Math.round(PixelRatio.roundToNearestPixel(newSize)) / scale;
+// Calculate card height
+export const getCardHeight = (variant = 'default') => {
+  const heights = {
+    compact: verticalScale(120),
+    default: verticalScale(160),
+    expanded: verticalScale(200),
+  };
+  return heights[variant] || heights.default;
 };
 
-// SafeAreaView edges configuration
+// Calculate grid item width
+export const getGridItemWidth = (columns = 2, spacing = 16) => {
+  const { width } = getWindowDimensions();
+  const totalSpacing = spacing * (columns + 1);
+  return (width - totalSpacing) / columns;
+};
+
+// Card dimensions for consistent layouts
 export const getSafeAreaEdges = (screen = "default") => {
   const configs = {
     default: ["top", "left", "right", "bottom"],
@@ -274,7 +264,6 @@ export default {
   matchesBreakpoint,
   isIOS,
   isAndroid,
-  isWeb,
   normalize,
   getSafeAreaEdges,
   getKeyboardConfig,

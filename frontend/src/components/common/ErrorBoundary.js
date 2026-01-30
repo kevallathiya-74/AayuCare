@@ -53,7 +53,7 @@ class ErrorBoundary extends React.Component {
           <View style={styles.content}>
             <Text style={styles.title}>Oops! Something went wrong</Text>
             <Text style={styles.message}>
-              We're sorry for the inconvenience. Please try again.
+              We&#39;re sorry for the inconvenience. Please try again.
             </Text>
 
             {__DEV__ && this.state.error && (

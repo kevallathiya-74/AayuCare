@@ -11,11 +11,6 @@ import { theme } from '../theme';
 export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Device type detection
-export const isIOS = Platform.OS === 'ios';
-export const isAndroid = Platform.OS === 'android';
-export const isWeb = Platform.OS === 'web';
-
-// Check if tablet
 export const isTablet = () => {
   const aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
   return Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) >= 600 && (aspectRatio > 1.2 || aspectRatio < 0.9);
@@ -26,37 +21,28 @@ export const isTablet = () => {
 /**
  * Format currency in Indian Rupees
  * @param {number} amount - Amount to format
- * @param {boolean} showSymbol - Show ₹ symbol
+ * @param {boolean} showSymbol - Show ₹ symbol (default: true)
  * @returns {string} Formatted currency
  */
 export const formatCurrency = (amount, showSymbol = true) => {
-  const formatted = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-  
-  return showSymbol ? formatted : formatted.replace('₹', '').trim();
+  if (amount === null || amount === undefined || isNaN(amount)) return showSymbol ? '₹0' : '0';
+  const formatted = Math.abs(amount).toFixed(2);
+  return showSymbol ? `₹${formatted}` : formatted;
 };
 
 /**
- * Format phone number (Indian format)
- * @param {string} phone - Phone number
- * @returns {string} Formatted phone
+ * Format phone number in Indian format
+ * @param {string} phone - Phone number to format
+ * @returns {string} Formatted phone number
  */
 export const formatPhoneNumber = (phone) => {
   const cleaned = phone.replace(/\D/g, '');
-  
-  // Indian mobile: +91 XXXXX XXXXX
   if (cleaned.length === 10) {
     return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
   }
-  
   if (cleaned.length === 12 && cleaned.startsWith('91')) {
     return `+${cleaned.slice(0, 2)} ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`;
   }
-  
   return phone;
 };
 
@@ -81,9 +67,9 @@ export const isValidEmail = (email) => {
 };
 
 /**
- * Validate Aadhaar number (optional)
+ * Validate Aadhaar number
  * @param {string} aadhaar - Aadhaar number
- * @returns {boolean} Is valid format
+ * @returns {boolean} Is valid
  */
 export const isValidAadhaar = (aadhaar) => {
   const cleaned = aadhaar.replace(/\D/g, '');
@@ -124,99 +110,81 @@ export const formatTime = (date) => {
  * @param {string} time24 - Time in 24-hour format (e.g., '14:00', '09:30')
  * @returns {string} Time in 12-hour format (e.g., '2:00 PM', '9:30 AM')
  */
-export const convert24To12Hour = (time24) => {
-  if (!time24 || typeof time24 !== 'string') return time24;
-  
-  const [hoursStr, minutesStr] = time24.split(':');
-  let hours = parseInt(hoursStr, 10);
-  const minutes = minutesStr || '00';
-  
-  if (isNaN(hours)) return time24;
-  
+export const convertTo12Hour = (time24) => {
+  if (!time24) return '';
+  const [hours24, minutes] = time24.split(':');
+  let hours = parseInt(hours24, 10);
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;
-  
   return `${hours}:${minutes} ${ampm}`;
 };
 
 /**
  * Format date and time together
- * @param {Date|string} date - Date/time to format
+ * @param {Date|string} date - Date to format
  * @returns {string} Formatted date and time
  */
 export const formatDateTime = (date) => {
-  return `${formatDate(date)} at ${formatTime(date)}`;
+  return `${formatDate(date)} ${formatTime(date)}`;
 };
 
 /**
- * Get relative time (e.g., "2 hours ago")
+ * Get relative time (e.g., "2 hours ago", "in 3 days")
  * @param {Date|string} date - Date to compare
- * @returns {string} Relative time
+ * @returns {string} Relative time string
  */
 export const getRelativeTime = (date) => {
-  const d = new Date(date);
   const now = new Date();
-  const diff = now - d;
+  const target = new Date(date);
+  const diffMs = target - now;
+  const diffMins = Math.floor(Math.abs(diffMs) / 60000);
   
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const weeks = Math.floor(days / 7);
-  const months = Math.floor(days / 30);
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return diffMs < 0 ? `${diffMins} mins ago` : `in ${diffMins} mins`;
   
-  if (seconds < 60) return 'Just now';
-  if (minutes < 60) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
-  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
-  if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-  if (months < 12) return `${months} month${months > 1 ? 's' : ''} ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return diffMs < 0 ? `${diffHours} hours ago` : `in ${diffHours} hours`;
   
-  return formatDate(date);
+  const diffDays = Math.floor(diffHours / 24);
+  return diffMs < 0 ? `${diffDays} days ago` : `in ${diffDays} days`;
 };
 
-// Health data utilities
+// Health metric utilities
 
 /**
  * Get BMI category
- * @param {number} bmi - BMI value
- * @returns {object} Category and color
+ * @param {number} bmi - Body Mass Index
+ * @returns {string} Category (Underweight, Normal, Overweight, Obese)
  */
 export const getBMICategory = (bmi) => {
-  if (bmi < 18.5) return { category: 'Underweight', color: theme.colors.warning.main };
-  if (bmi < 25) return { category: 'Normal', color: theme.colors.success.main };
-  if (bmi < 30) return { category: 'Overweight', color: theme.colors.warning.main };
-  return { category: 'Obese', color: theme.colors.error.main };
+  if (bmi < 18.5) return 'Underweight';
+  if (bmi < 25) return 'Normal';
+  if (bmi < 30) return 'Overweight';
+  return 'Obese';
 };
 
 /**
  * Get blood pressure category
  * @param {number} systolic - Systolic pressure
  * @param {number} diastolic - Diastolic pressure
- * @returns {object} Category and color
+ * @returns {string} Category (Normal, Elevated, High)
  */
 export const getBPCategory = (systolic, diastolic) => {
-  if (systolic < 120 && diastolic < 80) {
-    return { category: 'Normal', color: theme.colors.success.main };
-  }
-  if (systolic < 130 && diastolic < 80) {
-    return { category: 'Elevated', color: theme.colors.warning.main };
-  }
-  if (systolic < 140 || diastolic < 90) {
-    return { category: 'High (Stage 1)', color: theme.colors.warning.dark };
-  }
-  return { category: 'High (Stage 2)', color: theme.colors.error.main };
+  if (systolic < 120 && diastolic < 80) return 'Normal';
+  if (systolic < 130 && diastolic < 80) return 'Elevated';
+  if (systolic < 140 || diastolic < 90) return 'High (Stage 1)';
+  return 'High (Stage 2)';
 };
 
 /**
  * Get heart rate category
- * @param {number} bpm - Beats per minute
- * @returns {object} Category and color
+ * @param {number} heartRate - Heart rate in bpm
+ * @returns {string} Category (Low, Normal, High)
  */
-export const getHeartRateCategory = (bpm) => {
-  if (bpm < 60) return { category: 'Low', color: theme.colors.info.main };
-  if (bpm <= 100) return { category: 'Normal', color: theme.colors.success.main };
-  return { category: 'High', color: theme.colors.error.main };
+export const getHeartRateCategory = (heartRate) => {
+  if (heartRate < 60) return 'Low';
+  if (heartRate <= 100) return 'Normal';
+  return 'High';
 };
 
 // String utilities
@@ -232,89 +200,83 @@ export const capitalize = (str) => {
 };
 
 /**
- * Truncate text with ellipsis
- * @param {string} text - Text to truncate
+ * Truncate string with ellipsis
+ * @param {string} str - String to truncate
  * @param {number} maxLength - Maximum length
- * @returns {string} Truncated text
+ * @returns {string} Truncated string
  */
-export const truncate = (text, maxLength = 50) => {
-  if (!text || text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + '...';
+export const truncate = (str, maxLength = 50) => {
+  if (!str || str.length <= maxLength) return str;
+  return str.substring(0, maxLength - 3) + '...';
 };
 
 /**
  * Get initials from name
  * @param {string} name - Full name
- * @returns {string} Initials
+ * @returns {string} Initials (e.g., "John Doe" -> "JD")
  */
 export const getInitials = (name) => {
   if (!name) return '';
-  const parts = name.trim().split(' ');
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  return name
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+    .substring(0, 2);
 };
-
-// Error handling
 
 /**
  * Get user-friendly error message
- * @param {Error|string} error - Error object or message
+ * @param {Error|string} error - Error object or string
  * @returns {string} User-friendly message
  */
 export const getErrorMessage = (error) => {
   if (typeof error === 'string') return error;
-  
-  if (error.response) {
-    // API error
-    return error.response.data?.message || 'Something went wrong. Please try again.';
-  }
-  
-  if (error.message) {
-    return error.message;
-  }
-  
+  if (error?.message) return error.message;
   return 'An unexpected error occurred. Please try again.';
 };
 
-// Vibration/Haptic feedback
+// Platform utilities
 
 /**
- * Trigger haptic feedback (if available)
- * @param {string} type - Feedback type
+ * Trigger haptic feedback (vibration)
+ * @param {string} type - Type of feedback ('light', 'medium', 'heavy')
  */
 export const hapticFeedback = (type = 'light') => {
-  // Note: In production, use expo-haptics
-  // For now, this is a placeholder
-  if (Platform.OS === 'ios' || Platform.OS === 'android') {
-    // Vibration.vibrate(type === 'light' ? 10 : 50);
+  if (Platform.OS === 'ios') {
+    // iOS haptic feedback would go here
+    // Requires expo-haptics
   }
 };
 
-// Debounce & Throttle
+// Function utilities
 
 /**
- * Debounce function
+ * Debounce function execution
  * @param {Function} func - Function to debounce
  * @param {number} wait - Wait time in ms
  * @returns {Function} Debounced function
  */
 export const debounce = (func, wait = 300) => {
   let timeout;
-  return (...args) => {
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(later, wait);
   };
 };
 
 /**
- * Throttle function
+ * Throttle function execution
  * @param {Function} func - Function to throttle
  * @param {number} limit - Time limit in ms
  * @returns {Function} Throttled function
  */
 export const throttle = (func, limit = 300) => {
   let inThrottle;
-  return (...args) => {
+  return function executedFunction(...args) {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;

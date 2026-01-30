@@ -1031,7 +1031,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                   <Text style={styles.modalSubmitButtonText}>
                     Create Record
                   </Text>
-                )})
+                )}
               </TouchableOpacity>
             </View>
           </View>

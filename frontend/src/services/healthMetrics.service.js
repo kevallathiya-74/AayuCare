@@ -81,15 +81,16 @@ const healthMetricsService = {
 
     /**
      * Delete a metric entry
+     * @param {string} patientId - Patient ID
      * @param {string} metricId - Metric ID
      * @returns {Promise}
      */
-    async deleteMetric(metricId) {
+    async deleteMetric(patientId, metricId) {
         try {
-            const response = await api.delete(`/health-metrics/${metricId}`);
+            const response = await api.delete(`/patients/${patientId}/health-metrics/${metricId}`);
             return response.data;
         } catch (error) {
-            logError(error, { context: 'healthMetricsService.deleteMetric', metricId });
+            logError(error, { context: 'healthMetricsService.deleteMetric', patientId, metricId });
             throw error;
         }
     },

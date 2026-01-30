@@ -2,10 +2,22 @@
  * AayuCare - Auth Redux Slice
  *
  * Manages authentication state.
+ * 
+ * ARCHITECTURE NOTE:
+ * - This slice does NOT use 'storage' directly
+ * - Redux Toolkit does NOT provide 'storage' by default
+ * - All storage operations go through authService abstraction
+ * - authService uses Better Auth with SecureStore
+ * - NO thunkExtraArgument configuration needed
  */
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authService from "../../services/auth.service";
+
+// Runtime guard: Prevent accidental 'storage' references
+if (typeof storage !== 'undefined' && typeof window === 'undefined') {
+  console.warn('[authSlice] WARNING: Global "storage" detected in React Native context. This should NOT exist.');
+}
 
 // Initial state
 const initialState = {
@@ -37,26 +49,6 @@ export const loginUser = createAsyncThunk(
         error?.message || error?.toString() || "Login failed";
       console.error("[authSlice] Error message:", errorMessage);
       return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-export const registerUser = createAsyncThunk(
-  "auth/register",
-  async (userData, { rejectWithValue }) => {
-    try {
-      console.log("[authSlice] Register thunk started with:", userData.userId);
-      const response = await authService.register(userData);
-      console.log(
-        "[authSlice] Register response:",
-        JSON.stringify(response, null, 2)
-      );
-      console.log("[authSlice] User:", response?.user);
-      console.log("[authSlice] Token:", response?.token ? "exists" : "missing");
-      return response;
-    } catch (error) {
-      console.log("[authSlice] Register error:", error);
-      return rejectWithValue(error.message || "Registration failed");
     }
   }
 );
@@ -105,19 +97,7 @@ export const loadUser = createAsyncThunk(
   }
 );
 
-export const refreshUserData = createAsyncThunk(
-  "auth/refreshUserData",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await authService.getCurrentUser();
-      return response.user;
-    } catch (error) {
-      return rejectWithValue(error.message || "Failed to refresh user data");
-    }
-  }
-);
-
-// Slice
+// Create the slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -137,131 +117,60 @@ const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Login
     builder
+      // Login
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        console.log(
-          "[authSlice] loginUser.fulfilled - payload:",
-          JSON.stringify(action.payload, null, 2)
-        );
-        console.log("[authSlice] Setting user:", action.payload?.user);
-        console.log(
-          "[authSlice] Setting token:",
-          action.payload?.token ? "exists" : "missing"
-        );
         state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.user = action.payload?.user || null;
+        state.token = action.payload?.token || null;
+        state.isAuthenticated = !!action.payload?.user;
         state.error = null;
-        console.log("[authSlice] State after update:", {
-          isAuthenticated: state.isAuthenticated,
-          hasUser: !!state.user,
-          hasToken: !!state.token,
-        });
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
+        state.error = action.payload || "Login failed";
         state.isAuthenticated = false;
-        state.error = action.payload;
-      });
-
-    // Register
-    builder
-      .addCase(registerUser.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
-        console.log(
-          "[authSlice] registerUser.fulfilled - payload:",
-          JSON.stringify(action.payload, null, 2)
-        );
-        state.isLoading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.error = null;
-        console.log("[authSlice] Register state updated:", {
-          isAuthenticated: state.isAuthenticated,
-          hasUser: !!state.user,
-          hasToken: !!state.token,
-        });
-      })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isAuthenticated = false;
-        state.error = action.payload;
-      });
-
-    // Logout
-    builder
+      // Logout
       .addCase(logoutUser.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(logoutUser.fulfilled, (state) => {
-        console.log("[authSlice] logoutUser.fulfilled - clearing state");
-        state.isLoading = false;
-        state.isAuthenticated = false;
         state.user = null;
         state.token = null;
+        state.isAuthenticated = false;
+        state.isLoading = false;
         state.error = null;
-        console.log("[authSlice] Logout state cleared");
       })
       .addCase(logoutUser.rejected, (state) => {
-        state.isLoading = false;
-        // Still clear user data even if logout API fails
-        state.isAuthenticated = false;
         state.user = null;
         state.token = null;
-      });
-
-    // Load user - ALWAYS resolves (never rejects)
-    builder
+        state.isAuthenticated = false;
+        state.isLoading = false;
+      })
+      // Load user
       .addCase(loadUser.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
-        console.log(
-          "[authSlice] loadUser.fulfilled - payload:",
-          action.payload?.userId
-        );
         state.isLoading = false;
         if (action.payload) {
-          console.log(
-            "[authSlice] Setting authenticated user:",
-            action.payload.userId
-          );
-          state.isAuthenticated = true;
           state.user = action.payload;
+          state.isAuthenticated = true;
         } else {
-          console.log(
-            "[authSlice] No user data found - user not authenticated"
-          );
-          state.isAuthenticated = false;
           state.user = null;
+          state.isAuthenticated = false;
         }
-        console.log("[authSlice] LoadUser state:", {
-          isAuthenticated: state.isAuthenticated,
-          hasUser: !!state.user,
-          isLoading: state.isLoading,
-        });
       })
       .addCase(loadUser.rejected, (state) => {
-        console.log("[authSlice] loadUser.rejected - clearing loading state");
         state.isLoading = false;
-        state.isAuthenticated = false;
         state.user = null;
+        state.isAuthenticated = false;
       });
-
-    // Refresh user data
-    builder.addCase(refreshUserData.fulfilled, (state, action) => {
-      state.user = action.payload;
-    });
   },
 });
 

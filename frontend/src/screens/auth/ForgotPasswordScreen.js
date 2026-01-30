@@ -201,7 +201,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 </View>
                 <Text style={styles.successText}>Email Sent Successfully!</Text>
                 <Text style={styles.successSubtext}>
-                  We've sent password reset instructions to {email}
+                  We&#39;ve sent password reset instructions to {email}
                 </Text>
               </View>
             )}

@@ -8,18 +8,6 @@ import api from './api';
 /**
  * Create new medical record
  */
-export const createMedicalRecord = async (recordData) => {
-    try {
-        const response = await api.post('/medical-records', recordData);
-        return response.data.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-/**
- * Get patient's medical records
- */
 export const getPatientMedicalRecords = async (patientId, filters = {}) => {
     try {
         const { recordType, startDate, endDate, page = 1, limit = 10 } = filters;
@@ -39,35 +27,16 @@ export const getPatientMedicalRecords = async (patientId, filters = {}) => {
 };
 
 /**
- * Get single medical record
+ * Get patient records (alias for compatibility)
  */
-export const getMedicalRecord = async (recordId) => {
-    try {
-        const response = await api.get(`/medical-records/${recordId}`);
-        return response.data.data;
-    } catch (error) {
-        throw error;
-    }
-};
+export const getPatientRecords = getPatientMedicalRecords;
 
 /**
- * Update medical record
+ * Get all medical records
  */
-export const updateMedicalRecord = async (recordId, updateData) => {
+export const getAllRecords = async () => {
     try {
-        const response = await api.put(`/medical-records/${recordId}`, updateData);
-        return response.data.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-/**
- * Delete medical record
- */
-export const deleteMedicalRecord = async (recordId) => {
-    try {
-        const response = await api.delete(`/medical-records/${recordId}`);
+        const response = await api.get('/medical-records');
         return response.data;
     } catch (error) {
         throw error;
@@ -75,24 +44,11 @@ export const deleteMedicalRecord = async (recordId) => {
 };
 
 /**
- * Get patient's complete medical history
+ * Create new medical record
  */
-export const getPatientHistory = async (patientId) => {
+export const createMedicalRecord = async (recordData) => {
     try {
-        const response = await api.get(`/medical-records/history/${patientId}`);
-        return response.data.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-/**
- * Get all medical records (admin only)
- */
-export const getAllRecords = async (filters = {}) => {
-    try {
-        const params = new URLSearchParams(filters).toString();
-        const response = await api.get(`/medical-records?${params}`);
+        const response = await api.post('/medical-records', recordData);
         return response.data;
     } catch (error) {
         throw error;
@@ -100,25 +56,12 @@ export const getAllRecords = async (filters = {}) => {
 };
 
 /**
- * Get patient records by patient ID
+ * Export all functions
  */
-export const getPatientRecords = async (patientId) => {
-    try {
-        const response = await api.get(`/medical-records/patient/${patientId}`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
 export default {
-    createMedicalRecord,
     getPatientMedicalRecords,
-    getMedicalRecord,
-    updateMedicalRecord,
-    deleteMedicalRecord,
-    getPatientHistory,
-    getAllRecords,
     getPatientRecords,
+    getAllRecords,
+    createMedicalRecord,
 };
 

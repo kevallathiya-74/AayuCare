@@ -13,6 +13,15 @@
  */
 
 import { healthColors } from "./healthColors";
+import {
+  fontFamilies,
+  fontWeights,
+  fontSizes,
+  lineHeights,
+  letterSpacing,
+  textStyles,
+} from "./typography";
+import { spacing, componentSpacing, layout, breakpoints, grid, safeAreaConfig } from "./spacing";
 
 // ===================================================================
 // UNIFIED THEME OBJECT - Single Export for Entire App
@@ -137,87 +146,35 @@ export const theme = {
   // =================================================================
   typography: {
     // Font Families
-    fontFamily: {
-      regular: "System",
-      medium: "System",
-      bold: "System",
-    },
+    fontFamily: fontFamilies,
 
-    // Font Sizes
-    sizes: {
-      xs: 10,
-      sm: 12,
-      base: 14,
-      md: 16,
-      lg: 18,
-      xl: 20,
-      xxl: 24,
-      xxxl: 28,
-      xxxxl: 32,
-      xxxxxl: 40,
-
-      // Semantic Sizes
-      caption: 11,
-      body: 14,
-      bodyLarge: 16,
-      subtitle: 14,
-      title: 18,
-      headline: 24,
-      display: 32,
-    },
+    // Font Sizes (from typography.js)
+    sizes: fontSizes,
+    fontSizes, // Also export as fontSizes for compatibility
 
     // Font Weights
-    weights: {
-      light: "300",
-      regular: "400",
-      medium: "500",
-      semibold: "600",
-      bold: "700",
-      extrabold: "800",
-    },
+    weights: fontWeights,
+    fontWeights, // Also export as fontWeights for compatibility
 
     // Line Heights
-    lineHeights: {
-      tight: 1.2,
-      normal: 1.5,
-      relaxed: 1.75,
-      loose: 2,
-    },
+    lineHeights,
+
+    // Letter Spacing
+    letterSpacing,
+
+    // Text Styles (pre-configured text combinations)
+    textStyles,
   },
 
   // =================================================================
   // SPACING - All Margins, Paddings, Gaps
   // =================================================================
-  spacing: {
-    // Base Spacing Scale
-    xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
-    xxl: 24,
-    xxxl: 32,
-    xxxxl: 40,
-    xxxxxl: 48,
-
-    // Screen Padding
-    screenPadding: 16,
-    screenPaddingHorizontal: 16,
-    screenPaddingVertical: 16,
-
-    // Component Spacing
-    cardPadding: 16,
-    cardMargin: 12,
-    buttonPadding: 14,
-    inputPadding: 12,
-
-    // Gaps
-    gapXs: 4,
-    gapSm: 8,
-    gapMd: 12,
-    gapLg: 16,
-    gapXl: 24,
-  },
+  spacing,
+  componentSpacing,
+  layout,
+  breakpoints,
+  grid,
+  safeAreaConfig,
 
   // =================================================================
   // BORDER RADIUS - All Rounded Corners
@@ -387,6 +344,20 @@ export const theme = {
 };
 
 export default theme;
-export { healthColors };
+export { 
+  healthColors,
+  fontFamilies,
+  fontWeights,
+  fontSizes,
+  lineHeights,
+  letterSpacing,
+  textStyles,
+  spacing,
+  componentSpacing,
+  layout,
+  breakpoints,
+  grid,
+  safeAreaConfig,
+};
 
 

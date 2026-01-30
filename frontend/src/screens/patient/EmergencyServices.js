@@ -311,7 +311,7 @@ const EmergencyServices = ({ navigation }) => {
             <View style={styles.tipItem}>
               <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>
-                Don't hang up until told to do so
+                Don&#39;t hang up until told to do so
               </Text>
             </View>
           </View>

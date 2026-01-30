@@ -34,7 +34,7 @@ import {
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { formatDate, formatTime } from "../../utils/helpers";
+import { formatDate, formatTime, formatCurrency } from "../../utils/helpers";
 import { doctorService, appointmentService } from "../../services";
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
@@ -427,7 +427,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                           color={healthColors.success.main}
                         />
                         <Text style={styles.feeText}>
-                          Consultation: ₹{doctor.consultationFee || 500}
+                          Consultation: {formatCurrency(doctor.consultationFee || 500)}
                         </Text>
                       </View>
                     </View>

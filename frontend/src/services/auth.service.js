@@ -3,29 +3,57 @@
  * Production-grade JWT auth for React Native / Expo
  */
 
-import authService from "./betterAuth.service";
+import authClient from "./betterAuth.service";
 
-// Re-export all functions
-export const {
-  register,
-  login,
-  logout,
-  getSession,
-  isAuthenticated,
-  refreshSession,
-  getAuthToken,
-  getUserData,
-  updateProfile,
-  changePassword,
-} = authService;
+// Re-export Better Auth methods
+export const { signIn, signUp, signOut, useSession } = authClient;
 
-// Legacy function names for compatibility
-export const getCurrentUser = async () => {
-  const session = await authService.getSession();
-  return session ? { user: session.user } : null;
+// Additional auth helper functions
+export const login = async (credentials) => {
+  const result = await signIn.email({
+    email: credentials.email,
+    password: credentials.password,
+  });
+  return {
+    user: result.data?.user,
+    token: result.data?.session?.token,
+  };
 };
 
-export const getStoredUser = authService.getUserData;
+export const register = async (userData) => {
+  const result = await signUp.email({
+    email: userData.email,
+    password: userData.password,
+    name: userData.name,
+    ...userData,
+  });
+  return {
+    success: !!result.data?.user,
+    user: result.data?.user,
+    token: result.data?.session?.token,
+  };
+};
 
-export default authService;
+export const logout = async () => {
+  await signOut();
+};
+
+export const getSession = async () => {
+  // Use Better Auth's session hook or method
+  const session = authClient.$fetch('/api/auth/get-session');
+  return session;
+};
+
+// Export service object as default for consistent usage
+export default {
+  signIn,
+  signUp,
+  signOut,
+  useSession,
+  login,
+  register,
+  logout,
+  getSession,
+  authClient,
+};
 

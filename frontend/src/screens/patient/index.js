@@ -15,7 +15,6 @@ export { default as DiseaseInfoScreen } from './DiseaseInfoScreen';
 export { default as HospitalEventsScreen } from './HospitalEventsScreen';
 export { default as PharmacyBillingScreen } from './PharmacyBillingScreen';
 export { default as MedicalRecordsScreen } from './MedicalRecordsScreen';
-export { default as HealthMetricsDashboard } from './HealthMetricsDashboard';
 export { default as AISymptomChecker } from './AISymptomChecker';
 export { default as EmergencyServices } from './EmergencyServices';
 export { default as AIHealthAssistantScreen } from './AIHealthAssistantScreen';

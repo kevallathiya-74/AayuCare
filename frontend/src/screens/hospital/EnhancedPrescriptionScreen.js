@@ -29,6 +29,7 @@ import {
 } from "../../utils/responsive";
 import { prescriptionService, patientService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { formatCurrency } from "../../utils/helpers";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -241,7 +242,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             />
             <Text style={styles.emptyStateTitle}>No Patient Selected</Text>
             <Text style={styles.emptyStateText}>
-              Please select a patient from Today's Appointments or Patient
+              Please select a patient from Today&#39;s Appointments or Patient
               Management to create a prescription.
             </Text>
             <TouchableOpacity
@@ -475,7 +476,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               <View style={styles.costCard}>
                 <View style={styles.costRow}>
                   <Text style={styles.costLabel}>Estimated Cost:</Text>
-                  <Text style={styles.costValue}>₹{estimatedCost}</Text>
+                  <Text style={styles.costValue}>{formatCurrency(estimatedCost)}</Text>
                 </View>
                 <View style={styles.costRow}>
                   <Text style={styles.costLabel}>
@@ -486,7 +487,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <View style={styles.divider} />
                 <View style={styles.costRow}>
                   <Text style={styles.finalCostLabel}>Final Amount:</Text>
-                  <Text style={styles.finalCostValue}>₹{finalCost}</Text>
+                  <Text style={styles.finalCostValue}>{formatCurrency(finalCost)}</Text>
                 </View>
               </View>
             </View>

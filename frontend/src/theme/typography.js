@@ -60,35 +60,35 @@ export const fontWeights = {
 
 // Font sizes (mobile-optimized, accessible)
 export const fontSizes = {
-  // Display sizes (large headings)
-  displayLarge: 32,      // Hero text
-  displayMedium: 28,     // Screen titles
-  displaySmall: 24,      // Section headers
+  // Display sizes (extra large for hero sections)
+  displayLarge: 48,
+  displayMedium: 40,
+  displaySmall: 36,
   
   // Heading sizes
-  h1: 24,                // Main headings
-  h2: 20,                // Sub headings
-  h3: 18,                // Section titles
-  h4: 16,                // Card titles
-  h5: 14,                // Small headings
-  h6: 12,                // Tiny headings
+  h1: 32,
+  h2: 28,
+  h3: 24,
+  h4: 20,
+  h5: 18,
+  h6: 16,
   
-  // Body sizes
-  bodyLarge: 16,         // Large body text (comfortable reading)
-  bodyMedium: 14,        // Standard body text (most common)
-  bodySmall: 12,         // Small body text
+  // Body text sizes
+  bodyLarge: 16,
+  bodyMedium: 14,
+  bodySmall: 12,
   
-  // Label sizes
-  labelLarge: 14,        // Button labels, input labels
-  labelMedium: 12,       // Form labels
-  labelSmall: 10,        // Tiny labels, badges
+  // Label sizes (for buttons, inputs)
+  labelLarge: 16,
+  labelMedium: 14,
+  labelSmall: 12,
   
-  // Special
-  caption: 10,           // Captions, hints
-  overline: 10,          // Overline text (all caps)
+  // Caption/Helper text
+  caption: 12,
+  overline: 10,
 };
 
-// Line heights (for readability)
+// Line heights
 export const lineHeights = {
   tight: 1.2,            // Headings
   normal: 1.5,           // Body text (optimal for reading)
@@ -104,8 +104,6 @@ export const letterSpacing = {
   wider: 1,
   widest: 1.5,
 };
-
-// Typography styles (pre-configured text styles)
 export const textStyles = {
   // Display styles
   displayLarge: {
@@ -244,7 +242,7 @@ export const textStyles = {
     fontSize: fontSizes.labelLarge,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.labelLarge * lineHeights.tight,
-    textTransform: 'none', // Don't uppercase buttons (friendlier)
+    textTransform: 'none', // Do not uppercase buttons (friendlier)
   },
   
   // Number styles (for health metrics)
@@ -271,21 +269,15 @@ export const textStyles = {
 };
 
 // Font loading configuration (for expo-font)
-// Note: Add font files to assets/fonts/ directory
+// Note: Add font files to assets/fonts/ directory when custom fonts are added
 export const fontsToLoad = {
-  // Uncomment when font files are added to assets/fonts/
-  // 'Poppins-Regular': require('../../assets/fonts/Poppins-Regular.ttf'),
-  // 'Poppins-Medium': require('../../assets/fonts/Poppins-Medium.ttf'),
+  // Placeholder for custom font loading
+  // Example:
   // 'Poppins-SemiBold': require('../../assets/fonts/Poppins-SemiBold.ttf'),
-  // 'Poppins-Bold': require('../../assets/fonts/Poppins-Bold.ttf'),
   // 'Inter-Regular': require('../../assets/fonts/Inter-Regular.ttf'),
-  // 'Inter-Medium': require('../../assets/fonts/Inter-Medium.ttf'),
-  // 'Inter-SemiBold': require('../../assets/fonts/Inter-SemiBold.ttf'),
-  // 'Inter-Bold': require('../../assets/fonts/Inter-Bold.ttf'),
-  // 'Lato-Regular': require('../../assets/fonts/Lato-Regular.ttf'),
-  // 'Lato-Bold': require('../../assets/fonts/Lato-Bold.ttf'),
 };
 
+// Default export with all typography utilities
 export default {
   fontFamilies,
   fontWeights,

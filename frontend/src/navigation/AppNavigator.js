@@ -59,7 +59,6 @@ import AIHealthAssistantScreen from "../screens/patient/AIHealthAssistantScreen"
 import SpecialistCareFinderScreen from "../screens/patient/SpecialistCareFinderScreen";
 import AppointmentBookingScreen from "../screens/patient/AppointmentBookingScreen";
 import MedicalRecordsScreen from "../screens/patient/MedicalRecordsScreen";
-import HealthMetricsDashboard from "../screens/patient/HealthMetricsDashboard";
 import AISymptomChecker from "../screens/patient/AISymptomChecker";
 import EmergencyServices from "../screens/patient/EmergencyServices";
 
@@ -349,10 +348,6 @@ const AppNavigator = () => {
                 <Stack.Screen
                   name="MedicalRecords"
                   component={MedicalRecordsScreen}
-                />
-                <Stack.Screen
-                  name="HealthMetrics"
-                  component={HealthMetricsDashboard}
                 />
                 <Stack.Screen
                   name="AISymptomChecker"

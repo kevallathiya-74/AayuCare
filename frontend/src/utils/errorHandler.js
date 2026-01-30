@@ -15,142 +15,95 @@ import { errorAnalytics } from './errorAnalytics';
  */
 export const ERROR_TYPES = {
     NETWORK: 'NETWORK',
-    AUTH: 'AUTH',
+    AUTHENTICATION: 'AUTHENTICATION',
     VALIDATION: 'VALIDATION',
     SERVER: 'SERVER',
+    NOT_FOUND: 'NOT_FOUND',
+    PERMISSION: 'PERMISSION',
+    TIMEOUT: 'TIMEOUT',
     UNKNOWN: 'UNKNOWN',
 };
 
 /**
  * User-friendly error messages
  */
-const ERROR_MESSAGES = {
-    // Network errors
-    NETWORK_ERROR: 'Unable to connect to server. Please check your internet connection and try again.',
-    TIMEOUT_ERROR: 'Request timed out. Please try again.',
-    
-    // Authentication errors
-    AUTH_INVALID_CREDENTIALS: 'Invalid User ID or Password. Please try again.',
-    AUTH_SESSION_EXPIRED: 'Your session has expired. Please login again.',
-    AUTH_UNAUTHORIZED: 'You are not authorized to perform this action.',
-    
-    // Validation errors
-    VALIDATION_REQUIRED_FIELD: 'Please fill in all required fields.',
-    VALIDATION_INVALID_EMAIL: 'Please enter a valid email address.',
-    VALIDATION_INVALID_PHONE: 'Please enter a valid phone number.',
-    VALIDATION_PASSWORD_TOO_SHORT: 'Password must be at least 6 characters long.',
-    
-    // Server errors
-    SERVER_ERROR: 'Something went wrong on our end. Please try again later.',
-    SERVER_MAINTENANCE: 'Server is under maintenance. Please try again later.',
-    
-    // Data errors
-    DATA_NOT_FOUND: 'The requested data was not found.',
-    DATA_FETCH_ERROR: 'Failed to load data. Please try again.',
-    
-    // Generic
-    UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
+export const ERROR_MESSAGES = {
+    NETWORK: 'Network error. Please check your internet connection.',
+    AUTHENTICATION: 'Authentication failed. Please login again.',
+    VALIDATION: 'Please check your input and try again.',
+    SERVER: 'Server error. Please try again later.',
+    NOT_FOUND: 'The requested resource was not found.',
+    PERMISSION: 'You do not have permission to perform this action.',
+    TIMEOUT: 'Request timed out. Please try again.',
+    UNKNOWN: 'An unexpected error occurred. Please try again.',
 };
 
 /**
- * Parse error and return user-friendly message
- * @param {Error|string|Object} error - The error to parse
+ * Parse error object and extract user-friendly message
+ * @param {Error|string|Object} error - Error to parse
  * @returns {string} User-friendly error message
  */
 export const parseError = (error) => {
-    // If error is a string
+    // Handle string errors
     if (typeof error === 'string') {
-        // Check for network-related keywords
-        if (error.toLowerCase().includes('network') || 
-            error.toLowerCase().includes('connection') ||
-            error.toLowerCase().includes('cannot connect')) {
-            return ERROR_MESSAGES.NETWORK_ERROR;
-        }
-        
-        // Check for auth-related keywords
-        if (error.toLowerCase().includes('unauthorized') || 
-            error.toLowerCase().includes('not authorized')) {
-            return ERROR_MESSAGES.AUTH_UNAUTHORIZED;
-        }
-        
-        if (error.toLowerCase().includes('session expired') || 
-            error.toLowerCase().includes('token expired')) {
-            return ERROR_MESSAGES.AUTH_SESSION_EXPIRED;
-        }
-        
-        if (error.toLowerCase().includes('incorrect') || 
-            error.toLowerCase().includes('invalid credentials')) {
-            return ERROR_MESSAGES.AUTH_INVALID_CREDENTIALS;
-        }
-        
-        // Return the error string if it's already user-friendly
         return error;
     }
-    
-    // If error is an Error object
-    if (error instanceof Error) {
-        const message = error.message || '';
-        
-        // Network errors
-        if (message.includes('Network request failed') || 
-            message.includes('Failed to fetch') ||
-            message.includes('Cannot connect')) {
-            return ERROR_MESSAGES.NETWORK_ERROR;
-        }
-        
-        // Timeout errors
-        if (message.includes('timeout') || message.includes('timed out')) {
-            return ERROR_MESSAGES.TIMEOUT_ERROR;
-        }
-        
-        // If message is user-friendly, return it
-        if (message.length > 0 && !message.includes('ExpoSecureStore') && 
-            !message.includes('is not a function')) {
-            return message;
-        }
-    }
-    
-    // If error is an object with response (Axios error)
+
+    // Handle axios/fetch errors with response
     if (error?.response) {
         const status = error.response.status;
         const data = error.response.data;
-        
-        // Extract message from response
+
+        // API error message
         if (data?.message) {
             return data.message;
         }
-        
-        // Handle based on status code
+
+        // HTTP status codes
         switch (status) {
             case 400:
-                return data?.error || 'Invalid request. Please check your input.';
+                return ERROR_MESSAGES.VALIDATION;
             case 401:
-                return ERROR_MESSAGES.AUTH_INVALID_CREDENTIALS;
+                return ERROR_MESSAGES.AUTHENTICATION;
             case 403:
-                return ERROR_MESSAGES.AUTH_UNAUTHORIZED;
+                return ERROR_MESSAGES.PERMISSION;
             case 404:
-                return ERROR_MESSAGES.DATA_NOT_FOUND;
+                return ERROR_MESSAGES.NOT_FOUND;
             case 408:
-                return ERROR_MESSAGES.TIMEOUT_ERROR;
+                return ERROR_MESSAGES.TIMEOUT;
             case 500:
             case 502:
             case 503:
-            case 504:
-                return ERROR_MESSAGES.SERVER_ERROR;
+                return ERROR_MESSAGES.SERVER;
             default:
-                return ERROR_MESSAGES.UNKNOWN_ERROR;
+                return ERROR_MESSAGES.UNKNOWN;
         }
     }
-    
-    // Default fallback
-    return ERROR_MESSAGES.UNKNOWN_ERROR;
+
+    // Handle network errors
+    if (error?.message) {
+        const message = error.message.toLowerCase();
+        if (message.includes('network') || message.includes('connection')) {
+            return ERROR_MESSAGES.NETWORK;
+        }
+        if (message.includes('timeout')) {
+            return ERROR_MESSAGES.TIMEOUT;
+        }
+        if (message.includes('unauthorized') || message.includes('unauthenticated')) {
+            return ERROR_MESSAGES.AUTHENTICATION;
+        }
+        return error.message;
+    }
+
+    // Fallback
+    return ERROR_MESSAGES.UNKNOWN;
 };
 
 /**
  * Show error alert to user
- * @param {Error|string|Object} error - The error to display
- * @param {string} title - Optional custom title
- * @param {Function} onDismiss - Optional callback when dismissed
+ * @param {Error|string} error - Error to display
+ * @param {string} title - Alert title
+ * @param {Function} onDismiss - Callback when dismissed
  */
 export const showError = (error, title = 'Error', onDismiss) => {
     const message = parseError(error);
@@ -322,30 +275,25 @@ export const validatePhone = (phone) => {
  * @param {Function} setError - Error state setter (optional)
  * @param {string} errorContext - Context for error logging
  */
-export const handleAsync = async (asyncFn, setLoading, setError, errorContext = '') => {
+export const handleAsync = async (asyncFn, setLoading, setError = null, errorContext = '') => {
     try {
-        setLoading(true);
-        if (setError) setError(null);
-        
+        if (setLoading) setLoading(true);
         const result = await asyncFn();
+        if (setLoading) setLoading(false);
         return result;
     } catch (error) {
+        if (setLoading) setLoading(false);
         logError(error, errorContext);
-        
-        const errorMessage = parseError(error);
-        
         if (setError) {
-            setError(errorMessage);
-        } else {
-            showError(error);
+            setError(parseError(error));
         }
-        
-        throw error; // Re-throw for caller to handle if needed
-    } finally {
-        setLoading(false);
+        throw error;
     }
 };
 
+/**
+ * Default export with all error handler utilities
+ */
 export default {
     ERROR_TYPES,
     ERROR_MESSAGES,

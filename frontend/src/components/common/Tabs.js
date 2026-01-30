@@ -41,7 +41,7 @@ const Tabs = ({
         Animated.parallel([
             Animated.spring(indicatorPosition, {
                 toValue: position,
-                useNativeDriver: false, // Must be false since we're animating width too
+                useNativeDriver: false, // Must be false since we are animating width too
             }),
             Animated.spring(indicatorWidth, {
                 toValue: tabWidths[index] || 0,

@@ -68,31 +68,7 @@ export const createShadow = ({
   radius = safeRadius;
   elevation = safeElevation;
 
-  if (Platform.OS === "web") {
-    // Convert color to rgba format for web
-    let shadowColor = color;
-
-    // If color is already rgba/rgb, adjust opacity
-    if (color.includes("rgba") || color.includes("rgb")) {
-      shadowColor = color.replace(
-        /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/,
-        (match, r, g, b, a) => `rgba(${r}, ${g}, ${b}, ${opacity || a || 1})`
-      );
-    }
-    // If color is hex, convert to rgba
-    else if (color.startsWith("#")) {
-      const hex = color.replace("#", "");
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      shadowColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    }
-
-    return {
-      boxShadow: `${offset.width}px ${offset.height}px ${radius}px ${shadowColor}`,
-    };
-  }
-
+  // React Native shadow properties (iOS and Android)
   return {
     shadowColor: color,
     shadowOffset: offset,
@@ -120,12 +96,7 @@ export const createTextShadow = ({
     color = theme.colors.black;
   }
 
-  if (Platform.OS === "web") {
-    return {
-      textShadow: `${offset.width}px ${offset.height}px ${radius}px ${color}`,
-    };
-  }
-
+  // React Native text shadow properties (iOS and Android)
   return {
     textShadowColor: color,
     textShadowOffset: offset,

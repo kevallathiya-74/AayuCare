@@ -139,34 +139,52 @@ export const layout = {
   },
 };
 
-// Safe area insets (for notched devices)
-export const safeArea = {
-  top: 44,        // iOS notch
-  bottom: 34,     // iOS home indicator
-  left: 0,
-  right: 0,
-};
-
-// Responsive breakpoints (for tablets)
+// Responsive breakpoints for different screen sizes
 export const breakpoints = {
-  phone: 0,
-  tablet: 768,
-  desktop: 1024,
+  xs: 0,       // Extra small (phones in portrait)
+  sm: 375,     // Small (standard phones)
+  md: 768,     // Medium (tablets in portrait)
+  lg: 1024,    // Large (tablets in landscape)
+  xl: 1280,    // Extra large (large tablets/desktops)
 };
 
-// Grid system (for complex layouts)
+// Grid system for responsive layouts
 export const grid = {
-  columns: 12,
-  gutter: spacing.md,      // 16px between columns
-  margin: spacing.md,      // 16px screen edges
+  columns: 12,           // 12-column grid
+  gutter: spacing.md,    // 16px - Space between grid items
+  margin: spacing.md,    // 16px - Grid container margin
+  
+  // Column widths (percentage-based)
+  col: (span = 1) => `${(span / 12) * 100}%`,
+  
+  // Grid breakpoints
+  breakpoints: breakpoints,
 };
 
+// Note: Safe area insets should be obtained using useSafeAreaInsets() hook
+// from react-native-safe-area-context at component level, not from theme.
+// This is because safe area values are dynamic and device-specific.
+
+// Safe area helpers for common patterns
+export const safeAreaConfig = {
+  // Edge configurations for SafeAreaView
+  edges: {
+    all: ['top', 'right', 'bottom', 'left'],
+    top: ['top'],
+    bottom: ['bottom'],
+    horizontal: ['left', 'right'],
+    vertical: ['top', 'bottom'],
+    noBottom: ['top', 'left', 'right'], // Common for screens with tab bar
+  },
+};
+
+// Export all spacing utilities
 export default {
   spacing,
   componentSpacing,
   layout,
-  safeArea,
   breakpoints,
   grid,
+  safeAreaConfig,
 };
 

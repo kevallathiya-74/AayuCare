@@ -50,6 +50,7 @@ import {
   showError,
   logError,
 } from "../../utils/errorHandler";
+import { formatCurrency } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import notificationService from "../../services/notification.service";
 import eventService from "../../services/event.service";
@@ -1139,7 +1140,7 @@ const AdminHomeScreen = ({ navigation }) => {
                   <View style={styles.menuStatContent}>
                     <Text style={styles.menuStatLabel}>Today's Revenue</Text>
                     <Text style={styles.menuStatValue}>
-                      ₹{stats.revenue.today.toLocaleString()}
+                      {formatCurrency(stats.revenue.today, false)}
                     </Text>
                   </View>
                 </View>

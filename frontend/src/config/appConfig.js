@@ -1,6 +1,17 @@
 /**
- * Application Configuration
- * Centralized configuration management
+ * AayuCare - Global Application Configuration
+ * SINGLE SOURCE OF TRUTH for all app configuration
+ * 
+ * This file consolidates:
+ * - API configuration
+ * - Environment variables
+ * - Feature flags
+ * - App metadata
+ * 
+ * Import this file ONLY using:
+ * import { APP_CONFIG } from '../config/appConfig';
+ * OR
+ * import APP_CONFIG from '../config/appConfig';
  */
 
 import Constants from "expo-constants";
@@ -30,21 +41,22 @@ const getApiBaseUrl = () => {
   // Check for explicit environment variable first
   const envUrl = getEnvVar("API_BASE_URL");
   if (envUrl) {
-    console.log('[Config] Using explicit API URL:', envUrl);
+    console.log('[APP_CONFIG] Using explicit API URL:', envUrl);
     return envUrl;
   }
 
   // ALWAYS use production backend (Render) for now
   // This ensures the app works in both Expo Go and production APK
   const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
-  console.log('[Config] Using production backend:', prodUrl);
+  console.log('[APP_CONFIG] Using production backend:', prodUrl);
   return prodUrl;
 };
 
 /**
- * Application Configuration
+ * Global Application Configuration Object
+ * This is the ONLY configuration export for the entire app
  */
-export const AppConfig = {
+export const APP_CONFIG = {
   // App Information
   app: {
     name: Constants.expoConfig?.name || "AayuCare",
@@ -80,8 +92,18 @@ export const AppConfig = {
     isDevelopment: __DEV__,
     isProduction: !__DEV__,
     isExpoGo: Constants.appOwnership === "expo",
+    platform: Platform.OS,
   },
 };
 
-export default AppConfig;
+// Default export for backwards compatibility
+export default APP_CONFIG;
 
+// Log configuration on initialization (only in development)
+if (__DEV__) {
+  console.log('[APP_CONFIG] Initialized:', {
+    apiUrl: APP_CONFIG.api.baseURL,
+    environment: APP_CONFIG.env.isDevelopment ? 'Development' : 'Production',
+    platform: APP_CONFIG.env.platform,
+  });
+}

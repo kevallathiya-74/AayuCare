@@ -29,6 +29,7 @@ import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicat
 import ErrorRecovery from "../../components/common/ErrorRecovery";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { formatCurrency } from "../../utils/helpers";
 import { prescriptionService } from "../../services";
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
@@ -127,7 +128,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       alert(
-        `Payment of ₹${total.toFixed(2)} via ${selectedPayment.toUpperCase()} initiated!`
+        `Payment of ${formatCurrency(total)} via ${selectedPayment.toUpperCase()} initiated!`
       );
     } catch (err) {
       logError(err, {
@@ -316,7 +317,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   </Text>
                 </View>
                 <View style={styles.medicinePrice}>
-                  <Text style={styles.priceText}>₹{medicine.price}</Text>
+                  <Text style={styles.priceText}>{formatCurrency(medicine.price)}</Text>
                 </View>
               </View>
             ))}
@@ -420,7 +421,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           <View style={styles.card}>
             <View style={styles.billingRow}>
               <Text style={styles.billingLabel}>Subtotal:</Text>
-              <Text style={styles.billingValue}>₹{subtotal.toFixed(2)}</Text>
+              <Text style={styles.billingValue}>{formatCurrency(subtotal)}</Text>
             </View>
             <View style={styles.billingRow}>
               <View style={styles.billingLabelWithIcon}>
@@ -437,13 +438,13 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   discount > 0 && styles.discountValue,
                 ]}
               >
-                {discount > 0 ? "-" : ""}₹{discount.toFixed(2)}
+                {discount > 0 ? "-" : ""}{formatCurrency(discount)}
               </Text>
             </View>
             <View style={styles.billingDivider} />
             <View style={styles.billingRow}>
               <Text style={styles.billingTotal}>Total Amount:</Text>
-              <Text style={styles.billingTotalValue}>₹{total.toFixed(2)}</Text>
+              <Text style={styles.billingTotalValue}>{formatCurrency(total)}</Text>
             </View>
           </View>
         </View>
@@ -513,7 +514,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               <>
                 <Ionicons name="card" size={24} color={theme.colors.white} />
                 <Text style={styles.payButtonText}>
-                  Pay ₹{total.toFixed(2)}
+                  Pay {formatCurrency(total)}
                 </Text>
               </>
             )}

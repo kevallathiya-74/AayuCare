@@ -30,6 +30,7 @@ import {
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { formatCurrency } from "../../utils/helpers";
 import { doctorService } from "../../services";
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
@@ -135,7 +136,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 color={healthColors.success.main}
               />
               <Text style={styles.feeText}>
-                ₹{doctor.consultationFee || doctor.fee}
+                {formatCurrency(doctor.consultationFee || doctor.fee)}
               </Text>
             </View>
             <View style={styles.detailItem}>
@@ -238,7 +239,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       {/* Fixed: BookAppointment -> AppointmentBooking (correct screen name) */}
-      {/* Fixed: DoctorProfile replaced with Alert (screen doesn't exist) */}
+      {/* Fixed: DoctorProfile replaced with Alert (screen does not exist) */}
     </View>
   );
 
@@ -356,7 +357,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 <Text style={styles.filterLabel}>Fee Range:</Text>
               </View>
               <Text style={styles.feeRangeText}>
-                ₹{feeRange[0]} - ₹{feeRange[1]}
+                {formatCurrency(feeRange[0])} - {formatCurrency(feeRange[1])}
               </Text>
             </View>
           </View>

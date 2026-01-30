@@ -60,24 +60,6 @@ export const AIIcon = (props) => (
   />
 );
 
-export const PrescriptionIcon = (props) => (
-  <IconWithBackground
-    name="document-text"
-    gradient
-    gradientColors={[healthColors.primary.main, healthColors.primary.dark]}
-    {...props}
-  />
-);
-
-export const AppointmentIcon = (props) => (
-  <IconWithBackground
-    name="calendar"
-    gradient
-    gradientColors={[healthColors.success.main, healthColors.success.dark]}
-    {...props}
-  />
-);
-
 export const EmergencyIcon = (props) => (
   <IconWithBackground
     name="alert-circle"
@@ -87,20 +69,38 @@ export const EmergencyIcon = (props) => (
   />
 );
 
+export const PrescriptionIcon = (props) => (
+  <IconWithBackground
+    name="document-text"
+    gradient
+    gradientColors={[healthColors.secondary.main, healthColors.secondary.dark]}
+    {...props}
+  />
+);
+
+export const AppointmentIcon = (props) => (
+  <IconWithBackground
+    name="calendar"
+    gradient
+    gradientColors={[healthColors.primary.main, healthColors.primary.dark]}
+    {...props}
+  />
+);
+
 export const HealthMetricsIcon = (props) => (
   <IconWithBackground
-    name="pulse"
+    name="fitness"
     gradient
-    gradientColors={[healthColors.warning.main, healthColors.warning.dark]}
+    gradientColors={[healthColors.health.heartRate, healthColors.error.main]}
     {...props}
   />
 );
 
 export const PharmacyIcon = (props) => (
   <IconWithBackground
-    name="medical"
+    name="medkit"
     gradient
-    gradientColors={[healthColors.fitness.aqua, healthColors.primary.main]}
+    gradientColors={[healthColors.success.main, healthColors.success.dark]}
     {...props}
   />
 );
@@ -109,7 +109,7 @@ export const WomensHealthIcon = (props) => (
   <IconWithBackground
     name="heart"
     gradient
-    gradientColors={[healthColors.error.main, healthColors.error.dark]}
+    gradientColors={[healthColors.hospital.pink, healthColors.error.main]}
     {...props}
   />
 );
@@ -118,7 +118,7 @@ export const ActivityIcon = (props) => (
   <IconWithBackground
     name="walk"
     gradient
-    gradientColors={[healthColors.secondary.main, healthColors.secondary.dark]}
+    gradientColors={[healthColors.health.steps, healthColors.secondary.main]}
     {...props}
   />
 );
@@ -127,7 +127,7 @@ export const DiseaseLibraryIcon = (props) => (
   <IconWithBackground
     name="book"
     gradient
-    gradientColors={[healthColors.info.main, healthColors.info.dark]}
+    gradientColors={[healthColors.info.main, healthColors.primary.main]}
     {...props}
   />
 );
@@ -136,7 +136,7 @@ export const VoiceIcon = (props) => (
   <IconWithBackground
     name="mic"
     gradient
-    gradientColors={[healthColors.fitness.aqua, healthColors.primary.dark]}
+    gradientColors={[healthColors.secondary.main, healthColors.secondary.dark]}
     {...props}
   />
 );
@@ -145,69 +145,35 @@ export const LanguageIcon = (props) => (
   <IconWithBackground
     name="language"
     gradient
-    gradientColors={[healthColors.warning.main, healthColors.warning.dark]}
+    gradientColors={[healthColors.primary.main, healthColors.info.main]}
     {...props}
   />
 );
 
 export const EventsIcon = (props) => (
   <IconWithBackground
-    name="megaphone"
+    name="calendar-outline"
     gradient
-    gradientColors={[healthColors.womens.lavender, healthColors.secondary.dark]}
+    gradientColors={[healthColors.hospital.teal, healthColors.info.main]}
     {...props}
   />
 );
 
-// Badge with Icon
-export const BadgeIcon = ({
-  count,
-  icon = "notifications",
-  size = 20,
-  badgeColor = healthColors.semantic.error,
-}) => {
-  return (
-    <View style={styles.badgeContainer}>
-      <Ionicons name={icon} size={size} color={healthColors.text.primary} />
-      {count > 0 && (
-        <View style={[styles.badge, { backgroundColor: badgeColor }]}>
-          <Text style={styles.badgeText}>{count > 99 ? "99+" : count}</Text>
-        </View>
-      )}
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  badgeContainer: {
-    position: "relative",
-  },
-  badge: {
-    position: "absolute",
-    top: -6,
-    right: -6,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: healthColors.neutral.white,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: "bold",
-    color: healthColors.neutral.white,
-  },
-});
+export const BadgeIcon = (props) => (
+  <IconWithBackground
+    name="ribbon"
+    gradient
+    gradientColors={[healthColors.warning.main, healthColors.warning.dark]}
+    {...props}
+  />
+);
 
 export default {
   IconWithBackground,
   AIIcon,
+  EmergencyIcon,
   PrescriptionIcon,
   AppointmentIcon,
-  EmergencyIcon,
   HealthMetricsIcon,
   PharmacyIcon,
   WomensHealthIcon,

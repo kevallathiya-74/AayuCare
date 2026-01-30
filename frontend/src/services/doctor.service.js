@@ -199,19 +199,6 @@ class DoctorService {
   }
 
   /**
-   * Get profile statistics
-   */
-  async getProfileStats() {
-    try {
-      const response = await api.get("/doctors/me/profile/stats");
-      return response.data;
-    } catch (error) {
-      logError(error, { context: "DoctorService.getProfileStats" });
-      throw error;
-    }
-  }
-
-  /**
    * Update doctor profile
    */
   async updateProfile(profileData) {

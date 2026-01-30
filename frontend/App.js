@@ -5,6 +5,7 @@ import { Provider as PaperProvider } from "react-native-paper";
 import { View, Platform, StyleSheet, LogBox } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { initializeSentry } from "./src/config/sentry";
 
 console.log("═══════════════════════════════════════════");
 console.log("[App.js] File loading...");
@@ -115,14 +116,9 @@ try {
 }
 
 console.log("[App.js] Initializing Sentry...");
-// Initialize Sentry safely
-try {
-  const { initializeSentry } = require("./src/config/sentry");
-  initializeSentry();
-  console.log("[App.js] Sentry initialized");
-} catch (e) {
-  console.log("[App] Sentry init skipped:", e.message);
-}
+// Initialize Sentry (safe guards built into initializeSentry)
+initializeSentry();
+console.log("[App.js] Sentry initialization complete");
 
 console.log("[App.js] Creating QueryClient...");
 // Create React Query client
@@ -185,10 +181,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFB", // theme.colors.backgroundSecondary
-    ...(Platform.OS === "web" && {
-      height: "100vh",
-      width: "100vw",
-      overflow: "hidden",
-    }),
   },
 });
