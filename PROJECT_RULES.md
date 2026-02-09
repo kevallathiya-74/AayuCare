@@ -278,7 +278,262 @@ Before deployment:
 > it is not acceptable for AayuCare.**
 
 ---
-## 18. custom rules 
+
+🔐 18. Session Management Rules (MANDATORY – APP-WIDE)
+
+Session handling in AayuCare is security-critical.
+All authentication, authorization, and user persistence must follow these rules.
+
+18.1 Single Session Authority (STRICT)
+
+The application must have exactly one session authority.
+
+Session state must be controlled ONLY by:
+
+authClient
+
+Redux authSlice
+
+UI components must NEVER:
+
+Read tokens directly
+
+Write to storage
+
+Infer session state manually
+
+❌ No component-level session logic
+❌ No duplicated session checks
+✅ One centralized session lifecycle
+
+18.2 Session Lifecycle (END-TO-END)
+
+Every user session MUST follow this lifecycle:
+
+App Launch
+
+App initializes
+
+Session restore runs ONCE
+
+Session Restore
+
+Token read from appStorage
+
+Token validated (locally + backend)
+
+Authenticated
+
+User data loaded from backend
+
+Session marked active
+
+Session Expiry / Logout
+
+Token invalidated
+
+Storage cleared
+
+Redux state reset
+
+Unauthenticated State
+
+User redirected safely
+
+No crashes
+
+No stale data
+
+Skipping any step is forbidden.
+
+18.3 Storage Rules for Session Data
+
+Only appStorage may access persisted session data.
+
+Allowed session keys must be explicitly defined (example):
+
+AUTH_TOKEN
+
+REFRESH_TOKEN
+
+USER_ID
+
+Session data must:
+
+Be validated before use
+
+Be cleared on logout
+
+Never be assumed valid
+
+❌ Blind reads from storage are forbidden.
+
+18.4 Token Handling Rules (CRITICAL)
+
+Tokens must NEVER:
+
+Be logged
+
+Be shown in UI
+
+Be passed via navigation params
+
+Tokens must ALWAYS:
+
+Be attached via apiClient headers
+
+Be refreshed or invalidated correctly
+
+Expired tokens must:
+
+Trigger logout
+
+Not cause infinite retries
+
+Silent retry loops are forbidden.
+
+18.5 Backend Session Validation Rules
+
+Every protected API must:
+
+Validate token
+
+Validate user existence
+
+Validate session state
+
+Backend must reject:
+
+Expired tokens
+
+Revoked tokens
+
+Tampered tokens
+
+Backend must return:
+
+401 for invalid sessions
+
+Clear error codes (no vague messages)
+
+18.6 Frontend Reaction to Session Errors
+
+On 401 / 403:
+
+Session must be cleared
+
+User redirected to auth flow
+
+UI must show:
+
+Friendly message
+
+Clear next action
+
+App must NEVER:
+
+Crash
+
+Freeze on splash screen
+
+Enter infinite loading state
+
+18.7 Session Initialization Rules (IMPORTANT)
+
+Session initialization must:
+
+Run only once per app launch
+
+Be guarded by a flag (e.g. authInitialized)
+
+Multiple session initializations are forbidden.
+
+Session init must:
+
+Always resolve (success or failure)
+
+Never block navigation forever
+
+This rule exists to prevent:
+
+Splash screen loops
+
+[runtime not ready] errors
+
+18.8 Navigation & Session Coupling Rules
+
+Navigation must ALWAYS respect session state.
+
+Protected screens must:
+
+Be inaccessible when unauthenticated
+
+Session changes must:
+
+Immediately reflect in navigation
+
+Navigation logic must NOT live in:
+
+Redux reducers
+
+API clients
+
+18.9 Session Cleanup Rules (ZERO TOLERANCE)
+
+On logout or session failure, ALL of the following MUST happen:
+
+Clear Redux auth state
+
+Clear session storage
+
+Cancel in-flight API requests
+
+Reset sensitive cached data
+
+Redirect user safely
+
+Partial cleanup is forbidden.
+
+18.10 Session Error Prevention Rules
+
+Repeated session-related errors indicate:
+
+Architectural violation
+
+Any recurring session error must:
+
+Be traced to root cause
+
+Be fixed permanently
+
+Temporary guards (try/catch only) are forbidden
+unless root cause is removed.
+
+18.11 Production Session Validation Checklist
+
+Before release, verify:
+
+App cold start restores session correctly
+
+Expired token logs user out cleanly
+
+Backend rejects invalid tokens
+
+No infinite splash screen
+
+No runtime session errors
+
+QR scan → real device works correctly
+
+If any check fails → release is blocked.
+
+18.12 Final Session Rule (ABSOLUTE)
+
+If a session bug can reappear after a restart,
+the fix is NOT acceptable for AayuCare.
+
+
+## . custom rules 
  
  proper maintiain ui for frontend design 
  only needed to database collection create 

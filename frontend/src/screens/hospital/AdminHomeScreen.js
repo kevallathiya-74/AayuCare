@@ -182,14 +182,10 @@ const AdminHomeScreen = ({ navigation }) => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
   // Get refreshCount from context to sync tab badge
   const { refreshCount } = useAdminAppointments();
 
-  // Refresh data when screen comes into focus
+  // Refresh data when screen comes into focus (replaces useEffect to avoid duplicate calls)
   useFocusEffect(
     useCallback(() => {
       fetchDashboardData();
@@ -635,7 +631,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 <View style={styles.profileInfoContent}>
                   <Text style={styles.profileInfoLabel}>Admin ID</Text>
                   <Text style={styles.profileInfoValue}>
-                    {user?.id || user?.employeeId || "ADM001"}
+                    {user?.userId || "ADMIN"}
                   </Text>
                 </View>
               </View>
@@ -960,7 +956,11 @@ const AdminHomeScreen = ({ navigation }) => {
         animationType="fade"
         onRequestClose={closeMenu}
       >
-        <Pressable style={styles.menuOverlay} onPress={closeMenu}>
+        <View style={styles.menuOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeMenu}
+          />
           <Animated.View
             style={[
               styles.menuDrawer,
@@ -968,7 +968,6 @@ const AdminHomeScreen = ({ navigation }) => {
                 transform: [{ translateX: slideAnim }],
               },
             ]}
-            onStartShouldSetResponder={() => true}
           >
             {/* Menu Header */}
             <LinearGradient
@@ -984,7 +983,7 @@ const AdminHomeScreen = ({ navigation }) => {
                     {user?.name || "Administrator"}
                   </Text>
                   <Text style={styles.menuUserRole}>System Admin</Text>
-                  <Text style={styles.menuUserId}>ID: {user?.id || "N/A"}</Text>
+                  <Text style={styles.menuUserId}>ID: {user?.userId || "ADMIN"}</Text>
                 </View>
               </View>
               <Pressable style={styles.menuCloseButton} onPress={closeMenu}>
@@ -1213,7 +1212,7 @@ const AdminHomeScreen = ({ navigation }) => {
               </View>
             </ScrollView>
           </Animated.View>
-        </Pressable>
+        </View>
       </Modal>
     </SafeAreaView>
   );
