@@ -38,6 +38,7 @@ import {
   prescriptionService,
 } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { calculateAge, formatDate, formatMedicalHistoryDuration } from "../../utils/dateHelpers";
 
 const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -110,6 +111,26 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
+  // Calculate age from dateOfBirth
+  const calculatedAge = user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
+  
+  // Format medical history properly (array of objects)
+  const formatMedicalHistory = () => {
+    if (!user?.medicalHistory || user.medicalHistory.length === 0) return "None";
+    
+    return user.medicalHistory
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        const condition = item.condition || "Unknown";
+        const duration = item.diagnosedDate 
+          ? ` (${formatMedicalHistoryDuration(item.diagnosedDate, item.status)})`
+          : "";
+        const status = item.status ? ` - ${item.status}` : "";
+        return `${condition}${duration}${status}`;
+      })
+      .join("; ");
+  };
+
   const profileSections = [
     {
       title: "Personal Information",
@@ -119,9 +140,21 @@ const ProfileScreen = ({ navigation }) => {
         { label: "Patient ID", value: user?.userId || "N/A" },
         { label: "Email", value: user?.email || "N/A" },
         { label: "Phone", value: user?.phone || "N/A" },
-        { label: "Age", value: user?.age ? `${user.age} years` : "N/A" },
-        { label: "Gender", value: user?.gender || "N/A" },
+        { label: "Date of Birth", value: user?.dateOfBirth ? formatDate(user.dateOfBirth) : "N/A" },
+        { label: "Age", value: calculatedAge ? `${calculatedAge} years` : "N/A" },
+        { label: "Gender", value: user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "N/A" },
         { label: "Blood Group", value: user?.bloodGroup || "N/A" },
+        { label: "Address", value: user?.address || "N/A" },
+      ],
+    },
+    {
+      title: "Hospital Information",
+      icon: "business-outline",
+      data: [
+        { label: "Hospital", value: user?.hospitalName || "N/A" },
+        { label: "Hospital ID", value: user?.hospitalId || "N/A" },
+        { label: "Account Status", value: user?.isActive ? "Active" : "Inactive" },
+        { label: "Verified", value: user?.isVerified ? "Yes" : "No" },
       ],
     },
     {
@@ -130,7 +163,7 @@ const ProfileScreen = ({ navigation }) => {
       data: [
         {
           label: "Medical History",
-          value: user?.medicalHistory?.join(", ") || "None",
+          value: formatMedicalHistory(),
         },
         { label: "Allergies", value: user?.allergies?.join(", ") || "None" },
         {
@@ -150,7 +183,7 @@ const ProfileScreen = ({ navigation }) => {
         },
         {
           label: "Relationship",
-          value: user?.emergencyContact?.relationship || "N/A",
+          value: user?.emergencyContact?.relation || "N/A",
         },
       ],
     },

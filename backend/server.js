@@ -76,8 +76,15 @@ app.use(
 // Rate limiting - General API
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: process.env.NODE_ENV === 'development' ? 500 : 100, // Higher limit in dev
   message: "Too many requests from this IP, please try again later",
+  skip: (req) => {
+    // Skip rate limiting for authenticated admin users in development
+    if (process.env.NODE_ENV === 'development') {
+      return req.path.startsWith('/api/admin') || req.path.startsWith('/api/notifications');
+    }
+    return false;
+  },
 });
 app.use("/api/", limiter);
 

@@ -32,6 +32,83 @@ exports.createAppointment = async (req, res, next) => {
 };
 
 /**
+ * @desc    Get all appointments with cursor-based pagination (admin only)
+ * @route   GET /api/appointments/cursor
+ * @access  Private (Admin)
+ */
+exports.getAllAppointmentsCursor = async (req, res, next) => {
+  try {
+    // Add hospitalId from authenticated user for multi-tenancy
+    const filters = { ...req.query };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      filters.hospitalId = req.hospitalId;
+    }
+    
+    const result = await appointmentService.getAllAppointmentsCursor(filters);
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get appointments with cursor-based pagination (patient or doctor specific)
+ * @route   GET /api/appointments/cursor
+ * @access  Private
+ */
+exports.getAppointmentsCursor = async (req, res, next) => {
+  try {
+    let result;
+    
+    // Add hospitalId to filters for multi-tenancy (skip for super_admin)
+    const filters = { ...req.query };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      filters.hospitalId = req.hospitalId;
+    }
+
+    if (req.user.role === "patient") {
+      result = await appointmentService.getPatientAppointmentsCursor(
+        req.user._id,
+        filters
+      );
+    } else if (req.user.role === "doctor") {
+      result = await appointmentService.getDoctorAppointmentsCursor(
+        req.user._id,
+        filters
+      );
+    } else if (req.user.role === "admin") {
+      // Admin can view all appointments or filter by patient/doctor
+      const { patientId, doctorId } = req.query;
+      if (patientId) {
+        result = await appointmentService.getPatientAppointmentsCursor(
+          patientId,
+          filters
+        );
+      } else if (doctorId) {
+        result = await appointmentService.getDoctorAppointmentsCursor(
+          doctorId,
+          filters
+        );
+      } else {
+        // No filters - get all appointments (admin only)
+        result = await appointmentService.getAllAppointmentsCursor(filters);
+      }
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @desc    Get all appointments (admin only, with optional filters)
  * @route   GET /api/appointments (admin calls this)
  * @access  Private (Admin)

@@ -3,7 +3,7 @@
  * Handles prescription creation, retrieval, and patient notifications
  */
 
-import api from './api';
+import api from './apiClient';
 
 class PrescriptionService {
     /**

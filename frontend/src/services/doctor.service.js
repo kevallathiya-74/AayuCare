@@ -3,7 +3,7 @@
  * Handles all doctor-related API calls
  */
 
-import api from "./api";
+import api from "./apiClient";
 import { logError } from "../utils/errorHandler";
 
 class DoctorService {

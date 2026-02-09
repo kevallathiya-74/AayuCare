@@ -16,6 +16,9 @@ const {
   getSecuritySettings,
   changePassword,
   logoutAllDevices,
+  getMedicalRecordsOverview,
+  getSystemMetrics,
+  getNotificationsManagement,
 } = require("../controllers/adminController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
@@ -37,6 +40,13 @@ router.post("/users/bulk", bulkUpdateUsers);
 
 // System routes
 router.get("/system/health", getSystemHealth);
+router.get("/system/metrics", getSystemMetrics);
+
+// Medical records routes
+router.get("/medical-records", getMedicalRecordsOverview);
+
+// Notifications routes
+router.get("/notifications/manage", getNotificationsManagement);
 
 // Security routes
 router.get("/security", getSecuritySettings);

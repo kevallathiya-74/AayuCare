@@ -3,7 +3,7 @@
  * Handles all appointment-related API calls
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError } from '../utils/errorHandler';
 
 class AppointmentService {
@@ -13,6 +13,60 @@ class AppointmentService {
     async createAppointment(appointmentData) {
         const response = await api.post('/appointments', appointmentData);
         return response.data;
+    }
+
+    /**
+     * Get appointments with cursor-based pagination
+     */
+    async getAppointmentsCursor(filters = {}) {
+        try {
+            // Filter out null/undefined values to prevent "null" strings in query params
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v != null && v !== 'null' && v !== '')
+            );
+            const params = new URLSearchParams(cleanFilters).toString();
+            const response = await api.get(`/appointments/cursor?${params}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'AppointmentService.getAppointmentsCursor' });
+            throw error;
+        }
+    }
+
+    /**
+     * Get patient appointments with cursor-based pagination
+     */
+    async getPatientAppointmentsCursor(patientId, filters = {}) {
+        try {
+            // Filter out null/undefined values to prevent "null" strings in query params
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v != null && v !== 'null' && v !== '')
+            );
+            const params = new URLSearchParams(cleanFilters).toString();
+            const response = await api.get(`/appointments/patient/${patientId}/cursor?${params}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'AppointmentService.getPatientAppointmentsCursor', patientId });
+            throw error;
+        }
+    }
+
+    /**
+     * Get doctor appointments with cursor-based pagination
+     */
+    async getDoctorAppointmentsCursor(doctorId, filters = {}) {
+        try {
+            // Filter out null/undefined values to prevent "null" strings in query params
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v != null && v !== 'null' && v !== '')
+            );
+            const params = new URLSearchParams(cleanFilters).toString();
+            const response = await api.get(`/appointments/doctor/${doctorId}/cursor?${params}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'AppointmentService.getDoctorAppointmentsCursor', doctorId });
+            throw error;
+        }
     }
 
     /**

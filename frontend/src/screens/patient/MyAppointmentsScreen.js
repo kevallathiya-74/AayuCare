@@ -1,10 +1,10 @@
 /**
  * My Appointments Screen (Patient)
- * View upcoming and past appointments
- * Reschedule/cancel options
+ * View upcoming and past appointments with lazy loading
+ * Production-ready with cursor-based pagination
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -18,77 +18,64 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../theme";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import {
-  verticalScale,
-  getSafeAreaEdges,
-} from "../../utils/responsive";
-import appointmentService from "../../services/appointment.service";
+import { verticalScale } from "../../utils/responsive";
+import { usePatientAppointmentsInfinite } from "../../hooks/useAppointments";
 
 const MyAppointmentsScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const [appointments, setAppointments] = useState([]);
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchAppointments();
+  // Determine status filter based on selected tab
+  const statusFilter = selectedTab === "upcoming" 
+    ? "scheduled,confirmed" 
+    : "completed,cancelled";
+
+  // Use infinite query hook for lazy loading
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = usePatientAppointmentsInfinite(user?.id, {
+    status: statusFilter,
+    limit: 20,
+  });
+
+  // Flatten paginated data
+  const appointments = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap((page) => page.appointments || []);
+  }, [data]);
+
+  // Handle tab change - refetch with new filter
+  const handleTabChange = (tab) => {
+    setSelectedTab(tab);
+    // React Query will auto-refetch when key changes
+  };
+
+  // Handle load more for infinite scroll
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  }, [user]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const fetchAppointments = useCallback(async () => {
-    if (!user?.id) {
-      setError("User not authenticated");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await appointmentService.getAppointments({
-        patientId: user.id,
-        status:
-          selectedTab === "upcoming"
-            ? "scheduled,confirmed"
-            : "completed,cancelled",
-      });
-
-      if (response.success) {
-        // Backend returns { success, data: { appointments: [], pagination: {} } }
-        setAppointments(response.data?.appointments || response.data || []);
-      } else {
-        throw new Error(response.message || "Failed to load appointments");
-      }
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to load appointments";
-      logError(err, {
-        context: "MyAppointmentsScreen.fetchAppointments",
-        userId: user?.id,
-      });
-      setError(errorMessage);
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedTab, user]);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchAppointments();
-    setRefreshing(false);
-  }, [fetchAppointments]);
+  // Handle pull to refresh
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   const renderAppointment = ({ item }) => (
     <View style={styles.appointmentCard}>
@@ -185,7 +172,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, selectedTab === "upcoming" && styles.tabActive]}
-          onPress={() => setSelectedTab("upcoming")}
+          onPress={() => handleTabChange("upcoming")}
           activeOpacity={0.7}
         >
           <Text
@@ -199,7 +186,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, selectedTab === "past" && styles.tabActive]}
-          onPress={() => setSelectedTab("past")}
+          onPress={() => handleTabChange("past")}
           activeOpacity={0.7}
         >
           <Text
@@ -214,14 +201,14 @@ const MyAppointmentsScreen = ({ navigation }) => {
       </View>
 
       {/* Appointments List */}
-      {error ? (
+      {isError ? (
         <ErrorRecovery
-          error={error}
-          onRetry={fetchAppointments}
+          error={error?.message || "Failed to load appointments"}
+          onRetry={() => refetch()}
           onGoBack={() => navigation.goBack()}
           context="loading appointments"
         />
-      ) : loading ? (
+      ) : isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
           <Text style={styles.loadingText}>Loading appointments...</Text>
@@ -236,13 +223,28 @@ const MyAppointmentsScreen = ({ navigation }) => {
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={handleRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
             />
+          }
+          ListFooterComponent={() =>
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
+              </View>
+            ) : null
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
@@ -428,6 +430,10 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
     textAlign: "center",
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
 });
 

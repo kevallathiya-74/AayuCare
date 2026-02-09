@@ -1,0 +1,229 @@
+/**
+ * AayuCare - React Query Configuration
+ * SINGLE SOURCE OF TRUTH for React Query settings
+ * 
+ * Configures:
+ * - Query defaults
+ * - Retry logic
+ * - Stale time
+ * - Cache time
+ * - Error handling
+ */
+
+import { QueryClient } from '@tanstack/react-query';
+import { logError } from '../utils/errorHandler';
+import { APP_CONFIG } from './appConfig';
+
+/**
+ * Create and configure QueryClient
+ * Settings optimized for healthcare app requirements:
+ * - Longer stale time for stable data (patient info, doctor profiles)
+ * - Shorter stale time for dynamic data (appointments, notifications)
+ * - Retry failed requests with exponential backoff
+ * - Never retry 401/403 errors (auth failures)
+ */
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Stale time: How long data is considered fresh
+      staleTime: 5 * 60 * 1000, // 5 minutes default
+
+      // Cache time: How long unused data stays in cache
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+
+      // Retry failed requests (except auth errors)
+      retry: (failureCount, error) => {
+        // Don't retry auth errors
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          return false;
+        }
+        // Don't retry 4xx errors
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false;
+        }
+        // Retry up to 3 times for network/server errors
+        return failureCount < 3;
+      },
+
+      // Retry delay with exponential backoff
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+
+      // Refetch on window focus (useful for web, safe for mobile)
+      refetchOnWindowFocus: false,
+
+      // Refetch on reconnect
+      refetchOnReconnect: true,
+
+      // Don't refetch on mount by default (staleTime handles this)
+      refetchOnMount: true,
+
+      // Error handling
+      onError: (error) => {
+        if (__DEV__) {
+          console.error('[React Query] Query error:', error);
+        }
+        logError(error, { context: 'ReactQuery.query' });
+      },
+    },
+    mutations: {
+      // Retry mutations only once
+      retry: 1,
+
+      // Error handling for mutations
+      onError: (error) => {
+        if (__DEV__) {
+          console.error('[React Query] Mutation error:', error);
+        }
+        logError(error, { context: 'ReactQuery.mutation' });
+      },
+    },
+  },
+});
+
+/**
+ * Query key factory for consistent cache keys
+ * Prevents typos and ensures proper invalidation
+ */
+export const queryKeys = {
+  // Appointments
+  appointments: {
+    all: ['appointments'],
+    lists: () => [...queryKeys.appointments.all, 'list'],
+    list: (filters) => [...queryKeys.appointments.lists(), filters],
+    infinite: (filters) => [...queryKeys.appointments.lists(), 'infinite', filters],
+    details: () => [...queryKeys.appointments.all, 'detail'],
+    detail: (id) => [...queryKeys.appointments.details(), id],
+    patient: (patientId) => [...queryKeys.appointments.all, 'patient', patientId],
+    doctor: (doctorId) => [...queryKeys.appointments.all, 'doctor', doctorId],
+  },
+
+  // Patients
+  patients: {
+    all: ['patients'],
+    lists: () => [...queryKeys.patients.all, 'list'],
+    list: (filters) => [...queryKeys.patients.lists(), filters],
+    infinite: (filters) => [...queryKeys.patients.lists(), 'infinite', filters],
+    details: () => [...queryKeys.patients.all, 'detail'],
+    detail: (id) => [...queryKeys.patients.details(), id],
+  },
+
+  // Doctors
+  doctors: {
+    all: ['doctors'],
+    lists: () => [...queryKeys.doctors.all, 'list'],
+    list: (filters) => [...queryKeys.doctors.lists(), filters],
+    infinite: (filters) => [...queryKeys.doctors.lists(), 'infinite', filters],
+    details: () => [...queryKeys.doctors.all, 'detail'],
+    detail: (id) => [...queryKeys.doctors.details(), id],
+  },
+
+  // Medical Records
+  medicalRecords: {
+    all: ['medicalRecords'],
+    lists: () => [...queryKeys.medicalRecords.all, 'list'],
+    list: (filters) => [...queryKeys.medicalRecords.lists(), filters],
+    infinite: (filters) => [...queryKeys.medicalRecords.lists(), 'infinite', filters],
+    patient: (patientId) => [...queryKeys.medicalRecords.all, 'patient', patientId],
+  },
+
+  // Prescriptions
+  prescriptions: {
+    all: ['prescriptions'],
+    lists: () => [...queryKeys.prescriptions.all, 'list'],
+    list: (filters) => [...queryKeys.prescriptions.lists(), filters],
+    infinite: (filters) => [...queryKeys.prescriptions.lists(), 'infinite', filters],
+    patient: (patientId) => [...queryKeys.prescriptions.all, 'patient', patientId],
+  },
+
+  // Notifications
+  notifications: {
+    all: ['notifications'],
+    lists: () => [...queryKeys.notifications.all, 'list'],
+    list: (filters) => [...queryKeys.notifications.lists(), filters],
+    infinite: (filters) => [...queryKeys.notifications.lists(), 'infinite', filters],
+    unreadCount: () => [...queryKeys.notifications.all, 'unreadCount'],
+  },
+
+  // Events
+  events: {
+    all: ['events'],
+    lists: () => [...queryKeys.events.all, 'list'],
+    list: (filters) => [...queryKeys.events.lists(), filters],
+    infinite: (filters) => [...queryKeys.events.lists(), 'infinite', filters],
+    upcoming: () => [...queryKeys.events.all, 'upcoming'],
+  },
+
+  // Health Metrics
+  healthMetrics: {
+    all: ['healthMetrics'],
+    patient: (patientId) => [...queryKeys.healthMetrics.all, 'patient', patientId],
+    latest: (patientId) => [...queryKeys.healthMetrics.all, 'latest', patientId],
+  },
+
+  // Dashboard Stats
+  dashboardStats: {
+    admin: () => ['dashboardStats', 'admin'],
+    doctor: (doctorId) => ['dashboardStats', 'doctor', doctorId],
+    patient: (patientId) => ['dashboardStats', 'patient', patientId],
+  },
+};
+
+/**
+ * Helper to invalidate related queries after mutations
+ */
+export const invalidateRelatedQueries = async (queryClient, entityType, action = 'update') => {
+  const invalidations = [];
+
+  switch (entityType) {
+    case 'appointment':
+      invalidations.push(
+        queryClient.invalidateQueries(queryKeys.appointments.all),
+        queryClient.invalidateQueries(queryKeys.dashboardStats.admin()),
+        queryClient.invalidateQueries(queryKeys.notifications.all)
+      );
+      break;
+
+    case 'patient':
+      invalidations.push(
+        queryClient.invalidateQueries(queryKeys.patients.all),
+        queryClient.invalidateQueries(queryKeys.dashboardStats.admin())
+      );
+      break;
+
+    case 'doctor':
+      invalidations.push(
+        queryClient.invalidateQueries(queryKeys.doctors.all),
+        queryClient.invalidateQueries(queryKeys.dashboardStats.admin())
+      );
+      break;
+
+    case 'medicalRecord':
+      invalidations.push(
+        queryClient.invalidateQueries(queryKeys.medicalRecords.all),
+        queryClient.invalidateQueries(queryKeys.patients.all)
+      );
+      break;
+
+    case 'prescription':
+      invalidations.push(
+        queryClient.invalidateQueries(queryKeys.prescriptions.all),
+        queryClient.invalidateQueries(queryKeys.patients.all)
+      );
+      break;
+
+    case 'notification':
+      invalidations.push(
+        queryClient.invalidateQueries(queryKeys.notifications.all)
+      );
+      break;
+
+    default:
+      if (__DEV__) {
+        console.warn(`[React Query] Unknown entity type for invalidation: ${entityType}`);
+      }
+  }
+
+  await Promise.all(invalidations);
+};
+
+export default queryClient;

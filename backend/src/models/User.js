@@ -127,6 +127,7 @@ const userSchema = new mongoose.Schema({
     refreshToken: String,
     lastLogin: Date,
 }, {
+    collection: 'user', // Explicit collection name (database uses 'user' not 'users')
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }

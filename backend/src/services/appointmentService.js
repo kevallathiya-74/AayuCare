@@ -66,6 +66,264 @@ class AppointmentService {
     }
 
     /**
+     * Get all appointments (admin only) - CURSOR-BASED PAGINATION
+     * More efficient for large datasets and real-time updates
+     * @param {Object} filters - Filter options including hospitalId for multi-tenancy
+     */
+    async getAllAppointmentsCursor(filters = {}) {
+        const { status, startDate, endDate, limit = 20, cursor, patientId, doctorId, hospitalId } = filters;
+
+        const query = {};
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
+
+        if (patientId) {
+            query.patientId = patientId;
+        }
+
+        if (doctorId) {
+            query.doctorId = doctorId;
+        }
+
+        if (status) {
+            // Handle comma-separated status values (e.g., "scheduled,confirmed")
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
+        }
+
+        if (startDate || endDate) {
+            query.appointmentDate = {};
+            if (startDate) query.appointmentDate.$gte = new Date(startDate);
+            if (endDate) query.appointmentDate.$lte = new Date(endDate);
+        }
+
+        // Cursor-based pagination: If cursor provided, fetch records after that cursor
+        // Check for both falsy values and string 'null' to prevent invalid date casting
+        if (cursor && cursor !== 'null' && cursor !== 'undefined') {
+            try {
+                // Cursor format: base64 encoded "timestamp_id"
+                const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+                const [timestamp, id] = decoded.split('_');
+                
+                // Validate timestamp is a valid number
+                const parsedTimestamp = parseInt(timestamp);
+                if (isNaN(parsedTimestamp)) {
+                    throw new Error('Invalid timestamp in cursor');
+                }
+                
+                // Find records with timestamp less than cursor OR same timestamp but greater ID
+                query.$or = [
+                    { appointmentDate: { $lt: new Date(parsedTimestamp) } },
+                    { 
+                        appointmentDate: { $eq: new Date(parsedTimestamp) },
+                        _id: { $gt: id }
+                    }
+                ];
+            } catch (error) {
+                logger.error('Invalid cursor format:', error);
+                throw new AppError('Invalid cursor format', 400);
+            }
+        }
+
+        const itemLimit = parseInt(limit) + 1; // Fetch one extra to determine if there's more
+
+        const appointments = await Appointment.find(query)
+            .populate('patientId', 'name userId phone email')
+            .populate('doctorId', 'name specialization qualification consultationFee')
+            .sort({ appointmentDate: -1, _id: 1 })
+            .limit(itemLimit);
+
+        // Check if there are more items
+        const hasMore = appointments.length > limit;
+        const results = hasMore ? appointments.slice(0, limit) : appointments;
+
+        // Generate next cursor if there are more items
+        let nextCursor = null;
+        if (hasMore && results.length > 0) {
+            const lastItem = results[results.length - 1];
+            const cursorData = `${lastItem.appointmentDate.getTime()}_${lastItem._id}`;
+            nextCursor = Buffer.from(cursorData).toString('base64');
+        }
+
+        return {
+            appointments: results,
+            pagination: {
+                nextCursor,
+                hasMore,
+                limit: parseInt(limit),
+            }
+        };
+    }
+
+    /**
+     * Get appointments for a patient - CURSOR-BASED PAGINATION
+     */
+    async getPatientAppointmentsCursor(patientId, filters = {}) {
+        const { status, startDate, endDate, limit = 20, cursor, hospitalId } = filters;
+
+        const query = { patientId };
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
+
+        if (status) {
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
+        }
+
+        if (startDate || endDate) {
+            query.appointmentDate = {};
+            if (startDate) query.appointmentDate.$gte = new Date(startDate);
+            if (endDate) query.appointmentDate.$lte = new Date(endDate);
+        }
+
+        // Cursor-based pagination
+        // Check for both falsy values and string 'null' to prevent invalid date casting
+        if (cursor && cursor !== 'null' && cursor !== 'undefined') {
+            try {
+                const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+                const [timestamp, id] = decoded.split('_');
+                
+                // Validate timestamp is a valid number
+                const parsedTimestamp = parseInt(timestamp);
+                if (isNaN(parsedTimestamp)) {
+                    throw new Error('Invalid timestamp in cursor');
+                }
+                
+                query.$or = [
+                    { appointmentDate: { $lt: new Date(parsedTimestamp) } },
+                    { 
+                        appointmentDate: { $eq: new Date(parsedTimestamp) },
+                        _id: { $gt: id }
+                    }
+                ];
+            } catch (error) {
+                logger.error('Invalid cursor format:', error);
+                throw new AppError('Invalid cursor format', 400);
+            }
+        }
+
+        const itemLimit = parseInt(limit) + 1;
+
+        const appointments = await Appointment.find(query)
+            .populate('doctorId', 'name specialization qualification consultationFee')
+            .sort({ appointmentDate: -1, _id: 1 })
+            .limit(itemLimit);
+
+        const hasMore = appointments.length > limit;
+        const results = hasMore ? appointments.slice(0, limit) : appointments;
+
+        let nextCursor = null;
+        if (hasMore && results.length > 0) {
+            const lastItem = results[results.length - 1];
+            const cursorData = `${lastItem.appointmentDate.getTime()}_${lastItem._id}`;
+            nextCursor = Buffer.from(cursorData).toString('base64');
+        }
+
+        return {
+            appointments: results,
+            pagination: {
+                nextCursor,
+                hasMore,
+                limit: parseInt(limit),
+            }
+        };
+    }
+
+    /**
+     * Get appointments for a doctor - CURSOR-BASED PAGINATION
+     */
+    async getDoctorAppointmentsCursor(doctorId, filters = {}) {
+        const { status, date, limit = 20, cursor, hospitalId } = filters;
+
+        const query = { doctorId };
+
+        // Multi-tenancy: Filter by hospitalId if provided
+        if (hospitalId) {
+            query.hospitalId = hospitalId;
+        }
+
+        if (status) {
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
+        }
+
+        if (date) {
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+            query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
+        }
+
+        // Cursor-based pagination
+        // Check for both falsy values and string 'null' to prevent invalid date casting
+        if (cursor && cursor !== 'null' && cursor !== 'undefined') {
+            try {
+                const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+                const [timestamp, id] = decoded.split('_');
+                
+                // Validate timestamp is a valid number
+                const parsedTimestamp = parseInt(timestamp);
+                if (isNaN(parsedTimestamp)) {
+                    throw new Error('Invalid timestamp in cursor');
+                }
+                
+                query.$or = [
+                    { appointmentDate: { $lt: new Date(parsedTimestamp) } },
+                    { 
+                        appointmentDate: { $eq: new Date(parsedTimestamp) },
+                        _id: { $gt: id }
+                    }
+                ];
+            } catch (error) {
+                logger.error('Invalid cursor format:', error);
+                throw new AppError('Invalid cursor format', 400);
+            }
+        }
+
+        const itemLimit = parseInt(limit) + 1;
+
+        const appointments = await Appointment.find(query)
+            .populate('patientId', 'name userId phone')
+            .sort({ appointmentDate: -1, _id: 1 })
+            .limit(itemLimit);
+
+        const hasMore = appointments.length > limit;
+        const results = hasMore ? appointments.slice(0, limit) : appointments;
+
+        let nextCursor = null;
+        if (hasMore && results.length > 0) {
+            const lastItem = results[results.length - 1];
+            const cursorData = `${lastItem.appointmentDate.getTime()}_${lastItem._id}`;
+            nextCursor = Buffer.from(cursorData).toString('base64');
+        }
+
+        return {
+            appointments: results,
+            pagination: {
+                nextCursor,
+                hasMore,
+                limit: parseInt(limit),
+            }
+        };
+    }
+
+    /**
      * Get all appointments (admin only)
      * @param {Object} filters - Filter options including hospitalId for multi-tenancy
      */

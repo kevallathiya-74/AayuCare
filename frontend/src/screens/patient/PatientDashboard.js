@@ -25,6 +25,8 @@ import {
   Pressable,
   Animated,
   RefreshControl,
+  Linking,
+  Alert,
 } from "react-native";
 import {
   SafeAreaView,
@@ -45,6 +47,7 @@ import {
 } from "../../utils/responsive";
 import { healthMetricsService, notificationService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { calculateAge, formatMedicalHistoryDuration } from "../../utils/dateHelpers";
 
 const { width } = Dimensions.get("window");
 
@@ -399,7 +402,7 @@ const PatientDashboard = ({ navigation }) => {
                     color={theme.colors.text.white}
                   />
                   <Text style={styles.bannerInfoText}>
-                    Age: {user?.age || "N/A"} • Blood: {user?.bloodGroup || "N/A"}
+                    Age: {user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : "N/A")} • Blood: {user?.bloodGroup || "N/A"}
                   </Text>
                 </View>
               </View>
@@ -501,6 +504,165 @@ const PatientDashboard = ({ navigation }) => {
               </View>
             </View>
           )}
+        </View>
+
+        {/* Medical History Section */}
+        {(user?.medicalHistory?.length > 0 ||
+          user?.allergies?.length > 0 ||
+          user?.currentMedications?.length > 0) && (
+          <View style={styles.medicalHistorySection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>MEDICAL HISTORY</Text>
+            </View>
+            <View style={styles.medicalCard}>
+              {user?.medicalHistory?.length > 0 && (
+                <View style={styles.medicalGroup}>
+                  <View style={styles.medicalGroupHeader}>
+                    <Ionicons
+                      name="medical"
+                      size={18}
+                      color={healthColors.error.main}
+                    />
+                    <Text style={styles.medicalGroupTitle}>Conditions</Text>
+                  </View>
+                  {user.medicalHistory.map((item, index) => {
+                    const condition =
+                      typeof item === "string" ? item : item.condition || "Unknown";
+                    const duration =
+                      typeof item === "object" && item.diagnosedDate
+                        ? formatMedicalHistoryDuration(item.diagnosedDate, item.status)
+                        : null;
+                    const status =
+                      typeof item === "object" && item.status ? item.status : null;
+
+                    return (
+                      <View key={index} style={styles.medicalChip}>
+                        <Text style={styles.medicalChipText}>{condition}</Text>
+                        {duration && (
+                          <Text style={styles.medicalChipDuration}>{duration}</Text>
+                        )}
+                        {status && (
+                          <View
+                            style={[
+                              styles.statusBadge,
+                              status === "active" && styles.statusBadgeActive,
+                              status === "chronic" && styles.statusBadgeChronic,
+                              status === "resolved" && styles.statusBadgeResolved,
+                            ]}
+                          >
+                            <Text style={styles.statusBadgeText}>
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              {user?.allergies?.length > 0 && (
+                <View style={styles.medicalGroup}>
+                  <View style={styles.medicalGroupHeader}>
+                    <Ionicons
+                      name="warning"
+                      size={18}
+                      color={healthColors.warning.main}
+                    />
+                    <Text style={styles.medicalGroupTitle}>Allergies</Text>
+                  </View>
+                  <View style={styles.allergiesContainer}>
+                    {user.allergies.map((allergy, index) => (
+                      <View key={index} style={styles.allergyChip}>
+                        <Ionicons
+                          name="alert-circle"
+                          size={12}
+                          color={healthColors.warning.main}
+                        />
+                        <Text style={styles.allergyChipText}>{allergy}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {user?.currentMedications?.length > 0 && (
+                <View style={styles.medicalGroup}>
+                  <View style={styles.medicalGroupHeader}>
+                    <Ionicons
+                      name="medkit"
+                      size={18}
+                      color={healthColors.primary.main}
+                    />
+                    <Text style={styles.medicalGroupTitle}>Current Medications</Text>
+                  </View>
+                  {user.currentMedications.map((medication, index) => (
+                    <View key={index} style={styles.medicationItem}>
+                      <View style={styles.medicationBullet} />
+                      <Text style={styles.medicationText}>{medication}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Emergency Contact Section */}
+        <View style={styles.emergencyContactSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>EMERGENCY CONTACT</Text>
+          </View>
+          <View style={styles.emergencyButtonsContainer}>
+            {/* Emergency Contact Button */}
+            <TouchableOpacity
+              style={styles.emergencyButtonRelative}
+              onPress={() => {
+                const phone = user?.emergencyContact?.phone;
+                if (phone) {
+                  Linking.openURL(`tel:${phone}`).catch((err) => {
+                    logError(err, "Failed to open dialer");
+                    Alert.alert("Error", "Unable to make call");
+                  });
+                } else {
+                  Alert.alert("No Contact", "Emergency contact not available");
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="call"
+                size={32}
+                color={theme.colors.text.white}
+                style={styles.emergencyButtonIcon}
+              />
+              <Text style={styles.emergencyButtonText}>
+                Emergency{"\n"}Contact
+              </Text>
+            </TouchableOpacity>
+
+            {/* Ambulance 108 Button */}
+            <TouchableOpacity
+              style={styles.emergencyButtonAmbulance}
+              onPress={() => {
+                Linking.openURL("tel:108").catch((err) => {
+                  logError(err, "Failed to open dialer for 108");
+                  Alert.alert("Error", "Unable to make call");
+                });
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="medkit"
+                size={32}
+                color={theme.colors.text.white}
+                style={styles.emergencyButtonIcon}
+              />
+              <Text style={styles.emergencyButtonText}>
+                Ambulance{"\n"}108
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Main Features Section */}
@@ -1282,6 +1444,166 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     marginTop: 12,
     textAlign: "center",
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+    marginLeft: 8,
+  },
+  // Medical History Section
+  medicalHistorySection: {
+    paddingHorizontal: getScreenPadding(),
+    marginBottom: 24,
+  },
+  medicalCard: {
+    backgroundColor: theme.colors.background.paper,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  medicalGroup: {
+    marginBottom: 16,
+  },
+  medicalGroupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  medicalGroupTitle: {
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.text.primary,
+    marginLeft: 6,
+  },
+  medicalChip: {
+    backgroundColor: healthColors.error.background,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: healthColors.error.light,
+  },
+  medicalChipText: {
+    fontSize: 13,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.error.main,
+    marginBottom: 4,
+  },
+  medicalChipDuration: {
+    fontSize: 11,
+    color: healthColors.text.secondary,
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  statusBadgeActive: {
+    backgroundColor: healthColors.error.main,
+  },
+  statusBadgeChronic: {
+    backgroundColor: healthColors.warning.main,
+  },
+  statusBadgeResolved: {
+    backgroundColor: healthColors.success.main,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+  },
+  allergiesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  allergyChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: healthColors.warning.background,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: healthColors.warning.light,
+  },
+  allergyChipText: {
+    fontSize: 12,
+    color: healthColors.warning.main,
+    fontWeight: theme.typography.weights.medium,
+    marginLeft: 4,
+  },
+  medicationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  medicationBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: healthColors.primary.main,
+    marginRight: 10,
+  },
+  medicationText: {
+    fontSize: 13,
+    color: healthColors.text.primary,
+    flex: 1,
+  },
+  // Emergency Contact Section
+  emergencyContactSection: {
+    paddingHorizontal: getScreenPadding(),
+    marginBottom: 24,
+  },
+  emergencyButtonsContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  emergencyButtonRelative: {
+    flex: 1,
+    backgroundColor: "#DC2626",
+    borderRadius: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 140,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  emergencyButtonAmbulance: {
+    flex: 1,
+    backgroundColor: "#7C2D12",
+    borderRadius: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 140,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  emergencyButtonIcon: {
+    marginBottom: 12,
+  },
+  emergencyButtonText: {
+    fontSize: 15,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+    textAlign: "center",
+    lineHeight: 20,
+    letterSpacing: 0.5,
   },
 });
 

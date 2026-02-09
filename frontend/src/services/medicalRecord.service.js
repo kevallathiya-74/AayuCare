@@ -3,7 +3,7 @@
  * Handles all medical records API calls
  */
 
-import api from './api';
+import api from './apiClient';
 
 /**
  * Create new medical record

@@ -82,22 +82,38 @@ const AdminHomeScreen = ({ navigation }) => {
   });
   const [notificationCount, setNotificationCount] = useState(0);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
+  const [doctorsList, setDoctorsList] = useState([]);
+  const [patientsList, setPatientsList] = useState([]);
+  const [medicalRecordsData, setMedicalRecordsData] = useState({ records: [], stats: [] });
+  const [systemMetrics, setSystemMetrics] = useState(null);
+  const [notificationsData, setNotificationsData] = useState({ notifications: [], stats: {} });
+  const [systemLogs, setSystemLogs] = useState([]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
       setError(null);
 
-      // Fetch stats, activities, notifications, and events in parallel
+      // Fetch stats, activities, notifications, events, doctors, patients, medical records, metrics, and notification management in parallel
       const [
         statsResponse,
         activitiesResponse,
         notificationsResponse,
         eventsResponse,
+        doctorsResponse,
+        patientsResponse,
+        medicalRecordsResponse,
+        metricsResponse,
+        notificationsMgmtResponse,
       ] = await Promise.all([
         adminService.getDashboardStats().catch(() => null),
         adminService.getRecentActivities(5).catch(() => null),
         notificationService.getUnreadCount().catch(() => null),
         eventService.getUpcomingEvents({ limit: 100 }).catch(() => null),
+        adminService.getUsers({ role: 'doctor', limit: 10 }).catch(() => null),
+        adminService.getUsers({ role: 'patient', limit: 10 }).catch(() => null),
+        adminService.getMedicalRecordsOverview({ limit: 5 }).catch(() => null),
+        adminService.getSystemMetrics().catch(() => null),
+        adminService.getNotificationsManagement({ limit: 5 }).catch(() => null),
       ]);
 
       if (statsResponse?.success) {
@@ -148,12 +164,48 @@ const AdminHomeScreen = ({ navigation }) => {
         setRecentActivities(activitiesResponse.data);
       }
 
+      if (doctorsResponse?.success) {
+        // Backend returns data as array directly, not data.users
+        const doctors = doctorsResponse.data || [];
+        if (__DEV__) {
+          console.log('[AdminHome] Doctors fetched:', doctors.length, 'doctors');
+        }
+        setDoctorsList(doctors);
+      }
+
+      if (patientsResponse?.success) {
+        // Backend returns data as array directly, not data.users
+        const patients = patientsResponse.data || [];
+        if (__DEV__) {
+          console.log('[AdminHome] Patients fetched:', patients.length, 'patients');
+        }
+        setPatientsList(patients);
+      }
+
       if (notificationsResponse?.success) {
         setNotificationCount(notificationsResponse.data?.count || 0);
       }
 
       if (eventsResponse?.success) {
         setUpcomingEventsCount(eventsResponse.data?.length || 0);
+      }
+
+      if (medicalRecordsResponse?.success) {
+        setMedicalRecordsData({
+          records: medicalRecordsResponse.data?.records || [],
+          stats: medicalRecordsResponse.data?.stats || [],
+        });
+      }
+
+      if (metricsResponse?.success) {
+        setSystemMetrics(metricsResponse.data || null);
+      }
+
+      if (notificationsMgmtResponse?.success) {
+        setNotificationsData({
+          notifications: notificationsMgmtResponse.data?.notifications || [],
+          stats: notificationsMgmtResponse.data?.stats || {},
+        });
       }
 
       // Fetch system health from API
@@ -885,6 +937,100 @@ const AdminHomeScreen = ({ navigation }) => {
           {/* Quick Actions */}
           {renderActionSection("Quick Actions", quickActions.management)}
 
+          {/* Doctors List */}
+          {doctorsList.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons
+                  name="medical"
+                  size={22}
+                  color={healthColors.secondary.main}
+                />
+                <Text style={styles.sectionTitle}>Active Doctors</Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("ManageDoctors")}
+                  style={styles.viewAllButton}
+                >
+                  <Text style={styles.viewAllText}>View All</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={healthColors.primary.main}
+                  />
+                </TouchableOpacity>
+              </View>
+              {doctorsList.map((doctor, index) => (
+                <TouchableOpacity
+                  key={doctor._id || index}
+                  style={styles.userListItem}
+                  onPress={() => navigation.navigate("ManageDoctors")}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.userAvatar}>
+                    <Ionicons name="person" size={24} color={healthColors.secondary.main} />
+                  </View>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.userName}>{doctor.name}</Text>
+                    <Text style={styles.userSubtitle}>
+                      {doctor.specialization || "General Physician"}
+                    </Text>
+                  </View>
+                  <View style={[styles.userStatusBadge, styles.userStatusActive]}>
+                    <Text style={styles.userStatusText}>Active</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Patients List */}
+          {patientsList.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons
+                  name="people"
+                  size={22}
+                  color={healthColors.accent.coral}
+                />
+                <Text style={styles.sectionTitle}>Recent Patients</Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("PatientManagement")}
+                  style={styles.viewAllButton}
+                >
+                  <Text style={styles.viewAllText}>View All</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={healthColors.primary.main}
+                  />
+                </TouchableOpacity>
+              </View>
+              {patientsList.map((patient, index) => (
+                <TouchableOpacity
+                  key={patient._id || index}
+                  style={styles.userListItem}
+                  onPress={() => navigation.navigate("PatientManagement")}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.userAvatar}>
+                    <Ionicons name="person" size={24} color={healthColors.accent.coral} />
+                  </View>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.userName}>{patient.name}</Text>
+                    <Text style={styles.userSubtitle}>
+                      {patient.bloodGroup ? `Blood Group: ${patient.bloodGroup}` : "Patient"}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color={healthColors.text.secondary}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
           {/* Recent Activities */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
@@ -944,6 +1090,181 @@ const AdminHomeScreen = ({ navigation }) => {
               )}
             </View>
           </View>
+
+          {/* Medical Records Overview */}
+          {medicalRecordsData.records.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons
+                  name="document-text"
+                  size={22}
+                  color={healthColors.accent.purple}
+                />
+                <Text style={styles.sectionTitle}>Medical Records</Text>
+                <TouchableOpacity
+                  onPress={() => Alert.alert("Medical Records", "Full records view coming soon!")}
+                  style={styles.viewAllButton}
+                >
+                  <Text style={styles.viewAllText}>View All</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={healthColors.primary.main}
+                  />
+                </TouchableOpacity>
+              </View>
+              {medicalRecordsData.records.map((record, index) => (
+                <View
+                  key={record._id || index}
+                  style={styles.recordItem}
+                >
+                  <View style={styles.recordIconWrapper}>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color={healthColors.accent.purple}
+                    />
+                  </View>
+                  <View style={styles.recordContent}>
+                    <Text style={styles.recordTitle}>{record.title || "Medical Record"}</Text>
+                    <Text style={styles.recordSubtitle}>
+                      {record.patientId?.name || "Unknown Patient"} • {record.recordType || "General"}
+                    </Text>
+                    <Text style={styles.recordTime}>
+                      {new Date(record.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* System Metrics */}
+          {systemMetrics && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons
+                  name="bar-chart"
+                  size={22}
+                  color={healthColors.success.main}
+                />
+                <Text style={styles.sectionTitle}>System Metrics</Text>
+              </View>
+              <View style={styles.metricsCard}>
+                <View style={styles.metricRow}>
+                  <Text style={styles.metricLabel}>Active Users (7 days)</Text>
+                  <Text style={styles.metricValue}>{systemMetrics.activeUsers || 0}</Text>
+                </View>
+                <View style={styles.metricRow}>
+                  <Text style={styles.metricLabel}>Database Size</Text>
+                  <Text style={styles.metricValue}>
+                    {((systemMetrics.database?.dataSize || 0) / (1024 * 1024)).toFixed(2)} MB
+                  </Text>
+                </View>
+                <View style={styles.metricRow}>
+                  <Text style={styles.metricLabel}>Collections</Text>
+                  <Text style={styles.metricValue}>{systemMetrics.database?.collections || 0}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Notifications Management */}
+          {notificationsData.notifications.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons
+                  name="notifications"
+                  size={22}
+                  color={healthColors.warning.main}
+                />
+                <Text style={styles.sectionTitle}>System Notifications</Text>
+                {notificationsData.stats.unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>
+                      {notificationsData.stats.unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {notificationsData.notifications.map((notification, index) => (
+                <View
+                  key={notification._id || index}
+                  style={[
+                    styles.notificationItem,
+                    !notification.isRead && styles.notificationUnread,
+                  ]}
+                >
+                  <View style={styles.notificationIconWrapper}>
+                    <Ionicons
+                      name={notification.type === "alert" ? "warning" : "information-circle"}
+                      size={20}
+                      color={notification.type === "alert" ? healthColors.error.main : healthColors.info.main}
+                    />
+                  </View>
+                  <View style={styles.notificationContent}>
+                    <Text style={styles.notificationTitle}>{notification.title || "Notification"}</Text>
+                    <Text style={styles.notificationMessage}>{notification.message}</Text>
+                    <Text style={styles.notificationTime}>
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </Text>
+                  </View>
+                  {!notification.isRead && (
+                    <View style={styles.unreadDot} />
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* System Health Status */}
+          {systemHealth && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons
+                  name="pulse"
+                  size={22}
+                  color={systemHealth.status === "good" ? healthColors.success.main : healthColors.error.main}
+                />
+                <Text style={styles.sectionTitle}>System Health</Text>
+              </View>
+              <View style={styles.healthCard}>
+                <View style={styles.healthRow}>
+                  <Text style={styles.healthLabel}>Status</Text>
+                  <View style={[
+                    styles.statusBadge,
+                    systemHealth.status === "good" ? styles.statusGood : styles.statusBad
+                  ]}>
+                    <Text style={styles.statusText}>
+                      {systemHealth.status === "good" ? "Healthy" : "Issues Detected"}
+                    </Text>
+                  </View>
+                </View>
+                {systemHealth.database && (
+                  <>
+                    <View style={styles.healthRow}>
+                      <Text style={styles.healthLabel}>Database</Text>
+                      <Text style={styles.healthValue}>
+                        {systemHealth.database.connected ? "Connected" : "Disconnected"}
+                      </Text>
+                    </View>
+                    <View style={styles.healthRow}>
+                      <Text style={styles.healthLabel}>Uptime</Text>
+                      <Text style={styles.healthValue}>
+                        {Math.floor((systemHealth.uptime || 0) / 3600)}h
+                      </Text>
+                    </View>
+                  </>
+                )}
+                <View style={styles.healthRow}>
+                  <Text style={styles.healthLabel}>Memory Usage</Text>
+                  <Text style={styles.healthValue}>
+                    {((systemHealth.memory?.heapUsed || 0) / (1024 * 1024)).toFixed(0)} MB
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -1865,6 +2186,229 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: healthColors.text.secondary,
     marginBottom: 4,
+  },
+  // User List Styles
+  userListItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: healthColors.background.card,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  userAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: healthColors.background.paper,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: healthColors.border.light,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 15,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.text.primary,
+    marginBottom: 2,
+  },
+  userSubtitle: {
+    fontSize: 13,
+    color: healthColors.text.secondary,
+  },
+  userStatusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  userStatusActive: {
+    backgroundColor: healthColors.success.background,
+  },
+  userStatusText: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.success.main,
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+  },
+  viewAllText: {
+    fontSize: 13,
+    fontWeight: theme.typography.weights.medium,
+    color: healthColors.primary.main,
+    marginRight: 4,
+  },
+  // Medical Records Styles
+  recordItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: healthColors.background.card,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  recordIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: healthColors.accent.purple + "20",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  recordContent: {
+    flex: 1,
+  },
+  recordTitle: {
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.text.primary,
+    marginBottom: 2,
+  },
+  recordSubtitle: {
+    fontSize: 12,
+    color: healthColors.text.secondary,
+    marginBottom: 2,
+  },
+  recordTime: {
+    fontSize: 11,
+    color: healthColors.text.disabled,
+  },
+  // System Metrics Styles
+  metricsCard: {
+    backgroundColor: healthColors.background.card,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  metricRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  metricLabel: {
+    fontSize: 14,
+    color: healthColors.text.secondary,
+  },
+  metricValue: {
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  // Notifications Styles
+  notificationBadge: {
+    backgroundColor: healthColors.error.main,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  notificationBadgeText: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: "white",
+  },
+  notificationItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: healthColors.background.card,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  notificationUnread: {
+    backgroundColor: healthColors.primary.background,
+    borderColor: healthColors.primary.main,
+  },
+  notificationIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: healthColors.info.background,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.text.primary,
+    marginBottom: 2,
+  },
+  notificationMessage: {
+    fontSize: 12,
+    color: healthColors.text.secondary,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 11,
+    color: healthColors.text.disabled,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: healthColors.error.main,
+    marginLeft: 8,
+  },
+  // System Health Styles
+  healthCard: {
+    backgroundColor: healthColors.background.card,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  healthRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  healthLabel: {
+    fontSize: 14,
+    color: healthColors.text.secondary,
+  },
+  healthValue: {
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semiBold,
+    color: healthColors.text.primary,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusGood: {
+    backgroundColor: healthColors.success.background,
+  },
+  statusBad: {
+    backgroundColor: healthColors.error.background,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.semiBold,
   },
 });
 

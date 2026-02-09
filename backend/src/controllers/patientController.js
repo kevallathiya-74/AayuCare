@@ -42,7 +42,7 @@ exports.searchPatients = async (req, res) => {
     }
 
     // If search query provided, add search conditions (minimum 1 character)
-    // Otherwise return empty results for empty search
+    // If no query parameter, return all patients (filtered by hospital)
     if (q && q.trim().length >= 1) {
       // Sanitize search query to prevent regex injection
       const searchQuery = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -54,15 +54,8 @@ exports.searchPatients = async (req, res) => {
         { email: { $regex: searchQuery, $options: "i" } },
         { phone: { $regex: searchQuery, $options: "i" } },
       ];
-    } else if (!q) {
-      // If no query parameter at all, return empty results (not all patients)
-      return res.json({
-        success: true,
-        count: 0,
-        data: [],
-        patients: [],
-      });
     }
+    // If no query parameter, still return all patients (don't return empty)
 
     // Get patients (all if no query, filtered if query provided)
     const patients = await User.find(query)

@@ -3,7 +3,7 @@
  * Handles notification API calls and real-time updates
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError, showError } from '../utils/errorHandler';
 
 class NotificationService {

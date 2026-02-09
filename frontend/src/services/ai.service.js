@@ -4,7 +4,7 @@
  * Provides symptom analysis, risk assessment, and health recommendations
  */
 
-import api from "./api";
+import api from "./apiClient";
 import { logError } from "../utils/errorHandler";
 
 class AIService {

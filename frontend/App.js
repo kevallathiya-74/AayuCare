@@ -3,9 +3,10 @@ import { StatusBar } from "expo-status-bar";
 import { Provider as ReduxProvider } from "react-redux";
 import { Provider as PaperProvider } from "react-native-paper";
 import { View, Platform, StyleSheet, LogBox } from "react-native";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initializeSentry } from "./src/config/sentry";
+import queryClient from "./src/config/reactQueryConfig";
 
 console.log("═══════════════════════════════════════════");
 console.log("[App.js] File loading...");
@@ -120,18 +121,7 @@ console.log("[App.js] Initializing Sentry...");
 initializeSentry();
 console.log("[App.js] Sentry initialization complete");
 
-console.log("[App.js] Creating QueryClient...");
-// Create React Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
-
-console.log("[App.js] QueryClient created");
+console.log("[App.js] Centralized QueryClient loaded from reactQueryConfig");
 console.log("[App.js] Defining App component...");
 
 export default function App() {

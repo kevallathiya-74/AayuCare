@@ -3,7 +3,7 @@
  * Sets up axios interceptor to handle authentication errors globally
  */
 
-import api from '../services/api';
+import apiClient from '../services/apiClient';
 import appStorage from './appStorage';
 import { STORAGE_KEYS } from './constants';
 

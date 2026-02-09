@@ -3,7 +3,7 @@
  * Hospital events, camps, and health programs API calls
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError } from '../utils/errorHandler';
 
 const eventService = {

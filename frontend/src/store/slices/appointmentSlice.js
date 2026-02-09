@@ -5,7 +5,7 @@
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../services/api';
+import apiClient from '../../services/apiClient';
 
 // Initial state
 const initialState = {

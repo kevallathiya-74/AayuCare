@@ -3,7 +3,7 @@
  * API calls for admin dashboard functionality
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError } from '../utils/errorHandler';
 
 const adminService = {
@@ -187,6 +187,63 @@ const adminService = {
             return response.data;
         } catch (error) {
             logError(error, { context: 'adminService.logoutAllDevices' });
+            throw error;
+        }
+    },
+
+    /**
+     * Get medical records overview (metadata only)
+     * @param {object} options - Query options (page, limit, patientId)
+     * @returns {Promise} - Medical records metadata
+     */
+    async getMedicalRecordsOverview(options = {}) {
+        try {
+            const { page = 1, limit = 20, patientId } = options;
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                ...(patientId && { patientId }),
+            });
+            const response = await api.get(`/admin/medical-records?${params}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.getMedicalRecordsOverview', options });
+            throw error;
+        }
+    },
+
+    /**
+     * Get system metrics and aggregations
+     * @returns {Promise} - System metrics data
+     */
+    async getSystemMetrics() {
+        try {
+            const response = await api.get('/admin/system/metrics');
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.getSystemMetrics' });
+            throw error;
+        }
+    },
+
+    /**
+     * Get notifications for management
+     * @param {object} options - Query options (page, limit, type, status)
+     * @returns {Promise} - Notifications data
+     */
+    async getNotificationsManagement(options = {}) {
+        try {
+            const { page = 1, limit = 20, type, status } = options;
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                ...(type && { type }),
+                ...(status && { status }),
+            });
+            const response = await api.get(`/admin/notifications/manage?${params}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.getNotificationsManagement', options });
             throw error;
         }
     },

@@ -16,6 +16,13 @@ router.use(protect);
 router.use(attachHospitalId);
 
 /**
+ * @route   GET /api/appointments/cursor
+ * @desc    Get appointments with cursor-based pagination (filtered by role) - For lazy loading
+ * @access  Private
+ */
+router.get("/cursor", appointmentController.getAppointmentsCursor);
+
+/**
  * @route   GET /api/appointments/stats
  * @desc    Get appointment statistics
  * @access  Private

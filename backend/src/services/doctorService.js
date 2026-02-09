@@ -23,7 +23,9 @@ class DoctorService {
         const query = { role: 'doctor' };
 
         // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
+        // Note: For public endpoints without authentication, hospitalId may not be set
+        // Only filter if hospitalId is explicitly provided (not undefined or null)
+        if (hospitalId !== undefined && hospitalId !== null) {
             query.hospitalId = hospitalId;
         }
 

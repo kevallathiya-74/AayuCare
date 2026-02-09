@@ -3,7 +3,7 @@
  * API calls for patient management and medical history
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError } from '../utils/errorHandler';
 
 class PatientService {

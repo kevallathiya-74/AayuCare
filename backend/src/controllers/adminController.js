@@ -208,6 +208,13 @@ exports.getUsers = async (req, res) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       query.hospitalId = req.hospitalId;
     }
+    
+    // Debug logging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[getUsers] Query:', JSON.stringify(query));
+      console.log('[getUsers] req.hospitalId:', req.hospitalId);
+      console.log('[getUsers] req.user.role:', req.user?.role);
+    }
 
     if (role) {
       query.role = role;
@@ -232,6 +239,11 @@ exports.getUsers = async (req, res) => {
         .lean(),
       User.countDocuments(query),
     ]);
+    
+    // Debug logging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[getUsers] Found:', users.length, 'users out of', total);
+    }
 
     res.json({
       success: true,
@@ -697,6 +709,235 @@ exports.logoutAllDevices = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to logout from all devices',
+    });
+  }
+};
+
+/**
+ * @desc    Get medical records overview (metadata only)
+ * @route   GET /api/admin/medical-records
+ * @access  Private (Admin only)
+ */
+exports.getMedicalRecordsOverview = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, patientId } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const query = {};
+
+    // Add hospitalId filter for multi-tenancy
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+
+    if (patientId) {
+      query.patientId = patientId;
+    }
+
+    const [records, total] = await Promise.all([
+      MedicalRecord.find(query)
+        .select("recordType title patientId doctorId createdAt updatedAt hospitalId")
+        .populate("patientId", "name userId")
+        .populate("doctorId", "name specialization")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      MedicalRecord.countDocuments(query),
+    ]);
+
+    // Aggregate by record type
+    const typeStats = await MedicalRecord.aggregate([
+      { $match: query },
+      { $group: { _id: "$recordType", count: { $sum: 1 } } },
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        records,
+        stats: typeStats,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      },
+    });
+  } catch (error) {
+    logger.error("Get medical records overview error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch medical records overview",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Get system metrics and aggregations
+ * @route   GET /api/admin/system/metrics
+ * @access  Private (Admin only)
+ */
+exports.getSystemMetrics = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    const baseQuery = {};
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      baseQuery.hospitalId = req.hospitalId;
+    }
+
+    // Aggregate user growth
+    const userGrowth = await User.aggregate([
+      { $match: baseQuery },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            role: "$role",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": -1, "_id.month": -1 } },
+      { $limit: 12 },
+    ]);
+
+    // Appointment trends
+    const appointmentTrends = await Appointment.aggregate([
+      { $match: baseQuery },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            status: "$status",
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": -1, "_id.month": -1 } },
+      { $limit: 12 },
+    ]);
+
+    // Active users (logged in within last 7 days)
+    const activeUsers = await User.countDocuments({
+      ...baseQuery,
+      lastLoginAt: { $gte: weekAgo },
+    });
+
+    // Database size stats
+    const dbStats = await mongoose.connection.db.stats();
+
+    res.json({
+      success: true,
+      data: {
+        userGrowth,
+        appointmentTrends,
+        activeUsers,
+        database: {
+          collections: dbStats.collections,
+          dataSize: dbStats.dataSize,
+          indexSize: dbStats.indexSize,
+          storageSize: dbStats.storageSize,
+        },
+        timestamp: new Date(),
+      },
+    });
+  } catch (error) {
+    logger.error("Get system metrics error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch system metrics",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Get notifications for management
+ * @route   GET /api/admin/notifications/manage
+ * @access  Private (Admin only)
+ */
+exports.getNotificationsManagement = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, type, status } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const query = {};
+
+    // Add hospitalId filter for multi-tenancy
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+
+    if (type) {
+      query.type = type;
+    }
+
+    if (status) {
+      query.isRead = status === "read";
+    }
+
+    const Notification = require("../models/Notification");
+
+    const [notifications, total, unreadCount] = await Promise.all([
+      Notification.find(query)
+        .populate("userId", "name role")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Notification.countDocuments(query),
+      Notification.countDocuments({ ...query, isRead: false }),
+    ]);
+
+    // Type distribution
+    const typeStats = await Notification.aggregate([
+      { $match: query },
+      { $group: { _id: "$type", count: { $sum: 1 } } },
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        notifications,
+        stats: {
+          total,
+          unreadCount,
+          typeDistribution: typeStats,
+        },
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      },
+    });
+  } catch (error) {
+    logger.error("Get notifications management error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+      error: error.message,
     });
   }
 };

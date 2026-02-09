@@ -1,10 +1,10 @@
 /**
  * Admin Appointments Screen
- * View and manage all appointments for admin users
- * Syncs badge count via AdminAppointmentContext
+ * View and manage all appointments for admin users with lazy loading
+ * Production-ready with cursor-based pagination
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,56 +23,56 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
-import { appointmentService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
+import { useAppointmentsInfinite } from "../../hooks/useAppointments";
 
 const AppointmentsScreen = ({ navigation }) => {
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
-
-  // Get context to sync badge count
   const { refreshCount } = useAdminAppointments();
 
-  const fetchAppointments = useCallback(async () => {
-    try {
-      setError(null);
-      // Fetch with higher limit and pending status to match badge count
-      const response = await appointmentService.getAllAppointments({
-        limit: 50, // Increased from default 10 to show more appointments
-        status: "scheduled,confirmed", // Only pending appointments
-      });
-      // Backend returns { status, data: { appointments: [], pagination: {} } }
-      setAppointments(response?.data?.appointments || response?.data || []);
-    } catch (err) {
-      logError(err, { context: "AppointmentsScreen.fetchAppointments" });
-      setError("Failed to load appointments");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  // Use infinite query hook for admin appointments with lazy loading
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = useAppointmentsInfinite({
+    status: "scheduled,confirmed", // Only pending appointments
+    limit: 20,
+  });
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+  // Flatten paginated data
+  const appointments = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap((page) => page.appointments || []);
+  }, [data]);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchAppointments();
+      refetch();
       refreshCount();
-    }, [fetchAppointments, refreshCount])
+    }, [refetch, refreshCount])
   );
 
+  // Handle pull to refresh
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchAppointments();
+    refetch();
     refreshCount(); // Also refresh tab badge count
-  }, [fetchAppointments, refreshCount]);
+  }, [refetch, refreshCount]);
+
+  // Handle load more for infinite scroll
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -166,7 +166,7 @@ const AppointmentsScreen = ({ navigation }) => {
       {error && (
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={fetchAppointments}
+          onPress={refetch}
           accessibilityRole="button"
           accessibilityLabel="Retry loading appointments"
         >
@@ -208,7 +208,7 @@ const AppointmentsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
           <Text style={styles.loadingText}>Loading appointments...</Text>
@@ -222,13 +222,28 @@ const AppointmentsScreen = ({ navigation }) => {
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={onRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
             />
+          }
+          ListFooterComponent={() =>
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
+              </View>
+            ) : null
           }
           ListEmptyComponent={renderEmptyState}
           showsVerticalScrollIndicator={false}
@@ -372,6 +387,10 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.typography.sizes.lg,
     fontWeight: theme.typography.weights.semibold,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
 });
 

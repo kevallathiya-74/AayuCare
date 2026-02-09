@@ -535,5 +535,6 @@ the fix is NOT acceptable for AayuCare.
 
 ## . custom rules 
  
- proper maintiain ui for frontend design 
- only needed to database collection create 
+- proper maintiain ui for frontend design 
+- only needed to database collection create 
+- you assumed still this app in 200 user use this application and run so this app on traffic and load on server and database so you need to maintain the ui and database collection for this application and also maintain the traffic on server and database for this application without app crash.

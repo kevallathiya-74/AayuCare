@@ -3,7 +3,7 @@
  * API calls for activity tracking (steps, sleep, water, stress)
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError } from '../utils/errorHandler';
 
 const activityService = {

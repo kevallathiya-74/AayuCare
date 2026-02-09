@@ -3,7 +3,7 @@
  * API calls for patient health metrics (BP, sugar, weight, BMI)
  */
 
-import api from './api';
+import api from './apiClient';
 import { logError } from '../utils/errorHandler';
 
 const healthMetricsService = {
