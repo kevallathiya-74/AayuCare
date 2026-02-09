@@ -390,7 +390,7 @@ const PatientDashboard = ({ navigation }) => {
                     size={18}
                     color={theme.colors.text.white}
                   />
-                  <Text style={styles.bannerInfoText}>ID: {user?.id?.slice(-8) || "N/A"}</Text>
+                  <Text style={styles.bannerInfoText}>ID: {user?.userId || "N/A"}</Text>
                 </View>
                 <View style={styles.bannerInfoRow}>
                   <Ionicons
@@ -532,7 +532,11 @@ const PatientDashboard = ({ navigation }) => {
         visible={menuVisible}
         onRequestClose={closeMenu}
       >
-        <Pressable style={styles.menuOverlay} onPress={closeMenu}>
+        <View style={styles.menuOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeMenu}
+          />
           <Animated.View
             style={[
               styles.menuDrawer,
@@ -540,7 +544,6 @@ const PatientDashboard = ({ navigation }) => {
                 transform: [{ translateX: slideAnim }],
               },
             ]}
-            onStartShouldSetResponder={() => true}
           >
             <LinearGradient
               colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -563,7 +566,7 @@ const PatientDashboard = ({ navigation }) => {
                     </Text>
                     <Text style={styles.menuUserRole}>Patient Account</Text>
                     <Text style={styles.menuUserId}>
-                      ID: {user?.id?.slice(-6) || "PAT001"}
+                      ID: {user?.userId || "PAT001"}
                     </Text>
                   </View>
                 </View>
@@ -905,7 +908,7 @@ const PatientDashboard = ({ navigation }) => {
               </View>
             </ScrollView>
           </Animated.View>
-        </Pressable>
+        </View>
       </Modal>
     </SafeAreaView>
   );

@@ -735,7 +735,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                   </View>
                   <View style={styles.patientBasicInfo}>
                     <Text style={styles.patientName}>
-                      {selectedPatient.name} ID: {selectedPatient.id} Age:{" "}
+                      {selectedPatient.name} ID: {selectedPatient.userId || selectedPatient.id} Age:{" "}
                       {selectedPatient.age}
                     </Text>
                     <Text style={styles.patientDetail}>

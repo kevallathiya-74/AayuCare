@@ -553,7 +553,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                     </Text>
                     <Text style={styles.searchResultDetails}>
                       {patient.age ? `Age: ${patient.age} | ` : ""}ID:{" "}
-                      {patient.userId || patient._id?.slice(-6)}
+                      {patient.userId || "N/A"}
                     </Text>
                   </View>
                   <Ionicons
@@ -787,7 +787,11 @@ const DoctorHomeScreen = ({ navigation }) => {
         visible={menuVisible}
         onRequestClose={closeMenu}
       >
-        <Pressable style={styles.menuOverlay} onPress={closeMenu}>
+        <View style={styles.menuOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeMenu}
+          />
           <Animated.View
             style={[
               styles.menuDrawer,
@@ -795,7 +799,6 @@ const DoctorHomeScreen = ({ navigation }) => {
                 transform: [{ translateX: slideAnim }],
               },
             ]}
-            onStartShouldSetResponder={() => true}
           >
             <LinearGradient
               colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -820,7 +823,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                       {user?.specialization || "General Physician"}
                     </Text>
                     <Text style={styles.menuUserId}>
-                      ID: {user?.id || "DOC001"}
+                      ID: {user?.userId || "DOC001"}
                     </Text>
                   </View>
                 </View>
@@ -1076,7 +1079,7 @@ const DoctorHomeScreen = ({ navigation }) => {
               </View>
             </ScrollView>
           </Animated.View>
-        </Pressable>
+        </View>
       </Modal>
     </SafeAreaView>
   );

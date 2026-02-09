@@ -116,7 +116,7 @@ const ProfileScreen = ({ navigation }) => {
       icon: "person-outline",
       data: [
         { label: "Full Name", value: user?.name || "N/A" },
-        { label: "Patient ID", value: user?.id || "N/A" },
+        { label: "Patient ID", value: user?.userId || "N/A" },
         { label: "Email", value: user?.email || "N/A" },
         { label: "Phone", value: user?.phone || "N/A" },
         { label: "Age", value: user?.age ? `${user.age} years` : "N/A" },
@@ -253,7 +253,7 @@ const ProfileScreen = ({ navigation }) => {
                 color="rgba(255, 255, 255, 0.9)"
               />
               <Text style={styles.userIdText}>
-                ID: {user?.id || "PAT001"}
+                ID: {user?.userId || "PAT001"}
               </Text>
             </View>
           </View>
