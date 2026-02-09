@@ -45,8 +45,23 @@ const getApiBaseUrl = () => {
     return envUrl;
   }
 
-  // ALWAYS use production backend (Render) for now
-  // This ensures the app works in both Expo Go and production APK
+  // For development: Try to detect if local backend is running
+  // Expo Go users: Use your computer's local IP
+  const isExpoGo = Constants.appOwnership === 'expo';
+  
+  if (__DEV__ && isExpoGo) {
+    // Get the manifest URL to extract the local IP
+    const manifestUrl = Constants.expoConfig?.hostUri;
+    
+    if (manifestUrl) {
+      const localIp = manifestUrl.split(':')[0]; // Extract IP from exp://192.168.x.x:8081
+      const localBackendUrl = `http://${localIp}:5000/api`;
+      console.log('[APP_CONFIG] Development mode - using local backend:', localBackendUrl);
+      return localBackendUrl;
+    }
+  }
+
+  // Fallback to production backend (Render)
   const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
   console.log('[APP_CONFIG] Using production backend:', prodUrl);
   return prodUrl;

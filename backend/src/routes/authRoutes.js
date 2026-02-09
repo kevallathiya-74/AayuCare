@@ -12,6 +12,8 @@ const { protect } = require("../middleware/auth");
 
 // Public routes
 router.post("/email-by-userid", authController.getEmailByUserId);
+router.post("/profile-by-email", authController.getProfileByEmail);
+router.post("/current-session", authController.getCurrentSession);
 
 // Protected routes
 router.use(protect);

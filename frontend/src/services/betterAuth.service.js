@@ -25,26 +25,26 @@ const authClient = createAuthClient({
       scheme: "aayucare",
       storagePrefix: "aayucare_auth",
       storage: {
-        get: async (key) => {
+        getItem: async (key) => {
           try {
             return await SecureStore.getItemAsync(key);
           } catch (error) {
-            console.error('[Auth] Storage get error:', error);
+            console.error('[Auth] Storage getItem error:', error);
             return null;
           }
         },
-        set: async (key, value) => {
+        setItem: async (key, value) => {
           try {
             await SecureStore.setItemAsync(key, value);
           } catch (error) {
-            console.error('[Auth] Storage set error:', error);
+            console.error('[Auth] Storage setItem error:', error);
           }
         },
-        remove: async (key) => {
+        removeItem: async (key) => {
           try {
             await SecureStore.deleteItemAsync(key);
           } catch (error) {
-            console.error('[Auth] Storage remove error:', error);
+            console.error('[Auth] Storage removeItem error:', error);
           }
         },
       },

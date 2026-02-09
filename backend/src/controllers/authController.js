@@ -41,11 +41,13 @@ exports.getEmailByUserId = async (req, res, next) => {
     const db = mongoose.connection.getClient().db("test");
     const userCollection = db.collection("user");
 
-    console.log("[AuthController] Searching for userId:", userId);
-    const user = await userCollection.findOne({ userId: userId });
+    // Convert userId to uppercase (matches User schema)
+    const userIdUppercase = userId.toString().trim().toUpperCase();
+    console.log("[AuthController] Searching for userId:", userIdUppercase);
+    const user = await userCollection.findOne({ userId: userIdUppercase });
 
     if (!user) {
-      console.log("[AuthController] User not found:", userId);
+      console.log("[AuthController] User not found:", userIdUppercase);
       return res.status(404).json({
         status: "error",
         message: "User not found",
@@ -59,6 +61,128 @@ exports.getEmailByUserId = async (req, res, next) => {
     });
   } catch (error) {
     console.error("[AuthController] Error in getEmailByUserId:", error);
+    res.status(500).json({
+      status: "error",
+      message: error.message || "Internal server error",
+    });
+  }
+};
+ 
+/**
+ * @desc    Get current session token (for mobile apps after Better Auth login)
+ * @route   POST /api/user/current-session
+ * @access  Public (called immediately after Better Auth login)
+ */
+exports.getCurrentSession = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        status: "error",
+        message: "User ID is required",
+      });
+    }
+
+    const db = mongoose.connection.getClient().db("test");
+    const sessionCollection = db.collection("session");
+
+    // Find the most recent valid session for this user
+    const session = await sessionCollection.findOne(
+      {
+        userId: new mongoose.Types.ObjectId(userId),
+        expiresAt: { $gt: new Date() },
+      },
+      {
+        sort: { createdAt: -1 },
+      }
+    );
+
+    if (!session) {
+      return res.status(404).json({
+        status: "error",
+        message: "No active session found",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      token: session.token,
+      expiresAt: session.expiresAt,
+    });
+  } catch (error) {
+    console.error("[AuthController] Error in getCurrentSession:", error);
+    res.status(500).json({
+      status: "error",
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+/**
+ * @desc    Get user profile by email (for post-login data fetch)
+ * @route   POST /api/user/profile-by-email
+ * @access  Public (called after Better Auth login)
+ */
+exports.getProfileByEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
+    const db = mongoose.connection.getClient().db("test");
+    const userCollection = db.collection("user");
+
+    const user = await userCollection.findOne({ email: email });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Return user-friendly data (no MongoDB _id, passwords, etc.)
+    const userProfile = {
+      id: user._id.toString(),
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      hospitalId: user.hospitalId,
+      hospitalName: user.hospitalName,
+      isActive: user.isActive,
+      isVerified: user.isVerified,
+    };
+
+    // Add role-specific fields
+    if (user.role === "admin") {
+      userProfile.department = user.department;
+    } else if (user.role === "doctor") {
+      userProfile.specialization = user.specialization;
+      userProfile.qualification = user.qualification;
+      userProfile.experience = user.experience;
+      userProfile.consultationFee = user.consultationFee;
+    } else if (user.role === "patient") {
+      userProfile.dateOfBirth = user.dateOfBirth;
+      userProfile.gender = user.gender;
+      userProfile.bloodGroup = user.bloodGroup;
+      userProfile.address = user.address;
+      userProfile.emergencyContact = user.emergencyContact;
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: userProfile,
+    });
+  } catch (error) {
+    console.error("[AuthController] Error in getProfileByEmail:", error);
     res.status(500).json({
       status: "error",
       message: error.message || "Internal server error",

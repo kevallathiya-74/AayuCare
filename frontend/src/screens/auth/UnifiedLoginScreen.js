@@ -76,7 +76,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
     // Validate inputs
     const validation = validateRequiredFields({ userId, password });
     if (!validation.isValid) {
-      showError("Please enter both User ID and Password");
+      showError("Please enter both Email/User ID and Password");
       return;
     }
 
@@ -186,7 +186,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   (userIdFocused || userId) && styles.labelFocused,
                 ]}
               >
-                User ID / Employee ID / Patient ID
+                Email or User ID
               </Text>
               <View
                 style={[
@@ -210,13 +210,14 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   onChangeText={setUserId}
                   onFocus={() => setUserIdFocused(true)}
                   onBlur={() => setUserIdFocused(false)}
-                  placeholder="Enter your ID"
+                  placeholder="Enter Email or User ID"
                   placeholderTextColor={healthColors.text.tertiary}
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
                   onSubmitEditing={() => passwordInputRef.current?.focus()}
                   editable={!isLoading}
+                  keyboardType="email-address"
                 />
               </View>
             </View>

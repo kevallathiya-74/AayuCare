@@ -50,11 +50,17 @@ const initAuth = () => {
       },
 
       advanced: {
-        cookieSameSite: "lax",
-        cookieSecure: process.env.NODE_ENV === "production",
-        useSecureCookies: process.env.NODE_ENV === "production",
+        cookieSameSite: "none", // Changed from "lax" for mobile app compatibility
+        cookieSecure: false, // Disabled for development (allow HTTP)
+        useSecureCookies: false, // Disabled for development
         // Allow requests without Origin header (for React Native/Expo mobile apps)
         requireOriginHeader: false,
+        // Disable CSRF protection for mobile apps (React Native/Expo)
+        disableCSRFCheck: true,
+        // Disable subdomain cookies
+        crossSubdomainCookies: {
+          enabled: false,
+        },
       },
 
       trustedOrigins: [
