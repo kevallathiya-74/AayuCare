@@ -154,9 +154,11 @@ const authSlice = createSlice({
       })
       // Load user
       .addCase(loadUser.pending, (state) => {
+        console.log('[authSlice] loadUser.pending - setting isLoading = true');
         state.isLoading = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
+        console.log('[authSlice] loadUser.fulfilled - payload:', action.payload ? 'user found' : 'no user');
         state.isLoading = false;
         if (action.payload) {
           state.user = action.payload;
@@ -165,8 +167,10 @@ const authSlice = createSlice({
           state.user = null;
           state.isAuthenticated = false;
         }
+        console.log('[authSlice] loadUser complete - isLoading:', state.isLoading, 'isAuthenticated:', state.isAuthenticated);
       })
       .addCase(loadUser.rejected, (state) => {
+        console.log('[authSlice] loadUser.rejected');
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;

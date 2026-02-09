@@ -47,7 +47,6 @@
     },
     "extra": {
       "sentryDSN": {},
-      "API_BASE_URL": "https://aayucare-backend.onrender.com/api",
       "PRODUCTION_API_URL": "https://aayucare-backend.onrender.com/api",
       "eas": {
         "projectId": "31972ca4-e87a-4c14-862f-330973332013"
