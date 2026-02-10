@@ -8,6 +8,7 @@ export { default as DoctorProfileScreen } from "./DoctorProfileScreen";
 export { default as TodaysAppointmentsScreen } from "./TodaysAppointmentsScreen";
 export { default as EnhancedPrescriptionScreen } from "./EnhancedPrescriptionScreen";
 export { default as ManageDoctorsScreen } from "./ManageDoctorsScreen";
+export { default as ManagePatientsScreen } from "./ManagePatientsScreen";
 export { default as AppointmentsScreen } from "./AppointmentsScreen";
 export { default as ReportsScreen } from "./ReportsScreen";
 export { default as AdminSettingsScreen } from "./AdminSettingsScreen";

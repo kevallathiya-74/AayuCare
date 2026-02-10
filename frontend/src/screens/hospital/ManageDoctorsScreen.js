@@ -21,11 +21,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import AddDoctorModal from "./AddDoctorModal";
+import EditDoctorModal from "./EditDoctorModal";
 
 const ManageDoctorsScreen = ({ navigation }) => {
   const [doctors, setDoctors] = useState([]);
@@ -34,6 +36,8 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const insets = useSafeAreaInsets();
@@ -66,6 +70,13 @@ const ManageDoctorsScreen = ({ navigation }) => {
     fetchDoctors();
   }, [fetchDoctors]);
 
+  // Refetch when screen comes into focus (after navigation)
+  useFocusEffect(
+    useCallback(() => {
+      fetchDoctors(searchQuery.trim());
+    }, [fetchDoctors, searchQuery])
+  );
+
   // Real-time search with debouncing
   useEffect(() => {
     const delaySearch = setTimeout(() => {
@@ -97,12 +108,22 @@ const ManageDoctorsScreen = ({ navigation }) => {
           onPress: async () => {
             setUpdatingId(doctor._id);
             try {
-              await adminService.updateUserStatus(doctor._id, newStatus);
-              setDoctors((prev) =>
-                prev.map((d) =>
-                  d._id === doctor._id ? { ...d, isActive: newStatus } : d
-                )
-              );
+              const response = await adminService.updateUserStatus(doctor._id, newStatus);
+              
+              // Update local state immediately with server response
+              if (response.success && response.data) {
+                setDoctors((prev) =>
+                  prev.map((d) =>
+                    d._id === doctor._id ? { ...d, isActive: response.data.isActive } : d
+                  )
+                );
+              }
+              
+              // Also refetch to ensure consistency
+              setTimeout(() => {
+                fetchDoctors(searchQuery.trim());
+              }, 500);
+              
               Alert.alert(
                 "Success",
                 `Doctor ${newStatus ? "activated" : "deactivated"} successfully`
@@ -112,6 +133,60 @@ const ManageDoctorsScreen = ({ navigation }) => {
                 context: "ManageDoctorsScreen.handleToggleStatus",
               });
               Alert.alert("Error", "Failed to update doctor status");
+            } finally {
+              setUpdatingId(null);
+            }
+          },
+        },
+      ]
+    );
+  }, []);
+
+  const handleEditDoctor = useCallback((doctor) => {
+    setSelectedDoctor(doctor);
+    setShowEditModal(true);
+  }, []);
+
+  const handleEditSuccess = useCallback(() => {
+    // Refetch with current search query to maintain search context
+    fetchDoctors(searchQuery.trim());
+  }, [fetchDoctors, searchQuery]);
+
+  const handleAddSuccess = useCallback(() => {
+    // After adding, refetch with current search query
+    fetchDoctors(searchQuery.trim());
+  }, [fetchDoctors, searchQuery]);
+
+  const handleDeleteDoctor = useCallback(async (doctor) => {
+    Alert.alert(
+      "Delete Doctor",
+      `Are you sure you want to delete ${doctor.name}? This action will deactivate the doctor account.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setUpdatingId(doctor._id);
+            try {
+              await adminService.deleteUser(doctor.userId);
+              // Remove from list
+              setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
+              Alert.alert("Success", "Doctor deleted successfully");
+            } catch (err) {
+              logError(err, {
+                context: "ManageDoctorsScreen.handleDeleteDoctor",
+              });
+              
+              // Better error handling
+              let errorMessage = "Failed to delete doctor";
+              if (err.response?.data?.message) {
+                errorMessage = err.response.data.message;
+              } else if (err.message) {
+                errorMessage = err.message;
+              }
+              
+              Alert.alert("Error", errorMessage);
             } finally {
               setUpdatingId(null);
             }
@@ -217,9 +292,45 @@ const ManageDoctorsScreen = ({ navigation }) => {
             <Text style={styles.detailText}>{item.phone || "N/A"}</Text>
           </View>
         </View>
+        
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.editButton]}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleEditDoctor(item);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit ${item.name}`}
+          >
+            <Ionicons
+              name="create-outline"
+              size={18}
+              color={healthColors.primary.main}
+            />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDeleteDoctor(item);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${item.name}`}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={18}
+              color={healthColors.error.main}
+            />
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     ),
-    [handleToggleStatus, updatingId]
+    [handleToggleStatus, handleEditDoctor, handleDeleteDoctor, updatingId]
   );
 
   const renderEmptyState = () => (
@@ -349,7 +460,18 @@ const ManageDoctorsScreen = ({ navigation }) => {
       <AddDoctorModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSuccess={fetchDoctors}
+        onSuccess={handleAddSuccess}
+      />
+
+      {/* Edit Doctor Modal */}
+      <EditDoctorModal
+        visible={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedDoctor(null);
+        }}
+        onSuccess={handleEditSuccess}
+        doctor={selectedDoctor}
       />
     </SafeAreaView>
   );
@@ -526,6 +648,43 @@ const styles = StyleSheet.create({
   retryText: {
     color: theme.colors.white,
     fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: healthColors.border.light,
+    gap: theme.spacing.sm,
+  },
+  actionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    gap: theme.spacing.xs,
+  },
+  editButton: {
+    backgroundColor: healthColors.primary.main + "15",
+    borderWidth: 1,
+    borderColor: healthColors.primary.main,
+  },
+  editButtonText: {
+    color: healthColors.primary.main,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  deleteButton: {
+    backgroundColor: healthColors.error.main + "15",
+    borderWidth: 1,
+    borderColor: healthColors.error.main,
+  },
+  deleteButtonText: {
+    color: healthColors.error.main,
+    fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.semibold,
   },
 });

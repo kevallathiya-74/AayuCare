@@ -1,9 +1,9 @@
 /**
- * Add Doctor Modal
- * Form to add new doctor to the system
+ * Edit Doctor Modal
+ * Form to edit existing doctor information
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,9 +19,8 @@ import {
   FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import authService from "../../services/auth.service";
+import adminService from "../../services/admin.service";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -41,8 +40,7 @@ const SPECIALIZATIONS = [
   "Urology",
 ];
 
-const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
-  const { user } = useSelector((state) => state.auth);
+const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
   const [loading, setLoading] = useState(false);
   const [showSpecializationPicker, setShowSpecializationPicker] =
     useState(false);
@@ -50,14 +48,36 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     name: "",
     email: "",
     phone: "",
-    password: "",
     specialization: "",
     qualification: "",
     experience: "",
     department: "",
+    consultationFee: "",
   });
 
   const [errors, setErrors] = useState({});
+
+  // Pre-fill form when doctor data is provided
+  useEffect(() => {
+    if (doctor && visible) {
+      console.log('[EditDoctor] Pre-filling form with:', doctor);
+      
+      const formValues = {
+        name: doctor.name || "",
+        email: doctor.email || "",
+        phone: doctor.phone || "",
+        specialization: doctor.specialization || "",
+        qualification: doctor.qualification || "",
+        experience: doctor.experience?.toString() || "0",
+        department: doctor.department || "",
+        consultationFee: doctor.consultationFee?.toString() || "500",
+      };
+      
+      console.log('[EditDoctor] Form values:', formValues);
+      setFormData(formValues);
+      setErrors({}); // Clear any previous errors
+    }
+  }, [doctor, visible]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -78,12 +98,6 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       newErrors.phone = "Invalid phone format (10-15 digits)";
     }
 
-    if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
     if (!formData.specialization) {
       newErrors.specialization = "Please select a specialization";
     }
@@ -101,6 +115,14 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       newErrors.experience = "Experience must be a positive number";
     }
 
+    if (
+      formData.consultationFee &&
+      (isNaN(formData.consultationFee) ||
+        parseInt(formData.consultationFee) < 0)
+    ) {
+      newErrors.consultationFee = "Consultation fee must be a positive number";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -112,63 +134,44 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      // Generate unique doctor ID (DOC + date + time + random)
-      const now = new Date();
-      const dateStr =
-        now.getFullYear().toString() +
-        (now.getMonth() + 1).toString().padStart(2, "0") +
-        now.getDate().toString().padStart(2, "0");
-      const timeStr =
-        now.getHours().toString().padStart(2, "0") +
-        now.getMinutes().toString().padStart(2, "0") +
-        now.getSeconds().toString().padStart(2, "0");
-      const random = Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-      const userId = `DOC${dateStr}${timeStr}${random}`;
-
-      // Prepare doctor data
-      const doctorData = {
-        userId: userId,
+      // Prepare update data
+      const updateData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
-        password: formData.password,
-        role: "doctor",
         specialization: formData.specialization,
         qualification: formData.qualification.trim(),
         experience: parseInt(formData.experience),
-        consultationFee: 500, // Default consultation fee
-        department:
-          formData.department.trim() || formData.specialization || "General",
-        isActive: true,
-        hospitalId: user?.hospitalId,
-        hospitalName: user?.hospitalName,
+        department: formData.department.trim() || formData.specialization,
+        consultationFee: parseInt(formData.consultationFee) || 500,
       };
 
-      // Call register API with doctor role
-      const response = await authService.register(doctorData);
+      // Call update API
+      const response = await adminService.updateUserProfile(
+        doctor.userId,
+        updateData
+      );
 
-      if (response.success || response.user) {
+      if (response.status === "success") {
         // Call onSuccess first to trigger parent refetch
         if (onSuccess) {
           onSuccess();
         }
         
-        // Then close modal and reset form
+        // Then close modal
         onClose();
         resetForm();
         
         // Show success message after modal closes
         setTimeout(() => {
-          Alert.alert("Success", "Doctor added successfully");
+          Alert.alert("Success", "Doctor profile updated successfully");
         }, 300);
       }
     } catch (error) {
-      console.error("Add doctor error:", error);
+      console.error("Edit doctor error:", error);
 
       // Better error handling
-      let errorMessage = "Failed to add doctor. Please try again.";
+      let errorMessage = "Failed to update doctor profile. Please try again.";
 
       if (typeof error === "string") {
         errorMessage = error;
@@ -186,9 +189,6 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         } else if (errorMessage.includes("phone")) {
           errorMessage =
             "This phone number is already registered. Please use a different number.";
-        } else {
-          errorMessage =
-            "A doctor with these details already exists. Please check email and phone number.";
         }
       }
 
@@ -203,11 +203,11 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       name: "",
       email: "",
       phone: "",
-      password: "",
       specialization: "",
       qualification: "",
       experience: "",
       department: "",
+      consultationFee: "",
     });
     setErrors({});
   };
@@ -222,8 +222,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     label,
     placeholder,
     icon,
-    keyboardType = "default",
-    secureTextEntry = false
+    keyboardType = "default"
   ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
@@ -248,7 +247,6 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
           placeholder={placeholder}
           placeholderTextColor={healthColors.text.tertiary}
           keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
           autoCapitalize={key === "email" ? "none" : "words"}
           editable={!loading}
         />
@@ -366,7 +364,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Add New Doctor</Text>
+            <Text style={styles.title}>Edit Doctor Profile</Text>
             <TouchableOpacity
               onPress={handleClose}
               style={styles.closeButton}
@@ -401,14 +399,6 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "call",
               "phone-pad"
             )}
-            {renderInput(
-              "password",
-              "Password *",
-              "Minimum 6 characters",
-              "lock-closed",
-              "default",
-              true
-            )}
             {renderPicker(
               "specialization",
               "Specialization *",
@@ -429,6 +419,13 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "numeric"
             )}
             {renderInput("department", "Department", "Cardiology", "business")}
+            {renderInput(
+              "consultationFee",
+              "Consultation Fee",
+              "500",
+              "cash",
+              "numeric"
+            )}
 
             <Text style={styles.noteText}>* Required fields</Text>
           </ScrollView>
@@ -450,7 +447,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               {loading ? (
                 <ActivityIndicator size="small" color={theme.colors.white} />
               ) : (
-                <Text style={styles.submitButtonText}>Add Doctor</Text>
+                <Text style={styles.submitButtonText}>Save Changes</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -522,12 +519,6 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
-  },
-  picker: {
-    flex: 1,
-    height: 50,
-    color: healthColors.text.primary,
-    marginLeft: -8,
   },
   pickerText: {
     flex: 1,
@@ -626,5 +617,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddDoctorModal;
-
+export default EditDoctorModal;

@@ -31,6 +31,7 @@ import PatientTabNavigator from "./PatientTabNavigator";
 // Additional Screens (not in tabs)
 import {
   ManageDoctorsScreen,
+  ManagePatientsScreen,
   PatientManagementScreen,
   EnhancedPrescriptionScreen,
   WalkInPatientScreen,
@@ -228,7 +229,7 @@ const AppNavigator = () => {
                 />
                 <Stack.Screen
                   name="PatientManagement"
-                  component={PatientManagementScreen}
+                  component={ManagePatientsScreen}
                 />
                 <Stack.Screen
                   name="CreatePrescription"
@@ -287,7 +288,7 @@ const AppNavigator = () => {
                 />
                 <Stack.Screen
                   name="PatientManagement"
-                  component={PatientManagementScreen}
+                  component={ManagePatientsScreen}
                 />
                 <Stack.Screen
                   name="CreatePrescription"

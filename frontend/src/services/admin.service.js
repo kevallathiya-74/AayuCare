@@ -247,6 +247,52 @@ const adminService = {
             throw error;
         }
     },
+
+    /**
+     * Create new user (doctor or patient)
+     * @param {object} userData - User data (name, email, phone, password, role, etc.)
+     * @returns {Promise} - Created user data
+     */
+    async createUser(userData) {
+        try {
+            const response = await api.post('/admin/users', userData);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.createUser', role: userData.role });
+            throw error;
+        }
+    },
+
+    /**
+     * Update user profile (full profile update)
+     * @param {string} userId - User ID
+     * @param {object} profileData - Profile data to update
+     * @returns {Promise} - Updated user data
+     */
+    async updateUserProfile(userId, profileData) {
+        try {
+            const response = await api.put(`/admin/users/${userId}`, profileData);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.updateUserProfile', userId });
+            throw error;
+        }
+    },
+
+    /**
+     * Delete user (soft delete - sets isActive to false)
+     * @param {string} userId - User ID
+     * @returns {Promise} - Deletion confirmation
+     */
+    async deleteUser(userId) {
+        try {
+            const response = await api.delete(`/admin/users/${userId}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.deleteUser', userId });
+            throw error;
+        }
+    },
 };
 
 export default adminService;

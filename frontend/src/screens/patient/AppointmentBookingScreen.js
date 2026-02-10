@@ -31,13 +31,17 @@ import {
   getSafeAreaEdges,
   getKeyboardConfig,
 } from "../../utils/responsive";
+import { useSelector } from "react-redux";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { formatDate, formatTime, formatCurrency } from "../../utils/helpers";
+import { formatDate, formatTime, formatCurrency, convertTo24Hour } from "../../utils/helpers";
 import { doctorService, appointmentService } from "../../services";
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
+  // Get authenticated user for hospitalId
+  const { user } = useSelector((state) => state.auth);
+  
   const [selectedSpecialty, setSelectedSpecialty] = useState("Cardiology");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [appointmentType, setAppointmentType] = useState("in-person");
@@ -193,20 +197,29 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
 
     setLoading(true);
     try {
-      // Prepare appointment data
+      // Map appointment type to backend-accepted values
+      const appointmentTypeMap = {
+        "in-person": "clinic_visit",
+        "telemedicine": "telemedicine"
+      };
+      
+      // Convert time from 12-hour format (e.g., "10:30 AM") to 24-hour format (e.g., "10:30")
+      const time24Hour = convertTo24Hour(selectedTime);
+      
+      // Prepare appointment data with correct field names and formats
       const appointmentData = {
         doctorId: selectedDoctor._id,
         appointmentDate: date.toISOString(),
-        appointmentTime: selectedTime,
-        appointmentType,
-        reason: reason.trim(),
-        specialty: selectedSpecialty,
+        appointmentTime: time24Hour, // Send in 24-hour format (HH:MM)
+        type: appointmentTypeMap[appointmentType] || "clinic_visit", // Use 'type' field with valid values
+        chiefComplaint: reason.trim(), // Backend expects chiefComplaint, not reason
+        hospitalId: user?.hospitalId || "MAIN", // Required field for multi-tenancy
       };
 
       const response =
         await appointmentService.createAppointment(appointmentData);
 
-      if (response?.success) {
+      if (response?.status === "success" || response?.success) {
         Alert.alert(
           "Appointment Booked!",
           `Your appointment with ${selectedDoctor.name} has been scheduled for ${selectedDate} at ${selectedTime}`,

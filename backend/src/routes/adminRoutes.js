@@ -19,6 +19,9 @@ const {
   getMedicalRecordsOverview,
   getSystemMetrics,
   getNotificationsManagement,
+  createUser,
+  updateUserProfile,
+  deleteUser,
 } = require("../controllers/adminController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
@@ -34,6 +37,9 @@ router.get("/activities", getRecentActivities);
 
 // User management routes
 router.get("/users", getUsers);
+router.post("/users", createUser);
+router.put("/users/:userId", updateUserProfile);
+router.delete("/users/:userId", deleteUser);
 router.patch("/users/:userId/status", updateUserStatus);
 router.patch("/users/:userId/role", updateUserRole);
 router.post("/users/bulk", bulkUpdateUsers);

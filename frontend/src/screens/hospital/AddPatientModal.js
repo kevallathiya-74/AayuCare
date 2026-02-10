@@ -1,6 +1,6 @@
 /**
- * Add Doctor Modal
- * Form to add new doctor to the system
+ * Add Patient Modal
+ * Form to add new patient to the system
  */
 
 import React, { useState } from "react";
@@ -18,43 +18,31 @@ import {
   Platform,
   FlatList,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import authService from "../../services/auth.service";
+import adminService from "../../services/admin.service";
 
-const SPECIALIZATIONS = [
-  "Cardiology",
-  "Dermatology",
-  "Endocrinology",
-  "Gastroenterology",
-  "General Medicine",
-  "Neurology",
-  "Obstetrics & Gynecology",
-  "Oncology",
-  "Orthopedics",
-  "Pediatrics",
-  "Psychiatry",
-  "Pulmonology",
-  "Radiology",
-  "Surgery",
-  "Urology",
-];
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const GENDERS = ["Male", "Female", "Other"];
 
-const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
+const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
-  const [showSpecializationPicker, setShowSpecializationPicker] =
-    useState(false);
+  const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);
+  const [showGenderPicker, setShowGenderPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date(2000, 0, 1));
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
-    specialization: "",
-    qualification: "",
-    experience: "",
-    department: "",
+    dateOfBirth: "",
+    gender: "",
+    bloodGroup: "",
+    address: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -84,21 +72,12 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       newErrors.password = "Password must be at least 6 characters";
     }
 
-    if (!formData.specialization) {
-      newErrors.specialization = "Please select a specialization";
+    if (!formData.dateOfBirth.trim()) {
+      newErrors.dateOfBirth = "Date of birth is required";
     }
 
-    if (!formData.qualification.trim()) {
-      newErrors.qualification = "Qualification is required";
-    }
-
-    if (!formData.experience.trim()) {
-      newErrors.experience = "Experience is required";
-    } else if (
-      isNaN(formData.experience) ||
-      parseInt(formData.experience) < 0
-    ) {
-      newErrors.experience = "Experience must be a positive number";
+    if (!formData.gender) {
+      newErrors.gender = "Please select gender";
     }
 
     setErrors(newErrors);
@@ -112,7 +91,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      // Generate unique doctor ID (DOC + date + time + random)
+      // Generate unique patient ID
       const now = new Date();
       const dateStr =
         now.getFullYear().toString() +
@@ -125,31 +104,29 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       const random = Math.floor(Math.random() * 10000)
         .toString()
         .padStart(4, "0");
-      const userId = `DOC${dateStr}${timeStr}${random}`;
+      const userId = `PAT${dateStr}${timeStr}${random}`;
 
-      // Prepare doctor data
-      const doctorData = {
+      // Prepare patient data
+      const patientData = {
         userId: userId,
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         password: formData.password,
-        role: "doctor",
-        specialization: formData.specialization,
-        qualification: formData.qualification.trim(),
-        experience: parseInt(formData.experience),
-        consultationFee: 500, // Default consultation fee
-        department:
-          formData.department.trim() || formData.specialization || "General",
+        role: "patient",
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup || undefined,
+        address: formData.address.trim() || undefined,
         isActive: true,
         hospitalId: user?.hospitalId,
         hospitalName: user?.hospitalName,
       };
 
-      // Call register API with doctor role
-      const response = await authService.register(doctorData);
+      // Call create API
+      const response = await adminService.createUser(patientData);
 
-      if (response.success || response.user) {
+      if (response.status === "success") {
         // Call onSuccess first to trigger parent refetch
         if (onSuccess) {
           onSuccess();
@@ -161,14 +138,14 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         
         // Show success message after modal closes
         setTimeout(() => {
-          Alert.alert("Success", "Doctor added successfully");
+          Alert.alert("Success", "Patient registered successfully");
         }, 300);
       }
     } catch (error) {
-      console.error("Add doctor error:", error);
+      console.error("Add patient error:", error);
 
       // Better error handling
-      let errorMessage = "Failed to add doctor. Please try again.";
+      let errorMessage = "Failed to register patient. Please try again.";
 
       if (typeof error === "string") {
         errorMessage = error;
@@ -186,9 +163,6 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         } else if (errorMessage.includes("phone")) {
           errorMessage =
             "This phone number is already registered. Please use a different number.";
-        } else {
-          errorMessage =
-            "A doctor with these details already exists. Please check email and phone number.";
         }
       }
 
@@ -204,12 +178,38 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       email: "",
       phone: "",
       password: "",
-      specialization: "",
-      qualification: "",
-      experience: "",
-      department: "",
+      dateOfBirth: "",
+      gender: "",
+      bloodGroup: "",
+      address: "",
     });
     setErrors({});
+    setSelectedDate(new Date(2000, 0, 1));
+  };
+
+  const handleDateChange = (event, date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+    
+    if (date) {
+      setSelectedDate(date);
+      const formattedDate = date.toISOString().split("T")[0];
+      setFormData({ ...formData, dateOfBirth: formattedDate });
+      if (errors.dateOfBirth) {
+        setErrors({ ...errors, dateOfBirth: null });
+      }
+    }
+  };
+
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const handleClose = () => {
@@ -223,7 +223,8 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     placeholder,
     icon,
     keyboardType = "default",
-    secureTextEntry = false
+    secureTextEntry = false,
+    multiline = false
   ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
@@ -237,7 +238,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
           style={styles.inputIcon}
         />
         <TextInput
-          style={styles.input}
+          style={[styles.input, multiline && styles.textArea]}
           value={formData[key]}
           onChangeText={(value) => {
             setFormData({ ...formData, [key]: value });
@@ -249,20 +250,22 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
           placeholderTextColor={healthColors.text.tertiary}
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
-          autoCapitalize={key === "email" ? "none" : "words"}
+          autoCapitalize={key === "email" ? "none" : "sentences"}
           editable={!loading}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
         />
       </View>
       {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
     </View>
   );
 
-  const renderPicker = (key, label, icon, options) => (
+  const renderPicker = (key, label, icon, options, setShowPicker) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
         style={[styles.inputWrapper, errors[key] && styles.inputError]}
-        onPress={() => setShowSpecializationPicker(true)}
+        onPress={() => setShowPicker(true)}
         disabled={loading}
       >
         <Ionicons
@@ -276,7 +279,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         <Text
           style={[styles.pickerText, !formData[key] && styles.placeholderText]}
         >
-          {formData[key] || "Select specialization..."}
+          {formData[key] || `Select ${label.toLowerCase()}...`}
         </Text>
         <Ionicons
           name="chevron-down"
@@ -285,71 +288,64 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         />
       </TouchableOpacity>
       {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-
-      {/* Custom Dropdown Modal */}
-      <Modal
-        visible={showSpecializationPicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowSpecializationPicker(false)}
-      >
-        <TouchableOpacity
-          style={styles.dropdownOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSpecializationPicker(false)}
-        >
-          <View style={styles.dropdownContainer}>
-            <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>Select Specialization</Text>
-              <TouchableOpacity
-                onPress={() => setShowSpecializationPicker(false)}
-              >
-                <Ionicons
-                  name="close"
-                  size={24}
-                  color={healthColors.text.primary}
-                />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.dropdownItem,
-                    formData[key] === item && styles.dropdownItemSelected,
-                  ]}
-                  onPress={() => {
-                    setFormData({ ...formData, [key]: item });
-                    if (errors[key]) {
-                      setErrors({ ...errors, [key]: null });
-                    }
-                    setShowSpecializationPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      formData[key] === item && styles.dropdownItemTextSelected,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                  {formData[key] === item && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={healthColors.primary.main}
-                    />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </View>
+  );
+
+  const renderPickerModal = (title, options, selectedValue, onSelect, visible, onClose) => (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={styles.dropdownOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <View style={styles.dropdownContainer}>
+          <View style={styles.dropdownHeader}>
+            <Text style={styles.dropdownTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons
+                name="close"
+                size={24}
+                color={healthColors.text.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={options}
+            keyExtractor={(item) => item}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.dropdownItem,
+                  selectedValue === item && styles.dropdownItemSelected,
+                ]}
+                onPress={() => onSelect(item)}
+              >
+                <Text
+                  style={[
+                    styles.dropdownItemText,
+                    selectedValue === item && styles.dropdownItemTextSelected,
+                  ]}
+                >
+                  {item}
+                </Text>
+                {selectedValue === item && (
+                  <Ionicons
+                    name="checkmark"
+                    size={20}
+                    color={healthColors.primary.main}
+                  />
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </TouchableOpacity>
+    </Modal>
   );
 
   return (
@@ -366,7 +362,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Add New Doctor</Text>
+            <Text style={styles.title}>Register New Patient</Text>
             <TouchableOpacity
               onPress={handleClose}
               style={styles.closeButton}
@@ -386,11 +382,11 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {renderInput("name", "Full Name *", "Dr. John Doe", "person")}
+            {renderInput("name", "Full Name *", "John Doe", "person")}
             {renderInput(
               "email",
               "Email Address *",
-              "doctor@example.com",
+              "patient@example.com",
               "mail",
               "email-address"
             )}
@@ -409,26 +405,70 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "default",
               true
             )}
+            {/* Date of Birth Picker */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Date of Birth *</Text>
+              <TouchableOpacity
+                style={[
+                  styles.inputWrapper,
+                  errors.dateOfBirth && styles.inputError,
+                ]}
+                onPress={() => setShowDatePicker(true)}
+                disabled={loading}
+              >
+                <Ionicons
+                  name="calendar"
+                  size={20}
+                  color={
+                    errors.dateOfBirth
+                      ? healthColors.error.main
+                      : healthColors.text.tertiary
+                  }
+                  style={styles.inputIcon}
+                />
+                <Text
+                  style={[
+                    styles.pickerText,
+                    !formData.dateOfBirth && styles.placeholderText,
+                  ]}
+                >
+                  {formData.dateOfBirth
+                    ? formatDisplayDate(formData.dateOfBirth)
+                    : "Select date of birth..."}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={healthColors.text.tertiary}
+                />
+              </TouchableOpacity>
+              {errors.dateOfBirth && (
+                <Text style={styles.errorText}>{errors.dateOfBirth}</Text>
+              )}
+            </View>
             {renderPicker(
-              "specialization",
-              "Specialization *",
-              "medical",
-              SPECIALIZATIONS
+              "gender",
+              "Gender *",
+              "person-outline",
+              GENDERS,
+              setShowGenderPicker
+            )}
+            {renderPicker(
+              "bloodGroup",
+              "Blood Group",
+              "water",
+              BLOOD_GROUPS,
+              setShowBloodGroupPicker
             )}
             {renderInput(
-              "qualification",
-              "Qualification *",
-              "MBBS, MD",
-              "school"
+              "address",
+              "Address",
+              "Full address",
+              "location",
+              "default",
+              false,
+              true
             )}
-            {renderInput(
-              "experience",
-              "Years of Experience *",
-              "5",
-              "time",
-              "numeric"
-            )}
-            {renderInput("department", "Department", "Cardiology", "business")}
 
             <Text style={styles.noteText}>* Required fields</Text>
           </ScrollView>
@@ -450,12 +490,53 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               {loading ? (
                 <ActivityIndicator size="small" color={theme.colors.white} />
               ) : (
-                <Text style={styles.submitButtonText}>Add Doctor</Text>
+                <Text style={styles.submitButtonText}>Register Patient</Text>
               )}
             </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Picker Modals */}
+      {renderPickerModal(
+        "Select Gender",
+        GENDERS,
+        formData.gender,
+        (item) => {
+          setFormData({ ...formData, gender: item });
+          if (errors.gender) {
+            setErrors({ ...errors, gender: null });
+          }
+          setShowGenderPicker(false);
+        },
+        showGenderPicker,
+        () => setShowGenderPicker(false)
+      )}
+
+      {renderPickerModal(
+        "Select Blood Group",
+        BLOOD_GROUPS,
+        formData.bloodGroup,
+        (item) => {
+          setFormData({ ...formData, bloodGroup: item });
+          setShowBloodGroupPicker(false);
+        },
+        showBloodGroupPicker,
+        () => setShowBloodGroupPicker(false)
+      )}
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+          minimumDate={new Date(1900, 0, 1)}
+          onTouchCancel={() => setShowDatePicker(false)}
+        />
+      )}
     </Modal>
   );
 };
@@ -523,11 +604,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.lg,
     color: healthColors.text.primary,
   },
-  picker: {
-    flex: 1,
-    height: 50,
-    color: healthColors.text.primary,
-    marginLeft: -8,
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: "top",
   },
   pickerText: {
     flex: 1,
@@ -626,5 +705,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddDoctorModal;
-
+export default AddPatientModal;

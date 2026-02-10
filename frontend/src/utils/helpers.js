@@ -120,6 +120,34 @@ export const convertTo12Hour = (time24) => {
 };
 
 /**
+ * Convert 12-hour time string with AM/PM to 24-hour format
+ * @param {string} time12 - Time in 12-hour format (e.g., '2:00 PM', '9:30 AM', '10:30 AM')
+ * @returns {string} Time in 24-hour format (e.g., '14:00', '09:30', '10:30')
+ */
+export const convertTo24Hour = (time12) => {
+  if (!time12) return '';
+  
+  // Match time format like "10:30 AM" or "2:00 PM"
+  const match = time12.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return time12; // Return as-is if format doesn't match
+  
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  const period = match[3].toUpperCase();
+  
+  // Convert to 24-hour format
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  // Ensure hours are zero-padded
+  const hours24 = String(hours).padStart(2, '0');
+  return `${hours24}:${minutes}`;
+};
+
+/**
  * Format date and time together
  * @param {Date|string} date - Date to format
  * @returns {string} Formatted date and time

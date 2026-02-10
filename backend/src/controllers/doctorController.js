@@ -100,7 +100,7 @@ exports.getDoctorDashboard = async (req, res) => {
         ...baseQuery,
         appointmentDate: { $gte: today, $lt: tomorrow },
       })
-        .populate("patientId", "name userId age gender phone")
+        .populate("patientId", "name userId age gender phone isActive dateOfBirth bloodGroup")
         .sort({ appointmentDate: 1 })
         .lean(),
       // Completed today
@@ -121,7 +121,7 @@ exports.getDoctorDashboard = async (req, res) => {
       Prescription.find(req.hospitalId && req.user.role !== "super_admin" ? { doctorId, hospitalId: req.hospitalId } : { doctorId })
         .sort({ createdAt: -1 })
         .limit(5)
-        .populate("patientId", "name userId")
+        .populate("patientId", "name userId isActive dateOfBirth gender bloodGroup")
         .lean(),
     ]);
 
@@ -225,7 +225,7 @@ exports.getTodaysAppointments = async (req, res) => {
     }
 
     const appointments = await Appointment.find(query)
-      .populate("patientId", "name userId age gender phone email")
+      .populate("patientId", "name userId age gender phone email isActive dateOfBirth bloodGroup address")
       .sort({ appointmentDate: 1 })
       .lean();
 
@@ -293,7 +293,7 @@ exports.getUpcomingAppointments = async (req, res) => {
 
     const [appointments, total] = await Promise.all([
       Appointment.find(query)
-        .populate("patientId", "name userId age gender phone")
+        .populate("patientId", "name userId age gender phone isActive dateOfBirth bloodGroup address")
         .sort({ appointmentDate: 1 })
         .skip(skip)
         .limit(parseInt(limit))
@@ -381,7 +381,7 @@ exports.searchPatients = async (req, res) => {
         { phone: { $regex: sanitizedQuery, $options: "i" } },
       ],
     })
-      .select("name userId age gender phone email dateOfBirth")
+      .select("name userId age gender phone email dateOfBirth isActive bloodGroup address allergies medicalHistory currentMedications emergencyContact")
       .limit(10)
       .lean({ virtuals: true });
 
@@ -566,17 +566,20 @@ exports.registerWalkInPatient = async (req, res) => {
 
     // Create appointment immediately if needed
     if (symptoms) {
+      // Format time in 24-hour HH:MM format (not 12-hour with AM/PM)
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const appointmentTime = `${hours}:${minutes}`; // e.g., "14:30"
+      
       await Appointment.create({
         patientId: patient._id,
         doctorId,
         hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
         appointmentDate: new Date(),
-        appointmentTime: new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        reason: symptoms,
-        status: "pending",
+        appointmentTime: appointmentTime, // HH:MM format in 24-hour
+        chiefComplaint: symptoms, // Use chiefComplaint field, not reason
+        status: "scheduled", // Use valid status: "scheduled" not "pending"
         type: "walk-in",
       });
     }
@@ -728,7 +731,7 @@ exports.getConsultationHistory = async (req, res, next) => {
 
     const total = await Appointment.countDocuments(query);
     const appointments = await Appointment.find(query)
-      .populate("patientId", "name userId age gender phone")
+      .populate("patientId", "name userId age gender phone isActive dateOfBirth bloodGroup address")
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)

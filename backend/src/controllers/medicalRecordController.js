@@ -50,8 +50,8 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const medicalRecords = await MedicalRecord.find(query)
-      .populate("patientId", "name userId email phone")
-      .populate("doctorId", "name specialization")
+      .populate("patientId", "name userId email phone isActive dateOfBirth gender bloodGroup")
+      .populate("doctorId", "name specialization isActive")
       .sort({ date: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -241,8 +241,8 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
 exports.getMedicalRecord = async (req, res, next) => {
   try {
     const medicalRecord = await MedicalRecord.findById(req.params.id)
-      .populate("patientId", "name userId email phone")
-      .populate("doctorId", "name specialization qualification");
+      .populate("patientId", "name userId email phone isActive dateOfBirth gender bloodGroup")
+      .populate("doctorId", "name specialization qualification isActive");
 
     if (!medicalRecord) {
       return next(new AppError("Medical record not found", 404));
@@ -365,7 +365,7 @@ exports.getPatientHistory = async (req, res, next) => {
     }
     
     const medicalRecords = await MedicalRecord.find(historyQuery)
-      .populate("doctorId", "name specialization")
+      .populate("doctorId", "name specialization isActive")
       .sort({ date: -1 });
 
     // Group by record type

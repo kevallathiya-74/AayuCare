@@ -8,12 +8,23 @@ import { logError } from '../utils/errorHandler';
 
 class PatientService {
     /**
-     * Get all patients
+     * Get all patients with optional search
+     * @param {Object} params - Query parameters { search: string }
      * @returns {Promise<Array>} - List of all patients
      */
-    async getAllPatients() {
+    async getAllPatients(params = {}) {
         try {
-            const response = await api.get('/patients/search');
+            // Add cache-busting timestamp to force fresh data
+            const queryParams = new URLSearchParams(params);
+            queryParams.set('_t', Date.now().toString());
+            
+            const response = await api.get(`/patients/search?${queryParams.toString()}`, {
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             return response.data;
         } catch (error) {
             logError(error, { context: 'PatientService.getAllPatients' });

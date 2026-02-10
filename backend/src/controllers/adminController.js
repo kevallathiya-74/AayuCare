@@ -942,6 +942,329 @@ exports.getNotificationsManagement = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Create new user (doctor or patient)
+ * @route   POST /api/admin/users
+ * @access  Private (Admin only)
+ */
+exports.createUser = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      phone,
+      password,
+      role,
+      specialization,
+      qualification,
+      experience,
+      department,
+      dateOfBirth,
+      gender,
+      bloodGroup,
+      address,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !phone || !password || !role) {
+      return res.status(400).json({
+        status: "error",
+        message: "Name, email, phone, password, and role are required",
+      });
+    }
+
+    // Validate role
+    if (!["doctor", "patient"].includes(role)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Role must be either doctor or patient",
+      });
+    }
+
+    // Role-specific validation
+    if (role === "doctor") {
+      if (!specialization || !qualification) {
+        return res.status(400).json({
+          status: "error",
+          message: "Specialization and qualification are required for doctors",
+        });
+      }
+    }
+
+    // Check for duplicate email or phone
+    const existingUser = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { phone }],
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        status: "error",
+        message:
+          existingUser.email === email.toLowerCase()
+            ? "Email already exists"
+            : "Phone number already exists",
+      });
+    }
+
+    // Generate unique userId
+    const prefix = role === "doctor" ? "DOC" : "PAT";
+    const now = new Date();
+    const dateStr =
+      now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, "0") +
+      now.getDate().toString().padStart(2, "0");
+    const timeStr =
+      now.getHours().toString().padStart(2, "0") +
+      now.getMinutes().toString().padStart(2, "0") +
+      now.getSeconds().toString().padStart(2, "0");
+    const random = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0");
+    const userId = `${prefix}${dateStr}${timeStr}${random}`;
+
+    // Prepare user data
+    const userData = {
+      userId,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      password,
+      role,
+      isActive: true,
+      hospitalId: req.hospitalId || req.user.hospitalId,
+      hospitalName: req.user.hospitalName,
+    };
+
+    // Add role-specific fields
+    if (role === "doctor") {
+      userData.specialization = specialization;
+      userData.qualification = qualification;
+      userData.experience = experience || 0;
+      userData.department = department || specialization;
+      userData.consultationFee = 500; // Default
+    } else if (role === "patient") {
+      userData.dateOfBirth = dateOfBirth;
+      userData.gender = gender;
+      userData.bloodGroup = bloodGroup;
+      userData.address = address;
+    }
+
+    // Create user
+    const user = await User.create(userData);
+
+    // Remove password from response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    logger.info(`Admin ${req.user.userId} created new ${role}: ${userId}`);
+
+    res.status(201).json({
+      status: "success",
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} created successfully`,
+      data: { user: userResponse },
+    });
+  } catch (error) {
+    logger.error("Create user error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to create user",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Update user profile (full update)
+ * @route   PUT /api/admin/users/:userId
+ * @access  Private (Admin only)
+ */
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const {
+      name,
+      email,
+      phone,
+      specialization,
+      qualification,
+      experience,
+      department,
+      consultationFee,
+      dateOfBirth,
+      gender,
+      bloodGroup,
+      address,
+    } = req.body;
+
+    // Find user with hospitalId filter
+    const query = { userId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+
+    const user = await User.findOne(query);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found or access denied",
+      });
+    }
+
+    // Check for duplicate email or phone (if changed)
+    if (email && email.toLowerCase() !== user.email) {
+      const emailExists = await User.findOne({
+        email: email.toLowerCase(),
+        _id: { $ne: user._id },
+      });
+      if (emailExists) {
+        return res.status(400).json({
+          status: "error",
+          message: "Email already exists",
+        });
+      }
+    }
+
+    if (phone && phone !== user.phone) {
+      const phoneExists = await User.findOne({
+        phone,
+        _id: { $ne: user._id },
+      });
+      if (phoneExists) {
+        return res.status(400).json({
+          status: "error",
+          message: "Phone number already exists",
+        });
+      }
+    }
+
+    // Update common fields
+    if (name) user.name = name.trim();
+    if (email) user.email = email.toLowerCase().trim();
+    if (phone) user.phone = phone.trim();
+
+    // Update role-specific fields
+    if (user.role === "doctor") {
+      if (specialization) user.specialization = specialization;
+      if (qualification) user.qualification = qualification;
+      if (experience !== undefined) user.experience = experience;
+      if (department) user.department = department;
+      if (consultationFee !== undefined) user.consultationFee = consultationFee;
+    } else if (user.role === "patient") {
+      if (dateOfBirth) user.dateOfBirth = dateOfBirth;
+      if (gender) user.gender = gender;
+      if (bloodGroup) user.bloodGroup = bloodGroup;
+      if (address) user.address = address;
+    }
+
+    user.updatedAt = new Date();
+    await user.save();
+
+    // Remove password from response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    logger.info(`Admin ${req.user.userId} updated profile of ${userId}`);
+
+    res.json({
+      status: "success",
+      message: "User profile updated successfully",
+      data: { user: userResponse },
+    });
+  } catch (error) {
+    logger.error("Update user profile error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update user profile",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Delete user (soft delete)
+ * @route   DELETE /api/admin/users/:userId
+ * @access  Private (Admin only)
+ */
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find user with hospitalId filter
+    const query = { userId };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      query.hospitalId = req.hospitalId;
+    }
+
+    const user = await User.findOne(query);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found or access denied",
+      });
+    }
+
+    // Prevent deleting admin users
+    if (["admin", "super_admin"].includes(user.role)) {
+      return res.status(403).json({
+        status: "error",
+        message: "Cannot delete admin users",
+      });
+    }
+
+    // Check for active appointments (for doctors)
+    if (user.role === "doctor") {
+      const activeAppointments = await Appointment.countDocuments({
+        doctorId: user._id,
+        status: { $in: ["scheduled", "confirmed"] },
+        appointmentDate: { $gte: new Date() },
+      });
+
+      if (activeAppointments > 0) {
+        return res.status(400).json({
+          status: "error",
+          message: `Cannot delete doctor with ${activeAppointments} active appointments. Please reschedule or cancel them first.`,
+        });
+      }
+    }
+
+    // Soft delete - set isActive to false
+    user.isActive = false;
+    user.updatedAt = new Date();
+    await user.save();
+
+    logger.info(
+      `Admin ${req.user.userId} soft-deleted user ${userId} (${user.role})`
+    );
+
+    res.json({
+      status: "success",
+      message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} deleted successfully`,
+      data: {
+        userId: user.userId,
+        deletedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    logger.error("Delete user error:", {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete user",
+      error: error.message,
+    });
+  }
+};
+
 // Helper function
 function getTimeAgo(date) {
   const now = new Date();

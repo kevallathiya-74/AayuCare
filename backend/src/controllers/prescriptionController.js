@@ -59,7 +59,7 @@ exports.createPrescription = async (req, res) => {
     });
 
     // Populate doctor details
-    await prescription.populate("doctorId", "name specialization userId");
+    await prescription.populate("doctorId", "name specialization userId isActive");
 
     res.status(201).json({
       success: true,
@@ -129,7 +129,7 @@ exports.getPatientPrescriptions = async (req, res) => {
     }
     
     const prescriptions = await Prescription.find(prescriptionQuery)
-      .populate("doctorId", "name specialization userId")
+      .populate("doctorId", "name specialization userId isActive")
       .sort({ createdAt: -1 });
 
     res.json({
@@ -190,7 +190,7 @@ exports.getDoctorPrescriptions = async (req, res) => {
     }
     
     const prescriptions = await Prescription.find(prescriptionQuery)
-      .populate("patientId", "name userId age gender")
+      .populate("patientId", "name userId age gender isActive dateOfBirth bloodGroup address")
       .sort({ createdAt: -1 });
 
     res.json({
@@ -222,8 +222,8 @@ exports.getPrescriptionById = async (req, res) => {
     const { prescriptionId } = req.params;
 
     const prescription = await Prescription.findById(prescriptionId)
-      .populate("doctorId", "name specialization userId phone")
-      .populate("patientId", "name userId age gender bloodGroup");
+      .populate("doctorId", "name specialization userId phone isActive")
+      .populate("patientId", "name userId age gender bloodGroup isActive dateOfBirth address");
 
     if (!prescription) {
       return res.status(404).json({
@@ -289,7 +289,7 @@ exports.updatePrescriptionStatus = async (req, res) => {
       prescriptionId,
       { status },
       { new: true, runValidators: true }
-    ).populate("doctorId", "name specialization");
+    ).populate("doctorId", "name specialization isActive");
 
     if (!prescription) {
       return res.status(404).json({

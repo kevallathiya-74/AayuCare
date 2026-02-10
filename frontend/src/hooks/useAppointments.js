@@ -38,7 +38,8 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
           limit: filters.limit || 20,
         });
 
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointments');
         }
 
@@ -86,7 +87,8 @@ export function usePatientAppointmentsInfinite(patientId, filters = {}, options 
           limit: filters.limit || 20,
         });
 
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointments');
         }
 
@@ -128,7 +130,8 @@ export function useDoctorAppointmentsInfinite(doctorId, filters = {}, options = 
           limit: filters.limit || 20,
         });
 
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointments');
         }
 
@@ -163,7 +166,8 @@ export function useAppointment(appointmentId, options = {}) {
       try {
         const response = await appointmentService.getAppointment(appointmentId);
         
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointment');
         }
 
@@ -191,7 +195,8 @@ export function useCreateAppointment() {
       try {
         const response = await appointmentService.createAppointment(appointmentData);
         
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to create appointment');
         }
 
@@ -220,7 +225,8 @@ export function useUpdateAppointmentStatus() {
       try {
         const response = await appointmentService.updateAppointmentStatus(appointmentId, status);
         
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to update appointment status');
         }
 
@@ -255,7 +261,8 @@ export function useCancelAppointment() {
       try {
         const response = await appointmentService.cancelAppointment(appointmentId, reason);
         
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to cancel appointment');
         }
 
@@ -286,7 +293,8 @@ export function useAppointmentsRealTime(filters = {}, interval = 30000) {
       try {
         const response = await appointmentService.getAppointments(filters);
         
-        if (!response.success) {
+        // Backend returns { status: "success", data: {...} }
+        if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointments');
         }
 

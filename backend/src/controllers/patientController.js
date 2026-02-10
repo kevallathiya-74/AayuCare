@@ -60,7 +60,7 @@ exports.searchPatients = async (req, res) => {
     // Get patients (all if no query, filtered if query provided)
     const patients = await User.find(query)
       .select(
-        "userId name email phone age gender bloodGroup allergies medicalHistory createdAt"
+        "userId name email phone age gender bloodGroup allergies medicalHistory isActive createdAt dateOfBirth address"
       )
       .sort({ createdAt: -1 })
       .limit(50)
@@ -136,7 +136,7 @@ exports.getCompleteHistory = async (req, res) => {
       recordQuery.hospitalId = req.hospitalId;
     }
     const medicalRecords = await MedicalRecord.find(recordQuery)
-      .populate("doctorId", "name specialization userId")
+      .populate("doctorId", "name specialization userId isActive")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -146,7 +146,7 @@ exports.getCompleteHistory = async (req, res) => {
       appointmentQuery.hospitalId = req.hospitalId;
     }
     const appointments = await Appointment.find(appointmentQuery)
-      .populate("doctorId", "name specialization userId")
+      .populate("doctorId", "name specialization userId isActive")
       .sort({ appointmentDate: -1 })
       .lean();
 
@@ -156,7 +156,7 @@ exports.getCompleteHistory = async (req, res) => {
       prescriptionQuery.hospitalId = req.hospitalId;
     }
     const prescriptions = await Prescription.find(prescriptionQuery)
-      .populate("doctorId", "name specialization userId")
+      .populate("doctorId", "name specialization userId isActive")
       .sort({ createdAt: -1 })
       .lean();
 

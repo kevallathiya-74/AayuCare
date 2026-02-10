@@ -134,8 +134,8 @@ class AppointmentService {
         const itemLimit = parseInt(limit) + 1; // Fetch one extra to determine if there's more
 
         const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone email')
-            .populate('doctorId', 'name specialization qualification consultationFee')
+            .populate('patientId', 'name userId phone email isActive dateOfBirth gender bloodGroup')
+            .populate('doctorId', 'name specialization qualification consultationFee isActive')
             .sort({ appointmentDate: -1, _id: 1 })
             .limit(itemLimit);
 
@@ -217,7 +217,7 @@ class AppointmentService {
         const itemLimit = parseInt(limit) + 1;
 
         const appointments = await Appointment.find(query)
-            .populate('doctorId', 'name specialization qualification consultationFee')
+            .populate('doctorId', 'name specialization qualification consultationFee isActive')
             .sort({ appointmentDate: -1, _id: 1 })
             .limit(itemLimit);
 
@@ -299,7 +299,7 @@ class AppointmentService {
         const itemLimit = parseInt(limit) + 1;
 
         const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone')
+            .populate('patientId', 'name userId phone isActive dateOfBirth gender bloodGroup address')
             .sort({ appointmentDate: -1, _id: 1 })
             .limit(itemLimit);
 
@@ -363,8 +363,8 @@ class AppointmentService {
         const skip = (page - 1) * limit;
 
         const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone email')
-            .populate('doctorId', 'name specialization qualification consultationFee')
+            .populate('patientId', 'name userId phone email isActive dateOfBirth gender bloodGroup address')
+            .populate('doctorId', 'name specialization qualification consultationFee isActive')
             .sort({ appointmentDate: -1, appointmentTime: -1 })
             .skip(skip)
             .limit(parseInt(limit));
@@ -413,8 +413,8 @@ class AppointmentService {
         const skip = (page - 1) * limit;
 
         const appointments = await Appointment.find(query)
-            .populate('doctorId', 'name specialization qualification consultationFee')
-            .populate('patientId', 'name userId phone')
+            .populate('doctorId', 'name specialization qualification consultationFee isActive')
+            .populate('patientId', 'name userId phone isActive dateOfBirth gender bloodGroup address')
             .sort({ appointmentDate: -1, appointmentTime: -1 })
             .skip(skip)
             .limit(parseInt(limit));
@@ -465,7 +465,7 @@ class AppointmentService {
         const skip = (page - 1) * limit;
 
         const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone dateOfBirth gender bloodGroup')
+            .populate('patientId', 'name userId phone dateOfBirth gender bloodGroup isActive allergies address')
             .sort({ appointmentDate: 1, appointmentTime: 1 })
             .skip(skip)
             .limit(parseInt(limit));
@@ -488,8 +488,8 @@ class AppointmentService {
      */
     async getAppointmentById(appointmentId) {
         const appointment = await Appointment.findById(appointmentId)
-            .populate('patientId', 'name userId email phone dateOfBirth gender bloodGroup allergies medicalHistory')
-            .populate('doctorId', 'name specialization qualification experience consultationFee')
+            .populate('patientId', 'name userId email phone dateOfBirth gender bloodGroup allergies medicalHistory isActive address emergencyContact')
+            .populate('doctorId', 'name specialization qualification experience consultationFee isActive')
             .populate('prescription');
 
         if (!appointment) {

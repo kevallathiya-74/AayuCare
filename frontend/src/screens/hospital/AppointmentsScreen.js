@@ -161,7 +161,7 @@ const AppointmentsScreen = ({ navigation }) => {
       />
       <Text style={styles.emptyTitle}>No Appointments</Text>
       <Text style={styles.emptySubtitle}>
-        {error || "Appointments will appear here"}
+        {error?.message || "Appointments will appear here"}
       </Text>
       {error && (
         <TouchableOpacity
