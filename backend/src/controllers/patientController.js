@@ -3,10 +3,10 @@
  * Handles patient management, search, and medical history
  */
 
-const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
+const appointmentRepository = require("../repositories/appointmentRepository");
+const prescriptionRepository = require("../repositories/prescriptionRepository");
 const MedicalRecord = require("../models/MedicalRecord");
-const Appointment = require("../models/Appointment");
-const Prescription = require("../models/Prescription");
 const HealthMetric = require("../models/HealthMetric");
 const logger = require("../utils/logger");
 
@@ -58,13 +58,22 @@ exports.searchPatients = async (req, res) => {
     // If no query parameter, still return all patients (don't return empty)
 
     // Get patients (all if no query, filtered if query provided)
-    const patients = await User.find(query)
-      .select(
-        "userId name email phone age gender bloodGroup allergies medicalHistory isActive createdAt dateOfBirth address"
-      )
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean();
+    const filters = {
+      limit: 50,
+      sortBy: "createdAt",
+      sortOrder: "DESC"
+    };
+    
+    // Add search conditions if provided
+    if (query.$or) {
+      filters.search = req.query.q;
+    }
+    
+    if (query.hospitalId) {
+      filters.hospitalId = query.hospitalId;
+    }
+    
+    const patients = await userRepository.findPatientsByHospital(filters.hospitalId || "MAIN", filters.limit, 0);
 
     res.json({
       success: true,
@@ -106,19 +115,21 @@ exports.getCompleteHistory = async (req, res) => {
       });
     }
 
-    // Get patient profile - try both userId and _id
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Get patient profile - try both id and userId
+    let patient;
+    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      patient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      patient = await userRepository.findByUserId(patientId);
     }
     
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+    // Verify hospital access
+    if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this patient"
+      });
     }
-    const patient = await User.findOne(query).select("-password").lean();
 
     if (!patient) {
       return res.status(404).json({
@@ -127,11 +138,11 @@ exports.getCompleteHistory = async (req, res) => {
       });
     }
 
-    // Use MongoDB _id for querying related collections
-    const patientObjectId = patient._id;
+    // Use patient id for querying related collections
+    const patientDbId = patient.id;
 
-    // Get all medical records (sorted by most recent)
-    const recordQuery = { patientId: patientObjectId };
+    // Get all medical records (sorted by most recent) - MongoDB collection
+    const recordQuery = { patientId: patientDbId };
     if (req.hospitalId && req.user.role !== "super_admin") {
       recordQuery.hospitalId = req.hospitalId;
     }
@@ -140,25 +151,25 @@ exports.getCompleteHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Get all appointments (sorted by most recent)
-    const appointmentQuery = { patientId: patientObjectId };
+    // Get all appointments (sorted by most recent) - PostgreSQL
+    const appointmentFilters = {
+      sortBy: "appointment_date",
+      sortOrder: "DESC"
+    };
     if (req.hospitalId && req.user.role !== "super_admin") {
-      appointmentQuery.hospitalId = req.hospitalId;
+      appointmentFilters.hospitalId = req.hospitalId;
     }
-    const appointments = await Appointment.find(appointmentQuery)
-      .populate("doctorId", "name specialization userId isActive")
-      .sort({ appointmentDate: -1 })
-      .lean();
+    const appointments = await appointmentRepository.findByPatient(patientDbId, appointmentFilters);
 
-    // Get all prescriptions (sorted by most recent)
-    const prescriptionQuery = { patientId: patientObjectId };
+    // Get all prescriptions (sorted by most recent) - MongoDB
+    const prescriptionFilters = {
+      sortBy: "createdAt",
+      sortOrder: "DESC"
+    };
     if (req.hospitalId && req.user.role !== "super_admin") {
-      prescriptionQuery.hospitalId = req.hospitalId;
+      prescriptionFilters.hospitalId = req.hospitalId;
     }
-    const prescriptions = await Prescription.find(prescriptionQuery)
-      .populate("doctorId", "name specialization userId isActive")
-      .sort({ createdAt: -1 })
-      .lean();
+    const prescriptions = await prescriptionRepository.findByPatient(patientDbId, prescriptionFilters);
 
     // Calculate health statistics
     const stats = {
@@ -238,29 +249,31 @@ exports.getPatientProfile = async (req, res) => {
       });
     }
 
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Get patient profile
+    let patient;
+    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      patient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      patient = await userRepository.findByUserId(patientId);
     }
     
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+    // Verify hospital access
+    if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this patient"
+      });
     }
-    
-    const patient = await User.findOne(query).select("-password").lean();
 
-    if (!patient) {
+    if (!patient || patient.role !== "patient") {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
       });
     }
 
-    // Get quick stats using patient._id
-    const statsQuery = { patientId: patient._id };
+    // Get quick stats using patient id
+    const statsQuery = { patientId: patient.id };
     if (req.hospitalId && req.user.role !== "super_admin") {
       statsQuery.hospitalId = req.hospitalId;
     }
@@ -268,8 +281,8 @@ exports.getPatientProfile = async (req, res) => {
     const [recordCount, appointmentCount, prescriptionCount] =
       await Promise.all([
         MedicalRecord.countDocuments(statsQuery),
-        Appointment.countDocuments(statsQuery),
-        Prescription.countDocuments(statsQuery),
+        appointmentRepository.countByStatus(patient.id, "patient", req.hospitalId),
+        prescriptionRepository.findByPatient(patient.id, {}).then(p => p.length),
       ]);
 
     res.json({
@@ -316,13 +329,8 @@ exports.updatePatientProfile = async (req, res) => {
 
     const allowedUpdates = [
       "name",
-      "age",
-      "gender",
       "phone",
       "address",
-      "bloodGroup",
-      "allergies",
-      "medicalHistory",
       "emergencyContact",
     ];
 
@@ -333,23 +341,28 @@ exports.updatePatientProfile = async (req, res) => {
       }
     });
 
-    const patient = await User.findOneAndUpdate(
-      { userId: patientId, role: "patient" },
-      updates,
-      { new: true, runValidators: true }
-    ).select("-password");
+    // Find patient by userId or id
+    let patient;
+    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      patient = await userRepository.findById(patientId);
+    } else {
+      patient = await userRepository.findByUserId(patientId);
+    }
 
-    if (!patient) {
+    if (!patient || patient.role !== "patient") {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
       });
     }
+    
+    // Update user profile
+    const updatedPatient = await userRepository.update(patient.id, updates);
 
     res.json({
       success: true,
       message: "Profile updated successfully",
-      data: patient,
+      data: updatedPatient,
     });
   } catch (error) {
     logger.error("Patient profile update error:", {
@@ -386,17 +399,23 @@ exports.getHealthMetrics = async (req, res) => {
       });
     }
 
-    // Fetch all metrics for the patient - handle both _id and userId
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Fetch all metrics for the patient - handle both id and userId
+    let patient;
+    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      patient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      patient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query).select("_id");
 
-    const patientObjectId = patient ? patient._id : patientId;
-    const metricsQuery = { patient: patientObjectId };
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    const patientIdValue = patient.id;
+    const metricsQuery = { patient: patientIdValue };
     if (req.hospitalId && req.user.role !== "super_admin") {
       metricsQuery.hospitalId = req.hospitalId;
     }

@@ -4,7 +4,7 @@
  */
 
 const MedicalRecord = require("../models/MedicalRecord");
-const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
 const logger = require("../utils/logger");
 
 /**
@@ -73,23 +73,29 @@ exports.getHealthInsights = async (req, res) => {
       });
     }
 
-    // Get patient data - supports both userId and _id
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Get patient data - supports both userId and id
+    let patient;
+    if (patientId.match(/^[0-9]+$/)) {
+      // Try finding by id first
+      patient = await userRepository.findById(patientId);
+      // If not found, try userId
+      if (!patient) {
+        patient = await userRepository.findByUserId(patientId);
+      }
     } else {
-      query.userId = patientId;
+      patient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query);
-    if (!patient) {
+    
+    // Verify it's actually a patient
+    if (!patient || patient.role !== "patient") {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
       });
     }
 
-    // Get recent medical records using patient._id
-    const records = await MedicalRecord.find({ patientId: patient._id })
+    // Get recent medical records using patient.id
+    const records = await MedicalRecord.find({ patientId: patient.id })
       .sort({ createdAt: -1 })
       .limit(10);
 

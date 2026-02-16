@@ -1,5 +1,5 @@
 const MedicalRecord = require("../models/MedicalRecord");
-const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
 
@@ -95,18 +95,22 @@ exports.createMedicalRecord = async (req, res, next) => {
       files,
     } = req.body;
 
-    // Find patient by userId (string like "PAT001") or ObjectId
+    // Find patient by userId (string like "PAT001") or id
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      // It's an ObjectId
-      patient = await User.findById(patientId);
+    if (patientId.match(/^[0-9]+$/)) {
+      // It's a numeric id (PostgreSQL)
+      patient = await userRepository.findById(patientId);
       // Verify it's actually a patient
       if (patient && patient.role !== "patient") {
         patient = null;
       }
     } else {
       // It's a userId string like "PAT001"
-      patient = await User.findOne({ userId: patientId, role: "patient" });
+      patient = await userRepository.findByUserId(patientId);
+      // Verify it's actually a patient
+      if (patient && patient.role !== "patient") {
+        patient = null;
+      }
     }
 
     if (!patient) {
@@ -114,7 +118,7 @@ exports.createMedicalRecord = async (req, res, next) => {
     }
 
     const medicalRecord = await MedicalRecord.create({
-      patientId: patient._id, // Use ObjectId from found patient
+      patientId: patient.id, // Use id from found patient
       doctorId: req.user._id,
       hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       recordType,
@@ -164,21 +168,27 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       });
     }
 
-    // Find patient by either userId or _id
+    // Find patient by either userId or id
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      // Try finding by ObjectId first
-      patient = await User.findById(patientId).select("_id role");
+    if (patientId.match(/^[0-9]+$/)) {
+      // Try finding by id first
+      patient = await userRepository.findById(patientId);
       // Verify it's actually a patient
       if (patient && patient.role !== "patient") {
         patient = null;
       }
       // If not found or wrong role, try userId
       if (!patient) {
-        patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
+        patient = await userRepository.findByUserId(patientId);
+        if (patient && patient.role !== "patient") {
+          patient = null;
+        }
       }
     } else {
-      patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
+      patient = await userRepository.findByUserId(patientId);
+      if (patient && patient.role !== "patient") {
+        patient = null;
+      }
     }
     if (!patient) {
       return res.status(404).json({
@@ -188,7 +198,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     }
 
     // Build query
-    const query = { patientId: patient._id };
+    const query = { patientId: patient.id };
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
@@ -346,19 +356,25 @@ exports.getPatientHistory = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
-    // Find patient by either userId or _id
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Find patient by either userId or id
+    let patient;
+    if (patientId.match(/^[0-9]+$/)) {
+      // Try finding by id first
+      patient = await userRepository.findById(patientId);
+      // If not found, try userId
+      if (!patient) {
+        patient = await userRepository.findByUserId(patientId);
+      }
     } else {
-      query.userId = patientId;
+      patient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query);
-    if (!patient) {
+    
+    // Verify it's actually a patient
+    if (!patient || patient.role !== "patient") {
       return next(new AppError("Patient not found", 404));
     }
 
-    const historyQuery = { patientId: patient._id };
+    const historyQuery = { patientId: patient.id };
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
       historyQuery.hospitalId = req.hospitalId;

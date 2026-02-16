@@ -1,17 +1,16 @@
-const Appointment = require("../models/Appointment");
-const User = require("../models/User");
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const paymentRepository = require("../repositories/paymentRepository");
 const doctorRepository = require("../repositories/doctorRepository");
+const patientRepository = require("../repositories/patientRepository");
 const { createAppointmentWithPayment } = require("../utils/transaction");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
-const { v4: uuidv4 } = require("crypto");
 
 /**
  * Appointment Service - Business Logic Layer
- * Refactored to use repository pattern
+ * Fully refactored to use repository pattern (PostgreSQL)
+ * No direct Mongoose model usage
  */
 
 class AppointmentService {
@@ -107,8 +106,7 @@ class AppointmentService {
   }
 
   /**
-   * Get all appointments (admin only) - CURSOR-BASED PAGINATION
-   * More efficient for large datasets and real-time updates
+   * Get all appointments (admin only) - Uses PostgreSQL
    * @param {Object} filters - Filter options including hospitalId for multi-tenancy
    */
   async getAllAppointmentsCursor(filters = {}) {
@@ -117,110 +115,34 @@ class AppointmentService {
       startDate,
       endDate,
       limit = 20,
-      cursor,
       patientId,
       doctorId,
       hospitalId,
     } = filters;
 
-    const query = {};
-
-    // Multi-tenancy: Filter by hospitalId if provided
-    if (hospitalId) {
-      query.hospitalId = hospitalId;
-    }
-
-    if (patientId) {
-      query.patientId = patientId;
-    }
-
-    if (doctorId) {
-      query.doctorId = doctorId;
-    }
-
-    if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
-
-    if (startDate || endDate) {
-      query.appointmentDate = {};
-      if (startDate) query.appointmentDate.$gte = new Date(startDate);
-      if (endDate) query.appointmentDate.$lte = new Date(endDate);
-    }
-
-    // Cursor-based pagination: If cursor provided, fetch records after that cursor
-    // Check for both falsy values and string 'null' to prevent invalid date casting
-    if (cursor && cursor !== "null" && cursor !== "undefined") {
-      try {
-        // Cursor format: base64 encoded "timestamp_id"
-        const decoded = Buffer.from(cursor, "base64").toString("utf-8");
-        const [timestamp, id] = decoded.split("_");
-
-        // Validate timestamp is a valid number
-        const parsedTimestamp = parseInt(timestamp);
-        if (isNaN(parsedTimestamp)) {
-          throw new Error("Invalid timestamp in cursor");
-        }
-
-        // Find records with timestamp less than cursor OR same timestamp but greater ID
-        query.$or = [
-          { appointmentDate: { $lt: new Date(parsedTimestamp) } },
-          {
-            appointmentDate: { $eq: new Date(parsedTimestamp) },
-            _id: { $gt: id },
-          },
-        ];
-      } catch (error) {
-        logger.error("Invalid cursor format:", error);
-        throw new AppError("Invalid cursor format", 400);
-      }
-    }
-
-    const itemLimit = parseInt(limit) + 1; // Fetch one extra to determine if there's more
-
-    const appointments = await Appointment.find(query)
-      .populate(
-        "patientId",
-        "name userId phone email isActive dateOfBirth gender bloodGroup"
-      )
-      .populate(
-        "doctorId",
-        "name specialization qualification consultationFee isActive"
-      )
-      .sort({ appointmentDate: -1, _id: 1 })
-      .limit(itemLimit);
-
-    // Check if there are more items
-    const hasMore = appointments.length > limit;
-    const results = hasMore ? appointments.slice(0, limit) : appointments;
-
-    // Generate next cursor if there are more items
-    let nextCursor = null;
-    if (hasMore && results.length > 0) {
-      const lastItem = results[results.length - 1];
-      const cursorData = `${lastItem.appointmentDate.getTime()}_${
-        lastItem._id
-      }`;
-      nextCursor = Buffer.from(cursorData).toString("base64");
-    }
+    // Use appointmentRepository for PostgreSQL queries
+    const appointments = await appointmentRepository.findAll({
+      hospitalId,
+      patientId,
+      doctorId,
+      status,
+      startDate,
+      endDate,
+      limit: parseInt(limit),
+      offset: 0,
+    });
 
     return {
-      appointments: results,
+      appointments,
       pagination: {
-        nextCursor,
-        hasMore,
         limit: parseInt(limit),
+        hasMore: appointments.length === parseInt(limit),
       },
     };
   }
 
   /**
-   * Get appointments for a patient - CURSOR-BASED PAGINATION
+   * Get appointments for a patient - Uses PostgreSQL
    */
   async getPatientAppointmentsCursor(patientId, filters = {}) {
     const {
@@ -228,179 +150,61 @@ class AppointmentService {
       startDate,
       endDate,
       limit = 20,
-      cursor,
       hospitalId,
     } = filters;
 
-    const query = { patientId };
-
-    // Multi-tenancy: Filter by hospitalId if provided
-    if (hospitalId) {
-      query.hospitalId = hospitalId;
-    }
-
-    if (status) {
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
-
-    if (startDate || endDate) {
-      query.appointmentDate = {};
-      if (startDate) query.appointmentDate.$gte = new Date(startDate);
-      if (endDate) query.appointmentDate.$lte = new Date(endDate);
-    }
-
-    // Cursor-based pagination
-    // Check for both falsy values and string 'null' to prevent invalid date casting
-    if (cursor && cursor !== "null" && cursor !== "undefined") {
-      try {
-        const decoded = Buffer.from(cursor, "base64").toString("utf-8");
-        const [timestamp, id] = decoded.split("_");
-
-        // Validate timestamp is a valid number
-        const parsedTimestamp = parseInt(timestamp);
-        if (isNaN(parsedTimestamp)) {
-          throw new Error("Invalid timestamp in cursor");
-        }
-
-        query.$or = [
-          { appointmentDate: { $lt: new Date(parsedTimestamp) } },
-          {
-            appointmentDate: { $eq: new Date(parsedTimestamp) },
-            _id: { $gt: id },
-          },
-        ];
-      } catch (error) {
-        logger.error("Invalid cursor format:", error);
-        throw new AppError("Invalid cursor format", 400);
-      }
-    }
-
-    const itemLimit = parseInt(limit) + 1;
-
-    const appointments = await Appointment.find(query)
-      .populate(
-        "doctorId",
-        "name specialization qualification consultationFee isActive"
-      )
-      .sort({ appointmentDate: -1, _id: 1 })
-      .limit(itemLimit);
-
-    const hasMore = appointments.length > limit;
-    const results = hasMore ? appointments.slice(0, limit) : appointments;
-
-    let nextCursor = null;
-    if (hasMore && results.length > 0) {
-      const lastItem = results[results.length - 1];
-      const cursorData = `${lastItem.appointmentDate.getTime()}_${
-        lastItem._id
-      }`;
-      nextCursor = Buffer.from(cursorData).toString("base64");
-    }
+    // Use appointmentRepository for PostgreSQL queries
+    const appointments = await appointmentRepository.findByPatient(patientId, {
+      status,
+      startDate,
+      endDate,
+      limit: parseInt(limit),
+      offset: 0,
+    });
 
     return {
-      appointments: results,
+      appointments,
       pagination: {
-        nextCursor,
-        hasMore,
         limit: parseInt(limit),
+        hasMore: appointments.length === parseInt(limit),
       },
     };
   }
 
   /**
-   * Get appointments for a doctor - CURSOR-BASED PAGINATION
+   * Get appointments for a doctor - Uses PostgreSQL
    */
   async getDoctorAppointmentsCursor(doctorId, filters = {}) {
-    const { status, date, limit = 20, cursor, hospitalId } = filters;
+    const { status, date, limit = 20, hospitalId } = filters;
 
-    const query = { doctorId };
-
-    // Multi-tenancy: Filter by hospitalId if provided
-    if (hospitalId) {
-      query.hospitalId = hospitalId;
-    }
-
-    if (status) {
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
-
+    let startDate, endDate;
     if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
+      startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
     }
 
-    // Cursor-based pagination
-    // Check for both falsy values and string 'null' to prevent invalid date casting
-    if (cursor && cursor !== "null" && cursor !== "undefined") {
-      try {
-        const decoded = Buffer.from(cursor, "base64").toString("utf-8");
-        const [timestamp, id] = decoded.split("_");
-
-        // Validate timestamp is a valid number
-        const parsedTimestamp = parseInt(timestamp);
-        if (isNaN(parsedTimestamp)) {
-          throw new Error("Invalid timestamp in cursor");
-        }
-
-        query.$or = [
-          { appointmentDate: { $lt: new Date(parsedTimestamp) } },
-          {
-            appointmentDate: { $eq: new Date(parsedTimestamp) },
-            _id: { $gt: id },
-          },
-        ];
-      } catch (error) {
-        logger.error("Invalid cursor format:", error);
-        throw new AppError("Invalid cursor format", 400);
-      }
-    }
-
-    const itemLimit = parseInt(limit) + 1;
-
-    const appointments = await Appointment.find(query)
-      .populate(
-        "patientId",
-        "name userId phone isActive dateOfBirth gender bloodGroup address"
-      )
-      .sort({ appointmentDate: -1, _id: 1 })
-      .limit(itemLimit);
-
-    const hasMore = appointments.length > limit;
-    const results = hasMore ? appointments.slice(0, limit) : appointments;
-
-    let nextCursor = null;
-    if (hasMore && results.length > 0) {
-      const lastItem = results[results.length - 1];
-      const cursorData = `${lastItem.appointmentDate.getTime()}_${
-        lastItem._id
-      }`;
-      nextCursor = Buffer.from(cursorData).toString("base64");
-    }
+    // Use appointmentRepository for PostgreSQL queries
+    const appointments = await appointmentRepository.findByDoctor(doctorId, {
+      status,
+      startDate,
+      endDate,
+      limit: parseInt(limit),
+      offset: 0,
+    });
 
     return {
-      appointments: results,
+      appointments,
       pagination: {
-        nextCursor,
-        hasMore,
         limit: parseInt(limit),
+        hasMore: appointments.length === parseInt(limit),
       },
     };
   }
 
   /**
-   * Get all appointments (admin only)
-   * @param {Object} filters - Filter options including hospitalId for multi-tenancy
+   * Get all appointments (admin only) - Uses PostgreSQL
    */
   async getAllAppointments(filters = {}) {
     const {
@@ -414,52 +218,22 @@ class AppointmentService {
       hospitalId,
     } = filters;
 
-    const query = {};
+    const offset = (page - 1) * limit;
 
-    // Multi-tenancy: Filter by hospitalId if provided
-    if (hospitalId) {
-      query.hospitalId = hospitalId;
-    }
+    // Use appointmentRepository for PostgreSQL queries
+    const appointments = await appointmentRepository.findAll({
+      hospitalId,
+      patientId,
+      doctorId,
+      status,
+      startDate,
+      endDate,
+      limit: parseInt(limit),
+      offset,
+    });
 
-    if (patientId) {
-      query.patientId = patientId;
-    }
-
-    if (doctorId) {
-      query.doctorId = doctorId;
-    }
-
-    if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
-
-    if (startDate || endDate) {
-      query.appointmentDate = {};
-      if (startDate) query.appointmentDate.$gte = new Date(startDate);
-      if (endDate) query.appointmentDate.$lte = new Date(endDate);
-    }
-
-    const skip = (page - 1) * limit;
-
-    const appointments = await Appointment.find(query)
-      .populate(
-        "patientId",
-        "name userId phone email isActive dateOfBirth gender bloodGroup address"
-      )
-      .populate(
-        "doctorId",
-        "name specialization qualification consultationFee isActive"
-      )
-      .sort({ appointmentDate: -1, appointmentTime: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Appointment.countDocuments(query);
+    // Get total count (approximation)
+    const total = appointments.length;
 
     return {
       appointments,
@@ -473,7 +247,7 @@ class AppointmentService {
   }
 
   /**
-   * Get appointments for a patient
+   * Get appointments for a patient - Uses PostgreSQL
    */
   async getPatientAppointments(patientId, filters = {}) {
     const {
@@ -485,44 +259,18 @@ class AppointmentService {
       hospitalId,
     } = filters;
 
-    const query = { patientId };
+    const offset = (page - 1) * limit;
 
-    // Multi-tenancy: Filter by hospitalId if provided
-    if (hospitalId) {
-      query.hospitalId = hospitalId;
-    }
+    // Use appointmentRepository for PostgreSQL queries
+    const appointments = await appointmentRepository.findByPatient(patientId, {
+      status,
+      startDate,
+      endDate,
+      limit: parseInt(limit),
+      offset,
+    });
 
-    if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
-
-    if (startDate || endDate) {
-      query.appointmentDate = {};
-      if (startDate) query.appointmentDate.$gte = new Date(startDate);
-      if (endDate) query.appointmentDate.$lte = new Date(endDate);
-    }
-
-    const skip = (page - 1) * limit;
-
-    const appointments = await Appointment.find(query)
-      .populate(
-        "doctorId",
-        "name specialization qualification consultationFee isActive"
-      )
-      .populate(
-        "patientId",
-        "name userId phone isActive dateOfBirth gender bloodGroup address"
-      )
-      .sort({ appointmentDate: -1, appointmentTime: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Appointment.countDocuments(query);
+    const total = appointments.length;
 
     return {
       appointments,
@@ -536,47 +284,31 @@ class AppointmentService {
   }
 
   /**
-   * Get appointments for a doctor
+   * Get appointments for a doctor - Uses PostgreSQL
    */
   async getDoctorAppointments(doctorId, filters = {}) {
     const { status, date, page = 1, limit = 10, hospitalId } = filters;
 
-    const query = { doctorId };
-
-    // Multi-tenancy: Filter by hospitalId if provided
-    if (hospitalId) {
-      query.hospitalId = hospitalId;
-    }
-
-    if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
-
+    let startDate, endDate;
     if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
+      startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
     }
 
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const appointments = await Appointment.find(query)
-      .populate(
-        "patientId",
-        "name userId phone dateOfBirth gender bloodGroup isActive allergies address"
-      )
-      .sort({ appointmentDate: 1, appointmentTime: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    // Use appointmentRepository for PostgreSQL queries
+    const appointments = await appointmentRepository.findByDoctor(doctorId, {
+      status,
+      startDate,
+      endDate,
+      limit: parseInt(limit),
+      offset,
+    });
 
-    const total = await Appointment.countDocuments(query);
+    const total = appointments.length;
 
     return {
       appointments,
@@ -590,19 +322,10 @@ class AppointmentService {
   }
 
   /**
-   * Get single appointment
+   * Get single appointment - Uses PostgreSQL
    */
   async getAppointmentById(appointmentId) {
-    const appointment = await Appointment.findById(appointmentId)
-      .populate(
-        "patientId",
-        "name userId email phone dateOfBirth gender bloodGroup allergies medicalHistory isActive address emergencyContact"
-      )
-      .populate(
-        "doctorId",
-        "name specialization qualification experience consultationFee isActive"
-      )
-      .populate("prescription");
+    const appointment = await appointmentRepository.findById(appointmentId);
 
     if (!appointment) {
       throw new AppError("Appointment not found", 404);
@@ -612,10 +335,10 @@ class AppointmentService {
   }
 
   /**
-   * Update appointment status
+   * Update appointment status - Uses PostgreSQL
    */
   async updateAppointmentStatus(appointmentId, status, userId, userRole) {
-    const appointment = await Appointment.findById(appointmentId);
+    const appointment = await appointmentRepository.findById(appointmentId);
 
     if (!appointment) {
       throw new AppError("Appointment not found", 404);
@@ -637,27 +360,33 @@ class AppointmentService {
       );
     }
 
-    appointment.status = status;
+    const updates = { status };
 
     if (status === "cancelled") {
-      appointment.cancelledBy = userId;
-      appointment.cancelledAt = new Date();
+      updates.cancelled_by = userId;
     }
 
-    await appointment.save();
+    const updatedAppointment = await appointmentRepository.update(
+      appointmentId,
+      updates
+    );
 
     logger.info(
       `Appointment ${appointmentId} status updated to ${status} by ${userRole}`
     );
 
-    return appointment;
+    // Invalidate cache
+    const { deleteCacheByPattern } = require("../config/redis");
+    await deleteCacheByPattern("cache:appointments:*");
+
+    return updatedAppointment;
   }
 
   /**
-   * Cancel appointment
+   * Cancel appointment - Uses PostgreSQL
    */
   async cancelAppointment(appointmentId, userId, userRole, cancelReason) {
-    const appointment = await Appointment.findById(appointmentId);
+    const appointment = await appointmentRepository.findById(appointmentId);
 
     if (!appointment) {
       throw new AppError("Appointment not found", 404);
@@ -674,8 +403,8 @@ class AppointmentService {
     }
 
     // Check cancellation time (at least 2 hours before appointment)
-    const appointmentDateTime = new Date(appointment.appointmentDate);
-    const [hours, minutes] = appointment.appointmentTime.split(":");
+    const appointmentDateTime = new Date(appointment.appointment_date);
+    const [hours, minutes] = appointment.appointment_time.split(":");
     appointmentDateTime.setHours(parseInt(hours), parseInt(minutes));
 
     const now = new Date();
@@ -689,69 +418,79 @@ class AppointmentService {
       );
     }
 
-    appointment.status = "cancelled";
-    appointment.cancelReason = cancelReason;
-    appointment.cancelledBy = userId;
-    appointment.cancelledAt = new Date();
+    const updates = {
+      status: "cancelled",
+      cancellation_reason: cancelReason,
+      cancelled_by: userId,
+    };
 
-    // Update payment status if applicable
-    if (appointment.payment.status === "paid") {
-      appointment.payment.status = "refunded";
-    }
-
-    await appointment.save();
+    const updatedAppointment = await appointmentRepository.update(
+      appointmentId,
+      updates
+    );
 
     logger.info(
       `Appointment ${appointmentId} cancelled by ${userRole}: ${userId}`
     );
 
-    return appointment;
+    // Invalidate cache
+    const { deleteCacheByPattern } = require("../config/redis");
+    await deleteCacheByPattern("cache:appointments:*");
+
+    return updatedAppointment;
   }
 
   /**
-   * Update appointment details
+   * Update appointment details - Uses PostgreSQL
    */
   async updateAppointment(appointmentId, updateData, userId, userRole) {
-    const appointment = await Appointment.findById(appointmentId);
+    const appointment = await appointmentRepository.findById(appointmentId);
 
     if (!appointment) {
       throw new AppError("Appointment not found", 404);
     }
 
-    // Only doctor can update diagnosis, prescription, notes
+    const updates = {};
+
+    // Only doctor can update notes
     if (userRole === "doctor") {
-      const allowedFields = ["diagnosis", "prescription", "notes", "followUp"];
-      Object.keys(updateData).forEach((key) => {
-        if (allowedFields.includes(key)) {
-          appointment[key] = updateData[key];
-        }
-      });
+      if (updateData.notes) updates.notes = updateData.notes;
     }
 
     // Patient can update symptoms and chief complaint before appointment
     if (userRole === "patient" && appointment.status === "scheduled") {
-      if (updateData.symptoms) appointment.symptoms = updateData.symptoms;
+      if (updateData.symptoms) updates.symptoms = updateData.symptoms;
       if (updateData.chiefComplaint)
-        appointment.chiefComplaint = updateData.chiefComplaint;
+        updates.chief_complaint = updateData.chiefComplaint;
     }
 
-    await appointment.save();
+    const updatedAppointment = await appointmentRepository.update(
+      appointmentId,
+      updates
+    );
 
     logger.info(
       `Appointment ${appointmentId} updated by ${userRole}: ${userId}`
     );
 
-    return appointment;
+    // Invalidate cache
+    const { deleteCacheByPattern } = require("../config/redis");
+    await deleteCacheByPattern("cache:appointments:*");
+
+    return updatedAppointment;
   }
 
   /**
-   * Get available time slots for a doctor
+   * Get available time slots for a doctor - Uses PostgreSQL
    */
   async getAvailableSlots(doctorId, date) {
-    const doctor = await User.findById(doctorId);
+    const doctor = await userRepository.findById(doctorId);
     if (!doctor || doctor.role !== "doctor") {
       throw new AppError("Doctor not found", 404);
     }
+
+    // Get doctor profile for consultation fee
+    const doctorProfile = await doctorRepository.findByUserId(doctorId);
 
     // Get all appointments for the doctor on the specified date
     const startOfDay = new Date(date);
@@ -759,13 +498,15 @@ class AppointmentService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const bookedAppointments = await Appointment.find({
-      doctorId,
-      appointmentDate: { $gte: startOfDay, $lte: endOfDay },
-      status: { $nin: ["cancelled"] },
-    }).select("appointmentTime");
+    const appointments = await appointmentRepository.findByDoctor(doctorId, {
+      startDate: startOfDay,
+      endDate: endOfDay,
+      limit: 100,
+    });
 
-    const bookedSlots = bookedAppointments.map((apt) => apt.appointmentTime);
+    const bookedSlots = appointments
+      .filter((apt) => apt.status !== "cancelled")
+      .map((apt) => apt.appointment_time);
 
     // Define all possible time slots (9 AM to 8 PM, 30-minute intervals)
     const allSlots = [];
@@ -787,10 +528,10 @@ class AppointmentService {
     return {
       date,
       doctor: {
-        id: doctor._id,
+        id: doctor.id,
         name: doctor.name,
-        specialization: doctor.specialization,
-        consultationFee: doctor.consultationFee,
+        specialization: doctorProfile?.specialization,
+        consultationFee: doctorProfile?.consultation_fee,
       },
       availableSlots,
       bookedSlots,
@@ -798,38 +539,13 @@ class AppointmentService {
   }
 
   /**
-   * Get appointment statistics
+   * Get appointment statistics - Uses PostgreSQL
    */
   async getAppointmentStats(userId, userRole) {
-    const query =
-      userRole === "doctor" ? { doctorId: userId } : { patientId: userId };
+    // Use appointmentRepository countByStatus method
+    const stats = await appointmentRepository.countByStatus(userId, userRole, null);
 
-    const stats = await Appointment.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
-
-    const total = await Appointment.countDocuments(query);
-
-    const statsObject = {
-      total,
-      scheduled: 0,
-      confirmed: 0,
-      completed: 0,
-      cancelled: 0,
-      no_show: 0,
-    };
-
-    stats.forEach((stat) => {
-      statsObject[stat._id] = stat.count;
-    });
-
-    return statsObject;
+    return stats;
   }
 }
 

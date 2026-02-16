@@ -1,8 +1,8 @@
 const doctorService = require("../services/doctorService");
-const Appointment = require("../models/Appointment");
-const Prescription = require("../models/Prescription");
-const User = require("../models/User");
-const Schedule = require("../models/Schedule");
+const appointmentRepository = require("../repositories/appointmentRepository");
+const prescriptionRepository = require("../repositories/prescriptionRepository");
+const userRepository = require("../repositories/userRepository");
+const scheduleRepository = require("../repositories/scheduleRepository");
 const logger = require("../utils/logger");
 
 /**
@@ -105,102 +105,91 @@ exports.getDoctorStats = async (req, res, next) => {
  */
 exports.getDoctorDashboard = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Build query base with hospitalId filter
-    const baseQuery = { doctorId };
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      baseQuery.hospitalId = req.hospitalId;
-    }
+    const baseFilters = { 
+      doctorId,
+      hospitalId: (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : null 
+    };
 
     // Run all queries in parallel
     const [
       todaysAppointments,
       completedToday,
-      totalPatients,
-      upcomingAppointments,
+      totalPatientsData,
+      upcomingAppointmentsCount,
       recentPrescriptions,
     ] = await Promise.all([
       // Today's appointments
-      Appointment.find({
-        ...baseQuery,
-        appointmentDate: { $gte: today, $lt: tomorrow },
-      })
-        .populate(
-          "patientId",
-          "name userId age gender phone isActive dateOfBirth bloodGroup"
-        )
-        .sort({ appointmentDate: 1 })
-        .lean(),
+      appointmentRepository.findByDoctor(doctorId, {
+        ...baseFilters,
+        startDate: today,
+        endDate: tomorrow,
+      }),
       // Completed today
-      Appointment.countDocuments({
-        ...baseQuery,
-        appointmentDate: { $gte: today, $lt: tomorrow },
-        status: "completed",
+      appointmentRepository.countByStatus(doctorId, 'completed', {
+        startDate: today,
+        endDate: tomorrow,
+        hospitalId: baseFilters.hospitalId,
       }),
       // Total unique patients
-      Appointment.distinct("patientId", baseQuery),
+      appointmentRepository.findByDoctor(doctorId, baseFilters),
       // Upcoming appointments (next 7 days)
-      Appointment.countDocuments({
-        ...baseQuery,
-        appointmentDate: { $gte: today },
-        status: { $in: ["scheduled", "confirmed"] },
+      appointmentRepository.countByStatus(doctorId, ['scheduled', 'confirmed'], {
+        startDate: today,
+        hospitalId: baseFilters.hospitalId,
       }),
       // Recent prescriptions
-      Prescription.find(
-        req.hospitalId && req.user.role !== "super_admin"
-          ? { doctorId, hospitalId: req.hospitalId }
-          : { doctorId }
-      )
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .populate(
-          "patientId",
-          "name userId isActive dateOfBirth gender bloodGroup"
-        )
-        .lean(),
+      prescriptionRepository.findByDoctor(doctorId, {
+        limit: 5,
+        hospitalId: baseFilters.hospitalId,
+      }),
     ]);
+
+    // Calculate total unique patients from appointments
+    const uniquePatientIds = new Set(todaysAppointments.map(apt => apt.patient_id));
+    const totalPatients = Array.from(uniquePatientIds);
 
     const schedule = {
       totalAppointments: todaysAppointments.length,
       completed: completedToday,
       pending: todaysAppointments.length - completedToday,
       nextPatient:
-        todaysAppointments.find((apt) => apt.status !== "completed")?.patientId
-          ?.name || "No pending",
+        todaysAppointments.find((apt) => apt.status !== "completed")?.patient_name || "No pending",
       nextTime: todaysAppointments.find((apt) => apt.status !== "completed")
-        ?.appointmentDate
+        ?.appointment_date
         ? new Date(
             todaysAppointments.find(
               (apt) => apt.status !== "completed"
-            ).appointmentDate
+            ).appointment_date
           ).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
         : "N/A",
     };
 
     // Format appointments for frontend
     const formattedAppointments = todaysAppointments.map((apt) => {
-      const age = apt.patientId?.dateOfBirth
-        ? calculateAge(apt.patientId.dateOfBirth)
+      const age = apt.date_of_birth
+        ? calculateAge(apt.date_of_birth)
         : null;
 
       return {
-        _id: apt._id,
-        id: apt._id,
-        time: new Date(apt.appointmentDate).toLocaleTimeString("en-IN", {
+        _id: apt.id,
+        id: apt.id,
+        time: new Date(apt.appointment_date).toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        patientName: apt.patientId?.name || "Unknown",
-        patientId: apt.patientId?.userId || apt.patientId?._id,
+        patientName: apt.patient_name || "Unknown",
+        patientId: apt.patient_user_id || apt.patient_id,
         age: age !== null ? age : "N/A",
         reason: apt.reason || "Consultation",
         status: apt.status,
-        type: apt.appointmentType || "in-person",
+        type: apt.appointment_type || "in-person",
       };
     });
 
@@ -211,15 +200,15 @@ exports.getDoctorDashboard = async (req, res) => {
         todaysAppointments: formattedAppointments,
         stats: {
           totalPatients: totalPatients.length,
-          upcomingAppointments,
+          upcomingAppointments: upcomingAppointmentsCount,
           prescriptionsToday: recentPrescriptions.filter(
-            (p) => new Date(p.createdAt) >= today
+            (p) => new Date(p.created_at) >= today
           ).length,
         },
         recentPrescriptions: recentPrescriptions.map((p) => ({
-          id: p._id,
-          patientName: p.patientId?.name || "Unknown",
-          date: p.createdAt,
+          id: p.id,
+          patientName: p.patient_name || "Unknown",
+          date: p.created_at,
           medicationsCount: p.medications?.length || 0,
         })),
       },
@@ -245,7 +234,7 @@ exports.getDoctorDashboard = async (req, res) => {
  */
 exports.getTodaysAppointments = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { filter = "all" } = req.query;
 
     const today = new Date();
@@ -253,50 +242,45 @@ exports.getTodaysAppointments = async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    let query = {
+    const filters = {
       doctorId,
-      appointmentDate: { $gte: today, $lt: tomorrow },
+      startDate: today,
+      endDate: tomorrow,
     };
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
 
     // Apply filter
     if (filter === "completed") {
-      query.status = "completed";
+      filters.status = "completed";
     } else if (filter === "pending") {
-      query.status = { $in: ["scheduled", "confirmed"] };
+      filters.status = ["scheduled", "confirmed"];
     }
 
-    const appointments = await Appointment.find(query)
-      .populate(
-        "patientId",
-        "name userId age gender phone email isActive dateOfBirth bloodGroup address"
-      )
-      .sort({ appointmentDate: 1 })
-      .lean();
+    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
 
     res.json({
       success: true,
       count: appointments.length,
       data: appointments.map((apt) => ({
-        _id: apt._id,
-        id: apt._id,
-        time: new Date(apt.appointmentDate).toLocaleTimeString("en-IN", {
+        _id: apt.id,
+        id: apt.id,
+        time: new Date(apt.appointment_date).toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        patientName: apt.patientId?.name || "Unknown",
-        patientId: apt.patientId?.userId || apt.patientId?._id,
-        patientPhoto: apt.patientId?.avatar || null,
-        age: apt.patientId?.age || "N/A",
-        gender: apt.patientId?.gender || "N/A",
-        phone: apt.patientId?.phone || "N/A",
+        patientName: apt.patient_name || "Unknown",
+        patientId: apt.patient_user_id || apt.patient_id,
+        patientPhoto: apt.patient_avatar || null,
+        age: apt.patient_age || "N/A",
+        gender: apt.patient_gender || "N/A",
+        phone: apt.patient_phone || "N/A",
         reason: apt.reason || "Consultation",
         status: apt.status,
-        type: apt.appointmentType || "in-person",
+        type: apt.appointment_type || "in-person",
       })),
     });
   } catch (error) {
@@ -320,54 +304,47 @@ exports.getTodaysAppointments = async (req, res) => {
  */
 exports.getUpcomingAppointments = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { page = 1, limit = 10 } = req.query;
 
     const tomorrow = new Date();
     tomorrow.setHours(0, 0, 0, 0);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const query = {
+    const filters = {
       doctorId,
-      appointmentDate: { $gte: tomorrow },
-      status: { $in: ["scheduled", "confirmed"] },
+      startDate: tomorrow,
+      status: ["scheduled", "confirmed"],
+      page: parseInt(page),
+      limit: parseInt(limit),
     };
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const [appointments, total] = await Promise.all([
-      Appointment.find(query)
-        .populate(
-          "patientId",
-          "name userId age gender phone isActive dateOfBirth bloodGroup address"
-        )
-        .sort({ appointmentDate: 1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(),
-      Appointment.countDocuments(query),
-    ]);
+    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const total = await appointmentRepository.countByStatus(doctorId, ["scheduled", "confirmed"], {
+      startDate: tomorrow,
+      hospitalId: filters.hospitalId,
+    });
 
     res.json({
       success: true,
       data: appointments.map((apt) => ({
-        _id: apt._id,
-        id: apt._id,
-        date: apt.appointmentDate,
-        time: new Date(apt.appointmentDate).toLocaleTimeString("en-IN", {
+        _id: apt.id,
+        id: apt.id,
+        date: apt.appointment_date,
+        time: new Date(apt.appointment_date).toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",
         }),
-        patientName: apt.patientId?.name || "Unknown",
-        patientId: apt.patientId?.userId || apt.patientId?._id,
+        patientName: apt.patient_name || "Unknown",
+        patientId: apt.patient_user_id || apt.patient_id,
         reason: apt.reason || "Consultation",
         status: apt.status,
-        type: apt.appointmentType || "in-person",
+        type: apt.appointment_type || "in-person",
       })),
       pagination: {
         page: parseInt(page),
@@ -397,7 +374,7 @@ exports.getUpcomingAppointments = async (req, res) => {
  */
 exports.searchPatients = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { q } = req.query;
 
     logger.info("Search patients request:", {
@@ -413,34 +390,30 @@ exports.searchPatients = async (req, res) => {
       });
     }
 
-    // Sanitize search query for regex
-    const sanitizedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
     // Find patients who have appointments with this doctor
-    const appointmentQuery = { doctorId };
+    const filters = { doctorId };
     if (req.hospitalId && req.user.role !== "super_admin") {
-      appointmentQuery.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
-    const patientIds = await Appointment.distinct(
-      "patientId",
-      appointmentQuery
-    );
+    
+    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const patientIds = [...new Set(appointments.map(apt => apt.patient_id))];
 
     logger.info("Found patient IDs:", { patientIds, count: patientIds.length });
 
-    const patients = await User.find({
-      _id: { $in: patientIds },
-      $or: [
-        { name: { $regex: sanitizedQuery, $options: "i" } },
-        { userId: { $regex: sanitizedQuery, $options: "i" } },
-        { phone: { $regex: sanitizedQuery, $options: "i" } },
-      ],
-    })
-      .select(
-        "name userId age gender phone email dateOfBirth isActive bloodGroup address allergies medicalHistory currentMedications emergencyContact"
-      )
-      .limit(10)
-      .lean({ virtuals: true });
+    // Search patients by name, userId, or phone
+    const patients = [];
+    for (const patientId of patientIds) {
+      const patient = await userRepository.findById(patientId);
+      if (patient && (
+        patient.name?.toLowerCase().includes(q.toLowerCase()) ||
+        patient.user_id?.toLowerCase().includes(q.toLowerCase()) ||
+        patient.phone?.includes(q)
+      )) {
+        patients.push(patient);
+        if (patients.length >= 10) break;
+      }
+    }
 
     logger.info("Search results:", { count: patients.length, patients });
 
@@ -469,7 +442,7 @@ exports.searchPatients = async (req, res) => {
  */
 exports.getPatientDetails = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { patientId } = req.params;
 
     logger.info("Get patient details request:", {
@@ -479,17 +452,17 @@ exports.getPatientDetails = async (req, res) => {
     });
 
     // Verify doctor has appointments with this patient
-    const appointmentQuery = {
+    const filters = {
       doctorId,
       patientId,
     };
     if (req.hospitalId && req.user.role !== "super_admin") {
-      appointmentQuery.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
 
-    const hasAppointment = await Appointment.findOne(appointmentQuery).lean();
+    const patientAppointments = await appointmentRepository.findByDoctor(doctorId, filters);
 
-    if (!hasAppointment) {
+    if (!patientAppointments || patientAppointments.length === 0) {
       return res.status(403).json({
         success: false,
         message: "You do not have access to this patient's records",
@@ -497,11 +470,7 @@ exports.getPatientDetails = async (req, res) => {
     }
 
     // Get patient details
-    const patient = await User.findById(patientId)
-      .select(
-        "name userId age gender phone email dateOfBirth isActive bloodGroup address allergies medicalHistory currentMedications emergencyContact avatar"
-      )
-      .lean({ virtuals: true });
+    const patient = await userRepository.findById(patientId);
 
     if (!patient) {
       return res.status(404).json({
@@ -510,16 +479,10 @@ exports.getPatientDetails = async (req, res) => {
       });
     }
 
-    // Get appointment history
-    const appointments = await Appointment.find(appointmentQuery)
-      .select(
-        "appointmentDate appointmentTime status type chiefComplaint reason"
-      )
-      .sort({ appointmentDate: -1 })
-      .limit(10)
-      .lean();
+    // Get appointment history (already fetched above)
+    const appointments = patientAppointments.slice(0, 10);
 
-    // Get medical records
+    // Get medical records (note: medical record repository not available, keeping this as TODO)
     const MedicalRecord = require("../models/MedicalRecord");
     const medicalRecordsQuery = {
       patientId,
@@ -536,19 +499,16 @@ exports.getPatientDetails = async (req, res) => {
       .lean();
 
     // Get prescriptions
-    const prescriptionsQuery = {
-      patientId,
+    const prescriptionFilters = {
       doctorId,
+      patientId,
+      limit: 10,
     };
     if (req.hospitalId && req.user.role !== "super_admin") {
-      prescriptionsQuery.hospitalId = req.hospitalId;
+      prescriptionFilters.hospitalId = req.hospitalId;
     }
 
-    const prescriptions = await Prescription.find(prescriptionsQuery)
-      .select("prescriptionDate medicines diagnosis notes")
-      .sort({ prescriptionDate: -1 })
-      .limit(10)
-      .lean();
+    const prescriptions = await prescriptionRepository.findByDoctor(doctorId, prescriptionFilters);
 
     logger.info("Patient details retrieved:", {
       patientId,
@@ -595,7 +555,7 @@ exports.updateAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, notes } = req.body;
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
 
     const validStatuses = [
       "confirmed",
@@ -611,36 +571,35 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    const appointment = await Appointment.findOne({ _id: id, doctorId });
+    const appointment = await appointmentRepository.findById(id);
 
-    if (!appointment) {
+    if (!appointment || appointment.doctor_id !== doctorId) {
       return res.status(404).json({
         success: false,
         message: "Appointment not found or unauthorized",
       });
     }
 
-    appointment.status = status;
+    const updateData = { status };
     if (notes) {
-      appointment.notes = notes;
+      updateData.notes = notes;
     }
     if (status === "completed") {
-      appointment.completedAt = new Date();
+      updateData.completed_at = new Date();
     }
 
-    await appointment.save();
+    const updatedAppointment = await appointmentRepository.update(id, updateData);
 
     logger.info("Appointment status updated", {
       appointmentId: id,
       doctorId,
-      oldStatus: appointment.status,
       newStatus: status,
     });
 
     res.json({
       success: true,
       message: "Appointment status updated",
-      data: appointment,
+      data: updatedAppointment,
     });
   } catch (error) {
     logger.error("Update appointment status error:", {
@@ -662,18 +621,20 @@ exports.updateAppointmentStatus = async (req, res) => {
  */
 exports.getDoctorProfileStats = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
 
-    const [totalPatients, completedAppointments, doctor] = await Promise.all([
-      Appointment.distinct("patientId", { doctorId }),
-      Appointment.countDocuments({ doctorId, status: "completed" }),
-      User.findById(doctorId).select("experience rating").lean(),
+    const [appointments, completedAppointments, doctor] = await Promise.all([
+      appointmentRepository.findByDoctor(doctorId, {}),
+      appointmentRepository.countByStatus(doctorId, "completed"),
+      userRepository.findById(doctorId),
     ]);
+
+    const uniquePatients = [...new Set(appointments.map(apt => apt.patient_id))];
 
     res.json({
       success: true,
       data: {
-        totalPatients: totalPatients.length,
+        totalPatients: uniquePatients.length,
         completedConsultations: completedAppointments,
         rating: doctor?.rating || 4.5,
         experienceYears: doctor?.experience || 0,
@@ -702,7 +663,7 @@ exports.registerWalkInPatient = async (req, res) => {
   try {
     const { name, age, gender, phone, bloodGroup, symptoms, address } =
       req.body;
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
 
     // Validate required fields
     if (!name || !age || !gender || !phone) {
@@ -713,9 +674,9 @@ exports.registerWalkInPatient = async (req, res) => {
     }
 
     // Check if patient with this phone already exists
-    let patient = await User.findOne({ phone, role: "patient" });
+    let patient = await userRepository.findByPhone(phone);
 
-    if (patient) {
+    if (patient && patient.role === "patient") {
       // Patient exists, return existing patient
       return res.status(200).json({
         success: true,
@@ -726,10 +687,11 @@ exports.registerWalkInPatient = async (req, res) => {
     }
 
     // Generate unique userId
-    const patientCount = await User.countDocuments({ role: "patient" });
-    const userId = `P${String(patientCount + 1).padStart(6, "0")}`;
+    const allPatients = await userRepository.findByRole("patient");
+    const userId = `P${String(allPatients.length + 1).padStart(6, "0")}`;
 
-    // Create new walk-in patient
+    // Create new walk-in patient (Note: userRepository.create not available, using User model)
+    const User = require("../models/User");
     patient = await User.create({
       name,
       userId,
@@ -753,15 +715,15 @@ exports.registerWalkInPatient = async (req, res) => {
       const minutes = String(now.getMinutes()).padStart(2, "0");
       const appointmentTime = `${hours}:${minutes}`; // e.g., "14:30"
 
-      await Appointment.create({
-        patientId: patient._id,
-        doctorId,
-        hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
-        appointmentDate: new Date(),
-        appointmentTime: appointmentTime, // HH:MM format in 24-hour
-        chiefComplaint: symptoms, // Use chiefComplaint field, not reason
-        status: "scheduled", // Use valid status: "scheduled" not "pending"
-        type: "walk-in",
+      await appointmentRepository.create({
+        patient_id: patient.id || patient._id,
+        doctor_id: doctorId,
+        hospital_id: req.hospitalId || req.user.hospitalId || "MAIN",
+        appointment_date: new Date(),
+        appointment_time: appointmentTime, // HH:MM format in 24-hour
+        chief_complaint: symptoms,
+        status: "scheduled",
+        appointment_type: "walk-in",
       });
     }
 
@@ -792,24 +754,25 @@ exports.registerWalkInPatient = async (req, res) => {
  */
 exports.getProfileStats = async (req, res, next) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
 
     // Get total unique patients treated
-    const statsQuery = {
+    const filters = {
       doctorId,
-      status: { $in: ["completed", "confirmed"] },
+      status: ["completed", "confirmed"],
     };
     if (req.hospitalId && req.user.role !== "super_admin") {
-      statsQuery.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
-    const uniquePatients = await Appointment.distinct("patientId", statsQuery);
+    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const uniquePatients = [...new Set(appointments.map(apt => apt.patient_id))];
 
     // Get years of experience from user profile
-    const doctor = await User.findById(doctorId);
+    const doctor = await userRepository.findById(doctorId);
     const yearsExperience =
-      doctor?.yearsOfExperience ||
-      (doctor?.createdAt
-        ? new Date().getFullYear() - new Date(doctor.createdAt).getFullYear()
+      doctor?.years_of_experience ||
+      (doctor?.created_at
+        ? new Date().getFullYear() - new Date(doctor.created_at).getFullYear()
         : 0);
 
     // Calculate average rating (mock for now, can be expanded)
@@ -842,7 +805,7 @@ exports.getProfileStats = async (req, res, next) => {
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const {
       name,
       specialization,
@@ -859,12 +822,9 @@ exports.updateProfile = async (req, res, next) => {
     if (phone) updateData.phone = phone;
     if (email) updateData.email = email;
     if (yearsOfExperience !== undefined)
-      updateData.yearsOfExperience = yearsOfExperience;
+      updateData.years_of_experience = yearsOfExperience;
 
-    const doctor = await User.findByIdAndUpdate(doctorId, updateData, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
+    const doctor = await userRepository.update(doctorId, updateData);
 
     res.status(200).json({
       success: true,
@@ -890,36 +850,37 @@ exports.updateProfile = async (req, res, next) => {
  */
 exports.getConsultationHistory = async (req, res, next) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { page = 1, limit = 20, status, startDate, endDate } = req.query;
 
-    const query = { doctorId };
+    const filters = { 
+      doctorId,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    };
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
 
     if (status) {
-      query.status = status;
+      filters.status = status;
     }
 
-    if (startDate || endDate) {
-      query.appointmentDate = {};
-      if (startDate) query.appointmentDate.$gte = new Date(startDate);
-      if (endDate) query.appointmentDate.$lte = new Date(endDate);
+    if (startDate) {
+      filters.startDate = new Date(startDate);
+    }
+    if (endDate) {
+      filters.endDate = new Date(endDate);
     }
 
-    const total = await Appointment.countDocuments(query);
-    const appointments = await Appointment.find(query)
-      .populate(
-        "patientId",
-        "name userId age gender phone isActive dateOfBirth bloodGroup address"
-      )
-      .sort({ appointmentDate: -1, appointmentTime: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
+    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const total = await appointmentRepository.countByStatus(doctorId, status || null, {
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      hospitalId: filters.hospitalId,
+    });
 
     res.status(200).json({
       success: true,
@@ -952,9 +913,9 @@ exports.getConsultationHistory = async (req, res, next) => {
  */
 exports.getSchedule = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
 
-    const schedules = await Schedule.find({ doctorId }).sort({ dayOfWeek: 1 });
+    const schedules = await scheduleRepository.findAvailableByDoctor(doctorId);
 
     // Create default schedule if none exists
     if (schedules.length === 0) {
@@ -967,20 +928,23 @@ exports.getSchedule = async (req, res) => {
         "saturday",
         "sunday",
       ];
-      const defaultSchedules = daysOfWeek.map((day) => ({
-        doctorId,
-        dayOfWeek: day,
-        isAvailable: ["saturday", "sunday"].includes(day) ? false : true,
-        timeSlots: ["saturday", "sunday"].includes(day)
-          ? []
-          : [
-              { startTime: "09:00", endTime: "12:00", isAvailable: true },
-              { startTime: "14:00", endTime: "17:00", isAvailable: true },
-            ],
-        breakTime: { startTime: "12:00", endTime: "14:00" },
-      }));
-
-      const created = await Schedule.insertMany(defaultSchedules);
+      const created = [];
+      for (const day of daysOfWeek) {
+        const scheduleData = {
+          doctor_id: doctorId,
+          day_of_week: day,
+          is_available: !["saturday", "sunday"].includes(day),
+          time_slots: !["saturday", "sunday"].includes(day)
+            ? [
+                { start_time: "09:00", end_time: "12:00", is_available: true },
+                { start_time: "14:00", end_time: "17:00", is_available: true },
+              ]
+            : [],
+          break_time: { start_time: "12:00", end_time: "14:00" },
+        };
+        const schedule = await scheduleRepository.create(scheduleData);
+        created.push(schedule);
+      }
       return res.status(200).json({
         success: true,
         data: created,
@@ -1010,7 +974,7 @@ exports.getSchedule = async (req, res) => {
  */
 exports.updateSchedule = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { dayOfWeek } = req.params;
     const { isAvailable, timeSlots, breakTime, notes } = req.body;
 
@@ -1032,25 +996,23 @@ exports.updateSchedule = async (req, res) => {
     }
 
     // Find and update or create new schedule
-    let schedule = await Schedule.findOne({
-      doctorId,
-      dayOfWeek: dayOfWeek.toLowerCase(),
-    });
+    let schedule = await scheduleRepository.findByDoctorAndDay(doctorId, dayOfWeek.toLowerCase());
 
     if (schedule) {
-      schedule.isAvailable =
-        isAvailable !== undefined ? isAvailable : schedule.isAvailable;
-      schedule.timeSlots = timeSlots || schedule.timeSlots;
-      schedule.breakTime = breakTime || schedule.breakTime;
-      schedule.notes = notes !== undefined ? notes : schedule.notes;
-      await schedule.save();
+      const updateData = {};
+      if (isAvailable !== undefined) updateData.is_available = isAvailable;
+      if (timeSlots) updateData.time_slots = timeSlots;
+      if (breakTime) updateData.break_time = breakTime;
+      if (notes !== undefined) updateData.notes = notes;
+      
+      schedule = await scheduleRepository.update(schedule.id, updateData);
     } else {
-      schedule = await Schedule.create({
-        doctorId,
-        dayOfWeek: dayOfWeek.toLowerCase(),
-        isAvailable: isAvailable !== undefined ? isAvailable : true,
-        timeSlots: timeSlots || [],
-        breakTime: breakTime || null,
+      schedule = await scheduleRepository.create({
+        doctor_id: doctorId,
+        day_of_week: dayOfWeek.toLowerCase(),
+        is_available: isAvailable !== undefined ? isAvailable : true,
+        time_slots: timeSlots || [],
+        break_time: breakTime || null,
         notes: notes || "",
       });
     }
@@ -1084,13 +1046,10 @@ exports.updateSchedule = async (req, res) => {
  */
 exports.toggleDayAvailability = async (req, res) => {
   try {
-    const doctorId = req.user._id;
+    const doctorId = req.user.id || req.user._id;
     const { dayOfWeek } = req.params;
 
-    const schedule = await Schedule.findOne({
-      doctorId,
-      dayOfWeek: dayOfWeek.toLowerCase(),
-    });
+    const schedule = await scheduleRepository.findByDoctorAndDay(doctorId, dayOfWeek.toLowerCase());
 
     if (!schedule) {
       return res.status(404).json({
@@ -1099,19 +1058,20 @@ exports.toggleDayAvailability = async (req, res) => {
       });
     }
 
-    schedule.isAvailable = !schedule.isAvailable;
-    await schedule.save();
+    const updatedSchedule = await scheduleRepository.update(schedule.id, {
+      is_available: !schedule.is_available,
+    });
 
     logger.info("Day availability toggled:", {
       doctorId,
       dayOfWeek,
-      isAvailable: schedule.isAvailable,
+      isAvailable: updatedSchedule.is_available,
     });
 
     res.status(200).json({
       success: true,
       message: `${dayOfWeek} availability updated`,
-      data: schedule,
+      data: updatedSchedule,
     });
   } catch (error) {
     logger.error("Toggle availability error:", {

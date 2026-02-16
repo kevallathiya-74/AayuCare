@@ -8,6 +8,7 @@ const { updateDoctorProfileSchema } = require("../validators/schemas");
 const {
   cacheDoctorList,
   cacheDoctorAvailability,
+  cacheDashboard,
   invalidateCache,
 } = require("../middleware/cache");
 
@@ -26,6 +27,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor"),
+  cacheDashboard,
   doctorController.getDoctorDashboard
 );
 
@@ -116,7 +118,7 @@ router.get(
  * @desc    Get all doctors
  * @access  Public
  */
-router.get("/", doctorController.getDoctors);
+router.get("/", cacheDoctorList, doctorController.getDoctors);
 
 /**
  * @route   GET /api/doctors/:id
@@ -158,7 +160,9 @@ router.put(
   "/me/profile",
   protect,
   authorize("doctor"),
-  doctorController.updateProfile
+  validateBody(updateDoctorProfileSchema),
+  doctorController.updateProfile,
+  invalidateCache("cache:doctors:*")
 );
 
 /**
@@ -182,6 +186,7 @@ router.get(
   "/me/schedule",
   protect,
   authorize("doctor"),
+  cacheDoctorAvailability,
   doctorController.getSchedule
 );
 
@@ -194,7 +199,8 @@ router.put(
   "/me/schedule/:dayOfWeek",
   protect,
   authorize("doctor"),
-  doctorController.updateSchedule
+  doctorController.updateSchedule,
+  invalidateCache("cache:doctors:*")
 );
 
 /**
@@ -206,7 +212,8 @@ router.patch(
   "/me/schedule/:dayOfWeek/toggle",
   protect,
   authorize("doctor"),
-  doctorController.toggleDayAvailability
+  doctorController.toggleDayAvailability,
+  invalidateCache("cache:doctors:*")
 );
 
 /**

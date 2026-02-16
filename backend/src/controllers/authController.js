@@ -1,12 +1,12 @@
 /**
  * AayuCare - Auth Controller
  * Custom endpoints extending Better Auth
- * Refactored to use repository pattern
+ * Fully refactored to use repository pattern where applicable
+ * Note: Better Auth-specific MongoDB queries remain for session management
  */
 
 const { getAuth } = require("../lib/auth");
 const { AppError } = require("../middleware/errorHandler");
-const User = require("../models/User");
 const userRepository = require("../repositories/userRepository");
 const doctorRepository = require("../repositories/doctorRepository");
 const patientRepository = require("../repositories/patientRepository");
@@ -209,7 +209,7 @@ exports.getMe = async (req, res, next) => {
 };
 
 /**
- * @desc    Update user profile
+ * @desc    Update user profile - Uses PostgreSQL
  * @route   PUT /api/auth/profile
  * @access  Private
  */
@@ -219,14 +219,6 @@ exports.updateProfile = async (req, res, next) => {
       "name",
       "phone",
       "address",
-      "avatar",
-      "specialization",
-      "qualification",
-      "experience",
-      "consultationFee",
-      "bloodGroup",
-      "allergies",
-      "currentMedications",
     ];
 
     const filteredUpdates = {};
@@ -236,19 +228,42 @@ exports.updateProfile = async (req, res, next) => {
       }
     });
 
-    const user = await User.findByIdAndUpdate(req.user.id, filteredUpdates, {
-      new: true,
-      runValidators: true,
-    });
+    // Update user in PostgreSQL
+    const user = await userRepository.update(req.user.id, filteredUpdates);
 
     if (!user) {
       return next(new AppError("User not found", 404));
     }
 
+    // Update role-specific profile
+    if (req.user.role === "doctor") {
+      const doctorUpdates = {};
+      ["specialization", "qualification", "experience", "consultation_fee"].forEach((key) => {
+        if (req.body[key] !== undefined) {
+          doctorUpdates[key] = req.body[key];
+        }
+      });
+
+      if (Object.keys(doctorUpdates).length > 0) {
+        await doctorRepository.update(req.user.id, doctorUpdates);
+      }
+    } else if (req.user.role === "patient") {
+      const patientUpdates = {};
+      ["blood_group", "allergies", "address", "emergency_contact_name", "emergency_contact_phone"].forEach((key) => {
+        if (req.body[key] !== undefined) {
+          patientUpdates[key] = req.body[key];
+        }
+      });
+
+      if (Object.keys(patientUpdates).length > 0) {
+        await patientRepository.update(req.user.id, patientUpdates);
+      }
+    }
+
     res.status(200).json({
       status: "success",
       data: {
-        user: user.toJSON(),
+        user,
       },
     });
   } catch (error) {
@@ -257,7 +272,7 @@ exports.updateProfile = async (req, res, next) => {
 };
 
 /**
- * @desc    Change password
+ * @desc    Change password - Uses PostgreSQL
  * @route   PUT /api/auth/change-password
  * @access  Private
  */
@@ -265,19 +280,25 @@ exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id).select("+password");
+    const user = await userRepository.findById(req.user.id, true);
 
     if (!user) {
       return next(new AppError("User not found", 404));
     }
 
-    const isValid = await user.comparePassword(currentPassword);
+    // Verify current password (you'll need bcrypt)
+    const bcrypt = require("bcrypt");
+    const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+
     if (!isValid) {
       return next(new AppError("Current password incorrect", 401));
     }
 
-    user.password = newPassword;
-    await user.save();
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await userRepository.update(req.user.id, { password_hash: passwordHash });
 
     res.status(200).json({
       status: "success",

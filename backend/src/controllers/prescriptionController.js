@@ -1,14 +1,15 @@
 /**
  * Prescription Controller
  * Handles prescription creation, retrieval, and management
+ * Fully refactored to use repository pattern
  */
 
-const Prescription = require("../models/Prescription");
-const User = require("../models/User");
+const prescriptionRepository = require("../repositories/prescriptionRepository");
+const userRepository = require("../repositories/userRepository");
 const logger = require("../utils/logger");
 
 /**
- * @desc    Create a new prescription
+ * @desc    Create a new prescription - Uses MongoDB via repository
  * @route   POST /api/prescriptions
  * @access  Private (Doctor/Admin)
  */
@@ -32,34 +33,25 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Verify patient exists - supports both userId and _id
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
-    } else {
-      query.userId = patientId;
-    }
-    const patient = await User.findOne(query);
-    if (!patient) {
+    // Verify patient exists using repository
+    const patient = await userRepository.findById(patientId);
+    if (!patient || patient.role !== "patient") {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
       });
     }
 
-    // Create prescription using patient ObjectId
-    const prescription = await Prescription.create({
-      patientId: patient._id,
-      doctorId: req.user._id,
-      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
+    // Create prescription using repository
+    const prescription = await prescriptionRepository.create({
+      patientId: patient.id,
+      doctorId: req.user.id || req.user._id,
+      hospitalId: req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN",
       medicines: medications,
       diagnosis,
       instructions: notes,
       followUpDate,
     });
-
-    // Populate doctor details
-    await prescription.populate("doctorId", "name specialization userId isActive");
 
     res.status(201).json({
       success: true,

@@ -1,7 +1,7 @@
 const appointmentService = require("../services/appointmentService");
 const { AppError } = require("../middleware/errorHandler");
-const User = require("../models/User");
-const Appointment = require("../models/Appointment");
+const userRepository = require("../repositories/userRepository");
+const appointmentRepository = require("../repositories/appointmentRepository");
 
 /**
  * @desc    Create new appointment
@@ -366,33 +366,35 @@ exports.getPatientAppointments = async (req, res, next) => {
       });
     }
 
-    // Find patient by either userId or _id
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Find patient by either userId or _id (UUID format)
+    let patient;
+    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      patient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      // Legacy MongoDB ObjectId lookup
+      patient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query).select("_id");
 
-    if (!patient) {
+    if (!patient || patient.role !== "patient") {
       return res.status(404).json({
         status: "error",
         message: "Patient not found",
       });
     }
 
-    // Find appointments using the ObjectId
-    const appointmentQuery = { patientId: patient._id };
+    // Build filters for appointments
+    const filters = { 
+      patientId: patient.id,
+      sortBy: "appointmentDate",
+      sortOrder: "DESC"
+    };
+    
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
-      appointmentQuery.hospitalId = req.hospitalId;
+      filters.hospitalId = req.hospitalId;
     }
     
-    const appointments = await Appointment.find(appointmentQuery)
-      .populate("doctorId", "name specialization")
-      .populate("patientId", "name email phone")
-      .sort({ appointmentDate: -1 });
+    const appointments = await appointmentRepository.findByPatient(patient.id, filters);
 
     res.status(200).json({
       status: "success",
