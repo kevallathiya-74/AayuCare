@@ -15,7 +15,12 @@ const initAuth = () => {
   if (auth) return auth;
 
   try {
-    const db = mongoose.connection.getClient().db("test");
+    // Check if MongoDB is connected
+    if (!mongoose.connection || mongoose.connection.readyState !== 1) {
+      throw new Error("MongoDB not connected - Better Auth requires MongoDB");
+    }
+
+    const db = mongoose.connection.getClient().db("aayucare");
 
     auth = betterAuth({
       database: mongodbAdapter(db),

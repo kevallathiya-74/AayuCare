@@ -8,6 +8,9 @@ const router = express.Router();
 const prescriptionController = require("../controllers/prescriptionController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
+const { validateBody } = require("../middleware/validation");
+const { createPrescriptionSchema } = require("../validators/schemas");
+const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // All routes require authentication
 router.use(protect);
@@ -19,7 +22,9 @@ router.use(attachHospitalId);
 router.post(
   "/",
   authorize("doctor", "admin"),
-  prescriptionController.createPrescription
+  validateBody(createPrescriptionSchema),
+  prescriptionController.createPrescription,
+  invalidateCache("cache:prescription:*")
 );
 
 // @route   GET /api/prescriptions/patient/:patientId
@@ -27,18 +32,27 @@ router.post(
 // @access  Private (Patient own data or Doctor/Admin)
 router.get(
   "/patient/:patientId",
+  cacheMiddleware(60),
   prescriptionController.getPatientPrescriptions
 );
 
 // @route   GET /api/prescriptions/doctor/:doctorId
 // @desc    Get all prescriptions created by a doctor
 // @access  Private (Doctor own data or Admin)
-router.get("/doctor/:doctorId", prescriptionController.getDoctorPrescriptions);
+router.get(
+  "/doctor/:doctorId",
+  cacheMiddleware(60),
+  prescriptionController.getDoctorPrescriptions
+);
 
 // @route   GET /api/prescriptions/:prescriptionId
 // @desc    Get prescription by ID
 // @access  Private
-router.get("/:prescriptionId", prescriptionController.getPrescriptionById);
+router.get(
+  "/:prescriptionId",
+  cacheMiddleware(120),
+  prescriptionController.getPrescriptionById
+);
 
 // @route   PATCH /api/prescriptions/:prescriptionId/status
 // @desc    Update prescription status
@@ -46,7 +60,8 @@ router.get("/:prescriptionId", prescriptionController.getPrescriptionById);
 router.patch(
   "/:prescriptionId/status",
   authorize("doctor", "admin"),
-  prescriptionController.updatePrescriptionStatus
+  prescriptionController.updatePrescriptionStatus,
+  invalidateCache("cache:prescription:*")
 );
 
 // @route   DELETE /api/prescriptions/:prescriptionId
@@ -55,7 +70,8 @@ router.patch(
 router.delete(
   "/:prescriptionId",
   authorize("admin"),
-  prescriptionController.deletePrescription
+  prescriptionController.deletePrescription,
+  invalidateCache("cache:prescription:*")
 );
 
 module.exports = router;

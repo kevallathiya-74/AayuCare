@@ -6,6 +6,36 @@ const Schedule = require("../models/Schedule");
 const logger = require("../utils/logger");
 
 /**
+ * Calculate age from date of birth
+ * @param {Date} dateOfBirth - Date of birth
+ * @returns {number|null} - Age in years or null if invalid
+ */
+const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
+
+  try {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+
+    if (isNaN(birthDate.getTime())) return null;
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age >= 0 ? age : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
  * @desc    Get all doctors
  * @route   GET /api/doctors
  * @access  Public
@@ -15,12 +45,12 @@ exports.getDoctors = async (req, res, next) => {
     // Add hospitalId filter for multi-tenancy
     // If user is authenticated, filter by their hospital
     const filters = { ...req.query };
-    
+
     // For authenticated users, filter by their hospital (skip for super_admin)
     if (req.hospitalId && (!req.user || req.user.role !== "super_admin")) {
       filters.hospitalId = req.hospitalId;
     }
-    
+
     const result = await doctorService.getDoctors(filters);
 
     res.status(200).json({
@@ -100,7 +130,10 @@ exports.getDoctorDashboard = async (req, res) => {
         ...baseQuery,
         appointmentDate: { $gte: today, $lt: tomorrow },
       })
-        .populate("patientId", "name userId age gender phone isActive dateOfBirth bloodGroup")
+        .populate(
+          "patientId",
+          "name userId age gender phone isActive dateOfBirth bloodGroup"
+        )
         .sort({ appointmentDate: 1 })
         .lean(),
       // Completed today
@@ -118,10 +151,17 @@ exports.getDoctorDashboard = async (req, res) => {
         status: { $in: ["scheduled", "confirmed"] },
       }),
       // Recent prescriptions
-      Prescription.find(req.hospitalId && req.user.role !== "super_admin" ? { doctorId, hospitalId: req.hospitalId } : { doctorId })
+      Prescription.find(
+        req.hospitalId && req.user.role !== "super_admin"
+          ? { doctorId, hospitalId: req.hospitalId }
+          : { doctorId }
+      )
         .sort({ createdAt: -1 })
         .limit(5)
-        .populate("patientId", "name userId isActive dateOfBirth gender bloodGroup")
+        .populate(
+          "patientId",
+          "name userId isActive dateOfBirth gender bloodGroup"
+        )
         .lean(),
     ]);
 
@@ -143,20 +183,26 @@ exports.getDoctorDashboard = async (req, res) => {
     };
 
     // Format appointments for frontend
-    const formattedAppointments = todaysAppointments.map((apt) => ({
-      _id: apt._id,
-      id: apt._id,
-      time: new Date(apt.appointmentDate).toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      patientName: apt.patientId?.name || "Unknown",
-      patientId: apt.patientId?.userId || apt.patientId?._id,
-      age: apt.patientId?.age || "N/A",
-      reason: apt.reason || "Consultation",
-      status: apt.status,
-      type: apt.appointmentType || "in-person",
-    }));
+    const formattedAppointments = todaysAppointments.map((apt) => {
+      const age = apt.patientId?.dateOfBirth
+        ? calculateAge(apt.patientId.dateOfBirth)
+        : null;
+
+      return {
+        _id: apt._id,
+        id: apt._id,
+        time: new Date(apt.appointmentDate).toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        patientName: apt.patientId?.name || "Unknown",
+        patientId: apt.patientId?.userId || apt.patientId?._id,
+        age: age !== null ? age : "N/A",
+        reason: apt.reason || "Consultation",
+        status: apt.status,
+        type: apt.appointmentType || "in-person",
+      };
+    });
 
     res.json({
       success: true,
@@ -211,7 +257,7 @@ exports.getTodaysAppointments = async (req, res) => {
       doctorId,
       appointmentDate: { $gte: today, $lt: tomorrow },
     };
-    
+
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
       query.hospitalId = req.hospitalId;
@@ -225,7 +271,10 @@ exports.getTodaysAppointments = async (req, res) => {
     }
 
     const appointments = await Appointment.find(query)
-      .populate("patientId", "name userId age gender phone email isActive dateOfBirth bloodGroup address")
+      .populate(
+        "patientId",
+        "name userId age gender phone email isActive dateOfBirth bloodGroup address"
+      )
       .sort({ appointmentDate: 1 })
       .lean();
 
@@ -283,7 +332,7 @@ exports.getUpcomingAppointments = async (req, res) => {
       appointmentDate: { $gte: tomorrow },
       status: { $in: ["scheduled", "confirmed"] },
     };
-    
+
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
       query.hospitalId = req.hospitalId;
@@ -293,7 +342,10 @@ exports.getUpcomingAppointments = async (req, res) => {
 
     const [appointments, total] = await Promise.all([
       Appointment.find(query)
-        .populate("patientId", "name userId age gender phone isActive dateOfBirth bloodGroup address")
+        .populate(
+          "patientId",
+          "name userId age gender phone isActive dateOfBirth bloodGroup address"
+        )
         .sort({ appointmentDate: 1 })
         .skip(skip)
         .limit(parseInt(limit))
@@ -369,7 +421,10 @@ exports.searchPatients = async (req, res) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       appointmentQuery.hospitalId = req.hospitalId;
     }
-    const patientIds = await Appointment.distinct("patientId", appointmentQuery);
+    const patientIds = await Appointment.distinct(
+      "patientId",
+      appointmentQuery
+    );
 
     logger.info("Found patient IDs:", { patientIds, count: patientIds.length });
 
@@ -381,7 +436,9 @@ exports.searchPatients = async (req, res) => {
         { phone: { $regex: sanitizedQuery, $options: "i" } },
       ],
     })
-      .select("name userId age gender phone email dateOfBirth isActive bloodGroup address allergies medicalHistory currentMedications emergencyContact")
+      .select(
+        "name userId age gender phone email dateOfBirth isActive bloodGroup address allergies medicalHistory currentMedications emergencyContact"
+      )
       .limit(10)
       .lean({ virtuals: true });
 
@@ -400,6 +457,130 @@ exports.searchPatients = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to search patients",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Get detailed patient information
+ * @route   GET /api/doctors/me/patients/:patientId
+ * @access  Private (Doctor only)
+ */
+exports.getPatientDetails = async (req, res) => {
+  try {
+    const doctorId = req.user._id;
+    const { patientId } = req.params;
+
+    logger.info("Get patient details request:", {
+      doctorId,
+      patientId,
+      userId: req.user.userId,
+    });
+
+    // Verify doctor has appointments with this patient
+    const appointmentQuery = {
+      doctorId,
+      patientId,
+    };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      appointmentQuery.hospitalId = req.hospitalId;
+    }
+
+    const hasAppointment = await Appointment.findOne(appointmentQuery).lean();
+
+    if (!hasAppointment) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have access to this patient's records",
+      });
+    }
+
+    // Get patient details
+    const patient = await User.findById(patientId)
+      .select(
+        "name userId age gender phone email dateOfBirth isActive bloodGroup address allergies medicalHistory currentMedications emergencyContact avatar"
+      )
+      .lean({ virtuals: true });
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    // Get appointment history
+    const appointments = await Appointment.find(appointmentQuery)
+      .select(
+        "appointmentDate appointmentTime status type chiefComplaint reason"
+      )
+      .sort({ appointmentDate: -1 })
+      .limit(10)
+      .lean();
+
+    // Get medical records
+    const MedicalRecord = require("../models/MedicalRecord");
+    const medicalRecordsQuery = {
+      patientId,
+      doctorId,
+    };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      medicalRecordsQuery.hospitalId = req.hospitalId;
+    }
+
+    const medicalRecords = await MedicalRecord.find(medicalRecordsQuery)
+      .select("recordType title date diagnosis")
+      .sort({ date: -1 })
+      .limit(10)
+      .lean();
+
+    // Get prescriptions
+    const prescriptionsQuery = {
+      patientId,
+      doctorId,
+    };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      prescriptionsQuery.hospitalId = req.hospitalId;
+    }
+
+    const prescriptions = await Prescription.find(prescriptionsQuery)
+      .select("prescriptionDate medicines diagnosis notes")
+      .sort({ prescriptionDate: -1 })
+      .limit(10)
+      .lean();
+
+    logger.info("Patient details retrieved:", {
+      patientId,
+      appointmentsCount: appointments.length,
+      medicalRecordsCount: medicalRecords.length,
+      prescriptionsCount: prescriptions.length,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        patient,
+        appointments,
+        medicalRecords,
+        prescriptions,
+        stats: {
+          totalAppointments: appointments.length,
+          totalRecords: medicalRecords.length,
+          totalPrescriptions: prescriptions.length,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error("Get patient details error:", {
+      error: error.message,
+      stack: error.stack,
+      doctorId: req.user?._id,
+      patientId: req.params?.patientId,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve patient details",
       error: error.message,
     });
   }
@@ -568,10 +749,10 @@ exports.registerWalkInPatient = async (req, res) => {
     if (symptoms) {
       // Format time in 24-hour HH:MM format (not 12-hour with AM/PM)
       const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
       const appointmentTime = `${hours}:${minutes}`; // e.g., "14:30"
-      
+
       await Appointment.create({
         patientId: patient._id,
         doctorId,
@@ -731,7 +912,10 @@ exports.getConsultationHistory = async (req, res, next) => {
 
     const total = await Appointment.countDocuments(query);
     const appointments = await Appointment.find(query)
-      .populate("patientId", "name userId age gender phone isActive dateOfBirth bloodGroup address")
+      .populate(
+        "patientId",
+        "name userId age gender phone isActive dateOfBirth bloodGroup address"
+      )
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)

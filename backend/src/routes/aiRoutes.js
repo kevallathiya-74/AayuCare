@@ -14,6 +14,7 @@ const {
   validateExerciseRecommendations,
   validatePatientId,
 } = require("../validators/aiValidator");
+const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // All routes require authentication
 router.use(protect);
@@ -24,7 +25,8 @@ router.use(protect);
 router.post(
   "/analyze-symptoms",
   validateAnalyzeSymptoms,
-  aiController.analyzeSymptoms
+  aiController.analyzeSymptoms,
+  invalidateCache("cache:ai:*")
 );
 
 // @route   GET /api/ai/health-insights/:patientId
@@ -33,13 +35,19 @@ router.post(
 router.get(
   "/health-insights/:patientId",
   validatePatientId,
+  cacheMiddleware(120),
   aiController.getHealthInsights
 );
 
 // @route   POST /api/ai/risk-score
 // @desc    Calculate health risk score
 // @access  Private
-router.post("/risk-score", validateRiskScore, aiController.calculateRiskScore);
+router.post(
+  "/risk-score",
+  validateRiskScore,
+  aiController.calculateRiskScore,
+  invalidateCache("cache:ai:*")
+);
 
 // @route   POST /api/ai/diet-recommendations
 // @desc    Get personalized diet recommendations
@@ -47,7 +55,8 @@ router.post("/risk-score", validateRiskScore, aiController.calculateRiskScore);
 router.post(
   "/diet-recommendations",
   validateDietRecommendations,
-  aiController.getDietRecommendations
+  aiController.getDietRecommendations,
+  invalidateCache("cache:ai:*")
 );
 
 // @route   POST /api/ai/exercise-recommendations
@@ -56,7 +65,8 @@ router.post(
 router.post(
   "/exercise-recommendations",
   validateExerciseRecommendations,
-  aiController.getExerciseRecommendations
+  aiController.getExerciseRecommendations,
+  invalidateCache("cache:ai:*")
 );
 
 // @route   POST /api/ai/analyze-medical-record

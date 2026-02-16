@@ -8,6 +8,9 @@ const router = express.Router();
 const patientController = require("../controllers/patientController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
+const { validateBody } = require("../middleware/validation");
+const { updatePatientProfileSchema } = require("../validators/schemas");
+const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // All routes require authentication
 router.use(protect);
@@ -19,6 +22,7 @@ router.use(attachHospitalId);
 router.get(
   "/search",
   authorize("doctor", "admin"),
+  cacheMiddleware(60),
   patientController.searchPatients
 );
 
@@ -28,6 +32,7 @@ router.get(
 router.get(
   "/:patientId/complete-history",
   authorize("patient", "doctor", "admin"),
+  cacheMiddleware(30),
   patientController.getCompleteHistory
 );
 
@@ -37,6 +42,7 @@ router.get(
 router.get(
   "/:patientId/profile",
   authorize("patient", "doctor", "admin"),
+  cacheMiddleware(120),
   patientController.getPatientProfile
 );
 
@@ -46,7 +52,9 @@ router.get(
 router.patch(
   "/:patientId/profile",
   authorize("patient", "admin"),
-  patientController.updatePatientProfile
+  validateBody(updatePatientProfileSchema),
+  patientController.updatePatientProfile,
+  invalidateCache("cache:patient:*")
 );
 
 // @route   GET /api/patients/:patientId/health-metrics

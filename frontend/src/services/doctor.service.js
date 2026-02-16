@@ -15,15 +15,15 @@ class DoctorService {
       // Add cache-busting timestamp to force fresh data
       const params = new URLSearchParams({
         ...filters,
-        _t: Date.now().toString()
+        _t: Date.now().toString(),
       }).toString();
-      
+
       const response = await api.get(`/doctors?${params}`, {
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       });
       return response.data;
     } catch (error) {
@@ -36,7 +36,11 @@ class DoctorService {
    * Get all doctors (alias for admin screens)
    */
   async getAllDoctors(additionalFilters = {}) {
-    return this.getDoctors({ limit: 100, includeInactive: true, ...additionalFilters });
+    return this.getDoctors({
+      limit: 100,
+      includeInactive: true,
+      ...additionalFilters,
+    });
   }
 
   /**
@@ -123,6 +127,22 @@ class DoctorService {
       return response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.searchMyPatients", query });
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed patient information
+   */
+  async getPatientDetails(patientId) {
+    try {
+      const response = await api.get(`/doctors/me/patients/${patientId}`);
+      return response.data;
+    } catch (error) {
+      logError(error, {
+        context: "DoctorService.getPatientDetails",
+        patientId,
+      });
       throw error;
     }
   }
@@ -298,4 +318,3 @@ class DoctorService {
 }
 
 export default new DoctorService();
-

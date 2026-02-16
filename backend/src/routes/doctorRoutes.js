@@ -3,6 +3,13 @@ const router = express.Router();
 const doctorController = require("../controllers/doctorController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
+const { validateBody } = require("../middleware/validation");
+const { updateDoctorProfileSchema } = require("../validators/schemas");
+const {
+  cacheDoctorList,
+  cacheDoctorAvailability,
+  invalidateCache,
+} = require("../middleware/cache");
 
 /**
  * Protected routes (Doctor only) - Must come before public routes
@@ -59,6 +66,19 @@ router.get(
   attachHospitalId,
   authorize("doctor"),
   doctorController.searchPatients
+);
+
+/**
+ * @route   GET /api/doctors/me/patients/:patientId
+ * @desc    Get detailed patient information
+ * @access  Private (Doctor)
+ */
+router.get(
+  "/me/patients/:patientId",
+  protect,
+  attachHospitalId,
+  authorize("doctor"),
+  doctorController.getPatientDetails
 );
 
 /**

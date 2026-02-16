@@ -29,6 +29,7 @@ import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
+import PatientDetailsModal from "./PatientDetailsModal";
 
 const ManagePatientsScreen = ({ navigation }) => {
   const [patients, setPatients] = useState([]);
@@ -38,6 +39,7 @@ const ManagePatientsScreen = ({ navigation }) => {
   const [updatingId, setUpdatingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
@@ -113,22 +115,27 @@ const ManagePatientsScreen = ({ navigation }) => {
           onPress: async () => {
             setUpdatingId(patient._id);
             try {
-              const response = await adminService.updateUserStatus(patient._id, newStatus);
-              
+              const response = await adminService.updateUserStatus(
+                patient._id,
+                newStatus
+              );
+
               // Update local state immediately with server response
               if (response.success && response.data) {
                 setPatients((prev) =>
                   prev.map((p) =>
-                    p._id === patient._id ? { ...p, isActive: response.data.isActive } : p
+                    p._id === patient._id
+                      ? { ...p, isActive: response.data.isActive }
+                      : p
                   )
                 );
               }
-              
+
               // Also refetch to ensure consistency
               setTimeout(() => {
                 fetchPatients(searchQuery.trim());
               }, 500);
-              
+
               Alert.alert(
                 "Success",
                 `Patient ${newStatus ? "activated" : "deactivated"} successfully`
@@ -202,14 +209,8 @@ const ManagePatientsScreen = ({ navigation }) => {
   }, []);
 
   const handlePatientPress = (patient) => {
-    const age = calculateAge(patient.dateOfBirth);
-    const ageDisplay = age !== null ? `${age} years` : "N/A";
-
-    Alert.alert(
-      patient.name,
-      `Age: ${ageDisplay}\nGender: ${patient.gender || "N/A"}\nBlood Group: ${patient.bloodGroup || "N/A"}\nEmail: ${patient.email || "N/A"}\nPhone: ${patient.phone || "N/A"}\nStatus: ${patient.isActive ? "Active" : "Inactive"}`,
-      [{ text: "OK" }]
-    );
+    setSelectedPatient(patient);
+    setShowDetailsModal(true);
   };
 
   const renderPatient = useCallback(
@@ -295,9 +296,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                 size={14}
                 color={healthColors.text.tertiary}
               />
-              <Text style={styles.detailText}>
-                {item.bloodGroup || "N/A"}
-              </Text>
+              <Text style={styles.detailText}>{item.bloodGroup || "N/A"}</Text>
             </View>
             <View style={styles.detailItem}>
               <Ionicons
@@ -497,6 +496,17 @@ const ManagePatientsScreen = ({ navigation }) => {
         }}
         onSuccess={handleEditSuccess}
         patient={selectedPatient}
+      />
+
+      {/* Patient Details Modal */}
+      <PatientDetailsModal
+        visible={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedPatient(null);
+        }}
+        patientId={selectedPatient?._id}
+        patientName={selectedPatient?.name}
       />
     </SafeAreaView>
   );

@@ -1,700 +1,836 @@
-const Appointment = require('../models/Appointment');
-const User = require('../models/User');
-const { AppError } = require('../middleware/errorHandler');
-const logger = require('../utils/logger');
+const Appointment = require("../models/Appointment");
+const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
+const appointmentRepository = require("../repositories/appointmentRepository");
+const paymentRepository = require("../repositories/paymentRepository");
+const doctorRepository = require("../repositories/doctorRepository");
+const { createAppointmentWithPayment } = require("../utils/transaction");
+const { AppError } = require("../middleware/errorHandler");
+const logger = require("../utils/logger");
+const { v4: uuidv4 } = require("crypto");
 
 /**
  * Appointment Service - Business Logic Layer
+ * Refactored to use repository pattern
  */
 
 class AppointmentService {
-    /**
-     * Create new appointment
-     */
-    async createAppointment(appointmentData) {
-        const { patientId, doctorId, appointmentDate, appointmentTime, type, symptoms, chiefComplaint } = appointmentData;
+  /**
+   * Create new appointment with payment (ACID transaction)
+   */
+  async createAppointment(appointmentData) {
+    const {
+      patientId,
+      doctorId,
+      appointmentDate,
+      appointmentTime,
+      type,
+      symptoms,
+      chiefComplaint,
+      hospitalId,
+    } = appointmentData;
 
-        // Verify patient exists
-        const patient = await User.findById(patientId);
-        if (!patient || patient.role !== 'patient') {
-            throw new AppError('Patient not found', 404);
-        }
-
-        // Verify doctor exists
-        const doctor = await User.findById(doctorId);
-        if (!doctor || doctor.role !== 'doctor') {
-            throw new AppError('Doctor not found', 404);
-        }
-
-        // Verify patient and doctor belong to same hospital (multi-tenancy)
-        if (patient.hospitalId !== doctor.hospitalId) {
-            throw new AppError('Cannot book appointment with doctor from different hospital', 400);
-        }
-
-        // Check if slot is available
-        const existingAppointment = await Appointment.findOne({
-            doctorId,
-            appointmentDate: new Date(appointmentDate),
-            appointmentTime,
-            status: { $nin: ['cancelled', 'completed'] }
-        });
-
-        if (existingAppointment) {
-            throw new AppError('This time slot is already booked', 400);
-        }
-
-        // Create appointment with doctor's hospitalId
-        const appointment = await Appointment.create({
-            patientId,
-            doctorId,
-            hospitalId: doctor.hospitalId,
-            appointmentDate: new Date(appointmentDate),
-            appointmentTime,
-            type,
-            symptoms,
-            chiefComplaint,
-            status: 'scheduled',
-            payment: {
-                amount: doctor.consultationFee || 0,
-                status: 'pending'
-            }
-        });
-
-        logger.info(`Appointment created: ${appointment._id} for patient ${patient.userId} with doctor ${doctor.userId} at hospital ${doctor.hospitalId}`);
-
-        return appointment;
+    // Verify patient exists
+    const patient = await userRepository.findById(patientId);
+    if (!patient || patient.role !== "patient") {
+      throw new AppError("Patient not found", 404);
     }
 
-    /**
-     * Get all appointments (admin only) - CURSOR-BASED PAGINATION
-     * More efficient for large datasets and real-time updates
-     * @param {Object} filters - Filter options including hospitalId for multi-tenancy
-     */
-    async getAllAppointmentsCursor(filters = {}) {
-        const { status, startDate, endDate, limit = 20, cursor, patientId, doctorId, hospitalId } = filters;
-
-        const query = {};
-
-        // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
-            query.hospitalId = hospitalId;
-        }
-
-        if (patientId) {
-            query.patientId = patientId;
-        }
-
-        if (doctorId) {
-            query.doctorId = doctorId;
-        }
-
-        if (status) {
-            // Handle comma-separated status values (e.g., "scheduled,confirmed")
-            if (status.includes(',')) {
-                query.status = { $in: status.split(',').map(s => s.trim()) };
-            } else {
-                query.status = status;
-            }
-        }
-
-        if (startDate || endDate) {
-            query.appointmentDate = {};
-            if (startDate) query.appointmentDate.$gte = new Date(startDate);
-            if (endDate) query.appointmentDate.$lte = new Date(endDate);
-        }
-
-        // Cursor-based pagination: If cursor provided, fetch records after that cursor
-        // Check for both falsy values and string 'null' to prevent invalid date casting
-        if (cursor && cursor !== 'null' && cursor !== 'undefined') {
-            try {
-                // Cursor format: base64 encoded "timestamp_id"
-                const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
-                const [timestamp, id] = decoded.split('_');
-                
-                // Validate timestamp is a valid number
-                const parsedTimestamp = parseInt(timestamp);
-                if (isNaN(parsedTimestamp)) {
-                    throw new Error('Invalid timestamp in cursor');
-                }
-                
-                // Find records with timestamp less than cursor OR same timestamp but greater ID
-                query.$or = [
-                    { appointmentDate: { $lt: new Date(parsedTimestamp) } },
-                    { 
-                        appointmentDate: { $eq: new Date(parsedTimestamp) },
-                        _id: { $gt: id }
-                    }
-                ];
-            } catch (error) {
-                logger.error('Invalid cursor format:', error);
-                throw new AppError('Invalid cursor format', 400);
-            }
-        }
-
-        const itemLimit = parseInt(limit) + 1; // Fetch one extra to determine if there's more
-
-        const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone email isActive dateOfBirth gender bloodGroup')
-            .populate('doctorId', 'name specialization qualification consultationFee isActive')
-            .sort({ appointmentDate: -1, _id: 1 })
-            .limit(itemLimit);
-
-        // Check if there are more items
-        const hasMore = appointments.length > limit;
-        const results = hasMore ? appointments.slice(0, limit) : appointments;
-
-        // Generate next cursor if there are more items
-        let nextCursor = null;
-        if (hasMore && results.length > 0) {
-            const lastItem = results[results.length - 1];
-            const cursorData = `${lastItem.appointmentDate.getTime()}_${lastItem._id}`;
-            nextCursor = Buffer.from(cursorData).toString('base64');
-        }
-
-        return {
-            appointments: results,
-            pagination: {
-                nextCursor,
-                hasMore,
-                limit: parseInt(limit),
-            }
-        };
+    // Verify doctor exists
+    const doctor = await userRepository.findById(doctorId);
+    if (!doctor || doctor.role !== "doctor") {
+      throw new AppError("Doctor not found", 404);
     }
 
-    /**
-     * Get appointments for a patient - CURSOR-BASED PAGINATION
-     */
-    async getPatientAppointmentsCursor(patientId, filters = {}) {
-        const { status, startDate, endDate, limit = 20, cursor, hospitalId } = filters;
-
-        const query = { patientId };
-
-        // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
-            query.hospitalId = hospitalId;
-        }
-
-        if (status) {
-            if (status.includes(',')) {
-                query.status = { $in: status.split(',').map(s => s.trim()) };
-            } else {
-                query.status = status;
-            }
-        }
-
-        if (startDate || endDate) {
-            query.appointmentDate = {};
-            if (startDate) query.appointmentDate.$gte = new Date(startDate);
-            if (endDate) query.appointmentDate.$lte = new Date(endDate);
-        }
-
-        // Cursor-based pagination
-        // Check for both falsy values and string 'null' to prevent invalid date casting
-        if (cursor && cursor !== 'null' && cursor !== 'undefined') {
-            try {
-                const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
-                const [timestamp, id] = decoded.split('_');
-                
-                // Validate timestamp is a valid number
-                const parsedTimestamp = parseInt(timestamp);
-                if (isNaN(parsedTimestamp)) {
-                    throw new Error('Invalid timestamp in cursor');
-                }
-                
-                query.$or = [
-                    { appointmentDate: { $lt: new Date(parsedTimestamp) } },
-                    { 
-                        appointmentDate: { $eq: new Date(parsedTimestamp) },
-                        _id: { $gt: id }
-                    }
-                ];
-            } catch (error) {
-                logger.error('Invalid cursor format:', error);
-                throw new AppError('Invalid cursor format', 400);
-            }
-        }
-
-        const itemLimit = parseInt(limit) + 1;
-
-        const appointments = await Appointment.find(query)
-            .populate('doctorId', 'name specialization qualification consultationFee isActive')
-            .sort({ appointmentDate: -1, _id: 1 })
-            .limit(itemLimit);
-
-        const hasMore = appointments.length > limit;
-        const results = hasMore ? appointments.slice(0, limit) : appointments;
-
-        let nextCursor = null;
-        if (hasMore && results.length > 0) {
-            const lastItem = results[results.length - 1];
-            const cursorData = `${lastItem.appointmentDate.getTime()}_${lastItem._id}`;
-            nextCursor = Buffer.from(cursorData).toString('base64');
-        }
-
-        return {
-            appointments: results,
-            pagination: {
-                nextCursor,
-                hasMore,
-                limit: parseInt(limit),
-            }
-        };
+    // Get doctor details for consultation fee
+    const doctorProfile = await doctorRepository.findByUserId(doctorId);
+    if (!doctorProfile) {
+      throw new AppError("Doctor profile not found", 404);
     }
 
-    /**
-     * Get appointments for a doctor - CURSOR-BASED PAGINATION
-     */
-    async getDoctorAppointmentsCursor(doctorId, filters = {}) {
-        const { status, date, limit = 20, cursor, hospitalId } = filters;
-
-        const query = { doctorId };
-
-        // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
-            query.hospitalId = hospitalId;
-        }
-
-        if (status) {
-            if (status.includes(',')) {
-                query.status = { $in: status.split(',').map(s => s.trim()) };
-            } else {
-                query.status = status;
-            }
-        }
-
-        if (date) {
-            const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
-            query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
-        }
-
-        // Cursor-based pagination
-        // Check for both falsy values and string 'null' to prevent invalid date casting
-        if (cursor && cursor !== 'null' && cursor !== 'undefined') {
-            try {
-                const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
-                const [timestamp, id] = decoded.split('_');
-                
-                // Validate timestamp is a valid number
-                const parsedTimestamp = parseInt(timestamp);
-                if (isNaN(parsedTimestamp)) {
-                    throw new Error('Invalid timestamp in cursor');
-                }
-                
-                query.$or = [
-                    { appointmentDate: { $lt: new Date(parsedTimestamp) } },
-                    { 
-                        appointmentDate: { $eq: new Date(parsedTimestamp) },
-                        _id: { $gt: id }
-                    }
-                ];
-            } catch (error) {
-                logger.error('Invalid cursor format:', error);
-                throw new AppError('Invalid cursor format', 400);
-            }
-        }
-
-        const itemLimit = parseInt(limit) + 1;
-
-        const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone isActive dateOfBirth gender bloodGroup address')
-            .sort({ appointmentDate: -1, _id: 1 })
-            .limit(itemLimit);
-
-        const hasMore = appointments.length > limit;
-        const results = hasMore ? appointments.slice(0, limit) : appointments;
-
-        let nextCursor = null;
-        if (hasMore && results.length > 0) {
-            const lastItem = results[results.length - 1];
-            const cursorData = `${lastItem.appointmentDate.getTime()}_${lastItem._id}`;
-            nextCursor = Buffer.from(cursorData).toString('base64');
-        }
-
-        return {
-            appointments: results,
-            pagination: {
-                nextCursor,
-                hasMore,
-                limit: parseInt(limit),
-            }
-        };
+    // Verify patient and doctor belong to same hospital (multi-tenancy)
+    if (patient.hospital_id !== doctor.hospital_id) {
+      throw new AppError(
+        "Cannot book appointment with doctor from different hospital",
+        400
+      );
     }
 
-    /**
-     * Get all appointments (admin only)
-     * @param {Object} filters - Filter options including hospitalId for multi-tenancy
-     */
-    async getAllAppointments(filters = {}) {
-        const { status, startDate, endDate, page = 1, limit = 10, patientId, doctorId, hospitalId } = filters;
+    // Check if slot is available
+    const isAvailable = await appointmentRepository.isSlotAvailable(
+      doctorId,
+      appointmentDate,
+      appointmentTime,
+      hospitalId || doctor.hospital_id
+    );
 
-        const query = {};
-
-        // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
-            query.hospitalId = hospitalId;
-        }
-
-        if (patientId) {
-            query.patientId = patientId;
-        }
-
-        if (doctorId) {
-            query.doctorId = doctorId;
-        }
-
-        if (status) {
-            // Handle comma-separated status values (e.g., "scheduled,confirmed")
-            if (status.includes(',')) {
-                query.status = { $in: status.split(',').map(s => s.trim()) };
-            } else {
-                query.status = status;
-            }
-        }
-
-        if (startDate || endDate) {
-            query.appointmentDate = {};
-            if (startDate) query.appointmentDate.$gte = new Date(startDate);
-            if (endDate) query.appointmentDate.$lte = new Date(endDate);
-        }
-
-        const skip = (page - 1) * limit;
-
-        const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone email isActive dateOfBirth gender bloodGroup address')
-            .populate('doctorId', 'name specialization qualification consultationFee isActive')
-            .sort({ appointmentDate: -1, appointmentTime: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const total = await Appointment.countDocuments(query);
-
-        return {
-            appointments,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                pages: Math.ceil(total / limit),
-            }
-        };
+    if (!isAvailable) {
+      throw new AppError("This time slot is already booked", 400);
     }
 
-    /**
-     * Get appointments for a patient
-     */
-    async getPatientAppointments(patientId, filters = {}) {
-        const { status, startDate, endDate, page = 1, limit = 10, hospitalId } = filters;
+    // Create appointment and payment atomically using transaction
+    const { appointment, payment } = await createAppointmentWithPayment(
+      {
+        appointmentId: `APT-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)
+          .toUpperCase()}`,
+        patientId,
+        doctorId,
+        hospitalId: hospitalId || doctor.hospital_id,
+        appointmentDate,
+        appointmentTime,
+        type,
+        symptoms,
+        chiefComplaint,
+      },
+      {
+        paymentId: `PAY-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)
+          .toUpperCase()}`,
+        amount: doctorProfile.consultation_fee || 0,
+        currency: "INR",
+      }
+    );
 
-        const query = { patientId };
+    logger.info(
+      `Appointment created: ${appointment.id} for patient ${patient.user_id} with doctor ${doctor.user_id} at hospital ${doctor.hospital_id}`
+    );
 
-        // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
-            query.hospitalId = hospitalId;
-        }
+    // Invalidate cache
+    const { deleteCacheByPattern } = require("../config/redis");
+    await deleteCacheByPattern("cache:appointments:*");
+    await deleteCacheByPattern(`cache:doctor:${doctorId}:*`);
 
-        if (status) {
-            // Handle comma-separated status values (e.g., "scheduled,confirmed")
-            if (status.includes(',')) {
-                query.status = { $in: status.split(',').map(s => s.trim()) };
-            } else {
-                query.status = status;
-            }
-        }
+    return appointment;
+  }
 
-        if (startDate || endDate) {
-            query.appointmentDate = {};
-            if (startDate) query.appointmentDate.$gte = new Date(startDate);
-            if (endDate) query.appointmentDate.$lte = new Date(endDate);
-        }
+  /**
+   * Get all appointments (admin only) - CURSOR-BASED PAGINATION
+   * More efficient for large datasets and real-time updates
+   * @param {Object} filters - Filter options including hospitalId for multi-tenancy
+   */
+  async getAllAppointmentsCursor(filters = {}) {
+    const {
+      status,
+      startDate,
+      endDate,
+      limit = 20,
+      cursor,
+      patientId,
+      doctorId,
+      hospitalId,
+    } = filters;
 
-        const skip = (page - 1) * limit;
+    const query = {};
 
-        const appointments = await Appointment.find(query)
-            .populate('doctorId', 'name specialization qualification consultationFee isActive')
-            .populate('patientId', 'name userId phone isActive dateOfBirth gender bloodGroup address')
-            .sort({ appointmentDate: -1, appointmentTime: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const total = await Appointment.countDocuments(query);
-
-        return {
-            appointments,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                pages: Math.ceil(total / limit),
-            }
-        };
+    // Multi-tenancy: Filter by hospitalId if provided
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
     }
 
-    /**
-     * Get appointments for a doctor
-     */
-    async getDoctorAppointments(doctorId, filters = {}) {
-        const { status, date, page = 1, limit = 10, hospitalId } = filters;
-
-        const query = { doctorId };
-
-        // Multi-tenancy: Filter by hospitalId if provided
-        if (hospitalId) {
-            query.hospitalId = hospitalId;
-        }
-
-        if (status) {
-            // Handle comma-separated status values (e.g., "scheduled,confirmed")
-            if (status.includes(',')) {
-                query.status = { $in: status.split(',').map(s => s.trim()) };
-            } else {
-                query.status = status;
-            }
-        }
-
-        if (date) {
-            const startOfDay = new Date(date);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(date);
-            endOfDay.setHours(23, 59, 59, 999);
-            query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
-        }
-
-        const skip = (page - 1) * limit;
-
-        const appointments = await Appointment.find(query)
-            .populate('patientId', 'name userId phone dateOfBirth gender bloodGroup isActive allergies address')
-            .sort({ appointmentDate: 1, appointmentTime: 1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const total = await Appointment.countDocuments(query);
-
-        return {
-            appointments,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                pages: Math.ceil(total / limit),
-            }
-        };
+    if (patientId) {
+      query.patientId = patientId;
     }
 
-    /**
-     * Get single appointment
-     */
-    async getAppointmentById(appointmentId) {
-        const appointment = await Appointment.findById(appointmentId)
-            .populate('patientId', 'name userId email phone dateOfBirth gender bloodGroup allergies medicalHistory isActive address emergencyContact')
-            .populate('doctorId', 'name specialization qualification experience consultationFee isActive')
-            .populate('prescription');
-
-        if (!appointment) {
-            throw new AppError('Appointment not found', 404);
-        }
-
-        return appointment;
+    if (doctorId) {
+      query.doctorId = doctorId;
     }
 
-    /**
-     * Update appointment status
-     */
-    async updateAppointmentStatus(appointmentId, status, userId, userRole) {
-        const appointment = await Appointment.findById(appointmentId);
-
-        if (!appointment) {
-            throw new AppError('Appointment not found', 404);
-        }
-
-        // Validate status transition
-        const validTransitions = {
-            scheduled: ['confirmed', 'cancelled'],
-            confirmed: ['completed', 'cancelled', 'no_show'],
-            completed: [],
-            cancelled: [],
-            no_show: []
-        };
-
-        if (!validTransitions[appointment.status].includes(status)) {
-            throw new AppError(`Cannot change status from ${appointment.status} to ${status}`, 400);
-        }
-
-        appointment.status = status;
-
-        if (status === 'cancelled') {
-            appointment.cancelledBy = userId;
-            appointment.cancelledAt = new Date();
-        }
-
-        await appointment.save();
-
-        logger.info(`Appointment ${appointmentId} status updated to ${status} by ${userRole}`);
-
-        return appointment;
+    if (status) {
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",").map((s) => s.trim()) };
+      } else {
+        query.status = status;
+      }
     }
 
-    /**
-     * Cancel appointment
-     */
-    async cancelAppointment(appointmentId, userId, userRole, cancelReason) {
-        const appointment = await Appointment.findById(appointmentId);
-
-        if (!appointment) {
-            throw new AppError('Appointment not found', 404);
-        }
-
-        if (appointment.status === 'cancelled' || appointment.status === 'completed') {
-            throw new AppError(`Cannot cancel ${appointment.status} appointment`, 400);
-        }
-
-        // Check cancellation time (at least 2 hours before appointment)
-        const appointmentDateTime = new Date(appointment.appointmentDate);
-        const [hours, minutes] = appointment.appointmentTime.split(':');
-        appointmentDateTime.setHours(parseInt(hours), parseInt(minutes));
-
-        const now = new Date();
-        const timeDiff = appointmentDateTime - now;
-        const hoursDiff = timeDiff / (1000 * 60 * 60);
-
-        if (hoursDiff < 2 && userRole === 'patient') {
-            throw new AppError('Appointments can only be cancelled at least 2 hours before the scheduled time', 400);
-        }
-
-        appointment.status = 'cancelled';
-        appointment.cancelReason = cancelReason;
-        appointment.cancelledBy = userId;
-        appointment.cancelledAt = new Date();
-
-        // Update payment status if applicable
-        if (appointment.payment.status === 'paid') {
-            appointment.payment.status = 'refunded';
-        }
-
-        await appointment.save();
-
-        logger.info(`Appointment ${appointmentId} cancelled by ${userRole}: ${userId}`);
-
-        return appointment;
+    if (startDate || endDate) {
+      query.appointmentDate = {};
+      if (startDate) query.appointmentDate.$gte = new Date(startDate);
+      if (endDate) query.appointmentDate.$lte = new Date(endDate);
     }
 
-    /**
-     * Update appointment details
-     */
-    async updateAppointment(appointmentId, updateData, userId, userRole) {
-        const appointment = await Appointment.findById(appointmentId);
+    // Cursor-based pagination: If cursor provided, fetch records after that cursor
+    // Check for both falsy values and string 'null' to prevent invalid date casting
+    if (cursor && cursor !== "null" && cursor !== "undefined") {
+      try {
+        // Cursor format: base64 encoded "timestamp_id"
+        const decoded = Buffer.from(cursor, "base64").toString("utf-8");
+        const [timestamp, id] = decoded.split("_");
 
-        if (!appointment) {
-            throw new AppError('Appointment not found', 404);
+        // Validate timestamp is a valid number
+        const parsedTimestamp = parseInt(timestamp);
+        if (isNaN(parsedTimestamp)) {
+          throw new Error("Invalid timestamp in cursor");
         }
 
-        // Only doctor can update diagnosis, prescription, notes
-        if (userRole === 'doctor') {
-            const allowedFields = ['diagnosis', 'prescription', 'notes', 'followUp'];
-            Object.keys(updateData).forEach(key => {
-                if (allowedFields.includes(key)) {
-                    appointment[key] = updateData[key];
-                }
-            });
-        }
-
-        // Patient can update symptoms and chief complaint before appointment
-        if (userRole === 'patient' && appointment.status === 'scheduled') {
-            if (updateData.symptoms) appointment.symptoms = updateData.symptoms;
-            if (updateData.chiefComplaint) appointment.chiefComplaint = updateData.chiefComplaint;
-        }
-
-        await appointment.save();
-
-        logger.info(`Appointment ${appointmentId} updated by ${userRole}: ${userId}`);
-
-        return appointment;
+        // Find records with timestamp less than cursor OR same timestamp but greater ID
+        query.$or = [
+          { appointmentDate: { $lt: new Date(parsedTimestamp) } },
+          {
+            appointmentDate: { $eq: new Date(parsedTimestamp) },
+            _id: { $gt: id },
+          },
+        ];
+      } catch (error) {
+        logger.error("Invalid cursor format:", error);
+        throw new AppError("Invalid cursor format", 400);
+      }
     }
 
-    /**
-     * Get available time slots for a doctor
-     */
-    async getAvailableSlots(doctorId, date) {
-        const doctor = await User.findById(doctorId);
-        if (!doctor || doctor.role !== 'doctor') {
-            throw new AppError('Doctor not found', 404);
-        }
+    const itemLimit = parseInt(limit) + 1; // Fetch one extra to determine if there's more
 
-        // Get all appointments for the doctor on the specified date
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
+    const appointments = await Appointment.find(query)
+      .populate(
+        "patientId",
+        "name userId phone email isActive dateOfBirth gender bloodGroup"
+      )
+      .populate(
+        "doctorId",
+        "name specialization qualification consultationFee isActive"
+      )
+      .sort({ appointmentDate: -1, _id: 1 })
+      .limit(itemLimit);
 
-        const bookedAppointments = await Appointment.find({
-            doctorId,
-            appointmentDate: { $gte: startOfDay, $lte: endOfDay },
-            status: { $nin: ['cancelled'] }
-        }).select('appointmentTime');
+    // Check if there are more items
+    const hasMore = appointments.length > limit;
+    const results = hasMore ? appointments.slice(0, limit) : appointments;
 
-        const bookedSlots = bookedAppointments.map(apt => apt.appointmentTime);
-
-        // Define all possible time slots (9 AM to 8 PM, 30-minute intervals)
-        const allSlots = [];
-        for (let hour = 9; hour <= 20; hour++) {
-            for (let minute of [0, 30]) {
-                if (hour === 20 && minute === 30) break; // Stop at 8:00 PM
-                const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                allSlots.push(timeSlot);
-            }
-        }
-
-        // Filter out booked slots
-        const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
-
-        return {
-            date,
-            doctor: {
-                id: doctor._id,
-                name: doctor.name,
-                specialization: doctor.specialization,
-                consultationFee: doctor.consultationFee
-            },
-            availableSlots,
-            bookedSlots
-        };
+    // Generate next cursor if there are more items
+    let nextCursor = null;
+    if (hasMore && results.length > 0) {
+      const lastItem = results[results.length - 1];
+      const cursorData = `${lastItem.appointmentDate.getTime()}_${
+        lastItem._id
+      }`;
+      nextCursor = Buffer.from(cursorData).toString("base64");
     }
 
-    /**
-     * Get appointment statistics
-     */
-    async getAppointmentStats(userId, userRole) {
-        const query = userRole === 'doctor' ? { doctorId: userId } : { patientId: userId };
+    return {
+      appointments: results,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit: parseInt(limit),
+      },
+    };
+  }
 
-        const stats = await Appointment.aggregate([
-            { $match: query },
-            {
-                $group: {
-                    _id: '$status',
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
+  /**
+   * Get appointments for a patient - CURSOR-BASED PAGINATION
+   */
+  async getPatientAppointmentsCursor(patientId, filters = {}) {
+    const {
+      status,
+      startDate,
+      endDate,
+      limit = 20,
+      cursor,
+      hospitalId,
+    } = filters;
 
-        const total = await Appointment.countDocuments(query);
+    const query = { patientId };
 
-        const statsObject = {
-            total,
-            scheduled: 0,
-            confirmed: 0,
-            completed: 0,
-            cancelled: 0,
-            no_show: 0
-        };
-
-        stats.forEach(stat => {
-            statsObject[stat._id] = stat.count;
-        });
-
-        return statsObject;
+    // Multi-tenancy: Filter by hospitalId if provided
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
     }
+
+    if (status) {
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",").map((s) => s.trim()) };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (startDate || endDate) {
+      query.appointmentDate = {};
+      if (startDate) query.appointmentDate.$gte = new Date(startDate);
+      if (endDate) query.appointmentDate.$lte = new Date(endDate);
+    }
+
+    // Cursor-based pagination
+    // Check for both falsy values and string 'null' to prevent invalid date casting
+    if (cursor && cursor !== "null" && cursor !== "undefined") {
+      try {
+        const decoded = Buffer.from(cursor, "base64").toString("utf-8");
+        const [timestamp, id] = decoded.split("_");
+
+        // Validate timestamp is a valid number
+        const parsedTimestamp = parseInt(timestamp);
+        if (isNaN(parsedTimestamp)) {
+          throw new Error("Invalid timestamp in cursor");
+        }
+
+        query.$or = [
+          { appointmentDate: { $lt: new Date(parsedTimestamp) } },
+          {
+            appointmentDate: { $eq: new Date(parsedTimestamp) },
+            _id: { $gt: id },
+          },
+        ];
+      } catch (error) {
+        logger.error("Invalid cursor format:", error);
+        throw new AppError("Invalid cursor format", 400);
+      }
+    }
+
+    const itemLimit = parseInt(limit) + 1;
+
+    const appointments = await Appointment.find(query)
+      .populate(
+        "doctorId",
+        "name specialization qualification consultationFee isActive"
+      )
+      .sort({ appointmentDate: -1, _id: 1 })
+      .limit(itemLimit);
+
+    const hasMore = appointments.length > limit;
+    const results = hasMore ? appointments.slice(0, limit) : appointments;
+
+    let nextCursor = null;
+    if (hasMore && results.length > 0) {
+      const lastItem = results[results.length - 1];
+      const cursorData = `${lastItem.appointmentDate.getTime()}_${
+        lastItem._id
+      }`;
+      nextCursor = Buffer.from(cursorData).toString("base64");
+    }
+
+    return {
+      appointments: results,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit: parseInt(limit),
+      },
+    };
+  }
+
+  /**
+   * Get appointments for a doctor - CURSOR-BASED PAGINATION
+   */
+  async getDoctorAppointmentsCursor(doctorId, filters = {}) {
+    const { status, date, limit = 20, cursor, hospitalId } = filters;
+
+    const query = { doctorId };
+
+    // Multi-tenancy: Filter by hospitalId if provided
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
+    }
+
+    if (status) {
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",").map((s) => s.trim()) };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    // Cursor-based pagination
+    // Check for both falsy values and string 'null' to prevent invalid date casting
+    if (cursor && cursor !== "null" && cursor !== "undefined") {
+      try {
+        const decoded = Buffer.from(cursor, "base64").toString("utf-8");
+        const [timestamp, id] = decoded.split("_");
+
+        // Validate timestamp is a valid number
+        const parsedTimestamp = parseInt(timestamp);
+        if (isNaN(parsedTimestamp)) {
+          throw new Error("Invalid timestamp in cursor");
+        }
+
+        query.$or = [
+          { appointmentDate: { $lt: new Date(parsedTimestamp) } },
+          {
+            appointmentDate: { $eq: new Date(parsedTimestamp) },
+            _id: { $gt: id },
+          },
+        ];
+      } catch (error) {
+        logger.error("Invalid cursor format:", error);
+        throw new AppError("Invalid cursor format", 400);
+      }
+    }
+
+    const itemLimit = parseInt(limit) + 1;
+
+    const appointments = await Appointment.find(query)
+      .populate(
+        "patientId",
+        "name userId phone isActive dateOfBirth gender bloodGroup address"
+      )
+      .sort({ appointmentDate: -1, _id: 1 })
+      .limit(itemLimit);
+
+    const hasMore = appointments.length > limit;
+    const results = hasMore ? appointments.slice(0, limit) : appointments;
+
+    let nextCursor = null;
+    if (hasMore && results.length > 0) {
+      const lastItem = results[results.length - 1];
+      const cursorData = `${lastItem.appointmentDate.getTime()}_${
+        lastItem._id
+      }`;
+      nextCursor = Buffer.from(cursorData).toString("base64");
+    }
+
+    return {
+      appointments: results,
+      pagination: {
+        nextCursor,
+        hasMore,
+        limit: parseInt(limit),
+      },
+    };
+  }
+
+  /**
+   * Get all appointments (admin only)
+   * @param {Object} filters - Filter options including hospitalId for multi-tenancy
+   */
+  async getAllAppointments(filters = {}) {
+    const {
+      status,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+      patientId,
+      doctorId,
+      hospitalId,
+    } = filters;
+
+    const query = {};
+
+    // Multi-tenancy: Filter by hospitalId if provided
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
+    }
+
+    if (patientId) {
+      query.patientId = patientId;
+    }
+
+    if (doctorId) {
+      query.doctorId = doctorId;
+    }
+
+    if (status) {
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",").map((s) => s.trim()) };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (startDate || endDate) {
+      query.appointmentDate = {};
+      if (startDate) query.appointmentDate.$gte = new Date(startDate);
+      if (endDate) query.appointmentDate.$lte = new Date(endDate);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const appointments = await Appointment.find(query)
+      .populate(
+        "patientId",
+        "name userId phone email isActive dateOfBirth gender bloodGroup address"
+      )
+      .populate(
+        "doctorId",
+        "name specialization qualification consultationFee isActive"
+      )
+      .sort({ appointmentDate: -1, appointmentTime: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Appointment.countDocuments(query);
+
+    return {
+      appointments,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Get appointments for a patient
+   */
+  async getPatientAppointments(patientId, filters = {}) {
+    const {
+      status,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+      hospitalId,
+    } = filters;
+
+    const query = { patientId };
+
+    // Multi-tenancy: Filter by hospitalId if provided
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
+    }
+
+    if (status) {
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",").map((s) => s.trim()) };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (startDate || endDate) {
+      query.appointmentDate = {};
+      if (startDate) query.appointmentDate.$gte = new Date(startDate);
+      if (endDate) query.appointmentDate.$lte = new Date(endDate);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const appointments = await Appointment.find(query)
+      .populate(
+        "doctorId",
+        "name specialization qualification consultationFee isActive"
+      )
+      .populate(
+        "patientId",
+        "name userId phone isActive dateOfBirth gender bloodGroup address"
+      )
+      .sort({ appointmentDate: -1, appointmentTime: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Appointment.countDocuments(query);
+
+    return {
+      appointments,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Get appointments for a doctor
+   */
+  async getDoctorAppointments(doctorId, filters = {}) {
+    const { status, date, page = 1, limit = 10, hospitalId } = filters;
+
+    const query = { doctorId };
+
+    // Multi-tenancy: Filter by hospitalId if provided
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
+    }
+
+    if (status) {
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      if (status.includes(",")) {
+        query.status = { $in: status.split(",").map((s) => s.trim()) };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const appointments = await Appointment.find(query)
+      .populate(
+        "patientId",
+        "name userId phone dateOfBirth gender bloodGroup isActive allergies address"
+      )
+      .sort({ appointmentDate: 1, appointmentTime: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Appointment.countDocuments(query);
+
+    return {
+      appointments,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Get single appointment
+   */
+  async getAppointmentById(appointmentId) {
+    const appointment = await Appointment.findById(appointmentId)
+      .populate(
+        "patientId",
+        "name userId email phone dateOfBirth gender bloodGroup allergies medicalHistory isActive address emergencyContact"
+      )
+      .populate(
+        "doctorId",
+        "name specialization qualification experience consultationFee isActive"
+      )
+      .populate("prescription");
+
+    if (!appointment) {
+      throw new AppError("Appointment not found", 404);
+    }
+
+    return appointment;
+  }
+
+  /**
+   * Update appointment status
+   */
+  async updateAppointmentStatus(appointmentId, status, userId, userRole) {
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      throw new AppError("Appointment not found", 404);
+    }
+
+    // Validate status transition
+    const validTransitions = {
+      scheduled: ["confirmed", "cancelled"],
+      confirmed: ["completed", "cancelled", "no_show"],
+      completed: [],
+      cancelled: [],
+      no_show: [],
+    };
+
+    if (!validTransitions[appointment.status].includes(status)) {
+      throw new AppError(
+        `Cannot change status from ${appointment.status} to ${status}`,
+        400
+      );
+    }
+
+    appointment.status = status;
+
+    if (status === "cancelled") {
+      appointment.cancelledBy = userId;
+      appointment.cancelledAt = new Date();
+    }
+
+    await appointment.save();
+
+    logger.info(
+      `Appointment ${appointmentId} status updated to ${status} by ${userRole}`
+    );
+
+    return appointment;
+  }
+
+  /**
+   * Cancel appointment
+   */
+  async cancelAppointment(appointmentId, userId, userRole, cancelReason) {
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      throw new AppError("Appointment not found", 404);
+    }
+
+    if (
+      appointment.status === "cancelled" ||
+      appointment.status === "completed"
+    ) {
+      throw new AppError(
+        `Cannot cancel ${appointment.status} appointment`,
+        400
+      );
+    }
+
+    // Check cancellation time (at least 2 hours before appointment)
+    const appointmentDateTime = new Date(appointment.appointmentDate);
+    const [hours, minutes] = appointment.appointmentTime.split(":");
+    appointmentDateTime.setHours(parseInt(hours), parseInt(minutes));
+
+    const now = new Date();
+    const timeDiff = appointmentDateTime - now;
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+    if (hoursDiff < 2 && userRole === "patient") {
+      throw new AppError(
+        "Appointments can only be cancelled at least 2 hours before the scheduled time",
+        400
+      );
+    }
+
+    appointment.status = "cancelled";
+    appointment.cancelReason = cancelReason;
+    appointment.cancelledBy = userId;
+    appointment.cancelledAt = new Date();
+
+    // Update payment status if applicable
+    if (appointment.payment.status === "paid") {
+      appointment.payment.status = "refunded";
+    }
+
+    await appointment.save();
+
+    logger.info(
+      `Appointment ${appointmentId} cancelled by ${userRole}: ${userId}`
+    );
+
+    return appointment;
+  }
+
+  /**
+   * Update appointment details
+   */
+  async updateAppointment(appointmentId, updateData, userId, userRole) {
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      throw new AppError("Appointment not found", 404);
+    }
+
+    // Only doctor can update diagnosis, prescription, notes
+    if (userRole === "doctor") {
+      const allowedFields = ["diagnosis", "prescription", "notes", "followUp"];
+      Object.keys(updateData).forEach((key) => {
+        if (allowedFields.includes(key)) {
+          appointment[key] = updateData[key];
+        }
+      });
+    }
+
+    // Patient can update symptoms and chief complaint before appointment
+    if (userRole === "patient" && appointment.status === "scheduled") {
+      if (updateData.symptoms) appointment.symptoms = updateData.symptoms;
+      if (updateData.chiefComplaint)
+        appointment.chiefComplaint = updateData.chiefComplaint;
+    }
+
+    await appointment.save();
+
+    logger.info(
+      `Appointment ${appointmentId} updated by ${userRole}: ${userId}`
+    );
+
+    return appointment;
+  }
+
+  /**
+   * Get available time slots for a doctor
+   */
+  async getAvailableSlots(doctorId, date) {
+    const doctor = await User.findById(doctorId);
+    if (!doctor || doctor.role !== "doctor") {
+      throw new AppError("Doctor not found", 404);
+    }
+
+    // Get all appointments for the doctor on the specified date
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const bookedAppointments = await Appointment.find({
+      doctorId,
+      appointmentDate: { $gte: startOfDay, $lte: endOfDay },
+      status: { $nin: ["cancelled"] },
+    }).select("appointmentTime");
+
+    const bookedSlots = bookedAppointments.map((apt) => apt.appointmentTime);
+
+    // Define all possible time slots (9 AM to 8 PM, 30-minute intervals)
+    const allSlots = [];
+    for (let hour = 9; hour <= 20; hour++) {
+      for (let minute of [0, 30]) {
+        if (hour === 20 && minute === 30) break; // Stop at 8:00 PM
+        const timeSlot = `${hour.toString().padStart(2, "0")}:${minute
+          .toString()
+          .padStart(2, "0")}`;
+        allSlots.push(timeSlot);
+      }
+    }
+
+    // Filter out booked slots
+    const availableSlots = allSlots.filter(
+      (slot) => !bookedSlots.includes(slot)
+    );
+
+    return {
+      date,
+      doctor: {
+        id: doctor._id,
+        name: doctor.name,
+        specialization: doctor.specialization,
+        consultationFee: doctor.consultationFee,
+      },
+      availableSlots,
+      bookedSlots,
+    };
+  }
+
+  /**
+   * Get appointment statistics
+   */
+  async getAppointmentStats(userId, userRole) {
+    const query =
+      userRole === "doctor" ? { doctorId: userId } : { patientId: userId };
+
+    const stats = await Appointment.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const total = await Appointment.countDocuments(query);
+
+    const statsObject = {
+      total,
+      scheduled: 0,
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+      no_show: 0,
+    };
+
+    stats.forEach((stat) => {
+      statsObject[stat._id] = stat.count;
+    });
+
+    return statsObject;
+  }
 }
 
 module.exports = new AppointmentService();

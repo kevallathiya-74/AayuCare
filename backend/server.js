@@ -1,12 +1,43 @@
+// =============================================================================
+// CRITICAL: Load environment variables FIRST before any other imports
+// =============================================================================
+require("dotenv").config();
+
+// =============================================================================
+// DNS FIX: Resolve MongoDB SRV connection issues on Windows
+// =============================================================================
+const dns = require("dns");
+
+// CRITICAL: Override localhost DNS with public DNS servers (Google DNS)
+// This fixes the 127.0.0.1 DNS issue that prevents SRV resolution
+dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+dns.setDefaultResultOrder("ipv4first");
+
+// =============================================================================
+// Validate Critical Environment Variables
+// =============================================================================
+if (!process.env.MONGODB_URI) {
+  console.error("❌ FATAL: MONGODB_URI is not defined in .env file");
+  process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+  console.error("❌ FATAL: JWT_SECRET is not defined in .env file");
+  process.exit(1);
+}
+
+// Environment validated - ready to start
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
-require("dotenv").config();
 
 const connectDB = require("./src/config/database");
+const { connectPostgres, closePool } = require("./src/config/postgres");
+const { connectRedis, closeRedis } = require("./src/config/redis");
 const { errorHandler } = require("./src/middleware/errorHandler");
 const logger = require("./src/utils/logger");
 const { initAuth, getAuth } = require("./src/lib/auth");
@@ -29,16 +60,37 @@ const app = express();
 // Must be set BEFORE rate limiter to correctly identify client IPs
 app.set("trust proxy", 1);
 
-// Connect to MongoDB FIRST
-connectDB().then(() => {
-  // Initialize Better Auth after DB connection
+// Connect to databases
+const initializeDatabases = async () => {
   try {
-    initAuth();
-    logger.info("✅ Better Auth initialized");
+    // MongoDB (for medical records, logs, documents) - non-blocking
+    try {
+      await connectDB();
+    } catch (mongoError) {
+      logger.warn("⚠️  Continuing without MongoDB");
+    }
+
+    // PostgreSQL (for relational data)
+    await connectPostgres();
+
+    // Redis (for caching and sessions)
+    await connectRedis();
+
+    // Initialize Better Auth after all DB connections
+    try {
+      initAuth();
+      logger.info("✅ Better Auth initialized");
+    } catch (error) {
+      logger.error("❌ Better Auth initialization failed:", error);
+    }
   } catch (error) {
-    logger.error("❌ Better Auth initialization failed:", error);
+    logger.error("❌ Database initialization failed:", error);
+    process.exit(1);
   }
-});
+};
+
+// Initialize databases
+initializeDatabases();
 
 // Security Middleware
 app.use(helmet());
@@ -76,12 +128,15 @@ app.use(
 // Rate limiting - General API
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 500 : 100, // Higher limit in dev
+  max: process.env.NODE_ENV === "development" ? 500 : 100, // Higher limit in dev
   message: "Too many requests from this IP, please try again later",
   skip: (req) => {
     // Skip rate limiting for authenticated admin users in development
-    if (process.env.NODE_ENV === 'development') {
-      return req.path.startsWith('/api/admin') || req.path.startsWith('/api/notifications');
+    if (process.env.NODE_ENV === "development") {
+      return (
+        req.path.startsWith("/api/admin") ||
+        req.path.startsWith("/api/notifications")
+      );
     }
     return false;
   },
@@ -150,16 +205,40 @@ app.get("/api", (req, res) => {
 });
 
 // Health check
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
   const mongoStatus =
     mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+
+  // Check PostgreSQL
+  let postgresStatus = "disconnected";
+  try {
+    const { query } = require("./src/config/postgres");
+    await query("SELECT 1");
+    postgresStatus = "connected";
+  } catch (error) {
+    logger.error("PostgreSQL health check failed:", error.message);
+  }
+
+  // Check Redis
+  let redisStatus = "disconnected";
+  try {
+    const { redisClient } = require("./src/config/redis");
+    await redisClient.ping();
+    redisStatus = "connected";
+  } catch (error) {
+    logger.error("Redis health check failed:", error.message);
+  }
 
   res.json({
     status: "success",
     message: "AayuCare Backend Server is running",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
-    mongodb: mongoStatus,
+    databases: {
+      mongodb: mongoStatus,
+      postgresql: postgresStatus,
+      redis: redisStatus,
+    },
     betterAuth:
       typeof getAuth === "function" ? "initialized" : "not initialized",
   });
@@ -208,10 +287,27 @@ process.on("unhandledRejection", (err) => {
 });
 
 // Handle SIGTERM
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   logger.info("🛑 SIGTERM RECEIVED. Shutting down gracefully");
-  server.close(() => {
-    logger.info("✅ Process terminated!");
+
+  server.close(async () => {
+    try {
+      // Close database connections
+      await mongoose.connection.close();
+      logger.info("✅ MongoDB connection closed");
+
+      await closePool();
+      logger.info("✅ PostgreSQL connection closed");
+
+      await closeRedis();
+      logger.info("✅ Redis connection closed");
+
+      logger.info("✅ Process terminated!");
+      process.exit(0);
+    } catch (error) {
+      logger.error("❌ Error during graceful shutdown:", error);
+      process.exit(1);
+    }
   });
 });
 

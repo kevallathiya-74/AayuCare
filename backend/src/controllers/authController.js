@@ -1,11 +1,16 @@
 /**
  * AayuCare - Auth Controller
  * Custom endpoints extending Better Auth
+ * Refactored to use repository pattern
  */
 
 const { getAuth } = require("../lib/auth");
 const { AppError } = require("../middleware/errorHandler");
 const User = require("../models/User");
+const userRepository = require("../repositories/userRepository");
+const doctorRepository = require("../repositories/doctorRepository");
+const patientRepository = require("../repositories/patientRepository");
+const { createUserWithProfile } = require("../utils/transaction");
 const mongoose = require("mongoose");
 
 /**
@@ -15,46 +20,40 @@ const mongoose = require("mongoose");
  */
 exports.getEmailByUserId = async (req, res, next) => {
   try {
-    console.log("[AuthController] getEmailByUserId called");
-    console.log("[AuthController] Request body:", req.body);
-
     const { userId } = req.body;
 
     if (!userId) {
-      console.error("[AuthController] Missing userId in request");
       return res.status(400).json({
         status: "error",
         message: "User ID is required",
       });
     }
 
-    // Check MongoDB connection
-    if (!mongoose.connection || mongoose.connection.readyState !== 1) {
-      console.error("[AuthController] MongoDB not connected");
-      return res.status(503).json({
-        status: "error",
-        message: "Database not available",
-      });
+    // Try PostgreSQL first
+    const userIdUppercase = userId.toString().trim().toUpperCase();
+    let user = await userRepository.findByUserId(userIdUppercase);
+
+    // Fallback to MongoDB for backward compatibility
+    if (!user) {
+      if (!mongoose.connection || mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+          status: "error",
+          message: "Database not available",
+        });
+      }
+
+      const db = mongoose.connection.getClient().db("aayucare");
+      const userCollection = db.collection("user");
+      user = await userCollection.findOne({ userId: userIdUppercase });
     }
 
-    // Better Auth stores users in 'user' collection
-    const db = mongoose.connection.getClient().db("test");
-    const userCollection = db.collection("user");
-
-    // Convert userId to uppercase (matches User schema)
-    const userIdUppercase = userId.toString().trim().toUpperCase();
-    console.log("[AuthController] Searching for userId:", userIdUppercase);
-    const user = await userCollection.findOne({ userId: userIdUppercase });
-
     if (!user) {
-      console.log("[AuthController] User not found:", userIdUppercase);
       return res.status(404).json({
         status: "error",
         message: "User not found",
       });
     }
 
-    console.log("[AuthController] User found:", user.email);
     res.status(200).json({
       status: "success",
       email: user.email,
@@ -67,7 +66,7 @@ exports.getEmailByUserId = async (req, res, next) => {
     });
   }
 };
- 
+
 /**
  * @desc    Get current session token (for mobile apps after Better Auth login)
  * @route   POST /api/user/current-session
@@ -84,7 +83,7 @@ exports.getCurrentSession = async (req, res, next) => {
       });
     }
 
-    const db = mongoose.connection.getClient().db("test");
+    const db = mongoose.connection.getClient().db("aayucare");
     const sessionCollection = db.collection("session");
 
     // Find the most recent valid session for this user
@@ -135,7 +134,7 @@ exports.getProfileByEmail = async (req, res, next) => {
       });
     }
 
-    const db = mongoose.connection.getClient().db("test");
+    const db = mongoose.connection.getClient().db("aayucare");
     const userCollection = db.collection("user");
 
     const user = await userCollection.findOne({ email: email });

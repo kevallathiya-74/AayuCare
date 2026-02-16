@@ -9,6 +9,9 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
+const { validateBody } = require("../middleware/validation");
+const { loginSchema, updateProfileSchema } = require("../validators/schemas");
+const { invalidateCache } = require("../middleware/cache");
 
 // Public routes
 router.post("/email-by-userid", authController.getEmailByUserId);
@@ -19,7 +22,16 @@ router.post("/current-session", authController.getCurrentSession);
 router.use(protect);
 
 router.get("/me", authController.getMe);
-router.put("/profile", authController.updateProfile);
-router.put("/change-password", authController.changePassword);
+router.put(
+  "/profile",
+  validateBody(updateProfileSchema),
+  authController.updateProfile,
+  invalidateCache("cache:user:*")
+);
+router.put(
+  "/change-password",
+  authController.changePassword,
+  invalidateCache("cache:session:*")
+);
 
 module.exports = router;

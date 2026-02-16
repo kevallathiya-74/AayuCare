@@ -34,7 +34,7 @@ exports.protect = async (req, res, next) => {
 
         // Query session directly from MongoDB
         try {
-          const db = mongoose.connection.getClient().db("test");
+          const db = mongoose.connection.getClient().db("aayucare");
           const sessionDoc = await db.collection("session").findOne({ token });
 
           if (sessionDoc && sessionDoc.expiresAt > new Date()) {

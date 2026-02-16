@@ -3,6 +3,9 @@ const router = express.Router();
 const medicalRecordController = require("../controllers/medicalRecordController");
 const { protect, restrictTo } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
+const { validateBody } = require("../middleware/validation");
+const { createMedicalRecordSchema } = require("../validators/schemas");
+const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // All routes require authentication
 router.use(protect);
@@ -12,6 +15,7 @@ router.use(attachHospitalId);
 router.get(
   "/",
   restrictTo("admin"),
+  cacheMiddleware(60),
   medicalRecordController.getAllMedicalRecords
 );
 
@@ -19,12 +23,15 @@ router.get(
 router.post(
   "/",
   restrictTo("doctor", "admin"),
-  medicalRecordController.createMedicalRecord
+  validateBody(createMedicalRecordSchema),
+  medicalRecordController.createMedicalRecord,
+  invalidateCache("cache:medicalrecord:*")
 );
 
 // Get patient's medical records
 router.get(
   "/patient/:patientId",
+  cacheMiddleware(120),
   medicalRecordController.getPatientMedicalRecords
 );
 
@@ -32,24 +39,32 @@ router.get(
 router.get(
   "/history/:patientId",
   restrictTo("doctor", "admin"),
+  cacheMiddleware(120),
   medicalRecordController.getPatientHistory
 );
 
 // Get single medical record
-router.get("/:id", medicalRecordController.getMedicalRecord);
+router.get(
+  "/:id",
+  cacheMiddleware(120),
+  medicalRecordController.getMedicalRecord
+);
 
 // Update medical record (Doctor, Admin only)
 router.put(
   "/:id",
   restrictTo("doctor", "admin"),
-  medicalRecordController.updateMedicalRecord
+  validateBody(createMedicalRecordSchema),
+  medicalRecordController.updateMedicalRecord,
+  invalidateCache("cache:medicalrecord:*")
 );
 
 // Delete medical record (Doctor, Admin only)
 router.delete(
   "/:id",
   restrictTo("doctor", "admin"),
-  medicalRecordController.deleteMedicalRecord
+  medicalRecordController.deleteMedicalRecord,
+  invalidateCache("cache:medicalrecord:*")
 );
 
 module.exports = router;

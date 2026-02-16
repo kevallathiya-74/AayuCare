@@ -3,6 +3,15 @@ const router = express.Router();
 const appointmentController = require("../controllers/appointmentController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
+const { validateBody, validateParams } = require("../middleware/validation");
+const {
+  createAppointmentSchema,
+  updateAppointmentSchema,
+} = require("../validators/schemas");
+const {
+  cachePatientAppointments,
+  invalidateCache,
+} = require("../middleware/cache");
 const {
   validateCreateAppointment,
   validateUpdateAppointmentStatus,
@@ -20,7 +29,11 @@ router.use(attachHospitalId);
  * @desc    Get appointments with cursor-based pagination (filtered by role) - For lazy loading
  * @access  Private
  */
-router.get("/cursor", appointmentController.getAppointmentsCursor);
+router.get(
+  "/cursor",
+  cachePatientAppointments,
+  appointmentController.getAppointmentsCursor
+);
 
 /**
  * @route   GET /api/appointments/stats
@@ -62,8 +75,10 @@ router.get("/", validateGetAppointments, appointmentController.getAppointments);
 router.post(
   "/",
   authorize("patient", "admin"),
+  validateBody(createAppointmentSchema),
   validateCreateAppointment,
-  appointmentController.createAppointment
+  appointmentController.createAppointment,
+  invalidateCache("cache:appointments:*")
 );
 
 /**
@@ -78,7 +93,12 @@ router.get("/:id", appointmentController.getAppointment);
  * @desc    Update appointment details
  * @access  Private
  */
-router.put("/:id", appointmentController.updateAppointment);
+router.put(
+  "/:id",
+  validateBody(updateAppointmentSchema),
+  appointmentController.updateAppointment,
+  invalidateCache("cache:appointments:*")
+);
 
 /**
  * @route   PATCH /api/appointments/:id/status
@@ -89,7 +109,8 @@ router.patch(
   "/:id/status",
   authorize("doctor", "admin"),
   validateUpdateAppointmentStatus,
-  appointmentController.updateAppointmentStatus
+  appointmentController.updateAppointmentStatus,
+  invalidateCache("cache:appointments:*")
 );
 
 /**
