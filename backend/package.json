@@ -8,7 +8,9 @@
     "dev": "nodemon server.js",
     "init:postgres": "node scripts/initPostgres.js",
     "cleanup:db": "node scripts/cleanupDatabase.js",
-    "setup": "npm install && npm run init:postgres && npm run cleanup:db"
+    "seed:db": "node scripts/seedDatabase.js",
+    "setup": "npm install && npm run init:postgres && npm run cleanup:db",
+    "setup:full": "npm install && npm run init:postgres && npm run cleanup:db && npm run seed:db"
   },
   "keywords": [],
   "author": "",

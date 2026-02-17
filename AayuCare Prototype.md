@@ -839,3 +839,14 @@ FEATURES TO IMPLEMENT:
 • Biometric Authentication  
 • Voice Recognition (Speech-to-Text)  
 • Multi-language i18n  
+
+
+
+
+# DATABASE SETUP (POSTGRESQL):
+
+- DATABASE CREATE COMMANDS:
+- CREATE USER aayucare_admin WITH PASSWORD 'aayucare123';
+- ALTER USER aayucare_admin WITH SUPERUSER;
+- CREATE DATABASE aayucare_db OWNER aayucare_admin;
+- GRANT ALL PRIVILEGES ON DATABASE aayucare_db TO aayucare_admin;
