@@ -1653,7 +1653,11 @@ exports.permanentDeleteUser = async (req, res) => {
   }
 };
 
-// Helper function
+/**
+ * Convert a date to a short human-readable relative time string.
+ * @param {Date|string|number} date - Date, ISO string, or timestamp to compare against current time.
+ * @returns {string} A relative time string: "just now", "<n> mins ago", "<n> hours ago", or "<n> days ago".
+ */
 function getTimeAgo(date) {
   const now = new Date();
   const diff = now - new Date(date);
