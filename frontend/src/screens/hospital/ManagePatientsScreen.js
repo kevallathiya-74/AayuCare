@@ -181,7 +181,7 @@ const ManagePatientsScreen = ({ navigation }) => {
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: "Deactivate",
           style: "destructive",
           onPress: async () => {
             setUpdatingId(patient._id);
@@ -189,7 +189,7 @@ const ManagePatientsScreen = ({ navigation }) => {
               await adminService.deleteUser(patient.userId);
               // Remove from list
               setPatients((prev) => prev.filter((p) => p._id !== patient._id));
-              Alert.alert("Success", "Patient deleted successfully");
+              Alert.alert("Success", "Patient deactivated successfully");
             } catch (err) {
               logError(err, {
                 context: "ManagePatientsScreen.handleDeletePatient",
@@ -197,6 +197,61 @@ const ManagePatientsScreen = ({ navigation }) => {
 
               // Better error handling
               let errorMessage = "Failed to delete patient";
+              if (err.response?.data?.message) {
+                errorMessage = err.response.data.message;
+              } else if (err.message) {
+                errorMessage = err.message;
+              }
+
+              Alert.alert("Error", errorMessage);
+            } finally {
+              setUpdatingId(null);
+            }
+          },
+        },
+        {
+          text: "Delete Permanently",
+          style: "destructive",
+          onPress: () => handlePermanentDeletePatient(patient),
+        },
+      ]
+    );
+  }, []);
+
+  const handlePermanentDeletePatient = useCallback(async (patient) => {
+    Alert.alert(
+      "⚠️ PERMANENT DELETE WARNING",
+      `This will PERMANENTLY DELETE all data for ${patient.name}:\n\n` +
+      `• Personal information\n` +
+      `• Medical records\n` +
+      `• Appointment history\n` +
+      `• Prescriptions\n` +
+      `• Health metrics\n\n` +
+      `⚠️ This action CANNOT be undone!\n` +
+      `⚠️ This may VIOLATE healthcare compliance regulations!\n\n` +
+      `Are you absolutely sure?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "YES, DELETE PERMANENTLY",
+          style: "destructive",
+          onPress: async () => {
+            setUpdatingId(patient._id);
+            try {
+              await adminService.permanentDeleteUser(patient.userId);
+              // Remove from list
+              setPatients((prev) => prev.filter((p) => p._id !== patient._id));
+              Alert.alert(
+                "Permanently Deleted",
+                `${patient.name} has been permanently removed from the system. This action was logged for audit purposes.`
+              );
+            } catch (err) {
+              logError(err, {
+                context: "ManagePatientsScreen.handlePermanentDeletePatient",
+              });
+
+              // Better error handling
+              let errorMessage = "Failed to permanently delete patient";
               if (err.response?.data?.message) {
                 errorMessage = err.response.data.message;
               } else if (err.message) {

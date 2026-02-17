@@ -293,6 +293,22 @@ const adminService = {
             throw error;
         }
     },
+
+    /**
+     * PERMANENT delete user (hard delete - removes all data permanently)
+     * @param {string} userId - User ID
+     * @returns {Promise} - Deletion confirmation
+     * @warning This violates healthcare compliance - use with extreme caution
+     */
+    async permanentDeleteUser(userId) {
+        try {
+            const response = await api.delete(`/admin/users/${userId}/permanent`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'adminService.permanentDeleteUser', userId });
+            throw error;
+        }
+    },
 };
 
 export default adminService;

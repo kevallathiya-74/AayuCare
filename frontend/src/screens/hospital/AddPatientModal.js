@@ -115,7 +115,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         password: formData.password,
         role: "patient",
         dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
+        gender: formData.gender.toLowerCase(),
         bloodGroup: formData.bloodGroup || undefined,
         address: formData.address.trim() || undefined,
         isActive: true,
@@ -146,6 +146,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
       // Better error handling
       let errorMessage = "Failed to register patient. Please try again.";
+      let fieldError = null;
 
       if (typeof error === "string") {
         errorMessage = error;
@@ -155,18 +156,33 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         errorMessage = error.message;
       }
 
-      // Specific handling for duplicate errors
-      if (errorMessage.includes("already exists")) {
-        if (errorMessage.includes("email")) {
-          errorMessage =
-            "This email is already registered. Please use a different email.";
-        } else if (errorMessage.includes("phone")) {
-          errorMessage =
-            "This phone number is already registered. Please use a different number.";
-        }
+      // Specific handling for duplicate errors with field highlighting
+      if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors({ ...errors, email: "This email is already registered" });
+        errorMessage = "This email is already registered. Please use a different email.";
+        fieldError = "email";
+      } else if (errorMessage.toLowerCase().includes("phone") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors({ ...errors, phone: "This phone number is already registered" });
+        errorMessage = "This phone number is already registered. Please use a different number.";
+        fieldError = "phone";
       }
 
-      Alert.alert("Error", errorMessage);
+      // Show alert with clear message
+      Alert.alert(
+        "Registration Failed", 
+        errorMessage,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Focus on the error field if specified
+              if (fieldError === "phone") {
+                // Phone field will show red error state
+              }
+            }
+          }
+        ]
+      );
     } finally {
       setLoading(false);
     }
@@ -194,7 +210,11 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     
     if (date) {
       setSelectedDate(date);
-      const formattedDate = date.toISOString().split("T")[0];
+      // Use local date formatting to avoid timezone shift
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
       setFormData({ ...formData, dateOfBirth: formattedDate });
       if (errors.dateOfBirth) {
         setErrors({ ...errors, dateOfBirth: null });
@@ -400,7 +420,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
             {renderInput(
               "password",
               "Password *",
-              "Minimum 6 characters",
+              "Minimum 8 characters",
               "lock-closed",
               "default",
               true

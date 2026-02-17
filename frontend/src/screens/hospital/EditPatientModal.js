@@ -55,7 +55,11 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       
       if (patient.dateOfBirth) {
         const dob = new Date(patient.dateOfBirth);
-        dobString = dob.toISOString().split("T")[0]; // YYYY-MM-DD
+        // Use local date formatting to avoid timezone shift
+        const year = dob.getFullYear();
+        const month = String(dob.getMonth() + 1).padStart(2, '0');
+        const day = String(dob.getDate()).padStart(2, '0');
+        dobString = `${year}-${month}-${day}`; // YYYY-MM-DD
         dateObj = dob;
       }
 
@@ -126,7 +130,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         updateData.dateOfBirth = formData.dateOfBirth;
       }
       if (formData.gender) {
-        updateData.gender = formData.gender;
+        updateData.gender = formData.gender.toLowerCase();
       }
       if (formData.bloodGroup) {
         updateData.bloodGroup = formData.bloodGroup;
@@ -161,6 +165,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
 
       // Better error handling
       let errorMessage = "Failed to update patient profile. Please try again.";
+      let fieldError = null;
 
       if (typeof error === "string") {
         errorMessage = error;
@@ -170,18 +175,30 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         errorMessage = error.message;
       }
 
-      // Specific handling for duplicate errors
-      if (errorMessage.includes("already exists")) {
-        if (errorMessage.includes("email")) {
-          errorMessage =
-            "This email is already registered. Please use a different email.";
-        } else if (errorMessage.includes("phone")) {
-          errorMessage =
-            "This phone number is already registered. Please use a different number.";
-        }
+      // Specific handling for duplicate errors with field highlighting
+      if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors({ ...errors, email: "This email is already registered" });
+        errorMessage = "This email is already in use. Please use a different email.";
+        fieldError = "email";
+      } else if (errorMessage.toLowerCase().includes("phone") && errorMessage.toLowerCase().includes("already exists")) {
+        setErrors({ ...errors, phone: "This phone number is already registered" });
+        errorMessage = "This phone number is already in use. Please use a different number.";
+        fieldError = "phone";
       }
 
-      Alert.alert("Error", errorMessage);
+      // Show alert with clear message
+      Alert.alert(
+        "Update Failed",
+        errorMessage,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Field will show red error state
+            }
+          }
+        ]
+      );
     } finally {
       setLoading(false);
     }
@@ -208,7 +225,11 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     
     if (date) {
       setSelectedDate(date);
-      const formattedDate = date.toISOString().split("T")[0];
+      // Use local date formatting to avoid timezone shift
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
       setFormData({ ...formData, dateOfBirth: formattedDate });
       if (errors.dateOfBirth) {
         setErrors({ ...errors, dateOfBirth: null });

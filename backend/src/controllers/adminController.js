@@ -7,7 +7,10 @@ const mongoose = require("mongoose");
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
+const doctorRepository = require("../repositories/doctorRepository");
+const patientRepository = require("../repositories/patientRepository");
 const MedicalRecord = require("../models/MedicalRecord");
+const User = require("../models/User");
 const logger = require("../utils/logger");
 const { query } = require("../config/postgres");
 
@@ -267,6 +270,9 @@ exports.getUsers = async (req, res) => {
     const params = [];
     let paramIndex = 1;
 
+    // Always filter out inactive users (soft deleted)
+    conditions.push(`is_active = true`);
+
     if (req.hospitalId && req.user.role !== "super_admin") {
       conditions.push(`hospital_id = $${paramIndex}`);
       params.push(req.hospitalId);
@@ -286,15 +292,20 @@ exports.getUsers = async (req, res) => {
       paramIndex++;
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     const [usersResult, countResult] = await Promise.all([
       query(`
-        SELECT id, user_id, name, email, phone, role, hospital_id, hospital_name,
-               is_active, email_verified, phone_verified, created_at, updated_at
-        FROM users
+        SELECT u.id, u.user_id, u.name, u.email, u.phone, u.role, u.hospital_id, u.hospital_name,
+               u.is_active, u.email_verified, u.phone_verified, u.created_at, u.updated_at,
+               d.specialization, d.qualification, d.experience, d.department, d.consultation_fee, d.bio,
+               p.date_of_birth, p.gender, p.blood_group, p.address, 
+               p.emergency_contact_name, p.emergency_contact_phone
+        FROM users u
+        LEFT JOIN doctors d ON u.id = d.user_id AND u.role = 'doctor'
+        LEFT JOIN patients p ON u.id = p.user_id AND u.role = 'patient'
         ${whereClause}
-        ORDER BY created_at DESC
+        ORDER BY u.created_at DESC
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `, [...params, parseInt(limit), skip]),
       query(`SELECT COUNT(*) FROM users ${whereClause}`, params)
@@ -1148,7 +1159,20 @@ exports.createUser = async (req, res) => {
       `, [user.id, dateOfBirth, gender, bloodGroup, address]);
     }
 
-    const userResponse = user;
+    // Get complete user profile with role-specific data
+    let userResponse = user;
+    
+    if (role === "doctor") {
+      const doctorProfile = await doctorRepository.findByUserId(user.id);
+      if (doctorProfile) {
+        userResponse = { ...userResponse, ...doctorProfile };
+      }
+    } else if (role === "patient") {
+      const patientProfile = await patientRepository.findByUserId(user.id);
+      if (patientProfile) {
+        userResponse = { ...userResponse, ...patientProfile };
+      }
+    }
 
     logger.info(`Admin ${req.user.userId} created new ${role}: ${userId}`);
 
@@ -1161,7 +1185,25 @@ exports.createUser = async (req, res) => {
     logger.error("Create user error:", {
       error: error.message,
       stack: error.stack,
+      code: error.code,
     });
+
+    // Handle PostgreSQL unique constraint violations
+    if (error.code === '23505') {
+      // Unique constraint violation
+      if (error.message.includes('phone')) {
+        return res.status(400).json({
+          status: "error",
+          message: "Phone number already exists",
+        });
+      } else if (error.message.includes('email')) {
+        return res.status(400).json({
+          status: "error",
+          message: "Email already exists",
+        });
+      }
+    }
+
     res.status(500).json({
       status: "error",
       message: "Failed to create user",
@@ -1192,6 +1234,12 @@ exports.updateUserProfile = async (req, res) => {
       bloodGroup,
       address,
     } = req.body;
+
+    logger.info('Update user profile request:', { 
+      userId, 
+      requestedFields: Object.keys(req.body),
+      values: { name, email, phone, specialization, qualification, experience, department, consultationFee, dateOfBirth, gender, bloodGroup, address }
+    });
 
     // Find user with hospitalId filter
     const user = await userRepository.findByUserId(userId);
@@ -1250,6 +1298,20 @@ exports.updateUserProfile = async (req, res) => {
 
     // Update role-specific fields
     if (user.role === "doctor") {
+      // First check if doctor record exists
+      const doctorCheck = await query(
+        'SELECT id FROM doctors WHERE user_id = $1',
+        [user.id]
+      );
+      
+      if (doctorCheck.rows.length === 0) {
+        logger.error('Doctor record not found for user', { userId: user.id, customUserId: userId });
+        return res.status(404).json({
+          status: "error",
+          message: "Doctor profile not found. Please contact support.",
+        });
+      }
+      
       const doctorUpdates = [];
       const doctorValues = [];
       let paramIndex = 1;
@@ -1282,12 +1344,34 @@ exports.updateUserProfile = async (req, res) => {
       
       if (doctorUpdates.length > 0) {
         doctorValues.push(user.id);
-        await query(
-          `UPDATE doctors SET ${doctorUpdates.join(', ')} WHERE user_id = $${paramIndex}`,
-          doctorValues
-        );
+        const updateQuery = `UPDATE doctors SET ${doctorUpdates.join(', ')}, updated_at = NOW() WHERE user_id = $${paramIndex}`;
+        logger.info('Updating doctor:', { query: updateQuery, values: doctorValues, userId: user.id });
+        const result = await query(updateQuery, doctorValues);
+        logger.info('Doctor update result:', { rowCount: result.rowCount });
+        
+        if (result.rowCount === 0) {
+          logger.error('Doctor update failed - no rows affected', { userId: user.id });
+          return res.status(500).json({
+            status: "error",
+            message: "Failed to update doctor profile",
+          });
+        }
       }
     } else if (user.role === "patient") {
+      // First check if patient record exists
+      const patientCheck = await query(
+        'SELECT id FROM patients WHERE user_id = $1',
+        [user.id]
+      );
+      
+      if (patientCheck.rows.length === 0) {
+        logger.error('Patient record not found for user', { userId: user.id, customUserId: userId });
+        return res.status(404).json({
+          status: "error",
+          message: "Patient profile not found. Please contact support.",
+        });
+      }
+      
       const patientUpdates = [];
       const patientValues = [];
       let paramIndex = 1;
@@ -1315,15 +1399,36 @@ exports.updateUserProfile = async (req, res) => {
       
       if (patientUpdates.length > 0) {
         patientValues.push(user.id);
-        await query(
-          `UPDATE patients SET ${patientUpdates.join(', ')} WHERE user_id = $${paramIndex}`,
-          patientValues
-        );
+        const updateQuery = `UPDATE patients SET ${patientUpdates.join(', ')}, updated_at = NOW() WHERE user_id = $${paramIndex}`;
+        logger.info('Updating patient:', { query: updateQuery, values: patientValues, userId: user.id });
+        const result = await query(updateQuery, patientValues);
+        logger.info('Patient update result:', { rowCount: result.rowCount });
+        
+        if (result.rowCount === 0) {
+          logger.error('Patient update failed - no rows affected', { userId: user.id });
+          return res.status(500).json({
+            status: "error",
+            message: "Failed to update patient profile",
+          });
+        }
       }
     }
 
-    // Get updated user
-    const userResponse = await userRepository.findById(user.id);
+    // Get updated user with complete profile (including doctor/patient specific fields)
+    let userResponse = await userRepository.findById(user.id);
+    
+    // If role is doctor or patient, fetch complete profile with JOIN
+    if (user.role === "doctor") {
+      const doctorProfile = await doctorRepository.findByUserId(user.id);
+      if (doctorProfile) {
+        userResponse = { ...userResponse, ...doctorProfile };
+      }
+    } else if (user.role === "patient") {
+      const patientProfile = await patientRepository.findByUserId(user.id);
+      if (patientProfile) {
+        userResponse = { ...userResponse, ...patientProfile };
+      }
+    }
 
     logger.info(`Admin ${req.user.userId} updated profile of ${userId}`);
 
@@ -1400,8 +1505,23 @@ exports.deleteUser = async (req, res) => {
       }
     }
 
-    // Soft delete - set isActive to false
+    // Soft delete - set isActive to false in PostgreSQL
     await userRepository.update(user.id, { isActive: false });
+
+    // Also update MongoDB User if exists (for consistency)
+    try {
+      const mongoUser = await User.findOne({ userId: user.user_id });
+      if (mongoUser) {
+        mongoUser.isActive = false;
+        await mongoUser.save();
+        logger.info(`MongoDB User ${user.user_id} also marked as inactive`);
+      }
+    } catch (mongoError) {
+      // Log but don't fail the request if MongoDB update fails
+      logger.warn(`Failed to update MongoDB User ${user.user_id}:`, {
+        error: mongoError.message,
+      });
+    }
 
     logger.info(
       `Admin ${req.user.userId} soft-deleted user ${userId} (${user.role})`
@@ -1423,6 +1543,111 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Failed to delete user",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    PERMANENT delete user (hard delete - removes all data)
+ * @route   DELETE /api/admin/users/:userId/permanent
+ * @access  Private (Admin only)
+ * @warning This violates healthcare compliance - use with extreme caution
+ */
+exports.permanentDeleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find user
+    const user = await userRepository.findByUserId(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Check hospital access
+    if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied",
+      });
+    }
+
+    // Prevent deleting admin users
+    if (["admin", "super_admin"].includes(user.role)) {
+      return res.status(403).json({
+        status: "error",
+        message: "Cannot permanently delete admin users",
+      });
+    }
+
+    // AUDIT LOG - Record this critical action
+    logger.warn("PERMANENT DELETE INITIATED", {
+      deletedUserId: user.user_id,
+      deletedUserRole: user.role,
+      deletedUserEmail: user.email,
+      deletedBy: req.user.userId,
+      deletedByRole: req.user.role,
+      timestamp: new Date().toISOString(),
+      ipAddress: req.ip,
+    });
+
+    // Start permanent deletion process
+    // 1. Delete role-specific data first (cascade)
+    if (user.role === "doctor") {
+      await query(`DELETE FROM doctors WHERE user_id = $1`, [user.id]);
+      logger.info(`Deleted doctor profile for ${user.user_id}`);
+    } else if (user.role === "patient") {
+      await query(`DELETE FROM patients WHERE user_id = $1`, [user.id]);
+      logger.info(`Deleted patient profile for ${user.user_id}`);
+    }
+
+    // 2. Delete from users table (PostgreSQL)
+    await query(`DELETE FROM users WHERE id = $1`, [user.id]);
+    logger.info(`Deleted user record from PostgreSQL: ${user.user_id}`);
+
+    // 3. Delete from MongoDB User collection
+    try {
+      const mongoUser = await User.findOneAndDelete({ userId: user.user_id });
+      if (mongoUser) {
+        logger.info(`Deleted MongoDB User document: ${user.user_id}`);
+      }
+    } catch (mongoError) {
+      logger.warn(`Failed to delete MongoDB User ${user.user_id}:`, {
+        error: mongoError.message,
+      });
+    }
+
+    // FINAL AUDIT LOG
+    logger.warn("PERMANENT DELETE COMPLETED", {
+      deletedUserId: user.user_id,
+      deletedUserRole: user.role,
+      deletedBy: req.user.userId,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json({
+      status: "success",
+      message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} permanently deleted. This action cannot be undone.`,
+      data: {
+        userId: user.user_id,
+        deletedAt: new Date(),
+        deletedBy: req.user.userId,
+      },
+    });
+  } catch (error) {
+    logger.error("PERMANENT delete error:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.params.userId,
+      requestedBy: req.user?.userId,
+    });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to permanently delete user",
       error: error.message,
     });
   }

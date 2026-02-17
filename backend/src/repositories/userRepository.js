@@ -230,7 +230,7 @@ class UserRepository {
    */
   async findPatientsByHospital(hospitalId, limit = 20, offset = 0, searchTerm = '') {
     // Build WHERE clause with search conditions
-    let whereConditions = 'u.hospital_id = $1 AND u.role = \'patient\'';
+    let whereConditions = 'u.hospital_id = $1 AND u.role = \'patient\' AND u.is_active = true';
     const params = [hospitalId];
     let paramIndex = 2;
 

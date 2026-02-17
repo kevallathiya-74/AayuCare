@@ -404,7 +404,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
             {renderInput(
               "password",
               "Password *",
-              "Minimum 6 characters",
+              "Minimum 8 characters",
               "lock-closed",
               "default",
               true

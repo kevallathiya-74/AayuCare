@@ -54,7 +54,7 @@ const registerSchema = Joi.object({
     then: Joi.optional(),
     otherwise: Joi.forbidden(),
   }),
-  gender: Joi.string().valid("male", "female", "other").when("role", {
+  gender: Joi.string().lowercase().valid("male", "female", "other").when("role", {
     is: "patient",
     then: Joi.optional(),
     otherwise: Joi.forbidden(),
@@ -123,11 +123,33 @@ const updatePaymentSchema = Joi.object({
 
 // User profile update validation
 const updateProfileSchema = Joi.object({
+  // Common user fields
   name: Joi.string().min(2).max(255).optional(),
+  email: Joi.string().email().optional(),
   phone: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .optional(),
-  // Add other updateable fields
+  
+  // Doctor-specific fields
+  specialization: Joi.string().max(255).optional(),
+  qualification: Joi.string().max(255).optional(),
+  experience: Joi.number().integer().min(0).optional(),
+  department: Joi.string().max(255).optional(),
+  consultationFee: Joi.number().min(0).optional(),
+  bio: Joi.string().max(1000).optional(),
+  availability: Joi.object().optional(),
+  
+  // Patient-specific fields
+  dateOfBirth: Joi.date().optional(),
+  gender: Joi.string().lowercase().valid("male", "female", "other").optional(),
+  bloodGroup: Joi.string().valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-").optional(),
+  address: Joi.string().max(500).optional(),
+  emergencyContactName: Joi.string().max(255).optional(),
+  emergencyContactPhone: Joi.string()
+    .pattern(/^\+?[1-9]\d{1,14}$/)
+    .optional(),
+  allergies: Joi.array().items(Joi.string()).optional(),
+  chronicConditions: Joi.array().items(Joi.string()).optional(),
 }).min(1);
 
 // Doctor profile update validation
@@ -143,7 +165,7 @@ const updateDoctorProfileSchema = Joi.object({
 // Patient profile update validation
 const updatePatientProfileSchema = Joi.object({
   dateOfBirth: Joi.date().optional(),
-  gender: Joi.string().valid("male", "female", "other").optional(),
+  gender: Joi.string().lowercase().valid("male", "female", "other").optional(),
   bloodGroup: Joi.string().optional(),
   address: Joi.string().max(500).optional(),
   emergencyContactName: Joi.string().max(255).optional(),

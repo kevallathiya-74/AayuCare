@@ -22,6 +22,7 @@ const {
   createUser,
   updateUserProfile,
   deleteUser,
+  permanentDeleteUser,
 } = require("../controllers/adminController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
@@ -47,24 +48,48 @@ router.post(
   "/users",
   validateBody(registerSchema),
   createUser,
-  invalidateCache("cache:user:*")
+  invalidateCache("v1:cache:user:*"),
+  invalidateCache("v1:cache:doctors:*"),
+  invalidateCache("v1:cache:patient:*"),
+  invalidateCache("v1:cache:*patients*")
 );
 router.put(
   "/users/:userId",
   validateBody(updateProfileSchema),
   updateUserProfile,
-  invalidateCache("cache:user:*")
+  invalidateCache("v1:cache:user:*"),
+  invalidateCache("v1:cache:doctors:*"),
+  invalidateCache("v1:cache:patient:*"),
+  invalidateCache("v1:cache:*patients*")
 );
-router.delete("/users/:userId", deleteUser, invalidateCache("cache:user:*"));
+router.delete("/users/:userId", deleteUser, 
+  invalidateCache("v1:cache:user:*"),
+  invalidateCache("v1:cache:doctors:*"),
+  invalidateCache("v1:cache:patient:*"),
+  invalidateCache("v1:cache:*patients*")
+);
+// PERMANENT DELETE - Use with extreme caution (violates healthcare compliance)
+router.delete("/users/:userId/permanent", permanentDeleteUser, 
+  invalidateCache("v1:cache:user:*"),
+  invalidateCache("v1:cache:doctors:*"),
+  invalidateCache("v1:cache:patient:*"),
+  invalidateCache("v1:cache:*patients*")
+);
 router.patch(
   "/users/:userId/status",
   updateUserStatus,
-  invalidateCache("cache:user:*")
+  invalidateCache("v1:cache:user:*"),
+  invalidateCache("v1:cache:doctors:*"),
+  invalidateCache("v1:cache:patient:*"),
+  invalidateCache("v1:cache:*patients*")
 );
 router.patch(
   "/users/:userId/role",
   updateUserRole,
-  invalidateCache("cache:user:*")
+  invalidateCache("v1:cache:user:*"),
+  invalidateCache("v1:cache:doctors:*"),
+  invalidateCache("v1:cache:patient:*"),
+  invalidateCache("v1:cache:*patients*")
 );
 router.post("/users/bulk", bulkUpdateUsers, invalidateCache("cache:user:*"));
 

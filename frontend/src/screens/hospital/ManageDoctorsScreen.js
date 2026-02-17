@@ -165,7 +165,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: "Deactivate",
           style: "destructive",
           onPress: async () => {
             setUpdatingId(doctor._id);
@@ -173,7 +173,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
               await adminService.deleteUser(doctor.userId);
               // Remove from list
               setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
-              Alert.alert("Success", "Doctor deleted successfully");
+              Alert.alert("Success", "Doctor deactivated successfully");
             } catch (err) {
               logError(err, {
                 context: "ManageDoctorsScreen.handleDeleteDoctor",
@@ -186,8 +186,56 @@ const ManageDoctorsScreen = ({ navigation }) => {
               } else if (err.message) {
                 errorMessage = err.message;
               }
-              
+
               Alert.alert("Error", errorMessage);
+            } finally {
+              setUpdatingId(null);
+            }
+          },
+        },
+        {
+          text: "Delete Permanently",
+          style: "destructive",
+          onPress: () => handlePermanentDeleteDoctor(doctor),
+        },
+      ]
+    );
+  }, []);
+
+  const handlePermanentDeleteDoctor = useCallback(async (doctor) => {
+    Alert.alert(
+      "⚠️ PERMANENT DELETE WARNING",
+      `This will PERMANENTLY DELETE all data for Dr. ${doctor.name}:\n\n` +
+      `• Personal information\n` +
+      `• Appointment history\n` +
+      `• Schedule data\n` +
+      `• Prescriptions issued\n` +
+      `• Medical records created\n\n` +
+      `⚠️ This action CANNOT be undone!\n` +
+      `⚠️ This may VIOLATE healthcare compliance regulations!\n\n` +
+      `Are you absolutely sure?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "YES, DELETE PERMANENTLY",
+          style: "destructive",
+          onPress: async () => {
+            setUpdatingId(doctor._id);
+            try {
+              await adminService.permanentDeleteUser(doctor.userId);
+              // Remove from list
+              setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
+              Alert.alert(
+                "Permanently Deleted",
+                `Dr. ${doctor.name} has been permanently removed from the system. This action was logged for audit purposes.`
+              );
+            } catch (err) {
+              logError(err, {
+                context: "ManageDoctorsScreen.handlePermanentDeleteDoctor",
+              });
+
+              // Better error handling
+              let errorMessage = "Failed to permanently delete doctor";
             } finally {
               setUpdatingId(null);
             }
