@@ -140,18 +140,6 @@ router.post(
 );
 
 /**
- * @route   GET /api/doctors/profile/stats
- * @desc    Get profile statistics for logged-in doctor
- * @access  Private (Doctor)
- */
-router.get(
-  "/me/profile/stats",
-  protect,
-  authorize("doctor"),
-  doctorController.getProfileStats
-);
-
-/**
  * @route   PUT /api/doctors/profile
  * @desc    Update doctor profile
  * @access  Private (Doctor)

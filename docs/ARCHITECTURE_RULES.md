@@ -208,9 +208,98 @@ Future ML comparison module must:
 - Store results in NoSQL.
 - Keep patient data encrypted at rest.
 
-# 13 documention
+---
 
-    -must follow online documention for formate, package for frontend, backend, database
+# 1️⃣3️⃣ DOCUMENTATION STANDARDS
+
+## 13.1 Documentation Location
+
+ALL documentation files MUST be stored in the `/docs/` directory:
+
+```
+docs/
+├── ARCHITECTURE_RULES.md
+├── PROJECT_RULES.md
+├── API_DOCUMENTATION.md
+├── DEPLOYMENT_GUIDE.md
+└── [feature-specific].md
+```
+
+**Required for all .md files:**
+- ✅ Root-level guides: `/docs/*.md`
+- ✅ Backend documentation: `/docs/backend/*.md`
+- ✅ Frontend documentation: `/docs/frontend/*.md`
+- ✅ Database schemas: `/docs/database/*.md`
+
+**Exceptions (allowed outside /docs/):**
+- `README.md` (root only)
+- `CHANGELOG.md` (root only)
+- `LICENSE.md` (root only)
+
+## 13.2 Documentation Structure
+
+Each documentation file MUST include:
+
+**Header section:**
+```markdown
+# [Title]
+
+Version: X.X
+Last Updated: [Date]
+Environment: [Development/Production]
+```
+
+**Required sections:**
+- Overview/Purpose
+- Prerequisites
+- Implementation details
+- Examples
+- Related documentation links
+
+## 13.3 Documentation Standards
+
+**Format requirements:**
+- Use proper markdown syntax
+- Follow official documentation for packages/frameworks
+- Include code examples
+- Add table of contents for long documents (> 200 lines)
+- Use consistent heading levels
+
+## 13.4 Code Documentation
+
+**Inline comments:**
+- Use JSDoc format for functions
+- Comment complex business logic
+- Explain "why" not "what"
+- Keep comments up-to-date
+
+**API documentation:**
+- Document all endpoints
+- Include request/response examples
+- List all parameters and types
+- Specify authentication requirements
+- Document error responses
+
+**Database documentation:**
+- Schema diagrams
+- Table relationships
+- Index strategy
+- Migration history
+
+## 13.5 Documentation Maintenance
+
+**Required updates:**
+- When adding new features → Update relevant .md files
+- When changing APIs → Update API documentation
+- When modifying database → Update schema docs
+- When deploying → Update deployment guides
+
+**Forbidden:**
+- Outdated documentation
+- Incorrect examples
+- Broken internal links
+- Placeholder content in production
+- Undocumented breaking changes
 
 ---
 

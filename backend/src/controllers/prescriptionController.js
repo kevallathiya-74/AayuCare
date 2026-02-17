@@ -6,6 +6,8 @@
 
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
+const User = require("../models/User");
+const Prescription = require("../models/Prescription");
 const logger = require("../utils/logger");
 
 /**

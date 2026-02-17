@@ -5,7 +5,8 @@
 
 const { getAuth } = require("../lib/auth");
 const { AppError } = require("./errorHandler");
-const mongoose = require("mongoose");
+const { query } = require("../config/postgres");
+const logger = require("../utils/logger");
 
 /**
  * Protect routes - requires valid Better Auth session
@@ -32,39 +33,59 @@ exports.protect = async (req, res, next) => {
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.substring(7); // Remove "Bearer " prefix
 
-        // Query session directly from MongoDB
+        // Query session from PostgreSQL (Better Auth stores sessions in PostgreSQL)
         try {
-          const db = mongoose.connection.getClient().db("aayucare");
-          const sessionDoc = await db.collection("session").findOne({ token });
+          const sessionResult = await query(
+            `SELECT token, user_id as "userId", expires_at as "expiresAt"
+             FROM session
+             WHERE token = $1
+               AND expires_at > NOW()
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [token]
+          );
 
-          if (sessionDoc && sessionDoc.expiresAt > new Date()) {
-            // Session is valid, get user by _id (not id field)
-            const userDoc = await db.collection("user").findOne({
-              _id: sessionDoc.userId,
-            });
+          if (sessionResult.rows.length > 0) {
+            const sessionDoc = sessionResult.rows[0];
+            
+            // Get user from PostgreSQL users table
+            const userResult = await query(
+              `SELECT id, user_id as "userId", name, email, phone, role, 
+                      hospital_id as "hospitalId", hospital_name as "hospitalName",
+                      is_active as "isActive", email_verified as "emailVerified"
+               FROM users
+               WHERE id = $1`,
+              [sessionDoc.userId]
+            );
 
-            if (userDoc) {
+            if (userResult.rows.length > 0) {
+              const userDoc = userResult.rows[0];
               session = {
                 user: userDoc,
                 session: sessionDoc,
               };
+              
+              if (process.env.NODE_ENV === 'development') {
+                logger.debug('[Auth] Token validated successfully for user:', userDoc.email);
+              }
             }
+          } else {
+            logger.warn('[Auth] Token not found or expired:', token.substring(0, 10) + '...');
           }
         } catch (tokenError) {
-          console.error(
-            "[Auth] Token verification failed:",
-            tokenError.message
-          );
+          logger.error('[Auth] Token verification failed:', tokenError.message);
         }
       }
     }
 
     // Check if we have a valid session
     if (!session || !session.user) {
+      logger.warn('[Auth] No valid session found');
       return next(new AppError("Authentication required", 401));
     }
 
     if (!session.user.isActive) {
+      logger.warn('[Auth] Account deactivated for user:', session.user.email);
       return next(new AppError("Account deactivated", 403));
     }
 
@@ -74,7 +95,7 @@ exports.protect = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("[Auth] Protection error:", error.message);
+    logger.error('[Auth] Protection error:', error.message);
     return next(new AppError("Authentication failed", 401));
   }
 };

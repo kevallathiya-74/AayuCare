@@ -353,6 +353,13 @@ class AppointmentRepository {
 
   /**
    * Delete appointment (use with caution)
+   * NOTE: Consider implementing soft delete pattern instead:
+   *   1. Add 'deleted_at' TIMESTAMP column to appointments table
+   *   2. Add 'deleted_by' UUID column referencing users table
+   *   3. Use UPDATE instead of DELETE: UPDATE appointments SET deleted_at = NOW(), deleted_by = $1 WHERE id = $2
+   *   4. Filter out soft-deleted records in queries: WHERE deleted_at IS NULL
+   *   5. Benefits: Audit trail, data recovery, compliance with data retention policies
+   * 
    * @param {string} id - Appointment UUID
    * @returns {Promise<boolean>} Success status
    */

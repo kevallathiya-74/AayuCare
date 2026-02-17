@@ -54,7 +54,7 @@ class DoctorService {
 
     // Filter inactive if needed
     if (!includeInactive) {
-      filteredDoctors = filteredDoctors.filter((doctor) => doctor.is_active);
+      filteredDoctors = filteredDoctors.filter((doctor) => doctor.isActive);
     }
 
     const total = filteredDoctors.length;

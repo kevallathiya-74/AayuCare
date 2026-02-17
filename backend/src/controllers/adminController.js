@@ -29,10 +29,8 @@ exports.getDashboardStats = async (req, res) => {
       baseQuery.hospitalId = req.hospitalId;
     }
 
-    // Build SQL filters
-    const hospitalFilter = req.hospitalId && req.user.role !== "super_admin" 
-      ? `AND hospital_id = '${req.hospitalId}'` 
-      : '';
+    // Build SQL filters with parameterized queries (SQL injection prevention)
+    const hasHospitalFilter = req.hospitalId && req.user.role !== "super_admin";
 
     // Run all queries in parallel for performance
     const [
@@ -49,24 +47,24 @@ exports.getDashboardStats = async (req, res) => {
           COUNT(*) FILTER (WHERE status IN ('scheduled', 'confirmed')) as pending,
           COUNT(*) FILTER (WHERE status = 'completed') as completed
         FROM appointments
-        WHERE 1=1 ${hospitalFilter}
-      `, [today, tomorrow]),
+        WHERE 1=1 ${hasHospitalFilter ? 'AND hospital_id = $3' : ''}
+      `, hasHospitalFilter ? [today, tomorrow, req.hospitalId] : [today, tomorrow]),
       // Doctor stats
       query(`
         SELECT 
           COUNT(*) as total,
           COUNT(*) FILTER (WHERE is_active = true) as active
         FROM users
-        WHERE role = 'doctor' ${hospitalFilter}
-      `),
+        WHERE role = 'doctor' ${hasHospitalFilter ? 'AND hospital_id = $1' : ''}
+      `, hasHospitalFilter ? [req.hospitalId] : []),
       // Patient stats
       query(`
         SELECT 
           COUNT(*) as total,
           COUNT(*) FILTER (WHERE created_at >= $1) as new_this_month
         FROM users
-        WHERE role = 'patient' ${hospitalFilter}
-      `, [new Date(new Date().setDate(1))]),
+        WHERE role = 'patient' ${hasHospitalFilter ? 'AND hospital_id = $2' : ''}
+      `, hasHospitalFilter ? [new Date(new Date().setDate(1)), req.hospitalId] : [new Date(new Date().setDate(1))]),
       // Prescription stats
       prescriptionRepository.count(baseQuery).then(total => ({
         total,
@@ -135,7 +133,7 @@ exports.getDashboardStats = async (req, res) => {
  */
 exports.getRecentActivities = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100); // Enforce max 100
 
     // Build base query with hospitalId filter (skip for super_admin)
     const baseQuery = {};
@@ -144,9 +142,10 @@ exports.getRecentActivities = async (req, res) => {
     }
 
     // Get recent appointments from PostgreSQL
-    const hospitalFilter = req.hospitalId && req.user.role !== "super_admin" 
-      ? `AND a.hospital_id = '${req.hospitalId}'` 
+    const hospitalFilter2 = req.hospitalId && req.user.role !== "super_admin" 
+      ? 'AND a.hospital_id = $2' 
       : '';
+    const hospitalParams2 = req.hospitalId && req.user.role !== "super_admin" ? [limit, req.hospitalId] : [limit];
     
     const appointmentsResult = await query(`
       SELECT a.id, a.created_at,
@@ -155,10 +154,10 @@ exports.getRecentActivities = async (req, res) => {
       FROM appointments a
       LEFT JOIN users p ON a.patient_id = p.id
       LEFT JOIN users d ON a.doctor_id = d.id
-      WHERE 1=1 ${hospitalFilter}
+      WHERE 1=1 ${hospitalFilter2}
       ORDER BY a.created_at DESC
       LIMIT $1
-    `, [limit]);
+    `, hospitalParams2);
     
     const recentAppointments = appointmentsResult.rows.map(row => ({
       _id: row.id,
@@ -228,28 +227,35 @@ exports.getUsers = async (req, res) => {
     const { page = 1, limit = 20, role, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const query = {};
+    const mongoQuery = {};
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+      mongoQuery.hospitalId = req.hospitalId;
     }
     
     // Debug logging
     if (process.env.NODE_ENV !== 'production') {
-      console.log('[getUsers] Query:', JSON.stringify(query));
-      console.log('[getUsers] req.hospitalId:', req.hospitalId);
-      console.log('[getUsers] req.user.role:', req.user?.role);
+      logger.debug('[getUsers] Query:', JSON.stringify(mongoQuery));
+      logger.debug('[getUsers] req.hospitalId:', req.hospitalId);
+      logger.debug('[getUsers] req.user.role:', req.user?.role);
     }
 
     if (role) {
-      query.role = role;
+      mongoQuery.role = role;
     }
 
     if (search) {
+      // Validate search query length to prevent ReDoS
+      if (search.length > 100) {
+        return res.status(400).json({ 
+          status: 'error',
+          message: 'Search query too long (max 100 characters)' 
+        });
+      }
       // Sanitize regex to prevent injection
       const sanitizedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      query.$or = [
+      mongoQuery.$or = [
         { name: { $regex: sanitizedSearch, $options: "i" } },
         { email: { $regex: sanitizedSearch, $options: "i" } },
         { userId: { $regex: sanitizedSearch, $options: "i" } },
@@ -299,7 +305,7 @@ exports.getUsers = async (req, res) => {
     
     // Debug logging
     if (process.env.NODE_ENV !== 'production') {
-      console.log('[getUsers] Found:', users.length, 'users out of', total);
+      logger.debug('[getUsers] Found:', users.length, 'users out of', total);
     }
 
     res.json({
@@ -878,9 +884,7 @@ exports.getSystemMetrics = async (req, res) => {
     }
 
     // Get user growth from PostgreSQL
-    const hospitalFilter = req.hospitalId && req.user.role !== "super_admin" 
-      ? `AND hospital_id = '${req.hospitalId}'` 
-      : '';
+    const hasHospitalFilter3 = req.hospitalId && req.user.role !== "super_admin";
 
     const userGrowthResult = await query(`
       SELECT 
@@ -889,11 +893,11 @@ exports.getSystemMetrics = async (req, res) => {
         role,
         COUNT(*) as count
       FROM users
-      WHERE 1=1 ${hospitalFilter}
+      WHERE 1=1 ${hasHospitalFilter3 ? 'AND hospital_id = $1' : ''}
       GROUP BY year, month, role
       ORDER BY year DESC, month DESC
       LIMIT 12
-    `);
+    `, hasHospitalFilter3 ? [req.hospitalId] : []);
     const userGrowth = userGrowthResult.rows.map(row => ({
       _id: { year: parseInt(row.year), month: parseInt(row.month), role: row.role },
       count: parseInt(row.count)
@@ -907,11 +911,11 @@ exports.getSystemMetrics = async (req, res) => {
         status,
         COUNT(*) as count
       FROM appointments
-      WHERE 1=1 ${hospitalFilter}
+      WHERE 1=1 ${hasHospitalFilter3 ? 'AND hospital_id = $1' : ''}
       GROUP BY year, month, status
       ORDER BY year DESC, month DESC
       LIMIT 12
-    `);
+    `, hasHospitalFilter3 ? [req.hospitalId] : []);
     const appointmentTrends = appointmentTrendsResult.rows.map(row => ({
       _id: { year: parseInt(row.year), month: parseInt(row.month), status: row.status },
       count: parseInt(row.count)
@@ -921,8 +925,8 @@ exports.getSystemMetrics = async (req, res) => {
     const activeUsersResult = await query(`
       SELECT COUNT(*) as count
       FROM users
-      WHERE last_login >= $1 ${hospitalFilter}
-    `, [weekAgo]);
+      WHERE last_login >= $1 ${hasHospitalFilter3 ? 'AND hospital_id = $2' : ''}
+    `, hasHospitalFilter3 ? [weekAgo, req.hospitalId] : [weekAgo]);
     const activeUsers = parseInt(activeUsersResult.rows[0].count);
 
     // Database size stats

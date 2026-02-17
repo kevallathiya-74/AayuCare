@@ -1068,3 +1068,6 @@ Production updates MUST:
 All rules in this document are MANDATORY for production healthcare application.
 
 Violation = CRITICAL DEFECT requiring immediate fix.
+Donot create every time *.md file and unused file and code remove and bug fix after testing code also remove 
+
+critical and non-critical all issues fix it all till then after stop

@@ -14,7 +14,7 @@ class PrescriptionService {
     async createPrescription(prescriptionData) {
         try {
             const response = await api.post('/prescriptions', prescriptionData);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             throw this.handleError(error);
         }
@@ -28,7 +28,7 @@ class PrescriptionService {
     async getPatientPrescriptions(patientId) {
         try {
             const response = await api.get(`/prescriptions/patient/${patientId}`);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             throw this.handleError(error);
         }
@@ -42,7 +42,7 @@ class PrescriptionService {
     async getPrescriptionById(prescriptionId) {
         try {
             const response = await api.get(`/prescriptions/${prescriptionId}`);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             throw this.handleError(error);
         }
@@ -56,7 +56,7 @@ class PrescriptionService {
     async getDoctorPrescriptions(doctorId) {
         try {
             const response = await api.get(`/prescriptions/doctor/${doctorId}`);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             throw this.handleError(error);
         }

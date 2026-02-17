@@ -221,40 +221,78 @@ class UserRepository {
   }
 
   /**
-   * Find all patients in a hospital
+   * Find all patients in a hospital with optional search
    * @param {string} hospitalId - Hospital ID
    * @param {number} limit - Limit
    * @param {number} offset - Offset
+   * @param {string} searchTerm - Optional search term for name, email, phone, or userId
    * @returns {Promise<Object>} Patients with pagination
    */
-  async findPatientsByHospital(hospitalId, limit = 20, offset = 0) {
+  async findPatientsByHospital(hospitalId, limit = 20, offset = 0, searchTerm = '') {
+    // Build WHERE clause with search conditions
+    let whereConditions = 'u.hospital_id = $1 AND u.role = \'patient\'';
+    const params = [hospitalId];
+    let paramIndex = 2;
+
+    if (searchTerm && searchTerm.trim()) {
+      const searchPattern = `%${searchTerm.trim()}%`;
+      whereConditions += ` AND (u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR u.phone ILIKE $${paramIndex} OR u.user_id ILIKE $${paramIndex})`;
+      params.push(searchPattern);
+      paramIndex++;
+    }
+
     const sql = `
-            SELECT u.id, u.user_id, u.name, u.email, u.phone, u.hospital_id,
-                   p.date_of_birth, p.gender, p.blood_group, p.address
+            SELECT u.id, u.user_id, u.name, u.email, u.phone, u.hospital_id, u.is_active,
+                   p.date_of_birth, p.gender, p.blood_group, p.address,
+                   p.emergency_contact_name, p.emergency_contact_phone, 
+                   p.allergies, p.chronic_conditions
             FROM users u
             INNER JOIN patients p ON u.id = p.user_id
-            WHERE u.hospital_id = $1 AND u.role = 'patient' AND u.is_active = true
+            WHERE ${whereConditions}
             ORDER BY u.created_at DESC
-            LIMIT $2 OFFSET $3
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
         `;
 
     const countSql = `
             SELECT COUNT(*) 
             FROM users u
             INNER JOIN patients p ON u.id = p.user_id
-            WHERE u.hospital_id = $1 AND u.role = 'patient' AND u.is_active = true
+            WHERE ${whereConditions}
         `;
 
     const [dataResult, countResult] = await Promise.all([
-      query(sql, [hospitalId, limit, offset]),
-      query(countSql, [hospitalId]),
+      query(sql, [...params, limit, offset]),
+      query(countSql, params),
     ]);
 
+    // Map snake_case PostgreSQL fields to camelCase for frontend
+    const mappedData = dataResult.rows.map(row => ({
+      _id: row.id, // MongoDB compatibility
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      hospitalId: row.hospital_id,
+      isActive: row.is_active,
+      dateOfBirth: row.date_of_birth,
+      gender: row.gender,
+      bloodGroup: row.blood_group,
+      address: row.address,
+      emergencyContactName: row.emergency_contact_name,
+      emergencyContactPhone: row.emergency_contact_phone,
+      allergies: row.allergies,
+      chronicConditions: row.chronic_conditions
+    }));
+
+    const total = parseInt(countResult.rows[0].count, 10);
+    const page = Math.floor(offset / limit) + 1;
+
     return {
-      data: dataResult.rows,
-      total: parseInt(countResult.rows[0].count, 10),
-      limit,
-      offset,
+      data: mappedData,
+      total,
+      page,
+      limit
     };
   }
 

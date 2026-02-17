@@ -25,7 +25,7 @@ class DoctorService {
           Expires: "0",
         },
       });
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctors" });
       throw error;
@@ -49,7 +49,7 @@ class DoctorService {
   async getDoctor(doctorId) {
     try {
       const response = await api.get(`/doctors/${doctorId}`);
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctor", doctorId });
       throw error;
@@ -62,7 +62,7 @@ class DoctorService {
   async getDoctorStats(doctorId) {
     try {
       const response = await api.get(`/doctors/${doctorId}/stats`);
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctorStats", doctorId });
       throw error;
@@ -75,7 +75,7 @@ class DoctorService {
   async getDashboard() {
     try {
       const response = await api.get("/doctors/me/dashboard");
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getDashboard" });
       throw error;
@@ -91,7 +91,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/appointments/today?filter=${filter}`
       );
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       logError(error, {
         context: "DoctorService.getTodaysAppointments",
@@ -109,7 +109,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/appointments/upcoming?page=${page}&limit=${limit}`
       );
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getUpcomingAppointments" });
       throw error;

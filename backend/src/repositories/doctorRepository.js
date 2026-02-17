@@ -54,14 +54,43 @@ class DoctorRepository {
    */
   async findByUserId(userId) {
     const sql = `
-            SELECT d.*, u.name, u.email, u.phone, u.hospital_id, u.hospital_name
+            SELECT d.id, d.user_id, d.specialization, d.qualification, d.experience, 
+                   d.consultation_fee, d.license_number, d.department, d.bio, d.availability,
+                   u.id as user_uuid, u.user_id as custom_user_id, u.name, u.email, 
+                   u.phone, u.hospital_id, u.hospital_name, u.is_active,
+                   d.created_at, d.updated_at
             FROM doctors d
             INNER JOIN users u ON d.user_id = u.id
             WHERE d.user_id = $1
         `;
 
     const result = await query(sql, [userId]);
-    return result.rows[0] || null;
+    const row = result.rows[0];
+    
+    if (!row) return null;
+    
+    // Map snake_case PostgreSQL fields to camelCase for frontend
+    return {
+      _id: row.user_uuid,
+      id: row.user_uuid,
+      userId: row.custom_user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      hospitalId: row.hospital_id,
+      hospitalName: row.hospital_name,
+      isActive: row.is_active,
+      specialization: row.specialization,
+      qualification: row.qualification,
+      experience: row.experience,
+      consultationFee: parseFloat(row.consultation_fee),
+      licenseNumber: row.license_number,
+      department: row.department,
+      bio: row.bio,
+      availability: row.availability,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
   }
 
   /**
@@ -126,7 +155,11 @@ class DoctorRepository {
    */
   async findBySpecialization(specialization, hospitalId = null) {
     let sql = `
-            SELECT d.*, u.name, u.email, u.phone, u.hospital_id, u.hospital_name
+            SELECT d.id, d.user_id, d.specialization, d.qualification, d.experience, 
+                   d.consultation_fee, d.license_number, d.department, d.bio, d.availability,
+                   u.id as user_uuid, u.user_id as custom_user_id, u.name, u.email, 
+                   u.phone, u.hospital_id, u.hospital_name, u.is_active,
+                   d.created_at, d.updated_at
             FROM doctors d
             INNER JOIN users u ON d.user_id = u.id
             WHERE d.specialization ILIKE $1 AND u.is_active = true
@@ -142,7 +175,31 @@ class DoctorRepository {
     sql += ` ORDER BY u.name`;
 
     const result = await query(sql, params);
-    return result.rows;
+    
+    // Map snake_case PostgreSQL fields to camelCase for frontend
+    const mappedDoctors = result.rows.map(row => ({
+      _id: row.user_uuid,
+      id: row.user_uuid,
+      userId: row.custom_user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      hospitalId: row.hospital_id,
+      hospitalName: row.hospital_name,
+      isActive: row.is_active,
+      specialization: row.specialization,
+      qualification: row.qualification,
+      experience: row.experience,
+      consultationFee: parseFloat(row.consultation_fee),
+      licenseNumber: row.license_number,
+      department: row.department,
+      bio: row.bio,
+      availability: row.availability,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+    
+    return mappedDoctors;
   }
 
   /**
@@ -154,11 +211,14 @@ class DoctorRepository {
     const { hospitalId, specialization, limit = 20, offset = 0 } = filters;
 
     let sql = `
-            SELECT d.*, u.id as user_id, u.user_id as custom_user_id, u.name, u.email, 
-                   u.phone, u.hospital_id, u.hospital_name
+            SELECT d.id, d.user_id, d.specialization, d.qualification, d.experience, 
+                   d.consultation_fee, d.license_number, d.department, d.bio, d.availability,
+                   u.id as user_uuid, u.user_id as custom_user_id, u.name, u.email, 
+                   u.phone, u.hospital_id, u.hospital_name, u.is_active,
+                   d.created_at, d.updated_at
             FROM doctors d
             INNER JOIN users u ON d.user_id = u.id
-            WHERE u.is_active = true
+            WHERE 1=1
         `;
 
     const params = [];
@@ -180,7 +240,31 @@ class DoctorRepository {
     params.push(limit, offset);
 
     const result = await query(sql, params);
-    return result.rows;
+    
+    // Map snake_case PostgreSQL fields to camelCase for frontend
+    const mappedDoctors = result.rows.map(row => ({
+      _id: row.user_uuid, // MongoDB compatibility
+      id: row.user_uuid,
+      userId: row.custom_user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      hospitalId: row.hospital_id,
+      hospitalName: row.hospital_name,
+      isActive: row.is_active,
+      specialization: row.specialization,
+      qualification: row.qualification,
+      experience: row.experience,
+      consultationFee: parseFloat(row.consultation_fee),
+      licenseNumber: row.license_number,
+      department: row.department,
+      bio: row.bio,
+      availability: row.availability,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+    
+    return mappedDoctors;
   }
 
   /**
@@ -191,8 +275,11 @@ class DoctorRepository {
    */
   async search(searchTerm, hospitalId = null) {
     let sql = `
-            SELECT d.*, u.id as user_id, u.user_id as custom_user_id, u.name, u.email, 
-                   u.phone, u.hospital_id, u.hospital_name
+            SELECT d.id, d.user_id, d.specialization, d.qualification, d.experience, 
+                   d.consultation_fee, d.license_number, d.department, d.bio, d.availability,
+                   u.id as user_uuid, u.user_id as custom_user_id, u.name, u.email, 
+                   u.phone, u.hospital_id, u.hospital_name, u.is_active,
+                   d.created_at, d.updated_at
             FROM doctors d
             INNER JOIN users u ON d.user_id = u.id
             WHERE u.is_active = true 
@@ -209,7 +296,31 @@ class DoctorRepository {
     sql += ` ORDER BY u.name LIMIT 20`;
 
     const result = await query(sql, params);
-    return result.rows;
+    
+    // Map snake_case PostgreSQL fields to camelCase for frontend
+    const mappedDoctors = result.rows.map(row => ({
+      _id: row.user_uuid, // MongoDB compatibility
+      id: row.user_uuid,
+      userId: row.custom_user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      hospitalId: row.hospital_id,
+      hospitalName: row.hospital_name,
+      isActive: row.is_active,
+      specialization: row.specialization,
+      qualification: row.qualification,
+      experience: row.experience,
+      consultationFee: parseFloat(row.consultation_fee),
+      licenseNumber: row.license_number,
+      department: row.department,
+      bio: row.bio,
+      availability: row.availability,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+    
+    return mappedDoctors;
   }
 }
 
