@@ -25,7 +25,7 @@ class PatientService {
                     'Expires': '0'
                 }
             });
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             logError(error, { context: 'PatientService.getAllPatients' });
             throw this.handleError(error);
@@ -40,7 +40,7 @@ class PatientService {
     async searchPatients(query) {
         try {
             const response = await api.get(`/patients/search?q=${encodeURIComponent(query)}`);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             logError(error, { context: 'PatientService.searchPatients', query });
             throw this.handleError(error);
@@ -55,7 +55,7 @@ class PatientService {
     async getPatientById(patientId) {
         try {
             const response = await api.get(`/patients/${patientId}/profile`);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             logError(error, { context: 'PatientService.getPatientById', patientId });
             throw this.handleError(error);
@@ -70,7 +70,7 @@ class PatientService {
     async getCompleteHistory(patientId) {
         try {
             const response = await api.get(`/patients/${patientId}/complete-history`);
-            return response.data;
+            return response.data?.data || response.data;
         } catch (error) {
             logError(error, { context: 'PatientService.getCompleteHistory', patientId });
             throw this.handleError(error);

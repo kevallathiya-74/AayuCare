@@ -393,6 +393,28 @@ async function createPatientProfile(client, userId, profile) {
 }
 
 /**
+ * Create Better Auth account record for email/password authentication
+ */
+async function createAuthAccount(client, userId, email, passwordHash) {
+  const accountId = `${userId}_credential`;
+  
+  await client.query(
+    `INSERT INTO account (
+      id, account_id, provider_id, user_id, password,
+      created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING`,
+    [
+      accountId,
+      email,
+      'credential', // Better Auth uses 'credential' for email/password
+      userId,
+      passwordHash
+    ]
+  );
+}
+
+/**
  * Check if user already exists
  */
 async function userExists(email) {
@@ -434,6 +456,7 @@ async function seedDatabase() {
       
       await withTransaction(async (client) => {
         const user = await createUser(client, admin, passwordHash);
+        await createAuthAccount(client, user.id, user.email, passwordHash);
         logger.info(`✅ Created admin: ${user.name} (${user.email})`);
         stats.admins.created++;
       });
@@ -451,6 +474,7 @@ async function seedDatabase() {
       await withTransaction(async (client) => {
         const user = await createUser(client, doctor, passwordHash);
         await createDoctorProfile(client, user.id, doctor.profile);
+        await createAuthAccount(client, user.id, user.email, passwordHash);
         logger.info(`✅ Created doctor: ${user.name} - ${doctor.profile.specialization} (${user.email})`);
         stats.doctors.created++;
       });
@@ -468,6 +492,7 @@ async function seedDatabase() {
       await withTransaction(async (client) => {
         const user = await createUser(client, patient, passwordHash);
         await createPatientProfile(client, user.id, patient.profile);
+        await createAuthAccount(client, user.id, user.email, passwordHash);
         logger.info(`✅ Created patient: ${user.name} (${user.email})`);
         stats.patients.created++;
       });

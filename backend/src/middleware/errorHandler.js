@@ -29,9 +29,13 @@ const errorHandler = (err, req, res, next) => {
             stack: err.stack,
         });
     } else {
+        // Production - don't expose stack traces or internal error details
         logger.error('Error:', {
             message: err.message,
             statusCode: err.statusCode,
+            url: req.originalUrl,
+            method: req.method,
+            ip: req.ip,
         });
 
         if (err.isOperational) {
@@ -40,6 +44,7 @@ const errorHandler = (err, req, res, next) => {
                 message: err.message,
             });
         } else {
+            // Don't leak error details
             res.status(500).json({
                 status: 'error',
                 message: 'Something went wrong!',

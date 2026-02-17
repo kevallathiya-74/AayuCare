@@ -52,9 +52,10 @@ const ManageDoctorsScreen = ({ navigation }) => {
       console.log('[ManageDoctors] API Response:', response);
       console.log('[ManageDoctors] Data:', response?.data);
       
-      // Backend returns { status, data: { doctors: [], pagination: {} } }
-      const doctorsList = response?.data?.doctors || response?.data || [];
+      // Backend returns { doctors: [], pagination: {} } after service unwraps it
+      const doctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
       console.log('[ManageDoctors] Doctors list:', doctorsList);
+      console.log(`[SUCCESS] Loaded ${doctorsList.length} doctors`);
       setDoctors(doctorsList);
     } catch (err) {
       logError(err, { context: "ManageDoctorsScreen.fetchDoctors" });
@@ -108,7 +109,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
           onPress: async () => {
             setUpdatingId(doctor._id);
             try {
-              const response = await adminService.updateUserStatus(doctor._id, newStatus);
+              const response = await adminService.updateUserStatus(doctor.userId, newStatus);
               
               // Update local state immediately with server response
               if (response.success && response.data) {

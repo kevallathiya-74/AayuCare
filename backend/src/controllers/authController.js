@@ -21,16 +21,26 @@ const mongoose = require("mongoose");
 exports.getEmailByUserId = async (req, res, next) => {
   try {
     const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({
-        status: "error",
-        message: "User ID is required",
+    
+    // Validate userId parameter
+    if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+      return res.status(400).json({ 
+        status: 'error',
+        message: 'Valid userId is required' 
+      });
+    }
+    
+    // Sanitize userId (prevent injection)
+    const sanitizedUserId = userId.trim();
+    if (sanitizedUserId.length > 50) {
+      return res.status(400).json({ 
+        status: 'error',
+        message: 'Invalid userId format' 
       });
     }
 
     // Try PostgreSQL first
-    const userIdUppercase = userId.toString().trim().toUpperCase();
+    const userIdUppercase = sanitizedUserId.toUpperCase();
     let user = await userRepository.findByUserId(userIdUppercase);
 
     // Fallback to MongoDB for backward compatibility
@@ -83,26 +93,28 @@ exports.getCurrentSession = async (req, res, next) => {
       });
     }
 
-    const db = mongoose.connection.getClient().db("aayucare");
-    const sessionCollection = db.collection("session");
-
+    // Query PostgreSQL session table (Better Auth uses PostgreSQL now)
+    const { query } = require("../config/postgres");
+    
     // Find the most recent valid session for this user
-    const session = await sessionCollection.findOne(
-      {
-        userId: new mongoose.Types.ObjectId(userId),
-        expiresAt: { $gt: new Date() },
-      },
-      {
-        sort: { createdAt: -1 },
-      }
+    const result = await query(
+      `SELECT token, expires_at as "expiresAt"
+       FROM session
+       WHERE user_id = $1
+         AND expires_at > NOW()
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId]
     );
 
-    if (!session) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
         status: "error",
         message: "No active session found",
       });
     }
+
+    const session = result.rows[0];
 
     res.status(200).json({
       status: "success",
@@ -134,10 +146,8 @@ exports.getProfileByEmail = async (req, res, next) => {
       });
     }
 
-    const db = mongoose.connection.getClient().db("aayucare");
-    const userCollection = db.collection("user");
-
-    const user = await userCollection.findOne({ email: email });
+    // Query PostgreSQL users table
+    const user = await userRepository.findByEmail(email);
 
     if (!user) {
       return res.status(404).json({
@@ -146,34 +156,46 @@ exports.getProfileByEmail = async (req, res, next) => {
       });
     }
 
-    // Return user-friendly data (no MongoDB _id, passwords, etc.)
+    // Return user-friendly data (no password hash)
     const userProfile = {
-      id: user._id.toString(),
-      userId: user.userId,
+      id: user.id,
+      userId: user.user_id,
       name: user.name,
       email: user.email,
       phone: user.phone,
       role: user.role,
-      hospitalId: user.hospitalId,
-      hospitalName: user.hospitalName,
-      isActive: user.isActive,
-      isVerified: user.isVerified,
+      hospitalId: user.hospital_id,
+      hospitalName: user.hospital_name,
+      isActive: user.is_active,
+      isVerified: user.email_verified,
     };
 
-    // Add role-specific fields
+    // Add role-specific fields from related tables
     if (user.role === "admin") {
-      userProfile.department = user.department;
+      // Admin-specific fields can be added here if needed
+      userProfile.department = user.department; // If exists in users table
     } else if (user.role === "doctor") {
-      userProfile.specialization = user.specialization;
-      userProfile.qualification = user.qualification;
-      userProfile.experience = user.experience;
-      userProfile.consultationFee = user.consultationFee;
+      // Fetch doctor profile
+      const doctor = await doctorRepository.findByUserId(user.id);
+      if (doctor) {
+        userProfile.specialization = doctor.specialization;
+        userProfile.qualification = doctor.qualification;
+        userProfile.experience = doctor.experience;
+        userProfile.consultationFee = doctor.consultation_fee;
+        userProfile.availableFrom = doctor.available_from;
+        userProfile.availableTo = doctor.available_to;
+      }
     } else if (user.role === "patient") {
-      userProfile.dateOfBirth = user.dateOfBirth;
-      userProfile.gender = user.gender;
-      userProfile.bloodGroup = user.bloodGroup;
-      userProfile.address = user.address;
-      userProfile.emergencyContact = user.emergencyContact;
+      // Fetch patient profile
+      const patient = await patientRepository.findByUserId(user.id);
+      if (patient) {
+        userProfile.dateOfBirth = patient.date_of_birth;
+        userProfile.gender = patient.gender;
+        userProfile.bloodGroup = patient.blood_group;
+        userProfile.address = patient.address;
+        userProfile.emergencyContact = patient.emergency_contact;
+        userProfile.emergencyContactName = patient.emergency_contact_name;
+      }
     }
 
     res.status(200).json({

@@ -158,7 +158,7 @@ Date: ${new Date(appointment.appointmentDate).toLocaleDateString('en-IN')}
 Time: ${appointment.appointmentTime}
 Type: ${appointment.type}
 
-Hospital Contact: +91-XXXXXXXXXX
+Hospital Contact: ${process.env.HOSPITAL_CONTACT_PHONE || '+91-0000000000'}
 
 Reply CANCEL to cancel appointment.
         `.trim();

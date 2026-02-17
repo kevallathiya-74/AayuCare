@@ -12,7 +12,12 @@ const registerSchema = Joi.object({
   phone: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .required(),
-  password: Joi.string().min(6).max(100).required(),
+  password: Joi.string()
+    .min(8)
+    .max(100)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .message('Password must be at least 8 characters and contain uppercase, lowercase, and number')
+    .required(),
   role: Joi.string().valid("admin", "doctor", "patient").required(),
   hospitalId: Joi.string().when("role", {
     is: Joi.not("super_admin"),

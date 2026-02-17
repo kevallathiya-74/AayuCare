@@ -220,7 +220,6 @@ export const logout = async () => {
     const appStorage = (await import('../utils/appStorage')).default;
     const { STORAGE_KEYS } = await import('../utils/constants');
     await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-    await appStorage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
     await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
     console.log('[auth.service] Storage cleared');
 

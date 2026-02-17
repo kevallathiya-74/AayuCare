@@ -63,7 +63,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors and token refresh
+// Response interceptor - Handle errors
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -71,57 +71,25 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Skip token refresh for auth endpoints (login, register, refresh)
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
-                           originalRequest.url?.includes('/auth/register') ||
+    // Skip token refresh for auth endpoints (login, register)
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/sign-in') || 
+                           originalRequest.url?.includes('/auth/sign-up') ||
                            originalRequest.url?.includes('/auth/refresh');
 
-    // Handle 401 Unauthorized - Token expired (but not for auth endpoints)
+    // Handle 401 Unauthorized - Session expired (Better Auth uses session tokens, not refresh tokens)
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
-      try {
-        console.log('[API] 401 error, attempting token refresh...');
-        const refreshToken = await appStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-
-        if (refreshToken) {
-          console.log('[API] Refresh token found, calling refresh endpoint');
-          const response = await axios.post(`${APP_CONFIG.api.baseURL}/auth/refresh`, {
-            refreshToken,
-          });
-
-          const { token } = response.data.data;
-          console.log('[API] New token received, updating storage');
-
-          // Save new token
-          await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          console.log('[API] Retrying original request with new token');
-          return api(originalRequest);
-        } else {
-          console.log('[API] No refresh token found, clearing storage');
-          // No refresh token - Clear storage and force re-login
-          await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-          await appStorage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
-          await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-          
-          const authError = new Error('Session expired. Please login again.');
-          authError.code = 'AUTH_EXPIRED';
-          return Promise.reject(authError);
-        }
-      } catch (refreshError) {
-        console.log('[API] Token refresh failed:', refreshError.message);
-        // Refresh failed - Clear storage and redirect to login
-        await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-        await appStorage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
-        await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-
-        const authError = new Error('Session expired. Please login again.');
-        authError.code = 'AUTH_EXPIRED';
-        return Promise.reject(authError);
-      }
+      console.log('[API] 401 error - Session expired, clearing storage');
+      
+      // Better Auth doesn't use refresh tokens - session is managed server-side
+      // Clear storage and force re-login
+      await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+      await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+      
+      const authError = new Error('Session expired. Please login again.');
+      authError.code = 'AUTH_EXPIRED';
+      return Promise.reject(authError);
     }
 
     // Handle network errors

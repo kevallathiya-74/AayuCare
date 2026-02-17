@@ -4,80 +4,44 @@
  */
 
 const { betterAuth } = require("better-auth");
-const { mongodbAdapter } = require("better-auth/adapters/mongodb");
-const mongoose = require("mongoose");
+const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 
-// Initialize auth after MongoDB connection
+// Initialize auth with PostgreSQL
 let auth = null;
+let authPool = null;
 
 const initAuth = () => {
   if (auth) return auth;
 
   try {
-    // Check if MongoDB is connected
-    if (!mongoose.connection || mongoose.connection.readyState !== 1) {
-      throw new Error("MongoDB not connected - Better Auth requires MongoDB");
-    }
-
-    const db = mongoose.connection.getClient().db("aayucare");
+    // Create PostgreSQL connection pool for Better Auth
+    authPool = new Pool({
+      host: process.env.POSTGRES_HOST || "localhost",
+      port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
+      user: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DB,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
 
     auth = betterAuth({
-      database: mongodbAdapter(db),
+      database: authPool,
 
       secret: process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET,
       baseURL: process.env.BACKEND_URL || "http://localhost:5000",
       basePath: "/api/auth",
 
-      emailAndPassword: {
-        enabled: true,
-        requireEmailVerification: false,
-        minPasswordLength: 6,
-        maxPasswordLength: 128,
-        // Use bcrypt for password hashing (for compatibility with migrated users)
-        password: {
-          hash: async (password) => {
-            return await bcrypt.hash(password, 12);
-          },
-          verify: async ({ hash, password }) => {
-            return await bcrypt.compare(password, hash);
-          },
-        },
-      },
-
-      session: {
-        expiresIn: 60 * 60 * 24 * 30, // 30 days
-        updateAge: 60 * 60 * 24, // Update every 24 hours
-        cookieCache: {
-          enabled: true,
-          maxAge: 60 * 5, // 5 minutes
-        },
-      },
-
-      advanced: {
-        cookieSameSite: "none", // Changed from "lax" for mobile app compatibility
-        cookieSecure: false, // Disabled for development (allow HTTP)
-        useSecureCookies: false, // Disabled for development
-        // Allow requests without Origin header (for React Native/Expo mobile apps)
-        requireOriginHeader: false,
-        // Disable CSRF protection for mobile apps (React Native/Expo)
-        disableCSRFCheck: true,
-        // Disable subdomain cookies
-        crossSubdomainCookies: {
-          enabled: false,
-        },
-      },
-
-      trustedOrigins: [
-        process.env.FRONTEND_URL,
-        "http://localhost:3000",
-        "http://localhost:19006",
-        "http://localhost:8081",
-        "exp://192.168.137.1:8081",
-        "*", // Allow all origins for mobile app
-      ].filter(Boolean),
-
+      // Map to existing PostgreSQL users table
       user: {
+        modelName: "users", // Use our existing 'users' table name
+        fields: {
+          emailVerified: "email_verified",
+          createdAt: "created_at",
+          updatedAt: "updated_at",
+        },
         additionalFields: {
           userId: {
             type: "string",
@@ -169,6 +133,81 @@ const initAuth = () => {
           },
         },
       },
+
+      // Map session table fields
+      session: {
+        modelName: "session",
+        fields: {
+          userId: "user_id",
+          expiresAt: "expires_at",
+          ipAddress: "ip_address",
+          userAgent: "user_agent",
+          createdAt: "created_at",
+          updatedAt: "updated_at",
+        },
+        expiresIn: 60 * 60 * 24 * 30, // 30 days
+        updateAge: 60 * 60 * 24, // Update every 24 hours
+        cookieCache: {
+          enabled: true,
+          maxAge: 60 * 5, // 5 minutes
+        },
+      },
+
+      // Map account table fields  
+      account: {
+        modelName: "account", // Better Auth will create this table
+        fields: {
+          accountId: "account_id",
+          providerId: "provider_id",
+          userId: "user_id",
+          accessToken: "access_token",
+          refreshToken: "refresh_token",
+          idToken: "id_token",
+          accessTokenExpiresAt: "access_token_expires_at",
+          refreshTokenExpiresAt: "refresh_token_expires_at",
+          createdAt: "created_at",
+          updatedAt: "updated_at",
+        },
+      },
+
+      emailAndPassword: {
+        enabled: true,
+        requireEmailVerification: false,
+        minPasswordLength: 6,
+        maxPasswordLength: 128,
+        // Use bcrypt for password hashing (for compatibility with seeded users)
+        password: {
+          hash: async (password) => {
+            return await bcrypt.hash(password, 12);
+          },
+          verify: async ({ hash, password }) => {
+            return await bcrypt.compare(password, hash);
+          },
+        },
+      },
+
+      advanced: {
+        cookieSameSite: "none", // Changed from "lax" for mobile app compatibility
+        cookieSecure: false, // Disabled for development (allow HTTP)
+        useSecureCookies: false, // Disabled for development
+        // Allow requests without Origin header (for React Native/Expo mobile apps)
+        requireOriginHeader: false,
+        // Disable CSRF protection for mobile apps (React Native/Expo)
+        disableCSRFCheck: true,
+        // Disable subdomain cookies
+        crossSubdomainCookies: {
+          enabled: false,
+        },
+      },
+
+      trustedOrigins: [
+        process.env.FRONTEND_URL,
+        "http://localhost:3000",
+        "http://localhost:19006",
+        "http://localhost:8081",
+        "exp://192.168.137.1:8081",
+        "*", // Allow all origins for mobile app
+      ].filter(Boolean),
     });
 
     return auth;

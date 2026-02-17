@@ -7,15 +7,34 @@
 
 const express = require("express");
 const router = express.Router();
+const rateLimit = require("express-rate-limit");
 const authController = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 const { validateBody } = require("../middleware/validation");
 const { loginSchema, updateProfileSchema } = require("../validators/schemas");
 const { invalidateCache } = require("../middleware/cache");
 
-// Public routes
-router.post("/email-by-userid", authController.getEmailByUserId);
-router.post("/profile-by-email", authController.getProfileByEmail);
+// Rate limiter for sensitive public endpoints (prevent user enumeration)
+const sensitiveAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 requests per IP
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter for password changes
+const passwordChangeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 password change attempts per hour
+  message: 'Too many password change attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Public routes (with rate limiting for security)
+router.post("/email-by-userid", sensitiveAuthLimiter, authController.getEmailByUserId);
+router.post("/profile-by-email", sensitiveAuthLimiter, authController.getProfileByEmail);
 router.post("/current-session", authController.getCurrentSession);
 
 // Protected routes
@@ -30,6 +49,7 @@ router.put(
 );
 router.put(
   "/change-password",
+  passwordChangeLimiter,
   authController.changePassword,
   invalidateCache("cache:session:*")
 );

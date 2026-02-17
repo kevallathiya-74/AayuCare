@@ -6,6 +6,7 @@
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
+const User = require("../models/User");
 const MedicalRecord = require("../models/MedicalRecord");
 const HealthMetric = require("../models/HealthMetric");
 const logger = require("../utils/logger");
@@ -32,54 +33,33 @@ const isOwnPatientData = (user, patientId) => {
  */
 exports.searchPatients = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, page = 1, limit = 50 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let query = { role: "patient" };
+    // Get hospitalId from request (set by hospitalMiddleware)
+    const hospitalId = req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : "MAIN";
 
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
-    }
+    // Sanitize search query if provided
+    const searchTerm = q && q.trim().length >= 1 ? q.trim() : '';
 
-    // If search query provided, add search conditions (minimum 1 character)
-    // If no query parameter, return all patients (filtered by hospital)
-    if (q && q.trim().length >= 1) {
-      // Sanitize search query to prevent regex injection
-      const searchQuery = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-      // Search in multiple fields
-      query.$or = [
-        { userId: { $regex: searchQuery, $options: "i" } },
-        { name: { $regex: searchQuery, $options: "i" } },
-        { email: { $regex: searchQuery, $options: "i" } },
-        { phone: { $regex: searchQuery, $options: "i" } },
-      ];
-    }
-    // If no query parameter, still return all patients (don't return empty)
-
-    // Get patients (all if no query, filtered if query provided)
-    const filters = {
-      limit: 50,
-      sortBy: "createdAt",
-      sortOrder: "DESC"
-    };
-    
-    // Add search conditions if provided
-    if (query.$or) {
-      filters.search = req.query.q;
-    }
-    
-    if (query.hospitalId) {
-      filters.hospitalId = query.hospitalId;
-    }
-    
-    const patients = await userRepository.findPatientsByHospital(filters.hospitalId || "MAIN", filters.limit, 0);
+    // Get patients with search from repository
+    const result = await userRepository.findPatientsByHospital(
+      hospitalId,
+      parseInt(limit),
+      offset,
+      searchTerm
+    );
 
     res.json({
-      success: true,
-      count: patients.length,
-      data: patients, // Changed from 'patients' to 'data' for consistency
-      patients, // Keep both for backward compatibility
+      status: "success",
+      message: "Patients retrieved successfully",
+      data: result.data, // Return the data array from repository
+      patients: result.data, // Also include as 'patients' for backward compatibility
+      count: result.data.length,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      pages: Math.ceil(result.total / result.limit)
     });
   } catch (error) {
     logger.error("Patient search error:", {

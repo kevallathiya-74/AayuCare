@@ -4,7 +4,11 @@ const logger = require("../utils/logger");
 /**
  * Redis Cache Middleware
  * Cache GET request responses with configurable TTL
+ * Version: 1.0 - All cache keys are versioned to prevent stale data after API updates
  */
+
+// API version for cache key namespacing
+const API_VERSION = 'v1';
 
 /**
  * Create cache middleware for GET endpoints
@@ -20,17 +24,17 @@ const cacheMiddleware = (ttl = 60, keyGenerator = null) => {
     }
 
     try {
-      // Generate cache key
+      // Generate cache key with API version prefix
       let cacheKey;
       if (keyGenerator && typeof keyGenerator === "function") {
-        cacheKey = keyGenerator(req);
+        cacheKey = `${API_VERSION}:${keyGenerator(req)}`;
       } else {
-        // Default key: route + query params + user role + hospital
+        // Default key: version + route + query params + user role + hospital
         const userId = req.user?.id || "anonymous";
         const role = req.user?.role || "guest";
         const hospitalId = req.hospitalId || "none";
         const queryString = JSON.stringify(req.query);
-        cacheKey = `cache:${req.originalUrl}:${userId}:${role}:${hospitalId}:${queryString}`;
+        cacheKey = `${API_VERSION}:cache:${req.originalUrl}:${userId}:${role}:${hospitalId}:${queryString}`;
       }
 
       // Try to get from cache

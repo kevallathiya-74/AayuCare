@@ -131,18 +131,20 @@ exports.getDoctorDashboard = async (req, res) => {
         startDate: today,
         endDate: tomorrow,
       }),
-      // Completed today
-      appointmentRepository.countByStatus(doctorId, 'completed', {
+      // Completed today - use findByDoctor with status filter and count
+      appointmentRepository.findByDoctor(doctorId, {
+        ...baseFilters,
         startDate: today,
         endDate: tomorrow,
-        hospitalId: baseFilters.hospitalId,
+        status: 'completed',
       }),
       // Total unique patients
       appointmentRepository.findByDoctor(doctorId, baseFilters),
-      // Upcoming appointments (next 7 days)
-      appointmentRepository.countByStatus(doctorId, ['scheduled', 'confirmed'], {
+      // Upcoming appointments (next 7 days) - count scheduled/confirmed
+      appointmentRepository.findByDoctor(doctorId, {
+        ...baseFilters,
         startDate: today,
-        hospitalId: baseFilters.hospitalId,
+        status: ['scheduled', 'confirmed'],
       }),
       // Recent prescriptions
       prescriptionRepository.findByDoctor(doctorId, {
@@ -154,11 +156,14 @@ exports.getDoctorDashboard = async (req, res) => {
     // Calculate total unique patients from appointments
     const uniquePatientIds = new Set(todaysAppointments.map(apt => apt.patient_id));
     const totalPatients = Array.from(uniquePatientIds);
+    
+    // Count completed appointments
+    const completedCount = Array.isArray(completedToday) ? completedToday.length : 0;
 
     const schedule = {
       totalAppointments: todaysAppointments.length,
-      completed: completedToday,
-      pending: todaysAppointments.length - completedToday,
+      completed: completedCount,
+      pending: todaysAppointments.length - completedCount,
       nextPatient:
         todaysAppointments.find((apt) => apt.status !== "completed")?.patient_name || "No pending",
       nextTime: todaysAppointments.find((apt) => apt.status !== "completed")
@@ -200,7 +205,7 @@ exports.getDoctorDashboard = async (req, res) => {
         todaysAppointments: formattedAppointments,
         stats: {
           totalPatients: totalPatients.length,
-          upcomingAppointments: upcomingAppointmentsCount,
+          upcomingAppointments: Array.isArray(upcomingAppointmentsCount) ? upcomingAppointmentsCount.length : 0,
           prescriptionsToday: recentPrescriptions.filter(
             (p) => new Date(p.created_at) >= today
           ).length,
@@ -775,8 +780,11 @@ exports.getProfileStats = async (req, res, next) => {
         ? new Date().getFullYear() - new Date(doctor.created_at).getFullYear()
         : 0);
 
-    // Calculate average rating (mock for now, can be expanded)
-    const avgRating = 4.5; // TODO: Implement actual rating system
+    // Calculate average rating
+    // TODO: Implement actual rating system - requires ratings table in PostgreSQL
+    //       with columns: id, doctor_id, patient_id, rating, review, created_at
+    //       Then calculate: SELECT AVG(rating) FROM ratings WHERE doctor_id = $1
+    const avgRating = null; // null indicates rating system not implemented
 
     res.status(200).json({
       success: true,

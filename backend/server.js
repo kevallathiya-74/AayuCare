@@ -16,15 +16,28 @@ dns.setDefaultResultOrder("ipv4first");
 // =============================================================================
 // Validate Critical Environment Variables
 // =============================================================================
-if (!process.env.MONGODB_URI) {
-  console.error("❌ FATAL: MONGODB_URI is not defined in .env file");
+const requiredEnvVars = [
+  'MONGODB_URI',
+  'JWT_SECRET',
+  'POSTGRES_HOST',
+  'POSTGRES_USER',
+  'POSTGRES_PASSWORD',
+  'POSTGRES_DB',
+  'REDIS_HOST',
+  'BETTER_AUTH_SECRET',
+  'BETTER_AUTH_URL'
+];
+
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error("❌ FATAL: Missing required environment variables:");
+  missingVars.forEach(varName => console.error(`   - ${varName}`));
+  console.error("\n💡 Please check your .env file and ensure all variables are set.");
   process.exit(1);
 }
 
-if (!process.env.JWT_SECRET) {
-  console.error("❌ FATAL: JWT_SECRET is not defined in .env file");
-  process.exit(1);
-}
+console.log("✅ All required environment variables validated");
 
 // Environment validated - ready to start
 
@@ -122,6 +135,7 @@ app.use(
       }
     },
     credentials: true,
+    maxAge: 86400, // Cache preflight requests for 24 hours
   })
 );
 
@@ -229,6 +243,18 @@ app.get("/api/health", async (req, res) => {
     logger.error("Redis health check failed:", error.message);
   }
 
+  // Better Auth health check
+  let betterAuthStatus = 'not initialized';
+  try {
+    const auth = getAuth();
+    if (auth && typeof auth.api === 'object') {
+      betterAuthStatus = 'initialized';
+    }
+  } catch (error) {
+    betterAuthStatus = 'error';
+    logger.error('Better Auth health check failed:', error.message);
+  }
+
   res.json({
     status: "success",
     message: "AayuCare Backend Server is running",
@@ -239,8 +265,7 @@ app.get("/api/health", async (req, res) => {
       postgresql: postgresStatus,
       redis: redisStatus,
     },
-    betterAuth:
-      typeof getAuth === "function" ? "initialized" : "not initialized",
+    betterAuth: betterAuthStatus,
   });
 });
 

@@ -58,7 +58,12 @@ const ManagePatientsScreen = ({ navigation }) => {
         searchTerm ? { search: searchTerm } : {}
       );
 
-      const patientsList = response?.patients || response?.data || [];
+      console.log('[ManagePatients] API Response:', response);
+      console.log('[ManagePatients] Is array?', Array.isArray(response));
+      // Handle response as array directly or extract from nested structure
+      const patientsList = Array.isArray(response) 
+        ? response 
+        : (response?.patients || response?.data || []);
       setPatients(patientsList);
       console.log(`[SUCCESS] Loaded ${patientsList.length} patients`);
     } catch (err) {
@@ -116,7 +121,7 @@ const ManagePatientsScreen = ({ navigation }) => {
             setUpdatingId(patient._id);
             try {
               const response = await adminService.updateUserStatus(
-                patient._id,
+                patient.userId,
                 newStatus
               );
 

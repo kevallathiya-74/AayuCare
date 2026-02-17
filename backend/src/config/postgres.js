@@ -30,6 +30,17 @@ pool.on("remove", (client) => {
   logger.info("📤 PostgreSQL client removed from pool");
 });
 
+// Log pool statistics every 60 seconds in development
+if (process.env.NODE_ENV !== 'production') {
+  setInterval(() => {
+    logger.debug('📊 PostgreSQL Pool Stats:', {
+      total: pool.totalCount,
+      idle: pool.idleCount,
+      waiting: pool.waitingCount,
+    });
+  }, 60000);
+}
+
 /**
  * Initialize PostgreSQL connection and verify connectivity
  */
