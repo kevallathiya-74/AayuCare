@@ -728,7 +728,7 @@ const PatientDashboard = ({ navigation }) => {
                     </Text>
                     <Text style={styles.menuUserRole}>Patient Account</Text>
                     <Text style={styles.menuUserId}>
-                      ID: {user?.userId || "PAT001"}
+                      ID: {user?.userId || "PAT1"}
                     </Text>
                   </View>
                 </View>

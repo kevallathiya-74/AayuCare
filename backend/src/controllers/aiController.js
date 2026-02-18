@@ -29,6 +29,16 @@ exports.analyzeSymptoms = async (req, res) => {
     const recommendations = generateRecommendations(symptoms, severity);
     const whenToSeekHelp = getEmergencySignals(symptoms);
 
+    // Invalidate AI-related caches after analysis
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:ai:*");
+      await deleteCacheByPattern("cache:ai:*");
+      logger.debug("Cache invalidated after symptom analysis");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       analysis: {
@@ -191,6 +201,16 @@ exports.calculateRiskScore = async (req, res) => {
     const riskLevel =
       riskScore < 30 ? "low" : riskScore < 60 ? "medium" : "high";
 
+    // Invalidate AI-related caches after risk calculation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:ai:*");
+      await deleteCacheByPattern("cache:ai:*");
+      logger.debug("Cache invalidated after risk score calculation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       riskScore,
@@ -254,6 +274,16 @@ exports.getDietRecommendations = async (req, res) => {
       goal
     );
 
+    // Invalidate AI-related caches after generating diet recommendations
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:ai:*");
+      await deleteCacheByPattern("cache:ai:*");
+      logger.debug("Cache invalidated after diet recommendations");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       dietPlan,
@@ -288,6 +318,16 @@ exports.getExerciseRecommendations = async (req, res) => {
     } = req.body;
 
     const exercisePlan = generateExercisePlan(age, fitness, conditions, goal);
+
+    // Invalidate AI-related caches after generating exercise recommendations
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:ai:*");
+      await deleteCacheByPattern("cache:ai:*");
+      logger.debug("Cache invalidated after exercise recommendations");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,

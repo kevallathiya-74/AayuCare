@@ -516,9 +516,9 @@ const AdminHomeScreen = ({ navigation }) => {
         isTabScreen: true,
       },
       {
-        title: "Active Doctors",
-        value: stats.doctors.active,
-        subtitle: `${stats.doctors.total} total • ${stats.doctors.onDuty} on duty`,
+        title: "Total Doctors",
+        value: stats.doctors.total,
+        subtitle: `${stats.doctors.active} active • ${stats.doctors.onDuty} on duty`,
         icon: "medical",
         gradient: [healthColors.secondary.main, healthColors.secondary.dark],
         trend: stats.doctors.trend,
@@ -946,7 +946,7 @@ const AdminHomeScreen = ({ navigation }) => {
                   size={22}
                   color={healthColors.secondary.main}
                 />
-                <Text style={styles.sectionTitle}>Active Doctors</Text>
+                <Text style={styles.sectionTitle}>Total Doctors</Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate("ManageDoctors")}
                   style={styles.viewAllButton}

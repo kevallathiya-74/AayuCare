@@ -63,7 +63,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone is required";
     } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format (10-15 digits)";
+      newErrors.phone = "Invalid phone format";
     }
 
     if (!formData.password.trim()) {
@@ -91,24 +91,22 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      // Generate unique patient ID
-      const now = new Date();
-      const dateStr =
-        now.getFullYear().toString() +
-        (now.getMonth() + 1).toString().padStart(2, "0") +
-        now.getDate().toString().padStart(2, "0");
-      const timeStr =
-        now.getHours().toString().padStart(2, "0") +
-        now.getMinutes().toString().padStart(2, "0") +
-        now.getSeconds().toString().padStart(2, "0");
-      const random = Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-      const userId = `PAT${dateStr}${timeStr}${random}`;
+      // DEBUG: Log formData state at time of submission
+      console.log('=== FORM SUBMIT DEBUG ===');
+      console.log('Full formData:', JSON.stringify(formData, null, 2));
+      console.log('Address field specifically:', {
+        value: formData.address,
+        type: typeof formData.address,
+        length: formData.address ? formData.address.length : 0,
+        trimmed: formData.address ? formData.address.trim() : '',
+        trimmedLength: formData.address ? formData.address.trim().length : 0,
+        hasValue: !!formData.address,
+        hasTrimmedValue: !!(formData.address && formData.address.trim())
+      });
 
-      // Prepare patient data
+      // Backend will generate auto-increment userId (PAT1, PAT2, PAT3...)
+      // Prepare patient data without userId
       const patientData = {
-        userId: userId,
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
@@ -116,12 +114,28 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         role: "patient",
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender.toLowerCase(),
-        bloodGroup: formData.bloodGroup || undefined,
-        address: formData.address.trim() || undefined,
         isActive: true,
         hospitalId: user?.hospitalId,
         hospitalName: user?.hospitalName,
       };
+
+      // Add optional fields only if they have values (prevents undefined → NULL issue)
+      if (formData.bloodGroup) {
+        patientData.bloodGroup = formData.bloodGroup;
+      }
+      if (formData.address && formData.address.trim()) {
+        console.log('ADDING address to patientData:', formData.address.trim());
+        patientData.address = formData.address.trim();
+      } else {
+        console.log('NOT adding address - condition failed:', {
+          hasAddress: !!formData.address,
+          addressValue: formData.address,
+          trimValue: formData.address ? formData.address.trim() : ''
+        });
+      }
+
+      console.log('Final patientData being sent to API:', JSON.stringify(patientData, null, 2));
+      console.log('=== END FORM SUBMIT DEBUG ===');
 
       // Call create API
       const response = await adminService.createUser(patientData);
@@ -261,7 +275,19 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           style={[styles.input, multiline && styles.textArea]}
           value={formData[key]}
           onChangeText={(value) => {
+            // DEBUG: Log address field changes
+            if (key === 'address') {
+              console.log('Address field changed:', {
+                newValue: value,
+                length: value ? value.length : 0,
+                type: typeof value
+              });
+            }
             setFormData({ ...formData, [key]: value });
+            // DEBUG: Log state after update for address
+            if (key === 'address') {
+              console.log('formData after setState:', { ...formData, [key]: value });
+            }
             if (errors[key]) {
               setErrors({ ...errors, [key]: null });
             }

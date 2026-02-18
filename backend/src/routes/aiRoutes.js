@@ -25,8 +25,8 @@ router.use(protect);
 router.post(
   "/analyze-symptoms",
   validateAnalyzeSymptoms,
-  aiController.analyzeSymptoms,
-  invalidateCache("cache:ai:*")
+  aiController.analyzeSymptoms
+  // Cache invalidation now handled inside controller
 );
 
 // @route   GET /api/ai/health-insights/:patientId
@@ -45,8 +45,8 @@ router.get(
 router.post(
   "/risk-score",
   validateRiskScore,
-  aiController.calculateRiskScore,
-  invalidateCache("cache:ai:*")
+  aiController.calculateRiskScore
+  // Cache invalidation now handled inside controller
 );
 
 // @route   POST /api/ai/diet-recommendations
@@ -55,8 +55,8 @@ router.post(
 router.post(
   "/diet-recommendations",
   validateDietRecommendations,
-  aiController.getDietRecommendations,
-  invalidateCache("cache:ai:*")
+  aiController.getDietRecommendations
+  // Cache invalidation now handled inside controller
 );
 
 // @route   POST /api/ai/exercise-recommendations
@@ -65,8 +65,8 @@ router.post(
 router.post(
   "/exercise-recommendations",
   validateExerciseRecommendations,
-  aiController.getExerciseRecommendations,
-  invalidateCache("cache:ai:*")
+  aiController.getExerciseRecommendations
+  // Cache invalidation now handled inside controller
 );
 
 // @route   POST /api/ai/analyze-medical-record

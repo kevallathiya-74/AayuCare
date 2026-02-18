@@ -149,8 +149,8 @@ router.put(
   protect,
   authorize("doctor"),
   validateBody(updateDoctorProfileSchema),
-  doctorController.updateProfile,
-  invalidateCache("cache:doctors:*")
+  doctorController.updateProfile
+  // Cache invalidation now handled inside controller
 );
 
 /**
@@ -187,8 +187,8 @@ router.put(
   "/me/schedule/:dayOfWeek",
   protect,
   authorize("doctor"),
-  doctorController.updateSchedule,
-  invalidateCache("cache:doctors:*")
+  doctorController.updateSchedule
+  // Cache invalidation now handled inside controller
 );
 
 /**
@@ -200,8 +200,8 @@ router.patch(
   "/me/schedule/:dayOfWeek/toggle",
   protect,
   authorize("doctor"),
-  doctorController.toggleDayAvailability,
-  invalidateCache("cache:doctors:*")
+  doctorController.toggleDayAvailability
+  // Cache invalidation now handled inside controller
 );
 
 /**

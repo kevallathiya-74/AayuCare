@@ -595,6 +595,16 @@ exports.updateAppointmentStatus = async (req, res) => {
 
     const updatedAppointment = await appointmentRepository.update(id, updateData);
 
+    // Invalidate appointment caches after status update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:appointments:*");
+      await deleteCacheByPattern("cache:appointments:*");
+      logger.debug("Cache invalidated after appointment status update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     logger.info("Appointment status updated", {
       appointmentId: id,
       doctorId,
@@ -732,6 +742,19 @@ exports.registerWalkInPatient = async (req, res) => {
       });
     }
 
+    // Invalidate relevant caches after walk-in patient registration
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("cache:patient:*");
+      await deleteCacheByPattern("v1:cache:appointments:*");
+      await deleteCacheByPattern("cache:appointments:*");
+      logger.debug("Cache invalidated after walk-in patient registration");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(201).json({
       success: true,
       message: "Walk-in patient registered successfully",
@@ -834,9 +857,20 @@ exports.updateProfile = async (req, res, next) => {
 
     const doctor = await userRepository.update(doctorId, updateData);
 
+    // Invalidate relevant caches after profile update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      logger.debug("Cache invalidated after doctor profile update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(200).json({
       success: true,
-      message: "Profile updated successfully",
+      message: "Profile Updated Successfully",
       data: doctor,
     });
   } catch (error) {
@@ -953,6 +987,17 @@ exports.getSchedule = async (req, res) => {
         const schedule = await scheduleRepository.create(scheduleData);
         created.push(schedule);
       }
+      
+      // Invalidate relevant caches after default schedule creation
+      const { deleteCacheByPattern } = require("../config/redis");
+      try {
+        await deleteCacheByPattern("v1:cache:doctors:*");
+        await deleteCacheByPattern("v1:cache:doctor:*");
+        logger.debug("Cache invalidated after default schedule creation");
+      } catch (cacheError) {
+        logger.warn("Failed to invalidate cache:", cacheError.message);
+      }
+      
       return res.status(200).json({
         success: true,
         data: created,
@@ -1030,6 +1075,16 @@ exports.updateSchedule = async (req, res) => {
       dayOfWeek,
     });
 
+    // Invalidate relevant caches after schedule update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      logger.debug("Cache invalidated after schedule update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(200).json({
       success: true,
       message: "Schedule updated successfully",
@@ -1075,6 +1130,16 @@ exports.toggleDayAvailability = async (req, res) => {
       dayOfWeek,
       isAvailable: updatedSchedule.is_available,
     });
+
+    // Invalidate relevant caches after availability toggle
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      logger.debug("Cache invalidated after availability toggle");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(200).json({
       success: true,

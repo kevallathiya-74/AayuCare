@@ -2,6 +2,7 @@ const appointmentService = require("../services/appointmentService");
 const { AppError } = require("../middleware/errorHandler");
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
+const logger = require("../utils/logger");
 
 /**
  * @desc    Create new appointment
@@ -20,6 +21,16 @@ exports.createAppointment = async (req, res, next) => {
     const appointment = await appointmentService.createAppointment(
       appointmentData
     );
+
+    // Invalidate relevant caches after appointment creation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:appointments:*");
+      await deleteCacheByPattern("cache:appointments:*");
+      logger.debug("Cache invalidated after appointment creation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(201).json({
       status: "success",
@@ -239,6 +250,16 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       req.user.role
     );
 
+    // Invalidate relevant caches after appointment status update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:appointments:*");
+      await deleteCacheByPattern("cache:appointments:*");
+      logger.debug("Cache invalidated after appointment status update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(200).json({
       status: "success",
       message: "Appointment status updated successfully",
@@ -265,6 +286,16 @@ exports.cancelAppointment = async (req, res, next) => {
       cancelReason
     );
 
+    // Invalidate appointment caches after cancellation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:appointments:*");
+      await deleteCacheByPattern("cache:appointments:*");
+      logger.debug("Cache invalidated after appointment cancellation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(200).json({
       status: "success",
       message: "Appointment cancelled successfully",
@@ -288,6 +319,16 @@ exports.updateAppointment = async (req, res, next) => {
       req.user._id,
       req.user.role
     );
+
+    // Invalidate relevant caches after appointment update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:appointments:*");
+      await deleteCacheByPattern("cache:appointments:*");
+      logger.debug("Cache invalidated after appointment update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(200).json({
       status: "success",

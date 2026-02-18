@@ -95,7 +95,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone is required";
     } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format (10-15 digits)";
+      newErrors.phone = "Invalid phone format";
     }
 
     if (!formData.specialization) {
@@ -164,7 +164,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
         
         // Show success message after modal closes
         setTimeout(() => {
-          Alert.alert("Success", "Doctor profile updated successfully");
+          Alert.alert("Success", "Doctor Profile Updated Successfully");
         }, 300);
       }
     } catch (error) {
@@ -384,7 +384,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {renderInput("name", "Full Name *", "Dr. John Doe", "person")}
+            {renderInput("name", "Full Name *", "Dr. Raj Kumar", "person")}
             {renderInput(
               "email",
               "Email Address *",

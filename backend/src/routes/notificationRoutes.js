@@ -30,29 +30,29 @@ router.get(
 // Mark notification as read
 router.put(
   "/:id/read",
-  notificationController.markAsRead,
-  invalidateCache("cache:notification:*")
+  notificationController.markAsRead
+  // Cache invalidation now handled inside controller
 );
 
 // Mark all as read
 router.put(
   "/mark-all-read",
-  notificationController.markAllAsRead,
-  invalidateCache("cache:notification:*")
+  notificationController.markAllAsRead
+  // Cache invalidation now handled inside controller
 );
 
 // Delete notification
 router.delete(
   "/:id",
-  notificationController.deleteNotification,
-  invalidateCache("cache:notification:*")
+  notificationController.deleteNotification
+  // Cache invalidation now handled inside controller
 );
 
 // Clear all notifications
 router.delete(
   "/clear-all",
-  notificationController.clearAllNotifications,
-  invalidateCache("cache:notification:*")
+  notificationController.clearAllNotifications
+  // Cache invalidation now handled inside controller
 );
 
 // Admin routes
@@ -60,15 +60,15 @@ router.post(
   "/",
   authorize("admin"),
   validateBody(createNotificationSchema),
-  notificationController.createNotification,
-  invalidateCache("cache:notification:*")
+  notificationController.createNotification
+  // Cache invalidation now handled inside controller
 );
 router.post(
   "/broadcast",
   authorize("admin"),
   validateBody(createNotificationSchema),
-  notificationController.broadcastNotification,
-  invalidateCache("cache:notification:*")
+  notificationController.broadcastNotification
+  // Cache invalidation now handled inside controller
 );
 
 module.exports = router;

@@ -1061,13 +1061,446 @@ Production updates MUST:
 
 ---
 
-## 29. ABSOLUTE FINAL RULE
+## 29. Database Structure & Integrity Rules (ENFORCED)
+
+### 29.1 Foreign Key Constraints (MANDATORY)
+
+Database MUST maintain exactly 8 foreign key constraints:
+
+**CASCADE DELETE (Auto-delete profiles):**
+- doctors.user_id → users.id (ON DELETE CASCADE)
+- patients.user_id → users.id (ON DELETE CASCADE)
+
+**RESTRICT (Prevent deletion):**
+- appointments.patient_id → users.id (ON DELETE RESTRICT)
+- appointments.doctor_id → users.id (ON DELETE RESTRICT)
+- payments.appointment_id → appointments.id (ON DELETE RESTRICT)
+- payments.patient_id → users.id (ON DELETE RESTRICT)
+- payments.doctor_id → users.id (ON DELETE RESTRICT)
+
+**SET NULL (Preserve history):**
+- appointments.cancelled_by → users.id (ON DELETE SET NULL)
+
+**Verification Command:**
+```bash
+node backend/verify-postgres.js
+```
+
+❌ Duplicate constraints are forbidden
+❌ Missing foreign keys are forbidden
+✅ Exactly 8 constraints must exist
+✅ All foreign key columns must be indexed
+
+### 29.2 Audit Logging (HIPAA Compliance)
+
+ALL critical operations MUST be logged to `audit_logs` table:
+
+**Required Table Structure:**
+```sql
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  action VARCHAR(100) NOT NULL,
+  entity_type VARCHAR(50),
+  entity_id UUID,
+  old_values JSONB,
+  new_values JSONB,
+  ip_address INET,
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Required Indexes:**
+- idx_audit_logs_user_id (user_id)
+- idx_audit_logs_entity (entity_type, entity_id)
+- idx_audit_logs_created_at (created_at)
+- idx_audit_logs_action (action)
+
+**Must Track:**
+- user_register, user_login, user_logout
+- profile_update
+- appointment_create, appointment_cancel, appointment_complete
+- payment_create, payment_refund
+- medical_record_view, medical_record_create, medical_record_update
+- prescription_create
+- admin_action, role_change
+
+**Verification:**
+```bash
+psql -U postgres -d aayucare_db -c "SELECT COUNT(*) FROM audit_logs;"
+```
+
+❌ Operations without audit log are forbidden
+❌ Missing audit_logs table blocks deployment
+✅ All sensitive actions must be tracked
+
+### 29.3 Soft Delete Pattern (STATUS-BASED)
+
+AayuCare uses **status-based soft delete** (NOT is_deleted column):
+
+**Appointments:**
+```sql
+status IN ('scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show')
+cancellation_reason TEXT
+cancelled_by UUID REFERENCES users(id)
+```
+
+**Payments:**
+```sql
+status IN ('pending', 'processing', 'completed', 'failed', 'refunded')
+refunded_at TIMESTAMP
+refund_amount DECIMAL(10, 2)
+```
+
+**Why Status-Based:**
+- ✅ Explicit business logic (cancelled != deleted)
+- ✅ Audit trail preserved (cancelled_by tracks user)
+- ✅ No need to filter is_deleted=false everywhere
+- ✅ HIPAA compliant (appointments never truly deleted)
+- ✅ Query performance (status indexed)
+
+❌ Adding is_deleted column is forbidden
+❌ Hard deleting appointments/payments is forbidden
+✅ Use status transitions for lifecycle management
+
+### 29.4 Table Partitioning Strategy (SCALABILITY)
+
+**When to Implement Partitioning:**
+
+**Thresholds:**
+- appointments table: > 1,000,000 rows
+- audit_logs table: > 5,000,000 rows
+- Query times: > 1 second consistently
+
+**Tables to Partition (by date):**
+1. appointments (by appointment_date)
+2. payments (by created_at)
+3. audit_logs (by created_at)
+
+**Implementation Example:**
+```sql
+-- Convert appointments to partitioned table
+CREATE TABLE appointments_partitioned (
+  LIKE appointments INCLUDING ALL
+) PARTITION BY RANGE (appointment_date);
+
+CREATE TABLE appointments_y2026m01 PARTITION OF appointments_partitioned
+  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+
+CREATE TABLE appointments_y2026m02 PARTITION OF appointments_partitioned
+  FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+-- Repeat for each month
+```
+
+**Current Status:**
+- ⏳ Partitioning NOT needed yet (< 1M rows)
+- ✅ Proper indexes exist (date, date_time, doctor_date)
+- ✅ Query performance < 200ms with current scale
+
+❌ Premature partitioning is forbidden
+✅ Monitor row counts monthly
+✅ Implement partitioning before performance degrades
+
+### 29.5 Database Health Monitoring (WEEKLY)
+
+**Required Weekly Checks:**
+
+```bash
+# 1. Verify foreign key count
+psql -U postgres -d aayucare_db -c "SELECT COUNT(*) FROM information_schema.table_constraints WHERE constraint_type = 'FOREIGN KEY';"
+# Expected: 8
+
+# 2. Check for orphaned records
+node backend/verify-postgres.js
+# Expected: 0 orphaned records
+
+# 3. Review audit log entries
+psql -U postgres -d aayucare_db -c "SELECT action, COUNT(*) FROM audit_logs GROUP BY action ORDER BY COUNT(*) DESC;"
+
+# 4. Monitor table sizes
+psql -U postgres -d aayucare_db -c "SELECT tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size FROM pg_tables WHERE schemaname = 'public' ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;"
+```
+
+**Alert Thresholds:**
+- Foreign keys ≠ 8 → CRITICAL
+- Orphaned records > 0 → HIGH
+- appointments > 1M rows → Implement partitioning
+- Query time > 500ms → Add indexes/optimize
+
+**Monthly Tasks:**
+- Review audit log growth
+- Archive old audit logs (> 2 years)
+- Vacuum and analyze tables
+- Update database statistics
+
+### 29.6 Database Migration Rules (ZERO DOWNTIME)
+
+**Schema Changes MUST:**
+
+1. **Create migration script** in `backend/migrations/YYYYMMDD_description.sql`
+2. **Test in development** environment first
+3. **Verify FK impact** - Check CASCADE/RESTRICT behavior
+4. **Run in staging** with production-like data
+5. **Schedule maintenance window** or use online DDL
+6. **Have rollback plan** ready
+
+**Example Migration:**
+```sql
+-- backend/migrations/20260218_add_appointment_reminder.sql
+BEGIN;
+
+-- Add column
+ALTER TABLE appointments ADD COLUMN reminder_sent BOOLEAN DEFAULT FALSE;
+
+-- Add index
+CREATE INDEX idx_appointments_reminder_sent ON appointments(reminder_sent) WHERE reminder_sent = FALSE;
+
+-- Verify
+SELECT COUNT(*) FROM appointments WHERE reminder_sent IS NULL;
+-- Expected: 0
+
+COMMIT;
+```
+
+❌ Manual schema changes in production are forbidden
+❌ Migrations without rollback plan are forbidden
+✅ All migrations must be versioned and tracked
+✅ Test migrations with realistic data volumes
+
+---
+
+## 30. CRITICAL LESSONS LEARNED & DEBUGGING RULES
+
+### 30.1 Validation Schema Completeness
+
+**MANDATORY: Every frontend form field MUST exist in backend Joi validation schema.**
+
+**Common Issue Pattern:**
+- Frontend has `address` field in form
+- Backend schema missing `address` field
+- Joi validation middleware strips out unknown fields
+- Data never reaches database
+- Bug appears as "field not saving"
+
+**Prevention:**
+```javascript
+// ✅ CORRECT: Include ALL fields (even optional ones)
+const registerSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  address: Joi.string().max(500).optional(), // Include optional fields!
+  
+  // Role-based fields with conditional validation
+  consultationFee: Joi.number().min(0).when("role", {
+    is: "doctor",
+    then: Joi.required(),
+    otherwise: Joi.forbidden(),
+  }),
+});
+```
+
+**Verification Steps:**
+1. List all fields in Add/Edit forms
+2. Check each field exists in validation schema
+3. Test creating records with optional fields filled
+4. Verify in database that optional fields saved
+
+❌ **Forbidden:** Adding form fields without updating validation schema
+✅ **Required:** Update validation schema BEFORE adding form UI
+
+---
+
+### 30.2 Form Field Consistency (Add vs Edit)
+
+**MANDATORY: Add and Edit forms must have identical field sets.**
+
+**Common Issue Pattern:**
+- Add Doctor form missing `consultationFee` field
+- Edit Doctor form has `consultationFee` field
+- Users confused why they can't set during creation
+- Inconsistent user experience
+
+**Solution:**
+```javascript
+// Define shared field configuration
+const DOCTOR_FORM_FIELDS = [
+  'name', 'email', 'specialization', 
+  'qualification', 'experience', 
+  'consultationFee', 'department'
+];
+
+// Use in both AddDoctorModal and EditDoctorModal
+```
+
+❌ **Forbidden:** Different fields in Add vs Edit
+✅ **Required:** Identical field sets, test both workflows
+
+---
+
+### 30.3 Dashboard Cache Invalidation
+
+**MANDATORY: ALL operations affecting stats/counts MUST invalidate dashboard cache.**
+
+**Common Issue Pattern:**
+- Deactivate doctor → `isActive` updated in database
+- Dashboard still shows old "active doctors" count
+- User confused, think change didn't work
+- Cache expires after 30+ seconds, then shows correct data
+
+**Solution:**
+```javascript
+// In EVERY user CRUD operation
+exports.updateUserStatus = async (req, res) => {
+  await userRepository.update(userId, { isActive: false });
+  
+  // ✅ MUST invalidate dashboard cache
+  const { deleteCacheByPattern } = require("../config/redis");
+  await deleteCacheByPattern("v1:cache:dashboard:*");
+  await deleteCacheByPattern("v1:cache:doctors:*");
+};
+```
+
+**Operations Requiring Dashboard Invalidation:**
+- `createUser` - Affects total counts
+- `updateUserStatus` - Affects active/inactive counts
+- `deleteUser` - Affects total counts
+- `createAppointment` - Affects appointment counts
+- `cancelAppointment` - Affects pending counts
+
+❌ **Forbidden:** User CRUD without dashboard cache invalidation
+✅ **Required:** Always include `v1:cache:dashboard:*` pattern
+
+---
+
+### 30.4 React Native Metro Bundler Cache
+
+**MANDATORY: Reload React Native app after EVERY code change.**
+
+**Common Issue Pattern:**
+- Edit frontend code, save files
+- Test immediately without reload
+- Bug still occurs, assume fix didn't work
+- Actually Metro bundler using cached JavaScript bundle
+
+**Solution:**
+```bash
+# After ANY frontend code change:
+# Press 'r' in Metro bundler terminal
+
+# If behavior still wrong:
+npx expo start --clear
+
+# For stubborn cache issues:
+watchman watch-del-all
+rm -rf node_modules/.cache
+npx expo start --clear
+```
+
+**When to ALWAYS Reload:**
+- Adding new form fields
+- Changing validation logic
+- Updating API calls
+- Modifying state management
+- Any JavaScript/JSX changes
+
+❌ **Forbidden:** Testing without reloading app
+✅ **Required:** Press 'r' after every edit
+
+---
+
+### 30.5 Systematic Bug Investigation Workflow
+
+**Follow this order when debugging:**
+
+```
+1. REPRODUCE
+   ✅ Exact steps to reproduce
+   ✅ Test on fresh data
+   ✅ Verify across app restarts
+   
+2. ISOLATE LAYER
+   Frontend → UI/Component issue
+   Backend → API/Logic issue
+   Database → Schema/Query issue
+   
+3. CHECK LOGS
+   Frontend: console.log statements
+   Backend: combined.log (tail -f)
+   Database: Query results
+   
+4. VERIFY CHANGES
+   ✅ Code changes saved
+   ✅ Backend server restarted
+   ✅ Frontend app reloaded
+   ✅ Cache cleared (if needed)
+   
+5. TEST THOROUGHLY
+   ✅ Create new record
+   ✅ Verify in database
+   ✅ Check backend logs
+   ✅ Navigate away and back
+   ✅ Test on fresh app launch
+```
+
+**Common Bug Patterns:**
+- **Field not saving** → Check validation schema completeness
+- **UI shows stale data** → Check cache invalidation + reload app
+- **Form field missing** → Compare Add vs Edit forms
+- **Changes don't apply** → Reload Metro bundler
+
+❌ **Forbidden:** Assuming fix works without full verification
+✅ **Required:** Follow complete debugging checklist
+
+---
+
+### 30.6 Production Debugging Checklist
+
+**Before marking ANY bug as "fixed":**
+
+- [ ] Code changes verified in actual files
+- [ ] Backend server restarted with new code
+- [ ] Frontend app reloaded (Metro cache cleared)
+- [ ] Test data created successfully
+- [ ] Database verified with SQL query
+- [ ] Backend logs show correct data flow
+- [ ] Cache invalidation confirmed in logs
+- [ ] Navigation flow tested (forward/back)
+- [ ] No error messages in console
+- [ ] Final test on completely fresh app launch
+- [ ] Tested with multiple test cases
+- [ ] Edge cases considered and tested
+
+**Incomplete testing = Bug still exists**
+
+---
+
+## 31. ABSOLUTE FINAL RULE
 
 > **If implementing these architecture patterns does not make the system more maintainable, scalable, and secure, it violates AayuCare's engineering standards.**
 
 All rules in this document are MANDATORY for production healthcare application.
 
 Violation = CRITICAL DEFECT requiring immediate fix.
+
+**Critical Lessons Integration:**
+- Validation schemas must be complete (Section 30.1)
+- Form fields must be consistent (Section 30.2)
+- Cache invalidation must be comprehensive (Section 30.3)
+- Metro bundler cache must be cleared (Section 30.4)
+- Debugging must be systematic (Section 30.5)
+- Testing must be thorough (Section 30.6)
+
 Donot create every time *.md file and unused file and code remove and bug fix after testing code also remove 
 
 critical and non-critical all issues fix it all till then after stop
+
+- You Always better formatein your codebase, focusing on security, performance, code quality, and best practices.
+
+**For detailed debugging workflows and architecture patterns, see:**
+- `/docs/ARCHITECTURE_RULES.md` - Complete architecture guidelines
+- Section 17.4 - Validation Schema Completeness
+- Section 17.5 - Form Field Parity
+- Section 16.4 - Dashboard Cache Invalidation
+- Section 5.1 - React Native Metro Bundler Cache
+- Section 27 - Debugging Workflow (Systematic Approach)    

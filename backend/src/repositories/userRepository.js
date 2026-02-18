@@ -158,8 +158,43 @@ class UserRepository {
                       is_active, email_verified, phone_verified, created_at, updated_at
         `;
 
+    logger.info("[USER_UPDATE] Executing SQL update", {
+      id,
+      updates,
+      sql: sql.substring(0, 100),
+      values: values.map((v, i) => i === values.indexOf(updates.password_hash) ? '***' : v)
+    });
+
     const result = await query(sql, values);
-    return result.rows[0];
+    
+    if (!result.rows || result.rows.length === 0) {
+      logger.error("[USER_UPDATE] No rows returned after update", { id });
+      throw new AppError("User not found or update failed", 404);
+    }
+    
+    const row = result.rows[0];
+    
+    logger.info("[USER_UPDATE] SQL update successful", {
+      userId: row.user_id,
+      updatedIsActive: row.is_active
+    });
+    
+    // Map snake_case PostgreSQL fields to camelCase for frontend
+    return {
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      role: row.role,
+      hospitalId: row.hospital_id,
+      hospitalName: row.hospital_name,
+      isActive: row.is_active,
+      emailVerified: row.email_verified,
+      phoneVerified: row.phone_verified,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
   }
 
   /**
@@ -171,6 +206,45 @@ class UserRepository {
     const sql = `UPDATE users SET is_active = false WHERE id = $1 RETURNING id`;
     const result = await query(sql, [id]);
     return result.rowCount > 0;
+  }
+
+  /**
+   * Get next auto-increment ID number for a role
+   * @param {string} role - User role (patient, doctor, admin)
+   * @param {string} hospitalId - Hospital ID (optional)
+   * @returns {Promise<string>} Next ID in format PAT1, DOC1, ADM1, etc.
+   */
+  async getNextUserId(role, hospitalId = null) {
+    const prefix = role === 'patient' ? 'PAT' : role === 'doctor' ? 'DOC' : 'ADM';
+    
+    // Use numeric sorting by extracting the number from user_id
+    let sql = `
+      SELECT user_id FROM users 
+      WHERE role = $1 AND user_id LIKE $2
+    `;
+    
+    const params = [role, `${prefix}%`];
+    
+    if (hospitalId) {
+      sql += ` AND hospital_id = $3`;
+      params.push(hospitalId);
+    }
+    
+    // CRITICAL FIX: Sort by numeric value, not string (PAT10 > PAT9, not PAT9 > PAT10)
+    sql += ` ORDER BY CAST(SUBSTRING(user_id FROM '[0-9]+') AS INTEGER) DESC LIMIT 1`;
+    
+    const result = await query(sql, params);
+    
+    if (result.rows.length === 0) {
+      return `${prefix}1`;
+    }
+    
+    // Extract number from last ID (e.g., PAT123 -> 123)
+    const lastId = result.rows[0].user_id;
+    const lastNumber = parseInt(lastId.replace(prefix, '')) || 0;
+    const nextNumber = lastNumber + 1;
+    
+    return `${prefix}${nextNumber}`;
   }
 
   /**
@@ -228,9 +302,27 @@ class UserRepository {
    * @param {string} searchTerm - Optional search term for name, email, phone, or userId
    * @returns {Promise<Object>} Patients with pagination
    */
+  /**
+   * Find patients by hospital with pagination and search
+   * @param {string} hospitalId - Hospital ID to filter by
+   * @param {number} limit - Maximum number of records to return (default: 20)
+   * @param {number} offset - Number of records to skip for pagination (default: 0)
+   * @param {string} searchTerm - Optional search term to filter by name, email, phone, or user_id
+   * @returns {Promise<Object>} Object containing:
+   *   - data: Array of patient records with user and patient profile information
+   *   - total: Total count of matching patients
+   * @description
+   * Performs INNER JOIN between users and patients tables.
+   * Filters by:
+   * - hospital_id (multi-tenancy)
+   * - role = 'patient'
+   * - Includes both active and inactive users (frontend handles display)
+   * - Optional search across name, email, phone, user_id (case-insensitive)
+   * Uses parameterized queries to prevent SQL injection.
+   */
   async findPatientsByHospital(hospitalId, limit = 20, offset = 0, searchTerm = '') {
-    // Build WHERE clause with search conditions
-    let whereConditions = 'u.hospital_id = $1 AND u.role = \'patient\' AND u.is_active = true';
+    // Build WHERE clause with search conditions (includes inactive users)
+    let whereConditions = 'u.hospital_id = $1 AND u.role = \'patient\'';
     const params = [hospitalId];
     let paramIndex = 2;
 

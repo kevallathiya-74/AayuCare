@@ -110,6 +110,14 @@ const ManagePatientsScreen = ({ navigation }) => {
   const handleToggleStatus = useCallback(async (patient) => {
     const newStatus = !patient.isActive;
 
+    console.log('[STATUS_UPDATE] Patient info:', {
+      _id: patient._id,
+      userId: patient.userId,
+      name: patient.name,
+      currentStatus: patient.isActive,
+      requestedStatus: newStatus
+    });
+
     Alert.alert(
       newStatus ? "Activate Patient" : "Deactivate Patient",
       `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${patient.name}?`,
@@ -120,24 +128,41 @@ const ManagePatientsScreen = ({ navigation }) => {
           onPress: async () => {
             setUpdatingId(patient._id);
             try {
+              console.log('[STATUS_UPDATE] Sending request...', {
+                userId: patient.userId,
+                newStatus
+              });
+              
               const response = await adminService.updateUserStatus(
                 patient.userId,
                 newStatus
               );
 
+              console.log('[STATUS_UPDATE] Response received:', {
+                success: response.success,
+                data: response.data,
+                dataIsActive: response.data?.isActive
+              });
+
               // Update local state immediately with server response
               if (response.success && response.data) {
                 setPatients((prev) =>
-                  prev.map((p) =>
-                    p._id === patient._id
-                      ? { ...p, isActive: response.data.isActive }
-                      : p
-                  )
+                  prev.map((p) => {
+                    if (p._id === patient._id) {
+                      console.log('[STATUS_UPDATE] Updating patient in state:', {
+                        oldStatus: p.isActive,
+                        newStatus: response.data.isActive
+                      });
+                      return { ...p, isActive: response.data.isActive };
+                    }
+                    return p;
+                  })
                 );
               }
 
               // Also refetch to ensure consistency
               setTimeout(() => {
+                console.log('[STATUS_UPDATE] Refetching patients list...');
                 fetchPatients(searchQuery.trim());
               }, 500);
 
@@ -146,6 +171,7 @@ const ManagePatientsScreen = ({ navigation }) => {
                 `Patient ${newStatus ? "activated" : "deactivated"} successfully`
               );
             } catch (err) {
+              console.error('[STATUS_UPDATE] Error:', err);
               logError(err, {
                 context: "ManagePatientsScreen.handleToggleStatus",
               });
@@ -157,7 +183,7 @@ const ManagePatientsScreen = ({ navigation }) => {
         },
       ]
     );
-  }, []);
+  }, [fetchPatients, searchQuery]);
 
   const handleEditPatient = useCallback((patient) => {
     setSelectedPatient(patient);
@@ -177,38 +203,9 @@ const ManagePatientsScreen = ({ navigation }) => {
   const handleDeletePatient = useCallback(async (patient) => {
     Alert.alert(
       "Delete Patient",
-      `Are you sure you want to delete ${patient.name}? This action will deactivate the patient account.`,
+      `Are you sure you want to permanently delete ${patient.name}? This action cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
-        {
-          text: "Deactivate",
-          style: "destructive",
-          onPress: async () => {
-            setUpdatingId(patient._id);
-            try {
-              await adminService.deleteUser(patient.userId);
-              // Remove from list
-              setPatients((prev) => prev.filter((p) => p._id !== patient._id));
-              Alert.alert("Success", "Patient deactivated successfully");
-            } catch (err) {
-              logError(err, {
-                context: "ManagePatientsScreen.handleDeletePatient",
-              });
-
-              // Better error handling
-              let errorMessage = "Failed to delete patient";
-              if (err.response?.data?.message) {
-                errorMessage = err.response.data.message;
-              } else if (err.message) {
-                errorMessage = err.message;
-              }
-
-              Alert.alert("Error", errorMessage);
-            } finally {
-              setUpdatingId(null);
-            }
-          },
-        },
         {
           text: "Delete Permanently",
           style: "destructive",

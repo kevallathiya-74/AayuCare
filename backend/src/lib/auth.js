@@ -212,7 +212,10 @@ const initAuth = () => {
 
     return auth;
   } catch (error) {
-    console.error("Better Auth initialization error:", error);
+    logger.error("Better Auth initialization error:", {
+      error: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 };

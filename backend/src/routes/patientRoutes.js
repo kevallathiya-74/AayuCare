@@ -53,8 +53,8 @@ router.patch(
   "/:patientId/profile",
   authorize("patient", "admin"),
   validateBody(updatePatientProfileSchema),
-  patientController.updatePatientProfile,
-  invalidateCache("cache:patient:*")
+  patientController.updatePatientProfile
+  // Cache invalidation now handled inside controller
 );
 
 // @route   GET /api/patients/:patientId/health-metrics

@@ -22,6 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import authService from "../../services/auth.service";
+import adminService from "../../services/admin.service";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -55,6 +56,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     qualification: "",
     experience: "",
     department: "",
+    consultationFee: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -75,7 +77,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone is required";
     } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format (10-15 digits)";
+      newErrors.phone = "Invalid phone format";
     }
 
     if (!formData.password.trim()) {
@@ -101,6 +103,14 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       newErrors.experience = "Experience must be a positive number";
     }
 
+    if (
+      formData.consultationFee &&
+      (isNaN(formData.consultationFee) ||
+        parseInt(formData.consultationFee) < 0)
+    ) {
+      newErrors.consultationFee = "Consultation fee must be a positive number";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -112,24 +122,9 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      // Generate unique doctor ID (DOC + date + time + random)
-      const now = new Date();
-      const dateStr =
-        now.getFullYear().toString() +
-        (now.getMonth() + 1).toString().padStart(2, "0") +
-        now.getDate().toString().padStart(2, "0");
-      const timeStr =
-        now.getHours().toString().padStart(2, "0") +
-        now.getMinutes().toString().padStart(2, "0") +
-        now.getSeconds().toString().padStart(2, "0");
-      const random = Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0");
-      const userId = `DOC${dateStr}${timeStr}${random}`;
-
-      // Prepare doctor data
+      // Backend will generate auto-increment userId (DOC1, DOC2, DOC3...)
+      // Prepare doctor data without userId
       const doctorData = {
-        userId: userId,
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
@@ -138,7 +133,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         specialization: formData.specialization,
         qualification: formData.qualification.trim(),
         experience: parseInt(formData.experience),
-        consultationFee: 500, // Default consultation fee
+        consultationFee: parseInt(formData.consultationFee) || 500,
         department:
           formData.department.trim() || formData.specialization || "General",
         isActive: true,
@@ -146,10 +141,10 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         hospitalName: user?.hospitalName,
       };
 
-      // Call register API with doctor role
-      const response = await authService.register(doctorData);
+      // Use adminService.createUser for consistency with AddPatientModal
+      const response = await adminService.createUser(doctorData);
 
-      if (response.success || response.user) {
+      if (response.status === "success" || response.success || response.user) {
         // Call onSuccess first to trigger parent refetch
         if (onSuccess) {
           onSuccess();
@@ -208,6 +203,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
       qualification: "",
       experience: "",
       department: "",
+      consultationFee: "",
     });
     setErrors({});
   };
@@ -386,7 +382,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {renderInput("name", "Full Name *", "Dr. John Doe", "person")}
+            {renderInput("name", "Full Name *", "Dr. Raj Kumar", "person")}
             {renderInput(
               "email",
               "Email Address *",
@@ -429,6 +425,13 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "numeric"
             )}
             {renderInput("department", "Department", "Cardiology", "business")}
+            {renderInput(
+              "consultationFee",
+              "Consultation Fee",
+              "500",
+              "cash",
+              "numeric"
+            )}
 
             <Text style={styles.noteText}>* Required fields</Text>
           </ScrollView>

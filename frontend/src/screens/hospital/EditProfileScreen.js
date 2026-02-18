@@ -73,7 +73,7 @@ const EditProfileScreen = ({ navigation }) => {
 
       if (response.success) {
         dispatch(setUser(response.data));
-        Alert.alert("Success", "Profile updated successfully", [
+        Alert.alert("Success", "Profile Updated Successfully", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),

@@ -99,6 +99,14 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const handleToggleStatus = useCallback(async (doctor) => {
     const newStatus = !doctor.isActive;
 
+    console.log('[STATUS_UPDATE] Doctor info:', {
+      _id: doctor._id,
+      userId: doctor.userId,
+      name: doctor.name,
+      currentStatus: doctor.isActive,
+      requestedStatus: newStatus
+    });
+
     Alert.alert(
       newStatus ? "Activate Doctor" : "Deactivate Doctor",
       `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${doctor.name}?`,
@@ -109,19 +117,38 @@ const ManageDoctorsScreen = ({ navigation }) => {
           onPress: async () => {
             setUpdatingId(doctor._id);
             try {
+              console.log('[STATUS_UPDATE] Sending request...', {
+                userId: doctor.userId,
+                newStatus
+              });
+              
               const response = await adminService.updateUserStatus(doctor.userId, newStatus);
+              
+              console.log('[STATUS_UPDATE] Response received:', {
+                success: response.success,
+                data: response.data,
+                dataIsActive: response.data?.isActive
+              });
               
               // Update local state immediately with server response
               if (response.success && response.data) {
                 setDoctors((prev) =>
-                  prev.map((d) =>
-                    d._id === doctor._id ? { ...d, isActive: response.data.isActive } : d
-                  )
+                  prev.map((d) => {
+                    if (d._id === doctor._id) {
+                      console.log('[STATUS_UPDATE] Updating doctor in state:', {
+                        oldStatus: d.isActive,
+                        newStatus: response.data.isActive
+                      });
+                      return { ...d, isActive: response.data.isActive };
+                    }
+                    return d;
+                  })
                 );
               }
               
               // Also refetch to ensure consistency
               setTimeout(() => {
+                console.log('[STATUS_UPDATE] Refetching doctors list...');
                 fetchDoctors(searchQuery.trim());
               }, 500);
               
@@ -130,6 +157,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
                 `Doctor ${newStatus ? "activated" : "deactivated"} successfully`
               );
             } catch (err) {
+              console.error('[STATUS_UPDATE] Error:', err);
               logError(err, {
                 context: "ManageDoctorsScreen.handleToggleStatus",
               });
@@ -141,7 +169,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
         },
       ]
     );
-  }, []);
+  }, [fetchDoctors, searchQuery]);
 
   const handleEditDoctor = useCallback((doctor) => {
     setSelectedDoctor(doctor);
@@ -161,38 +189,9 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const handleDeleteDoctor = useCallback(async (doctor) => {
     Alert.alert(
       "Delete Doctor",
-      `Are you sure you want to delete ${doctor.name}? This action will deactivate the doctor account.`,
+      `Are you sure you want to permanently delete ${doctor.name}? This action cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
-        {
-          text: "Deactivate",
-          style: "destructive",
-          onPress: async () => {
-            setUpdatingId(doctor._id);
-            try {
-              await adminService.deleteUser(doctor.userId);
-              // Remove from list
-              setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
-              Alert.alert("Success", "Doctor deactivated successfully");
-            } catch (err) {
-              logError(err, {
-                context: "ManageDoctorsScreen.handleDeleteDoctor",
-              });
-              
-              // Better error handling
-              let errorMessage = "Failed to delete doctor";
-              if (err.response?.data?.message) {
-                errorMessage = err.response.data.message;
-              } else if (err.message) {
-                errorMessage = err.message;
-              }
-
-              Alert.alert("Error", errorMessage);
-            } finally {
-              setUpdatingId(null);
-            }
-          },
-        },
         {
           text: "Delete Permanently",
           style: "destructive",

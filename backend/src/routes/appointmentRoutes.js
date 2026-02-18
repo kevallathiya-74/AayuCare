@@ -77,8 +77,8 @@ router.post(
   authorize("patient", "admin"),
   validateBody(createAppointmentSchema),
   validateCreateAppointment,
-  appointmentController.createAppointment,
-  invalidateCache("cache:appointments:*")
+  appointmentController.createAppointment
+  // Cache invalidation now handled inside controller
 );
 
 /**
@@ -96,8 +96,8 @@ router.get("/:id", appointmentController.getAppointment);
 router.put(
   "/:id",
   validateBody(updateAppointmentSchema),
-  appointmentController.updateAppointment,
-  invalidateCache("cache:appointments:*")
+  appointmentController.updateAppointment
+  // Cache invalidation now handled inside controller
 );
 
 /**
@@ -109,8 +109,8 @@ router.patch(
   "/:id/status",
   authorize("doctor", "admin"),
   validateUpdateAppointmentStatus,
-  appointmentController.updateAppointmentStatus,
-  invalidateCache("cache:appointments:*")
+  appointmentController.updateAppointmentStatus
+  // Cache invalidation now handled inside controller
 );
 
 /**
