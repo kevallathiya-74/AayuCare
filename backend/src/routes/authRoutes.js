@@ -44,14 +44,14 @@ router.get("/me", authController.getMe);
 router.put(
   "/profile",
   validateBody(updateProfileSchema),
-  authController.updateProfile,
-  invalidateCache("cache:user:*")
+  authController.updateProfile
+  // Cache invalidation now handled inside controller
 );
 router.put(
   "/change-password",
   passwordChangeLimiter,
-  authController.changePassword,
-  invalidateCache("cache:session:*")
+  authController.changePassword
+  // Cache invalidation now handled inside controller
 );
 
 module.exports = router;

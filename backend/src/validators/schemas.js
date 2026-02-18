@@ -64,6 +64,11 @@ const registerSchema = Joi.object({
     then: Joi.optional(),
     otherwise: Joi.forbidden(),
   }),
+  address: Joi.string().max(500).when("role", {
+    is: "patient",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
 });
 
 // Login validation

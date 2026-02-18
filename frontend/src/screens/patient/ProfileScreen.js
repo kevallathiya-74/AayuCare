@@ -286,7 +286,7 @@ const ProfileScreen = ({ navigation }) => {
                 color="rgba(255, 255, 255, 0.9)"
               />
               <Text style={styles.userIdText}>
-                ID: {user?.userId || "PAT001"}
+                ID: {user?.userId || "PAT1"}
               </Text>
             </View>
           </View>

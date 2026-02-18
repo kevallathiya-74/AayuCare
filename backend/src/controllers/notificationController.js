@@ -104,6 +104,16 @@ exports.markAsRead = async (req, res) => {
 
     await notification.markAsRead();
 
+    // Invalidate relevant caches after notification update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:notification:*");
+      await deleteCacheByPattern("cache:notification:*");
+      logger.debug("Cache invalidated after notification marked as read");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       message: "Notification marked as read",
@@ -130,6 +140,16 @@ exports.markAsRead = async (req, res) => {
 exports.markAllAsRead = async (req, res) => {
   try {
     const result = await Notification.markAllAsRead(req.user._id);
+
+    // Invalidate relevant caches after marking all as read
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:notification:*");
+      await deleteCacheByPattern("cache:notification:*");
+      logger.debug("Cache invalidated after marking all notifications as read");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -170,6 +190,16 @@ exports.deleteNotification = async (req, res) => {
       });
     }
 
+    // Invalidate relevant caches after notification deletion
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:notification:*");
+      await deleteCacheByPattern("cache:notification:*");
+      logger.debug("Cache invalidated after notification deletion");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       message: "Notification deleted successfully",
@@ -195,6 +225,16 @@ exports.deleteNotification = async (req, res) => {
 exports.clearAllNotifications = async (req, res) => {
   try {
     const result = await Notification.deleteMany({ userId: req.user._id });
+
+    // Invalidate relevant caches after clearing all notifications
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:notification:*");
+      await deleteCacheByPattern("cache:notification:*");
+      logger.debug("Cache invalidated after clearing all notifications");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -234,6 +274,16 @@ exports.createNotification = async (req, res) => {
       actionUrl,
       icon,
     });
+
+    // Invalidate relevant caches after notification creation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:notification:*");
+      await deleteCacheByPattern("cache:notification:*");
+      logger.debug("Cache invalidated after notification creation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -279,6 +329,16 @@ exports.broadcastNotification = async (req, res) => {
     }));
 
     const result = await Notification.insertMany(notifications);
+
+    // Invalidate relevant caches after broadcast notification
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:notification:*");
+      await deleteCacheByPattern("cache:notification:*");
+      logger.debug("Cache invalidated after broadcast notification");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(201).json({
       success: true,

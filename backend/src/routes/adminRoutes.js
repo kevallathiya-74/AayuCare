@@ -5,6 +5,7 @@
 
 const express = require("express");
 const router = express.Router();
+const rateLimit = require("express-rate-limit");
 const {
   getDashboardStats,
   getRecentActivities,
@@ -33,6 +34,15 @@ const {
 } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
+// Rate limiter for critical operations (permanent delete)
+const criticalOperationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Only 5 permanent deletions per hour
+  message: 'Too many permanent delete attempts. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Apply auth middleware to all routes
 router.use(protect);
 router.use(authorize("admin", "super_admin"));
@@ -47,53 +57,42 @@ router.get("/users", cacheMiddleware(60), getUsers);
 router.post(
   "/users",
   validateBody(registerSchema),
-  createUser,
-  invalidateCache("v1:cache:user:*"),
-  invalidateCache("v1:cache:doctors:*"),
-  invalidateCache("v1:cache:patient:*"),
-  invalidateCache("v1:cache:*patients*")
+  createUser
+  // Cache invalidation now handled inside controller
 );
 router.put(
   "/users/:userId",
   validateBody(updateProfileSchema),
-  updateUserProfile,
-  invalidateCache("v1:cache:user:*"),
-  invalidateCache("v1:cache:doctors:*"),
-  invalidateCache("v1:cache:patient:*"),
-  invalidateCache("v1:cache:*patients*")
+  updateUserProfile
+  // Cache invalidation now handled inside controller
 );
-router.delete("/users/:userId", deleteUser, 
-  invalidateCache("v1:cache:user:*"),
-  invalidateCache("v1:cache:doctors:*"),
-  invalidateCache("v1:cache:patient:*"),
-  invalidateCache("v1:cache:*patients*")
+router.delete("/users/:userId", deleteUser
+  // Cache invalidation now handled inside controller
 );
 // PERMANENT DELETE - Use with extreme caution (violates healthcare compliance)
-router.delete("/users/:userId/permanent", permanentDeleteUser, 
-  invalidateCache("v1:cache:user:*"),
-  invalidateCache("v1:cache:doctors:*"),
-  invalidateCache("v1:cache:patient:*"),
-  invalidateCache("v1:cache:*patients*")
+// Rate limited to 5 deletions per hour for security
+router.delete(
+  "/users/:userId/permanent", 
+  criticalOperationLimiter,
+  permanentDeleteUser
+  // Cache invalidation now handled inside controller  
 );
 router.patch(
   "/users/:userId/status",
-  updateUserStatus,
-  invalidateCache("v1:cache:user:*"),
-  invalidateCache("v1:cache:doctors:*"),
-  invalidateCache("v1:cache:patient:*"),
-  invalidateCache("v1:cache:*patients*")
+  updateUserStatus
+  // Cache invalidation now handled inside controller
 );
 router.patch(
   "/users/:userId/role",
-  updateUserRole,
-  invalidateCache("v1:cache:user:*"),
-  invalidateCache("v1:cache:doctors:*"),
-  invalidateCache("v1:cache:patient:*"),
-  invalidateCache("v1:cache:*patients*")
+  updateUserRole
+  // Cache invalidation now handled inside controller
 );
-router.post("/users/bulk", bulkUpdateUsers, invalidateCache("cache:user:*"));
 
-// System routes
+router.post(
+  "/users/bulk",
+  bulkUpdateUsers
+  // Cache invalidation now handled inside controller
+);
 router.get("/system/health", cacheMiddleware(10), getSystemHealth);
 router.get("/system/metrics", cacheMiddleware(30), getSystemMetrics);
 
@@ -112,13 +111,13 @@ router.get("/security", cacheMiddleware(60), getSecuritySettings);
 router.post(
   "/security/change-password",
   validateBody(updateProfileSchema),
-  changePassword,
-  invalidateCache("cache:session:*")
+  changePassword
+  // Cache invalidation now handled inside controller
 );
 router.post(
   "/security/logout-all",
-  logoutAllDevices,
-  invalidateCache("cache:session:*")
+  logoutAllDevices
+  // Cache invalidation now handled inside controller
 );
 
 module.exports = router;

@@ -4,6 +4,7 @@
  */
 
 const Event = require('../models/Event');
+const logger = require('../utils/logger');
 const { logError } = require('../utils/logger');
 
 /**
@@ -104,6 +105,16 @@ exports.createEvent = async (req, res) => {
         
         const event = await Event.create(eventData);
         
+        // Invalidate event-related caches after creation
+        const { deleteCacheByPattern } = require('../config/redis');
+        try {
+            await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('cache:event:*');
+            logger.debug('Cache invalidated after event creation');
+        } catch (cacheError) {
+            logger.warn('Failed to invalidate cache:', cacheError.message);
+        }
+        
         res.status(201).json({
             success: true,
             message: 'Event created successfully',
@@ -175,6 +186,16 @@ exports.registerForEvent = async (req, res) => {
         
         await event.save();
         
+        // Invalidate event-related caches after registration
+        const { deleteCacheByPattern } = require('../config/redis');
+        try {
+            await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('cache:event:*');
+            logger.debug('Cache invalidated after event registration');
+        } catch (cacheError) {
+            logger.warn('Failed to invalidate cache:', cacheError.message);
+        }
+        
         res.status(200).json({
             success: true,
             message: 'Successfully registered for event',
@@ -226,6 +247,16 @@ exports.cancelRegistration = async (req, res) => {
         
         await event.save();
         
+        // Invalidate event-related caches after cancellation
+        const { deleteCacheByPattern } = require('../config/redis');
+        try {
+            await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('cache:event:*');
+            logger.debug('Cache invalidated after event registration cancellation');
+        } catch (cacheError) {
+            logger.warn('Failed to invalidate cache:', cacheError.message);
+        }
+        
         res.status(200).json({
             success: true,
             message: 'Registration cancelled successfully',
@@ -262,6 +293,16 @@ exports.updateEvent = async (req, res) => {
             });
         }
         
+        // Invalidate event-related caches after update
+        const { deleteCacheByPattern } = require('../config/redis');
+        try {
+            await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('cache:event:*');
+            logger.debug('Cache invalidated after event update');
+        } catch (cacheError) {
+            logger.warn('Failed to invalidate cache:', cacheError.message);
+        }
+        
         res.status(200).json({
             success: true,
             message: 'Event updated successfully',
@@ -293,6 +334,16 @@ exports.deleteEvent = async (req, res) => {
                 success: false,
                 message: 'Event not found',
             });
+        }
+        
+        // Invalidate event-related caches after deletion
+        const { deleteCacheByPattern } = require('../config/redis');
+        try {
+            await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('cache:event:*');
+            logger.debug('Cache invalidated after event deletion');
+        } catch (cacheError) {
+            logger.warn('Failed to invalidate cache:', cacheError.message);
         }
         
         res.status(200).json({

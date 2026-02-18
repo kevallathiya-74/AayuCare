@@ -136,6 +136,16 @@ exports.createMedicalRecord = async (req, res, next) => {
       `Medical record created by ${req.user.userId} for patient ${patient.userId}`
     );
 
+    // Invalidate relevant caches after medical record creation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:medicalrecord:*");
+      await deleteCacheByPattern("cache:medicalrecord:*");
+      logger.debug("Cache invalidated after medical record creation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(201).json({
       status: "success",
       message: "Medical record created successfully",
@@ -300,6 +310,16 @@ exports.updateMedicalRecord = async (req, res, next) => {
       `Medical record ${req.params.id} updated by ${req.user.userId}`
     );
 
+    // Invalidate relevant caches after medical record update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:medicalrecord:*");
+      await deleteCacheByPattern("cache:medicalrecord:*");
+      logger.debug("Cache invalidated after medical record update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(200).json({
       status: "success",
       data: {
@@ -337,6 +357,16 @@ exports.deleteMedicalRecord = async (req, res, next) => {
     logger.info(
       `Medical record ${req.params.id} deleted by ${req.user.userId}`
     );
+
+    // Invalidate relevant caches after medical record deletion
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:medicalrecord:*");
+      await deleteCacheByPattern("cache:medicalrecord:*");
+      logger.debug("Cache invalidated after medical record deletion");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(200).json({
       status: "success",

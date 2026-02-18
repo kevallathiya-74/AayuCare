@@ -339,9 +339,20 @@ exports.updatePatientProfile = async (req, res) => {
     // Update user profile
     const updatedPatient = await userRepository.update(patient.id, updates);
 
+    // Invalidate relevant caches after patient profile update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("cache:patient:*");
+      await deleteCacheByPattern("v1:cache:user:*");
+      logger.debug("Cache invalidated after patient profile update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
-      message: "Profile updated successfully",
+      message: "Profile Updated Successfully",
       data: updatedPatient,
     });
   } catch (error) {
@@ -466,6 +477,18 @@ exports.addHealthMetric = async (req, res) => {
       recordedBy: req.user._id,
       source: req.user.role === "doctor" ? "doctor" : "manual",
     });
+
+    // Invalidate patient-related caches after adding health metric
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("cache:patient:*");
+      await deleteCacheByPattern("v1:cache:health:*");
+      await deleteCacheByPattern("cache:health:*");
+      logger.debug("Cache invalidated after health metric addition");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -606,6 +629,18 @@ exports.updateActivityData = async (req, res) => {
       source: "app",
     });
 
+    // Invalidate patient-related caches after activity update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("cache:patient:*");
+      await deleteCacheByPattern("v1:cache:health:*");
+      await deleteCacheByPattern("cache:health:*");
+      logger.debug("Cache invalidated after activity data update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(201).json({
       success: true,
       message: "Activity data updated successfully",
@@ -730,6 +765,18 @@ exports.deleteHealthMetric = async (req, res) => {
         success: false,
         message: "Metric not found",
       });
+    }
+
+    // Invalidate patient-related caches after metric deletion
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("cache:patient:*");
+      await deleteCacheByPattern("v1:cache:health:*");
+      await deleteCacheByPattern("cache:health:*");
+      logger.debug("Cache invalidated after health metric deletion");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
     res.json({

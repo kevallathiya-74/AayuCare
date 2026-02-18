@@ -11,6 +11,7 @@ const userRepository = require("../repositories/userRepository");
 const doctorRepository = require("../repositories/doctorRepository");
 const patientRepository = require("../repositories/patientRepository");
 const { createUserWithProfile } = require("../utils/transaction");
+const logger = require("../utils/logger");
 const mongoose = require("mongoose");
 
 /**
@@ -69,7 +70,11 @@ exports.getEmailByUserId = async (req, res, next) => {
       email: user.email,
     });
   } catch (error) {
-    console.error("[AuthController] Error in getEmailByUserId:", error);
+    logger.error("Error in getEmailByUserId", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.body.userId
+    });
     res.status(500).json({
       status: "error",
       message: error.message || "Internal server error",
@@ -122,7 +127,11 @@ exports.getCurrentSession = async (req, res, next) => {
       expiresAt: session.expiresAt,
     });
   } catch (error) {
-    console.error("[AuthController] Error in getCurrentSession:", error);
+    logger.error("Error in getCurrentSession", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.userId
+    });
     res.status(500).json({
       status: "error",
       message: error.message || "Internal server error",
@@ -203,7 +212,11 @@ exports.getProfileByEmail = async (req, res, next) => {
       data: userProfile,
     });
   } catch (error) {
-    console.error("[AuthController] Error in getProfileByEmail:", error);
+    logger.error("Error in getProfileByEmail", {
+      error: error.message,
+      stack: error.stack,
+      email: req.body.email
+    });
     res.status(500).json({
       status: "error",
       message: error.message || "Internal server error",
@@ -282,6 +295,20 @@ exports.updateProfile = async (req, res, next) => {
       }
     }
 
+    // Invalidate relevant caches after profile update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:*patients*");
+      await deleteCacheByPattern("cache:*");
+      logger.debug("Cache invalidated after profile update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(200).json({
       status: "success",
       data: {
@@ -321,6 +348,18 @@ exports.changePassword = async (req, res, next) => {
 
     // Update password
     await userRepository.update(req.user.id, { password_hash: passwordHash });
+
+    // Invalidate session-related caches after password change
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:session:*");
+      await deleteCacheByPattern("cache:session:*");
+      await deleteCacheByPattern(`v1:cache:user:${req.user.id}:*`);
+      await deleteCacheByPattern(`cache:user:${req.user.id}:*`);
+      logger.debug("Cache invalidated after password change");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(200).json({
       status: "success",

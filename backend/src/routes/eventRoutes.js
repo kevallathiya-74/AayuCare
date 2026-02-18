@@ -29,8 +29,8 @@ router.get("/:eventId", cacheMiddleware(300), eventController.getEventById);
 router.post(
   "/:eventId/register",
   protect,
-  eventController.registerForEvent,
-  invalidateCache("cache:event:*")
+  eventController.registerForEvent
+  // Cache invalidation now handled inside controller
 );
 
 // @route   DELETE /api/events/:eventId/register
@@ -39,8 +39,8 @@ router.post(
 router.delete(
   "/:eventId/register",
   protect,
-  eventController.cancelRegistration,
-  invalidateCache("cache:event:*")
+  eventController.cancelRegistration
+  // Cache invalidation now handled inside controller
 );
 
 // Admin routes (requires authentication and admin role)
@@ -52,8 +52,8 @@ router.post(
   protect,
   authorize("admin"),
   validateBody(createEventSchema),
-  eventController.createEvent,
-  invalidateCache("cache:event:*")
+  eventController.createEvent
+  // Cache invalidation now handled inside controller
 );
 
 // @route   PUT /api/events/:eventId
@@ -64,8 +64,8 @@ router.put(
   protect,
   authorize("admin"),
   validateBody(createEventSchema),
-  eventController.updateEvent,
-  invalidateCache("cache:event:*")
+  eventController.updateEvent
+  // Cache invalidation now handled inside controller
 );
 
 // @route   DELETE /api/events/:eventId
@@ -75,8 +75,8 @@ router.delete(
   "/:eventId",
   protect,
   authorize("admin"),
-  eventController.deleteEvent,
-  invalidateCache("cache:event:*")
+  eventController.deleteEvent
+  // Cache invalidation now handled inside controller
 );
 
 module.exports = router;

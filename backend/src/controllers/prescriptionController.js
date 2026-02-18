@@ -55,6 +55,16 @@ exports.createPrescription = async (req, res) => {
       followUpDate,
     });
 
+    // Invalidate relevant caches after prescription creation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:prescription:*");
+      await deleteCacheByPattern("cache:prescription:*");
+      logger.debug("Cache invalidated after prescription creation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.status(201).json({
       success: true,
       message: "Prescription created successfully. Patient will be notified.",
@@ -292,6 +302,16 @@ exports.updatePrescriptionStatus = async (req, res) => {
       });
     }
 
+    // Invalidate relevant caches after prescription status update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:prescription:*");
+      await deleteCacheByPattern("cache:prescription:*");
+      logger.debug("Cache invalidated after prescription status update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       message: "Prescription status updated successfully",
@@ -328,6 +348,16 @@ exports.deletePrescription = async (req, res) => {
         success: false,
         message: "Prescription not found",
       });
+    }
+
+    // Invalidate relevant caches after prescription deletion
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:prescription:*");
+      await deleteCacheByPattern("cache:prescription:*");
+      logger.debug("Cache invalidated after prescription deletion");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
     res.json({

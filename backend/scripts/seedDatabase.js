@@ -13,7 +13,8 @@
  * - No hardcoded values
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const bcrypt = require('bcryptjs');
 const { query, closePool } = require('../src/config/postgres');
 const logger = require('../src/utils/logger');
@@ -30,14 +31,14 @@ const HOSPITAL_NAME = 'AayuCare Main Hospital';
 const SEED_DATA = {
   admins: [
     {
-      userId: 'ADM001',
+      userId: 'ADM1',
       name: 'Rajesh Kumar',
       email: 'rajesh.kumar@aayucare.com',
       phone: '9876543210',
       role: 'admin'
     },
     {
-      userId: 'ADM002',
+      userId: 'ADM2',
       name: 'Priya Sharma',
       email: 'priya.sharma@aayucare.com',
       phone: '9876543211',
@@ -47,7 +48,7 @@ const SEED_DATA = {
   
   doctors: [
     {
-      userId: 'DOC001',
+      userId: 'DOC1',
       name: 'Dr. Amit Patel',
       email: 'amit.patel@aayucare.com',
       phone: '9876543220',
@@ -71,7 +72,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'DOC002',
+      userId: 'DOC2',
       name: 'Dr. Sneha Desai',
       email: 'sneha.desai@aayucare.com',
       phone: '9876543221',
@@ -94,7 +95,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'DOC003',
+      userId: 'DOC3',
       name: 'Dr. Vikram Singh',
       email: 'vikram.singh@aayucare.com',
       phone: '9876543222',
@@ -116,7 +117,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'DOC004',
+      userId: 'DOC4',
       name: 'Dr. Kavita Mehta',
       email: 'kavita.mehta@aayucare.com',
       phone: '9876543223',
@@ -137,7 +138,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'DOC005',
+      userId: 'DOC5',
       name: 'Dr. Arjun Reddy',
       email: 'arjun.reddy@aayucare.com',
       phone: '9876543224',
@@ -164,7 +165,7 @@ const SEED_DATA = {
   
   patients: [
     {
-      userId: 'PAT001',
+      userId: 'PAT1',
       name: 'Rahul Verma',
       email: 'rahul.verma@gmail.com',
       phone: '9876543230',
@@ -181,7 +182,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT002',
+      userId: 'PAT2',
       name: 'Anjali Gupta',
       email: 'anjali.gupta@gmail.com',
       phone: '9876543232',
@@ -198,7 +199,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT003',
+      userId: 'PAT3',
       name: 'Sanjay Joshi',
       email: 'sanjay.joshi@gmail.com',
       phone: '9876543234',
@@ -215,7 +216,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT004',
+      userId: 'PAT4',
       name: 'Meera Nair',
       email: 'meera.nair@gmail.com',
       phone: '9876543236',
@@ -232,7 +233,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT005',
+      userId: 'PAT5',
       name: 'Karan Malhotra',
       email: 'karan.malhotra@gmail.com',
       phone: '9876543238',
@@ -249,7 +250,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT006',
+      userId: 'PAT6',
       name: 'Pooja Iyer',
       email: 'pooja.iyer@gmail.com',
       phone: '9876543240',
@@ -266,7 +267,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT007',
+      userId: 'PAT7',
       name: 'Arun Kumar',
       email: 'arun.kumar@gmail.com',
       phone: '9876543242',
@@ -283,7 +284,7 @@ const SEED_DATA = {
       }
     },
     {
-      userId: 'PAT008',
+      userId: 'PAT8',
       name: 'Divya Shah',
       email: 'divya.shah@gmail.com',
       phone: '9876543244',

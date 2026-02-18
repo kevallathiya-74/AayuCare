@@ -44,6 +44,9 @@ CREATE INDEX idx_users_phone ON users(phone);
 CREATE INDEX idx_users_user_id ON users(user_id);
 CREATE INDEX idx_users_hospital_id ON users(hospital_id);
 CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_is_active ON users(is_active);
+CREATE INDEX idx_users_hospital_active ON users(hospital_id, is_active);
+CREATE INDEX idx_users_role_active ON users(role, is_active);
 
 -- =====================================================
 -- DOCTORS TABLE (Doctor-specific data)

@@ -13,6 +13,7 @@ const MedicalRecord = require("../models/MedicalRecord");
 const User = require("../models/User");
 const logger = require("../utils/logger");
 const { query } = require("../config/postgres");
+const { withTransaction } = require("../utils/transaction");
 
 /**
  * @desc    Get dashboard statistics
@@ -238,11 +239,11 @@ exports.getUsers = async (req, res) => {
     }
     
     // Debug logging
-    if (process.env.NODE_ENV !== 'production') {
-      logger.debug('[getUsers] Query:', JSON.stringify(mongoQuery));
-      logger.debug('[getUsers] req.hospitalId:', req.hospitalId);
-      logger.debug('[getUsers] req.user.role:', req.user?.role);
-    }
+    logger.debug('getUsers query', {
+      mongoQuery: JSON.stringify(mongoQuery),
+      hospitalId: req.hospitalId,
+      userRole: req.user?.role
+    });
 
     if (role) {
       mongoQuery.role = role;
@@ -315,9 +316,10 @@ exports.getUsers = async (req, res) => {
     const total = parseInt(countResult.rows[0].count);
     
     // Debug logging
-    if (process.env.NODE_ENV !== 'production') {
-      logger.debug('[getUsers] Found:', users.length, 'users out of', total);
-    }
+    logger.debug('getUsers results', {
+      foundCount: users.length,
+      totalCount: total
+    });
 
     res.json({
       success: true,
@@ -352,6 +354,12 @@ exports.updateUserStatus = async (req, res) => {
     const { userId } = req.params;
     const { isActive } = req.body;
 
+    logger.info("[STATUS_UPDATE] Request received", {
+      userId,
+      requestedStatus: isActive,
+      adminId: req.user?.userId
+    });
+
     if (typeof isActive !== "boolean") {
       return res.status(400).json({
         success: false,
@@ -363,21 +371,42 @@ exports.updateUserStatus = async (req, res) => {
     const user = await userRepository.findByUserId(userId);
 
     if (!user) {
+      logger.error("[STATUS_UPDATE] User not found", { userId });
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
 
+    logger.info("[STATUS_UPDATE] User found", {
+      userId: user.user_id,
+      currentStatus: user.is_active,
+      newStatus: isActive
+    });
+
     // Update status
     const updatedUser = await userRepository.update(user.id, { isActive });
 
-    // Log admin action
-    logger.info("User status updated", {
-      adminId: req.user.userId,
-      targetUserId: userId,
-      isActive,
+    logger.info("[STATUS_UPDATE] Database updated successfully", {
+      userId: updatedUser.userId,
+      newStatus: updatedUser.isActive,
+      adminId: req.user.userId
     });
+
+    // Invalidate relevant caches after status update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:*patients*"); // Invalidate all patient-related caches
+      await deleteCacheByPattern("v1:cache:/api/admin/users*"); // Invalidate admin user list cache
+      await deleteCacheByPattern("v1:cache:dashboard:*"); // Invalidate dashboard stats cache
+      logger.debug("Cache invalidated after status update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -385,7 +414,7 @@ exports.updateUserStatus = async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    logger.error("Update user status error:", {
+    logger.error("[STATUS_UPDATE] Error:", {
       error: error.message,
       stack: error.stack,
       userId: req.params.userId,
@@ -457,6 +486,18 @@ exports.updateUserRole = async (req, res) => {
       oldRole: user.role,
       newRole: role,
     });
+
+    // Invalidate relevant caches after role update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      logger.debug("Cache invalidated after role update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -561,6 +602,18 @@ exports.bulkUpdateUsers = async (req, res) => {
       adminId: req.user.userId,
       operationsCount: operations.length,
     });
+
+    // Invalidate relevant caches after bulk user update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      logger.debug("Cache invalidated after bulk user update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -752,6 +805,16 @@ exports.changePassword = async (req, res) => {
 
     logger.info(`Password changed for user: ${userId}`);
 
+    // Invalidate relevant caches after password change
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:session:*");
+      await deleteCacheByPattern("cache:session:*");
+      logger.debug("Cache invalidated after password change");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       success: true,
       message: 'Password changed successfully. Please login again.',
@@ -793,6 +856,16 @@ exports.logoutAllDevices = async (req, res) => {
     );
 
     logger.info(`Logged out all devices for user: ${userId}`);
+
+    // Invalidate relevant caches after logout all devices
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:session:*");
+      await deleteCacheByPattern("cache:session:*");
+      logger.debug("Cache invalidated after logout all devices");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -1068,6 +1141,19 @@ exports.createUser = async (req, res) => {
       address,
     } = req.body;
 
+    // Log incoming request to diagnose address field issues
+    logger.info("Patient creation request received:", {
+      name,
+      email,
+      phone,
+      dateOfBirth,
+      gender,
+      bloodGroup,
+      address,
+      hasAddress: !!address,
+      addressLength: address ? address.length : 0
+    });
+
     // Validate required fields
     if (!name || !email || !phone || !password || !role) {
       return res.status(400).json({
@@ -1112,21 +1198,8 @@ exports.createUser = async (req, res) => {
       });
     }
 
-    // Generate unique userId
-    const prefix = role === "doctor" ? "DOC" : "PAT";
-    const now = new Date();
-    const dateStr =
-      now.getFullYear().toString() +
-      (now.getMonth() + 1).toString().padStart(2, "0") +
-      now.getDate().toString().padStart(2, "0");
-    const timeStr =
-      now.getHours().toString().padStart(2, "0") +
-      now.getMinutes().toString().padStart(2, "0") +
-      now.getSeconds().toString().padStart(2, "0");
-    const random = Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0");
-    const userId = `${prefix}${dateStr}${timeStr}${random}`;
+    // Generate auto-increment userId (PAT1, DOC1, ADM1 format)
+    const userId = await userRepository.getNextUserId(role, req.hospitalId || req.user.hospitalId);
 
     // Hash password
     const bcrypt = require('bcryptjs');
@@ -1153,10 +1226,50 @@ exports.createUser = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6)
       `, [user.id, specialization, qualification, experience || 0, department || specialization, 500]);
     } else if (role === "patient") {
-      await query(`
-        INSERT INTO patients (user_id, date_of_birth, gender, blood_group, address)
-        VALUES ($1, $2, $3, $4, $5)
-      `, [user.id, dateOfBirth, gender, bloodGroup, address]);
+      // Build patient insert dynamically (only include provided fields)
+      const patientFields = ['user_id'];
+      const patientValues = [user.id];
+      let paramIndex = 2;
+
+      // Always include required fields
+      if (dateOfBirth) {
+        patientFields.push('date_of_birth');
+        patientValues.push(dateOfBirth);
+        paramIndex++;
+      }
+      if (gender) {
+        patientFields.push('gender');
+        patientValues.push(gender);
+        paramIndex++;
+      }
+      
+      // Optional fields - only insert if provided
+      if (bloodGroup) {
+        patientFields.push('blood_group');
+        patientValues.push(bloodGroup);
+        paramIndex++;
+      }
+      if (address) {
+        patientFields.push('address');
+        patientValues.push(address);
+        paramIndex++;
+      }
+
+      // Build INSERT query dynamically
+      const placeholders = patientValues.map((_, idx) => `$${idx + 1}`).join(', ');
+      const insertQuery = `
+        INSERT INTO patients (${patientFields.join(', ')})
+        VALUES (${placeholders})
+      `;
+      
+      logger.debug("Creating patient profile:", { 
+        query: insertQuery, 
+        values: patientValues,
+        hasAddress: !!address 
+      });
+      
+      await query(insertQuery, patientValues);
+      logger.debug("Patient profile created successfully");
     }
 
     // Get complete user profile with role-specific data
@@ -1175,6 +1288,21 @@ exports.createUser = async (req, res) => {
     }
 
     logger.info(`Admin ${req.user.userId} created new ${role}: ${userId}`);
+
+    // Invalidate relevant caches after user creation
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:*patients*"); // Invalidate all patient-related caches including search
+      await deleteCacheByPattern("v1:cache:/api/admin/users*"); // Invalidate admin user list cache
+      await deleteCacheByPattern("v1:cache:dashboard:*"); // Invalidate dashboard stats cache
+      logger.debug("Cache invalidated after user creation");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.status(201).json({
       status: "success",
@@ -1430,11 +1558,25 @@ exports.updateUserProfile = async (req, res) => {
       }
     }
 
+    // Invalidate relevant caches after successful update
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:*patients*");
+      logger.debug("Cache invalidated after profile update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+      // Don't fail the request if cache invalidation fails
+    }
+
     logger.info(`Admin ${req.user.userId} updated profile of ${userId}`);
 
     res.json({
       status: "success",
-      message: "User profile updated successfully",
+      message: "User Profile Updated Successfully",
       data: { user: userResponse },
     });
   } catch (error) {
@@ -1527,6 +1669,21 @@ exports.deleteUser = async (req, res) => {
       `Admin ${req.user.userId} soft-deleted user ${userId} (${user.role})`
     );
 
+    // Invalidate relevant caches after user deletion
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:*patients*"); // Invalidate all patient-related caches
+      await deleteCacheByPattern("v1:cache:/api/admin/users*"); // Invalidate admin user list cache
+      await deleteCacheByPattern("v1:cache:dashboard:*"); // Invalidate dashboard stats cache
+      logger.debug("Cache invalidated after user deletion");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
     res.json({
       status: "success",
       message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} deleted successfully`,
@@ -1552,7 +1709,26 @@ exports.deleteUser = async (req, res) => {
  * @desc    PERMANENT delete user (hard delete - removes all data)
  * @route   DELETE /api/admin/users/:userId/permanent
  * @access  Private (Admin only)
- * @warning This violates healthcare compliance - use with extreme caution
+ * @warning This violates healthcare compliance regulations (HIPAA) - use with EXTREME caution
+ * @param   {string} req.params.userId - User ID to permanently delete
+ * @returns {Object} Success message with deletion details
+ * 
+ * @security
+ * - Requires admin or super_admin role
+ * - Validates hospital access (multi-tenancy)
+ * - Prevents deletion of admin/super_admin users
+ * - Checks for active appointments (doctors only)
+ * - All operations wrapped in database transaction
+ * - Comprehensive audit logging at WARN level
+ * 
+ * @compliance
+ * WARNING: Permanent deletion violates healthcare data retention regulations.
+ * This action:
+ * - Removes all patient medical records (HIPAA violation)
+ * - Deletes appointment history
+ * - Removes prescription records
+ * - Cannot be reversed
+ * - Is logged for audit purposes
  */
 exports.permanentDeleteUser = async (req, res) => {
   try {
@@ -1568,15 +1744,15 @@ exports.permanentDeleteUser = async (req, res) => {
       });
     }
 
-    // Check hospital access
+    // Check hospital access (multi-tenancy)
     if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
       return res.status(403).json({
         status: "error",
-        message: "Access denied",
+        message: "Access denied - user belongs to different hospital",
       });
     }
 
-    // Prevent deleting admin users
+    // Prevent deleting admin users (security)
     if (["admin", "super_admin"].includes(user.role)) {
       return res.status(403).json({
         status: "error",
@@ -1584,7 +1760,27 @@ exports.permanentDeleteUser = async (req, res) => {
       });
     }
 
-    // AUDIT LOG - Record this critical action
+    // Check for active appointments (doctors only)
+    if (user.role === "doctor") {
+      const activeAppointmentsResult = await query(`
+        SELECT COUNT(*) as count
+        FROM appointments
+        WHERE doctor_id = $1
+        AND status IN ('scheduled', 'confirmed')
+        AND appointment_date >= $2
+      `, [user.id, new Date()]);
+
+      const activeAppointments = parseInt(activeAppointmentsResult.rows[0].count);
+
+      if (activeAppointments > 0) {
+        return res.status(400).json({
+          status: "error",
+          message: `Cannot delete doctor with ${activeAppointments} active appointments. Please reschedule or cancel them first.`,
+        });
+      }
+    }
+
+    // AUDIT LOG - Record this critical action BEFORE deletion
     logger.warn("PERMANENT DELETE INITIATED", {
       deletedUserId: user.user_id,
       deletedUserRole: user.role,
@@ -1593,41 +1789,67 @@ exports.permanentDeleteUser = async (req, res) => {
       deletedByRole: req.user.role,
       timestamp: new Date().toISOString(),
       ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
     });
 
-    // Start permanent deletion process
-    // 1. Delete role-specific data first (cascade)
-    if (user.role === "doctor") {
-      await query(`DELETE FROM doctors WHERE user_id = $1`, [user.id]);
-      logger.info(`Deleted doctor profile for ${user.user_id}`);
-    } else if (user.role === "patient") {
-      await query(`DELETE FROM patients WHERE user_id = $1`, [user.id]);
-      logger.info(`Deleted patient profile for ${user.user_id}`);
-    }
+    // ATOMIC TRANSACTION - All deletions succeed or all fail
+    await withTransaction(async (client) => {
+      // 1. Delete role-specific data first (respects foreign key constraints)
+      if (user.role === "doctor") {
+        await client.query(`DELETE FROM doctors WHERE user_id = $1`, [user.id]);
+        logger.info(`Deleted doctor profile for ${user.user_id}`);
+      } else if (user.role === "patient") {
+        await client.query(`DELETE FROM patients WHERE user_id = $1`, [user.id]);
+        logger.info(`Deleted patient profile for ${user.user_id}`);
+      }
 
-    // 2. Delete from users table (PostgreSQL)
-    await query(`DELETE FROM users WHERE id = $1`, [user.id]);
-    logger.info(`Deleted user record from PostgreSQL: ${user.user_id}`);
+      // 2. Delete from users table (PostgreSQL)
+      await client.query(`DELETE FROM users WHERE id = $1`, [user.id]);
+      logger.info(`Deleted user record from PostgreSQL: ${user.user_id}`);
+    });
 
-    // 3. Delete from MongoDB User collection
+    // 3. Delete from MongoDB User collection (outside transaction as it's different DB)
     try {
       const mongoUser = await User.findOneAndDelete({ userId: user.user_id });
       if (mongoUser) {
         logger.info(`Deleted MongoDB User document: ${user.user_id}`);
+      } else {
+        logger.warn(`MongoDB User not found: ${user.user_id}`);
       }
     } catch (mongoError) {
-      logger.warn(`Failed to delete MongoDB User ${user.user_id}:`, {
+      logger.error(`Failed to delete MongoDB User ${user.user_id}:`, {
+        error: mongoError.message,
+        stack: mongoError.stack,
+      });
+      // Note: PostgreSQL deletion already committed, log this inconsistency
+      logger.error("DATABASE INCONSISTENCY: PostgreSQL deleted but MongoDB failed", {
+        userId: user.user_id,
         error: mongoError.message,
       });
     }
 
-    // FINAL AUDIT LOG
+    // FINAL AUDIT LOG - Record successful completion
     logger.warn("PERMANENT DELETE COMPLETED", {
       deletedUserId: user.user_id,
       deletedUserRole: user.role,
       deletedBy: req.user.userId,
       timestamp: new Date().toISOString(),
+      success: true,
     });
+
+    // Invalidate relevant caches after permanent deletion
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:doctors:*");
+      await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:*patients*"); // Invalidate all patient-related caches
+      await deleteCacheByPattern("v1:cache:/api/admin/users*"); // Invalidate admin user list cache
+      logger.debug("Cache invalidated after permanent user deletion");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       status: "success",

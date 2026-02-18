@@ -97,11 +97,6 @@ class AppointmentService {
       `Appointment created: ${appointment.id} for patient ${patient.user_id} with doctor ${doctor.user_id} at hospital ${doctor.hospital_id}`
     );
 
-    // Invalidate cache
-    const { deleteCacheByPattern } = require("../config/redis");
-    await deleteCacheByPattern("cache:appointments:*");
-    await deleteCacheByPattern(`cache:doctor:${doctorId}:*`);
-
     return appointment;
   }
 
@@ -375,10 +370,6 @@ class AppointmentService {
       `Appointment ${appointmentId} status updated to ${status} by ${userRole}`
     );
 
-    // Invalidate cache
-    const { deleteCacheByPattern } = require("../config/redis");
-    await deleteCacheByPattern("cache:appointments:*");
-
     return updatedAppointment;
   }
 
@@ -433,10 +424,6 @@ class AppointmentService {
       `Appointment ${appointmentId} cancelled by ${userRole}: ${userId}`
     );
 
-    // Invalidate cache
-    const { deleteCacheByPattern } = require("../config/redis");
-    await deleteCacheByPattern("cache:appointments:*");
-
     return updatedAppointment;
   }
 
@@ -472,10 +459,6 @@ class AppointmentService {
     logger.info(
       `Appointment ${appointmentId} updated by ${userRole}: ${userId}`
     );
-
-    // Invalidate cache
-    const { deleteCacheByPattern } = require("../config/redis");
-    await deleteCacheByPattern("cache:appointments:*");
 
     return updatedAppointment;
   }

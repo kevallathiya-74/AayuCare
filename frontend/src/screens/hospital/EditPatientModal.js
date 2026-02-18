@@ -96,7 +96,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone is required";
     } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format (10-15 digits)";
+      newErrors.phone = "Invalid phone format";
     }
 
     if (formData.dateOfBirth && formData.dateOfBirth.trim()) {
@@ -157,7 +157,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         
         // Show success message after modal closes
         setTimeout(() => {
-          Alert.alert("Success", "Patient profile updated successfully");
+          Alert.alert("Success", "Patient Profile Updated Successfully");
         }, 300);
       }
     } catch (error) {

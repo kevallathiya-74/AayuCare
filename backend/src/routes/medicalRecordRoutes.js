@@ -24,8 +24,8 @@ router.post(
   "/",
   restrictTo("doctor", "admin"),
   validateBody(createMedicalRecordSchema),
-  medicalRecordController.createMedicalRecord,
-  invalidateCache("cache:medicalrecord:*")
+  medicalRecordController.createMedicalRecord
+  // Cache invalidation now handled inside controller
 );
 
 // Get patient's medical records
@@ -55,16 +55,16 @@ router.put(
   "/:id",
   restrictTo("doctor", "admin"),
   validateBody(createMedicalRecordSchema),
-  medicalRecordController.updateMedicalRecord,
-  invalidateCache("cache:medicalrecord:*")
+  medicalRecordController.updateMedicalRecord
+  // Cache invalidation now handled inside controller
 );
 
 // Delete medical record (Doctor, Admin only)
 router.delete(
   "/:id",
   restrictTo("doctor", "admin"),
-  medicalRecordController.deleteMedicalRecord,
-  invalidateCache("cache:medicalrecord:*")
+  medicalRecordController.deleteMedicalRecord
+  // Cache invalidation now handled inside controller
 );
 
 module.exports = router;

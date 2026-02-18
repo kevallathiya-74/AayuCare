@@ -156,7 +156,7 @@ const DoctorProfileScreen = ({ navigation }) => {
               {user?.department || "OPD"}
             </Text>
             <Text style={styles.doctorId}>
-              ID: {user?.userId || "DOC001"}
+              ID: {user?.userId || "DOC1"}
             </Text>
           </View>
 

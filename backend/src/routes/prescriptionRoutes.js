@@ -23,8 +23,8 @@ router.post(
   "/",
   authorize("doctor", "admin"),
   validateBody(createPrescriptionSchema),
-  prescriptionController.createPrescription,
-  invalidateCache("cache:prescription:*")
+  prescriptionController.createPrescription
+  // Cache invalidation now handled inside controller
 );
 
 // @route   GET /api/prescriptions/patient/:patientId
@@ -60,8 +60,8 @@ router.get(
 router.patch(
   "/:prescriptionId/status",
   authorize("doctor", "admin"),
-  prescriptionController.updatePrescriptionStatus,
-  invalidateCache("cache:prescription:*")
+  prescriptionController.updatePrescriptionStatus
+  // Cache invalidation now handled inside controller
 );
 
 // @route   DELETE /api/prescriptions/:prescriptionId
@@ -70,8 +70,8 @@ router.patch(
 router.delete(
   "/:prescriptionId",
   authorize("admin"),
-  prescriptionController.deletePrescription,
-  invalidateCache("cache:prescription:*")
+  prescriptionController.deletePrescription
+  // Cache invalidation now handled inside controller
 );
 
 module.exports = router;
