@@ -11,6 +11,7 @@ export { default as ManageDoctorsScreen } from "./ManageDoctorsScreen";
 export { default as ManagePatientsScreen } from "./ManagePatientsScreen";
 export { default as AppointmentsScreen } from "./AppointmentsScreen";
 export { default as ReportsScreen } from "./ReportsScreen";
+export { default as PharmacyManagementScreen } from "./PharmacyManagementScreen";
 export { default as AdminSettingsScreen } from "./AdminSettingsScreen";
 export { default as AdminHomeScreen } from "./AdminHomeScreen";
 export { default as PatientManagementScreen } from "./PatientManagementScreen";

@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -295,18 +295,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   doctorName: {
-    fontSize: 22,
+    fontSize: theme.typography.sizes.h2,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   specialization: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
   doctorId: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     fontFamily: "monospace",
   },
@@ -326,13 +326,13 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.border.light,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   optionsSection: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   optionTitle: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.error,
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error,
     marginLeft: 8,

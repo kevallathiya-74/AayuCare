@@ -361,12 +361,12 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.md,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
@@ -397,19 +397,19 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.lg,
   },
   ambulanceTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
     marginBottom: 4,
   },
   ambulanceNumber: {
-    fontSize: 32,
+    fontSize: theme.typography.sizes.h1,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
     marginBottom: 4,
   },
   ambulanceSubtext: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: theme.withOpacity(theme.colors.white, 0.9),
   },
   section: {
@@ -422,12 +422,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   viewAllText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semibold,
   },
@@ -454,13 +454,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   numberName: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     textAlign: "center",
     marginBottom: 4,
   },
   numberValue: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   hospitalName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     flex: 1,
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   emergencyBadgeText: {
-    fontSize: 9,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   hospitalDistance: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     marginLeft: 4,
   },
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     lineHeight: 20,
     marginLeft: theme.spacing.sm,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     flex: 1,
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     lineHeight: 16,
     marginLeft: theme.spacing.sm,

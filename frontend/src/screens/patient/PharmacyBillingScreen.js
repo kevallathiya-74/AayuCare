@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: theme.spacing.md,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   emptyState: {
@@ -555,13 +555,13 @@ const styles = StyleSheet.create({
     padding: getScreenPadding(),
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: theme.spacing.lg,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
     marginTop: theme.spacing.sm,
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   },
   bookButtonText: {
     color: theme.colors.white,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
   },
   header: {
@@ -600,12 +600,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -636,25 +636,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   prescriptionId: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   prescriptionDate: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
   doctorInfo: {
     alignItems: "flex-end",
   },
   doctorLabel: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     marginBottom: 2,
   },
   doctorName: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -676,31 +676,31 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   medicineEmoji: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
   },
   medicineInfo: {
     flex: 1,
   },
   medicineName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   medicineDosage: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 2,
   },
   medicineQty: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
   },
   medicinePrice: {
     alignItems: "flex-end",
   },
   priceText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.success.dark,
   },
@@ -729,13 +729,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   purchaseOptionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   purchaseOptionSubtitle: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     lineHeight: 18,
   },
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   discountText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -762,11 +762,11 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   billingLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   billingValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   discountTagText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -790,12 +790,12 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.md,
   },
   billingTotal: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   billingTotalValue: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.success.dark,
   },
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
   },
   paymentName: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   payButtonText: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     lineHeight: 18,
   },

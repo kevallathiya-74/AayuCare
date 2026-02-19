@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: theme.spacing.md,
   },
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: theme.spacing.md,
@@ -579,13 +579,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   statusSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   statusDetails: {
@@ -600,12 +600,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   statusLabel: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     flex: 1,
   },
   statusValue: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -639,12 +639,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   statTitle: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
@@ -671,13 +671,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionTitle: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   actionSubtitle: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   modalOverlay: {
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: theme.spacing.xs,
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   modalActions: {
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },

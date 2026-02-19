@@ -372,12 +372,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: theme.spacing.md,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   stepsCount: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     textAlign: "center",
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main,
   },
   progressText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sleepLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   sleepValue: {
@@ -439,12 +439,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   sleepDuration: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   sleepQuality: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
   },
   sleepDetails: {
@@ -460,12 +460,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sleepTimeLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     marginBottom: 4,
   },
   sleepTimeValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -477,12 +477,12 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   reportButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.medium,
   },
   waterCount: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     textAlign: "center",
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   glassEmoji: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
   },
   addGlassButton: {
     borderRadius: theme.borderRadius.md,
@@ -514,12 +514,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   addGlassText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
   reminderText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     textAlign: "center",
   },
@@ -543,12 +543,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   activityDuration: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
   progressButton: {
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   progressButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },

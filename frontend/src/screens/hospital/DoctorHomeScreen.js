@@ -1134,7 +1134,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.text.white,
   },
   bannerNotificationBadgeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1150,14 +1150,14 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   bannerTimeGreeting: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.medium,
     color: theme.withOpacity(theme.colors.text.white, 0.9),
     marginBottom: 4,
     letterSpacing: 0.3,
   },
   bannerWelcomeText: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1174,7 +1174,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   bannerInfoText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.text.white,
     marginLeft: 8,
     fontWeight: theme.typography.weights.medium,
@@ -1184,7 +1184,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(24), // spacing.lg for better section separation
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     letterSpacing: 0.5,
@@ -1203,7 +1203,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   scheduleTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     letterSpacing: 0.5,
@@ -1231,13 +1231,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   scheduleStatValue: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 4,
   },
   scheduleStatLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginTop: 4,
   },
@@ -1255,7 +1255,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   progressLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -1278,12 +1278,12 @@ const styles = StyleSheet.create({
     borderLeftColor: healthColors.primary.main,
   },
   nextPatientLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
   nextPatientName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
@@ -1303,7 +1303,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     paddingVertical: 0, // Remove default TextInput padding
   },
@@ -1327,12 +1327,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchResultName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   searchResultDetails: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
@@ -1346,7 +1346,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   emptyStateText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
     textAlign: "center",
@@ -1373,7 +1373,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   appointmentTimeText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -1394,16 +1394,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
   },
   appointmentPatient: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   appointmentReason: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 12,
   },
@@ -1421,7 +1421,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionButtonSecondaryText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
@@ -1433,7 +1433,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionButtonPrimaryText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.background.card,
   },
@@ -1449,7 +1449,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
   },
   addWalkinText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
     marginLeft: 8,
@@ -1461,7 +1461,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
   },
@@ -1479,12 +1479,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.error.main,
     fontWeight: theme.typography.weights.medium,
   },
   retryText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -1514,7 +1514,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   quickActionTitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     textAlign: "center",
@@ -1564,18 +1564,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   menuUserName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
     marginBottom: 2,
   },
   menuUserRole: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.text.white, 0.9),
     marginBottom: 2,
   },
   menuUserId: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: theme.withOpacity(theme.colors.text.white, 0.7),
   },
   menuCloseButton: {
@@ -1590,7 +1590,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   menuSectionTitle: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.tertiary,
     paddingHorizontal: 16,
@@ -1606,7 +1606,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -1627,7 +1627,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   menuBadgeText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1646,13 +1646,13 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main + "20",
   },
   menuStatValue: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
     marginBottom: 4,
   },
   menuStatLabel: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
@@ -1662,7 +1662,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   menuFooterText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
 });

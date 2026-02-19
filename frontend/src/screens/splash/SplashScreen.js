@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: theme.spacing.xl,
-    padding: 20,
+    padding: theme.spacing.lg,
   },
   logo: {
     width: "100%",
@@ -233,13 +233,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   appName: {
-    fontSize: 36,
+    fontSize: theme.typography.sizes.displaySmall,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
     marginBottom: theme.spacing.md,
   },
   tagline: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.medium,
     color: theme.withOpacity(theme.colors.white, 0.9),
     marginBottom: 4,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   footer: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: theme.withOpacity(theme.colors.white, 0.8),
     textAlign: "center",
   },

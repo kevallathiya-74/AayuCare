@@ -455,14 +455,14 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   appName: {
-    fontSize: 32,
+    fontSize: theme.typography.sizes.h1,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.neutral.white,
     marginBottom: 6,
     letterSpacing: 0.5,
   },
   tagline: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.text.white, 0.95),
     fontWeight: theme.typography.weights.regular,
     letterSpacing: 0.3,
@@ -484,14 +484,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   welcomeText: {
-    fontSize: 26,
+    fontSize: theme.typography.sizes.h2,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 8,
     letterSpacing: 0.3,
   },
   subtitleText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.regular,
     lineHeight: 20,
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main + "15",
   },
   roleText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.primary.main,
     marginLeft: 6,
     fontWeight: theme.typography.weights.medium,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     marginBottom: 6,
     fontWeight: theme.typography.weights.medium,
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.regular,
     paddingVertical: 0,
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   forgotPasswordText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.medium,
   },
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    fontSize: 17,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.neutral.white,
     letterSpacing: 0.5,
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
   },
   demoTitle: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.secondary,
     marginBottom: 8,
@@ -610,12 +610,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   demoLabel: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     fontWeight: theme.typography.weights.medium,
   },
   demoValue: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.medium,
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   footerText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
   },
   // Development Helper Styles
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   devToggleText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.info.main,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.accent.coral + "40",
   },
   devButtonText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },

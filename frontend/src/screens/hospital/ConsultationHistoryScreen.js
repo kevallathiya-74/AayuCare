@@ -338,12 +338,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   filterText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
   },
@@ -417,13 +417,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   patientName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   patientId: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   statusBadge: {
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
   },
   consultationDetails: {
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   detailText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     flex: 1,
   },
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   contactText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.disabled,
   },
   emptyState: {
@@ -467,14 +467,14 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(80),
   },
   emptyStateTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(80),
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
   },

@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: "700",
     color: healthColors.text.primary,
     marginLeft: 12,
@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.primary.main,
   },
   tabButtonText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     marginTop: 4,
     textAlign: "center",
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "700",
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -726,12 +726,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   infoLabel: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.tertiary,
     marginLeft: 6,
   },
   infoValue: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.text.primary,
   },
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   medicalItemTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.text.primary,
     marginLeft: 8,
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.light + "40",
   },
   chipText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: "500",
   },
@@ -779,13 +779,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   historyCondition: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   historyStatus: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   statsContainer: {
@@ -801,13 +801,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: "700",
     color: healthColors.text.primary,
     marginTop: 8,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     marginTop: 4,
     textAlign: "center",
@@ -829,7 +829,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   appointmentDate: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.text.primary,
     marginLeft: 6,
@@ -840,13 +840,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusBadgeText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: "600",
     color: healthColors.text.primary,
     textTransform: "capitalize",
   },
   appointmentReason: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "500",
     color: healthColors.text.primary,
     marginBottom: 8,
@@ -860,7 +860,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   appointmentInfoText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginLeft: 4,
   },
@@ -876,25 +876,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   recordTitle: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "600",
     color: healthColors.text.primary,
     marginLeft: 10,
     flex: 1,
   },
   recordType: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: "500",
     marginBottom: 4,
   },
   recordDiagnosis: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
   recordDate: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
   prescriptionCard: {
@@ -907,12 +907,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   prescriptionDate: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.text.primary,
   },
   prescriptionDiagnosis: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "500",
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   medicinesTitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.text.secondary,
     marginBottom: 6,
@@ -930,12 +930,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   medicineName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "500",
     color: healthColors.text.primary,
   },
   medicineDetails: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginLeft: 10,
   },
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
   },
@@ -959,7 +959,7 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   errorText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.error.main,
     textAlign: "center",
     marginTop: 16,
@@ -972,7 +972,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: theme.colors.white,
   },
@@ -984,7 +984,7 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.tertiary,
     marginTop: 16,
     textAlign: "center",

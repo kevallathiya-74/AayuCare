@@ -11,6 +11,46 @@ const Prescription = require("../models/Prescription");
 const logger = require("../utils/logger");
 
 /**
+ * @desc    Get all prescriptions (admin only)
+ * @route   GET /api/prescriptions
+ * @access  Private (Admin)
+ */
+exports.getAllPrescriptions = async (req, res) => {
+  try {
+    const { limit = 50, skip = 0, pharmacyStatus, startDate, endDate } = req.query;
+
+    // Get prescriptions from repository
+    const prescriptions = await prescriptionRepository.findAll({
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      pharmacyStatus,
+      startDate,
+      endDate,
+    });
+
+    // Map to include patient and doctor names from populated data
+    const prescriptionsWithNames = prescriptions.map((prescription) => ({
+      ...prescription,
+      patientName: prescription.patientId?.name || "Unknown Patient",
+      doctorName: prescription.doctorId?.name || "Unknown Doctor",
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: prescriptions.length,
+      prescriptions: prescriptionsWithNames,
+    });
+  } catch (error) {
+    logger.error("Error fetching all prescriptions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch prescriptions",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * @desc    Create a new prescription - Uses MongoDB via repository
  * @route   POST /api/prescriptions
  * @access  Private (Doctor/Admin)
@@ -328,6 +368,74 @@ exports.updatePrescriptionStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update prescription status",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Update pharmacy status
+ * @route   PATCH /api/prescriptions/:prescriptionId
+ * @access  Private (Doctor/Admin)
+ */
+exports.updatePharmacyStatus = async (req, res) => {
+  try {
+    const { prescriptionId } = req.params;
+    const { pharmacyStatus } = req.body;
+
+    const validStatuses = [
+      "pending",
+      "sent_to_pharmacy",
+      "preparing",
+      "ready",
+      "dispensed",
+    ];
+
+    if (!pharmacyStatus || !validStatuses.includes(pharmacyStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid pharmacy status. Must be one of: ${validStatuses.join(", ")}`,
+      });
+    }
+
+    // Update using repository
+    const prescription = await prescriptionRepository.updatePharmacyStatus(
+      prescriptionId,
+      pharmacyStatus
+    );
+
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: "Prescription not found",
+      });
+    }
+
+    // Invalidate relevant caches
+    const { deleteCacheByPattern } = require("../config/redis");
+    try {
+      await deleteCacheByPattern("v1:cache:prescription:*");
+      await deleteCacheByPattern("cache:prescription:*");
+      logger.debug("Cache invalidated after pharmacy status update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
+    res.json({
+      success: true,
+      message: "Pharmacy status updated successfully",
+      data: prescription,
+    });
+  } catch (error) {
+    logger.error("Update pharmacy status error:", {
+      error: error.message,
+      stack: error.stack,
+      prescriptionId: req.params.prescriptionId,
+      pharmacyStatus: req.body.pharmacyStatus,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to update pharmacy status",
       error: error.message,
     });
   }

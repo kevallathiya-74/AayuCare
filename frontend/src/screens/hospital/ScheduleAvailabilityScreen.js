@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   scrollView: {
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.dark,
     lineHeight: 18,
   },
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dayLabel: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   timeSlotText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.medium,
   },
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   breakTimeText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   editButton: {
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   editButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -583,12 +583,12 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -626,7 +626,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timeInputLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
@@ -637,11 +637,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   timeSeparator: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
     marginTop: 20,
   },
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   addButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -679,13 +679,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     minHeight: 80,
     textAlignVertical: "top",
   },
   characterCount: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     textAlign: "right",
     marginTop: 4,

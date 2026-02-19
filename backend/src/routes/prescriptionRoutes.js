@@ -16,6 +16,16 @@ const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 router.use(protect);
 router.use(attachHospitalId);
 
+// @route   GET /api/prescriptions
+// @desc    Get all prescriptions (admin only)
+// @access  Private (Admin only)
+router.get(
+  "/",
+  authorize("admin"),
+  cacheMiddleware(30),
+  prescriptionController.getAllPrescriptions
+);
+
 // @route   POST /api/prescriptions
 // @desc    Create a new prescription
 // @access  Private (Doctor/Admin only)
@@ -61,6 +71,16 @@ router.patch(
   "/:prescriptionId/status",
   authorize("doctor", "admin"),
   prescriptionController.updatePrescriptionStatus
+  // Cache invalidation now handled inside controller
+);
+
+// @route   PATCH /api/prescriptions/:prescriptionId
+// @desc    Update pharmacy status
+// @access  Private (Admin only)
+router.patch(
+  "/:prescriptionId",
+  authorize("admin"),
+  prescriptionController.updatePharmacyStatus
   // Cache invalidation now handled inside controller
 );
 

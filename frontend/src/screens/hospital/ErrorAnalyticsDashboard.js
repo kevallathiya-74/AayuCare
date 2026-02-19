@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
   },
   topErrorTypeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: "600",
   },
   topErrorDate: {

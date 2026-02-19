@@ -112,6 +112,41 @@ class PrescriptionRepository {
   }
 
   /**
+   * Find all prescriptions (admin only)
+   * @param {Object} filters - Optional filters
+   * @returns {Promise<Array>} Array of prescriptions
+   */
+  async findAll(filters = {}) {
+    const {
+      limit = 50,
+      skip = 0,
+      pharmacyStatus,
+      startDate,
+      endDate,
+    } = filters;
+
+    const query = {};
+
+    if (pharmacyStatus) {
+      query.pharmacyStatus = pharmacyStatus;
+    }
+
+    if (startDate || endDate) {
+      query.prescriptionDate = {};
+      if (startDate) query.prescriptionDate.$gte = new Date(startDate);
+      if (endDate) query.prescriptionDate.$lte = new Date(endDate);
+    }
+
+    return await Prescription.find(query)
+      .populate("patientId", "name email phone userId")
+      .populate("doctorId", "name specialization userId")
+      .sort({ prescriptionDate: -1 })
+      .limit(limit)
+      .skip(skip)
+      .lean();
+  }
+
+  /**
    * Find prescriptions by hospital ID
    * @param {string} hospitalId - Hospital ID
    * @param {Object} filters - Optional filters
