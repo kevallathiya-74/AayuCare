@@ -137,10 +137,10 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           </View>
           <View style={styles.patientDetails}>
             <Text style={styles.patientName}>
-              {item.patientId?.name || "Unknown Patient"}
+              {item.patientName || "Unknown Patient"}
             </Text>
             <Text style={styles.patientId}>
-              ID: {item.patientId?.userId || "N/A"}
+              ID: {item.patientId || "N/A"}
             </Text>
           </View>
         </View>
@@ -193,14 +193,14 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         )}
       </View>
 
-      {item.patientId?.phone && (
+      {item.patientPhone && (
         <View style={styles.contactRow}>
           <Ionicons
             name="call-outline"
             size={14}
             color={healthColors.text.disabled}
           />
-          <Text style={styles.contactText}>{item.patientId.phone}</Text>
+          <Text style={styles.contactText}>{item.patientPhone}</Text>
         </View>
       )}
     </TouchableOpacity>

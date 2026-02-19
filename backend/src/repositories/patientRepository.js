@@ -54,7 +54,15 @@ class PatientRepository {
    */
   async findByUserId(userId) {
     const sql = `
-            SELECT p.*, u.name, u.email, u.phone, u.hospital_id, u.hospital_name
+            SELECT p.*, 
+                   u.id as internal_id,
+                   u.user_id as formatted_user_id,
+                   u.name, 
+                   u.email, 
+                   u.phone, 
+                   u.is_active,
+                   u.hospital_id, 
+                   u.hospital_name
             FROM patients p
             INNER JOIN users u ON p.user_id = u.id
             WHERE p.user_id = $1

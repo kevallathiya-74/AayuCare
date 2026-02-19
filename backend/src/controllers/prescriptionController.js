@@ -46,8 +46,8 @@ exports.createPrescription = async (req, res) => {
 
     // Create prescription using repository
     const prescription = await prescriptionRepository.create({
-      patientId: patient.id,
-      doctorId: req.user.id || req.user._id,
+      patientId: patient.user_id,
+      doctorId: req.user.userId,
       hospitalId: req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN",
       medicines: medications,
       diagnosis,
@@ -93,9 +93,8 @@ exports.getPatientPrescriptions = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    // Check access rights - supports both _id and userId formats
-    const isOwnData =
-      req.user.userId === patientId || req.user._id.toString() === patientId;
+    // Check access rights
+    const isOwnData = req.user.userId === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         success: false,
@@ -164,9 +163,8 @@ exports.getDoctorPrescriptions = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
-    // Check access rights - supports both _id and userId formats
-    const isOwnData =
-      req.user.userId === doctorId || req.user._id.toString() === doctorId;
+    // Check access rights
+    const isOwnData = req.user.userId === doctorId;
     if (req.user.role !== "admin" && !isOwnData) {
       return res.status(403).json({
         success: false,
@@ -236,15 +234,18 @@ exports.getPrescriptionById = async (req, res) => {
       });
     }
 
-    // Check access rights - supports both _id and userId formats
-    const isPatientOwner =
-      prescription.patientId &&
-      (req.user.userId === prescription.patientId.userId ||
-        req.user._id.toString() === prescription.patientId._id.toString());
-    const isDoctorOwner =
-      prescription.doctorId &&
-      (req.user.userId === prescription.doctorId.userId ||
-        req.user._id.toString() === prescription.doctorId._id.toString());
+    // Check access rights - handle both populated and string patientId/doctorId
+    const patientUserId =
+      typeof prescription.patientId === "string"
+        ? prescription.patientId
+        : prescription.patientId?.userId;
+    const doctorUserId =
+      typeof prescription.doctorId === "string"
+        ? prescription.doctorId
+        : prescription.doctorId?.userId;
+
+    const isPatientOwner = patientUserId && req.user.userId === patientUserId;
+    const isDoctorOwner = doctorUserId && req.user.userId === doctorUserId;
 
     if (req.user.role !== "admin" && !isDoctorOwner && !isPatientOwner) {
       return res.status(403).json({

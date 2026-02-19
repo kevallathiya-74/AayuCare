@@ -73,13 +73,13 @@ router.get(
 /**
  * @route   GET /api/doctors/me/patients/:patientId
  * @desc    Get detailed patient information
- * @access  Private (Doctor)
+ * @access  Private (Doctor, Admin)
  */
 router.get(
   "/me/patients/:patientId",
   protect,
   attachHospitalId,
-  authorize("doctor"),
+  authorize("doctor", "admin"),
   doctorController.getPatientDetails
 );
 

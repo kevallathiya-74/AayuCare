@@ -24,6 +24,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
 import { logError } from "../../utils/errorHandler";
+import { formatDate } from "../../utils/helpers";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useAppointmentsInfinite } from "../../hooks/useAppointments";
 
@@ -94,7 +95,7 @@ const AppointmentsScreen = ({ navigation }) => {
   const handleAppointmentPress = (appointment) => {
     Alert.alert(
       "Appointment Details",
-      `Patient: ${appointment.patientId?.name || "N/A"}\nDoctor: ${appointment.doctorId?.name || "N/A"}\nStatus: ${appointment.status || "N/A"}`,
+      `Patient: ${appointment.patientName || "N/A"}\nDoctor: ${appointment.doctorName || "N/A"}\nStatus: ${appointment.status || "N/A"}`,
       [{ text: "OK" }]
     );
   };
@@ -105,7 +106,7 @@ const AppointmentsScreen = ({ navigation }) => {
         style={styles.appointmentCard}
         onPress={() => handleAppointmentPress(item)}
         accessibilityRole="button"
-        accessibilityLabel={`Appointment with ${item.doctorId?.name || "Doctor"}`}
+        accessibilityLabel={`Appointment with ${item.doctorName || "Doctor"}`}
       >
         <View style={styles.appointmentHeader}>
           <View style={styles.avatarContainer}>
@@ -117,10 +118,10 @@ const AppointmentsScreen = ({ navigation }) => {
           </View>
           <View style={styles.appointmentInfo}>
             <Text style={styles.doctorName}>
-              {item.doctorId?.name || "Unknown Doctor"}
+              {item.doctorName || "Unknown Doctor"}
             </Text>
             <Text style={styles.patientName}>
-              Patient: {item.patientId?.name || "Unknown"}
+              Patient: {item.patientName || "Unknown"}
             </Text>
             <Text style={styles.appointmentTime}>
               {formatDate(item.appointmentDate)}

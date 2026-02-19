@@ -72,7 +72,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               month: "short",
               year: "numeric",
             }),
-            doctor: latest.doctorId?.name || "Doctor",
+            doctor: latest.doctorName || "Doctor",
             medicines: (latest.medicines || latest.medications || []).map(
               (med) => ({
                 name: med.name || med.medicine || "Medication",

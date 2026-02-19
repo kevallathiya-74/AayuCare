@@ -82,8 +82,6 @@ const AppointmentsListScreen = ({ navigation, route }) => {
   // Render appointment item
   const renderAppointmentItem = useCallback(({ item }) => {
     const appointment = item;
-    const doctor = appointment.doctorId;
-    const patient = appointment.patientId;
 
     return (
       <TouchableOpacity
@@ -97,7 +95,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.headerInfo}>
             <Text style={styles.patientName}>
-              {user.role === 'patient' ? doctor?.name : patient?.name || 'Unknown'}
+              {user.role === 'patient' ? appointment.doctorName : appointment.patientName || 'Unknown'}
             </Text>
             <Text style={styles.appointmentDate}>
               {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}

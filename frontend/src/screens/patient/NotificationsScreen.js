@@ -25,6 +25,7 @@ import { theme, healthColors } from "../../theme";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { formatTime } from "../../utils/helpers";
 import { notificationService } from "../../services";
 
 const NotificationsScreen = ({ navigation }) => {

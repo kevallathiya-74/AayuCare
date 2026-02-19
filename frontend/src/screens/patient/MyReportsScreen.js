@@ -67,12 +67,12 @@ const MyReportsScreen = ({ navigation }) => {
         date: new Date(record.createdAt || record.date).toLocaleDateString(
           "en-IN",
           {
-            day: "numeric",
+        day: "numeric",
             month: "short",
             year: "numeric",
           }
         ),
-        doctor: record.doctorId?.name || record.doctorName || "Unknown Doctor",
+        doctor: record.doctorName || "Unknown Doctor",
         fileType: determineFileType(record),
         recordData: record,
       }));

@@ -1128,7 +1128,7 @@ const AdminHomeScreen = ({ navigation }) => {
                   <View style={styles.recordContent}>
                     <Text style={styles.recordTitle}>{record.title || "Medical Record"}</Text>
                     <Text style={styles.recordSubtitle}>
-                      {record.patientId?.name || "Unknown Patient"} • {record.recordType || "General"}
+                      {record.patientName || "Unknown Patient"} • {record.recordType || "General"}
                     </Text>
                     <Text style={styles.recordTime}>
                       {new Date(record.createdAt).toLocaleDateString()}

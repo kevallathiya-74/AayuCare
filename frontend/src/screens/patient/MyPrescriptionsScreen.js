@@ -98,7 +98,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         </View>
         <View style={styles.prescriptionInfo}>
           <Text style={styles.doctorName}>
-            Dr. {item.doctorId?.name || item.doctor?.name || "Unknown Doctor"}
+            Dr. {item.doctorName || "Unknown Doctor"}
           </Text>
           <Text style={styles.prescriptionDate}>
             {formatDate(item.prescriptionDate || item.createdAt || item.date)}

@@ -3,6 +3,7 @@ const { AppError } = require("../middleware/errorHandler");
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
 
 /**
  * @desc    Create new appointment
@@ -23,7 +24,6 @@ exports.createAppointment = async (req, res, next) => {
     );
 
     // Invalidate relevant caches after appointment creation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
@@ -251,7 +251,6 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     );
 
     // Invalidate relevant caches after appointment status update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
@@ -287,7 +286,6 @@ exports.cancelAppointment = async (req, res, next) => {
     );
 
     // Invalidate appointment caches after cancellation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
@@ -321,7 +319,6 @@ exports.updateAppointment = async (req, res, next) => {
     );
 
     // Invalidate relevant caches after appointment update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");

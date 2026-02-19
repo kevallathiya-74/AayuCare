@@ -165,10 +165,10 @@ const PatientManagementScreen = ({ navigation, route }) => {
         })),
         appointments: appointments.slice(0, 10).map((apt) => ({
           id: apt._id,
-          doctor: apt.doctorId?.name || apt.doctorName || "Doctor",
+          doctor: apt.doctorName || "Doctor",
           date: new Date(apt.appointmentDate).toLocaleDateString("en-IN"),
           status: apt.status || "Scheduled",
-          specialty: apt.doctorId?.specialization || apt.specialty || "General",
+          specialty: apt.specialization || "General",
         })),
         allergies: patient.allergies || [],
         phone: patient.phone || "N/A",
