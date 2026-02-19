@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: theme.colors.white,
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
   },
   actionButton: {

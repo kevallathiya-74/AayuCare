@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   suggestionsTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   suggestionText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   messageWrapper: {
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   messageText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     lineHeight: 20,
   },
   userMessageText: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   insightsTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.md,
   },
   insightsSubtitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 12,
   },
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   recommendationText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     marginBottom: 6,
     lineHeight: 20,
@@ -469,13 +469,13 @@ const styles = StyleSheet.create({
     borderTopColor: healthColors.border.light,
   },
   riskLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.warning.main,
     marginBottom: 6,
   },
   preventiveText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   doctorButton: {
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.md,
   },
   doctorButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
   },
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     maxHeight: 100,
     paddingVertical: 4,

@@ -1161,7 +1161,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
@@ -1177,7 +1177,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -1200,7 +1200,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   searchButton: {
@@ -1255,14 +1255,14 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   searchResultName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
     lineHeight: 20,
   },
   searchResultId: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
     marginBottom: 6,
@@ -1280,7 +1280,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   searchResultMetaText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.disabled,
     lineHeight: 14,
@@ -1322,14 +1322,14 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   patientListName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
     lineHeight: 20,
   },
   patientListId: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
     marginBottom: 6,
@@ -1347,7 +1347,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   patientListMetaText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.disabled,
     lineHeight: 14,
@@ -1361,14 +1361,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.disabled,
     textAlign: "center",
   },
@@ -1377,7 +1377,7 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(40),
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
   },
@@ -1406,16 +1406,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   patientName: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   patientDetail: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   patientVitals: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.success.main,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -1438,12 +1438,12 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   quickActionText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   quickActionTextWhite: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
   },
@@ -1465,7 +1465,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   historyTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -1476,17 +1476,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   historyItemText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     flex: 1,
   },
   historyItemSubtext: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
   emptyHistoryText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.disabled,
     fontStyle: "italic",
     textAlign: "center",
@@ -1512,12 +1512,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   recordTypeBadgeText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
   recordDetailDate: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
   },
@@ -1525,7 +1525,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   recordDetailLabel: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
     marginBottom: 6,
@@ -1533,7 +1533,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   recordDetailValue: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.regular,
     color: healthColors.text.primary,
     lineHeight: 22,
@@ -1561,12 +1561,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   criticalInfoLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.error.main,
   },
   criticalInfoValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -1590,7 +1590,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   bottomActionText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
   },
@@ -1603,19 +1603,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: getScreenPadding(),
   },
   emptyStateTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
   },
   errorText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.error.main,
     marginTop: 8,
     textAlign: "center",
@@ -1651,7 +1651,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.card,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -1660,7 +1660,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   formLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 6,
@@ -1673,7 +1673,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     minHeight: 44,
   },
@@ -1700,7 +1700,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   pickerOptionText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
   },
@@ -1734,12 +1734,12 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main,
   },
   modalCancelButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
   modalSubmitButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
   },

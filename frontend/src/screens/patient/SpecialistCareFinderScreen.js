@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   title: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   filterLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.medium,
   },
@@ -507,11 +507,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   filterValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   feeRangeText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     paddingHorizontal: getScreenPadding(),
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   specialtyText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.medium,
   },
@@ -574,13 +574,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   doctorName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   doctorSpecialty: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 6,
   },
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   ratingText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   doctorDetails: {
@@ -604,12 +604,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   feeText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.semiBold,
   },
   availabilityText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   consultationTypes: {
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   consultationTypeText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.disabled,
   },
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
   },
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   viewProfileText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
   },
@@ -687,14 +687,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyStateTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
     paddingHorizontal: getScreenPadding(),
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   doctorCountText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
   },

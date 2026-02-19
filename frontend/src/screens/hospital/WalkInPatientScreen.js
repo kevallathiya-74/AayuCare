@@ -462,12 +462,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 2,
   },
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -516,14 +516,14 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   label: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 8,
   },
   required: {
     color: healthColors.error.main,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
   },
   inputWrapper: {
     flexDirection: "row",
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 14,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   textAreaWrapper: {
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   genderText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.error.main,
   },
   bloodGroupText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   note: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     flex: 1,
   },
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   registerButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },

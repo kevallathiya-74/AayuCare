@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   filterTabText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
   },
   countText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
   },
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     letterSpacing: 0.5,
   },
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 6,
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   eventDate: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.tertiary,
   },
   eventDetails: {
@@ -573,12 +573,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   eventDetailText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     flex: 1,
   },
   eventDescription: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     lineHeight: 20,
     marginBottom: theme.spacing.md,
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "15",
   },
   detailsButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   registerButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
   },
@@ -644,14 +644,14 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   errorTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xs,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
     marginBottom: theme.spacing.lg,
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
   },
   retryButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
@@ -674,14 +674,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xs,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
     lineHeight: 20,
@@ -694,7 +694,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
   },
   resetFilterText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },

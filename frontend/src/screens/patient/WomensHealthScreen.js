@@ -335,12 +335,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -371,13 +371,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   cycleText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   nextPeriodText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   cycleProgress: {
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
   calendarButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.healthcare.pink,
     fontWeight: theme.typography.weights.medium,
   },
@@ -416,13 +416,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   insightTitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   insightText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     lineHeight: 18,
   },
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   pregnancyWeek: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   babySize: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
   },
   tipsSection: {
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   tipsTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   checkupText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
   scheduleButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.healthcare.pink,
     fontWeight: theme.typography.weights.medium,
   },
@@ -521,12 +521,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   activityDuration: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
   actionButton: {
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
   },
   actionButtonText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   emergencyText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },

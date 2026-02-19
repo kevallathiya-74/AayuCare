@@ -480,8 +480,8 @@ const AdminHomeScreen = ({ navigation }) => {
           title: "Pharmacy",
           icon: "medkit",
           color: healthColors.accent.purple,
-          screen: "Reports",
-          isTabScreen: true,
+          screen: "PharmacyManagement",
+          isTabScreen: false,
           badge:
             stats.prescriptions.today > 0 ? stats.prescriptions.today : null,
         },
@@ -1558,7 +1558,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
@@ -1586,7 +1586,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.background.primary,
   },
   notificationDotText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: "white",
   },
@@ -1603,14 +1603,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timeGreeting: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.9)",
     marginBottom: 4,
     letterSpacing: 0.3,
   },
   welcomeGreeting: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: "white",
     marginBottom: 8,
@@ -1621,7 +1621,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   roleInfoText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.95)",
     letterSpacing: 0.3,
@@ -1634,7 +1634,7 @@ const styles = StyleSheet.create({
   },
   // Legacy styles (kept for compatibility)
   welcomeName: {
-    fontSize: 26,
+    fontSize: theme.typography.sizes.h2,
     fontWeight: theme.typography.weights.bold,
     color: "white",
     marginBottom: 8,
@@ -1650,7 +1650,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   roleText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: "white",
     letterSpacing: 0.5,
@@ -1678,7 +1678,7 @@ const styles = StyleSheet.create({
   },
   healthText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
   },
   healthButton: {
@@ -1688,7 +1688,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.9)",
   },
   healthButtonText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
   },
   section: {
@@ -1703,12 +1703,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   viewAllText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
@@ -1750,24 +1750,24 @@ const styles = StyleSheet.create({
     borderRadius: 8, // Standard small border radius
   },
   trendText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   statValue: {
-    fontSize: 36,
+    fontSize: theme.typography.sizes.h1,
     fontWeight: "800",
     color: "white",
     marginBottom: 4,
   },
   statTitle: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: "white",
     marginBottom: 4,
   },
   statSubtitle: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: "rgba(255,255,255,0.8)",
   },
   // Action Section
@@ -1776,7 +1776,7 @@ const styles = StyleSheet.create({
     marginBottom: 24, // spacing.lg for consistent section separation
   },
   actionSectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -1821,12 +1821,12 @@ const styles = StyleSheet.create({
     borderColor: healthColors.background.card,
   },
   actionBadgeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: "white",
   },
   actionTitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     textAlign: "center",
@@ -1860,14 +1860,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
     marginBottom: 4,
     lineHeight: 20,
   },
   activityTime: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   // Empty State
@@ -1876,13 +1876,13 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.secondary,
     marginTop: 12,
   },
   emptySubtext: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.disabled,
     marginTop: 4,
     textAlign: "center",
@@ -1895,7 +1895,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   loadingText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
@@ -1924,13 +1924,13 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.3)",
   },
   profileName: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: theme.typography.weights.bold,
     color: "white",
     marginBottom: verticalScale(4),
   },
   profileEmail: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: "rgba(255,255,255,0.9)",
     marginBottom: verticalScale(12),
   },
@@ -1944,7 +1944,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   profileRoleText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: "white",
     letterSpacing: 1,
@@ -1954,7 +1954,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
   },
   profileSectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -1977,12 +1977,12 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   profileInfoLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
   profileInfoValue: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -1999,7 +1999,7 @@ const styles = StyleSheet.create({
   },
   profileActionText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -2015,7 +2015,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.error.main,
   },
   logoutButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
@@ -2072,19 +2072,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuUserName: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: "white",
     marginBottom: 2,
   },
   menuUserRole: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.9)",
     marginBottom: 2,
   },
   menuUserId: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: "rgba(255,255,255,0.7)",
   },
   menuCloseButton: {
@@ -2108,7 +2108,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.background.secondary,
   },
   menuSectionTitle: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.secondary,
     marginBottom: 12,
@@ -2127,7 +2127,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -2136,7 +2136,7 @@ const styles = StyleSheet.create({
   },
   menuItemTextDanger: {
     flex: 1,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
@@ -2149,7 +2149,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   menuBadgeText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: "white",
   },
@@ -2168,12 +2168,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuStatLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 2,
   },
   menuStatValue: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -2183,7 +2183,7 @@ const styles = StyleSheet.create({
     marginTop: 24, // spacing.lg
   },
   menuFooterText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
@@ -2213,13 +2213,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   userSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   userStatusBadge: {
@@ -2231,7 +2231,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.success.background,
   },
   userStatusText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.success.main,
   },
@@ -2241,7 +2241,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   viewAllText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.primary.main,
     marginRight: 4,
@@ -2270,18 +2270,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   recordTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   recordSubtitle: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 2,
   },
   recordTime: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.disabled,
   },
   // System Metrics Styles
@@ -2301,11 +2301,11 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   metricLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   metricValue: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -2318,7 +2318,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   notificationBadgeText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: "white",
   },
@@ -2349,18 +2349,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   notificationMessage: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
   notificationTime: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.disabled,
   },
   unreadDot: {
@@ -2387,11 +2387,11 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   healthLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   healthValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -2407,7 +2407,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.error.background,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
   },
 });

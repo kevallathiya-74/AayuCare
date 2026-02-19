@@ -267,8 +267,8 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.grays.gray200,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   listContent: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: healthColors.neutral.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -302,13 +302,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   patientName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   appointmentDate: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   statusBadge: {
@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.caption,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textTransform: 'capitalize',
   },
@@ -329,13 +329,13 @@ const styles = StyleSheet.create({
     borderTopColor: healthColors.grays.gray200,
   },
   appointmentType: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   symptoms: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   footerLoader: {
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     marginLeft: 8,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   loadingContainer: {
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
   },
   emptyContainer: {
@@ -367,14 +367,14 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.h4,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
     textAlign: 'center',
     marginBottom: 24,
@@ -386,8 +386,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   emptyButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
     color: 'white',
   },
   errorContainer: {
@@ -397,14 +397,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.h4,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginTop: 16,
     marginBottom: 8,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
     textAlign: 'center',
     marginBottom: 24,
@@ -416,8 +416,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
     color: 'white',
   },
 });

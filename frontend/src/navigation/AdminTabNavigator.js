@@ -22,6 +22,7 @@ import {
 import AdminHomeScreen from "../screens/hospital/AdminHomeScreen";
 import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
 import ReportsScreen from "../screens/hospital/ReportsScreen";
+import PharmacyManagementScreen from "../screens/hospital/PharmacyManagementScreen";
 import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
 import ErrorAnalyticsDashboard from "../screens/hospital/ErrorAnalyticsDashboard";
 

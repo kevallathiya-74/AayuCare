@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   header: {
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 12,
@@ -575,12 +575,12 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   infoLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.semiBold,
   },
   infoValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   medicationNumber: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -610,13 +610,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   medicationName: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 6,
   },
   medicationDosage: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 8,
   },
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   timingText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
   },
   addMedicineText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.card,
     borderRadius: 12,
     padding: 16,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     textAlignVertical: "top",
     minHeight: 100,
@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginLeft: 12,
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   checkboxLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     flex: 1,
   },
@@ -723,16 +723,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   costLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   costValue: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   discountValue: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.success.main,
   },
@@ -742,12 +742,12 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   finalCostLabel: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   finalCostValue: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveAndSendText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(80),
   },
   emptyStateTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 20,
@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emptyStateText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
     lineHeight: 20,
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   emptyStateButtonText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
   },

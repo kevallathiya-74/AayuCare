@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     flex: 1,
@@ -751,12 +751,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   stepNumberText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   stepTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
   },
   specialtyText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -805,13 +805,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   doctorName: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 4,
   },
   doctorDetails: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginBottom: 6,
   },
@@ -824,7 +824,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   ratingText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.primary,
   },
   feeContainer: {
@@ -834,7 +834,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   feeText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
   },
   typeTitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 8,
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
     color: healthColors.primary.main,
   },
   typeSubtitle: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.secondary,
     marginTop: 4,
   },
@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   dateText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   timeLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   timeSlotText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
   },
@@ -942,7 +942,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     borderRadius: 12,
     padding: 16,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     textAlignVertical: "top",
     minHeight: 80,
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   confirmButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -985,7 +985,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   specialtyOptionText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
   },
@@ -1037,17 +1037,17 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   datePickerTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   datePickerDone: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.primary.main,
   },
   paymentNote: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
     marginTop: 12,
@@ -1059,7 +1059,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   emptyState: {
@@ -1071,7 +1071,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
   },

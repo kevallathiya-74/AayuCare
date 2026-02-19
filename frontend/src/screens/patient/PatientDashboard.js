@@ -1107,7 +1107,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   appTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1130,7 +1130,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.text.white,
   },
   bannerNotificationBadgeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1146,14 +1146,14 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   bannerTimeGreeting: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: theme.withOpacity(theme.colors.text.white, 0.9),
     marginBottom: 2,
     letterSpacing: 0.5,
   },
   bannerWelcomeText: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1170,7 +1170,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   bannerInfoText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.text.white,
     marginLeft: 8,
     fontWeight: theme.typography.weights.medium,
@@ -1185,7 +1185,7 @@ const styles = StyleSheet.create({
     marginBottom: 12, // spacing.md
   },
   healthStatusTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginLeft: 8, // spacing.sm
@@ -1219,7 +1219,7 @@ const styles = StyleSheet.create({
     marginRight: 12, // spacing.md
   },
   healthCardTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.success.main,
     marginBottom: 8, // spacing.sm
@@ -1236,7 +1236,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   healthCardDetail: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.medium,
     marginLeft: 4,
@@ -1246,12 +1246,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   healthCardUpdated: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.secondary,
     marginLeft: 4,
   },
   emergencyTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginBottom: 12, // spacing.md
@@ -1261,13 +1261,13 @@ const styles = StyleSheet.create({
     marginBottom: 24, // spacing.lg
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   notificationItem: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     lineHeight: 18,
     marginRight: 8,
@@ -1288,7 +1288,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
     marginLeft: 8,
@@ -1306,7 +1306,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   logoutButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.error.main,
     marginLeft: 8,
@@ -1357,19 +1357,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuUserName: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: "white",
     marginBottom: 2,
   },
   menuUserRole: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: "rgba(255,255,255,0.9)",
     marginBottom: 2,
   },
   menuUserId: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: "rgba(255,255,255,0.7)",
   },
   menuCloseButton: {
@@ -1394,7 +1394,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   menuSectionTitle: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.secondary,
     marginBottom: 12,
@@ -1411,7 +1411,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
     marginLeft: 12,
@@ -1423,7 +1423,7 @@ const styles = StyleSheet.create({
   },
   menuItemTextDanger: {
     flex: 1,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
   },
@@ -1435,18 +1435,18 @@ const styles = StyleSheet.create({
     borderTopColor: healthColors.border.light,
   },
   menuFooterText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
     textAlign: "center",
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginLeft: 8,
@@ -1472,7 +1472,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   medicalGroupTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.text.primary,
     marginLeft: 6,
@@ -1486,13 +1486,13 @@ const styles = StyleSheet.create({
     borderColor: healthColors.error.light,
   },
   medicalChipText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: healthColors.error.main,
     marginBottom: 4,
   },
   medicalChipDuration: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.secondary,
   },
   statusBadge: {
@@ -1512,7 +1512,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.success.main,
   },
   statusBadgeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
@@ -1533,7 +1533,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.warning.light,
   },
   allergyChipText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.warning.main,
     fontWeight: theme.typography.weights.medium,
     marginLeft: 4,
@@ -1551,7 +1551,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   medicationText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     flex: 1,
   },
@@ -1566,14 +1566,14 @@ const styles = StyleSheet.create({
   },
   emergencyButtonRelative: {
     flex: 1,
-    backgroundColor: "#DC2626",
+    backgroundColor: healthColors.error.main,
     borderRadius: 12,
     paddingVertical: 24,
     paddingHorizontal: 16,
     justifyContent: "center",
     alignItems: "center",
     minHeight: 140,
-    shadowColor: "#000",
+    shadowColor: healthColors.neutral.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1581,14 +1581,14 @@ const styles = StyleSheet.create({
   },
   emergencyButtonAmbulance: {
     flex: 1,
-    backgroundColor: "#7C2D12",
+    backgroundColor: healthColors.error.dark,
     borderRadius: 12,
     paddingVertical: 24,
     paddingHorizontal: 16,
     justifyContent: "center",
     alignItems: "center",
     minHeight: 140,
-    shadowColor: "#000",
+    shadowColor: healthColors.neutral.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1598,7 +1598,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emergencyButtonText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
     textAlign: "center",

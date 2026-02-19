@@ -478,12 +478,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.white, 0.9),
     marginTop: 4,
   },
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   label: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: theme.spacing.sm,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   symptomChipText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.medium,
   },
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: healthColors.card.border,
     padding: theme.spacing.md,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     minHeight: 80,
     textAlignVertical: "top",
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: healthColors.card.border,
     padding: theme.spacing.md,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },
   severityContainer: {
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   severityText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   analyzeButtonText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     flex: 1,
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     lineHeight: 16,
   },
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: theme.spacing.md,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
   },
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   resultTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: theme.spacing.md,
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   conditionName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   probabilityText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
@@ -687,11 +687,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   urgencyLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   urgencyValue: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
   },
   recommendationItem: {
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
   recommendationText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
@@ -721,12 +721,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   warningTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.error.dark,
   },
   warningItem: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: theme.colors.error.dark,
     lineHeight: 18,
     marginTop: 4,
@@ -741,11 +741,11 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   recoveryLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
   },
   recoveryValue: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
   },
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   secondaryButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   primaryButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },

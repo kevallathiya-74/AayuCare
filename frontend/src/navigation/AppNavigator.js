@@ -36,6 +36,7 @@ import {
   EnhancedPrescriptionScreen,
   WalkInPatientScreen,
   ReportsScreen,
+  PharmacyManagementScreen,
   AppointmentsScreen,
   AdminSettingsScreen,
 } from "../screens/hospital";
@@ -236,6 +237,10 @@ const AppNavigator = () => {
                   component={EnhancedPrescriptionScreen}
                 />
                 <Stack.Screen name="Reports" component={ReportsScreen} />
+                <Stack.Screen
+                  name="PharmacyManagement"
+                  component={PharmacyManagementScreen}
+                />
                 <Stack.Screen
                   name="Appointments"
                   component={AppointmentsScreen}

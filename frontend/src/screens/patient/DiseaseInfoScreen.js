@@ -798,12 +798,12 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   categoryName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginLeft: theme.spacing.xs,
@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
   },
   quickAccessText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.primary,
     marginLeft: theme.spacing.md,
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
   },
   topicText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     marginRight: theme.spacing.md,
   },
@@ -930,12 +930,12 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   modalDescription: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
@@ -951,7 +951,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   videoText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
     marginTop: theme.spacing.sm,
@@ -970,12 +970,12 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     marginBottom: 4,
   },
   statValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   detailTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginLeft: 6,
@@ -1000,13 +1000,13 @@ const styles = StyleSheet.create({
     paddingLeft: theme.spacing.sm,
   },
   listBullet: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginRight: theme.spacing.sm,
   },
   listText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     lineHeight: 20,
   },
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
   },
   actionButtonText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
     marginLeft: 8,
@@ -1046,7 +1046,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   videoDuration: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: theme.withOpacity(theme.colors.white, 0.9),
     marginTop: 8,
   },
@@ -1056,19 +1056,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   placeholderText: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: theme.spacing.md,
   },
   placeholderSubtext: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: theme.spacing.sm,
     textAlign: "center",
   },
   placeholderNote: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     marginTop: theme.spacing.md,
     fontStyle: "italic",
@@ -1091,7 +1091,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   galleryItemText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.secondary,
     marginTop: 4,
   },
@@ -1107,7 +1107,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   dietMealTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginLeft: 6,
@@ -1122,11 +1122,11 @@ const styles = StyleSheet.create({
   },
   dietItemText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   dietCal: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.success.main,
   },
@@ -1139,13 +1139,13 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
   },
   notesTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.warning.dark,
     marginBottom: theme.spacing.sm,
   },
   notesText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.warning.dark,
     marginBottom: 4,
   },
@@ -1156,13 +1156,13 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
   },
   exerciseDayTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
     marginBottom: theme.spacing.xs,
   },
   exerciseCategory: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: theme.spacing.md,
@@ -1173,7 +1173,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   exerciseText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginLeft: theme.spacing.sm,
   },

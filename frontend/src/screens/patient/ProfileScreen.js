@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   userIdText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: "rgba(255, 255, 255, 0.9)",
     fontWeight: theme.typography.weights.semiBold,
   },
@@ -493,13 +493,13 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginTop: 8,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     marginTop: 4,
   },
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     ...textStyles.h3,
     color: healthColors.text.primary,
     marginLeft: spacing.sm,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
   },
   card: {
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
     ...textStyles.body,
     color: healthColors.text.secondary,
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
   },
   infoValue: {
     ...textStyles.body,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semiBold,
     flex: 1,
     textAlign: "right",
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
   },
   actionItem: {
     flexDirection: "row",
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     ...textStyles.body,
     flex: 1,
     fontWeight: theme.typography.weights.semiBold,
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyMedium,
   },
 });
 
