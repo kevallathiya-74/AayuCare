@@ -1,6 +1,7 @@
 const { query, getClient } = require("../config/postgres");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
+const { mapAppointmentData, mapArray } = require("../utils/fieldMapper");
 
 /**
  * Appointment Repository - PostgreSQL data access layer
@@ -78,9 +79,11 @@ class AppointmentRepository {
 
     let sql = `
             SELECT a.*, 
+                   p.name as patient_name, p.email as patient_email,
                    d.name as doctor_name, d.email as doctor_email,
                    doc.specialization, doc.consultation_fee
             FROM appointments a
+            LEFT JOIN users p ON a.patient_id = p.id
             LEFT JOIN users d ON a.doctor_id = d.id
             LEFT JOIN doctors doc ON d.id = doc.user_id
             WHERE a.patient_id = $1
@@ -90,9 +93,11 @@ class AppointmentRepository {
     let paramCount = 2;
 
     if (status) {
-      sql += ` AND a.status = $${paramCount}`;
-      params.push(status);
-      paramCount++;
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      const statusArray = status.split(',').map(s => s.trim());
+      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
+      params.push(...statusArray);
+      paramCount += statusArray.length;
     }
 
     if (startDate) {
@@ -107,12 +112,13 @@ class AppointmentRepository {
       paramCount++;
     }
 
-    sql += ` ORDER BY a.appointment_date DESC, a.appointment_time DESC`;
+    sql += ` ORDER BY a.appointment_date ASC, a.appointment_time ASC`;
     sql += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
     params.push(limit, offset);
 
     const result = await query(sql, params);
-    return result.rows;
+    // Map snake_case to camelCase for frontend compatibility
+    return mapArray(result.rows, mapAppointmentData);
   }
 
   /**
@@ -138,9 +144,11 @@ class AppointmentRepository {
     let paramCount = 2;
 
     if (status) {
-      sql += ` AND a.status = $${paramCount}`;
-      params.push(status);
-      paramCount++;
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      const statusArray = status.split(',').map(s => s.trim());
+      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
+      params.push(...statusArray);
+      paramCount += statusArray.length;
     }
 
     if (startDate) {
@@ -160,7 +168,8 @@ class AppointmentRepository {
     params.push(limit, offset);
 
     const result = await query(sql, params);
-    return result.rows;
+    // Map snake_case to camelCase for frontend compatibility
+    return mapArray(result.rows, mapAppointmentData);
   }
 
   /**
@@ -200,9 +209,11 @@ class AppointmentRepository {
     }
 
     if (status) {
-      sql += ` AND a.status = $${paramCount}`;
-      params.push(status);
-      paramCount++;
+      // Handle comma-separated status values (e.g., "scheduled,confirmed")
+      const statusArray = status.split(',').map(s => s.trim());
+      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
+      params.push(...statusArray);
+      paramCount += statusArray.length;
     }
 
     if (startDate) {
@@ -217,12 +228,13 @@ class AppointmentRepository {
       paramCount++;
     }
 
-    sql += ` ORDER BY a.appointment_date DESC, a.appointment_time DESC`;
+    sql += ` ORDER BY a.appointment_date ASC, a.appointment_time ASC`;
     sql += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
     params.push(limit, offset);
 
     const result = await query(sql, params);
-    return result.rows;
+    // Map snake_case to camelCase for frontend compatibility
+    return mapArray(result.rows, mapAppointmentData);
   }
 
   /**

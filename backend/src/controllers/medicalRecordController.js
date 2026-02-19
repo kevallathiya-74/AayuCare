@@ -169,8 +169,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     const { recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
-    const isOwnData =
-      req.user.userId === patientId || req.user._id.toString() === patientId;
+    const isOwnData = req.user.userId === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         status: "error",
@@ -294,7 +293,7 @@ exports.updateMedicalRecord = async (req, res, next) => {
 
     // Only the doctor who created it can update
     if (
-      medicalRecord.doctorId.toString() !== req.user._id.toString() &&
+      medicalRecord.doctorId !== req.user.userId &&
       req.user.role !== "admin"
     ) {
       return next(new AppError("Not authorized to update this record", 403));
@@ -346,7 +345,7 @@ exports.deleteMedicalRecord = async (req, res, next) => {
 
     // Only the doctor who created it or admin can delete
     if (
-      medicalRecord.doctorId.toString() !== req.user._id.toString() &&
+      medicalRecord.doctorId !== req.user.userId &&
       req.user.role !== "admin"
     ) {
       return next(new AppError("Not authorized to delete this record", 403));

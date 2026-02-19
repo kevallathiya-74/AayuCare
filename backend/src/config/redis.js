@@ -111,16 +111,40 @@ const deleteCache = async (key) => {
 
 /**
  * Delete multiple cache keys by pattern
+ * Uses SCAN for production-safe iteration (non-blocking)
  * @param {string} pattern - Key pattern (e.g., "user:*")
  * @returns {Promise<number>} Number of keys deleted
  */
 const deleteCacheByPattern = async (pattern) => {
   try {
-    const keys = await redisClient.keys(pattern);
+    const keys = [];
+    let cursor = "0";
+
+    // Use SCAN instead of KEYS for production safety (non-blocking, O(1) per call)
+    do {
+      const result = await redisClient.scan(cursor, {
+        MATCH: pattern,
+        COUNT: 100, // Scan 100 keys at a time
+      });
+
+      cursor = result.cursor;
+      if (result.keys.length > 0) {
+        keys.push(...result.keys);
+      }
+    } while (cursor !== "0");
+
     if (keys.length === 0) return 0;
 
-    await redisClient.del(...keys);
-    return keys.length;
+    // Delete in batches to avoid blocking
+    const batchSize = 100;
+    let deleted = 0;
+    for (let i = 0; i < keys.length; i += batchSize) {
+      const batch = keys.slice(i, i + batchSize);
+      await redisClient.del(...batch);
+      deleted += batch.length;
+    }
+
+    return deleted;
   } catch (error) {
     logger.error("Redis pattern delete error:", error.message);
     return 0;

@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 import { showError, logError } from "../../utils/errorHandler";
+import { formatDate } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 
 const SecuritySettingsScreen = ({ navigation }) => {

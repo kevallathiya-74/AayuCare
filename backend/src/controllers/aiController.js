@@ -73,9 +73,8 @@ exports.getHealthInsights = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    // Verify access rights - supports both _id and userId formats
-    const isOwnData =
-      req.user.userId === patientId || req.user._id.toString() === patientId;
+    // Verify access rights
+    const isOwnData = req.user.userId === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         success: false,

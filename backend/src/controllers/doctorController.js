@@ -443,80 +443,127 @@ exports.searchPatients = async (req, res) => {
 /**
  * @desc    Get detailed patient information
  * @route   GET /api/doctors/me/patients/:patientId
- * @access  Private (Doctor only)
+ * @access  Private (Doctor, Admin)
  */
 exports.getPatientDetails = async (req, res) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const userId = req.user.id || req.user._id;
+    const userRole = req.user.role;
     const { patientId } = req.params;
 
     logger.info("Get patient details request:", {
-      doctorId,
+      userId,
+      userRole,
       patientId,
-      userId: req.user.userId,
+      userIdString: req.user.userId,
     });
 
-    // Verify doctor has appointments with this patient
-    const filters = {
-      doctorId,
-      patientId,
-    };
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
+    // Get complete patient details (users + patients table joined)
+    const patientRepository = require("../repositories/patientRepository");
+    const {
+      mapPatientData,
+      mapAppointmentData,
+      mapPrescriptionData,
+      mapMedicalRecordData,
+      mapArray,
+    } = require("../utils/fieldMapper");
 
-    const patientAppointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const dbPatient = await patientRepository.findByUserId(patientId);
 
-    if (!patientAppointments || patientAppointments.length === 0) {
-      return res.status(403).json({
-        success: false,
-        message: "You do not have access to this patient's records",
-      });
-    }
-
-    // Get patient details
-    const patient = await userRepository.findById(patientId);
-
-    if (!patient) {
+    if (!dbPatient) {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
       });
     }
 
-    // Get appointment history (already fetched above)
-    const appointments = patientAppointments.slice(0, 10);
+    // Map patient data to camelCase format
+    const patient = mapPatientData(dbPatient);
 
-    // Get medical records (note: medical record repository not available, keeping this as TODO)
+    // Get appointments based on role
+    let patientAppointments = [];
+    
+    if (userRole === "doctor") {
+      // Doctors only see their own appointments with this patient
+      const filters = {
+        doctorId: userId,
+        patientId,
+      };
+      if (req.hospitalId && req.user.role !== "super_admin") {
+        filters.hospitalId = req.hospitalId;
+      }
+      patientAppointments = await appointmentRepository.findByDoctor(userId, filters);
+
+      // Verify doctor has relationship with patient
+      if (!patientAppointments || patientAppointments.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have access to this patient's records",
+        });
+      }
+    } else if (userRole === "admin") {
+      // Admins see all appointments for this patient
+      const filters = {
+        patientId,
+      };
+      if (req.hospitalId) {
+        filters.hospitalId = req.hospitalId;
+      }
+      patientAppointments = await appointmentRepository.findByPatient(patientId, filters);
+    }
+
+    // Map appointments to camelCase
+    const appointments = mapArray(patientAppointments.slice(0, 10), mapAppointmentData);
+
+    // Get medical records from MongoDB
     const MedicalRecord = require("../models/MedicalRecord");
     const medicalRecordsQuery = {
       patientId,
-      doctorId,
     };
+    
+    // Doctors only see their own records, admins see all
+    if (userRole === "doctor") {
+      medicalRecordsQuery.doctorId = userId;
+    }
+    
     if (req.hospitalId && req.user.role !== "super_admin") {
       medicalRecordsQuery.hospitalId = req.hospitalId;
     }
 
-    const medicalRecords = await MedicalRecord.find(medicalRecordsQuery)
-      .select("recordType title date diagnosis")
+    const dbMedicalRecords = await MedicalRecord.find(medicalRecordsQuery)
+      .select("recordType title date diagnosis symptoms vitalSigns createdAt")
       .sort({ date: -1 })
       .limit(10)
       .lean();
 
+    // Map medical records to proper format
+    const medicalRecords = mapArray(dbMedicalRecords, mapMedicalRecordData);
+
     // Get prescriptions
     const prescriptionFilters = {
-      doctorId,
       patientId,
       limit: 10,
     };
+    
+    // Doctors only see their own prescriptions, admins see all
+    if (userRole === "doctor") {
+      prescriptionFilters.doctorId = userId;
+    }
+    
     if (req.hospitalId && req.user.role !== "super_admin") {
       prescriptionFilters.hospitalId = req.hospitalId;
     }
 
-    const prescriptions = await prescriptionRepository.findByDoctor(doctorId, prescriptionFilters);
+    const dbPrescriptions = userRole === "doctor" 
+      ? await prescriptionRepository.findByDoctor(userId, prescriptionFilters)
+      : await prescriptionRepository.findByPatient(patientId, prescriptionFilters);
+
+    // Map prescriptions to proper format
+    const prescriptions = mapArray(dbPrescriptions, mapPrescriptionData);
 
     logger.info("Patient details retrieved:", {
       patientId,
+      role: userRole,
       appointmentsCount: appointments.length,
       medicalRecordsCount: medicalRecords.length,
       prescriptionsCount: prescriptions.length,
@@ -540,7 +587,8 @@ exports.getPatientDetails = async (req, res) => {
     logger.error("Get patient details error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      userId: req.user?._id,
+      role: req.user?.role,
       patientId: req.params?.patientId,
     });
     res.status(500).json({

@@ -7,6 +7,7 @@ require("dotenv").config();
 // DNS FIX: Resolve MongoDB SRV connection issues on Windows
 // =============================================================================
 const dns = require("dns");
+const logger = require("./src/utils/logger");
 
 // CRITICAL: Override localhost DNS with public DNS servers (Google DNS)
 // This fixes the 127.0.0.1 DNS issue that prevents SRV resolution
@@ -31,13 +32,13 @@ const requiredEnvVars = [
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.error("❌ FATAL: Missing required environment variables:");
-  missingVars.forEach(varName => console.error(`   - ${varName}`));
-  console.error("\n💡 Please check your .env file and ensure all variables are set.");
+  logger.error("❌ FATAL: Missing required environment variables:");
+  missingVars.forEach(varName => logger.error(`   - ${varName}`));
+  logger.error("\n💡 Please check your .env file and ensure all variables are set.");
   process.exit(1);
 }
 
-console.log("✅ All required environment variables validated");
+logger.info("✅ All required environment variables validated");
 
 // Environment validated - ready to start
 
@@ -52,7 +53,6 @@ const connectDB = require("./src/config/database");
 const { connectPostgres, closePool } = require("./src/config/postgres");
 const { connectRedis, closeRedis } = require("./src/config/redis");
 const { errorHandler } = require("./src/middleware/errorHandler");
-const logger = require("./src/utils/logger");
 const { initAuth, getAuth } = require("./src/lib/auth");
 const { toNodeHandler } = require("better-auth/node");
 
@@ -188,6 +188,9 @@ app.all("/api/auth/*", (req, res, next) => {
 // Body parser - MUST come AFTER Better Auth but BEFORE custom routes
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Disable ETags to prevent 304 Not Modified responses (causes frontend cache issues)
+app.set('etag', false);
 
 // API Routes (custom routes that extend Better Auth)
 // Mount custom auth endpoints on /api/user to avoid conflict with Better Auth's /api/auth/*

@@ -12,7 +12,7 @@ class AppointmentService {
      */
     async createAppointment(appointmentData) {
         const response = await api.post('/appointments', appointmentData);
-        return response.data?.data || response.data;
+        return response.data;
     }
 
     /**
@@ -26,7 +26,7 @@ class AppointmentService {
             );
             const params = new URLSearchParams(cleanFilters).toString();
             const response = await api.get(`/appointments/cursor?${params}`);
-            return response.data?.data || response.data;
+            return response.data;
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAppointmentsCursor' });
             throw error;
@@ -44,7 +44,7 @@ class AppointmentService {
             );
             const params = new URLSearchParams(cleanFilters).toString();
             const response = await api.get(`/appointments/patient/${patientId}/cursor?${params}`);
-            return response.data?.data || response.data;
+            return response.data;
         } catch (error) {
             logError(error, { context: 'AppointmentService.getPatientAppointmentsCursor', patientId });
             throw error;
@@ -62,7 +62,7 @@ class AppointmentService {
             );
             const params = new URLSearchParams(cleanFilters).toString();
             const response = await api.get(`/appointments/doctor/${doctorId}/cursor?${params}`);
-            return response.data?.data || response.data;
+            return response.data;
         } catch (error) {
             logError(error, { context: 'AppointmentService.getDoctorAppointmentsCursor', doctorId });
             throw error;
@@ -78,7 +78,7 @@ class AppointmentService {
             const params = new URLSearchParams(filters).toString();
             // Use main endpoint - backend handles admin access automatically
             const response = await api.get(`/appointments?${params}`);
-            return response.data?.data || response.data;
+            return response.data;
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAllAppointments' });
             throw error;
@@ -91,7 +91,7 @@ class AppointmentService {
     async getAppointments(filters = {}) {
         const params = new URLSearchParams(filters).toString();
         const response = await api.get(`/appointments?${params}`);
-        return response.data?.data || response.data;
+        return response.data;
     }
 
     /**

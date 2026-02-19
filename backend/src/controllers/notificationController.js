@@ -16,7 +16,7 @@ exports.getUserNotifications = async (req, res) => {
     const { page = 1, limit = 20, read } = req.query;
     const userId = req.user.userId;
 
-    const query = { userId: req.user._id };
+    const query = { userId: req.user.userId };
     if (read !== undefined) {
       query.read = read === "true";
     }

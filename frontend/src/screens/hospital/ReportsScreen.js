@@ -23,6 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import { medicalRecordService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { formatDate } from "../../utils/helpers";
 
 const ReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
@@ -70,7 +71,7 @@ const ReportsScreen = ({ navigation }) => {
   const handleReportPress = (report) => {
     Alert.alert(
       "Report Details",
-      `Type: ${report.recordType || report.type || "N/A"}\nPatient: ${report.patientId?.name || "N/A"}\nDate: ${formatDate(report.createdAt)}`,
+      `Type: ${report.recordType || report.type || "N/A"}\nPatient: ${report.patientName || "N/A"}\nDate: ${formatDate(report.createdAt)}`,
       [{ text: "OK" }]
     );
   };
@@ -96,7 +97,7 @@ const ReportsScreen = ({ navigation }) => {
               {item.recordType || item.type || "Medical Record"}
             </Text>
             <Text style={styles.patientName}>
-              Patient: {item.patientId?.name || "Unknown"}
+              Patient: {item.patientName || "Unknown"}
             </Text>
             <Text style={styles.reportDate}>{formatDate(item.createdAt)}</Text>
           </View>

@@ -2,14 +2,12 @@ const mongoose = require('mongoose');
 
 const medicalRecordSchema = new mongoose.Schema({
     patientId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true,
         index: true,
     },
     doctorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true,
     },
     hospitalId: {
@@ -87,7 +85,7 @@ const medicalRecordSchema = new mongoose.Schema({
         default: false,
     },
     sharedWith: [{
-        userId: mongoose.Schema.Types.ObjectId,
+        userId: String,
         sharedDate: Date,
     }],
 }, {

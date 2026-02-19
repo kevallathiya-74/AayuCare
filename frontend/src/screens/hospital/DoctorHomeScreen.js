@@ -182,8 +182,7 @@ const DoctorHomeScreen = ({ navigation }) => {
     async (appointment) => {
       try {
         const appointmentId = appointment._id || appointment.id;
-        const patientName =
-          appointment.patientName || appointment.patient?.name || "Patient";
+        const patientName = appointment.patientName || "Patient";
 
         await doctorService.updateAppointmentStatus(
           appointmentId,

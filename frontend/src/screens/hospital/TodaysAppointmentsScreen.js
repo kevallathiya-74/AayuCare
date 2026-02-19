@@ -175,7 +175,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         const appointmentId = item.id || item._id;
         Alert.alert(
           "Appointment Details",
-          `Patient: ${item.patient?.name || item.patientName}\nTime: ${item.timeSlot || item.time}`,
+          `Patient: ${item.patientName || "Unknown"}\nTime: ${item.timeSlot || item.time}`,
           [{ text: "OK" }]
         );
         // navigation.navigate("AppointmentDetails", { appointmentId });
@@ -183,7 +183,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       activeOpacity={0.7}
       accessible={true}
       accessibilityRole="button"
-      accessibilityLabel={`Appointment with ${item.patient?.name || item.patientName} at ${item.timeSlot || item.time}, ${getStatusLabel(item.status)}`}
+      accessibilityLabel={`Appointment with ${item.patientName || "Patient"} at ${item.timeSlot || item.time}, ${getStatusLabel(item.status)}`}
     >
       <View style={styles.cardLeft}>
         <View style={styles.avatar}>
@@ -191,7 +191,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         </View>
         <View style={styles.patientInfo}>
           <Text style={styles.patientName}>
-            {item.patient?.name || item.patientName}
+            {item.patientName || "Unknown Patient"}
           </Text>
           <Text style={styles.reason}>
             {item.reasonForVisit || item.reason}
