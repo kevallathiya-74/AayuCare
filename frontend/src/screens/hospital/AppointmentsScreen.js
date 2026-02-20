@@ -27,6 +27,7 @@ import { logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useAppointmentsInfinite } from "../../hooks/useAppointments";
+import { EmptyState } from "../../components/common";
 
 const AppointmentsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -154,27 +155,13 @@ const AppointmentsScreen = ({ navigation }) => {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="calendar-outline"
-        size={80}
-        color={healthColors.text.tertiary}
-      />
-      <Text style={styles.emptyTitle}>No Appointments</Text>
-      <Text style={styles.emptySubtitle}>
-        {error?.message || "Appointments will appear here"}
-      </Text>
-      {error && (
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={refetch}
-          accessibilityRole="button"
-          accessibilityLabel="Retry loading appointments"
-        >
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    <EmptyState
+      icon="calendar-outline"
+      title="No Appointments"
+      message={error?.message || "Appointments will appear here."}
+      actionLabel={error ? "Retry" : undefined}
+      onActionPress={error ? refetch : undefined}
+    />
   );
 
   return (
@@ -218,7 +205,7 @@ const AppointmentsScreen = ({ navigation }) => {
         <FlatList
           data={appointments}
           renderItem={renderAppointment}
-          keyExtractor={(item) => item._id || String(Math.random())}
+          keyExtractor={(item, index) => item._id || item.id || `appointment-${index}`}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -260,13 +247,14 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   header: {
+    height: theme.layout.headerHeight,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: 40,
@@ -285,20 +273,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.xl,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   listContent: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
     flexGrow: 1,
   },
   appointmentCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.card,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
+    marginTop: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   appointmentHeader: {
     flexDirection: "row",
@@ -317,7 +306,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   doctorName: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.h6,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -355,39 +344,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: theme.spacing.md,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: theme.spacing.xxxxl,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptySubtitle: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.xs,
-    textAlign: "center",
-  },
-  retryButton: {
-    marginTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    backgroundColor: healthColors.primary.main,
-    borderRadius: theme.borderRadius.md,
-  },
-  retryText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
   },
   footerLoader: {
     paddingVertical: theme.spacing.md,

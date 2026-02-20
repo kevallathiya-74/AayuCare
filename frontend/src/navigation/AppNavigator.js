@@ -14,6 +14,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
 import { loadUser } from "../store/slices/authSlice";
 import { healthColors } from "../theme/healthColors";
+import logger from "../utils/logger";
 
 // Splash & Selection
 import BoxSelectionScreen from "../screens/splash/BoxSelectionScreen";
@@ -77,7 +78,7 @@ const AppNavigator = () => {
   const navigationRef = useRef(null);
   const authInitialized = useRef(false); // Prevent multiple auth checks
 
-  console.log("[AppNavigator] Rendering - Auth state:", {
+  logger.debug("AppNavigator", "Rendering auth state", {
     isAuthenticated,
     user: user?.id,
     isLoading,
@@ -87,7 +88,7 @@ const AppNavigator = () => {
   useEffect(() => {
     // Prevent multiple auth initializations
     if (authInitialized.current) {
-      console.log("[AppNavigator] Auth already initialized, skipping");
+      logger.debug("AppNavigator", "Auth already initialized, skipping");
       return;
     }
 
@@ -96,12 +97,13 @@ const AppNavigator = () => {
     // Load user asynchronously with error handling
     const initAuth = async () => {
       try {
-        console.log("[AppNavigator] Initializing auth (ONCE)...");
+        logger.debug("AppNavigator", "Initializing auth (once)");
         await dispatch(loadUser()).unwrap();
-        console.log("[AppNavigator] Auth initialized successfully");
+        logger.debug("AppNavigator", "Auth initialized successfully");
       } catch (error) {
-        console.error(
-          "[AppNavigator] Auth initialization error:",
+        logger.error(
+          "AppNavigator",
+          "Auth initialization error",
           error?.message || error
         );
         // Continue anyway - auth will default to logged out state
@@ -117,16 +119,18 @@ const AppNavigator = () => {
       const currentRoute = navigationRef.current.getCurrentRoute();
       const userRole = user.role;
 
-      console.log(
-        "[AppNavigator] User authenticated, current route:",
+      logger.debug(
+        "AppNavigator",
+        "User authenticated on route",
         currentRoute?.name
       );
-      console.log("[AppNavigator] User role:", userRole);
+      logger.debug("AppNavigator", "User role", userRole);
 
       // Don't auto-navigate if on splash screen (let splash handle it)
       if (currentRoute && currentRoute.name === "SplashScreen") {
-        console.log(
-          "[AppNavigator] On splash screen, letting it handle navigation"
+        logger.debug(
+          "AppNavigator",
+          "On splash screen, navigation handled there"
         );
         return;
       }
@@ -140,12 +144,12 @@ const AppNavigator = () => {
 
       const targetScreen = roleScreens[userRole];
       if (currentRoute && currentRoute.name === targetScreen) {
-        console.log("[AppNavigator] Already on correct screen:", targetScreen);
+        logger.debug("AppNavigator", "Already on correct screen", targetScreen);
         return;
       }
 
       // Navigate to appropriate tab navigator based on role
-      console.log("[AppNavigator] Navigating to:", targetScreen);
+      logger.debug("AppNavigator", "Navigating to target", targetScreen);
       setTimeout(() => {
         if (userRole === "admin") {
           navigationRef.current?.reset({
@@ -180,7 +184,7 @@ const AppNavigator = () => {
       ];
 
       if (currentRoute && !authScreens.includes(currentRoute.name)) {
-        console.log("[AppNavigator] User logged out, navigating to Login");
+        logger.debug("AppNavigator", "Logged out, navigating to Login");
         navigationRef.current.reset({
           index: 0,
           routes: [{ name: "Login" }],

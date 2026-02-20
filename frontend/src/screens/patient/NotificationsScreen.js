@@ -27,6 +27,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatTime } from "../../utils/helpers";
 import { notificationService } from "../../services";
+import logger from "../../utils/logger";
 
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -40,20 +41,17 @@ const NotificationsScreen = ({ navigation }) => {
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
-    console.log('[NotificationsScreen] Fetching notifications...');
-    console.log('[NotificationsScreen] User:', user);
-    console.log('[NotificationsScreen] User ID:', user?.id);
-    console.log('[NotificationsScreen] Is Connected:', isConnected);
+    logger.debug("NotificationsScreen", "Fetching notifications");
     
     if (!user?.id) {
-      console.error('[NotificationsScreen] User not found or no user ID');
+      logger.error("NotificationsScreen", "User not found or missing user ID");
       setError("User not found");
       setLoading(false);
       return;
     }
 
     if (!isConnected) {
-      console.error('[NotificationsScreen] No internet connection');
+      logger.error("NotificationsScreen", "No internet connection");
       showError("No internet connection");
       setLoading(false);
       return;
@@ -61,22 +59,22 @@ const NotificationsScreen = ({ navigation }) => {
 
     try {
       setError(null);
-      console.log('[NotificationsScreen] Calling notification service...');
+      logger.debug("NotificationsScreen", "Calling notification service");
       const response = await notificationService.getNotifications(1, 50);
-      console.log('[NotificationsScreen] Response:', response);
+      logger.debug("NotificationsScreen", "Notification response received");
 
       if (response?.success) {
         // Backend returns { success, data: [...], unreadCount }
         const notificationData = response.data || [];
-        console.log('[NotificationsScreen] Notifications count:', notificationData.length);
+        logger.debug("NotificationsScreen", "Notifications count", notificationData.length);
         setNotifications(notificationData);
         setUnreadCount(response.unreadCount || 0);
       } else {
-        console.error('[NotificationsScreen] Response not successful:', response);
+        logger.error("NotificationsScreen", "Response not successful", response);
         setError("Failed to load notifications");
       }
     } catch (err) {
-      console.error('[NotificationsScreen] Error fetching notifications:', err);
+      logger.error("NotificationsScreen", "Error fetching notifications", err);
       logError(err, { context: "NotificationsScreen.fetchNotifications" });
       setError("Unable to fetch notifications");
     } finally {

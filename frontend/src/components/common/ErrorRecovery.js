@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import { verticalScale } from "../../utils/responsive";
@@ -116,30 +116,25 @@ const ErrorRecovery = ({
 
   return (
     <View style={styles.container}>
-      {/* Error Icon */}
       <View
         style={[
           styles.iconContainer,
           { backgroundColor: errorInfo.iconColor + "15" },
         ]}
       >
-        <Ionicons name={errorInfo.icon} size={60} color={errorInfo.iconColor} />
+        <Ionicons name={errorInfo.icon} size={36} color={errorInfo.iconColor} />
       </View>
 
-      {/* Title */}
       <Text style={styles.title}>{errorInfo.title}</Text>
-
-      {/* Message */}
       <Text style={styles.message}>{errorInfo.message}</Text>
 
-      {/* Suggestions */}
       <View style={styles.suggestionsContainer}>
         <Text style={styles.suggestionsTitle}>What you can do:</Text>
         {errorInfo.suggestions.map((suggestion, index) => (
           <View key={index} style={styles.suggestionItem}>
             <Ionicons
               name="checkmark-circle"
-              size={20}
+              size={16}
               color={healthColors.success.main}
               style={styles.suggestionIcon}
             />
@@ -148,7 +143,6 @@ const ErrorRecovery = ({
         ))}
       </View>
 
-      {/* Action Buttons */}
       <View style={styles.actionsContainer}>
         {showRetry && onRetry && (
           <TouchableOpacity
@@ -200,59 +194,58 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
     backgroundColor: healthColors.background.primary,
   },
   iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   title: {
-    fontSize: theme.typography.sizes.xxxxl,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
     textAlign: "center",
   },
   message: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     textAlign: "center",
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.lg,
-    lineHeight: theme.typography.sizes.lg * 1.5,
+    marginBottom: theme.spacing.lg,
+    lineHeight: theme.typography.sizes.bodyMedium * 1.4,
   },
   suggestionsContainer: {
     width: "100%",
     backgroundColor: healthColors.background.secondary,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    ...theme.shadows.md,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.sm,
   },
   suggestionsTitle: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: "600",
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   suggestionItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   suggestionIcon: {
-    marginRight: theme.spacing.sm,
+    marginRight: theme.spacing.xs,
   },
   suggestionText: {
     flex: 1,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.text.secondary,
-    lineHeight: theme.typography.sizes.sm * 1.5,
+    lineHeight: theme.typography.sizes.bodySmall * 1.4,
   },
   actionsContainer: {
     width: "100%",
@@ -263,14 +256,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.primary.main,
-    paddingVertical: theme.spacing.md,
+    minHeight: theme.touchTargets.min,
     borderRadius: theme.borderRadius.md,
     gap: theme.spacing.sm,
-    ...theme.shadows.lg,
+    ...theme.shadows.sm,
   },
   primaryButtonText: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: "600",
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.white,
   },
   secondaryButton: {
@@ -278,15 +271,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.white,
-    paddingVertical: theme.spacing.md,
+    minHeight: theme.touchTargets.min,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: healthColors.primary.main,
     gap: theme.spacing.sm,
   },
   secondaryButtonText: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: "600",
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   supportButton: {
@@ -294,13 +287,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: healthColors.background.secondary,
-    paddingVertical: theme.spacing.md,
+    minHeight: theme.touchTargets.min,
     borderRadius: theme.borderRadius.md,
     gap: theme.spacing.sm,
   },
   supportButtonText: {
-    fontSize: theme.typography.sizes.sm,
-    fontWeight: "500",
+    fontSize: theme.typography.sizes.bodySmall,
+    fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
 });

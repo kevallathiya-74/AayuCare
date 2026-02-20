@@ -424,7 +424,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           )}
         </View>
 
-        <View style={{ height: 80 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -707,6 +707,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
+  },
+  bottomSpacer: {
+    height: 80,
   },
 });
 

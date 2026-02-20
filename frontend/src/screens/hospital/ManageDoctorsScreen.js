@@ -19,13 +19,14 @@ import {
 } from "react-native";
 import {
   SafeAreaView,
-  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import logger from "../../utils/logger";
+import { EmptyState } from "../../components/common";
 import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 
@@ -40,8 +41,6 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
-  const insets = useSafeAreaInsets();
-
   const fetchDoctors = useCallback(async (searchTerm = "") => {
     try {
       setError(null);
@@ -49,13 +48,9 @@ const ManageDoctorsScreen = ({ navigation }) => {
         setSearchLoading(true);
       }
       const response = await doctorService.getAllDoctors(searchTerm ? { search: searchTerm } : {});
-      console.log('[ManageDoctors] API Response:', response);
-      console.log('[ManageDoctors] Data:', response?.data);
-      
       // Backend returns { doctors: [], pagination: {} } after service unwraps it
       const doctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
-      console.log('[ManageDoctors] Doctors list:', doctorsList);
-      console.log(`[SUCCESS] Loaded ${doctorsList.length} doctors`);
+      logger.debug("ManageDoctorsScreen", `Loaded ${doctorsList.length} doctors`);
       setDoctors(doctorsList);
     } catch (err) {
       logError(err, { context: "ManageDoctorsScreen.fetchDoctors" });
@@ -98,13 +93,11 @@ const ManageDoctorsScreen = ({ navigation }) => {
 
   const handleToggleStatus = useCallback(async (doctor) => {
     const newStatus = !doctor.isActive;
-
-    console.log('[STATUS_UPDATE] Doctor info:', {
-      _id: doctor._id,
+    logger.debug("ManageDoctorsScreen", "Updating doctor status", {
+      doctorId: doctor._id,
       userId: doctor.userId,
-      name: doctor.name,
       currentStatus: doctor.isActive,
-      requestedStatus: newStatus
+      requestedStatus: newStatus,
     });
 
     Alert.alert(
@@ -117,17 +110,10 @@ const ManageDoctorsScreen = ({ navigation }) => {
           onPress: async () => {
             setUpdatingId(doctor._id);
             try {
-              console.log('[STATUS_UPDATE] Sending request...', {
-                userId: doctor.userId,
-                newStatus
-              });
-              
               const response = await adminService.updateUserStatus(doctor.userId, newStatus);
-              
-              console.log('[STATUS_UPDATE] Response received:', {
+              logger.debug("ManageDoctorsScreen", "Status update response", {
                 success: response.success,
-                data: response.data,
-                dataIsActive: response.data?.isActive
+                updatedStatus: response.data?.isActive,
               });
               
               // Update local state immediately with server response
@@ -135,10 +121,6 @@ const ManageDoctorsScreen = ({ navigation }) => {
                 setDoctors((prev) =>
                   prev.map((d) => {
                     if (d._id === doctor._id) {
-                      console.log('[STATUS_UPDATE] Updating doctor in state:', {
-                        oldStatus: d.isActive,
-                        newStatus: response.data.isActive
-                      });
                       return { ...d, isActive: response.data.isActive };
                     }
                     return d;
@@ -148,7 +130,6 @@ const ManageDoctorsScreen = ({ navigation }) => {
               
               // Also refetch to ensure consistency
               setTimeout(() => {
-                console.log('[STATUS_UPDATE] Refetching doctors list...');
                 fetchDoctors(searchQuery.trim());
               }, 500);
               
@@ -157,7 +138,6 @@ const ManageDoctorsScreen = ({ navigation }) => {
                 `Doctor ${newStatus ? "activated" : "deactivated"} successfully`
               );
             } catch (err) {
-              console.error('[STATUS_UPDATE] Error:', err);
               logError(err, {
                 context: "ManageDoctorsScreen.handleToggleStatus",
               });
@@ -235,6 +215,12 @@ const ManageDoctorsScreen = ({ navigation }) => {
 
               // Better error handling
               let errorMessage = "Failed to permanently delete doctor";
+              if (err?.response?.data?.message) {
+                errorMessage = err.response.data.message;
+              } else if (err?.message) {
+                errorMessage = err.message;
+              }
+              Alert.alert("Error", errorMessage);
             } finally {
               setUpdatingId(null);
             }
@@ -382,27 +368,13 @@ const ManageDoctorsScreen = ({ navigation }) => {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="people-outline"
-        size={80}
-        color={healthColors.text.tertiary}
-      />
-      <Text style={styles.emptyTitle}>No Doctors Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        {error || "Doctor management will appear here"}
-      </Text>
-      {error && (
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={fetchDoctors}
-          accessibilityRole="button"
-          accessibilityLabel="Retry loading doctors"
-        >
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    <EmptyState
+      icon="people-outline"
+      title="No Doctors Yet"
+      message={error || "Doctor management data will appear here."}
+      actionLabel={error ? "Retry" : undefined}
+      onActionPress={error ? () => fetchDoctors(searchQuery.trim()) : undefined}
+    />
   );
 
   return (
@@ -489,7 +461,7 @@ const ManageDoctorsScreen = ({ navigation }) => {
         <FlatList
           data={doctors}
           renderItem={renderDoctor}
-          keyExtractor={(item) => item._id || String(Math.random())}
+          keyExtractor={(item, index) => item._id || item.id || `doctor-${index}`}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
@@ -531,13 +503,14 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   header: {
+    height: theme.layout.headerHeight,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: 40,
@@ -556,43 +529,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.xl,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   searchSection: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm + theme.spacing.xs,
+    paddingBottom: theme.spacing.sm + theme.spacing.xs,
     backgroundColor: healthColors.background.primary,
   },
   searchInputWrapper: {
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.background.card,
+    backgroundColor: healthColors.neutral.gray100,
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
     gap: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    paddingVertical: 8,
   },
   listContent: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
     flexGrow: 1,
   },
   doctorCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.card,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
+    marginTop: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   doctorHeader: {
     flexDirection: "row",
@@ -614,7 +585,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   doctorName: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.h6,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -664,39 +635,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: theme.spacing.md,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: theme.spacing.xxxxl,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptySubtitle: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.xs,
-    textAlign: "center",
-  },
-  retryButton: {
-    marginTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    backgroundColor: healthColors.primary.main,
-    borderRadius: theme.borderRadius.md,
-  },
-  retryText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
   },
   actionButtons: {
     flexDirection: "row",

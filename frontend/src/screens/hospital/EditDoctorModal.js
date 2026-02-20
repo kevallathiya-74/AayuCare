@@ -21,6 +21,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
+import logger from "../../utils/logger";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -60,7 +61,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
   // Pre-fill form when doctor data is provided
   useEffect(() => {
     if (doctor && visible) {
-      console.log('[EditDoctor] Pre-filling form with:', doctor);
+      logger.debug("EditDoctorModal", "Pre-filling form", doctor);
       
       const formValues = {
         name: doctor.name || "",
@@ -73,7 +74,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
         consultationFee: doctor.consultationFee?.toString() || "500",
       };
       
-      console.log('[EditDoctor] Form values:', formValues);
+      logger.debug("EditDoctorModal", "Derived form values", formValues);
       setFormData(formValues);
       setErrors({}); // Clear any previous errors
     }
@@ -168,7 +169,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
         }, 300);
       }
     } catch (error) {
-      console.error("Edit doctor error:", error);
+      logger.error("EditDoctorModal", "Edit doctor error", error);
 
       // Better error handling
       let errorMessage = "Failed to update doctor profile. Please try again.";

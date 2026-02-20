@@ -347,7 +347,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <View style={{ height: 80 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -489,6 +489,9 @@ const styles = StyleSheet.create({
   supportText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
+  },
+  bottomSpacer: {
+    height: 80,
   },
 });
 

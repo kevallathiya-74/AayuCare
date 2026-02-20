@@ -179,7 +179,7 @@ const EmergencyServices = ({ navigation }) => {
             <Text style={styles.headerSubtitle}>Quick access to help</Text>
           </View>
         </View>
-        <View style={{ width: 24 }} />
+        <View style={styles.headerRightSpacer} />
       </LinearGradient>
 
       <ScrollView
@@ -557,6 +557,9 @@ const styles = StyleSheet.create({
     color: healthColors.text.tertiary,
     lineHeight: 16,
     marginLeft: theme.spacing.sm,
+  },
+  headerRightSpacer: {
+    width: 24,
   },
 });
 

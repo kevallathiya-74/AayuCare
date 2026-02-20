@@ -23,6 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
+import logger from "../../utils/logger";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -91,10 +92,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      // DEBUG: Log formData state at time of submission
-      console.log('=== FORM SUBMIT DEBUG ===');
-      console.log('Full formData:', JSON.stringify(formData, null, 2));
-      console.log('Address field specifically:', {
+      logger.debug("AddPatientModal", "Submitting patient form");
+      logger.debug("AddPatientModal", "Address diagnostics", {
         value: formData.address,
         type: typeof formData.address,
         length: formData.address ? formData.address.length : 0,
@@ -124,18 +123,17 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         patientData.bloodGroup = formData.bloodGroup;
       }
       if (formData.address && formData.address.trim()) {
-        console.log('ADDING address to patientData:', formData.address.trim());
+        logger.debug("AddPatientModal", "Adding address to payload");
         patientData.address = formData.address.trim();
       } else {
-        console.log('NOT adding address - condition failed:', {
+        logger.debug("AddPatientModal", "Address skipped due to empty value");
+        logger.debug("AddPatientModal", "Address empty condition diagnostics", {
           hasAddress: !!formData.address,
           addressValue: formData.address,
           trimValue: formData.address ? formData.address.trim() : ''
         });
       }
-
-      console.log('Final patientData being sent to API:', JSON.stringify(patientData, null, 2));
-      console.log('=== END FORM SUBMIT DEBUG ===');
+      logger.debug("AddPatientModal", "Submitting create user payload");
 
       // Call create API
       const response = await adminService.createUser(patientData);
@@ -156,7 +154,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         }, 300);
       }
     } catch (error) {
-      console.error("Add patient error:", error);
+      logger.error("AddPatientModal", "Add patient error", error);
 
       // Better error handling
       let errorMessage = "Failed to register patient. Please try again.";
@@ -275,18 +273,16 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           style={[styles.input, multiline && styles.textArea]}
           value={formData[key]}
           onChangeText={(value) => {
-            // DEBUG: Log address field changes
             if (key === 'address') {
-              console.log('Address field changed:', {
+              logger.debug("AddPatientModal", "Address changed", {
                 newValue: value,
                 length: value ? value.length : 0,
                 type: typeof value
               });
             }
             setFormData({ ...formData, [key]: value });
-            // DEBUG: Log state after update for address
             if (key === 'address') {
-              console.log('formData after setState:', { ...formData, [key]: value });
+              logger.debug("AddPatientModal", "Address state updated");
             }
             if (errors[key]) {
               setErrors({ ...errors, [key]: null });

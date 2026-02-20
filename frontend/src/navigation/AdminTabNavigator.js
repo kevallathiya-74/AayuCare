@@ -7,7 +7,6 @@
 import React, { useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { Platform } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme/healthColors";
@@ -75,7 +74,7 @@ const AdminTabsInner = () => {
           paddingTop: 8,
           height: tabBarHeight,
           elevation: 8,
-          shadowColor: "#000",
+          shadowColor: healthColors.shadows.medium,
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,

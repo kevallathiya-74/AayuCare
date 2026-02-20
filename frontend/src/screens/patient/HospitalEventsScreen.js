@@ -27,6 +27,7 @@ import {
   verticalScale,
 } from "../../utils/responsive";
 import { showError, logError } from "../../utils/errorHandler";
+import logger from "../../utils/logger";
 import { eventService } from "../../services";
 
 const HospitalEventsScreen = ({ navigation }) => {
@@ -43,12 +44,12 @@ const HospitalEventsScreen = ({ navigation }) => {
       setError(null);
 
       const response = await eventService.getUpcomingEvents({ limit: 50 });
-      console.log("[HospitalEvents] Response:", response);
+      logger.debug("HospitalEventsScreen", "Fetched upcoming events response");
 
       const eventData = response?.data || response || [];
       const eventsArray = Array.isArray(eventData) ? eventData : [];
 
-      console.log("[HospitalEvents] Events count:", eventsArray.length);
+      logger.debug("HospitalEventsScreen", "Events count", eventsArray.length);
       setEvents(eventsArray);
     } catch (err) {
       const errorMessage =

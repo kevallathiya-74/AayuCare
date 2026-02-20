@@ -122,7 +122,7 @@ const DoctorProfileScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
-        backgroundColor={healthColors.background.main}
+        backgroundColor={healthColors.background.primary}
       />
 
       <ScrollView
@@ -253,13 +253,13 @@ const DoctorProfileScreen = ({ navigation }) => {
             <Ionicons
               name="log-out-outline"
               size={22}
-              color={healthColors.error}
+              color={healthColors.error.main}
             />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={{ height: verticalScale(20) }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -268,7 +268,7 @@ const DoctorProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: healthColors.background.main,
+    backgroundColor: healthColors.background.primary,
   },
   header: {
     padding: getScreenPadding(),
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   logoutSection: {
@@ -382,13 +382,16 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: healthColors.error,
+    borderColor: healthColors.error.main,
   },
   logoutText: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
-    color: healthColors.error,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.error.main,
     marginLeft: 8,
+  },
+  bottomSpacer: {
+    height: verticalScale(20),
   },
 });
 

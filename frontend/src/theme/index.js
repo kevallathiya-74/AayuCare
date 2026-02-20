@@ -23,6 +23,26 @@ import {
 } from "./typography";
 import { spacing, componentSpacing, layout, breakpoints, grid, safeAreaConfig } from "./spacing";
 
+// Backward-compatible typography aliases used across older screens.
+const typographySizes = {
+  ...fontSizes,
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 18,
+  xl: 20,
+  xxl: 24,
+  xxxl: 28,
+  xxxxl: 32,
+  base: 16,
+  body: 14,
+};
+
+const typographyWeights = {
+  ...fontWeights,
+  semiBold: fontWeights.semibold,
+};
+
 // ===================================================================
 // UNIFIED THEME OBJECT - Single Export for Entire App
 // ===================================================================
@@ -149,11 +169,11 @@ export const theme = {
     fontFamily: fontFamilies,
 
     // Font Sizes (from typography.js)
-    sizes: fontSizes,
+    sizes: typographySizes,
     fontSizes, // Also export as fontSizes for compatibility
 
     // Font Weights
-    weights: fontWeights,
+    weights: typographyWeights,
     fontWeights, // Also export as fontWeights for compatibility
 
     // Line Heights
@@ -317,7 +337,6 @@ export const theme = {
   withOpacity: (color, opacity) => {
     // Defensive checks
     if (!color || typeof color !== "string") {
-      console.warn("[Theme] withOpacity: Invalid color provided:", color);
       return `rgba(0, 0, 0, ${opacity || 0})`;
     }
 

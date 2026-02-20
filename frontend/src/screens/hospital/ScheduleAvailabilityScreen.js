@@ -166,7 +166,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Schedule & Availability</Text>
-          <View style={{ width: 24 }} />
+          <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={healthColors.primary.main} />
@@ -191,7 +191,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Schedule & Availability</Text>
-        <View style={{ width: 24 }} />
+        <View style={styles.headerRightSpacer} />
       </View>
 
       <ScrollView
@@ -689,6 +689,9 @@ const styles = StyleSheet.create({
     color: healthColors.text.tertiary,
     textAlign: "right",
     marginTop: 4,
+  },
+  headerRightSpacer: {
+    width: 24,
   },
 });
 

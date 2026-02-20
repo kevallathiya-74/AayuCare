@@ -23,6 +23,7 @@ import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import authService from "../../services/auth.service";
 import adminService from "../../services/admin.service";
+import logger from "../../utils/logger";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -160,7 +161,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
         }, 300);
       }
     } catch (error) {
-      console.error("Add doctor error:", error);
+      logger.error("AddDoctorModal", "Add doctor error", error);
 
       // Better error handling
       let errorMessage = "Failed to add doctor. Please try again.";

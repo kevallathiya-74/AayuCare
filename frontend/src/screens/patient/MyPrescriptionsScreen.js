@@ -212,7 +212,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         <FlatList
           data={prescriptions}
           renderItem={renderPrescription}
-          keyExtractor={(item) => item._id || item.id || String(Math.random())}
+          keyExtractor={(item, index) => item._id || item.id || `prescription-${index}`}
           contentContainerStyle={[
             styles.content,
             prescriptions.length === 0 && styles.emptyContent,

@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../theme";
+import logger from "../../utils/logger";
 const SplashScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
@@ -21,11 +22,11 @@ const SplashScreen = ({ navigation }) => {
     (state) => state.auth || {}
   );
 
-  console.log("[SplashScreen] Rendering...");
+  logger.debug("SplashScreen", "Rendering");
 
   useEffect(() => {
     try {
-      console.log("[SplashScreen] Starting animations...");
+      logger.debug("SplashScreen", "Starting animations");
 
       // Animate logo
       Animated.parallel([
@@ -52,9 +53,9 @@ const SplashScreen = ({ navigation }) => {
         })
       ).start();
 
-      console.log("[SplashScreen] Animations started");
+      logger.debug("SplashScreen", "Animations started");
     } catch (error) {
-      console.error("[SplashScreen] Animation error:", error);
+      logger.error("SplashScreen", "Animation error", error);
     }
   }, []);
 
@@ -62,17 +63,17 @@ const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     // Prevent multiple navigations
     if (hasNavigated.current) {
-      console.log("[SplashScreen] Already navigated, skipping");
+      logger.debug("SplashScreen", "Already navigated, skipping");
       return;
     }
 
     // Wait for auth loading to complete
     if (isLoading) {
-      console.log("[SplashScreen] Auth still loading...");
+      logger.debug("SplashScreen", "Auth still loading");
       return;
     }
 
-    console.log("[SplashScreen] Auth check complete:", {
+    logger.debug("SplashScreen", "Auth check complete", {
       isAuthenticated,
       user: user?.id,
     });
@@ -81,21 +82,18 @@ const SplashScreen = ({ navigation }) => {
     const timer = setTimeout(() => {
       // Set navigation flag inside timer to prevent race conditions
       if (hasNavigated.current) {
-        console.log("[SplashScreen] Already navigated in timer, skipping");
+        logger.debug("SplashScreen", "Already navigated in timer, skipping");
         return;
       }
       hasNavigated.current = true;
 
       if (!navigation) {
-        console.error("[SplashScreen] Navigation prop missing!");
+        logger.error("SplashScreen", "Navigation prop missing");
         return;
       }
 
       if (isAuthenticated && user) {
-        console.log(
-          "[SplashScreen] Authenticated - navigating based on role:",
-          user.role
-        );
+        logger.debug("SplashScreen", "Authenticated user role", user.role);
 
         // Navigate to role-specific tab navigator
         switch (user.role) {
@@ -109,13 +107,11 @@ const SplashScreen = ({ navigation }) => {
             navigation.replace("PatientTabs");
             break;
           default:
-            console.warn("[SplashScreen] Unknown role:", user.role);
+            logger.warn("SplashScreen", "Unknown role", user.role);
             navigation.replace("BoxSelection");
         }
       } else {
-        console.log(
-          "[SplashScreen] Not authenticated - navigating to BoxSelection"
-        );
+        logger.debug("SplashScreen", "Not authenticated - navigate to BoxSelection");
         navigation.replace("BoxSelection");
       }
     }, 1500); // 1.5s for splash animation

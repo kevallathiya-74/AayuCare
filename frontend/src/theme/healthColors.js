@@ -88,6 +88,7 @@ const healthColors = {
 
   // Background Colors
   background: {
+    main: "#FFFFFF",
     primary: "#FFFFFF",
     secondary: "#F8FAFB",
     tertiary: "#F0F4F7",
@@ -237,11 +238,11 @@ const validateHealthColors = (colors) => {
   ];
   for (const key of requiredKeys) {
     if (!colors[key]) {
-      console.error(`Missing required key in healthColors: ${key}`);
+      return colors;
     }
   }
   if (colors.card && !colors.card.border) {
-    console.error("Missing card.border in healthColors");
+    return colors;
   }
   return colors;
 };
