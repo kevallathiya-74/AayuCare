@@ -7,10 +7,8 @@
 import React, { useRef } from "react";
 import { View, StyleSheet, Pressable, Animated } from "react-native";
 import { theme, healthColors } from "../../theme";
-import { spacing, componentSpacing } from "../../theme/spacing";
 import {
   borderRadius as responsiveBorderRadius,
-  verticalScale,
 } from "../../utils/responsive";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -92,7 +90,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.card.border,
   },
   withPadding: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
   },
   elevationSmall: {
     ...theme.shadows.sm,

@@ -224,7 +224,7 @@ const AISymptomChecker = ({ navigation }) => {
         </View>
 
         {/* AI Tagline */}
-        <AITagline variant="gradient" style={{ marginTop: theme.spacing.lg }} />
+        <AITagline variant="gradient" style={styles.aiTagline} />
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
@@ -781,6 +781,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
+  },
+  aiTagline: {
+    marginTop: theme.spacing.lg,
   },
 });
 

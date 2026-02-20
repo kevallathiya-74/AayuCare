@@ -24,6 +24,7 @@ import { theme, healthColors } from "../../theme";
 import { medicalRecordService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
+import { EmptyState } from "../../components/common";
 
 const ReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
@@ -118,27 +119,13 @@ const ReportsScreen = ({ navigation }) => {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="document-text-outline"
-        size={80}
-        color={healthColors.text.tertiary}
-      />
-      <Text style={styles.emptyTitle}>No Reports</Text>
-      <Text style={styles.emptySubtitle}>
-        {error || "Medical reports will appear here"}
-      </Text>
-      {error && (
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={fetchReports}
-          accessibilityRole="button"
-          accessibilityLabel="Retry loading reports"
-        >
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    <EmptyState
+      icon="document-text-outline"
+      title="No Reports"
+      message={error || "Medical reports will appear here."}
+      actionLabel={error ? "Retry" : undefined}
+      onActionPress={error ? fetchReports : undefined}
+    />
   );
 
   return (
@@ -182,7 +169,7 @@ const ReportsScreen = ({ navigation }) => {
         <FlatList
           data={reports}
           renderItem={renderReport}
-          keyExtractor={(item) => item._id || String(Math.random())}
+          keyExtractor={(item, index) => item._id || item.id || `report-${index}`}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -209,13 +196,14 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   header: {
+    height: theme.layout.headerHeight,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: 40,
@@ -234,20 +222,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.xl,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
   listContent: {
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
     flexGrow: 1,
   },
   reportCard: {
     backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.card,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
+    marginTop: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   reportHeader: {
     flexDirection: "row",
@@ -266,7 +255,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reportType: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.h6,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textTransform: "capitalize",
@@ -295,39 +284,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: theme.spacing.md,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: theme.spacing.xxxxl,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptySubtitle: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.xs,
-    textAlign: "center",
-  },
-  retryButton: {
-    marginTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    backgroundColor: healthColors.primary.main,
-    borderRadius: theme.borderRadius.md,
-  },
-  retryText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
   },
 });
 

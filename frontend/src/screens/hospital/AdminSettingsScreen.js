@@ -255,7 +255,7 @@ const AdminSettingsScreen = ({ navigation }) => {
           )}
         </TouchableOpacity>
 
-        <View style={{ height: 40 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -385,6 +385,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.lg,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.error.main,
+  },
+  bottomSpacer: {
+    height: 40,
   },
 });
 

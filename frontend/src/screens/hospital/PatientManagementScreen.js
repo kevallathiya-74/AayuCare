@@ -33,6 +33,7 @@ import {
   medicalRecordService,
 } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import logger from "../../utils/logger";
 
 const PatientManagementScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,9 +73,9 @@ const PatientManagementScreen = ({ navigation, route }) => {
       const response = await patientService.getAllPatients();
       const patients = response?.patients || response?.data || [];
       setAllPatients(patients);
-      console.log(`[SUCCESS] Loaded ${patients.length} patients`);
+      logger.debug("PatientManagementScreen", `Loaded ${patients.length} patients`);
     } catch (err) {
-      console.error("[ERROR] Failed to load patients:", err);
+      logger.error("PatientManagementScreen", "Failed to load patients", err);
       logError(err, { context: "PatientManagementScreen.fetchAllPatients" });
       setError("Failed to load patients");
     } finally {
@@ -221,7 +222,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
           setSearchResults(patients);
           setShowSearchResults(patients.length > 0);
         } catch (err) {
-          console.error("[ERROR] Real-time search error:", err);
+          logger.error("PatientManagementScreen", "Real-time search error", err);
           logError(err, { context: "PatientManagementScreen.realtimeSearch" });
           setSearchResults([]);
           setShowSearchResults(false);
@@ -247,17 +248,17 @@ const PatientManagementScreen = ({ navigation, route }) => {
 
       try {
         const patientId = patient.userId || patient._id;
-        console.log("[INFO] Fetching patient data for:", patientId);
+        logger.debug("PatientManagementScreen", "Fetching selected patient data", patientId);
 
         const patientData = await fetchPatientData(patientId);
         if (patientData) {
           setSelectedPatient(patientData);
-          console.log("[SUCCESS] Patient data loaded:", patientData.name);
+          logger.debug("PatientManagementScreen", "Patient data loaded", patientData.name);
         } else {
           setError("Failed to load patient details");
         }
       } catch (err) {
-        console.error("[ERROR] Select patient error:", err);
+        logger.error("PatientManagementScreen", "Select patient error", err);
         logError(err, {
           context: "PatientManagementScreen.handleSelectPatient",
         });
@@ -282,11 +283,9 @@ const PatientManagementScreen = ({ navigation, route }) => {
       // Search for patients
       const searchRes = await patientService.searchPatients(searchQuery.trim());
       const patients = searchRes?.patients || searchRes?.data || [];
-
-      console.log("[SEARCH] Search results:", {
+      logger.debug("PatientManagementScreen", "Search result count", {
         query: searchQuery,
         count: patients.length,
-        patients,
       });
 
       if (patients.length === 0) {
@@ -298,18 +297,17 @@ const PatientManagementScreen = ({ navigation, route }) => {
       // Get full data for first matching patient using userId
       const firstPatient = patients[0];
       const patientId = firstPatient.userId || firstPatient._id;
-
-      console.log("[INFO] Fetching patient data for:", patientId);
+      logger.debug("PatientManagementScreen", "Fetching first matched patient", patientId);
 
       const patientData = await fetchPatientData(patientId);
       if (patientData) {
         setSelectedPatient(patientData);
-        console.log("[SUCCESS] Patient data loaded:", patientData.name);
+        logger.debug("PatientManagementScreen", "Patient data loaded", patientData.name);
       } else {
         setError("Failed to load patient details");
       }
     } catch (err) {
-      console.error("[ERROR] Search error:", err);
+      logger.error("PatientManagementScreen", "Search error", err);
       logError(err, { context: "PatientManagementScreen.handleSearch" });
       setError("Search failed. Please try again.");
     } finally {
@@ -357,7 +355,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
         diagnosis: newRecord.diagnosis.trim(),
       });
 
-      console.log("[SUCCESS] Medical record created:", result);
+      logger.debug("PatientManagementScreen", "Medical record created", result);
 
       Alert.alert(
         "Success",
@@ -378,7 +376,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
         onRefresh();
       }, 500);
     } catch (err) {
-      console.error("[ERROR] Create record error:", err);
+      logger.error("PatientManagementScreen", "Create medical record error", err);
       logError(err, { context: "handleSubmitRecord" });
 
       const errorMessage =
@@ -782,7 +780,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                         size={18}
                         color={healthColors.primary.main}
                       />
-                      <View style={{ flex: 1, marginLeft: 8 }}>
+                      <View style={styles.historyTextContainer}>
                         <Text style={styles.historyItemText}>
                           {record.title} -{" "}
                           {record.type.replace("_", " ").toUpperCase()}
@@ -914,7 +912,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
           </>
         )}
 
-        <View style={{ height: 80 }} />
+        <View style={styles.contentBottomSpacer} />
       </ScrollView>
 
       {/* Add Medical Record Modal */}
@@ -1010,7 +1008,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
               />
 
               {/* Bottom spacing to prevent cut-off */}
-              <View style={{ height: 20 }} />
+              <View style={styles.modalBodySpacer} />
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -1118,7 +1116,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                     </View>
                   )}
 
-                  <View style={{ height: 20 }} />
+                  <View style={styles.modalBodySpacer} />
                 </>
               )}
             </ScrollView>
@@ -1128,7 +1126,7 @@ const PatientManagementScreen = ({ navigation, route }) => {
                 style={[
                   styles.modalButton,
                   styles.modalSubmitButton,
-                  { flex: 1 },
+                  styles.flexFill,
                 ]}
                 onPress={() => setShowRecordDetailModal(false)}
               >
@@ -1742,6 +1740,19 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semiBold,
     color: theme.colors.white,
+  },
+  historyTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing.sm,
+  },
+  contentBottomSpacer: {
+    height: 80,
+  },
+  modalBodySpacer: {
+    height: 20,
+  },
+  flexFill: {
+    flex: 1,
   },
 });
 

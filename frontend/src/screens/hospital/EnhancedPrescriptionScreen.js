@@ -506,7 +506,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           </>
         )}
 
-        <View style={{ height: 80 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -809,6 +809,9 @@ const styles = StyleSheet.create({
   },
   emptyStateButtonTextSecondary: {
     color: healthColors.primary.main,
+  },
+  bottomSpacer: {
+    height: 80,
   },
 });
 

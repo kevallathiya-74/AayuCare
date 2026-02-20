@@ -200,7 +200,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
       </View>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.keyboardContainer}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 56 : 0}
       >
@@ -535,6 +535,9 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: healthColors.text.disabled,
+  },
+  keyboardContainer: {
+    flex: 1,
   },
 });
 

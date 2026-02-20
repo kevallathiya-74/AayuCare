@@ -299,7 +299,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
             <ActivityIndicator
               size="small"
               color={healthColors.primary.main}
-              style={{ marginVertical: 20 }}
+              style={styles.footerLoader}
             />
           )
         }
@@ -488,6 +488,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
+  },
+  footerLoader: {
+    marginVertical: 20,
   },
 });
 

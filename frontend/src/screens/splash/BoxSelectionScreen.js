@@ -20,13 +20,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import { fontFamilies, fontWeights, lineHeights } from "../../theme/typography";
 import { createTextShadow } from "../../utils/platformStyles";
+import logger from "../../utils/logger";
 
 if (!healthColors || !theme) {
-  console.error("[BoxSelectionScreen] ═══════════════════════════════════");
-  console.error("[BoxSelectionScreen] Missing theme imports!");
-  console.error("[BoxSelectionScreen] healthColors:", !!healthColors);
-  console.error("[BoxSelectionScreen] theme:", !!theme);
-  console.error("[BoxSelectionScreen] ═══════════════════════════════════");
+  logger.error("BoxSelectionScreen", "Missing theme imports", {
+    healthColors: !!healthColors,
+    theme: !!theme,
+  });
 }
 
 const { width, height } = Dimensions.get("window");
@@ -80,7 +80,7 @@ const BoxSelectionScreen = ({ navigation }) => {
     try {
       navigation.navigate("Login");
     } catch (error) {
-      console.error("[BoxSelectionScreen] Navigation error:", error);
+      logger.error("BoxSelectionScreen", "Navigation error", error);
     }
   };
 

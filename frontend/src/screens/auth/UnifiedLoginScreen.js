@@ -348,7 +348,9 @@ const UnifiedLoginScreen = ({ navigation }) => {
             )}
 
             {/* Login Button */}
-            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            <Animated.View
+              style={[styles.animatedButtonContainer, { transform: [{ scale: scaleAnim }] }]}
+            >
               <TouchableOpacity
                 style={[
                   styles.loginButton,
@@ -588,6 +590,9 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: healthColors.neutral.white,
     letterSpacing: 0.5,
+  },
+  animatedButtonContainer: {
+    width: "100%",
   },
   demoSection: {
     marginTop: 20,

@@ -42,12 +42,7 @@ const Input = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [hasValue, setHasValue] = useState(!!value);
   const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
-
-  React.useEffect(() => {
-    setHasValue(!!value);
-  }, [value]);
 
   const handleFocus = () => {
     setIsFocused(true);
@@ -108,7 +103,6 @@ const Input = ({
         <TextInput
           value={value}
           onChangeText={(text) => {
-            setHasValue(!!text);
             onChangeText && onChangeText(text);
           }}
           placeholder={label && !isFocused && !value ? '' : placeholder}
@@ -129,7 +123,6 @@ const Input = ({
             leftIcon && styles.inputWithLeftIcon,
             (rightIcon || secureTextEntry) && styles.inputWithRightIcon,
             multiline && styles.inputMultiline,
-            !hasValue && !isFocused && styles.inputCentered,
             inputStyle,
           ]}
           {...props}
@@ -173,7 +166,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: healthColors.input.border,
     borderRadius: responsiveBorderRadius.medium,
-    minHeight: Math.max(getInputHeight(), touchTargets.minimum), // Enforce 48dp minimum
+    minHeight: Math.max(getInputHeight(), touchTargets.medium),
     paddingVertical: 4, // Internal padding for better alignment
   },
   containerFocused: {
@@ -200,9 +193,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     outlineStyle: 'none',
     textAlign: 'left',
-  },
-  inputCentered: {
-    textAlign: 'center',
   },
   inputWithLeftIcon: {
     paddingLeft: 0,

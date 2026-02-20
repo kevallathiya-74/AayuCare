@@ -165,7 +165,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Appointments</Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.headerRightPlaceholder} />
       </View>
 
       {/* Tabs */}
@@ -434,6 +434,9 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: theme.spacing.md,
     alignItems: "center",
+  },
+  headerRightPlaceholder: {
+    width: 40,
   },
 });
 

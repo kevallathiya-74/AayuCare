@@ -27,6 +27,7 @@ import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
+import { EmptyState } from "../../components/common";
 
 const TodaysAppointmentsScreen = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState("today");
@@ -142,11 +143,11 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       case "completed":
         return healthColors.info.main;
       case "cancelled":
-        return healthColors.error;
+        return healthColors.error.main;
       case "in-progress":
         return healthColors.primary.main;
       default:
-        return healthColors.warning;
+        return healthColors.warning.main;
     }
   }, []);
 
@@ -257,21 +258,17 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="calendar-outline"
-        size={64}
-        color={healthColors.text.secondary}
-      />
-      <Text style={styles.emptyStateTitle}>No Appointments</Text>
-      <Text style={styles.emptyStateText}>
-        {selectedFilter === "today"
-          ? "No appointments scheduled for today"
+    <EmptyState
+      icon="calendar-outline"
+      title="No Appointments"
+      message={
+        selectedFilter === "today"
+          ? "No appointments scheduled for today."
           : selectedFilter === "upcoming"
-            ? "No upcoming appointments"
-            : "No completed appointments"}
-      </Text>
-    </View>
+            ? "No upcoming appointments."
+            : "No completed appointments."
+      }
+    />
   );
 
   if (loading && !refreshing) {
@@ -366,7 +363,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       <FlatList
         data={appointments}
         renderItem={renderAppointmentCard}
-        keyExtractor={(item) => item.id || item._id || String(Math.random())}
+        keyExtractor={(item, index) => item.id || item._id || `appointment-${index}`}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: Math.max(insets.bottom, 20) },
@@ -398,17 +395,17 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
   header: {
+    height: theme.layout.headerHeight,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    borderBottomWidth: 2,
+    borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
   backButton: {
@@ -420,7 +417,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.xxxl,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -434,24 +431,25 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     flexDirection: "row",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm + theme.spacing.xs,
     gap: theme.spacing.sm,
   },
   filterButton: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
+    height: 36,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 18,
     backgroundColor: healthColors.background.card,
     borderWidth: 1,
     borderColor: healthColors.border.light,
+    justifyContent: "center",
   },
   filterButtonActive: {
     backgroundColor: healthColors.primary.main,
     borderColor: healthColors.primary.main,
   },
   filterText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
@@ -459,52 +457,37 @@ const styles = StyleSheet.create({
     color: healthColors.text.white,
   },
   errorContainer: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
     alignItems: "center",
-    backgroundColor: healthColors.error + "10",
-    marginHorizontal: theme.spacing.lg,
+    backgroundColor: healthColors.error.background,
+    marginHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
   },
   errorText: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.error,
-    marginBottom: theme.spacing.sm,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.error.main,
+    marginBottom: theme.spacing.xs,
   },
   retryText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semibold,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: theme.spacing["4xl"] * 2,
-  },
-  emptyStateTitle: {
-    fontSize: theme.typography.sizes.xxxl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptyStateText: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.sm,
-    textAlign: "center",
-  },
   listContent: {
-    padding: theme.spacing.lg,
-    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+    flexGrow: 1,
   },
   appointmentCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.card,
     padding: theme.spacing.md,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
+    marginTop: theme.spacing.sm,
+    ...theme.shadows.sm,
   },
   cardLeft: {
     flexDirection: "row",
@@ -524,7 +507,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   patientName: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.h6,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,

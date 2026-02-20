@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme/healthColors";
 import { textStyles } from "../theme/typography";
 import { spacing } from "../theme/spacing";
-import { verticalScale } from "../utils/responsive";
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
@@ -124,7 +123,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
+        shadowColor: healthColors.shadows.medium,
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,

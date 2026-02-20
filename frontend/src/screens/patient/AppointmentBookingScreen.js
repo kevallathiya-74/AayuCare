@@ -695,7 +695,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ height: 80 }} />
+          <View style={styles.bottomSpacer} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1077,6 +1077,9 @@ const styles = StyleSheet.create({
   },
   confirmButtonDisabled: {
     opacity: 0.6,
+  },
+  bottomSpacer: {
+    height: 80,
   },
 });
 

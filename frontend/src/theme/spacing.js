@@ -17,6 +17,7 @@ export const spacing = {
   xl: BASE_UNIT * 4,        // 32px - Extra large spacing
   xxl: BASE_UNIT * 6,       // 48px - Section dividers
   xxxl: BASE_UNIT * 8,      // 64px - Major sections
+  xxxxl: BASE_UNIT * 10,    // 80px - Legacy compatibility spacing
 
   // Numbered scale for precise control
   0: 0,
@@ -33,6 +34,7 @@ export const spacing = {
   48: BASE_UNIT * 6,        // 48px
   56: BASE_UNIT * 7,        // 56px
   64: BASE_UNIT * 8,        // 64px
+  80: BASE_UNIT * 10,       // 80px
 };
 
 // Component-specific spacing

@@ -22,6 +22,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
+import logger from "../../utils/logger";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -47,7 +48,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   // Pre-fill form when patient data is provided
   useEffect(() => {
     if (patient && visible) {
-      console.log('[EditPatient] Pre-filling form with:', patient);
+      logger.debug("EditPatientModal", "Pre-filling form", patient);
       
       // Format date if it's a Date object
       let dobString = "";
@@ -73,7 +74,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         address: patient.address || "",
       };
       
-      console.log('[EditPatient] Form values:', formValues);
+      logger.debug("EditPatientModal", "Derived form values", formValues);
       setFormData(formValues);
       setSelectedDate(dateObj);
       setErrors({}); // Clear any previous errors
@@ -161,7 +162,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         }, 300);
       }
     } catch (error) {
-      console.error("Edit patient error:", error);
+      logger.error("EditPatientModal", "Edit patient error", error);
 
       // Better error handling
       let errorMessage = "Failed to update patient profile. Please try again.";

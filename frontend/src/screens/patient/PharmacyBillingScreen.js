@@ -200,7 +200,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               </Text>
             </View>
           </View>
-          <View style={{ width: 24 }} />
+          <View style={styles.headerRightSpacer} />
         </LinearGradient>
         <View style={styles.emptyState}>
           <Ionicons
@@ -858,6 +858,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
     lineHeight: 18,
+  },
+  headerRightSpacer: {
+    width: 24,
   },
 });
 

@@ -221,14 +221,14 @@ const DoctorHomeScreen = ({ navigation }) => {
   const getStatusColor = useCallback((status) => {
     switch (status) {
       case "completed":
-        return healthColors.success.main || healthColors.success;
+        return healthColors.success.main;
       case "in-progress":
-        return healthColors.info.main || healthColors.info;
+        return healthColors.info.main;
       case "cancelled":
       case "no-show":
-        return healthColors.error.main || healthColors.error;
+        return healthColors.error.main;
       default:
-        return healthColors.warning.main || healthColors.warning;
+        return healthColors.warning.main;
     }
   }, []);
 
@@ -776,7 +776,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <View style={{ height: verticalScale(20) }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       {/* Side Menu Modal */}
@@ -1267,7 +1267,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: healthColors.success,
+    backgroundColor: healthColors.success.main,
     borderRadius: 4,
   },
   nextPatientCard: {
@@ -1664,6 +1664,9 @@ const styles = StyleSheet.create({
   menuFooterText: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
+  },
+  bottomSpacer: {
+    height: verticalScale(20),
   },
 });
 

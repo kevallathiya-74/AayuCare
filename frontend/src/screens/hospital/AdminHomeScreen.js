@@ -50,6 +50,7 @@ import {
   showError,
   logError,
 } from "../../utils/errorHandler";
+import logger from "../../utils/logger";
 import { formatCurrency } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import notificationService from "../../services/notification.service";
@@ -167,18 +168,14 @@ const AdminHomeScreen = ({ navigation }) => {
       if (doctorsResponse?.success) {
         // Backend returns data as array directly, not data.users
         const doctors = doctorsResponse.data || [];
-        if (__DEV__) {
-          console.log('[AdminHome] Doctors fetched:', doctors.length, 'doctors');
-        }
+        logger.debug("AdminHomeScreen", "Doctors fetched", doctors.length);
         setDoctorsList(doctors);
       }
 
       if (patientsResponse?.success) {
         // Backend returns data as array directly, not data.users
         const patients = patientsResponse.data || [];
-        if (__DEV__) {
-          console.log('[AdminHome] Patients fetched:', patients.length, 'patients');
-        }
+        logger.debug("AdminHomeScreen", "Patients fetched", patients.length);
         setPatientsList(patients);
       }
 
@@ -220,7 +217,7 @@ const AdminHomeScreen = ({ navigation }) => {
       } catch (healthErr) {
         // Non-critical error, use fallback
         setSystemHealth({ status: "good", issues: 0 });
-        console.warn("System health check failed:", healthErr.message);
+        logger.warn("AdminHomeScreen", "System health check failed", healthErr.message);
       }
     } catch (err) {
       const errorMessage =
@@ -364,7 +361,7 @@ const AdminHomeScreen = ({ navigation }) => {
                     }
                   }
                 } catch (error) {
-                  console.error("[AdminHomeScreen] Navigation error:", error);
+                  logger.error("AdminHomeScreen", "Navigation error", error);
                   Alert.alert(
                     "Navigation Error",
                     "Unable to open this section. Please try again."
@@ -869,7 +866,7 @@ const AdminHomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ height: 50 }} />
+          <View style={styles.profileFooterSpacer} />
         </ScrollView>
       ) : loading && !refreshing ? (
         <View style={styles.loadingContainer}>
@@ -1266,7 +1263,7 @@ const AdminHomeScreen = ({ navigation }) => {
             </View>
           )}
 
-          <View style={{ height: 100 }} />
+          <View style={styles.dashboardFooterSpacer} />
         </ScrollView>
       )}
 
@@ -2409,6 +2406,12 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semiBold,
+  },
+  profileFooterSpacer: {
+    height: 50,
+  },
+  dashboardFooterSpacer: {
+    height: 100,
   },
 });
 
