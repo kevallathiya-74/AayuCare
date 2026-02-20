@@ -20,4 +20,5 @@ export { default as EmergencyServices } from './EmergencyServices';
 export { default as AIHealthAssistantScreen } from './AIHealthAssistantScreen';
 export { default as SpecialistCareFinderScreen } from './SpecialistCareFinderScreen';
 export { default as AppointmentBookingScreen } from './AppointmentBookingScreen';
+export { default as PatientEditProfileScreen } from './PatientEditProfileScreen';
 

@@ -77,10 +77,7 @@ const AdminHomeScreen = ({ navigation }) => {
     revenue: { total: 0, today: 0, trend: 0 },
   });
   const [recentActivities, setRecentActivities] = useState([]);
-  const [systemHealth, setSystemHealth] = useState({
-    status: "good",
-    issues: 0,
-  });
+  const [systemHealth, setSystemHealth] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
   const [doctorsList, setDoctorsList] = useState([]);
@@ -89,6 +86,7 @@ const AdminHomeScreen = ({ navigation }) => {
   const [systemMetrics, setSystemMetrics] = useState(null);
   const [notificationsData, setNotificationsData] = useState({ notifications: [], stats: {} });
   const [systemLogs, setSystemLogs] = useState([]);
+  const [activitiesLimit, setActivitiesLimit] = useState(5);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -107,7 +105,7 @@ const AdminHomeScreen = ({ navigation }) => {
         notificationsMgmtResponse,
       ] = await Promise.all([
         adminService.getDashboardStats().catch(() => null),
-        adminService.getRecentActivities(5).catch(() => null),
+        adminService.getRecentActivities(activitiesLimit).catch(() => null),
         notificationService.getUnreadCount().catch(() => null),
         eventService.getUpcomingEvents({ limit: 100 }).catch(() => null),
         adminService.getUsers({ role: 'doctor', limit: 10 }).catch(() => null),
@@ -208,15 +206,10 @@ const AdminHomeScreen = ({ navigation }) => {
       // Fetch system health from API
       try {
         const healthResponse = await adminService.getSystemHealth();
-        if (healthResponse?.success) {
-          setSystemHealth(healthResponse.data);
-        } else {
-          // Fallback if API doesn't return expected data
-          setSystemHealth({ status: "good", issues: 0 });
-        }
+        setSystemHealth(healthResponse?.success ? healthResponse.data : null);
       } catch (healthErr) {
-        // Non-critical error, use fallback
-        setSystemHealth({ status: "good", issues: 0 });
+        // Non-critical error, keep section hidden when data is unavailable
+        setSystemHealth(null);
         logger.warn("AdminHomeScreen", "System health check failed", healthErr.message);
       }
     } catch (err) {
@@ -229,7 +222,7 @@ const AdminHomeScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activitiesLimit]);
 
   // Get refreshCount from context to sync tab badge
   const { refreshCount } = useAdminAppointments();
@@ -287,6 +280,70 @@ const AdminHomeScreen = ({ navigation }) => {
     if (hour >= 17 && hour < 21) return "Good Evening";
     return "Good Night";
   }, []);
+
+  const normalizedSystemHealth = useMemo(() => {
+    if (!systemHealth || typeof systemHealth !== "object") {
+      return null;
+    }
+
+    const statusMap = {
+      healthy: "good",
+      degraded: "warning",
+      critical: "critical",
+      good: "good",
+      warning: "warning",
+    };
+
+    const normalizedStatus = statusMap[systemHealth.status] || "warning";
+    const databaseConnected =
+      typeof systemHealth.database === "object"
+        ? !!systemHealth.database?.connected
+        : systemHealth.database === "connected";
+
+    const computedIssues =
+      typeof systemHealth.issues === "number"
+        ? systemHealth.issues
+        : typeof systemHealth.services === "object"
+          ? Object.values(systemHealth.services).filter((svc) => !svc?.connected).length
+          : 0;
+
+    return {
+      ...systemHealth,
+      status: normalizedStatus,
+      issues: computedIssues,
+      database: { connected: databaseConnected },
+    };
+  }, [systemHealth]);
+
+  const metricsView = useMemo(() => {
+    if (!systemMetrics) {
+      return null;
+    }
+
+    const activeUsers =
+      typeof systemMetrics.activeUsers === "number"
+        ? String(systemMetrics.activeUsers)
+        : "N/A";
+    const dataSizeMB =
+      typeof systemMetrics.database?.dataSize === "number"
+        ? `${(systemMetrics.database.dataSize / (1024 * 1024)).toFixed(2)} MB`
+        : "N/A";
+    const collections =
+      typeof systemMetrics.database?.collections === "number"
+        ? String(systemMetrics.database.collections)
+        : "N/A";
+    const totalUsers =
+      typeof systemMetrics.totalUsers === "number"
+        ? String(systemMetrics.totalUsers)
+        : "N/A";
+
+    return {
+      activeUsers,
+      dataSizeMB,
+      collections,
+      totalUsers,
+    };
+  }, [systemMetrics]);
 
   // Render stat card with gradient (memoized)
   const renderStatCard = useCallback(
@@ -414,7 +471,7 @@ const AdminHomeScreen = ({ navigation }) => {
       },
     };
 
-    const current = healthStatus[systemHealth.status] || healthStatus.good;
+    const current = healthStatus[normalizedSystemHealth?.status] || healthStatus.good;
 
     return (
       <View
@@ -424,19 +481,19 @@ const AdminHomeScreen = ({ navigation }) => {
         <Text style={[styles.healthText, { color: current.color }]}>
           {current.text}
         </Text>
-        {systemHealth.issues > 0 && (
+        {normalizedSystemHealth?.issues > 0 && (
           <TouchableOpacity
             style={styles.healthButton}
-            onPress={() => navigation.navigate("Analytics")}
+            onPress={() => navigation.navigate("Reports")}
           >
             <Text style={[styles.healthButtonText, { color: current.color }]}>
-              View {systemHealth.issues} Issues
+              View Reports
             </Text>
           </TouchableOpacity>
         )}
       </View>
     );
-  }, [systemHealth.status, systemHealth.issues, navigation]);
+  }, [normalizedSystemHealth?.status, normalizedSystemHealth?.issues, navigation]);
 
   const quickActions = useMemo(
     () => ({
@@ -567,6 +624,38 @@ const AdminHomeScreen = ({ navigation }) => {
       setShowProfile(true);
     }, 100);
   }, [closeMenu]);
+
+  const handleDoctorCardPress = useCallback(
+    (doctor) => {
+      const doctorId = doctor?.userId || doctor?._id || doctor?.id;
+      if (!doctorId) {
+        navigation.navigate("ManageDoctors");
+        return;
+      }
+
+      navigation.navigate("ManageDoctors", {
+        doctorId,
+        doctorName: doctor?.name,
+      });
+    },
+    [navigation]
+  );
+
+  const handlePatientCardPress = useCallback(
+    (patient) => {
+      const patientId = patient?.userId || patient?._id || patient?.id;
+      if (!patientId) {
+        navigation.navigate("PatientManagement");
+        return;
+      }
+
+      navigation.navigate("PatientManagement", {
+        patientId,
+        patientName: patient?.name,
+      });
+    },
+    [navigation]
+  );
 
   return (
     <SafeAreaView
@@ -767,7 +856,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 style={styles.profileActionRow}
                 onPress={() => {
                   setShowProfile(false);
-                  navigation.navigate("Settings");
+                  navigation.navigate("AdminSettings");
                 }}
               >
                 <Ionicons
@@ -785,12 +874,10 @@ const AdminHomeScreen = ({ navigation }) => {
               <View style={styles.profileDivider} />
               <TouchableOpacity
                 style={styles.profileActionRow}
-                onPress={() =>
-                  Alert.alert(
-                    "Edit Profile",
-                    "Edit profile feature coming soon!"
-                  )
-                }
+                onPress={() => {
+                  setShowProfile(false);
+                  navigation.navigate("Settings");
+                }}
               >
                 <Ionicons
                   name="create-outline"
@@ -807,12 +894,10 @@ const AdminHomeScreen = ({ navigation }) => {
               <View style={styles.profileDivider} />
               <TouchableOpacity
                 style={styles.profileActionRow}
-                onPress={() =>
-                  Alert.alert(
-                    "Change Password",
-                    "Change password feature coming soon!"
-                  )
-                }
+                onPress={() => {
+                  setShowProfile(false);
+                  navigation.navigate("SecuritySettings");
+                }}
               >
                 <Ionicons
                   name="key-outline"
@@ -829,12 +914,10 @@ const AdminHomeScreen = ({ navigation }) => {
               <View style={styles.profileDivider} />
               <TouchableOpacity
                 style={styles.profileActionRow}
-                onPress={() =>
-                  Alert.alert(
-                    "Privacy Settings",
-                    "Privacy settings coming soon!"
-                  )
-                }
+                onPress={() => {
+                  setShowProfile(false);
+                  navigation.navigate("SecuritySettings");
+                }}
               >
                 <Ionicons
                   name="shield-outline"
@@ -960,7 +1043,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 <TouchableOpacity
                   key={doctor._id || index}
                   style={styles.userListItem}
-                  onPress={() => navigation.navigate("ManageDoctors")}
+                  onPress={() => handleDoctorCardPress(doctor)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.userAvatar}>
@@ -1006,7 +1089,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 <TouchableOpacity
                   key={patient._id || index}
                   style={styles.userListItem}
-                  onPress={() => navigation.navigate("PatientManagement")}
+                  onPress={() => handlePatientCardPress(patient)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.userAvatar}>
@@ -1039,13 +1122,12 @@ const AdminHomeScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Recent Activities</Text>
               <TouchableOpacity
                 onPress={() =>
-                  Alert.alert(
-                    "Activity Log",
-                    "Full activity log feature coming soon!"
-                  )
+                  setActivitiesLimit((prevLimit) => (prevLimit > 5 ? 5 : 20))
                 }
               >
-                <Text style={styles.viewAllText}>View All</Text>
+                <Text style={styles.viewAllText}>
+                  {activitiesLimit > 5 ? "Show Less" : "View All"}
+                </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.activitiesCard}>
@@ -1099,7 +1181,7 @@ const AdminHomeScreen = ({ navigation }) => {
                 />
                 <Text style={styles.sectionTitle}>Medical Records</Text>
                 <TouchableOpacity
-                  onPress={() => Alert.alert("Medical Records", "Full records view coming soon!")}
+                  onPress={() => navigation.navigate("Reports")}
                   style={styles.viewAllButton}
                 >
                   <Text style={styles.viewAllText}>View All</Text>
@@ -1137,7 +1219,7 @@ const AdminHomeScreen = ({ navigation }) => {
           )}
 
           {/* System Metrics */}
-          {systemMetrics && (
+          {metricsView && (
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <Ionicons
@@ -1150,17 +1232,15 @@ const AdminHomeScreen = ({ navigation }) => {
               <View style={styles.metricsCard}>
                 <View style={styles.metricRow}>
                   <Text style={styles.metricLabel}>Active Users (7 days)</Text>
-                  <Text style={styles.metricValue}>{systemMetrics.activeUsers || 0}</Text>
+                  <Text style={styles.metricValue}>{metricsView.activeUsers}</Text>
                 </View>
                 <View style={styles.metricRow}>
                   <Text style={styles.metricLabel}>Database Size</Text>
-                  <Text style={styles.metricValue}>
-                    {((systemMetrics.database?.dataSize || 0) / (1024 * 1024)).toFixed(2)} MB
-                  </Text>
+                  <Text style={styles.metricValue}>{metricsView.dataSizeMB}</Text>
                 </View>
                 <View style={styles.metricRow}>
                   <Text style={styles.metricLabel}>Collections</Text>
-                  <Text style={styles.metricValue}>{systemMetrics.database?.collections || 0}</Text>
+                  <Text style={styles.metricValue}>{metricsView.collections}</Text>
                 </View>
               </View>
             </View>
@@ -1215,13 +1295,13 @@ const AdminHomeScreen = ({ navigation }) => {
           )}
 
           {/* System Health Status */}
-          {systemHealth && (
+          {normalizedSystemHealth && (
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <Ionicons
                   name="pulse"
                   size={22}
-                  color={systemHealth.status === "good" ? healthColors.success.main : healthColors.error.main}
+                  color={normalizedSystemHealth.status === "good" ? healthColors.success.main : healthColors.error.main}
                 />
                 <Text style={styles.sectionTitle}>System Health</Text>
               </View>
@@ -1230,25 +1310,27 @@ const AdminHomeScreen = ({ navigation }) => {
                   <Text style={styles.healthLabel}>Status</Text>
                   <View style={[
                     styles.statusBadge,
-                    systemHealth.status === "good" ? styles.statusGood : styles.statusBad
+                    normalizedSystemHealth.status === "good" ? styles.statusGood : styles.statusBad
                   ]}>
                     <Text style={styles.statusText}>
-                      {systemHealth.status === "good" ? "Healthy" : "Issues Detected"}
+                      {normalizedSystemHealth.status === "good" ? "Healthy" : "Issues Detected"}
                     </Text>
                   </View>
                 </View>
-                {systemHealth.database && (
+                {normalizedSystemHealth.database && (
                   <>
                     <View style={styles.healthRow}>
                       <Text style={styles.healthLabel}>Database</Text>
                       <Text style={styles.healthValue}>
-                        {systemHealth.database.connected ? "Connected" : "Disconnected"}
+                        {normalizedSystemHealth.database.connected ? "Connected" : "Disconnected"}
                       </Text>
                     </View>
                     <View style={styles.healthRow}>
                       <Text style={styles.healthLabel}>Uptime</Text>
                       <Text style={styles.healthValue}>
-                        {Math.floor((systemHealth.uptime || 0) / 3600)}h
+                        {typeof normalizedSystemHealth.uptime === "number"
+                          ? `${Math.floor(normalizedSystemHealth.uptime / 3600)}h`
+                          : "N/A"}
                       </Text>
                     </View>
                   </>
@@ -1256,7 +1338,9 @@ const AdminHomeScreen = ({ navigation }) => {
                 <View style={styles.healthRow}>
                   <Text style={styles.healthLabel}>Memory Usage</Text>
                   <Text style={styles.healthValue}>
-                    {((systemHealth.memory?.heapUsed || 0) / (1024 * 1024)).toFixed(0)} MB
+                    {typeof normalizedSystemHealth.memory?.heapUsed === "number"
+                      ? `${(normalizedSystemHealth.memory.heapUsed / (1024 * 1024)).toFixed(0)} MB`
+                      : "N/A"}
                   </Text>
                 </View>
               </View>
@@ -1405,7 +1489,7 @@ const AdminHomeScreen = ({ navigation }) => {
                     size={22}
                     color={healthColors.text.primary}
                   />
-                  <Text style={styles.menuItemText}>Reports & Analytics</Text>
+                  <Text style={styles.menuItemText}>Reports & Records</Text>
                   <Ionicons
                     name="chevron-forward"
                     size={20}
@@ -1428,6 +1512,20 @@ const AdminHomeScreen = ({ navigation }) => {
                     <Text style={styles.menuStatLabel}>Active Users</Text>
                     <Text style={styles.menuStatValue}>
                       {stats.doctors.active + stats.patients.total}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.menuStatCard}>
+                  <Ionicons
+                    name="people-circle"
+                    size={25}
+                    color={healthColors.info.main}
+                  />
+                  <View style={styles.menuStatContent}>
+                    <Text style={styles.menuStatLabel}>Total Users</Text>
+                    <Text style={styles.menuStatValue}>
+                      {metricsView?.totalUsers || "N/A"}
                     </Text>
                   </View>
                 </View>

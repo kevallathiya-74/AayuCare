@@ -11,6 +11,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ScrollView,
   StatusBar,
   ActivityIndicator,
   RefreshControl,
@@ -28,10 +29,122 @@ import { formatDate } from "../../utils/helpers";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useAppointmentsInfinite } from "../../hooks/useAppointments";
 import { EmptyState } from "../../components/common";
+import appointmentService from "../../services/appointment.service";
 
 const AppointmentsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { refreshCount } = useAdminAppointments();
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("pending");
+  const [selectedDateFilter, setSelectedDateFilter] = useState("all");
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+    cancelled: 0,
+  });
+  const [dateCounts, setDateCounts] = useState({
+    all: 0,
+    today: 0,
+    next_7_days: 0,
+  });
+
+  const statusOptions = useMemo(
+    () => [
+      { key: "all", label: "All", status: undefined },
+      { key: "pending", label: "Pending", status: "scheduled,confirmed" },
+      { key: "in_progress", label: "In Progress", status: "in_progress" },
+      { key: "completed", label: "Completed", status: "completed" },
+      { key: "cancelled", label: "Cancelled", status: "cancelled" },
+    ],
+    []
+  );
+
+  const dateOptions = useMemo(
+    () => [
+      { key: "all", label: "All Dates" },
+      { key: "today", label: "Today" },
+      { key: "next_7_days", label: "Next 7 Days" },
+    ],
+    []
+  );
+
+  const queryFilters = useMemo(() => {
+    const selectedStatus = statusOptions.find(
+      (option) => option.key === selectedStatusFilter
+    );
+
+    const filters = {
+      status: selectedStatus?.status,
+      limit: 20,
+    };
+
+    const now = new Date();
+    if (selectedDateFilter === "today") {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      filters.startDate = start.toISOString();
+      filters.endDate = end.toISOString();
+    }
+
+    if (selectedDateFilter === "next_7_days") {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(now);
+      end.setDate(end.getDate() + 7);
+      end.setHours(23, 59, 59, 999);
+      filters.startDate = start.toISOString();
+      filters.endDate = end.toISOString();
+    }
+
+    return filters;
+  }, [selectedStatusFilter, selectedDateFilter, statusOptions]);
+
+  const fetchStatusCounts = useCallback(async () => {
+    try {
+      const response = await appointmentService.getAppointmentStats();
+      const statsArray = response?.data?.stats;
+      const dateRangeStats = response?.data?.dateRanges;
+
+      if (!Array.isArray(statsArray)) {
+        return;
+      }
+
+      const byStatus = statsArray.reduce((acc, item) => {
+        const statusKey = item?.status;
+        const countValue = Number(item?.count || 0);
+        if (statusKey) {
+          acc[statusKey] = countValue;
+        }
+        return acc;
+      }, {});
+
+      const pendingCount =
+        (byStatus.scheduled || 0) + (byStatus.confirmed || 0);
+      const allCount = Object.values(byStatus).reduce(
+        (sum, value) => sum + Number(value || 0),
+        0
+      );
+
+      setStatusCounts({
+        all: allCount,
+        pending: pendingCount,
+        in_progress: byStatus.in_progress || 0,
+        completed: byStatus.completed || 0,
+        cancelled: byStatus.cancelled || 0,
+      });
+
+      setDateCounts({
+        all: Number(dateRangeStats?.all || allCount),
+        today: Number(dateRangeStats?.today || 0),
+        next_7_days: Number(dateRangeStats?.next7Days || 0),
+      });
+    } catch (statsError) {
+      logError(statsError, { context: "AppointmentsScreen.fetchStatusCounts" });
+    }
+  }, []);
 
   // Use infinite query hook for admin appointments with lazy loading
   const {
@@ -45,8 +158,7 @@ const AppointmentsScreen = ({ navigation }) => {
     refetch,
     isRefetching,
   } = useAppointmentsInfinite({
-    status: "scheduled,confirmed", // Only pending appointments
-    limit: 20,
+    ...queryFilters,
   });
 
   // Flatten paginated data
@@ -60,14 +172,16 @@ const AppointmentsScreen = ({ navigation }) => {
     useCallback(() => {
       refetch();
       refreshCount();
-    }, [refetch, refreshCount])
+      fetchStatusCounts();
+    }, [refetch, refreshCount, fetchStatusCounts])
   );
 
   // Handle pull to refresh
   const onRefresh = useCallback(() => {
     refetch();
     refreshCount(); // Also refresh tab badge count
-  }, [refetch, refreshCount]);
+    fetchStatusCounts();
+  }, [refetch, refreshCount, fetchStatusCounts]);
 
   // Handle load more for infinite scroll
   const handleLoadMore = useCallback(() => {
@@ -81,6 +195,7 @@ const AppointmentsScreen = ({ navigation }) => {
       case "confirmed":
       case "completed":
         return healthColors.success.main;
+      case "in_progress":
       case "in-progress":
         return healthColors.primary.main;
       case "cancelled":
@@ -91,6 +206,11 @@ const AppointmentsScreen = ({ navigation }) => {
       default:
         return healthColors.text.secondary;
     }
+  };
+
+  const formatStatusLabel = (status) => {
+    if (!status) return "Unknown";
+    return status.replace(/_/g, " ");
   };
 
   const handleAppointmentPress = (appointment) => {
@@ -140,7 +260,7 @@ const AppointmentsScreen = ({ navigation }) => {
                 { color: getStatusColor(item.status) },
               ]}
             >
-              {item.status || "Unknown"}
+              {formatStatusLabel(item.status)}
             </Text>
           </View>
         </View>
@@ -188,12 +308,101 @@ const AppointmentsScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Appointments</Text>
         <TouchableOpacity
           style={styles.filterButton}
-          onPress={() => Alert.alert("Filter", "Filter options coming soon")}
+          onPress={() => {
+            setSelectedStatusFilter("pending");
+            setSelectedDateFilter("all");
+          }}
           accessibilityRole="button"
-          accessibilityLabel="Filter appointments"
+          accessibilityLabel="Reset appointment filters"
         >
-          <Ionicons name="filter" size={24} color={healthColors.text.primary} />
+          <Ionicons name="refresh" size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.filtersContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {statusOptions.map((option) => {
+            const isSelected = selectedStatusFilter === option.key;
+            return (
+              <TouchableOpacity
+                key={option.key}
+                style={[
+                  styles.filterChip,
+                  isSelected && styles.filterChipSelected,
+                ]}
+                onPress={() => setSelectedStatusFilter(option.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by ${option.label}`}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    isSelected && styles.filterChipTextSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                <View
+                  style={[
+                    styles.filterCountBadge,
+                    isSelected && styles.filterCountBadgeSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterCountText,
+                      isSelected && styles.filterCountTextSelected,
+                    ]}
+                  >
+                    {statusCounts[option.key] ?? 0}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {dateOptions.map((option) => {
+            const isSelected = selectedDateFilter === option.key;
+            return (
+              <TouchableOpacity
+                key={option.key}
+                style={[
+                  styles.filterChip,
+                  isSelected && styles.filterChipSelected,
+                ]}
+                onPress={() => setSelectedDateFilter(option.key)}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by ${option.label}`}
+              >
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    isSelected && styles.filterChipTextSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                <View
+                  style={[
+                    styles.filterCountBadge,
+                    isSelected && styles.filterCountBadgeSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterCountText,
+                      isSelected && styles.filterCountTextSelected,
+                    ]}
+                  >
+                    {dateCounts[option.key] ?? 0}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {isLoading ? (
@@ -271,6 +480,55 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.tertiary,
     justifyContent: "center",
     alignItems: "center",
+  },
+  filtersContainer: {
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  filterChip: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    backgroundColor: healthColors.background.card,
+    marginRight: theme.spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+  },
+  filterChipSelected: {
+    backgroundColor: healthColors.primary.main,
+    borderColor: healthColors.primary.main,
+  },
+  filterChipText: {
+    color: healthColors.text.secondary,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.medium,
+  },
+  filterChipTextSelected: {
+    color: theme.colors.white,
+  },
+  filterCountBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.xs,
+    backgroundColor: healthColors.background.tertiary,
+  },
+  filterCountBadgeSelected: {
+    backgroundColor: theme.colors.white + "33",
+  },
+  filterCountText: {
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.secondary,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  filterCountTextSelected: {
+    color: theme.colors.white,
   },
   headerTitle: {
     fontSize: theme.typography.sizes.h5,

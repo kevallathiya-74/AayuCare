@@ -16,6 +16,7 @@ import {
   Alert,
   Switch,
   TextInput,
+  Modal,
 } from "react-native";
 import {
   SafeAreaView,
@@ -30,7 +31,7 @@ import { EmptyState } from "../../components/common";
 import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 
-const ManageDoctorsScreen = ({ navigation }) => {
+const ManageDoctorsScreen = ({ navigation, route }) => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -38,9 +39,11 @@ const ManageDoctorsScreen = ({ navigation }) => {
   const [updatingId, setUpdatingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
+  const doctorIdFromRoute = route?.params?.doctorId;
   const fetchDoctors = useCallback(async (searchTerm = "") => {
     try {
       setError(null);
@@ -231,12 +234,26 @@ const ManageDoctorsScreen = ({ navigation }) => {
   }, []);
 
   const handleDoctorPress = (doctor) => {
-    Alert.alert(
-      doctor.name,
-      `Specialization: ${doctor.specialization || "N/A"}\nEmail: ${doctor.email || "N/A"}\nPhone: ${doctor.phone || "N/A"}\nStatus: ${doctor.isActive ? "Active" : "Inactive"}`,
-      [{ text: "OK" }]
-    );
+    setSelectedDoctor(doctor);
+    setShowDetailsModal(true);
   };
+
+  useEffect(() => {
+    if (!doctorIdFromRoute || loading || doctors.length === 0) {
+      return;
+    }
+
+    const matchedDoctor = doctors.find((doctor) => {
+      const ids = [doctor?._id, doctor?.id, doctor?.userId].filter(Boolean);
+      return ids.includes(doctorIdFromRoute);
+    });
+
+    if (matchedDoctor) {
+      handleDoctorPress(matchedDoctor);
+    }
+
+    navigation.setParams({ doctorId: undefined, doctorName: undefined });
+  }, [doctorIdFromRoute, doctors, loading, navigation]);
 
   const renderDoctor = useCallback(
     ({ item }) => (
@@ -493,6 +510,87 @@ const ManageDoctorsScreen = ({ navigation }) => {
         onSuccess={handleEditSuccess}
         doctor={selectedDoctor}
       />
+
+      <Modal
+        visible={showDetailsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowDetailsModal(false);
+          setSelectedDoctor(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.detailsModalContainer}>
+            <View style={styles.detailsHeader}>
+              <Text style={styles.detailsTitle}>Doctor Details</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowDetailsModal(false);
+                  setSelectedDoctor(null);
+                }}
+                style={styles.detailsCloseButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close doctor details"
+              >
+                <Ionicons
+                  name="close"
+                  size={22}
+                  color={healthColors.text.primary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.detailsBody}>
+              <View style={styles.detailsAvatarWrap}>
+                <Ionicons
+                  name="person"
+                  size={36}
+                  color={healthColors.primary.main}
+                />
+              </View>
+              <Text style={styles.detailsDoctorName}>
+                {selectedDoctor?.name || "Unknown"}
+              </Text>
+              <Text style={styles.detailsSpecialization}>
+                {selectedDoctor?.specialization || "General"}
+              </Text>
+
+              <View style={styles.detailsInfoCard}>
+                <View style={styles.detailsInfoRow}>
+                  <Text style={styles.detailsLabel}>Email</Text>
+                  <Text style={styles.detailsValue}>
+                    {selectedDoctor?.email || "N/A"}
+                  </Text>
+                </View>
+                <View style={styles.detailsDivider} />
+                <View style={styles.detailsInfoRow}>
+                  <Text style={styles.detailsLabel}>Phone</Text>
+                  <Text style={styles.detailsValue}>
+                    {selectedDoctor?.phone || "N/A"}
+                  </Text>
+                </View>
+                <View style={styles.detailsDivider} />
+                <View style={styles.detailsInfoRow}>
+                  <Text style={styles.detailsLabel}>Status</Text>
+                  <Text
+                    style={[
+                      styles.detailsValue,
+                      {
+                        color: selectedDoctor?.isActive
+                          ? healthColors.success.main
+                          : healthColors.error.main,
+                      },
+                    ]}
+                  >
+                    {selectedDoctor?.isActive ? "Active" : "Inactive"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -675,6 +773,88 @@ const styles = StyleSheet.create({
     color: healthColors.error.main,
     fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.semibold,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  detailsModalContainer: {
+    backgroundColor: healthColors.background.card,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    padding: theme.spacing.md,
+  },
+  detailsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: theme.spacing.md,
+  },
+  detailsTitle: {
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  detailsCloseButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: healthColors.background.tertiary,
+  },
+  detailsBody: {
+    alignItems: "center",
+  },
+  detailsAvatarWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: healthColors.primary.main + "15",
+    marginBottom: theme.spacing.sm,
+  },
+  detailsDoctorName: {
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  detailsSpecialization: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+  },
+  detailsInfoCard: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.md,
+    backgroundColor: healthColors.background.primary,
+  },
+  detailsInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    minHeight: 44,
+  },
+  detailsLabel: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+    fontWeight: theme.typography.weights.medium,
+  },
+  detailsValue: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  detailsDivider: {
+    height: 1,
+    backgroundColor: healthColors.border.light,
+    marginVertical: theme.spacing.xs,
   },
 });
 

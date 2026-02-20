@@ -4,6 +4,7 @@
  */
 
 const userRepository = require("../repositories/userRepository");
+const patientRepository = require("../repositories/patientRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const User = require("../models/User");
@@ -103,18 +104,18 @@ exports.getCompleteHistory = async (req, res) => {
       patient = await userRepository.findByUserId(patientId);
     }
     
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
     // Verify hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to access this patient"
-      });
-    }
-
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
       });
     }
 
@@ -237,18 +238,18 @@ exports.getPatientProfile = async (req, res) => {
       patient = await userRepository.findByUserId(patientId);
     }
     
+    if (!patient || patient.role !== "patient") {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
     // Verify hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to access this patient"
-      });
-    }
-
-    if (!patient || patient.role !== "patient") {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
       });
     }
 
@@ -307,19 +308,40 @@ exports.updatePatientProfile = async (req, res) => {
       });
     }
 
-    const allowedUpdates = [
-      "name",
-      "phone",
+    const allowedUserUpdates = ["name", "phone"];
+    const allowedPatientUpdates = [
+      "dateOfBirth",
+      "gender",
+      "bloodGroup",
       "address",
-      "emergencyContact",
+      "emergencyContactName",
+      "emergencyContactPhone",
+      "allergies",
+      "chronicConditions",
     ];
 
-    const updates = {};
+    const userUpdates = {};
+    const patientUpdates = {};
+
     Object.keys(req.body).forEach((key) => {
-      if (allowedUpdates.includes(key)) {
-        updates[key] = req.body[key];
+      if (allowedUserUpdates.includes(key)) {
+        userUpdates[key] = req.body[key];
+      }
+
+      if (allowedPatientUpdates.includes(key)) {
+        patientUpdates[key] = req.body[key];
       }
     });
+
+    if (
+      Object.keys(userUpdates).length === 0 &&
+      Object.keys(patientUpdates).length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid profile fields provided",
+      });
+    }
 
     // Find patient by userId or id
     let patient;
@@ -336,8 +358,42 @@ exports.updatePatientProfile = async (req, res) => {
       });
     }
     
-    // Update user profile
-    const updatedPatient = await userRepository.update(patient.id, updates);
+    let updatedUser = patient;
+    if (Object.keys(userUpdates).length > 0) {
+      updatedUser = await userRepository.update(patient.id, userUpdates);
+    }
+
+    if (Object.keys(patientUpdates).length > 0) {
+      await patientRepository.update(patient.id, patientUpdates);
+    }
+
+    const refreshedPatientProfile = await patientRepository.findByUserId(patient.id);
+
+    const updatedPatient = {
+      id: updatedUser.id,
+      userId: updatedUser.userId || updatedUser.user_id || refreshedPatientProfile?.formatted_user_id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      role: updatedUser.role,
+      hospitalId: updatedUser.hospitalId || updatedUser.hospital_id,
+      hospitalName: updatedUser.hospitalName || updatedUser.hospital_name,
+      isActive: updatedUser.isActive ?? updatedUser.is_active,
+      dateOfBirth: refreshedPatientProfile?.date_of_birth || null,
+      gender: refreshedPatientProfile?.gender || null,
+      bloodGroup: refreshedPatientProfile?.blood_group || null,
+      address: refreshedPatientProfile?.address || null,
+      emergencyContactName: refreshedPatientProfile?.emergency_contact_name || null,
+      emergencyContactPhone: refreshedPatientProfile?.emergency_contact_phone || null,
+      emergencyContact: {
+        name: refreshedPatientProfile?.emergency_contact_name || null,
+        phone: refreshedPatientProfile?.emergency_contact_phone || null,
+        relation: null,
+      },
+      allergies: refreshedPatientProfile?.allergies || [],
+      chronicConditions: refreshedPatientProfile?.chronic_conditions || [],
+      medicalHistory: refreshedPatientProfile?.chronic_conditions || [],
+    };
 
     // Invalidate relevant caches after patient profile update
     const { deleteCacheByPattern } = require("../config/redis");
@@ -345,6 +401,7 @@ exports.updatePatientProfile = async (req, res) => {
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("cache:patient:*");
       await deleteCacheByPattern("v1:cache:user:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after patient profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);

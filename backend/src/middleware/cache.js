@@ -86,7 +86,12 @@ const cacheDoctorAvailability = cacheMiddleware(60, (req) => {
 const cacheDoctorList = cacheMiddleware(300, (req) => {
   const hospitalId = req.hospitalId || "all";
   const specialization = req.query.specialization || "all";
-  return `cache:doctors:${hospitalId}:${specialization}`;
+  const search = (req.query.search || req.query.q || "").toString().trim().toLowerCase();
+  const includeInactive = (req.query.includeInactive || "false").toString().toLowerCase();
+  const page = (req.query.page || "1").toString();
+  const limit = (req.query.limit || "20").toString();
+
+  return `cache:doctors:${hospitalId}:${specialization}:${search}:${includeInactive}:${page}:${limit}`;
 });
 
 /**

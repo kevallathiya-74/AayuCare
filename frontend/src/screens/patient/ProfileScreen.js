@@ -116,9 +116,14 @@ const ProfileScreen = ({ navigation }) => {
   
   // Format medical history properly (array of objects)
   const formatMedicalHistory = () => {
-    if (!user?.medicalHistory || user.medicalHistory.length === 0) return "None";
+    const history =
+      user?.medicalHistory?.length > 0
+        ? user.medicalHistory
+        : user?.chronicConditions || [];
+
+    if (!history || history.length === 0) return "None";
     
-    return user.medicalHistory
+    return history
       .map((item) => {
         if (typeof item === 'string') return item;
         const condition = item.condition || "Unknown";
@@ -176,10 +181,13 @@ const ProfileScreen = ({ navigation }) => {
       title: "Emergency Contact",
       icon: "call-outline",
       data: [
-        { label: "Contact Name", value: user?.emergencyContact?.name || "N/A" },
+        {
+          label: "Contact Name",
+          value: user?.emergencyContact?.name || user?.emergencyContactName || "N/A",
+        },
         {
           label: "Contact Phone",
-          value: user?.emergencyContact?.phone || "N/A",
+          value: user?.emergencyContact?.phone || user?.emergencyContactPhone || "N/A",
         },
         {
           label: "Relationship",
@@ -194,23 +202,13 @@ const ProfileScreen = ({ navigation }) => {
       title: "Edit Profile",
       icon: "create-outline",
       color: healthColors.primary.main,
-      onPress: () =>
-        Alert.alert(
-          "Coming Soon",
-          "Profile editing will be available in the next update.",
-          [{ text: "OK" }]
-        ),
+      onPress: () => navigation.navigate("PatientEditProfile"),
     },
     {
       title: "Change Password",
       icon: "lock-closed-outline",
       color: healthColors.info.main,
-      onPress: () =>
-        Alert.alert(
-          "Coming Soon",
-          "Password change functionality will be available in the next update.",
-          [{ text: "OK" }]
-        ),
+      onPress: () => navigation.navigate("ChangePassword"),
     },
     {
       title: "Privacy Settings",

@@ -36,7 +36,6 @@ import {
   getContainerWidth,
   isTablet,
 } from "../../utils/responsive";
-import { showError, validateRequiredFields } from "../../utils/errorHandler";
 
 // Development auto-fill credentials (only available in __DEV__ mode)
 // Simple test credentials for easy development
@@ -59,6 +58,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
   const [userIdFocused, setUserIdFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [showDevHelper, setShowDevHelper] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ userId: "", password: "" });
+  const [formError, setFormError] = useState("");
 
   const passwordInputRef = useRef(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -68,15 +69,36 @@ const UnifiedLoginScreen = ({ navigation }) => {
     if (credentials) {
       setUserId(credentials.userId);
       setPassword(credentials.password);
+      setFieldErrors({ userId: "", password: "" });
+      setFormError("");
       setShowDevHelper(false);
     }
   };
 
+  const validateLoginForm = () => {
+    const nextErrors = { userId: "", password: "" };
+    const trimmedUserId = userId.trim();
+
+    if (!trimmedUserId) {
+      nextErrors.userId = "Email or User ID is required";
+    } else if (trimmedUserId.length < 3) {
+      nextErrors.userId = "Enter a valid Email or User ID";
+    }
+
+    if (!password) {
+      nextErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      nextErrors.password = "Password must be at least 6 characters";
+    }
+
+    setFieldErrors(nextErrors);
+    return !nextErrors.userId && !nextErrors.password;
+  };
+
   const handleLogin = async () => {
-    // Validate inputs
-    const validation = validateRequiredFields({ userId, password });
-    if (!validation.isValid) {
-      showError("Please enter both Email/User ID and Password");
+    setFormError("");
+
+    if (!validateLoginForm()) {
       return;
     }
 
@@ -104,8 +126,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
       // Role-based navigation handled automatically by AppNavigator
     } catch (err) {
-      // Show user-friendly error with errorHandler
-      showError(err, "Login Failed");
+      const message = err?.message || err?.toString() || "Login failed";
+      setFormError(message);
     }
   };
 
@@ -192,6 +214,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 style={[
                   styles.inputWrapper,
                   userIdFocused && styles.inputWrapperFocused,
+                  !!fieldErrors.userId && styles.inputWrapperError,
                 ]}
               >
                 <Ionicons
@@ -207,7 +230,13 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 <TextInput
                   style={styles.input}
                   value={userId}
-                  onChangeText={setUserId}
+                  onChangeText={(text) => {
+                    setUserId(text);
+                    if (fieldErrors.userId || formError) {
+                      setFieldErrors((prev) => ({ ...prev, userId: "" }));
+                      setFormError("");
+                    }
+                  }}
                   onFocus={() => setUserIdFocused(true)}
                   onBlur={() => setUserIdFocused(false)}
                   placeholder="Enter Email or User ID"
@@ -220,6 +249,9 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   keyboardType="email-address"
                 />
               </View>
+              {!!fieldErrors.userId && (
+                <Text style={styles.fieldErrorText}>{fieldErrors.userId}</Text>
+              )}
             </View>
 
             {/* Password Input */}
@@ -236,6 +268,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 style={[
                   styles.inputWrapper,
                   passwordFocused && styles.inputWrapperFocused,
+                  !!fieldErrors.password && styles.inputWrapperError,
                 ]}
               >
                 <Ionicons
@@ -252,7 +285,13 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   ref={passwordInputRef}
                   style={styles.input}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (fieldErrors.password || formError) {
+                      setFieldErrors((prev) => ({ ...prev, password: "" }));
+                      setFormError("");
+                    }
+                  }}
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
                   placeholder="Enter your password"
@@ -273,7 +312,21 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   />
                 </TouchableOpacity>
               </View>
+              {!!fieldErrors.password && (
+                <Text style={styles.fieldErrorText}>{fieldErrors.password}</Text>
+              )}
             </View>
+
+            {!!formError && (
+              <View style={styles.formErrorContainer}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={healthColors.error.main}
+                />
+                <Text style={styles.formErrorText}>{formError}</Text>
+              </View>
+            )}
 
             {/* Forgot Password */}
             <TouchableOpacity
@@ -547,6 +600,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     ...theme.shadows.md,
   },
+  inputWrapperError: {
+    borderColor: healthColors.error.main,
+  },
   inputIcon: {
     marginRight: 10,
   },
@@ -566,6 +622,28 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.primary.main,
+    fontWeight: theme.typography.weights.medium,
+  },
+  fieldErrorText: {
+    marginTop: 6,
+    fontSize: theme.typography.sizes.overline,
+    color: healthColors.error.main,
+    fontWeight: theme.typography.weights.medium,
+  },
+  formErrorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: healthColors.error.background,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  formErrorText: {
+    flex: 1,
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.error.main,
     fontWeight: theme.typography.weights.medium,
   },
   loginButton: {

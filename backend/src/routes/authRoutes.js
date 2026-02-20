@@ -11,7 +11,11 @@ const rateLimit = require("express-rate-limit");
 const authController = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 const { validateBody } = require("../middleware/validation");
-const { loginSchema, updateProfileSchema } = require("../validators/schemas");
+const {
+  loginSchema,
+  updateProfileSchema,
+  changePasswordSchema,
+} = require("../validators/schemas");
 const { invalidateCache } = require("../middleware/cache");
 
 // Rate limiter for sensitive public endpoints (prevent user enumeration)
@@ -50,6 +54,7 @@ router.put(
 router.put(
   "/change-password",
   passwordChangeLimiter,
+  validateBody(changePasswordSchema),
   authController.changePassword
   // Cache invalidation now handled inside controller
 );

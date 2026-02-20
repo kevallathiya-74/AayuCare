@@ -4,7 +4,18 @@
  */
 
 const Notification = require("../models/Notification");
+const mongoose = require("mongoose");
 const logger = require("../utils/logger");
+
+const resolveUserId = (req) =>
+  req.user?._id || req.user?.mongoId || req.user?.id || req.user?.userId;
+
+const toObjectId = (value) => {
+  if (!value) return null;
+  const id = typeof value === "string" ? value : value.toString();
+  if (!mongoose.Types.ObjectId.isValid(id)) return null;
+  return new mongoose.Types.ObjectId(id);
+};
 
 /**
  * @desc    Get user notifications
@@ -14,9 +25,22 @@ const logger = require("../utils/logger");
 exports.getUserNotifications = async (req, res) => {
   try {
     const { page = 1, limit = 20, read } = req.query;
-    const userId = req.user.userId;
+    const userId = toObjectId(resolveUserId(req));
 
-    const query = { userId: req.user.userId };
+    if (!userId) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: {
+          total: 0,
+          page: parseInt(page),
+          pages: 0,
+        },
+        unreadCount: 0,
+      });
+    }
+
+    const query = { userId };
     if (read !== undefined) {
       query.read = read === "true";
     }
@@ -28,7 +52,7 @@ exports.getUserNotifications = async (req, res) => {
       .lean();
 
     const total = await Notification.countDocuments(query);
-    const unreadCount = await Notification.getUnreadCount(req.user._id);
+    const unreadCount = await Notification.getUnreadCount(userId);
 
     res.json({
       success: true,
@@ -43,7 +67,7 @@ exports.getUserNotifications = async (req, res) => {
   } catch (error) {
     logger.error("Get notifications error:", {
       error: error.message,
-      userId: req.user?.userId,
+      userId: resolveUserId(req),
     });
     res.status(500).json({
       success: false,
@@ -60,7 +84,8 @@ exports.getUserNotifications = async (req, res) => {
  */
 exports.getUnreadCount = async (req, res) => {
   try {
-    const count = await Notification.getUnreadCount(req.user._id);
+    const userId = toObjectId(resolveUserId(req));
+    const count = userId ? await Notification.getUnreadCount(userId) : 0;
 
     res.json({
       success: true,
@@ -71,7 +96,7 @@ exports.getUnreadCount = async (req, res) => {
   } catch (error) {
     logger.error("Get unread count error:", {
       error: error.message,
-      userId: req.user?.userId,
+      userId: resolveUserId(req),
     });
     res.status(500).json({
       success: false,
@@ -89,10 +114,18 @@ exports.getUnreadCount = async (req, res) => {
 exports.markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = toObjectId(resolveUserId(req));
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user context for notifications",
+      });
+    }
 
     const notification = await Notification.findOne({
       _id: id,
-      userId: req.user._id,
+      userId,
     });
 
     if (!notification) {
@@ -139,7 +172,16 @@ exports.markAsRead = async (req, res) => {
  */
 exports.markAllAsRead = async (req, res) => {
   try {
-    const result = await Notification.markAllAsRead(req.user._id);
+    const userId = toObjectId(resolveUserId(req));
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user context for notifications",
+      });
+    }
+
+    const result = await Notification.markAllAsRead(userId);
 
     // Invalidate relevant caches after marking all as read
     const { deleteCacheByPattern } = require("../config/redis");
@@ -159,7 +201,7 @@ exports.markAllAsRead = async (req, res) => {
   } catch (error) {
     logger.error("Mark all as read error:", {
       error: error.message,
-      userId: req.user?.userId,
+      userId: resolveUserId(req),
     });
     res.status(500).json({
       success: false,
@@ -177,10 +219,18 @@ exports.markAllAsRead = async (req, res) => {
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = toObjectId(resolveUserId(req));
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user context for notifications",
+      });
+    }
 
     const notification = await Notification.findOneAndDelete({
       _id: id,
-      userId: req.user._id,
+      userId,
     });
 
     if (!notification) {
@@ -224,7 +274,16 @@ exports.deleteNotification = async (req, res) => {
  */
 exports.clearAllNotifications = async (req, res) => {
   try {
-    const result = await Notification.deleteMany({ userId: req.user._id });
+    const userId = toObjectId(resolveUserId(req));
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user context for notifications",
+      });
+    }
+
+    const result = await Notification.deleteMany({ userId });
 
     // Invalidate relevant caches after clearing all notifications
     const { deleteCacheByPattern } = require("../config/redis");
@@ -244,7 +303,7 @@ exports.clearAllNotifications = async (req, res) => {
   } catch (error) {
     logger.error("Clear all notifications error:", {
       error: error.message,
-      userId: req.user?.userId,
+      userId: resolveUserId(req),
     });
     res.status(500).json({
       success: false,

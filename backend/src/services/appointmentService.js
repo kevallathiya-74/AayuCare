@@ -110,10 +110,14 @@ class AppointmentService {
       startDate,
       endDate,
       limit = 20,
+      cursor = 0,
       patientId,
       doctorId,
       hospitalId,
     } = filters;
+
+    const parsedLimit = parseInt(limit, 10);
+    const offset = parseInt(cursor, 10) || 0;
 
     // Use appointmentRepository for PostgreSQL queries
     const appointments = await appointmentRepository.findAll({
@@ -123,15 +127,19 @@ class AppointmentService {
       status,
       startDate,
       endDate,
-      limit: parseInt(limit),
-      offset: 0,
+      limit: parsedLimit,
+      offset,
     });
+
+    const hasMore = appointments.length === parsedLimit;
+    const nextCursor = hasMore ? offset + parsedLimit : null;
 
     return {
       appointments,
       pagination: {
-        limit: parseInt(limit),
-        hasMore: appointments.length === parseInt(limit),
+        limit: parsedLimit,
+        hasMore,
+        nextCursor,
       },
     };
   }
@@ -145,23 +153,31 @@ class AppointmentService {
       startDate,
       endDate,
       limit = 20,
+      cursor = 0,
       hospitalId,
     } = filters;
+
+    const parsedLimit = parseInt(limit, 10);
+    const offset = parseInt(cursor, 10) || 0;
 
     // Use appointmentRepository for PostgreSQL queries
     const appointments = await appointmentRepository.findByPatient(patientId, {
       status,
       startDate,
       endDate,
-      limit: parseInt(limit),
-      offset: 0,
+      limit: parsedLimit,
+      offset,
     });
+
+    const hasMore = appointments.length === parsedLimit;
+    const nextCursor = hasMore ? offset + parsedLimit : null;
 
     return {
       appointments,
       pagination: {
-        limit: parseInt(limit),
-        hasMore: appointments.length === parseInt(limit),
+        limit: parsedLimit,
+        hasMore,
+        nextCursor,
       },
     };
   }
@@ -170,30 +186,38 @@ class AppointmentService {
    * Get appointments for a doctor - Uses PostgreSQL
    */
   async getDoctorAppointmentsCursor(doctorId, filters = {}) {
-    const { status, date, limit = 20, hospitalId } = filters;
+    const { status, date, startDate, endDate, limit = 20, cursor = 0, hospitalId } = filters;
 
-    let startDate, endDate;
+    const parsedLimit = parseInt(limit, 10);
+    const offset = parseInt(cursor, 10) || 0;
+
+    let normalizedStartDate = startDate;
+    let normalizedEndDate = endDate;
     if (date) {
-      startDate = new Date(date);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(date);
-      endDate.setHours(23, 59, 59, 999);
+      normalizedStartDate = new Date(date);
+      normalizedStartDate.setHours(0, 0, 0, 0);
+      normalizedEndDate = new Date(date);
+      normalizedEndDate.setHours(23, 59, 59, 999);
     }
 
     // Use appointmentRepository for PostgreSQL queries
     const appointments = await appointmentRepository.findByDoctor(doctorId, {
       status,
-      startDate,
-      endDate,
-      limit: parseInt(limit),
-      offset: 0,
+      startDate: normalizedStartDate,
+      endDate: normalizedEndDate,
+      limit: parsedLimit,
+      offset,
     });
+
+    const hasMore = appointments.length === parsedLimit;
+    const nextCursor = hasMore ? offset + parsedLimit : null;
 
     return {
       appointments,
       pagination: {
-        limit: parseInt(limit),
-        hasMore: appointments.length === parseInt(limit),
+        limit: parsedLimit,
+        hasMore,
+        nextCursor,
       },
     };
   }
@@ -342,7 +366,8 @@ class AppointmentService {
     // Validate status transition
     const validTransitions = {
       scheduled: ["confirmed", "cancelled"],
-      confirmed: ["completed", "cancelled", "no_show"],
+      confirmed: ["in_progress", "completed", "cancelled", "no_show"],
+      in_progress: ["completed", "cancelled"],
       completed: [],
       cancelled: [],
       no_show: [],
@@ -525,10 +550,16 @@ class AppointmentService {
    * Get appointment statistics - Uses PostgreSQL
    */
   async getAppointmentStats(userId, userRole) {
-    // Use appointmentRepository countByStatus method
-    const stats = await appointmentRepository.countByStatus(userId, userRole, null);
+    // Use repository-level aggregations for status and date filters
+    const [statusCounts, dateRanges] = await Promise.all([
+      appointmentRepository.countByStatus(userId, userRole, null),
+      appointmentRepository.countByDateRanges(userId, userRole, null),
+    ]);
 
-    return stats;
+    return {
+      statusCounts,
+      dateRanges,
+    };
   }
 }
 

@@ -180,6 +180,8 @@ class AppointmentRepository {
   async findAll(filters = {}) {
     const {
       hospitalId,
+      patientId,
+      doctorId,
       status,
       startDate,
       endDate,
@@ -205,6 +207,18 @@ class AppointmentRepository {
     if (hospitalId) {
       sql += ` AND a.hospital_id = $${paramCount}`;
       params.push(hospitalId);
+      paramCount++;
+    }
+
+    if (patientId) {
+      sql += ` AND a.patient_id = $${paramCount}`;
+      params.push(patientId);
+      paramCount++;
+    }
+
+    if (doctorId) {
+      sql += ` AND a.doctor_id = $${paramCount}`;
+      params.push(doctorId);
       paramCount++;
     }
 
@@ -361,6 +375,55 @@ class AppointmentRepository {
 
     const result = await query(sql, params);
     return result.rows;
+  }
+
+  /**
+   * Count appointments in key date ranges
+   * @param {string} userId - User UUID (patient or doctor)
+   * @param {string} role - User role
+   * @param {string|null} hospitalId - Hospital ID for admin scoping
+   * @returns {Promise<Object>} Date range counts
+   */
+  async countByDateRanges(userId, role, hospitalId = null) {
+    let sql = `
+            SELECT
+              COUNT(*) FILTER (
+                WHERE appointment_date = CURRENT_DATE
+              ) AS today_count,
+              COUNT(*) FILTER (
+                WHERE appointment_date >= CURRENT_DATE
+                AND appointment_date < CURRENT_DATE + INTERVAL '7 days'
+              ) AS next_7_days_count,
+              COUNT(*) AS all_count
+            FROM appointments
+            WHERE 1=1
+        `;
+
+    const params = [];
+    let paramCount = 1;
+
+    if (role === "patient") {
+      sql += ` AND patient_id = $${paramCount}`;
+      params.push(userId);
+      paramCount++;
+    } else if (role === "doctor") {
+      sql += ` AND doctor_id = $${paramCount}`;
+      params.push(userId);
+      paramCount++;
+    } else if (role === "admin" && hospitalId) {
+      sql += ` AND hospital_id = $${paramCount}`;
+      params.push(hospitalId);
+      paramCount++;
+    }
+
+    const result = await query(sql, params);
+    const row = result.rows[0] || {};
+
+    return {
+      all: Number(row.all_count || 0),
+      today: Number(row.today_count || 0),
+      next7Days: Number(row.next_7_days_count || 0),
+    };
   }
 
   /**

@@ -80,7 +80,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         ],
       },
       {
-        title: "Reports & Analytics",
+        title: "Reports",
         items: [
           {
             icon: "document-text",
@@ -88,13 +88,6 @@ const AdminSettingsScreen = ({ navigation }) => {
             screen: "Reports",
             isTabScreen: true,
             color: healthColors.warning.main,
-          },
-          {
-            icon: "analytics",
-            label: "Error Analytics",
-            screen: "Analytics",
-            isTabScreen: true,
-            color: healthColors.error.main,
           },
         ],
       },

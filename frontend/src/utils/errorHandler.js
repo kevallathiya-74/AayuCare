@@ -3,12 +3,11 @@
  * 
  * Centralized error handling with user-friendly messages
  * Provides consistent error display across the app
- * Integrated with error analytics tracking and Sentry
+ * Integrated with Sentry
  */
 
 import { Alert, Platform } from 'react-native';
 import { captureException } from '../config/sentry';
-import { errorAnalytics } from './errorAnalytics';
 
 /**
  * Error types for categorization
@@ -202,14 +201,6 @@ const getSeverity = (error) => {
  * @param {string} context - Context where error occurred
  */
 export const logError = (error, context = '') => {
-    // Track in analytics
-    if (errorAnalytics) {
-        errorAnalytics.trackError(error, context, {
-            platform: Platform.OS,
-            timestamp: Date.now(),
-        });
-    }
-
     // Always log to console for debugging (both dev and production)
     console.error(`[${context}] Error:`, error);
     

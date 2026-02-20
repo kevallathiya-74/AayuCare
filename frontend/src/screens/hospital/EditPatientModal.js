@@ -41,6 +41,10 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     gender: "",
     bloodGroup: "",
     address: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    allergies: "",
+    chronicConditions: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -72,6 +76,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         gender: patient.gender || "",
         bloodGroup: patient.bloodGroup || "",
         address: patient.address || "",
+        emergencyContactName: patient.emergencyContactName || "",
+        emergencyContactPhone: patient.emergencyContactPhone || "",
+        allergies: Array.isArray(patient.allergies)
+          ? patient.allergies.join(", ")
+          : "",
+        chronicConditions: Array.isArray(patient.chronicConditions)
+          ? patient.chronicConditions.join(", ")
+          : "",
       };
       
       logger.debug("EditPatientModal", "Derived form values", formValues);
@@ -98,6 +110,13 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       newErrors.phone = "Phone is required";
     } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
       newErrors.phone = "Invalid phone format";
+    }
+
+    if (
+      formData.emergencyContactPhone.trim() &&
+      !/^\+?[1-9]\d{1,14}$/.test(formData.emergencyContactPhone.trim())
+    ) {
+      newErrors.emergencyContactPhone = "Invalid phone format";
     }
 
     if (formData.dateOfBirth && formData.dateOfBirth.trim()) {
@@ -138,6 +157,24 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       }
       if (formData.address && formData.address.trim()) {
         updateData.address = formData.address.trim();
+      }
+      if (formData.emergencyContactName && formData.emergencyContactName.trim()) {
+        updateData.emergencyContactName = formData.emergencyContactName.trim();
+      }
+      if (formData.emergencyContactPhone && formData.emergencyContactPhone.trim()) {
+        updateData.emergencyContactPhone = formData.emergencyContactPhone.trim();
+      }
+      if (formData.allergies && formData.allergies.trim()) {
+        updateData.allergies = formData.allergies
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      if (formData.chronicConditions && formData.chronicConditions.trim()) {
+        updateData.chronicConditions = formData.chronicConditions
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
       }
 
       // Call update API
@@ -214,6 +251,10 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       gender: "",
       bloodGroup: "",
       address: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      allergies: "",
+      chronicConditions: "",
     });
     setErrors({});
     setSelectedDate(new Date(2000, 0, 1));
@@ -498,6 +539,35 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Address",
               "Full address",
               "location",
+              "default",
+              true
+            )}
+            {renderInput(
+              "emergencyContactName",
+              "Emergency Contact Name",
+              "Contact person name",
+              "person-add"
+            )}
+            {renderInput(
+              "emergencyContactPhone",
+              "Emergency Contact Phone",
+              "+911234567890",
+              "call",
+              "phone-pad"
+            )}
+            {renderInput(
+              "allergies",
+              "Allergies",
+              "e.g. Penicillin, Pollen",
+              "warning",
+              "default",
+              true
+            )}
+            {renderInput(
+              "chronicConditions",
+              "Chronic Conditions",
+              "e.g. Diabetes, Hypertension",
+              "medkit",
               "default",
               true
             )}

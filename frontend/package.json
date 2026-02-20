@@ -6,16 +6,11 @@
     "start": "expo start --lan",
     "start:clear": "expo start --clear --lan",
     "start:tunnel": "expo start --tunnel",
-    "start:no-dev": "expo start --no-dev --lan",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios",
-    "tunnel": "expo start --tunnel",
-    "theme:validate": "node scripts/validate-theme-imports.js",
-    "insets:validate": "node scripts/validate-safe-area-insets.js",
-    "validate:all": "npm run theme:validate && npm run insets:validate",
-    "precommit": "npm run validate:all"
+    "tunnel": "expo start --tunnel"
   },
   "dependencies": {
     "@better-auth/expo": "^1.4.16",

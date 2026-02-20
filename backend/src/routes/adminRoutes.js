@@ -31,6 +31,7 @@ const { validateBody } = require("../middleware/validation");
 const {
   registerSchema,
   updateProfileSchema,
+  changePasswordSchema,
 } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
@@ -110,7 +111,7 @@ router.get(
 router.get("/security", cacheMiddleware(60), getSecuritySettings);
 router.post(
   "/security/change-password",
-  validateBody(updateProfileSchema),
+  validateBody(changePasswordSchema),
   changePassword
   // Cache invalidation now handled inside controller
 );

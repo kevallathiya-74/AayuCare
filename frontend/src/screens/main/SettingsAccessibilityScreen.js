@@ -19,7 +19,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
@@ -27,7 +26,6 @@ import {
 } from "../../utils/responsive";
 
 const SettingsAccessibilityScreen = ({ navigation }) => {
-  const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
 
   const [settings, setSettings] = useState({
@@ -39,6 +37,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
     healthAlerts: true,
     hospitalEvents: true,
     waterIntakeReminder: true,
+    biometricLogin: false,
     highContrastMode: false,
     darkMode: false,
   });
@@ -285,22 +284,14 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
             <ActionRow
               icon="key-outline"
               label="Change Password"
-              onPress={() =>
-                Alert.alert(
-                  "Change Password",
-                  "Password change feature coming soon!"
-                )
-              }
+              onPress={() => navigation.navigate("ChangePassword")}
             />
-            <ActionRow
+            <SettingRow
               icon="finger-print-outline"
               label="Biometric Login (Fingerprint)"
-              onPress={() =>
-                Alert.alert(
-                  "Biometric Login",
-                  "Biometric authentication coming soon!"
-                )
-              }
+              value={settings.biometricLogin}
+              onToggle={() => toggleSetting("biometricLogin")}
+              iconColor={healthColors.success.main}
             />
             <ActionRow
               icon="document-text-outline"
@@ -308,7 +299,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               onPress={() =>
                 Alert.alert(
                   "Privacy Policy",
-                  "Privacy policy viewer coming soon!"
+                  "AayuCare protects your health data with encryption in transit and at rest. We use your data only for care, appointments, and platform operations, and we never sell personal medical data. You can request account-data review through support@aayucare.com."
                 )
               }
             />

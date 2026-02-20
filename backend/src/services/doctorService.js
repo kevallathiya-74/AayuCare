@@ -4,13 +4,6 @@ const appointmentRepository = require("../repositories/appointmentRepository");
 const { AppError } = require("../middleware/errorHandler");
 
 /**
- * Sanitize regex input to prevent injection attacks
- */
-const sanitizeRegex = (str) => {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
-
-/**
  * Doctor Service - Business Logic Layer
  * Fully refactored to use repository pattern (PostgreSQL)
  * No direct Mongoose model usage
@@ -32,29 +25,28 @@ class DoctorService {
       hospitalId,
     } = filters;
 
-    // Use repository to fetch doctors from PostgreSQL
-    const doctors = await doctorRepository.findAll({
-      hospitalId,
-      specialization,
-      limit: parseInt(limit),
-      offset: (page - 1) * limit,
-    });
+    const parsedLimit = parseInt(limit);
+    const parsedPage = parseInt(page);
+    const offset = (parsedPage - 1) * parsedLimit;
 
-    // Apply search filter if provided
-    let filteredDoctors = doctors;
+    let filteredDoctors;
     if (search) {
-      const sanitizedSearch = sanitizeRegex(search).toLowerCase();
-      filteredDoctors = doctors.filter(
-        (doctor) =>
-          doctor.name?.toLowerCase().includes(sanitizedSearch) ||
-          doctor.specialization?.toLowerCase().includes(sanitizedSearch) ||
-          doctor.qualification?.toLowerCase().includes(sanitizedSearch)
-      );
-    }
-
-    // Filter inactive if needed
-    if (!includeInactive) {
-      filteredDoctors = filteredDoctors.filter((doctor) => doctor.isActive);
+      filteredDoctors = await doctorRepository.search(search, hospitalId, {
+        includeInactive,
+        specialization,
+        limit: parsedLimit,
+        offset,
+      });
+    } else {
+      const doctors = await doctorRepository.findAll({
+        hospitalId,
+        specialization,
+        limit: parsedLimit,
+        offset,
+      });
+      filteredDoctors = includeInactive
+        ? doctors
+        : doctors.filter((doctor) => doctor.isActive);
     }
 
     const total = filteredDoctors.length;
@@ -62,10 +54,10 @@ class DoctorService {
     return {
       doctors: filteredDoctors,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: parsedPage,
+        limit: parsedLimit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / parsedLimit),
       },
     };
   }

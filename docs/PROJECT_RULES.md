@@ -1504,3 +1504,34 @@ critical and non-critical all issues fix it all till then after stop
 - Section 16.4 - Dashboard Cache Invalidation
 - Section 5.1 - React Native Metro Bundler Cache
 - Section 27 - Debugging Workflow (Systematic Approach)    
+- Section 27.6 - Whatever work you start, complete it properly and ensure it is fully connected end-to-end.
+
+---
+
+## 32. Documentation Validation & Format Rules (MANDATORY)
+
+All documentation updates must follow strict validation and formatting rules.
+
+### 32.1 Scope & Location
+
+- Update documentation only inside `/docs/*.md` (or valid subfolders under `/docs/`).
+- Do not create unnecessary markdown files.
+- Do not keep unused or duplicate documentation files.
+
+### 32.2 Validation-Only Documentation
+
+- Rules documents must include verifiable requirements only.
+- Every rule must be testable with a clear checklist, command, or expected outcome.
+- Avoid vague statements that cannot be validated in development or production.
+
+### 32.3 Proper Markdown Format
+
+- Use consistent heading levels (`#`, `##`, `###`) in logical order.
+- Use bullet lists for rules, checklists, and acceptance criteria.
+- Keep section titles clear and action-oriented.
+- Use consistent spacing and separators (`---`) between major sections.
+
+### 32.4 Required Quality Standard
+
+- Documentation must be readable, structured, and implementation-ready.
+- If formatting is broken or validation criteria are missing, the documentation update is incomplete.

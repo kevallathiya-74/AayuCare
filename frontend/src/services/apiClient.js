@@ -102,7 +102,11 @@ api.interceptors.response.use(
     }
 
     // Extract error message from response
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'An error occurred';
     console.error('[ERROR] API Error:', errorMessage);
 
     return Promise.reject(new Error(errorMessage));

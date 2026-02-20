@@ -44,6 +44,10 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     gender: "",
     bloodGroup: "",
     address: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    allergies: "",
+    chronicConditions: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -71,6 +75,13 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (
+      formData.emergencyContactPhone.trim() &&
+      !/^\+?[1-9]\d{1,14}$/.test(formData.emergencyContactPhone.trim())
+    ) {
+      newErrors.emergencyContactPhone = "Invalid phone format";
     }
 
     if (!formData.dateOfBirth.trim()) {
@@ -132,6 +143,24 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           addressValue: formData.address,
           trimValue: formData.address ? formData.address.trim() : ''
         });
+      }
+      if (formData.emergencyContactName && formData.emergencyContactName.trim()) {
+        patientData.emergencyContactName = formData.emergencyContactName.trim();
+      }
+      if (formData.emergencyContactPhone && formData.emergencyContactPhone.trim()) {
+        patientData.emergencyContactPhone = formData.emergencyContactPhone.trim();
+      }
+      if (formData.allergies && formData.allergies.trim()) {
+        patientData.allergies = formData.allergies
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      if (formData.chronicConditions && formData.chronicConditions.trim()) {
+        patientData.chronicConditions = formData.chronicConditions
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
       }
       logger.debug("AddPatientModal", "Submitting create user payload");
 
@@ -210,6 +239,10 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       gender: "",
       bloodGroup: "",
       address: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      allergies: "",
+      chronicConditions: "",
     });
     setErrors({});
     setSelectedDate(new Date(2000, 0, 1));
@@ -507,6 +540,38 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Address",
               "Full address",
               "location",
+              "default",
+              false,
+              true
+            )}
+            {renderInput(
+              "emergencyContactName",
+              "Emergency Contact Name",
+              "Contact person name",
+              "person-add",
+              "default"
+            )}
+            {renderInput(
+              "emergencyContactPhone",
+              "Emergency Contact Phone",
+              "+911234567890",
+              "call",
+              "phone-pad"
+            )}
+            {renderInput(
+              "allergies",
+              "Allergies",
+              "e.g. Penicillin, Pollen",
+              "warning",
+              "default",
+              false,
+              true
+            )}
+            {renderInput(
+              "chronicConditions",
+              "Chronic Conditions",
+              "e.g. Diabetes, Hypertension",
+              "medkit",
               "default",
               false,
               true
