@@ -28,10 +28,28 @@ import { EmptyState } from "../../components/common";
 
 const ReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
+  const [selectedRecordType, setSelectedRecordType] = useState("all");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
+
+  const availableRecordTypes = Array.from(
+    new Set(
+      reports
+        .map((report) => report.recordType || report.type)
+        .filter((recordType) => !!recordType)
+    )
+  );
+
+  const filteredReports =
+    selectedRecordType === "all"
+      ? reports
+      : reports.filter(
+          (report) =>
+            (report.recordType || report.type || "").toLowerCase() ===
+            selectedRecordType.toLowerCase()
+        );
 
   const fetchReports = useCallback(async () => {
     try {
@@ -76,6 +94,19 @@ const ReportsScreen = ({ navigation }) => {
       [{ text: "OK" }]
     );
   };
+
+  const handleFilterPress = useCallback(() => {
+    const filterOptions = ["all", ...availableRecordTypes];
+    if (!filterOptions.length) {
+      return;
+    }
+
+    const currentIndex = filterOptions.findIndex(
+      (option) => option.toLowerCase() === selectedRecordType.toLowerCase()
+    );
+    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % filterOptions.length : 0;
+    setSelectedRecordType(filterOptions[nextIndex]);
+  }, [availableRecordTypes, selectedRecordType]);
 
   const renderReport = useCallback(
     ({ item }) => (
@@ -122,7 +153,13 @@ const ReportsScreen = ({ navigation }) => {
     <EmptyState
       icon="document-text-outline"
       title="No Reports"
-      message={error || "Medical reports will appear here."}
+      message={
+        error
+          ? error
+          : selectedRecordType === "all"
+            ? "Medical reports will appear here."
+            : `No reports found for type: ${selectedRecordType}`
+      }
       actionLabel={error ? "Retry" : undefined}
       onActionPress={error ? fetchReports : undefined}
     />
@@ -152,7 +189,7 @@ const ReportsScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Reports & Records</Text>
         <TouchableOpacity
           style={styles.filterButton}
-          onPress={() => Alert.alert("Filter", "Filter options coming soon")}
+          onPress={handleFilterPress}
           accessibilityRole="button"
           accessibilityLabel="Filter reports"
         >
@@ -167,7 +204,7 @@ const ReportsScreen = ({ navigation }) => {
         </View>
       ) : (
         <FlatList
-          data={reports}
+          data={filteredReports}
           renderItem={renderReport}
           keyExtractor={(item, index) => item._id || item.id || `report-${index}`}
           contentContainerStyle={[

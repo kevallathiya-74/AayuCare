@@ -202,8 +202,16 @@ exports.getProfileByEmail = async (req, res, next) => {
         userProfile.gender = patient.gender;
         userProfile.bloodGroup = patient.blood_group;
         userProfile.address = patient.address;
-        userProfile.emergencyContact = patient.emergency_contact;
         userProfile.emergencyContactName = patient.emergency_contact_name;
+        userProfile.emergencyContactPhone = patient.emergency_contact_phone;
+        userProfile.emergencyContact = {
+          name: patient.emergency_contact_name || null,
+          phone: patient.emergency_contact_phone || null,
+          relation: null,
+        };
+        userProfile.allergies = patient.allergies || [];
+        userProfile.chronicConditions = patient.chronic_conditions || [];
+        userProfile.medicalHistory = patient.chronic_conditions || [];
       }
     }
 
@@ -253,7 +261,6 @@ exports.updateProfile = async (req, res, next) => {
     const allowedUpdates = [
       "name",
       "phone",
-      "address",
     ];
 
     const filteredUpdates = {};
@@ -273,7 +280,15 @@ exports.updateProfile = async (req, res, next) => {
     // Update role-specific profile
     if (req.user.role === "doctor") {
       const doctorUpdates = {};
-      ["specialization", "qualification", "experience", "consultation_fee"].forEach((key) => {
+      [
+        "specialization",
+        "qualification",
+        "experience",
+        "consultationFee",
+        "department",
+        "bio",
+        "availability",
+      ].forEach((key) => {
         if (req.body[key] !== undefined) {
           doctorUpdates[key] = req.body[key];
         }
@@ -284,7 +299,16 @@ exports.updateProfile = async (req, res, next) => {
       }
     } else if (req.user.role === "patient") {
       const patientUpdates = {};
-      ["blood_group", "allergies", "address", "emergency_contact_name", "emergency_contact_phone"].forEach((key) => {
+      [
+        "dateOfBirth",
+        "gender",
+        "bloodGroup",
+        "allergies",
+        "chronicConditions",
+        "address",
+        "emergencyContactName",
+        "emergencyContactPhone",
+      ].forEach((key) => {
         if (req.body[key] !== undefined) {
           patientUpdates[key] = req.body[key];
         }
@@ -328,6 +352,15 @@ exports.updateProfile = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
+
+    if (currentPassword === newPassword) {
+      return next(
+        new AppError(
+          "New password must be different from current password",
+          400
+        )
+      );
+    }
 
     const user = await userRepository.findById(req.user.id, true);
 

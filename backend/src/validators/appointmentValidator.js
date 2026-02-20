@@ -114,7 +114,14 @@ exports.validateUpdateAppointmentStatus = [
   body("status")
     .notEmpty()
     .withMessage("Status is required")
-    .isIn(["scheduled", "confirmed", "completed", "cancelled", "no_show"])
+    .isIn([
+      "scheduled",
+      "confirmed",
+      "in_progress",
+      "completed",
+      "cancelled",
+      "no_show",
+    ])
     .withMessage("Invalid appointment status"),
 
   validate,
@@ -150,6 +157,7 @@ exports.validateGetAppointments = [
       const validStatuses = [
         "scheduled",
         "confirmed",
+        "in_progress",
         "completed",
         "cancelled",
         "no_show",

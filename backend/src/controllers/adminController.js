@@ -13,6 +13,7 @@ const MedicalRecord = require("../models/MedicalRecord");
 const User = require("../models/User");
 const logger = require("../utils/logger");
 const { query } = require("../config/postgres");
+const { redisClient } = require("../config/redis");
 const { withTransaction } = require("../utils/transaction");
 
 /**
@@ -26,6 +27,10 @@ exports.getDashboardStats = async (req, res) => {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const previousMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 
     // Build base query with hospitalId filter (skip for super_admin)
     const baseQuery = {};
@@ -41,40 +46,70 @@ exports.getDashboardStats = async (req, res) => {
       appointmentStats,
       doctorStats,
       patientStats,
-      prescriptionStats
+      totalPrescriptions,
+      prescriptionsToday,
+      prescriptionsYesterday,
+      revenueStats,
     ] = await Promise.all([
       // Appointment stats
       query(`
         SELECT 
           COUNT(*) FILTER (WHERE 1=1) as total,
           COUNT(*) FILTER (WHERE appointment_date >= $1 AND appointment_date < $2) as today,
+          COUNT(*) FILTER (WHERE appointment_date >= $3 AND appointment_date < $1) as yesterday,
           COUNT(*) FILTER (WHERE status IN ('scheduled', 'confirmed')) as pending,
-          COUNT(*) FILTER (WHERE status = 'completed') as completed
+          COUNT(*) FILTER (WHERE status = 'completed') as completed,
+          COUNT(*) FILTER (WHERE appointment_date >= $4) as this_month,
+          COUNT(*) FILTER (WHERE appointment_date >= $5 AND appointment_date < $4) as previous_month
         FROM appointments
-        WHERE 1=1 ${hasHospitalFilter ? 'AND hospital_id = $3' : ''}
-      `, hasHospitalFilter ? [today, tomorrow, req.hospitalId] : [today, tomorrow]),
+        WHERE 1=1 ${hasHospitalFilter ? 'AND hospital_id = $6' : ''}
+      `, hasHospitalFilter ? [today, tomorrow, yesterday, currentMonthStart, previousMonthStart, req.hospitalId] : [today, tomorrow, yesterday, currentMonthStart, previousMonthStart]),
       // Doctor stats
       query(`
         SELECT 
           COUNT(*) as total,
-          COUNT(*) FILTER (WHERE is_active = true) as active
+          COUNT(*) FILTER (WHERE is_active = true) as active,
+          COUNT(*) FILTER (WHERE created_at >= $1) as new_this_month,
+          COUNT(*) FILTER (WHERE created_at >= $2 AND created_at < $1) as new_previous_month
         FROM users
-        WHERE role = 'doctor' ${hasHospitalFilter ? 'AND hospital_id = $1' : ''}
-      `, hasHospitalFilter ? [req.hospitalId] : []),
+        WHERE role = 'doctor' ${hasHospitalFilter ? 'AND hospital_id = $3' : ''}
+      `, hasHospitalFilter ? [currentMonthStart, previousMonthStart, req.hospitalId] : [currentMonthStart, previousMonthStart]),
       // Patient stats
       query(`
         SELECT 
           COUNT(*) as total,
-          COUNT(*) FILTER (WHERE created_at >= $1) as new_this_month
+          COUNT(*) FILTER (WHERE created_at >= $1) as new_this_month,
+          COUNT(*) FILTER (WHERE created_at >= $2 AND created_at < $1) as new_previous_month
         FROM users
-        WHERE role = 'patient' ${hasHospitalFilter ? 'AND hospital_id = $2' : ''}
-      `, hasHospitalFilter ? [new Date(new Date().setDate(1)), req.hospitalId] : [new Date(new Date().setDate(1))]),
+        WHERE role = 'patient' ${hasHospitalFilter ? 'AND hospital_id = $3' : ''}
+      `, hasHospitalFilter ? [currentMonthStart, previousMonthStart, req.hospitalId] : [currentMonthStart, previousMonthStart]),
       // Prescription stats
-      prescriptionRepository.count(baseQuery).then(total => ({
-        total,
-        today: 0 // Would need additional query for MongoDB
-      }))
+      prescriptionRepository.count(baseQuery),
+      prescriptionRepository.count({
+        ...baseQuery,
+        createdAt: { $gte: today, $lt: tomorrow },
+      }),
+      prescriptionRepository.count({
+        ...baseQuery,
+        createdAt: { $gte: yesterday, $lt: today },
+      }),
+      query(`
+        SELECT 
+          COALESCE(SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END), 0) as total,
+          COALESCE(SUM(CASE WHEN p.status = 'completed' AND p.created_at >= $1 AND p.created_at < $2 THEN p.amount ELSE 0 END), 0) as today,
+          COALESCE(SUM(CASE WHEN p.status = 'completed' AND p.created_at >= $3 AND p.created_at < $1 THEN p.amount ELSE 0 END), 0) as yesterday
+        FROM payments p
+        LEFT JOIN appointments a ON p.appointment_id = a.id
+        WHERE 1=1 ${hasHospitalFilter ? 'AND a.hospital_id = $4' : ''}
+      `, hasHospitalFilter ? [today, tomorrow, yesterday, req.hospitalId] : [today, tomorrow, yesterday]),
     ]);
+
+    const calculateTrend = (currentValue, previousValue) => {
+      if (!previousValue) {
+        return currentValue > 0 ? 100 : 0;
+      }
+      return Math.round(((currentValue - previousValue) / previousValue) * 100);
+    };
 
     const totalAppointments = parseInt(appointmentStats.rows[0].total);
     const appointmentsToday = parseInt(appointmentStats.rows[0].today);
@@ -84,8 +119,24 @@ exports.getDashboardStats = async (req, res) => {
     const activeDoctors = parseInt(doctorStats.rows[0].active);
     const totalPatients = parseInt(patientStats.rows[0].total);
     const newPatientsThisMonth = parseInt(patientStats.rows[0].new_this_month);
-    const totalPrescriptions = prescriptionStats.total;
-    const prescriptionsToday = prescriptionStats.today;
+    const totalPrescriptionsCount = parseInt(totalPrescriptions, 10);
+    const prescriptionsTodayCount = parseInt(prescriptionsToday, 10);
+    const prescriptionsYesterdayCount = parseInt(prescriptionsYesterday, 10);
+    const appointmentsThisMonth = parseInt(appointmentStats.rows[0].this_month, 10);
+    const appointmentsPreviousMonth = parseInt(appointmentStats.rows[0].previous_month, 10);
+    const doctorsNewThisMonth = parseInt(doctorStats.rows[0].new_this_month, 10);
+    const doctorsNewPreviousMonth = parseInt(
+      doctorStats.rows[0].new_previous_month,
+      10
+    );
+    const patientsNewPreviousMonth = parseInt(
+      patientStats.rows[0].new_previous_month,
+      10
+    );
+
+    const totalRevenue = parseFloat(revenueStats.rows[0].total || 0);
+    const revenueToday = parseFloat(revenueStats.rows[0].today || 0);
+    const revenueYesterday = parseFloat(revenueStats.rows[0].yesterday || 0);
 
     res.json({
       success: true,
@@ -95,26 +146,30 @@ exports.getDashboardStats = async (req, res) => {
           today: appointmentsToday,
           pending: pendingAppointments,
           completed: completedAppointments,
-          trend: 0, // Can be calculated from historical data
+          trend: calculateTrend(appointmentsThisMonth, appointmentsPreviousMonth),
         },
         doctors: {
           total: totalDoctors,
           active: activeDoctors,
-          onDuty: activeDoctors, // Can be enhanced with shift tracking
-          trend: 0,
+          onDuty: activeDoctors,
+          trend: calculateTrend(doctorsNewThisMonth, doctorsNewPreviousMonth),
         },
         patients: {
           total: totalPatients,
           new: newPatientsThisMonth,
           returning: totalPatients - newPatientsThisMonth,
-          trend: 0,
+          trend: calculateTrend(newPatientsThisMonth, patientsNewPreviousMonth),
         },
         prescriptions: {
-          total: totalPrescriptions,
-          today: prescriptionsToday,
-          trend: 0,
+          total: totalPrescriptionsCount,
+          today: prescriptionsTodayCount,
+          trend: calculateTrend(prescriptionsTodayCount, prescriptionsYesterdayCount),
         },
-        revenue: { total: 0, today: 0, trend: 0 }, // Placeholder for billing module
+        revenue: {
+          total: totalRevenue,
+          today: revenueToday,
+          trend: calculateTrend(revenueToday, revenueYesterday),
+        },
       },
     });
   } catch (error) {
@@ -641,14 +696,47 @@ exports.bulkUpdateUsers = async (req, res) => {
  */
 exports.getSystemHealth = async (req, res) => {
   try {
-    // Properly access MongoDB connection through mongoose
-    const dbStatus = await mongoose.connection.db.admin().ping();
+    const services = {
+      mongodb: { connected: false },
+      postgres: { connected: false },
+      redis: { connected: false },
+    };
+
+    try {
+      const mongoPing = await mongoose.connection.db.admin().ping();
+      services.mongodb.connected = mongoPing?.ok === 1;
+    } catch (mongoError) {
+      logger.warn("MongoDB health check failed:", mongoError.message);
+    }
+
+    try {
+      await query("SELECT 1");
+      services.postgres.connected = true;
+    } catch (postgresError) {
+      logger.warn("PostgreSQL health check failed:", postgresError.message);
+    }
+
+    try {
+      const redisPing = await redisClient.ping();
+      services.redis.connected = redisPing === "PONG";
+    } catch (redisError) {
+      logger.warn("Redis health check failed:", redisError.message);
+    }
+
+    const issues = Object.values(services).filter((service) => !service.connected).length;
+    const status = issues === 0 ? "good" : issues === 1 ? "warning" : "critical";
+    const memory = process.memoryUsage();
 
     res.json({
       success: true,
       data: {
-        status: "healthy",
-        database: dbStatus?.ok === 1 ? "connected" : "disconnected",
+        status,
+        issues,
+        database: {
+          connected: services.mongodb.connected,
+        },
+        services,
+        memory,
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
       },
@@ -658,8 +746,11 @@ exports.getSystemHealth = async (req, res) => {
     res.status(500).json({
       success: false,
       data: {
-        status: "degraded",
-        database: "error",
+        status: "critical",
+        issues: 3,
+        database: {
+          connected: false,
+        },
         error: error.message,
       },
     });
@@ -692,15 +783,36 @@ exports.getSecuritySettings = async (req, res) => {
 
     const statsResult = await query(`
       SELECT 
-        COUNT(*) FILTER (WHERE is_active = true AND last_login >= $1) as active_sessions,
+        COUNT(*) FILTER (WHERE is_active = true AND last_login >= $1) as active_users_7d,
         COUNT(*) FILTER (WHERE last_login >= $2) as recent_logins,
         COUNT(*) as total_users,
         COUNT(*) FILTER (WHERE email_verified = true) as verified_users
       FROM users
     `, [sevenDaysAgo, today]);
 
+    const sessionStatsResult = await query(
+      `SELECT COUNT(*)::int AS active_sessions
+       FROM session
+       WHERE expires_at > NOW()`
+    );
+
+    const userSessionStatsResult = await query(
+      `SELECT COUNT(*)::int AS active_sessions
+       FROM session
+       WHERE user_id = $1
+         AND expires_at > NOW()`,
+      [user.id]
+    );
+
     const stats = statsResult.rows[0];
-    const totalActiveSessions = parseInt(stats.active_sessions);
+    const totalActiveSessions = parseInt(
+      sessionStatsResult.rows[0]?.active_sessions || 0,
+      10
+    );
+    const myActiveSessions = parseInt(
+      userSessionStatsResult.rows[0]?.active_sessions || 0,
+      10
+    );
     const recentLoginAttempts = parseInt(stats.recent_logins);
     const totalUsers = parseInt(stats.total_users);
     const verifiedUsers = parseInt(stats.verified_users);
@@ -709,19 +821,19 @@ exports.getSecuritySettings = async (req, res) => {
       success: true,
       data: {
         user: {
-          tokenVersion: 0, // PostgreSQL doesn't have token version yet
           lastLogin: user.last_login,
           isVerified: user.email_verified,
           accountCreated: user.created_at,
-          revokedTokensCount: 0, // Would need separate tokens table
+          lastPasswordChange: user.updated_at,
+          myActiveSessions,
         },
         statistics: {
           activeSessions: totalActiveSessions,
+          activeUsers7d: parseInt(stats.active_users_7d, 10),
           recentLogins: recentLoginAttempts,
           totalUsers,
           verifiedUsers,
           unverifiedUsers: totalUsers - verifiedUsers,
-          twoFactorEnabled: false, // Placeholder for future 2FA feature
         },
         lastActivity: user.last_login ? getTimeAgo(user.last_login) : 'Never',
       },
@@ -756,10 +868,17 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       return res.status(400).json({
         success: false,
-        error: 'New password must be at least 6 characters',
+        error: 'New password must be at least 8 characters',
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be different from current password',
       });
     }
 
@@ -803,6 +922,11 @@ exports.changePassword = async (req, res) => {
       [newPasswordHash, user.id]
     );
 
+    const deletedSessionsResult = await query(
+      'DELETE FROM session WHERE user_id = $1',
+      [user.id]
+    );
+
     logger.info(`Password changed for user: ${userId}`);
 
     // Invalidate relevant caches after password change
@@ -818,6 +942,9 @@ exports.changePassword = async (req, res) => {
     res.json({
       success: true,
       message: 'Password changed successfully. Please login again.',
+      data: {
+        loggedOutSessions: deletedSessionsResult.rowCount || 0,
+      },
     });
   } catch (error) {
     logger.error('Change password error:', {
@@ -849,11 +976,12 @@ exports.logoutAllDevices = async (req, res) => {
       });
     }
 
-    // Clear refresh token (token version would need separate implementation)
-    await query(
-      'UPDATE users SET updated_at = NOW() WHERE id = $1',
+    const deletedSessionsResult = await query(
+      'DELETE FROM session WHERE user_id = $1',
       [user.id]
     );
+
+    await query('UPDATE users SET updated_at = NOW() WHERE id = $1', [user.id]);
 
     logger.info(`Logged out all devices for user: ${userId}`);
 
@@ -870,6 +998,9 @@ exports.logoutAllDevices = async (req, res) => {
     res.json({
       success: true,
       message: 'Successfully logged out from all devices',
+      data: {
+        loggedOutSessions: deletedSessionsResult.rowCount || 0,
+      },
     });
   } catch (error) {
     logger.error('Logout all devices error:', {
@@ -1013,6 +1144,14 @@ exports.getSystemMetrics = async (req, res) => {
     `, hasHospitalFilter3 ? [weekAgo, req.hospitalId] : [weekAgo]);
     const activeUsers = parseInt(activeUsersResult.rows[0].count);
 
+    // Total users count
+    const totalUsersResult = await query(`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE 1=1 ${hasHospitalFilter3 ? 'AND hospital_id = $1' : ''}
+    `, hasHospitalFilter3 ? [req.hospitalId] : []);
+    const totalUsers = parseInt(totalUsersResult.rows[0].count);
+
     // Database size stats
     const dbStats = await mongoose.connection.db.stats();
 
@@ -1022,6 +1161,7 @@ exports.getSystemMetrics = async (req, res) => {
         userGrowth,
         appointmentTrends,
         activeUsers,
+        totalUsers,
         database: {
           collections: dbStats.collections,
           dataSize: dbStats.dataSize,
@@ -1066,7 +1206,7 @@ exports.getNotificationsManagement = async (req, res) => {
     }
 
     if (status) {
-      query.isRead = status === "read";
+      query.read = status === "read";
     }
 
     const Notification = require("../models/Notification");
@@ -1079,7 +1219,7 @@ exports.getNotificationsManagement = async (req, res) => {
         .limit(parseInt(limit))
         .lean(),
       Notification.countDocuments(query),
-      Notification.countDocuments({ ...query, isRead: false }),
+      Notification.countDocuments({ ...query, read: false }),
     ]);
 
     // Type distribution
@@ -1139,6 +1279,10 @@ exports.createUser = async (req, res) => {
       gender,
       bloodGroup,
       address,
+      emergencyContactName,
+      emergencyContactPhone,
+      allergies,
+      chronicConditions,
     } = req.body;
 
     // Log incoming request to diagnose address field issues
@@ -1150,6 +1294,10 @@ exports.createUser = async (req, res) => {
       gender,
       bloodGroup,
       address,
+      emergencyContactName,
+      emergencyContactPhone,
+      allergies,
+      chronicConditions,
       hasAddress: !!address,
       addressLength: address ? address.length : 0
     });
@@ -1252,6 +1400,26 @@ exports.createUser = async (req, res) => {
       if (address) {
         patientFields.push('address');
         patientValues.push(address);
+        paramIndex++;
+      }
+      if (emergencyContactName) {
+        patientFields.push('emergency_contact_name');
+        patientValues.push(emergencyContactName);
+        paramIndex++;
+      }
+      if (emergencyContactPhone) {
+        patientFields.push('emergency_contact_phone');
+        patientValues.push(emergencyContactPhone);
+        paramIndex++;
+      }
+      if (Array.isArray(allergies) && allergies.length > 0) {
+        patientFields.push('allergies');
+        patientValues.push(allergies);
+        paramIndex++;
+      }
+      if (Array.isArray(chronicConditions) && chronicConditions.length > 0) {
+        patientFields.push('chronic_conditions');
+        patientValues.push(chronicConditions);
         paramIndex++;
       }
 
@@ -1361,12 +1529,33 @@ exports.updateUserProfile = async (req, res) => {
       gender,
       bloodGroup,
       address,
+      emergencyContactName,
+      emergencyContactPhone,
+      allergies,
+      chronicConditions,
     } = req.body;
 
     logger.info('Update user profile request:', { 
       userId, 
       requestedFields: Object.keys(req.body),
-      values: { name, email, phone, specialization, qualification, experience, department, consultationFee, dateOfBirth, gender, bloodGroup, address }
+      values: {
+        name,
+        email,
+        phone,
+        specialization,
+        qualification,
+        experience,
+        department,
+        consultationFee,
+        dateOfBirth,
+        gender,
+        bloodGroup,
+        address,
+        emergencyContactName,
+        emergencyContactPhone,
+        allergies,
+        chronicConditions,
+      }
     });
 
     // Find user with hospitalId filter
@@ -1522,6 +1711,26 @@ exports.updateUserProfile = async (req, res) => {
       if (address) {
         patientUpdates.push(`address = $${paramIndex}`);
         patientValues.push(address);
+        paramIndex++;
+      }
+      if (emergencyContactName) {
+        patientUpdates.push(`emergency_contact_name = $${paramIndex}`);
+        patientValues.push(emergencyContactName);
+        paramIndex++;
+      }
+      if (emergencyContactPhone) {
+        patientUpdates.push(`emergency_contact_phone = $${paramIndex}`);
+        patientValues.push(emergencyContactPhone);
+        paramIndex++;
+      }
+      if (Array.isArray(allergies)) {
+        patientUpdates.push(`allergies = $${paramIndex}`);
+        patientValues.push(allergies);
+        paramIndex++;
+      }
+      if (Array.isArray(chronicConditions)) {
+        patientUpdates.push(`chronic_conditions = $${paramIndex}`);
+        patientValues.push(chronicConditions);
         paramIndex++;
       }
       

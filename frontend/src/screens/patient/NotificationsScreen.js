@@ -25,12 +25,12 @@ import { theme, healthColors } from "../../theme";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { formatTime } from "../../utils/helpers";
-import { notificationService } from "../../services";
+import { adminService, notificationService } from "../../services";
 import logger from "../../utils/logger";
 
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
+  const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
   const { isConnected } = useNetworkStatus();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,13 +42,6 @@ const NotificationsScreen = ({ navigation }) => {
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     logger.debug("NotificationsScreen", "Fetching notifications");
-    
-    if (!user?.id) {
-      logger.error("NotificationsScreen", "User not found or missing user ID");
-      setError("User not found");
-      setLoading(false);
-      return;
-    }
 
     if (!isConnected) {
       logger.error("NotificationsScreen", "No internet connection");
@@ -59,16 +52,27 @@ const NotificationsScreen = ({ navigation }) => {
 
     try {
       setError(null);
-      logger.debug("NotificationsScreen", "Calling notification service");
-      const response = await notificationService.getNotifications(1, 50);
+      logger.debug("NotificationsScreen", "Calling notification endpoint", {
+        mode: isAdminUser ? "admin" : "user",
+      });
+
+      const response = isAdminUser
+        ? await adminService.getNotificationsManagement({ page: 1, limit: 50 })
+        : await notificationService.getNotifications(1, 50);
+
       logger.debug("NotificationsScreen", "Notification response received");
 
       if (response?.success) {
-        // Backend returns { success, data: [...], unreadCount }
-        const notificationData = response.data || [];
+        const notificationData = isAdminUser
+          ? response.data?.notifications || []
+          : response.data || [];
         logger.debug("NotificationsScreen", "Notifications count", notificationData.length);
         setNotifications(notificationData);
-        setUnreadCount(response.unreadCount || 0);
+        setUnreadCount(
+          isAdminUser
+            ? response.data?.stats?.unreadCount || 0
+            : response.unreadCount || 0
+        );
       } else {
         logger.error("NotificationsScreen", "Response not successful", response);
         setError("Failed to load notifications");
@@ -81,7 +85,7 @@ const NotificationsScreen = ({ navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id, isConnected]);
+  }, [isConnected, isAdminUser]);
 
   useEffect(() => {
     fetchNotifications();
@@ -95,14 +99,15 @@ const NotificationsScreen = ({ navigation }) => {
   const handleNotificationPress = useCallback(
     async (notification) => {
       try {
+        const isRead = notification.read ?? notification.isRead ?? false;
         // Mark as read if unread
-        if (!notification.read) {
+        if (!isRead && !isAdminUser) {
           await notificationService.markAsRead(notification._id);
 
           // Update local state
           setNotifications((prev) =>
             prev.map((n) =>
-              n._id === notification._id ? { ...n, read: true } : n
+              n._id === notification._id ? { ...n, read: true, isRead: true } : n
             )
           );
           setUnreadCount((prev) => Math.max(0, prev - 1));
@@ -119,14 +124,19 @@ const NotificationsScreen = ({ navigation }) => {
         });
       }
     },
-    [navigation]
+    [navigation, isAdminUser]
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
+    if (isAdminUser) {
+      showError("Mark all as read is only available for your own notifications");
+      return;
+    }
+
     try {
       await notificationService.markAllAsRead();
 
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true, isRead: true })));
       setUnreadCount(0);
 
       Alert.alert("Success", "All notifications marked as read");
@@ -134,9 +144,14 @@ const NotificationsScreen = ({ navigation }) => {
       logError(err, { context: "NotificationsScreen.handleMarkAllAsRead" });
       showError("Failed to mark all as read");
     }
-  }, []);
+  }, [isAdminUser]);
 
   const handleClearAll = useCallback(() => {
+    if (isAdminUser) {
+      showError("Clear all is only available for your own notifications");
+      return;
+    }
+
     Alert.alert(
       "Clear All Notifications",
       "Are you sure you want to delete all notifications?",
@@ -159,9 +174,14 @@ const NotificationsScreen = ({ navigation }) => {
         },
       ]
     );
-  }, []);
+  }, [isAdminUser]);
 
   const handleDeleteNotification = useCallback((notificationId, isRead) => {
+    if (isAdminUser) {
+      showError("Delete is only available for your own notifications");
+      return;
+    }
+
     Alert.alert(
       "Delete Notification",
       "Are you sure you want to delete this notification?",
@@ -191,7 +211,7 @@ const NotificationsScreen = ({ navigation }) => {
         },
       ]
     );
-  }, []);
+  }, [isAdminUser]);
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -244,9 +264,12 @@ const NotificationsScreen = ({ navigation }) => {
     return "Just now";
   };
 
-  const renderNotification = ({ item }) => (
+  const renderNotification = ({ item }) => {
+    const isRead = item.read ?? item.isRead ?? false;
+
+    return (
     <TouchableOpacity
-      style={[styles.notificationCard, !item.read && styles.unreadCard]}
+      style={[styles.notificationCard, !isRead && styles.unreadCard]}
       onPress={() => handleNotificationPress(item)}
       activeOpacity={0.7}
     >
@@ -266,10 +289,10 @@ const NotificationsScreen = ({ navigation }) => {
 
         <View style={styles.textContainer}>
           <View style={styles.headerRow}>
-            <Text style={[styles.title, !item.read && styles.unreadTitle]}>
+            <Text style={[styles.title, !isRead && styles.unreadTitle]}>
               {item.title}
             </Text>
-            {!item.read && <View style={styles.unreadDot} />}
+            {!isRead && <View style={styles.unreadDot} />}
           </View>
 
           <Text style={styles.message} numberOfLines={2}>
@@ -281,7 +304,7 @@ const NotificationsScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.deleteButton}
-          onPress={() => handleDeleteNotification(item._id, item.read)}
+          onPress={() => handleDeleteNotification(item._id, isRead)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons
@@ -292,7 +315,8 @@ const NotificationsScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   if (error) {
     return (
@@ -358,7 +382,7 @@ const NotificationsScreen = ({ navigation }) => {
       </View>
 
       {/* Mark All as Read Button */}
-      {unreadCount > 0 && (
+      {unreadCount > 0 && !isAdminUser && (
         <TouchableOpacity
           style={styles.markAllButton}
           onPress={handleMarkAllAsRead}

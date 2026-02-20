@@ -29,6 +29,7 @@ import {
 } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { useSelector } from "react-redux";
 
 const SettingsScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -39,6 +40,13 @@ const SettingsScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const userRole = useSelector((state) => state.auth?.user?.role);
+
+  const getEditProfileRoute = () => {
+    if (userRole === "doctor") return "EditProfile";
+    if (userRole === "admin") return "AdminSettings";
+    return "PatientEditProfile";
+  };
 
   const handleSettingChange = async (setter, value, settingName) => {
     try {
@@ -72,13 +80,13 @@ const SettingsScreen = ({ navigation }) => {
       title: "Edit Profile",
       leftIcon: { name: "person", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => navigation.navigate("Profile"),
+      onPress: () => navigation.navigate(getEditProfileRoute()),
     },
     {
       title: "Change Password",
       leftIcon: { name: "lock-closed", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () => navigation.navigate("ChangePassword"),
     },
     {
       title: "Accessibility & Advanced",

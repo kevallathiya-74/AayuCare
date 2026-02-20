@@ -23,7 +23,6 @@ import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
 import ReportsScreen from "../screens/hospital/ReportsScreen";
 import PharmacyManagementScreen from "../screens/hospital/PharmacyManagementScreen";
 import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
-import ErrorAnalyticsDashboard from "../screens/hospital/ErrorAnalyticsDashboard";
 
 const Tab = createBottomTabNavigator();
 
@@ -56,8 +55,6 @@ const AdminTabsInner = () => {
             iconName = focused ? "calendar" : "calendar-outline";
           } else if (route.name === "Reports") {
             iconName = focused ? "document-text" : "document-text-outline";
-          } else if (route.name === "Analytics") {
-            iconName = focused ? "analytics" : "analytics-outline";
           } else if (route.name === "Settings") {
             iconName = focused ? "settings" : "settings-outline";
           }
@@ -114,13 +111,6 @@ const AdminTabsInner = () => {
         component={ReportsScreen}
         options={{
           tabBarLabel: "Reports",
-        }}
-      />
-      <Tab.Screen
-        name="Analytics"
-        component={ErrorAnalyticsDashboard}
-        options={{
-          tabBarLabel: "Analytics",
         }}
       />
       <Tab.Screen

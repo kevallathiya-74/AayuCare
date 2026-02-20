@@ -371,14 +371,17 @@ exports.getAvailableSlots = async (req, res, next) => {
  */
 exports.getAppointmentStats = async (req, res, next) => {
   try {
-    const stats = await appointmentService.getAppointmentStats(
+    const statsPayload = await appointmentService.getAppointmentStats(
       req.user._id,
       req.user.role
     );
 
     res.status(200).json({
       status: "success",
-      data: { stats },
+      data: {
+        stats: statsPayload.statusCounts,
+        dateRanges: statsPayload.dateRanges,
+      },
     });
   } catch (error) {
     next(error);

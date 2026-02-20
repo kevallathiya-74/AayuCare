@@ -47,26 +47,6 @@ export const formatPhoneNumber = (phone) => {
 };
 
 /**
- * Validate Indian phone number
- * @param {string} phone - Phone number
- * @returns {boolean} Is valid
- */
-export const isValidPhoneNumber = (phone) => {
-  const cleaned = phone.replace(/\D/g, '');
-  return /^[6-9]\d{9}$/.test(cleaned) || /^91[6-9]\d{9}$/.test(cleaned);
-};
-
-/**
- * Validate email
- * @param {string} email - Email address
- * @returns {boolean} Is valid
- */
-export const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-/**
  * Validate Aadhaar number
  * @param {string} aadhaar - Aadhaar number
  * @returns {boolean} Is valid
@@ -349,8 +329,6 @@ export const sortBy = (array, key, order = 'asc') => {
 export default {
   formatCurrency,
   formatPhoneNumber,
-  isValidPhoneNumber,
-  isValidEmail,
   isValidAadhaar,
   formatDate,
   formatTime,

@@ -273,7 +273,14 @@ class DoctorRepository {
    * @param {string} hospitalId - Hospital ID
    * @returns {Promise<Array>} Array of doctors
    */
-  async search(searchTerm, hospitalId = null) {
+  async search(searchTerm, hospitalId = null, options = {}) {
+    const {
+      includeInactive = false,
+      specialization,
+      limit = 20,
+      offset = 0,
+    } = options;
+
     let sql = `
             SELECT d.id, d.user_id, d.specialization, d.qualification, d.experience, 
                    d.consultation_fee, d.license_number, d.department, d.bio, d.availability,
@@ -282,18 +289,42 @@ class DoctorRepository {
                    d.created_at, d.updated_at
             FROM doctors d
             INNER JOIN users u ON d.user_id = u.id
-            WHERE u.is_active = true 
-            AND (u.name ILIKE $1 OR d.specialization ILIKE $1)
+            WHERE 1=1
         `;
 
-    const params = [`%${searchTerm}%`];
+    const params = [];
+    let paramCount = 1;
 
-    if (hospitalId) {
-      sql += ` AND u.hospital_id = $2`;
-      params.push(hospitalId);
+    if (!includeInactive) {
+      sql += ` AND u.is_active = true`;
     }
 
-    sql += ` ORDER BY u.name LIMIT 20`;
+    if (hospitalId) {
+      sql += ` AND u.hospital_id = $${paramCount}`;
+      params.push(hospitalId);
+      paramCount++;
+    }
+
+    if (specialization) {
+      sql += ` AND d.specialization ILIKE $${paramCount}`;
+      params.push(`%${specialization}%`);
+      paramCount++;
+    }
+
+    sql += `
+            AND (
+              u.name ILIKE $${paramCount}
+              OR u.email ILIKE $${paramCount}
+              OR u.phone ILIKE $${paramCount}
+              OR d.specialization ILIKE $${paramCount}
+              OR d.qualification ILIKE $${paramCount}
+            )
+        `;
+    params.push(`%${searchTerm}%`);
+    paramCount++;
+
+    sql += ` ORDER BY u.name LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+    params.push(limit, offset);
 
     const result = await query(sql, params);
     

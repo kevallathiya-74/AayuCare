@@ -15,16 +15,19 @@ import {
   Alert,
   TextInput,
   StatusBar,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import { showError, logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
+import { logoutUser } from "../../store/slices/authSlice";
 
 const SecuritySettingsScreen = ({ navigation }) => {
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [securityData, setSecurityData] = useState(null);
@@ -35,6 +38,58 @@ const SecuritySettingsScreen = ({ navigation }) => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [passwordSubmitError, setPasswordSubmitError] = useState("");
+
+  const passwordRules = {
+    minLength: newPassword.length >= 8,
+    hasUpper: /[A-Z]/.test(newPassword),
+    hasLower: /[a-z]/.test(newPassword),
+    hasNumber: /\d/.test(newPassword),
+  };
+
+  const isPasswordValid =
+    passwordRules.minLength &&
+    passwordRules.hasUpper &&
+    passwordRules.hasLower &&
+    passwordRules.hasNumber;
+
+  const doPasswordsMatch =
+    confirmPassword.length > 0 && newPassword === confirmPassword;
+
+  const canSubmitPassword =
+    currentPassword.trim().length > 0 &&
+    isPasswordValid &&
+    doPasswordsMatch &&
+    !passwordLoading;
+
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+    setPasswordErrors({});
+    setPasswordSubmitError("");
+  };
+
+  const forceLogoutToLogin = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch (logoutError) {
+      logError(logoutError, {
+        context: "SecuritySettingsScreen.forceLogoutToLogin",
+      });
+    } finally {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+    }
+  };
 
   const fetchSecurityData = useCallback(async () => {
     try {
@@ -60,18 +115,29 @@ const SecuritySettingsScreen = ({ navigation }) => {
   }, [fetchSecurityData]);
 
   const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert("Error", "Please fill all password fields");
-      return;
+    const nextErrors = {};
+    setPasswordSubmitError("");
+
+    if (!currentPassword) {
+      nextErrors.currentPassword = "Current password is required";
+    }
+    if (!newPassword) {
+      nextErrors.newPassword = "New password is required";
+    } else if (!isPasswordValid) {
+      nextErrors.newPassword =
+        "Password must be 8+ chars with uppercase, lowercase, and number";
+    } else if (newPassword === currentPassword) {
+      nextErrors.newPassword =
+        "New password must be different from current password";
+    }
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "Please confirm new password";
+    } else if (newPassword !== confirmPassword) {
+      nextErrors.confirmPassword = "New passwords do not match";
     }
 
-    if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "New passwords do not match");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      Alert.alert("Error", "New password must be at least 6 characters");
+    setPasswordErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -93,24 +159,14 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 [
                   {
                     text: "OK",
-                    onPress: () => {
-                      // Navigate to login screen
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: "LoginScreen" }],
-                      });
-                    },
+                    onPress: forceLogoutToLogin,
                   },
                 ]
               );
-              setShowPasswordModal(false);
-              setCurrentPassword("");
-              setNewPassword("");
-              setConfirmPassword("");
+              closePasswordModal();
             } catch (error) {
-              const errorMessage =
-                error.response?.data?.error || "Failed to change password";
-              Alert.alert("Error", errorMessage);
+              const errorMessage = error?.message || "Failed to change password";
+              setPasswordSubmitError(errorMessage);
               logError(error, {
                 context: "SecuritySettingsScreen.handleChangePassword",
               });
@@ -142,12 +198,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 [
                   {
                     text: "OK",
-                    onPress: () => {
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: "LoginScreen" }],
-                      });
-                    },
+                    onPress: forceLogoutToLogin,
                   },
                 ]
               );
@@ -301,13 +352,26 @@ const SecuritySettingsScreen = ({ navigation }) => {
               </View>
               <View style={styles.statusRow}>
                 <Ionicons
-                  name="key-outline"
+                  name="lock-closed-outline"
                   size={18}
                   color={healthColors.text.secondary}
                 />
-                <Text style={styles.statusLabel}>Token Version:</Text>
+                <Text style={styles.statusLabel}>Password Updated:</Text>
                 <Text style={styles.statusValue}>
-                  {securityData?.user?.tokenVersion}
+                  {securityData?.user?.lastPasswordChange
+                    ? formatDate(securityData.user.lastPasswordChange)
+                    : "N/A"}
+                </Text>
+              </View>
+              <View style={styles.statusRow}>
+                <Ionicons
+                  name="phone-portrait-outline"
+                  size={18}
+                  color={healthColors.text.secondary}
+                />
+                <Text style={styles.statusLabel}>My Active Sessions:</Text>
+                <Text style={styles.statusValue}>
+                  {securityData?.user?.myActiveSessions ?? 0}
                 </Text>
               </View>
             </View>
@@ -337,9 +401,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
               healthColors.primary.main
             )}
             {renderStatCard(
-              "Unverified Users",
-              securityData?.statistics?.unverifiedUsers || 0,
-              "alert-circle",
+              "Active Users (7d)",
+              securityData?.statistics?.activeUsers7d || 0,
+              "pulse",
               healthColors.warning.main
             )}
           </View>
@@ -406,12 +470,17 @@ const SecuritySettingsScreen = ({ navigation }) => {
         </View>
 
         {/* Password Change Modal */}
-        {showPasswordModal && (
+        <Modal
+          visible={showPasswordModal}
+          transparent
+          animationType="fade"
+          onRequestClose={closePasswordModal}
+        >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
-                <TouchableOpacity onPress={() => setShowPasswordModal(false)}>
+                <TouchableOpacity onPress={closePasswordModal}>
                   <Ionicons
                     name="close"
                     size={24}
@@ -420,13 +489,26 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
 
+              {!!passwordSubmitError && (
+                <Text style={styles.passwordSubmitError}>{passwordSubmitError}</Text>
+              )}
+
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Current Password</Text>
                 <View style={styles.passwordInput}>
                   <TextInput
                     style={styles.input}
                     value={currentPassword}
-                    onChangeText={setCurrentPassword}
+                    onChangeText={(text) => {
+                      setCurrentPassword(text);
+                      if (passwordErrors.currentPassword || passwordSubmitError) {
+                        setPasswordErrors((prev) => ({
+                          ...prev,
+                          currentPassword: "",
+                        }));
+                        setPasswordSubmitError("");
+                      }
+                    }}
                     secureTextEntry={!showCurrentPassword}
                     placeholder="Enter current password"
                     placeholderTextColor={healthColors.text.disabled}
@@ -441,6 +523,11 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     />
                   </TouchableOpacity>
                 </View>
+                {!!passwordErrors.currentPassword && (
+                  <Text style={styles.passwordFieldError}>
+                    {passwordErrors.currentPassword}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.inputContainer}>
@@ -449,7 +536,13 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   <TextInput
                     style={styles.input}
                     value={newPassword}
-                    onChangeText={setNewPassword}
+                    onChangeText={(text) => {
+                      setNewPassword(text);
+                      if (passwordErrors.newPassword || passwordSubmitError) {
+                        setPasswordErrors((prev) => ({ ...prev, newPassword: "" }));
+                        setPasswordSubmitError("");
+                      }
+                    }}
                     secureTextEntry={!showNewPassword}
                     placeholder="Enter new password"
                     placeholderTextColor={healthColors.text.disabled}
@@ -464,31 +557,132 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     />
                   </TouchableOpacity>
                 </View>
+                {!!passwordErrors.newPassword && (
+                  <Text style={styles.passwordFieldError}>
+                    {passwordErrors.newPassword}
+                  </Text>
+                )}
               </View>
 
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Confirm New Password</Text>
-                <TextInput
-                  style={[styles.passwordInput, styles.input]}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry
-                  placeholder="Confirm new password"
-                  placeholderTextColor={healthColors.text.disabled}
-                />
+                <View style={styles.passwordInput}>
+                  <TextInput
+                    style={styles.input}
+                    value={confirmPassword}
+                    onChangeText={(text) => {
+                      setConfirmPassword(text);
+                      if (passwordErrors.confirmPassword || passwordSubmitError) {
+                        setPasswordErrors((prev) => ({
+                          ...prev,
+                          confirmPassword: "",
+                        }));
+                        setPasswordSubmitError("");
+                      }
+                    }}
+                    secureTextEntry={!showConfirmPassword}
+                    placeholder="Confirm new password"
+                    placeholderTextColor={healthColors.text.disabled}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color={healthColors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+                {!!confirmPassword && (
+                  <Text
+                    style={[
+                      styles.passwordHint,
+                      {
+                        color: doPasswordsMatch
+                          ? healthColors.success.main
+                          : healthColors.error.main,
+                      },
+                    ]}
+                  >
+                    {doPasswordsMatch
+                      ? "Passwords match"
+                      : "Passwords do not match"}
+                  </Text>
+                )}
+                {!!passwordErrors.confirmPassword && (
+                  <Text style={styles.passwordFieldError}>
+                    {passwordErrors.confirmPassword}
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.passwordRulesContainer}>
+                <Text style={styles.passwordRulesTitle}>Password must include:</Text>
+                <Text
+                  style={[
+                    styles.passwordRule,
+                    {
+                      color: passwordRules.minLength
+                        ? healthColors.success.main
+                        : healthColors.text.secondary,
+                    },
+                  ]}
+                >
+                  • At least 8 characters
+                </Text>
+                <Text
+                  style={[
+                    styles.passwordRule,
+                    {
+                      color: passwordRules.hasUpper
+                        ? healthColors.success.main
+                        : healthColors.text.secondary,
+                    },
+                  ]}
+                >
+                  • One uppercase letter
+                </Text>
+                <Text
+                  style={[
+                    styles.passwordRule,
+                    {
+                      color: passwordRules.hasLower
+                        ? healthColors.success.main
+                        : healthColors.text.secondary,
+                    },
+                  ]}
+                >
+                  • One lowercase letter
+                </Text>
+                <Text
+                  style={[
+                    styles.passwordRule,
+                    {
+                      color: passwordRules.hasNumber
+                        ? healthColors.success.main
+                        : healthColors.text.secondary,
+                    },
+                  ]}
+                >
+                  • One number
+                </Text>
               </View>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => setShowPasswordModal(false)}
+                  onPress={closePasswordModal}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.submitButton}
+                  style={[
+                    styles.submitButton,
+                    !canSubmitPassword && styles.submitButtonDisabled,
+                  ]}
                   onPress={handleChangePassword}
-                  disabled={passwordLoading}
+                  disabled={!canSubmitPassword}
                 >
                   {passwordLoading ? (
                     <ActivityIndicator size="small" color={theme.colors.white} />
@@ -499,7 +693,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
               </View>
             </View>
           </View>
-        )}
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -681,12 +875,8 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
   },
   modalOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    flex: 1,
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "center",
     alignItems: "center",
     padding: theme.spacing.lg,
@@ -739,6 +929,39 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     marginTop: theme.spacing.lg,
   },
+  passwordRulesContainer: {
+    backgroundColor: healthColors.background.secondary,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.md,
+  },
+  passwordRulesTitle: {
+    fontSize: theme.typography.sizes.caption,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  passwordRule: {
+    fontSize: theme.typography.sizes.caption,
+    marginBottom: theme.spacing.xs,
+  },
+  passwordHint: {
+    fontSize: theme.typography.sizes.caption,
+    marginTop: theme.spacing.xs,
+    fontWeight: theme.typography.weights.medium,
+  },
+  passwordFieldError: {
+    marginTop: theme.spacing.xs,
+    color: healthColors.error.main,
+    fontSize: theme.typography.sizes.overline,
+  },
+  passwordSubmitError: {
+    color: healthColors.error.main,
+    backgroundColor: healthColors.error.background,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    fontSize: theme.typography.sizes.caption,
+  },
   cancelButton: {
     flex: 1,
     paddingVertical: theme.spacing.md,
@@ -757,6 +980,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
     backgroundColor: healthColors.primary.main,
     alignItems: "center",
+  },
+  submitButtonDisabled: {
+    backgroundColor: healthColors.button.disabled,
   },
   submitButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,

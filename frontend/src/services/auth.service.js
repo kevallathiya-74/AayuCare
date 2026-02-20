@@ -5,6 +5,7 @@
 
 import authClient from "./betterAuth.service";
 import { APP_CONFIG } from "../config/appConfig";
+import api from "./apiClient";
 
 // Re-export Better Auth methods
 export const { signIn, signUp, signOut, useSession } = authClient;
@@ -13,6 +14,53 @@ export const { signIn, signUp, signOut, useSession } = authClient;
 const isEmail = (input) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(input);
+};
+
+const normalizeUserProfile = (profile = {}) => {
+  const emergencyName =
+    profile.emergencyContact?.name ||
+    profile.emergencyContactName ||
+    profile.emergency_contact_name ||
+    null;
+  const emergencyPhone =
+    profile.emergencyContact?.phone ||
+    profile.emergencyContactPhone ||
+    profile.emergency_contact_phone ||
+    null;
+
+  return {
+    ...profile,
+    userId: profile.userId || profile.user_id || profile.formatted_user_id,
+    hospitalId: profile.hospitalId || profile.hospital_id,
+    hospitalName: profile.hospitalName || profile.hospital_name,
+    isActive: profile.isActive ?? profile.is_active ?? false,
+    isVerified:
+      profile.isVerified ??
+      profile.emailVerified ??
+      profile.email_verified ??
+      false,
+    dateOfBirth: profile.dateOfBirth || profile.date_of_birth || null,
+    bloodGroup: profile.bloodGroup || profile.blood_group || null,
+    chronicConditions: profile.chronicConditions || profile.chronic_conditions || [],
+    allergies: profile.allergies || [],
+    emergencyContactName: emergencyName,
+    emergencyContactPhone: emergencyPhone,
+    emergencyContact: {
+      name: emergencyName,
+      phone: emergencyPhone,
+      relation:
+        profile.emergencyContact?.relation ||
+        profile.emergencyContactRelation ||
+        profile.emergency_contact_relation ||
+        null,
+    },
+    medicalHistory:
+      profile.medicalHistory ||
+      profile.medical_history ||
+      profile.chronicConditions ||
+      profile.chronic_conditions ||
+      [],
+  };
 };
 
 // Fetch with timeout helper
@@ -73,7 +121,7 @@ export const login = async (credentials) => {
         console.error('[auth.service] Email lookup failed:', errorData);
         
         if (emailResponse.status === 404) {
-          throw new Error('User ID not found. Please check your credentials.');
+          throw new Error('User ID not found.');
         } else if (emailResponse.status === 503) {
           throw new Error('Service temporarily unavailable. Please try again.');
         }
@@ -103,7 +151,7 @@ export const login = async (credentials) => {
     console.log('[auth.service] Better Auth sign-in completed');
 
     if (!result.data?.user) {
-      throw new Error('Invalid email/password combination. Please check your credentials.');
+      throw new Error('Invalid email/password combination.');
     }
 
     const betterAuthUserId = result.data.user.id;
@@ -128,7 +176,8 @@ export const login = async (credentials) => {
     }
 
     const profileData = await profileResponse.json();
-    console.log('[auth.service] Profile fetched for role:', profileData.data.role);
+    const normalizedUser = normalizeUserProfile(profileData.data || {});
+    console.log('[auth.service] Profile fetched for role:', normalizedUser.role);
 
     // Fetch the session token from backend
     console.log('[auth.service] Fetching session token...');
@@ -170,7 +219,7 @@ export const login = async (credentials) => {
     console.log('[auth.service] Login successful for role:', profileData.data.role);
 
     return {
-      user: profileData.data, // User-friendly profile data
+      user: normalizedUser,
       token: sessionToken,
     };
   } catch (error) {
@@ -256,6 +305,14 @@ export const getSession = async () => {
   }
 };
 
+export const changePassword = async (currentPassword, newPassword) => {
+  const response = await api.put("/user/change-password", {
+    currentPassword,
+    newPassword,
+  });
+  return response.data;
+};
+
 // Export service object as default for consistent usage
 export default {
   signIn,
@@ -266,6 +323,7 @@ export default {
   register,
   logout,
   getSession,
+  changePassword,
   authClient,
 };
 

@@ -69,6 +69,28 @@ const registerSchema = Joi.object({
     then: Joi.optional(),
     otherwise: Joi.forbidden(),
   }),
+  emergencyContactName: Joi.string().max(255).when("role", {
+    is: "patient",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+  emergencyContactPhone: Joi.string()
+    .pattern(/^\+?[1-9]\d{1,14}$/)
+    .when("role", {
+      is: "patient",
+      then: Joi.optional(),
+      otherwise: Joi.forbidden(),
+    }),
+  allergies: Joi.array().items(Joi.string()).when("role", {
+    is: "patient",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+  chronicConditions: Joi.array().items(Joi.string()).when("role", {
+    is: "patient",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
 });
 
 // Login validation
@@ -156,6 +178,18 @@ const updateProfileSchema = Joi.object({
   allergies: Joi.array().items(Joi.string()).optional(),
   chronicConditions: Joi.array().items(Joi.string()).optional(),
 }).min(1);
+
+const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().min(6).max(100).required(),
+  newPassword: Joi.string()
+    .min(8)
+    .max(100)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .message(
+      "New password must be at least 8 characters and contain uppercase, lowercase, and number"
+    )
+    .required(),
+});
 
 // Doctor profile update validation
 const updateDoctorProfileSchema = Joi.object({
@@ -258,6 +292,7 @@ module.exports = {
   createPaymentSchema,
   updatePaymentSchema,
   updateProfileSchema,
+  changePasswordSchema,
   updateDoctorProfileSchema,
   updatePatientProfileSchema,
   createPrescriptionSchema,

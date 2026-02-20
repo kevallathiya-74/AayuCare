@@ -32,7 +32,7 @@ import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
 
-const ManagePatientsScreen = ({ navigation }) => {
+const ManagePatientsScreen = ({ navigation, route }) => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,6 +44,7 @@ const ManagePatientsScreen = ({ navigation }) => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
+  const patientIdFromRoute = route?.params?.patientId;
   const fetchPatients = useCallback(async (searchTerm = "") => {
     try {
       if (searchTerm) {
@@ -54,7 +55,7 @@ const ManagePatientsScreen = ({ navigation }) => {
       setError(null);
 
       const response = await patientService.getAllPatients(
-        searchTerm ? { search: searchTerm } : {}
+        searchTerm ? { q: searchTerm } : {}
       );
 
       // Handle response as array directly or extract from nested structure
@@ -88,7 +89,7 @@ const ManagePatientsScreen = ({ navigation }) => {
   // Debounced search
   useEffect(() => {
     const delaySearch = setTimeout(() => {
-      if (searchQuery.trim().length >= 2) {
+      if (searchQuery.trim().length >= 1) {
         fetchPatients(searchQuery.trim());
       } else if (searchQuery.trim().length === 0) {
         fetchPatients("");
@@ -251,6 +252,23 @@ const ManagePatientsScreen = ({ navigation }) => {
     setSelectedPatient(patient);
     setShowDetailsModal(true);
   };
+
+  useEffect(() => {
+    if (!patientIdFromRoute || loading || patients.length === 0) {
+      return;
+    }
+
+    const matchedPatient = patients.find((patient) => {
+      const ids = [patient?._id, patient?.id, patient?.userId].filter(Boolean);
+      return ids.includes(patientIdFromRoute);
+    });
+
+    if (matchedPatient) {
+      handlePatientPress(matchedPatient);
+    }
+
+    navigation.setParams({ patientId: undefined, patientName: undefined });
+  }, [patientIdFromRoute, patients, loading, navigation]);
 
   const renderPatient = useCallback(
     ({ item }) => {

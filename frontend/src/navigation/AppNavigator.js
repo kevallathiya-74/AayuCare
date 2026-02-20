@@ -33,7 +33,6 @@ import PatientTabNavigator from "./PatientTabNavigator";
 import {
   ManageDoctorsScreen,
   ManagePatientsScreen,
-  PatientManagementScreen,
   EnhancedPrescriptionScreen,
   WalkInPatientScreen,
   ReportsScreen,
@@ -49,7 +48,11 @@ import EditProfileScreen from "../screens/hospital/EditProfileScreen";
 import ConsultationHistoryScreen from "../screens/hospital/ConsultationHistoryScreen";
 import ScheduleAvailabilityScreen from "../screens/hospital/ScheduleAvailabilityScreen";
 
-import { MyPrescriptionsScreen, ProfileScreen } from "../screens/patient";
+import {
+  MyPrescriptionsScreen,
+  PatientEditProfileScreen,
+  ProfileScreen,
+} from "../screens/patient";
 
 // New Patient Screens
 import NotificationsScreen from "../screens/patient/NotificationsScreen";
@@ -67,6 +70,7 @@ import EmergencyServices from "../screens/patient/EmergencyServices";
 
 // User Main App
 import { SettingsScreen, SettingsAccessibilityScreen } from "../screens/main";
+import ChangePasswordScreen from "../screens/main/ChangePasswordScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -225,6 +229,10 @@ const AppNavigator = () => {
         {/* Role-based Tab Navigators - Only when authenticated */}
         {isAuthenticated && (
           <>
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+            />
             {userRole === "admin" && (
               <>
                 <Stack.Screen name="AdminTabs" component={AdminTabNavigator} />
@@ -318,6 +326,10 @@ const AppNavigator = () => {
                   component={PatientTabNavigator}
                 />
                 <Stack.Screen name="Profile" component={ProfileScreen} />
+                <Stack.Screen
+                  name="PatientEditProfile"
+                  component={PatientEditProfileScreen}
+                />
                 <Stack.Screen
                   name="MyPrescriptions"
                   component={MyPrescriptionsScreen}

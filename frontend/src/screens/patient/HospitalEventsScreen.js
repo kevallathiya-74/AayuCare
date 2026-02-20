@@ -241,7 +241,7 @@ const HospitalEventsScreen = ({ navigation }) => {
             onPress={() =>
               Alert.alert(
                 "Event Details",
-                `Full details for "${event.title}" coming soon!`
+                `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${event.startTime} - ${event.endTime}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`
               )
             }
           >
