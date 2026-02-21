@@ -3,27 +3,21 @@
  * Form to add new doctor to the system
  */
 
-import React, { useState } from "react";
+import React from "react";
+import useDoctorForm from "./useDoctorForm";
 import {
+  Modal,
   View,
   Text,
-  StyleSheet,
-  Modal,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
+  StyleSheet,
+  TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import authService from "../../services/auth.service";
-import adminService from "../../services/admin.service";
-import logger from "../../utils/logger";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -44,310 +38,13 @@ const SPECIALIZATIONS = [
 ];
 
 const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
-  const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
-  const [showSpecializationPicker, setShowSpecializationPicker] =
-    useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    specialization: "",
-    qualification: "",
-    experience: "",
-    department: "",
-    consultationFee: "",
-  });
-
-  const [errors, setErrors] = useState({});
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required";
-    } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format";
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    if (!formData.specialization) {
-      newErrors.specialization = "Please select a specialization";
-    }
-
-    if (!formData.qualification.trim()) {
-      newErrors.qualification = "Qualification is required";
-    }
-
-    if (!formData.experience.trim()) {
-      newErrors.experience = "Experience is required";
-    } else if (
-      isNaN(formData.experience) ||
-      parseInt(formData.experience) < 0
-    ) {
-      newErrors.experience = "Experience must be a positive number";
-    }
-
-    if (
-      formData.consultationFee &&
-      (isNaN(formData.consultationFee) ||
-        parseInt(formData.consultationFee) < 0)
-    ) {
-      newErrors.consultationFee = "Consultation fee must be a positive number";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Backend will generate auto-increment userId (DOC1, DOC2, DOC3...)
-      // Prepare doctor data without userId
-      const doctorData = {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
-        password: formData.password,
-        role: "doctor",
-        specialization: formData.specialization,
-        qualification: formData.qualification.trim(),
-        experience: parseInt(formData.experience),
-        consultationFee: parseInt(formData.consultationFee) || 500,
-        department:
-          formData.department.trim() || formData.specialization || "General",
-        isActive: true,
-        hospitalId: user?.hospitalId,
-        hospitalName: user?.hospitalName,
-      };
-
-      // Use adminService.createUser for consistency with AddPatientModal
-      const response = await adminService.createUser(doctorData);
-
-      if (response.status === "success" || response.success || response.user) {
-        // Call onSuccess first to trigger parent refetch
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        // Then close modal and reset form
-        onClose();
-        resetForm();
-        
-        // Show success message after modal closes
-        setTimeout(() => {
-          Alert.alert("Success", "Doctor added successfully");
-        }, 300);
-      }
-    } catch (error) {
-      logger.error("AddDoctorModal", "Add doctor error", error);
-
-      // Better error handling
-      let errorMessage = "Failed to add doctor. Please try again.";
-
-      if (typeof error === "string") {
-        errorMessage = error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      // Specific handling for duplicate errors
-      if (errorMessage.includes("already exists")) {
-        if (errorMessage.includes("email")) {
-          errorMessage =
-            "This email is already registered. Please use a different email.";
-        } else if (errorMessage.includes("phone")) {
-          errorMessage =
-            "This phone number is already registered. Please use a different number.";
-        } else {
-          errorMessage =
-            "A doctor with these details already exists. Please check email and phone number.";
-        }
-      }
-
-      Alert.alert("Error", errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      password: "",
-      specialization: "",
-      qualification: "",
-      experience: "",
-      department: "",
-      consultationFee: "",
-    });
-    setErrors({});
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
-  const renderInput = (
-    key,
-    label,
-    placeholder,
-    icon,
-    keyboardType = "default",
-    secureTextEntry = false
-  ) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <Ionicons
-          name={icon}
-          size={20}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.tertiary
-          }
-          style={styles.inputIcon}
-        />
-        <TextInput
-          style={styles.input}
-          value={formData[key]}
-          onChangeText={(value) => {
-            setFormData({ ...formData, [key]: value });
-            if (errors[key]) {
-              setErrors({ ...errors, [key]: null });
-            }
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          autoCapitalize={key === "email" ? "none" : "words"}
-          editable={!loading}
-        />
-      </View>
-      {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-    </View>
-  );
-
-  const renderPicker = (key, label, icon, options) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.inputWrapper, errors[key] && styles.inputError]}
-        onPress={() => setShowSpecializationPicker(true)}
-        disabled={loading}
-      >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.tertiary
-          }
-          style={styles.inputIcon}
-        />
-        <Text
-          style={[styles.pickerText, !formData[key] && styles.placeholderText]}
-        >
-          {formData[key] || "Select specialization..."}
-        </Text>
-        <Ionicons
-          name="chevron-down"
-          size={20}
-          color={healthColors.text.tertiary}
-        />
-      </TouchableOpacity>
-      {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-
-      {/* Custom Dropdown Modal */}
-      <Modal
-        visible={showSpecializationPicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowSpecializationPicker(false)}
-      >
-        <TouchableOpacity
-          style={styles.dropdownOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSpecializationPicker(false)}
-        >
-          <View style={styles.dropdownContainer}>
-            <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>Select Specialization</Text>
-              <TouchableOpacity
-                onPress={() => setShowSpecializationPicker(false)}
-              >
-                <Ionicons
-                  name="close"
-                  size={24}
-                  color={healthColors.text.primary}
-                />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.dropdownItem,
-                    formData[key] === item && styles.dropdownItemSelected,
-                  ]}
-                  onPress={() => {
-                    setFormData({ ...formData, [key]: item });
-                    if (errors[key]) {
-                      setErrors({ ...errors, [key]: null });
-                    }
-                    setShowSpecializationPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      formData[key] === item && styles.dropdownItemTextSelected,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                  {formData[key] === item && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={healthColors.primary.main}
-                    />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </View>
-  );
+  const {
+    loading,
+    handleSubmit,
+    handleClose,
+    renderInput,
+    renderPicker,
+  } = useDoctorForm({ mode: "add", onClose, onSuccess });
 
   return (
     <Modal
@@ -432,6 +129,24 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "500",
               "cash",
               "numeric"
+            )}
+            {renderInput(
+              "licenseNumber",
+              "License Number *",
+              "MH/12345/2010",
+              "id-card"
+            )}
+            {renderInput(
+              "bio",
+              "Bio *",
+              "Short professional bio",
+              "information-circle"
+            )}
+            {renderInput(
+              "availability",
+              "Availability (JSON)",
+              '{"monday": ["09:00-12:00"]}',
+              "calendar"
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>

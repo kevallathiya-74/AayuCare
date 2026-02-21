@@ -21,9 +21,10 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
-import { patientService, adminService } from "../../services";
+import { patientService, adminService, doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import logger from "../../utils/logger";
@@ -33,6 +34,8 @@ import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
 
 const ManagePatientsScreen = ({ navigation, route }) => {
+  const { user } = useSelector((state) => state.auth);
+  const canManageUsers = ["admin", "super_admin"].includes(user?.role);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,6 +48,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const patientIdFromRoute = route?.params?.patientId;
+ 
+  const normalizedUserRole = String(user?.role || "").toLowerCase();
+
   const fetchPatients = useCallback(async (searchTerm = "") => {
     try {
       if (searchTerm) {
@@ -54,14 +60,22 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       }
       setError(null);
 
-      const response = await patientService.getAllPatients(
-        searchTerm ? { q: searchTerm } : {}
-      );
+      const isDoctorUser = normalizedUserRole === "doctor";
+      const response = isDoctorUser
+        ? await doctorService.searchMyPatients(searchTerm)
+        : await patientService.getAllPatients(searchTerm ? { q: searchTerm } : {});
 
       // Handle response as array directly or extract from nested structure
-      const patientsList = Array.isArray(response) 
-        ? response 
+      let patientsList = Array.isArray(response)
+        ? response
         : (response?.patients || response?.data || []);
+
+      patientsList = (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
+        ...patient,
+        _id: patient?._id || patient?.id || patient?.userId,
+        id: patient?.id || patient?._id || patient?.userId,
+      }));
+
       setPatients(patientsList);
       logger.debug("ManagePatientsScreen", `Loaded ${patientsList.length} patients`);
     } catch (err) {
@@ -72,12 +86,21 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       setSearchLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [normalizedUserRole]);
 
   // Initial load
   useEffect(() => {
     fetchPatients();
-  }, []);
+  }, [fetchPatients]);
+
+  // Ensure list refreshes once auth role is available/hydrated
+  useEffect(() => {
+    if (!normalizedUserRole) {
+      return;
+    }
+
+    fetchPatients(searchQuery.trim());
+  }, [normalizedUserRole, fetchPatients, searchQuery]);
 
   // Refetch when screen comes into focus (after navigation)
   useFocusEffect(
@@ -105,6 +128,11 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   }, [fetchPatients, searchQuery]);
 
   const handleToggleStatus = useCallback(async (patient) => {
+    if (!canManageUsers) {
+      Alert.alert("Access Denied", "Only admins can change patient status.");
+      return;
+    }
+
     const newStatus = !patient.isActive;
     logger.debug("ManagePatientsScreen", "Updating patient status", {
       patientId: patient._id,
@@ -166,7 +194,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [fetchPatients, searchQuery]);
+  }, [canManageUsers, fetchPatients, searchQuery]);
 
   const handleEditPatient = useCallback((patient) => {
     setSelectedPatient(patient);
@@ -184,6 +212,11 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   }, [fetchPatients, searchQuery]);
 
   const handleDeletePatient = useCallback(async (patient) => {
+    if (!canManageUsers) {
+      Alert.alert("Access Denied", "Only admins can delete patients.");
+      return;
+    }
+
     Alert.alert(
       "Delete Patient",
       `Are you sure you want to permanently delete ${patient.name}? This action cannot be undone.`,
@@ -196,7 +229,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, []);
+  }, [canManageUsers]);
 
   const handlePermanentDeletePatient = useCallback(async (patient) => {
     Alert.alert(
@@ -252,6 +285,22 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     setSelectedPatient(patient);
     setShowDetailsModal(true);
   };
+
+  const handleCreatePrescription = useCallback(
+    (patient) => {
+      const resolvedPatientId = patient?._id || patient?.id || patient?.userId;
+      if (!resolvedPatientId) {
+        Alert.alert("Patient Missing", "Unable to identify this patient for prescription.");
+        return;
+      }
+
+      navigation.navigate("CreatePrescription", {
+        patientId: resolvedPatientId,
+        patientName: patient?.name,
+      });
+    },
+    [navigation]
+  );
 
   useEffect(() => {
     if (!patientIdFromRoute || loading || patients.length === 0) {
@@ -332,6 +381,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 <Switch
                   value={item.isActive}
                   onValueChange={() => handleToggleStatus(item)}
+                  disabled={!canManageUsers}
                   trackColor={{
                     false: healthColors.border.light,
                     true: healthColors.primary.light + "50",
@@ -376,42 +426,70 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.actionButton, styles.editButton]}
+              style={[styles.actionButton, styles.prescriptionButton]}
               onPress={(e) => {
                 e.stopPropagation();
-                handleEditPatient(item);
+                handleCreatePrescription(item);
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Edit ${item.name}`}
+              accessibilityLabel={`Create prescription for ${item.name}`}
             >
               <Ionicons
-                name="create-outline"
+                name="document-text-outline"
                 size={18}
-                color={healthColors.primary.main}
+                color={healthColors.accent.coral}
               />
-              <Text style={styles.editButtonText}>Edit</Text>
+              <Text style={styles.prescriptionButtonText}>Prescription</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.deleteButton]}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleDeletePatient(item);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Delete ${item.name}`}
-            >
-              <Ionicons
-                name="trash-outline"
-                size={18}
-                color={healthColors.error.main}
-              />
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
+
+            {canManageUsers && (
+              <>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.editButton]}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleEditPatient(item);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${item.name}`}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={18}
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.deleteButton]}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleDeletePatient(item);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${item.name}`}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={18}
+                  color={healthColors.error.main}
+                />
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+              </>
+            )}
           </View>
         </TouchableOpacity>
       );
     },
-    [handleToggleStatus, handleEditPatient, handleDeletePatient, updatingId]
+    [
+      canManageUsers,
+      handleToggleStatus,
+      handleEditPatient,
+      handleDeletePatient,
+      handleCreatePrescription,
+      updatingId,
+    ]
   );
 
   const renderEmptyState = () => (
@@ -446,15 +524,19 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Patients</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Add new patient"
-        >
-          <Ionicons name="add" size={24} color={theme.colors.white} />
-        </TouchableOpacity>
+        {canManageUsers ? (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Add new patient"
+          >
+            <Ionicons name="add" size={24} color={theme.colors.white} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.addButtonPlaceholder} />
+        )}
       </View>
 
       {/* Search Section */}
@@ -524,22 +606,26 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       )}
 
       {/* Add Patient Modal */}
-      <AddPatientModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={handleAddSuccess}
-      />
+      {canManageUsers && (
+        <AddPatientModal
+          visible={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleAddSuccess}
+        />
+      )}
 
       {/* Edit Patient Modal */}
-      <EditPatientModal
-        visible={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedPatient(null);
-        }}
-        onSuccess={handleEditSuccess}
-        patient={selectedPatient}
-      />
+      {canManageUsers && (
+        <EditPatientModal
+          visible={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedPatient(null);
+          }}
+          onSuccess={handleEditSuccess}
+          patient={selectedPatient}
+        />
+      )}
 
       {/* Patient Details Modal */}
       <PatientDetailsModal
@@ -548,7 +634,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           setShowDetailsModal(false);
           setSelectedPatient(null);
         }}
-        patientId={selectedPatient?._id}
+        patientId={selectedPatient?._id || selectedPatient?.id || selectedPatient?.userId}
         patientName={selectedPatient?.name}
       />
     </SafeAreaView>
@@ -585,6 +671,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     ...theme.shadows.sm,
+  },
+  addButtonPlaceholder: {
+    width: 40,
+    height: 40,
   },
   searchSection: {
     paddingHorizontal: theme.spacing.md,
@@ -727,6 +817,16 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: healthColors.primary.main,
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  prescriptionButton: {
+    backgroundColor: healthColors.accent.coral + "15",
+    borderWidth: 1,
+    borderColor: healthColors.accent.coral,
+  },
+  prescriptionButtonText: {
+    color: healthColors.accent.coral,
     fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.semibold,
   },

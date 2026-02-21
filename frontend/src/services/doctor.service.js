@@ -7,6 +7,10 @@ import api from "./apiClient";
 import { logError } from "../utils/errorHandler";
 
 class DoctorService {
+  async getAllDoctors(filters = {}) {
+    return this.getDoctors(filters);
+  }
+
   /**
    * Get all doctors with filters
    */
@@ -30,17 +34,6 @@ class DoctorService {
       logError(error, { context: "DoctorService.getDoctors" });
       throw error;
     }
-  }
-
-  /**
-   * Get all doctors (alias for admin screens)
-   */
-  async getAllDoctors(additionalFilters = {}) {
-    return this.getDoctors({
-      limit: 100,
-      includeInactive: true,
-      ...additionalFilters,
-    });
   }
 
   /**
@@ -75,7 +68,7 @@ class DoctorService {
   async getDashboard() {
     try {
       const response = await api.get("/doctors/me/dashboard");
-      return response.data?.data || response.data;
+      return response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getDashboard" });
       throw error;
@@ -91,7 +84,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/appointments/today?filter=${filter}`
       );
-      return response.data?.data || response.data;
+      return response.data;
     } catch (error) {
       logError(error, {
         context: "DoctorService.getTodaysAppointments",
@@ -109,7 +102,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/appointments/upcoming?page=${page}&limit=${limit}`
       );
-      return response.data?.data || response.data;
+      return response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getUpcomingAppointments" });
       throw error;

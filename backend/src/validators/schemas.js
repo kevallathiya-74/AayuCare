@@ -47,6 +47,31 @@ const registerSchema = Joi.object({
     then: Joi.required(),
     otherwise: Joi.forbidden(),
   }),
+  department: Joi.string().max(255).when("role", {
+    is: "doctor",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+  licenseNumber: Joi.string().max(100).when("role", {
+    is: "doctor",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+  license_number: Joi.string().max(100).when("role", {
+    is: "doctor",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+  bio: Joi.string().max(1000).when("role", {
+    is: "doctor",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
+  availability: Joi.object().when("role", {
+    is: "doctor",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
 
   // Patient specific fields
   dateOfBirth: Joi.date().when("role", {
@@ -163,6 +188,8 @@ const updateProfileSchema = Joi.object({
   experience: Joi.number().integer().min(0).optional(),
   department: Joi.string().max(255).optional(),
   consultationFee: Joi.number().min(0).optional(),
+  licenseNumber: Joi.string().max(100).optional(),
+  license_number: Joi.string().max(100).optional(),
   bio: Joi.string().max(1000).optional(),
   availability: Joi.object().optional(),
   
@@ -197,6 +224,9 @@ const updateDoctorProfileSchema = Joi.object({
   qualification: Joi.string().max(255).optional(),
   experience: Joi.number().integer().min(0).optional(),
   consultationFee: Joi.number().min(0).optional(),
+  department: Joi.string().max(255).optional(),
+  licenseNumber: Joi.string().max(100).optional(),
+  license_number: Joi.string().max(100).optional(),
   bio: Joi.string().max(1000).optional(),
   availability: Joi.object().optional(),
 }).min(1);
@@ -217,7 +247,7 @@ const updatePatientProfileSchema = Joi.object({
 
 // Prescription validation
 const createPrescriptionSchema = Joi.object({
-  appointmentId: Joi.string().uuid().required(),
+  appointmentId: Joi.string().uuid().optional(),
   patientId: Joi.string().uuid().required(),
   diagnosis: Joi.string().max(1000).optional(),
   medications: Joi.array()

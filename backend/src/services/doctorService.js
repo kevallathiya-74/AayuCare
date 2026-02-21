@@ -66,15 +66,8 @@ class DoctorService {
    * Get doctor by ID
    */
   async getDoctorById(doctorId) {
-    // Try PostgreSQL first
-    let doctor = await userRepository.findById(doctorId);
-
-    // Fallback to MongoDB for backward compatibility
-    if (!doctor) {
-      doctor = await User.findById(doctorId).select("-password -refreshToken");
-    }
-
-    if (!doctor || (doctor.role !== "doctor" && doctor.role !== "doctor")) {
+    const doctor = await userRepository.findById(doctorId);
+    if (!doctor || doctor.role !== "doctor") {
       throw new AppError("Doctor not found", 404);
     }
 

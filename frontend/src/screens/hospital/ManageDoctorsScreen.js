@@ -22,6 +22,7 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
@@ -32,6 +33,8 @@ import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 
 const ManageDoctorsScreen = ({ navigation, route }) => {
+  const { user } = useSelector((state) => state.auth);
+  const canManageUsers = ["admin", "super_admin"].includes(user?.role);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -95,6 +98,11 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   }, [fetchDoctors, searchQuery]);
 
   const handleToggleStatus = useCallback(async (doctor) => {
+    if (!canManageUsers) {
+      Alert.alert("Access Denied", "Only admins can change doctor status.");
+      return;
+    }
+
     const newStatus = !doctor.isActive;
     logger.debug("ManageDoctorsScreen", "Updating doctor status", {
       doctorId: doctor._id,
@@ -152,7 +160,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [fetchDoctors, searchQuery]);
+  }, [canManageUsers, fetchDoctors, searchQuery]);
 
   const handleEditDoctor = useCallback((doctor) => {
     setSelectedDoctor(doctor);
@@ -170,6 +178,11 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   }, [fetchDoctors, searchQuery]);
 
   const handleDeleteDoctor = useCallback(async (doctor) => {
+    if (!canManageUsers) {
+      Alert.alert("Access Denied", "Only admins can delete doctors.");
+      return;
+    }
+
     Alert.alert(
       "Delete Doctor",
       `Are you sure you want to permanently delete ${doctor.name}? This action cannot be undone.`,
@@ -182,7 +195,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, []);
+  }, [canManageUsers]);
 
   const handlePermanentDeleteDoctor = useCallback(async (doctor) => {
     Alert.alert(
@@ -311,6 +324,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               <Switch
                 value={item.isActive}
                 onValueChange={() => handleToggleStatus(item)}
+                disabled={!canManageUsers}
                 trackColor={{
                   false: healthColors.border.light,
                   true: healthColors.primary.light + "50",
@@ -345,43 +359,45 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         </View>
         
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.editButton]}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleEditDoctor(item);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Edit ${item.name}`}
-          >
-            <Ionicons
-              name="create-outline"
-              size={18}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.editButtonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleDeleteDoctor(item);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Delete ${item.name}`}
-          >
-            <Ionicons
-              name="trash-outline"
-              size={18}
-              color={healthColors.error.main}
-            />
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
+        {canManageUsers && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.editButton]}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleEditDoctor(item);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${item.name}`}
+            >
+              <Ionicons
+                name="create-outline"
+                size={18}
+                color={healthColors.primary.main}
+              />
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.deleteButton]}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDeleteDoctor(item);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${item.name}`}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={healthColors.error.main}
+              />
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </TouchableOpacity>
     ),
-    [handleToggleStatus, handleEditDoctor, handleDeleteDoctor, updatingId]
+    [canManageUsers, handleToggleStatus, handleEditDoctor, handleDeleteDoctor, updatingId]
   );
 
   const renderEmptyState = () => (
@@ -419,15 +435,19 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Doctors</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Add new doctor"
-        >
-          <Ionicons name="add" size={24} color={healthColors.primary.main} />
-        </TouchableOpacity>
+        {canManageUsers ? (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddModal(true)}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Add new doctor"
+          >
+            <Ionicons name="add" size={24} color={healthColors.primary.main} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.addButtonPlaceholder} />
+        )}
       </View>
 
       {/* Search Section */}
@@ -494,22 +514,26 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       )}
 
       {/* Add Doctor Modal */}
-      <AddDoctorModal
-        visible={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={handleAddSuccess}
-      />
+      {canManageUsers && (
+        <AddDoctorModal
+          visible={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSuccess={handleAddSuccess}
+        />
+      )}
 
       {/* Edit Doctor Modal */}
-      <EditDoctorModal
-        visible={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedDoctor(null);
-        }}
-        onSuccess={handleEditSuccess}
-        doctor={selectedDoctor}
-      />
+      {canManageUsers && (
+        <EditDoctorModal
+          visible={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedDoctor(null);
+          }}
+          onSuccess={handleEditSuccess}
+          doctor={selectedDoctor}
+        />
+      )}
 
       <Modal
         visible={showDetailsModal}
@@ -625,6 +649,10 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "15",
     justifyContent: "center",
     alignItems: "center",
+  },
+  addButtonPlaceholder: {
+    width: 40,
+    height: 40,
   },
   headerTitle: {
     fontSize: theme.typography.sizes.h5,

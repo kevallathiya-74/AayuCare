@@ -259,7 +259,7 @@ exports.getPatientProfile = async (req, res) => {
       statsQuery.hospitalId = req.hospitalId;
     }
     
-    const [recordCount, appointmentCount, prescriptionCount] =
+    const [recordCount, appointmentCounts, prescriptionCount] =
       await Promise.all([
         MedicalRecord.countDocuments(statsQuery),
         appointmentRepository.countByStatus(patient.id, "patient", req.hospitalId),
@@ -272,7 +272,7 @@ exports.getPatientProfile = async (req, res) => {
         ...patient,
         stats: {
           totalRecords: recordCount,
-          totalAppointments: appointmentCount,
+          totalAppointments: appointmentCounts.total || 0,
           totalPrescriptions: prescriptionCount,
         },
       },

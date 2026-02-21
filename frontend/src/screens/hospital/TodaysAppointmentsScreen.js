@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Linking,
 } from "react-native";
 import {
   SafeAreaView,
@@ -116,17 +117,13 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
         const response = await doctorService.updateAppointmentStatus(
           appointmentId,
-          "in-progress"
+          "in_progress"
         );
         if (response?.success) {
           // Refresh data after status change to keep list and badge in sync
           fetchAppointments();
           refreshCount();
-          Alert.alert(
-            "Consultation Started",
-            "Consultation interface coming soon!"
-          );
-          // navigation.navigate('Consultation', { appointment }); // Screen doesn't exist yet
+          Alert.alert("Consultation Started", "Appointment marked in progress.");
         }
       } catch (err) {
         logError(err, "TodaysAppointmentsScreen.handleStartConsultation");
@@ -137,14 +134,15 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   );
 
   const getStatusColor = useCallback((status) => {
-    switch (status) {
+    const normalizedStatus = (status || "").replace(/-/g, "_");
+    switch (normalizedStatus) {
       case "confirmed":
         return healthColors.success.main;
       case "completed":
         return healthColors.info.main;
       case "cancelled":
         return healthColors.error.main;
-      case "in-progress":
+      case "in_progress":
         return healthColors.primary.main;
       default:
         return healthColors.warning.main;
@@ -152,15 +150,18 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   }, []);
 
   const getStatusLabel = useCallback((status) => {
-    switch (status) {
+    const normalizedStatus = (status || "").replace(/-/g, "_");
+    switch (normalizedStatus) {
       case "confirmed":
         return "Confirmed";
       case "completed":
         return "Completed";
       case "cancelled":
         return "Cancelled";
-      case "in-progress":
+      case "in_progress":
         return "In Progress";
+      case "no_show":
+        return "No Show";
       case "scheduled":
         return "Scheduled";
       default:
@@ -168,18 +169,37 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     }
   }, []);
 
+  const handleCreatePrescription = useCallback(
+    (appointment) => {
+      const resolvedPatientId =
+        appointment?.patientId ||
+        appointment?.patient?._id ||
+        appointment?.patient?.id ||
+        appointment?.patient?.userId;
+      const resolvedAppointmentId = appointment?.id || appointment?._id;
+
+      if (!resolvedPatientId) {
+        Alert.alert("Patient Missing", "Unable to identify patient for this appointment.");
+        return;
+      }
+
+      navigation.navigate("CreatePrescription", {
+        patientId: resolvedPatientId,
+        appointmentId: resolvedAppointmentId,
+      });
+    },
+    [navigation]
+  );
+
   const renderAppointmentCard = ({ item }) => (
     <TouchableOpacity
       style={styles.appointmentCard}
       onPress={() => {
-        // TODO: Create AppointmentDetails screen
-        const appointmentId = item.id || item._id;
         Alert.alert(
           "Appointment Details",
-          `Patient: ${item.patientName || "Unknown"}\nTime: ${item.timeSlot || item.time}`,
+          `Patient: ${item.patientName || "Unknown"}\nTime: ${item.timeSlot || item.time}\nStatus: ${getStatusLabel(item.status)}\nPhone: ${item.phone || "N/A"}`,
           [{ text: "OK" }]
         );
-        // navigation.navigate("AppointmentDetails", { appointmentId });
       }}
       activeOpacity={0.7}
       accessible={true}
@@ -211,19 +231,25 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.actionButton}
           activeOpacity={0.7}
-          onPress={() => {
-            // TODO: Implement video call functionality
-            const appointmentId = item.id || item._id;
-            Alert.alert("Video Call", "Video call feature coming soon!", [
-              { text: "OK" },
-            ]);
-            // navigation.navigate("VideoCall", { appointmentId });
+          onPress={async () => {
+            if (!item.phone || item.phone === "N/A") {
+              Alert.alert("Call Unavailable", "Patient phone number is not available.");
+              return;
+            }
+
+            const phoneUrl = `tel:${item.phone}`;
+            const canOpen = await Linking.canOpenURL(phoneUrl);
+            if (!canOpen) {
+              Alert.alert("Call Failed", "Unable to open phone dialer on this device.");
+              return;
+            }
+            await Linking.openURL(phoneUrl);
           }}
           accessibilityRole="button"
-          accessibilityLabel="Start video call"
+          accessibilityLabel="Call patient"
         >
           <Ionicons
-            name="videocam-outline"
+            name="call-outline"
             size={20}
             color={healthColors.primary.main}
           />
@@ -239,6 +265,19 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             name="medical-outline"
             size={20}
             color={healthColors.success.main}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          activeOpacity={0.7}
+          onPress={() => handleCreatePrescription(item)}
+          accessibilityRole="button"
+          accessibilityLabel="Create prescription"
+        >
+          <Ionicons
+            name="document-text-outline"
+            size={20}
+            color={healthColors.accent.coral}
           />
         </TouchableOpacity>
         <View
@@ -308,11 +347,9 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.searchButton}
           activeOpacity={0.7}
-          onPress={() =>
-            Alert.alert("Search", "Appointment search feature coming soon!")
-          }
+          onPress={handleRefresh}
           accessibilityRole="button"
-          accessibilityLabel="Search appointments"
+          accessibilityLabel="Refresh appointments"
         >
           <Ionicons name="search" size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
@@ -530,6 +567,7 @@ const styles = StyleSheet.create({
   cardRight: {
     alignItems: "flex-end",
     justifyContent: "space-between",
+    gap: theme.spacing.xs,
   },
   actionButton: {
     width: 36,
