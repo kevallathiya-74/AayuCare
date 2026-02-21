@@ -14,6 +14,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Linking,
 } from "react-native";
 import {
   SafeAreaView,
@@ -110,11 +111,18 @@ const DoctorProfileScreen = ({ navigation }) => {
       id: 5,
       title: "Help & Support",
       icon: "help-circle-outline",
-      onPress: () =>
-        Alert.alert(
-          "Help & Support",
-          "Support feature coming soon! Contact: support@aayucare.com"
-        ),
+      onPress: async () => {
+        const supportEmail = "support@aayucare.com";
+        const subject = encodeURIComponent("AayuCare Doctor Support Request");
+        const emailUrl = `mailto:${supportEmail}?subject=${subject}`;
+
+        const canOpen = await Linking.canOpenURL(emailUrl);
+        if (canOpen) {
+          await Linking.openURL(emailUrl);
+        } else {
+          Alert.alert("Help & Support", `Contact us at ${supportEmail}`);
+        }
+      },
     },
   ];
 

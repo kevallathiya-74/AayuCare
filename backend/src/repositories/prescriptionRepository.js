@@ -77,9 +77,19 @@ class PrescriptionRepository {
       pharmacyStatus,
       startDate,
       endDate,
+      patientId,
+      hospitalId,
     } = filters;
 
     const query = { doctorId };
+
+    if (patientId) {
+      query.patientId = patientId;
+    }
+
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
+    }
 
     if (pharmacyStatus) {
       query.pharmacyStatus = pharmacyStatus;

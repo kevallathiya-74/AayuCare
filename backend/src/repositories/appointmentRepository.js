@@ -75,7 +75,15 @@ class AppointmentRepository {
    * @returns {Promise<Array>} Array of appointments
    */
   async findByPatient(patientId, filters = {}) {
-    const { status, startDate, endDate, limit = 20, offset = 0 } = filters;
+    const {
+      status,
+      startDate,
+      endDate,
+      doctorId,
+      hospitalId,
+      limit = 20,
+      offset = 0,
+    } = filters;
 
     let sql = `
             SELECT a.*, 
@@ -93,11 +101,27 @@ class AppointmentRepository {
     let paramCount = 2;
 
     if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      const statusArray = status.split(',').map(s => s.trim());
+      const statusArray = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
       sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
       params.push(...statusArray);
       paramCount += statusArray.length;
+    }
+
+    if (doctorId) {
+      sql += ` AND a.doctor_id = $${paramCount}`;
+      params.push(doctorId);
+      paramCount++;
+    }
+
+    if (hospitalId) {
+      sql += ` AND a.hospital_id = $${paramCount}`;
+      params.push(hospitalId);
+      paramCount++;
     }
 
     if (startDate) {
@@ -128,7 +152,15 @@ class AppointmentRepository {
    * @returns {Promise<Array>} Array of appointments
    */
   async findByDoctor(doctorId, filters = {}) {
-    const { status, startDate, endDate, limit = 20, offset = 0 } = filters;
+    const {
+      status,
+      startDate,
+      endDate,
+      patientId,
+      hospitalId,
+      limit = 20,
+      offset = 0,
+    } = filters;
 
     let sql = `
             SELECT a.*, 
@@ -144,11 +176,27 @@ class AppointmentRepository {
     let paramCount = 2;
 
     if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      const statusArray = status.split(',').map(s => s.trim());
+      const statusArray = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
       sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
       params.push(...statusArray);
       paramCount += statusArray.length;
+    }
+
+    if (patientId) {
+      sql += ` AND a.patient_id = $${paramCount}`;
+      params.push(patientId);
+      paramCount++;
+    }
+
+    if (hospitalId) {
+      sql += ` AND a.hospital_id = $${paramCount}`;
+      params.push(hospitalId);
+      paramCount++;
     }
 
     if (startDate) {
@@ -223,8 +271,12 @@ class AppointmentRepository {
     }
 
     if (status) {
-      // Handle comma-separated status values (e.g., "scheduled,confirmed")
-      const statusArray = status.split(',').map(s => s.trim());
+      const statusArray = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
       sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
       params.push(...statusArray);
       paramCount += statusArray.length;
@@ -347,7 +399,14 @@ class AppointmentRepository {
    * @param {string} hospitalId - Hospital ID
    * @returns {Promise<Object>} Status counts
    */
-  async countByStatus(userId, role, hospitalId = null) {
+  async countByStatus(userId, role, options = null) {
+    const parsedOptions =
+      options && typeof options === "object" && !Array.isArray(options)
+        ? options
+        : { hospitalId: options || null };
+    const { hospitalId = null, status = null, startDate = null, endDate = null } =
+      parsedOptions;
+
     let sql = `
             SELECT status, COUNT(*) as count
             FROM appointments
@@ -371,10 +430,50 @@ class AppointmentRepository {
       paramCount++;
     }
 
+    if (status) {
+      const statusArray = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean);
+
+      if (statusArray.length > 0) {
+        sql += ` AND status IN (${statusArray
+          .map((_, index) => `$${paramCount + index}`)
+          .join(", ")})`;
+        params.push(...statusArray);
+        paramCount += statusArray.length;
+      }
+    }
+
+    if (startDate) {
+      sql += ` AND appointment_date >= $${paramCount}`;
+      params.push(startDate);
+      paramCount++;
+    }
+
+    if (endDate) {
+      sql += ` AND appointment_date <= $${paramCount}`;
+      params.push(endDate);
+      paramCount++;
+    }
+
     sql += ` GROUP BY status`;
 
     const result = await query(sql, params);
-    return result.rows;
+    const statusCounts = result.rows.reduce((acc, row) => {
+      acc[row.status] = Number(row.count || 0);
+      return acc;
+    }, {});
+
+    return {
+      ...statusCounts,
+      total: Object.values(statusCounts).reduce(
+        (sum, count) => sum + Number(count || 0),
+        0
+      ),
+    };
   }
 
   /**

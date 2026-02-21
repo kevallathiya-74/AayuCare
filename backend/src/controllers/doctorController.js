@@ -2,6 +2,7 @@ const doctorService = require("../services/doctorService");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
+const doctorRepository = require("../repositories/doctorRepository");
 const scheduleRepository = require("../repositories/scheduleRepository");
 const logger = require("../utils/logger");
 
@@ -33,6 +34,33 @@ const calculateAge = (dateOfBirth) => {
   } catch (error) {
     return null;
   }
+};
+
+const formatAppointmentTime = (appointment) => {
+  const rawTime = appointment?.appointmentTime || appointment?.appointment_time;
+  if (rawTime) {
+    const normalized = String(rawTime).slice(0, 8);
+    const parsed = new Date(`1970-01-01T${normalized}`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+  }
+
+  const rawDate = appointment?.appointmentDate || appointment?.appointment_date;
+  if (rawDate) {
+    const parsedDate = new Date(rawDate);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+  }
+
+  return "N/A";
 };
 
 /**
@@ -129,13 +157,13 @@ exports.getDoctorDashboard = async (req, res) => {
       appointmentRepository.findByDoctor(doctorId, {
         ...baseFilters,
         startDate: today,
-        endDate: tomorrow,
+        endDate: today,
       }),
       // Completed today - use findByDoctor with status filter and count
       appointmentRepository.findByDoctor(doctorId, {
         ...baseFilters,
         startDate: today,
-        endDate: tomorrow,
+        endDate: today,
         status: 'completed',
       }),
       // Total unique patients
@@ -144,7 +172,7 @@ exports.getDoctorDashboard = async (req, res) => {
       appointmentRepository.findByDoctor(doctorId, {
         ...baseFilters,
         startDate: today,
-        status: ['scheduled', 'confirmed'],
+        status: 'scheduled,confirmed',
       }),
       // Recent prescriptions
       prescriptionRepository.findByDoctor(doctorId, {
@@ -154,7 +182,11 @@ exports.getDoctorDashboard = async (req, res) => {
     ]);
 
     // Calculate total unique patients from appointments
-    const uniquePatientIds = new Set(todaysAppointments.map(apt => apt.patient_id));
+    const uniquePatientIds = new Set(
+      todaysAppointments
+        .map((apt) => apt.patientId || apt.patient_id)
+        .filter(Boolean)
+    );
     const totalPatients = Array.from(uniquePatientIds);
     
     // Count completed appointments
@@ -165,36 +197,29 @@ exports.getDoctorDashboard = async (req, res) => {
       completed: completedCount,
       pending: todaysAppointments.length - completedCount,
       nextPatient:
-        todaysAppointments.find((apt) => apt.status !== "completed")?.patient_name || "No pending",
-      nextTime: todaysAppointments.find((apt) => apt.status !== "completed")
-        ?.appointment_date
-        ? new Date(
-            todaysAppointments.find(
-              (apt) => apt.status !== "completed"
-            ).appointment_date
-          ).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
-        : "N/A",
+        todaysAppointments.find((apt) => apt.status !== "completed")
+          ?.patientName || "No pending",
+      nextTime: formatAppointmentTime(
+        todaysAppointments.find((apt) => apt.status !== "completed")
+      ),
     };
 
     // Format appointments for frontend
     const formattedAppointments = todaysAppointments.map((apt) => {
-      const age = apt.date_of_birth
-        ? calculateAge(apt.date_of_birth)
+      const age = apt.dateOfBirth || apt.date_of_birth
+        ? calculateAge(apt.dateOfBirth || apt.date_of_birth)
         : null;
 
       return {
         _id: apt.id,
         id: apt.id,
-        time: new Date(apt.appointment_date).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        patientName: apt.patient_name || "Unknown",
-        patientId: apt.patient_user_id || apt.patient_id,
+        time: formatAppointmentTime(apt),
+        patientName: apt.patientName || apt.patient_name || "Unknown",
+        patientId: apt.patientId || apt.patient_user_id || apt.patient_id,
         age: age !== null ? age : "N/A",
         reason: apt.reason || "Consultation",
         status: apt.status,
-        type: apt.appointment_type || "in-person",
+        type: apt.type || apt.appointment_type || "in-person",
       };
     });
 
@@ -207,13 +232,13 @@ exports.getDoctorDashboard = async (req, res) => {
           totalPatients: totalPatients.length,
           upcomingAppointments: Array.isArray(upcomingAppointmentsCount) ? upcomingAppointmentsCount.length : 0,
           prescriptionsToday: recentPrescriptions.filter(
-            (p) => new Date(p.created_at) >= today
+            (p) => new Date(p.createdAt || p.created_at) >= today
           ).length,
         },
         recentPrescriptions: recentPrescriptions.map((p) => ({
-          id: p.id,
-          patientName: p.patient_name || "Unknown",
-          date: p.created_at,
+          id: p.id || p._id,
+          patientName: p.patient_name || p.patientId?.name || "Unknown",
+          date: p.createdAt || p.created_at,
           medicationsCount: p.medications?.length || 0,
         })),
       },
@@ -250,7 +275,7 @@ exports.getTodaysAppointments = async (req, res) => {
     const filters = {
       doctorId,
       startDate: today,
-      endDate: tomorrow,
+      endDate: today,
     };
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
@@ -262,7 +287,7 @@ exports.getTodaysAppointments = async (req, res) => {
     if (filter === "completed") {
       filters.status = "completed";
     } else if (filter === "pending") {
-      filters.status = ["scheduled", "confirmed"];
+      filters.status = "scheduled,confirmed";
     }
 
     const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
@@ -273,19 +298,16 @@ exports.getTodaysAppointments = async (req, res) => {
       data: appointments.map((apt) => ({
         _id: apt.id,
         id: apt.id,
-        time: new Date(apt.appointment_date).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        patientName: apt.patient_name || "Unknown",
-        patientId: apt.patient_user_id || apt.patient_id,
-        patientPhoto: apt.patient_avatar || null,
-        age: apt.patient_age || "N/A",
-        gender: apt.patient_gender || "N/A",
-        phone: apt.patient_phone || "N/A",
+        time: formatAppointmentTime(apt),
+        patientName: apt.patientName || apt.patient_name || "Unknown",
+        patientId: apt.patientId || apt.patient_user_id || apt.patient_id,
+        patientPhoto: apt.patientAvatar || apt.patient_avatar || null,
+        age: apt.patientAge || apt.patient_age || "N/A",
+        gender: apt.patientGender || apt.patient_gender || "N/A",
+        phone: apt.patientPhone || apt.patient_phone || "N/A",
         reason: apt.reason || "Consultation",
         status: apt.status,
-        type: apt.appointment_type || "in-person",
+        type: apt.type || apt.appointment_type || "in-person",
       })),
     });
   } catch (error) {
@@ -319,7 +341,7 @@ exports.getUpcomingAppointments = async (req, res) => {
     const filters = {
       doctorId,
       startDate: tomorrow,
-      status: ["scheduled", "confirmed"],
+      status: "scheduled,confirmed",
       page: parseInt(page),
       limit: parseInt(limit),
     };
@@ -330,26 +352,25 @@ exports.getUpcomingAppointments = async (req, res) => {
     }
 
     const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
-    const total = await appointmentRepository.countByStatus(doctorId, ["scheduled", "confirmed"], {
+    const counts = await appointmentRepository.countByStatus(doctorId, "doctor", {
+      status: ["scheduled", "confirmed"],
       startDate: tomorrow,
       hospitalId: filters.hospitalId,
     });
+    const total = counts.total || 0;
 
     res.json({
       success: true,
       data: appointments.map((apt) => ({
         _id: apt.id,
         id: apt.id,
-        date: apt.appointment_date,
-        time: new Date(apt.appointment_date).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        patientName: apt.patient_name || "Unknown",
-        patientId: apt.patient_user_id || apt.patient_id,
+        date: apt.appointmentDate || apt.appointment_date,
+        time: formatAppointmentTime(apt),
+        patientName: apt.patientName || apt.patient_name || "Unknown",
+        patientId: apt.patientId || apt.patient_user_id || apt.patient_id,
         reason: apt.reason || "Consultation",
         status: apt.status,
-        type: apt.appointment_type || "in-person",
+        type: apt.type || apt.appointment_type || "in-person",
       })),
       pagination: {
         page: parseInt(page),
@@ -381,50 +402,49 @@ exports.searchPatients = async (req, res) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { q } = req.query;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const requestedLimit = parseInt(req.query.limit, 10) || 20;
+    const limit = Math.min(Math.max(requestedLimit, 1), 100);
+    const skip = (page - 1) * limit;
+    const searchQuery = String(q || "").trim();
 
     logger.info("Search patients request:", {
       doctorId,
       userId: req.user.userId,
       query: q,
+      page,
+      limit,
     });
 
-    if (!q || q.length < 1) {
-      return res.json({
-        success: true,
-        data: [],
-      });
-    }
+    const effectiveHospitalId =
+      req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
-    // Find patients who have appointments with this doctor
-    const filters = { doctorId };
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
-    
-    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
-    const patientIds = [...new Set(appointments.map(apt => apt.patient_id))];
+    const result = await userRepository.findPatientsByHospital(
+      effectiveHospitalId,
+      limit,
+      skip,
+      searchQuery
+    );
 
-    logger.info("Found patient IDs:", { patientIds, count: patientIds.length });
+    const paginatedPatients = Array.isArray(result?.data) ? result.data : [];
+    const total = Number(result?.total || paginatedPatients.length || 0);
 
-    // Search patients by name, userId, or phone
-    const patients = [];
-    for (const patientId of patientIds) {
-      const patient = await userRepository.findById(patientId);
-      if (patient && (
-        patient.name?.toLowerCase().includes(q.toLowerCase()) ||
-        patient.user_id?.toLowerCase().includes(q.toLowerCase()) ||
-        patient.phone?.includes(q)
-      )) {
-        patients.push(patient);
-        if (patients.length >= 10) break;
-      }
-    }
-
-    logger.info("Search results:", { count: patients.length, patients });
+    logger.info("Search results:", {
+      count: paginatedPatients.length,
+      total,
+      hospitalId: effectiveHospitalId,
+    });
 
     res.json({
       success: true,
-      data: patients,
+      data: paginatedPatients,
+      patients: paginatedPatients,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit) || 1,
+      },
     });
   } catch (error) {
     logger.error("Patient search error:", {
@@ -462,13 +482,47 @@ exports.getPatientDetails = async (req, res) => {
     const patientRepository = require("../repositories/patientRepository");
     const {
       mapPatientData,
-      mapAppointmentData,
       mapPrescriptionData,
       mapMedicalRecordData,
       mapArray,
     } = require("../utils/fieldMapper");
 
-    const dbPatient = await patientRepository.findByUserId(patientId);
+    const patientLookupValue = String(patientId || "").trim();
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        patientLookupValue
+      );
+
+    let patientUser = isUuid
+      ? await userRepository.findById(patientLookupValue)
+      : await userRepository.findByUserId(patientLookupValue);
+
+    if (!patientUser && isUuid) {
+      patientUser = await userRepository.findByUserId(patientLookupValue);
+    }
+
+    if (!patientUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    const resolvedPatientId = patientUser.id;
+    const resolvedPatientUserId = patientUser.user_id;
+
+    if (
+      req.hospitalId &&
+      req.user.role !== "super_admin" &&
+      patientUser.hospital_id !== req.hospitalId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this patient",
+      });
+    }
+
+    const dbPatient = await patientRepository.findByUserId(resolvedPatientId);
 
     if (!dbPatient) {
       return res.status(404).json({
@@ -480,51 +534,26 @@ exports.getPatientDetails = async (req, res) => {
     // Map patient data to camelCase format
     const patient = mapPatientData(dbPatient);
 
-    // Get appointments based on role
-    let patientAppointments = [];
-    
-    if (userRole === "doctor") {
-      // Doctors only see their own appointments with this patient
-      const filters = {
-        doctorId: userId,
-        patientId,
-      };
-      if (req.hospitalId && req.user.role !== "super_admin") {
-        filters.hospitalId = req.hospitalId;
-      }
-      patientAppointments = await appointmentRepository.findByDoctor(userId, filters);
-
-      // Verify doctor has relationship with patient
-      if (!patientAppointments || patientAppointments.length === 0) {
-        return res.status(403).json({
-          success: false,
-          message: "You do not have access to this patient's records",
-        });
-      }
-    } else if (userRole === "admin") {
-      // Admins see all appointments for this patient
-      const filters = {
-        patientId,
-      };
-      if (req.hospitalId) {
-        filters.hospitalId = req.hospitalId;
-      }
-      patientAppointments = await appointmentRepository.findByPatient(patientId, filters);
+    const appointmentFilters = {
+      patientId: resolvedPatientId,
+      limit: 50,
+      offset: 0,
+    };
+    if (req.hospitalId && req.user.role !== "super_admin") {
+      appointmentFilters.hospitalId = req.hospitalId;
     }
+    const patientAppointments = await appointmentRepository.findByPatient(
+      resolvedPatientId,
+      appointmentFilters
+    );
 
-    // Map appointments to camelCase
-    const appointments = mapArray(patientAppointments.slice(0, 10), mapAppointmentData);
+    const appointments = patientAppointments.slice(0, 10);
 
     // Get medical records from MongoDB
     const MedicalRecord = require("../models/MedicalRecord");
     const medicalRecordsQuery = {
-      patientId,
+      patientId: { $in: [resolvedPatientId, resolvedPatientUserId].filter(Boolean) },
     };
-    
-    // Doctors only see their own records, admins see all
-    if (userRole === "doctor") {
-      medicalRecordsQuery.doctorId = userId;
-    }
     
     if (req.hospitalId && req.user.role !== "super_admin") {
       medicalRecordsQuery.hospitalId = req.hospitalId;
@@ -539,30 +568,25 @@ exports.getPatientDetails = async (req, res) => {
     // Map medical records to proper format
     const medicalRecords = mapArray(dbMedicalRecords, mapMedicalRecordData);
 
-    // Get prescriptions
     const prescriptionFilters = {
-      patientId,
+      patientId: resolvedPatientId,
       limit: 10,
     };
-    
-    // Doctors only see their own prescriptions, admins see all
-    if (userRole === "doctor") {
-      prescriptionFilters.doctorId = userId;
-    }
-    
+
     if (req.hospitalId && req.user.role !== "super_admin") {
       prescriptionFilters.hospitalId = req.hospitalId;
     }
 
-    const dbPrescriptions = userRole === "doctor" 
-      ? await prescriptionRepository.findByDoctor(userId, prescriptionFilters)
-      : await prescriptionRepository.findByPatient(patientId, prescriptionFilters);
+    const dbPrescriptions = await prescriptionRepository.findByPatient(
+      resolvedPatientId,
+      prescriptionFilters
+    );
 
     // Map prescriptions to proper format
     const prescriptions = mapArray(dbPrescriptions, mapPrescriptionData);
 
     logger.info("Patient details retrieved:", {
-      patientId,
+      patientId: resolvedPatientUserId || resolvedPatientId,
       role: userRole,
       appointmentsCount: appointments.length,
       medicalRecordsCount: medicalRecords.length,
@@ -610,14 +634,18 @@ exports.updateAppointmentStatus = async (req, res) => {
     const { status, notes } = req.body;
     const doctorId = req.user.id || req.user._id;
 
+    const normalizedStatus = String(status || "")
+      .toLowerCase()
+      .replace(/-/g, "_");
+
     const validStatuses = [
       "confirmed",
-      "in-progress",
+      "in_progress",
       "completed",
       "cancelled",
-      "no-show",
+      "no_show",
     ];
-    if (!validStatuses.includes(status)) {
+    if (!validStatuses.includes(normalizedStatus)) {
       return res.status(400).json({
         success: false,
         message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
@@ -633,11 +661,11 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    const updateData = { status };
+    const updateData = { status: normalizedStatus };
     if (notes) {
       updateData.notes = notes;
     }
-    if (status === "completed") {
+    if (normalizedStatus === "completed") {
       updateData.completed_at = new Date();
     }
 
@@ -656,7 +684,7 @@ exports.updateAppointmentStatus = async (req, res) => {
     logger.info("Appointment status updated", {
       appointmentId: id,
       doctorId,
-      newStatus: status,
+      newStatus: normalizedStatus,
     });
 
     res.json({
@@ -686,21 +714,25 @@ exports.getDoctorProfileStats = async (req, res) => {
   try {
     const doctorId = req.user.id || req.user._id;
 
-    const [appointments, completedAppointments, doctor] = await Promise.all([
+    const [appointments, completedCounts, doctor] = await Promise.all([
       appointmentRepository.findByDoctor(doctorId, {}),
-      appointmentRepository.countByStatus(doctorId, "completed"),
+      appointmentRepository.countByStatus(doctorId, "doctor", {
+        status: "completed",
+      }),
       userRepository.findById(doctorId),
     ]);
 
-    const uniquePatients = [...new Set(appointments.map(apt => apt.patient_id))];
+    const uniquePatients = [
+      ...new Set(appointments.map((apt) => apt.patientId || apt.patient_id).filter(Boolean)),
+    ];
 
     res.json({
       success: true,
       data: {
         totalPatients: uniquePatients.length,
-        completedConsultations: completedAppointments,
-        rating: doctor?.rating || 4.5,
-        experienceYears: doctor?.experience || 0,
+        completedConsultations: completedCounts.completed || 0,
+        averageRating: doctor?.rating || 4.5,
+        yearsExperience: doctor?.experience || 0,
       },
     });
   } catch (error) {
@@ -841,7 +873,9 @@ exports.getProfileStats = async (req, res, next) => {
       filters.hospitalId = req.hospitalId;
     }
     const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
-    const uniquePatients = [...new Set(appointments.map(apt => apt.patient_id))];
+    const uniquePatients = [
+      ...new Set(appointments.map((apt) => apt.patientId || apt.patient_id).filter(Boolean)),
+    ];
 
     // Get years of experience from user profile
     const doctor = await userRepository.findById(doctorId);
@@ -887,23 +921,45 @@ exports.updateProfile = async (req, res, next) => {
     const doctorId = req.user.id || req.user._id;
     const {
       name,
-      specialization,
-      department,
-      phone,
       email,
-      yearsOfExperience,
+      phone,
+      specialization,
+      qualification,
+      experience,
+      consultationFee,
+      department,
+      licenseNumber,
+      license_number,
+      bio,
+      availability,
     } = req.body;
 
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (specialization) updateData.specialization = specialization;
-    if (department) updateData.department = department;
-    if (phone) updateData.phone = phone;
-    if (email) updateData.email = email;
-    if (yearsOfExperience !== undefined)
-      updateData.years_of_experience = yearsOfExperience;
+    const userUpdateData = {};
+    if (name !== undefined) userUpdateData.name = name;
+    if (phone !== undefined) userUpdateData.phone = phone;
+    if (email !== undefined) userUpdateData.email = email;
+    if (Object.keys(userUpdateData).length > 0) {
+      await userRepository.update(doctorId, userUpdateData);
+    }
 
-    const doctor = await userRepository.update(doctorId, updateData);
+    const doctorUpdateData = {};
+    if (specialization !== undefined) doctorUpdateData.specialization = specialization;
+    if (qualification !== undefined) doctorUpdateData.qualification = qualification;
+    if (experience !== undefined) doctorUpdateData.experience = experience;
+    if (consultationFee !== undefined) doctorUpdateData.consultationFee = consultationFee;
+    if (department !== undefined) doctorUpdateData.department = department;
+    const normalizedLicenseNumber = licenseNumber ?? license_number;
+    if (normalizedLicenseNumber !== undefined) {
+      doctorUpdateData.licenseNumber = normalizedLicenseNumber;
+    }
+    if (bio !== undefined) doctorUpdateData.bio = bio;
+    if (availability !== undefined) doctorUpdateData.availability = availability;
+
+    if (Object.keys(doctorUpdateData).length > 0) {
+      await doctorRepository.update(doctorId, doctorUpdateData);
+    }
+
+    const doctor = await doctorRepository.findByUserId(doctorId);
 
     // Invalidate relevant caches after profile update
     const { deleteCacheByPattern } = require("../config/redis");
@@ -911,6 +967,7 @@ exports.updateProfile = async (req, res, next) => {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
       await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after doctor profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -966,11 +1023,17 @@ exports.getConsultationHistory = async (req, res, next) => {
     }
 
     const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
-    const total = await appointmentRepository.countByStatus(doctorId, status || null, {
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      hospitalId: filters.hospitalId,
-    });
+    const consultationCounts = await appointmentRepository.countByStatus(
+      doctorId,
+      "doctor",
+      {
+        status: status || null,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        hospitalId: filters.hospitalId,
+      }
+    );
+    const total = consultationCounts.total || 0;
 
     res.status(200).json({
       success: true,

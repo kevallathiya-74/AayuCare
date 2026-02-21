@@ -186,11 +186,11 @@ const DoctorHomeScreen = ({ navigation }) => {
 
         await doctorService.updateAppointmentStatus(
           appointmentId,
-          "in-progress"
+          "in_progress"
         );
         Alert.alert(
           "Consultation Started",
-          `Starting consultation with ${patientName}`
+          `Consultation started for ${patientName}`
         );
         fetchDashboardData();
         refreshCount(); // Sync tab badge count after status change
@@ -219,13 +219,14 @@ const DoctorHomeScreen = ({ navigation }) => {
   }, []);
 
   const getStatusColor = useCallback((status) => {
-    switch (status) {
+    const normalizedStatus = (status || "").replace(/-/g, "_");
+    switch (normalizedStatus) {
       case "completed":
         return healthColors.success.main;
-      case "in-progress":
+      case "in_progress":
         return healthColors.info.main;
       case "cancelled":
-      case "no-show":
+      case "no_show":
         return healthColors.error.main;
       default:
         return healthColors.warning.main;
@@ -233,14 +234,15 @@ const DoctorHomeScreen = ({ navigation }) => {
   }, []);
 
   const getStatusLabel = useCallback((status) => {
-    switch (status) {
+    const normalizedStatus = (status || "").replace(/-/g, "_");
+    switch (normalizedStatus) {
       case "completed":
         return "Completed";
-      case "in-progress":
+      case "in_progress":
         return "In Progress";
       case "cancelled":
         return "Cancelled";
-      case "no-show":
+      case "no_show":
         return "No Show";
       case "confirmed":
         return "Confirmed";

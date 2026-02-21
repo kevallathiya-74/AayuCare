@@ -3,25 +3,21 @@
  * Form to edit existing doctor information
  */
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import useDoctorForm from "./useDoctorForm";
 import {
+  Modal,
   View,
   Text,
-  StyleSheet,
-  Modal,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
+  StyleSheet,
+  TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
-import adminService from "../../services/admin.service";
-import logger from "../../utils/logger";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -42,314 +38,13 @@ const SPECIALIZATIONS = [
 ];
 
 const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
-  const [loading, setLoading] = useState(false);
-  const [showSpecializationPicker, setShowSpecializationPicker] =
-    useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    specialization: "",
-    qualification: "",
-    experience: "",
-    department: "",
-    consultationFee: "",
-  });
-
-  const [errors, setErrors] = useState({});
-
-  // Pre-fill form when doctor data is provided
-  useEffect(() => {
-    if (doctor && visible) {
-      logger.debug("EditDoctorModal", "Pre-filling form", doctor);
-      
-      const formValues = {
-        name: doctor.name || "",
-        email: doctor.email || "",
-        phone: doctor.phone || "",
-        specialization: doctor.specialization || "",
-        qualification: doctor.qualification || "",
-        experience: doctor.experience?.toString() || "0",
-        department: doctor.department || "",
-        consultationFee: doctor.consultationFee?.toString() || "500",
-      };
-      
-      logger.debug("EditDoctorModal", "Derived form values", formValues);
-      setFormData(formValues);
-      setErrors({}); // Clear any previous errors
-    }
-  }, [doctor, visible]);
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required";
-    } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format";
-    }
-
-    if (!formData.specialization) {
-      newErrors.specialization = "Please select a specialization";
-    }
-
-    if (!formData.qualification.trim()) {
-      newErrors.qualification = "Qualification is required";
-    }
-
-    if (!formData.experience.trim()) {
-      newErrors.experience = "Experience is required";
-    } else if (
-      isNaN(formData.experience) ||
-      parseInt(formData.experience) < 0
-    ) {
-      newErrors.experience = "Experience must be a positive number";
-    }
-
-    if (
-      formData.consultationFee &&
-      (isNaN(formData.consultationFee) ||
-        parseInt(formData.consultationFee) < 0)
-    ) {
-      newErrors.consultationFee = "Consultation fee must be a positive number";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Prepare update data
-      const updateData = {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
-        specialization: formData.specialization,
-        qualification: formData.qualification.trim(),
-        experience: parseInt(formData.experience),
-        department: formData.department.trim() || formData.specialization,
-        consultationFee: parseInt(formData.consultationFee) || 500,
-      };
-
-      // Call update API
-      const response = await adminService.updateUserProfile(
-        doctor.userId,
-        updateData
-      );
-
-      if (response.status === "success") {
-        // Call onSuccess first to trigger parent refetch
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        // Then close modal
-        onClose();
-        resetForm();
-        
-        // Show success message after modal closes
-        setTimeout(() => {
-          Alert.alert("Success", "Doctor Profile Updated Successfully");
-        }, 300);
-      }
-    } catch (error) {
-      logger.error("EditDoctorModal", "Edit doctor error", error);
-
-      // Better error handling
-      let errorMessage = "Failed to update doctor profile. Please try again.";
-
-      if (typeof error === "string") {
-        errorMessage = error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      // Specific handling for duplicate errors
-      if (errorMessage.includes("already exists")) {
-        if (errorMessage.includes("email")) {
-          errorMessage =
-            "This email is already registered. Please use a different email.";
-        } else if (errorMessage.includes("phone")) {
-          errorMessage =
-            "This phone number is already registered. Please use a different number.";
-        }
-      }
-
-      Alert.alert("Error", errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      specialization: "",
-      qualification: "",
-      experience: "",
-      department: "",
-      consultationFee: "",
-    });
-    setErrors({});
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
-  const renderInput = (
-    key,
-    label,
-    placeholder,
-    icon,
-    keyboardType = "default"
-  ) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <Ionicons
-          name={icon}
-          size={20}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.tertiary
-          }
-          style={styles.inputIcon}
-        />
-        <TextInput
-          style={styles.input}
-          value={formData[key]}
-          onChangeText={(value) => {
-            setFormData({ ...formData, [key]: value });
-            if (errors[key]) {
-              setErrors({ ...errors, [key]: null });
-            }
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          keyboardType={keyboardType}
-          autoCapitalize={key === "email" ? "none" : "words"}
-          editable={!loading}
-        />
-      </View>
-      {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-    </View>
-  );
-
-  const renderPicker = (key, label, icon, options) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.inputWrapper, errors[key] && styles.inputError]}
-        onPress={() => setShowSpecializationPicker(true)}
-        disabled={loading}
-      >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.tertiary
-          }
-          style={styles.inputIcon}
-        />
-        <Text
-          style={[styles.pickerText, !formData[key] && styles.placeholderText]}
-        >
-          {formData[key] || "Select specialization..."}
-        </Text>
-        <Ionicons
-          name="chevron-down"
-          size={20}
-          color={healthColors.text.tertiary}
-        />
-      </TouchableOpacity>
-      {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
-
-      {/* Custom Dropdown Modal */}
-      <Modal
-        visible={showSpecializationPicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowSpecializationPicker(false)}
-      >
-        <TouchableOpacity
-          style={styles.dropdownOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSpecializationPicker(false)}
-        >
-          <View style={styles.dropdownContainer}>
-            <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>Select Specialization</Text>
-              <TouchableOpacity
-                onPress={() => setShowSpecializationPicker(false)}
-              >
-                <Ionicons
-                  name="close"
-                  size={24}
-                  color={healthColors.text.primary}
-                />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.dropdownItem,
-                    formData[key] === item && styles.dropdownItemSelected,
-                  ]}
-                  onPress={() => {
-                    setFormData({ ...formData, [key]: item });
-                    if (errors[key]) {
-                      setErrors({ ...errors, [key]: null });
-                    }
-                    setShowSpecializationPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.dropdownItemText,
-                      formData[key] === item && styles.dropdownItemTextSelected,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                  {formData[key] === item && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={healthColors.primary.main}
-                    />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </View>
-  );
+  const {
+    loading,
+    handleSubmit,
+    handleClose,
+    renderInput,
+    renderPicker,
+  } = useDoctorForm({ mode: "edit", doctor, onClose, onSuccess });
 
   return (
     <Modal
@@ -426,6 +121,24 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "500",
               "cash",
               "numeric"
+            )}
+            {renderInput(
+              "licenseNumber",
+              "License Number *",
+              "MH/12345/2010",
+              "id-card"
+            )}
+            {renderInput(
+              "bio",
+              "Bio *",
+              "Short professional bio",
+              "information-circle"
+            )}
+            {renderInput(
+              "availability",
+              "Availability (JSON)",
+              '{"monday": ["09:00-12:00"]}',
+              "calendar"
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>
@@ -619,3 +332,4 @@ const styles = StyleSheet.create({
 });
 
 export default EditDoctorModal;
+ 

@@ -39,8 +39,15 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
       const response = await doctorService.getPatientDetails(patientId);
 
-      if (response.success && response.data) {
-        setPatientData(response.data);
+      const responseData = response?.data || response;
+      const normalizedData = responseData?.patient
+        ? responseData
+        : responseData?.data?.patient
+          ? responseData.data
+          : null;
+
+      if ((response?.success || responseData?.success !== false) && normalizedData) {
+        setPatientData(normalizedData);
       } else {
         setError("Failed to load patient details");
       }
@@ -255,7 +262,9 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
   };
 
   const renderAppointmentsTab = () => {
-    const appointments = patientData?.appointments || [];
+    const appointments = Array.isArray(patientData?.appointments)
+      ? patientData.appointments
+      : [];
 
     if (appointments.length === 0) {
       return (
@@ -272,8 +281,18 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
     return (
       <View style={styles.tabContent}>
-        {appointments.map((appointment, index) => (
-          <View key={appointment._id || index} style={styles.appointmentCard}>
+        {appointments.map((appointment, index) => {
+          const appointmentDate =
+            appointment.appointmentDate ||
+            appointment.appointment_date ||
+            appointment.date;
+          const appointmentStatus = appointment.status || "scheduled";
+
+          return (
+          <View
+            key={appointment._id || appointment.id || appointment.appointmentId || index}
+            style={styles.appointmentCard}
+          >
             <View style={styles.appointmentHeader}>
               <View style={styles.appointmentDateContainer}>
                 <Ionicons
@@ -282,20 +301,19 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
                   color={healthColors.primary.main}
                 />
                 <Text style={styles.appointmentDate}>
-                  {new Date(appointment.appointmentDate).toLocaleDateString(
-                    "en-IN",
-                    {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    }
-                  )}
+                  {appointmentDate
+                    ? new Date(appointmentDate).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "N/A"}
                 </Text>
               </View>
               <View
-                style={[styles.statusBadge, getStatusStyle(appointment.status)]}
+                style={[styles.statusBadge, getStatusStyle(appointmentStatus)]}
               >
-                <Text style={styles.statusBadgeText}>{appointment.status}</Text>
+                <Text style={styles.statusBadgeText}>{appointmentStatus}</Text>
               </View>
             </View>
             <Text style={styles.appointmentReason}>
@@ -311,7 +329,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
                   color={healthColors.text.tertiary}
                 />
                 <Text style={styles.appointmentInfoText}>
-                  {appointment.appointmentTime || "N/A"}
+                  {appointment.appointmentTime || appointment.appointment_time || appointment.time || "N/A"}
                 </Text>
               </View>
               <View style={styles.appointmentInfo}>
@@ -326,13 +344,16 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
               </View>
             </View>
           </View>
-        ))}
+          );
+        })}
       </View>
     );
   };
 
   const renderRecordsTab = () => {
-    const records = patientData?.medicalRecords || [];
+    const records = Array.isArray(patientData?.medicalRecords)
+      ? patientData.medicalRecords
+      : [];
 
     if (records.length === 0) {
       return (
@@ -349,18 +370,23 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
     return (
       <View style={styles.tabContent}>
-        {records.map((record, index) => (
-          <View key={record._id || index} style={styles.recordCard}>
+        {records.map((record, index) => {
+          const recordType = record.recordType || record.record_type || "other";
+          const recordTitle = record.title || recordType.replace(/_/g, " ");
+          const recordDate = record.date || record.createdAt || record.created_at;
+
+          return (
+          <View key={record._id || record.id || index} style={styles.recordCard}>
             <View style={styles.recordHeader}>
               <Ionicons
-                name={getRecordIcon(record.recordType)}
+                name={getRecordIcon(recordType)}
                 size={20}
                 color={healthColors.primary.main}
               />
-              <Text style={styles.recordTitle}>{record.title}</Text>
+              <Text style={styles.recordTitle}>{recordTitle}</Text>
             </View>
             <Text style={styles.recordType}>
-              {formatRecordType(record.recordType)}
+              {formatRecordType(recordType)}
             </Text>
             {record.diagnosis && (
               <Text style={styles.recordDiagnosis}>
@@ -368,20 +394,25 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
               </Text>
             )}
             <Text style={styles.recordDate}>
-              {new Date(record.date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+              {recordDate
+                ? new Date(recordDate).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "N/A"}
             </Text>
           </View>
-        ))}
+          );
+        })}
       </View>
     );
   };
 
   const renderPrescriptionsTab = () => {
-    const prescriptions = patientData?.prescriptions || [];
+    const prescriptions = Array.isArray(patientData?.prescriptions)
+      ? patientData.prescriptions
+      : [];
 
     if (prescriptions.length === 0) {
       return (
@@ -398,18 +429,26 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
     return (
       <View style={styles.tabContent}>
-        {prescriptions.map((prescription, index) => (
-          <View key={prescription._id || index} style={styles.prescriptionCard}>
+        {prescriptions.map((prescription, index) => {
+          const prescriptionDate =
+            prescription.prescriptionDate ||
+            prescription.createdAt ||
+            prescription.created_at;
+
+          return (
+          <View
+            key={prescription._id || prescription.id || prescription.prescriptionId || index}
+            style={styles.prescriptionCard}
+          >
             <View style={styles.prescriptionHeader}>
               <Text style={styles.prescriptionDate}>
-                {new Date(prescription.prescriptionDate).toLocaleDateString(
-                  "en-IN",
-                  {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  }
-                )}
+                {prescriptionDate
+                  ? new Date(prescriptionDate).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "N/A"}
               </Text>
             </View>
             {prescription.diagnosis && (
@@ -417,7 +456,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
                 {prescription.diagnosis}
               </Text>
             )}
-            {prescription.medicines && prescription.medicines.length > 0 && (
+            {Array.isArray(prescription.medicines) && prescription.medicines.length > 0 && (
               <View style={styles.medicinesContainer}>
                 <Text style={styles.medicinesTitle}>Medicines:</Text>
                 {prescription.medicines.map((medicine, idx) => (
@@ -432,7 +471,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
               </View>
             )}
           </View>
-        ))}
+          );
+        })}
       </View>
     );
   };
@@ -469,6 +509,10 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
   };
 
   const formatRecordType = (recordType) => {
+    if (!recordType || typeof recordType !== "string") {
+      return "Other";
+    }
+
     return recordType
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

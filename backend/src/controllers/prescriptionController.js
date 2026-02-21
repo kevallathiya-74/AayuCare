@@ -6,9 +6,49 @@
 
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
-const User = require("../models/User");
 const Prescription = require("../models/Prescription");
 const logger = require("../utils/logger");
+
+const resolveUserByIdentifier = async (identifier) => {
+  const value = String(identifier || "").trim();
+  if (!value) return null;
+
+  const isUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value
+    );
+
+  if (isUuid) {
+    return userRepository.findById(value);
+  }
+
+  return userRepository.findByUserId(value);
+};
+
+const enrichPrescriptionUsers = async (prescriptions = []) => {
+  if (!Array.isArray(prescriptions) || prescriptions.length === 0) {
+    return [];
+  }
+
+  const userIds = [
+    ...new Set(
+      prescriptions
+        .flatMap((entry) => [entry.patientId, entry.doctorId])
+        .filter(Boolean)
+    ),
+  ];
+
+  const users = await Promise.all(userIds.map((id) => userRepository.findById(id)));
+  const userMap = new Map(users.filter(Boolean).map((user) => [user.id, user]));
+
+  return prescriptions.map((entry) => ({
+    ...entry,
+    patientName: userMap.get(entry.patientId)?.name || "Unknown Patient",
+    patientUserId: userMap.get(entry.patientId)?.user_id || null,
+    doctorName: userMap.get(entry.doctorId)?.name || "Unknown Doctor",
+    doctorUserId: userMap.get(entry.doctorId)?.user_id || null,
+  }));
+};
 
 /**
  * @desc    Get all prescriptions (admin only)
@@ -59,24 +99,28 @@ exports.createPrescription = async (req, res) => {
   try {
     const {
       patientId,
+      appointmentId,
       medications,
+      medicines,
       diagnosis,
-      symptoms,
-      notes,
+      instructions,
       followUpDate,
-      tests,
+      sendOptions,
     } = req.body;
 
+    const doctorId = req.user.id || req.user._id;
+    const meds = medications || medicines || [];
+
     // Validate required fields
-    if (!patientId || !medications || medications.length === 0) {
+    if (!patientId || !Array.isArray(meds) || meds.length === 0) {
       return res.status(400).json({
         success: false,
         message: "Patient ID and at least one medication are required",
       });
     }
 
-    // Verify patient exists using repository
-    const patient = await userRepository.findById(patientId);
+    // Verify patient exists using repository (uuid or custom userId)
+    const patient = await resolveUserByIdentifier(patientId);
     if (!patient || patient.role !== "patient") {
       return res.status(404).json({
         success: false,
@@ -84,15 +128,38 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
+    if (!doctorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid doctor session",
+      });
+    }
+
+    const normalizedMedicines = meds.map((medication) => ({
+      name: medication.name,
+      dosage: medication.dosage,
+      frequency: medication.frequency,
+      duration: medication.duration,
+      instructions: medication.instructions || "",
+      price: medication.price || medication.unitPrice || null,
+    }));
+
     // Create prescription using repository
     const prescription = await prescriptionRepository.create({
-      patientId: patient.user_id,
-      doctorId: req.user.userId,
+      patientId: patient.id,
+      doctorId,
+      appointmentId: appointmentId || null,
       hospitalId: req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN",
-      medicines: medications,
+      medicines: normalizedMedicines,
       diagnosis,
-      instructions: notes,
+      instructions,
       followUpDate,
+      isSentToPatient: !!sendOptions?.patientApp,
+      sentToPatientAt: sendOptions?.patientApp ? new Date() : null,
+      pharmacyStatus:
+        sendOptions?.hospitalPharmacy || sendOptions?.externalPharmacy
+          ? "sent_to_pharmacy"
+          : "pending",
     });
 
     // Invalidate relevant caches after prescription creation
@@ -133,8 +200,16 @@ exports.getPatientPrescriptions = async (req, res) => {
   try {
     const { patientId } = req.params;
 
+    const patient = await resolveUserByIdentifier(patientId);
+    if (!patient || patient.role !== "patient") {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
     // Check access rights
-    const isOwnData = req.user.userId === patientId;
+    const isOwnData = req.user.id === patient.id || req.user.userId === patient.user_id;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         success: false,
@@ -142,43 +217,18 @@ exports.getPatientPrescriptions = async (req, res) => {
       });
     }
 
-    // Find patient by either userId or _id
-    let patient;
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      // Try finding by ObjectId first
-      patient = await User.findById(patientId).select("_id role");
-      // Verify it's actually a patient
-      if (patient && patient.role !== "patient") {
-        patient = null;
-      }
-      // If not found or wrong role, try userId
-      if (!patient) {
-        patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
-      }
-    } else {
-      patient = await User.findOne({ userId: patientId, role: "patient" }).select("_id");
-    }
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
-    }
+    const prescriptions = await prescriptionRepository.findByPatient(patient.id, {
+      hospitalId: req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined,
+      limit: parseInt(req.query.limit || 50),
+      skip: parseInt(req.query.skip || 0),
+    });
 
-    const prescriptionQuery = { patientId: patient._id };
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      prescriptionQuery.hospitalId = req.hospitalId;
-    }
-    
-    const prescriptions = await Prescription.find(prescriptionQuery)
-      .populate("doctorId", "name specialization userId isActive")
-      .sort({ createdAt: -1 });
+    const enriched = await enrichPrescriptionUsers(prescriptions);
 
     res.json({
       success: true,
-      count: prescriptions.length,
-      data: prescriptions,
+      count: enriched.length,
+      data: enriched,
     });
   } catch (error) {
     logger.error("Get patient prescriptions error:", {
@@ -203,8 +253,16 @@ exports.getDoctorPrescriptions = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
+    const doctor = await resolveUserByIdentifier(doctorId);
+    if (!doctor || doctor.role !== "doctor") {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
     // Check access rights
-    const isOwnData = req.user.userId === doctorId;
+    const isOwnData = req.user.id === doctor.id || req.user.userId === doctor.user_id;
     if (req.user.role !== "admin" && !isOwnData) {
       return res.status(403).json({
         success: false,
@@ -212,33 +270,18 @@ exports.getDoctorPrescriptions = async (req, res) => {
       });
     }
 
-    // Find doctor by either userId or _id
-    const doctor = await User.findOne({
-      role: "doctor",
-      $or: [{ userId: doctorId }, { _id: doctorId }],
-    }).select("_id");
+    const prescriptions = await prescriptionRepository.findByDoctor(doctor.id, {
+      hospitalId: req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined,
+      limit: parseInt(req.query.limit || 50),
+      skip: parseInt(req.query.skip || 0),
+    });
 
-    if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
-    }
-
-    const prescriptionQuery = { doctorId: doctor._id };
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      prescriptionQuery.hospitalId = req.hospitalId;
-    }
-    
-    const prescriptions = await Prescription.find(prescriptionQuery)
-      .populate("patientId", "name userId age gender isActive dateOfBirth bloodGroup address")
-      .sort({ createdAt: -1 });
+    const enriched = await enrichPrescriptionUsers(prescriptions);
 
     res.json({
       success: true,
-      count: prescriptions.length,
-      data: prescriptions,
+      count: enriched.length,
+      data: enriched,
     });
   } catch (error) {
     logger.error("Get doctor prescriptions error:", {
@@ -263,9 +306,7 @@ exports.getPrescriptionById = async (req, res) => {
   try {
     const { prescriptionId } = req.params;
 
-    const prescription = await Prescription.findById(prescriptionId)
-      .populate("doctorId", "name specialization userId phone isActive")
-      .populate("patientId", "name userId age gender bloodGroup isActive dateOfBirth address");
+    const prescription = await prescriptionRepository.findById(prescriptionId);
 
     if (!prescription) {
       return res.status(404).json({
@@ -274,18 +315,13 @@ exports.getPrescriptionById = async (req, res) => {
       });
     }
 
-    // Check access rights - handle both populated and string patientId/doctorId
-    const patientUserId =
-      typeof prescription.patientId === "string"
-        ? prescription.patientId
-        : prescription.patientId?.userId;
-    const doctorUserId =
-      typeof prescription.doctorId === "string"
-        ? prescription.doctorId
-        : prescription.doctorId?.userId;
-
-    const isPatientOwner = patientUserId && req.user.userId === patientUserId;
-    const isDoctorOwner = doctorUserId && req.user.userId === doctorUserId;
+    // Check access rights
+    const isPatientOwner =
+      prescription.patientId &&
+      (req.user.id === prescription.patientId || req.user.userId === prescription.patientId);
+    const isDoctorOwner =
+      prescription.doctorId &&
+      (req.user.id === prescription.doctorId || req.user.userId === prescription.doctorId);
 
     if (req.user.role !== "admin" && !isDoctorOwner && !isPatientOwner) {
       return res.status(403).json({
@@ -294,9 +330,11 @@ exports.getPrescriptionById = async (req, res) => {
       });
     }
 
+    const enriched = (await enrichPrescriptionUsers([prescription]))[0] || prescription;
+
     res.json({
       success: true,
-      data: prescription,
+      data: enriched,
     });
   } catch (error) {
     logger.error("Get prescription by ID error:", {

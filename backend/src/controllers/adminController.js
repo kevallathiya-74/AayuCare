@@ -1275,6 +1275,11 @@ exports.createUser = async (req, res) => {
       qualification,
       experience,
       department,
+      consultationFee,
+      licenseNumber,
+      license_number,
+      bio,
+      availability,
       dateOfBirth,
       gender,
       bloodGroup,
@@ -1369,10 +1374,32 @@ exports.createUser = async (req, res) => {
 
     // Add role-specific data
     if (role === "doctor") {
+      const normalizedAvailability =
+        typeof availability === "string"
+          ? (() => {
+              try {
+                return JSON.parse(availability);
+              } catch {
+                return {};
+              }
+            })()
+          : availability || {};
+      const normalizedLicenseNumber = licenseNumber || license_number || null;
+
       await query(`
-        INSERT INTO doctors (user_id, specialization, qualification, experience, department, consultation_fee)
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `, [user.id, specialization, qualification, experience || 0, department || specialization, 500]);
+        INSERT INTO doctors (user_id, specialization, qualification, experience, department, consultation_fee, license_number, bio, availability)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `, [
+        user.id,
+        specialization,
+        qualification,
+        experience || 0,
+        department || specialization,
+        consultationFee ?? 500,
+        normalizedLicenseNumber,
+        bio || null,
+        JSON.stringify(normalizedAvailability),
+      ]);
     } else if (role === "patient") {
       // Build patient insert dynamically (only include provided fields)
       const patientFields = ['user_id'];
@@ -1525,6 +1552,10 @@ exports.updateUserProfile = async (req, res) => {
       experience,
       department,
       consultationFee,
+      licenseNumber,
+      license_number,
+      bio,
+      availability,
       dateOfBirth,
       gender,
       bloodGroup,
@@ -1547,6 +1578,10 @@ exports.updateUserProfile = async (req, res) => {
         experience,
         department,
         consultationFee,
+        licenseNumber,
+        license_number,
+        bio,
+        availability,
         dateOfBirth,
         gender,
         bloodGroup,
@@ -1656,6 +1691,22 @@ exports.updateUserProfile = async (req, res) => {
       if (consultationFee !== undefined) {
         doctorUpdates.push(`consultation_fee = $${paramIndex}`);
         doctorValues.push(consultationFee);
+        paramIndex++;
+      }
+      const normalizedLicenseNumber = licenseNumber ?? license_number;
+      if (normalizedLicenseNumber !== undefined) {
+        doctorUpdates.push(`license_number = $${paramIndex}`);
+        doctorValues.push(normalizedLicenseNumber || null);
+        paramIndex++;
+      }
+      if (bio !== undefined) {
+        doctorUpdates.push(`bio = $${paramIndex}`);
+        doctorValues.push(bio || null);
+        paramIndex++;
+      }
+      if (availability !== undefined) {
+        doctorUpdates.push(`availability = $${paramIndex}`);
+        doctorValues.push(JSON.stringify(availability || {}));
         paramIndex++;
       }
       
