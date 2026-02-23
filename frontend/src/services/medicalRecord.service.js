@@ -4,9 +4,10 @@
  */
 
 import api from './apiClient';
+import { logError } from '../utils/errorHandler';
 
 /**
- * Create new medical record
+ * Get patient medical records by patient ID
  */
 export const getPatientMedicalRecords = async (patientId, filters = {}) => {
     try {
@@ -22,6 +23,7 @@ export const getPatientMedicalRecords = async (patientId, filters = {}) => {
         const response = await api.get(`/medical-records/patient/${patientId}?${params}`);
         return response.data.data;
     } catch (error) {
+        logError(error, { context: 'medicalRecordService.getPatientMedicalRecords', patientId });
         throw error;
     }
 };
@@ -39,6 +41,7 @@ export const getAllRecords = async () => {
         const response = await api.get('/medical-records');
         return response.data;
     } catch (error) {
+        logError(error, { context: 'medicalRecordService.getAllRecords' });
         throw error;
     }
 };
@@ -51,6 +54,33 @@ export const createMedicalRecord = async (recordData) => {
         const response = await api.post('/medical-records', recordData);
         return response.data;
     } catch (error) {
+        logError(error, { context: 'medicalRecordService.createMedicalRecord' });
+        throw error;
+    }
+};
+
+/**
+ * Update an existing medical record
+ */
+export const updateMedicalRecord = async (recordId, updates) => {
+    try {
+        const response = await api.put(`/medical-records/${recordId}`, updates);
+        return response.data;
+    } catch (error) {
+        logError(error, { context: 'medicalRecordService.updateMedicalRecord', recordId });
+        throw error;
+    }
+};
+
+/**
+ * Delete a medical record
+ */
+export const deleteMedicalRecord = async (recordId) => {
+    try {
+        const response = await api.delete(`/medical-records/${recordId}`);
+        return response.data;
+    } catch (error) {
+        logError(error, { context: 'medicalRecordService.deleteMedicalRecord', recordId });
         throw error;
     }
 };
@@ -63,5 +93,7 @@ export default {
     getPatientRecords,
     getAllRecords,
     createMedicalRecord,
+    updateMedicalRecord,
+    deleteMedicalRecord,
 };
 

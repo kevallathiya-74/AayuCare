@@ -9,7 +9,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme/healthColors";
+import { healthColors } from "../theme";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import {
   DoctorAppointmentProvider,
@@ -19,7 +19,7 @@ import {
 // Doctor Screens
 import DoctorHomeScreen from "../screens/hospital/DoctorHomeScreen";
 import TodaysAppointmentsScreen from "../screens/hospital/TodaysAppointmentsScreen";
-import EnhancedPrescriptionScreen from "../screens/hospital/EnhancedPrescriptionScreen";
+import DoctorPatientsScreen from "../screens/hospital/DoctorPatientsScreen";
 import DoctorProfileScreen from "../screens/hospital/DoctorProfileScreen";
 
 const Tab = createBottomTabNavigator();
@@ -51,7 +51,7 @@ const DoctorTabsInner = () => {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "TodaysAppointments") {
             iconName = focused ? "calendar" : "calendar-outline";
-          } else if (route.name === "Prescriptions") {
+          } else if (route.name === "Patients") {
             iconName = focused ? "people" : "people-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
@@ -105,8 +105,8 @@ const DoctorTabsInner = () => {
         }}
       />
       <Tab.Screen
-        name="Prescriptions"
-        component={EnhancedPrescriptionScreen}
+        name="Patients"
+        component={DoctorPatientsScreen}
         options={{
           tabBarLabel: "Patients",
         }}

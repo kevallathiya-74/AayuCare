@@ -18,9 +18,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { theme, healthColors } from "../../theme";
-import { textStyles } from "../../theme/typography";
-import { spacing } from "../../theme/spacing";
+import { theme, healthColors, textStyles, spacing } from "../../theme";
 import {
   Card,
   ListItem,
@@ -311,7 +309,7 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     ...textStyles.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },

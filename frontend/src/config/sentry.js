@@ -13,7 +13,7 @@ let Sentry = null;
 try {
     Sentry = require('@sentry/react-native');
 } catch (e) {
-    console.log('[Sentry] Module not available in Expo Go');
+    if (__DEV__) { console.log('[Sentry] Module not available in Expo Go'); }
 }
 
 /**
@@ -42,7 +42,7 @@ const getSentryDSN = () => {
             return dsn;
         }
     } catch (e) {
-        console.log('[Sentry] Error getting DSN:', e.message);
+        if (__DEV__) { console.log('[Sentry] Error getting DSN:', e.message); }
     }
 
     return null;
@@ -55,19 +55,19 @@ const getSentryDSN = () => {
 export const initializeSentry = () => {
     // Skip if already initialized
     if (sentryInitialized) {
-        console.log('[Sentry] Already initialized');
+        if (__DEV__) { console.log('[Sentry] Already initialized'); }
         return;
     }
 
     // Skip in Expo Go
     if (isExpoGo) {
-        console.log('[Sentry] Skipped - running in Expo Go');
+        if (__DEV__) { console.log('[Sentry] Skipped - running in Expo Go'); }
         return;
     }
 
     // Skip if Sentry module not available
     if (!Sentry) {
-        console.log('[Sentry] Skipped - module not available');
+        if (__DEV__) { console.log('[Sentry] Skipped - module not available'); }
         return;
     }
 
@@ -75,7 +75,7 @@ export const initializeSentry = () => {
     
     // Skip if no DSN configured
     if (!dsn) {
-        console.log('[Sentry] Skipped - no DSN configured');
+        if (__DEV__) { console.log('[Sentry] Skipped - no DSN configured'); }
         return;
     }
 
@@ -100,9 +100,9 @@ export const initializeSentry = () => {
         });
 
         sentryInitialized = true;
-        console.log('[Sentry] Initialized successfully');
+        if (__DEV__) { console.log('[Sentry] Initialized successfully'); }
     } catch (error) {
-        console.error('[Sentry] Initialization failed:', error);
+        if (__DEV__) { console.error('[Sentry] Initialization failed:', error); }
     }
 };
 
@@ -131,8 +131,8 @@ export const captureException = (error, context = {}) => {
             contexts: context.contexts || {},
         });
     } catch (sentryError) {
-        console.error('[Sentry] Failed to capture exception:', sentryError);
-        console.error('[Original Error]', error);
+        if (__DEV__) { console.error('[Sentry] Failed to capture exception:', sentryError); }
+        if (__DEV__) { console.error('[Original Error]', error); }
     }
 };
 
@@ -152,7 +152,7 @@ export const captureMessage = (message, level = 'info', context = {}) => {
             extra: context.extra || {},
         });
     } catch (error) {
-        console.error('[Sentry] Failed to capture message:', error);
+        if (__DEV__) { console.error('[Sentry] Failed to capture message:', error); }
     }
 };
 
@@ -169,7 +169,7 @@ export const setUser = (user) => {
             username: user.name,
         } : null);
     } catch (error) {
-        console.error('[Sentry] Failed to set user:', error);
+        if (__DEV__) { console.error('[Sentry] Failed to set user:', error); }
     }
 };
 
@@ -187,7 +187,7 @@ export const addBreadcrumb = (breadcrumb) => {
             data: breadcrumb.data || {},
         });
     } catch (error) {
-        console.error('[Sentry] Failed to add breadcrumb:', error);
+        if (__DEV__) { console.error('[Sentry] Failed to add breadcrumb:', error); }
     }
 };
 

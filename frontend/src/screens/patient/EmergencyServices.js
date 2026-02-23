@@ -34,7 +34,6 @@ import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 
 const EmergencyServices = ({ navigation }) => {
-  const [calling, setCalling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();

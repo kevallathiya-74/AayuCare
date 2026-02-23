@@ -23,10 +23,7 @@ class PrescriptionRepository {
    * @returns {Promise<Object|null>} Prescription object or null
    */
   async findById(id) {
-    return await Prescription.findById(id)
-      .populate("patientId", "name email phone userId")
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    return await Prescription.findById(id).lean();
   }
 
   /**
@@ -40,11 +37,16 @@ class PrescriptionRepository {
       limit = 20,
       skip = 0,
       pharmacyStatus,
+      hospitalId,
       startDate,
       endDate,
     } = filters;
 
     const query = { patientId };
+
+    if (hospitalId) {
+      query.hospitalId = hospitalId;
+    }
 
     if (pharmacyStatus) {
       query.pharmacyStatus = pharmacyStatus;
@@ -57,7 +59,6 @@ class PrescriptionRepository {
     }
 
     return await Prescription.find(query)
-      .populate("doctorId", "name specialization userId")
       .sort({ prescriptionDate: -1 })
       .limit(limit)
       .skip(skip)
@@ -102,7 +103,6 @@ class PrescriptionRepository {
     }
 
     return await Prescription.find(query)
-      .populate("patientId", "name email phone userId")
       .sort({ prescriptionDate: -1 })
       .limit(limit)
       .skip(skip)
@@ -115,10 +115,7 @@ class PrescriptionRepository {
    * @returns {Promise<Object|null>} Prescription object or null
    */
   async findByAppointment(appointmentId) {
-    return await Prescription.findOne({ appointmentId })
-      .populate("patientId", "name email phone userId")
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    return await Prescription.findOne({ appointmentId }).lean();
   }
 
   /**
@@ -148,8 +145,6 @@ class PrescriptionRepository {
     }
 
     return await Prescription.find(query)
-      .populate("patientId", "name email phone userId")
-      .populate("doctorId", "name specialization userId")
       .sort({ prescriptionDate: -1 })
       .limit(limit)
       .skip(skip)
@@ -184,8 +179,6 @@ class PrescriptionRepository {
     }
 
     return await Prescription.find(query)
-      .populate("patientId", "name email phone userId")
-      .populate("doctorId", "name specialization userId")
       .sort({ prescriptionDate: -1 })
       .limit(limit)
       .skip(skip)
@@ -202,10 +195,7 @@ class PrescriptionRepository {
     return await Prescription.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    })
-      .populate("patientId", "name email phone userId")
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    }).lean();
   }
 
   /**
@@ -256,6 +246,15 @@ class PrescriptionRepository {
    */
   async count(filters = {}) {
     return await Prescription.countDocuments(filters);
+  }
+
+  /**
+   * Delete multiple prescriptions matching a filter
+   * @param {Object} filter - MongoDB filter object
+   * @returns {Promise<Object>} Deletion result
+   */
+  async deleteMany(filter) {
+    return await Prescription.deleteMany(filter);
   }
 
   /**

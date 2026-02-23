@@ -53,7 +53,7 @@ const { width } = Dimensions.get("window");
 
 const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { user, loading } = useSelector((state) => state.auth);
+  const { user, isLoading } = useSelector((state) => state.auth);
   const [menuVisible, setMenuVisible] = useState(false);
   const [healthMetrics, setHealthMetrics] = useState([]);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
@@ -327,7 +327,7 @@ const PatientDashboard = ({ navigation }) => {
             <LanguageSelector compact iconColor={theme.colors.text.white} />
             <TouchableOpacity
               style={styles.bannerIconButton}
-              onPress={() => navigation.navigate("More")}
+              onPress={() => navigation.navigate("Notifications")}
               accessibilityRole="button"
               accessibilityLabel="Notifications"
             >
@@ -361,7 +361,7 @@ const PatientDashboard = ({ navigation }) => {
 
         {/* Patient Greeting */}
         <View style={styles.bannerGreeting}>
-          {!user || loading ? (
+          {!user || isLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={theme.colors.text.white} />
               <Text
@@ -456,7 +456,9 @@ const PatientDashboard = ({ navigation }) => {
                 <View style={styles.healthCardText}>
                   <Text style={styles.healthCardTitle}>
                     {getHealthStatus().status} Risk Score:{" "}
-                    {getHealthStatus().riskScore}/100
+                    {typeof getHealthStatus().riskScore === "number"
+                      ? `${getHealthStatus().riskScore}/100`
+                      : getHealthStatus().riskScore}
                   </Text>
                   <View style={styles.healthMetrics}>
                     <View style={styles.metricItem}>
@@ -728,7 +730,7 @@ const PatientDashboard = ({ navigation }) => {
                     </Text>
                     <Text style={styles.menuUserRole}>Patient Account</Text>
                     <Text style={styles.menuUserId}>
-                      ID: {user?.userId || "PAT1"}
+                      ID: {user?.userId || "\u2014"}
                     </Text>
                   </View>
                 </View>
@@ -1264,6 +1266,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
+    marginLeft: 8,
   },
   notificationItem: {
     flex: 1,
@@ -1293,7 +1296,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.medium,
     marginLeft: 8,
   },
-  // Profile Styles
+  // Medical History Section
   logoutButtonProfile: {
     flexDirection: "row",
     alignItems: "center",
@@ -1314,7 +1317,7 @@ const styles = StyleSheet.create({
   // Menu Styles
   menuOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   menuDrawer: {
@@ -1346,11 +1349,11 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.3),
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.5)",
+    borderColor: theme.withOpacity(theme.colors.text.white, 0.5),
     marginRight: 12,
   },
   menuUserInfo: {
@@ -1359,18 +1362,18 @@ const styles = StyleSheet.create({
   menuUserName: {
     fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
-    color: "white",
+    color: theme.colors.text.white,
     marginBottom: 2,
   },
   menuUserRole: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
-    color: "rgba(255,255,255,0.9)",
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
     marginBottom: 2,
   },
   menuUserId: {
     fontSize: theme.typography.sizes.caption,
-    color: "rgba(255,255,255,0.7)",
+    color: theme.withOpacity(theme.colors.text.white, 0.7),
   },
   menuCloseButton: {
     position: "absolute",
@@ -1379,7 +1382,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.25),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1417,14 +1420,14 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   menuItemDanger: {
-    backgroundColor: "rgba(244, 67, 54, 0.08)",
+    backgroundColor: theme.colors.error.background,
     borderWidth: 1,
-    borderColor: "rgba(244, 67, 54, 0.2)",
+    borderColor: theme.colors.error.light,
   },
   menuItemTextDanger: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.error.main,
   },
   menuFooter: {
@@ -1439,19 +1442,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: 12,
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: 8,
-  },
-  // Medical History Section
+  // Profile Styles
   medicalHistorySection: {
     paddingHorizontal: getScreenPadding(),
     marginBottom: 24,
@@ -1473,7 +1464,7 @@ const styles = StyleSheet.create({
   },
   medicalGroupTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginLeft: 6,
   },
@@ -1487,7 +1478,7 @@ const styles = StyleSheet.create({
   },
   medicalChipText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.error.main,
     marginBottom: 4,
   },

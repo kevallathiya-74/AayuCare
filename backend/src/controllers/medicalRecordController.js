@@ -1,7 +1,12 @@
-const MedicalRecord = require("../models/MedicalRecord");
+const medicalRecordRepository = require("../repositories/medicalRecordRepository");
 const userRepository = require("../repositories/userRepository");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
+const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+
+// Shared UUID regex — used to decide findById vs findByUserId
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 /**
  * @desc    Get all medical records (admin only with filters)
@@ -49,14 +54,15 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     // Pagination
     const skip = (page - 1) * limit;
 
-    const medicalRecords = await MedicalRecord.find(query)
-      .populate("patientId", "name userId email phone isActive dateOfBirth gender bloodGroup")
-      .populate("doctorId", "name specialization isActive")
-      .sort({ date: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const options = {
+      sort: { date: -1 },
+      offset: skip,
+      limit: parseInt(limit),
+    };
 
-    const total = await MedicalRecord.countDocuments(query);
+    const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
+
+    const total = await medicalRecordRepository.count(query);
 
     res.status(200).json({
       status: "success",
@@ -95,32 +101,32 @@ exports.createMedicalRecord = async (req, res, next) => {
       files,
     } = req.body;
 
-    // Find patient by userId (string like "PAT001") or id
+    // Find patient by UUID or custom userId (e.g. "PAT001")
     let patient;
-    if (patientId.match(/^[0-9]+$/)) {
-      // It's a numeric id (PostgreSQL)
+    if (UUID_REGEX.test(patientId)) {
       patient = await userRepository.findById(patientId);
-      // Verify it's actually a patient
-      if (patient && patient.role !== "patient") {
-        patient = null;
-      }
     } else {
-      // It's a userId string like "PAT001"
+      // It's a custom userId string like "PAT001"
       patient = await userRepository.findByUserId(patientId);
-      // Verify it's actually a patient
-      if (patient && patient.role !== "patient") {
-        patient = null;
-      }
+    }
+    // Verify it's actually a patient
+    if (patient && patient.role !== "patient") {
+      patient = null;
     }
 
     if (!patient) {
       return next(new AppError("Patient not found", 404));
     }
 
-    const medicalRecord = await MedicalRecord.create({
+    const hospitalId = req.hospitalId || req.user?.hospitalId;
+    if (!hospitalId && req.user?.role !== "super_admin") {
+      return next(new AppError("Hospital context required to create medical record", 400));
+    }
+
+    const medicalRecord = await medicalRecordRepository.create({
       patientId: patient.id, // Use id from found patient
-      doctorId: req.user._id,
-      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
+      doctorId: req.user.id,
+      hospitalId,
       recordType,
       title,
       description,
@@ -137,14 +143,23 @@ exports.createMedicalRecord = async (req, res, next) => {
     );
 
     // Invalidate relevant caches after medical record creation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:medicalrecord:*");
       await deleteCacheByPattern("cache:medicalrecord:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after medical record creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.MEDICAL_RECORD_CREATE,
+      entityType: "medicalRecord",
+      entityId: medicalRecord._id ? String(medicalRecord._id) : null,
+      newValues: { patientId: patient.id, recordType, title },
+      req,
+    });
 
     res.status(201).json({
       status: "success",
@@ -177,21 +192,12 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       });
     }
 
-    // Find patient by either userId or id
+    // Find patient by UUID or custom userId (e.g. "PAT001")
     let patient;
-    if (patientId.match(/^[0-9]+$/)) {
-      // Try finding by id first
+    if (UUID_REGEX.test(patientId)) {
       patient = await userRepository.findById(patientId);
-      // Verify it's actually a patient
       if (patient && patient.role !== "patient") {
         patient = null;
-      }
-      // If not found or wrong role, try userId
-      if (!patient) {
-        patient = await userRepository.findByUserId(patientId);
-        if (patient && patient.role !== "patient") {
-          patient = null;
-        }
       }
     } else {
       patient = await userRepository.findByUserId(patientId);
@@ -227,13 +233,15 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     // Pagination
     const skip = (page - 1) * limit;
 
-    const medicalRecords = await MedicalRecord.find(query)
-      .populate("doctorId", "name specialization")
-      .sort({ date: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const options = {
+      sort: { date: -1 },
+      offset: skip,
+      limit: parseInt(limit),
+    };
 
-    const total = await MedicalRecord.countDocuments(query);
+    const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
+
+    const total = await medicalRecordRepository.count(query);
 
     res.status(200).json({
       status: "success",
@@ -259,12 +267,23 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
  */
 exports.getMedicalRecord = async (req, res, next) => {
   try {
-    const medicalRecord = await MedicalRecord.findById(req.params.id)
-      .populate("patientId", "name userId email phone isActive dateOfBirth gender bloodGroup")
-      .populate("doctorId", "name specialization qualification isActive");
+    const medicalRecord = await medicalRecordRepository.findById(req.params.id);
 
     if (!medicalRecord) {
       return next(new AppError("Medical record not found", 404));
+    }
+
+    // Authorization: patient can only see own records; doctor/admin must belong to same hospital
+    const role = req.user.role;
+    if (role === "patient") {
+      if (medicalRecord.patientId !== req.user.id) {
+        return next(new AppError("Not authorized to view this record", 403));
+      }
+    } else if (role !== "super_admin") {
+      // Doctor or admin — must be same hospital as the record
+      if (req.hospitalId && medicalRecord.hospitalId && medicalRecord.hospitalId !== req.hospitalId) {
+        return next(new AppError("Not authorized to view this record", 403));
+      }
     }
 
     res.status(200).json({
@@ -285,7 +304,7 @@ exports.getMedicalRecord = async (req, res, next) => {
  */
 exports.updateMedicalRecord = async (req, res, next) => {
   try {
-    const medicalRecord = await MedicalRecord.findById(req.params.id);
+    const medicalRecord = await medicalRecordRepository.findById(req.params.id);
 
     if (!medicalRecord) {
       return next(new AppError("Medical record not found", 404));
@@ -293,16 +312,15 @@ exports.updateMedicalRecord = async (req, res, next) => {
 
     // Only the doctor who created it can update
     if (
-      medicalRecord.doctorId !== req.user.userId &&
+      medicalRecord.doctorId !== req.user.id &&
       req.user.role !== "admin"
     ) {
       return next(new AppError("Not authorized to update this record", 403));
     }
 
-    const updatedRecord = await MedicalRecord.findByIdAndUpdate(
+    const updatedRecord = await medicalRecordRepository.update(
       req.params.id,
-      req.body,
-      { new: true, runValidators: true }
+      req.body
     );
 
     logger.info(
@@ -310,10 +328,10 @@ exports.updateMedicalRecord = async (req, res, next) => {
     );
 
     // Invalidate relevant caches after medical record update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:medicalrecord:*");
       await deleteCacheByPattern("cache:medicalrecord:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after medical record update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -337,31 +355,31 @@ exports.updateMedicalRecord = async (req, res, next) => {
  */
 exports.deleteMedicalRecord = async (req, res, next) => {
   try {
-    const medicalRecord = await MedicalRecord.findById(req.params.id);
+    const medicalRecord = await medicalRecordRepository.findById(req.params.id);
 
     if (!medicalRecord) {
       return next(new AppError("Medical record not found", 404));
     }
 
-    // Only the doctor who created it or admin can delete
+    // Only the doctor who created it (UUID comparison) or admin can delete
     if (
-      medicalRecord.doctorId !== req.user.userId &&
+      medicalRecord.doctorId !== req.user.id &&
       req.user.role !== "admin"
     ) {
       return next(new AppError("Not authorized to delete this record", 403));
     }
 
-    await medicalRecord.deleteOne();
+    await medicalRecordRepository.delete(req.params.id);
 
     logger.info(
       `Medical record ${req.params.id} deleted by ${req.user.userId}`
     );
 
     // Invalidate relevant caches after medical record deletion
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:medicalrecord:*");
       await deleteCacheByPattern("cache:medicalrecord:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after medical record deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -385,15 +403,10 @@ exports.getPatientHistory = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
-    // Find patient by either userId or id
+    // Find patient by UUID or custom userId
     let patient;
-    if (patientId.match(/^[0-9]+$/)) {
-      // Try finding by id first
+    if (UUID_REGEX.test(patientId)) {
       patient = await userRepository.findById(patientId);
-      // If not found, try userId
-      if (!patient) {
-        patient = await userRepository.findByUserId(patientId);
-      }
     } else {
       patient = await userRepository.findByUserId(patientId);
     }
@@ -409,9 +422,12 @@ exports.getPatientHistory = async (req, res, next) => {
       historyQuery.hospitalId = req.hospitalId;
     }
     
-    const medicalRecords = await MedicalRecord.find(historyQuery)
-      .populate("doctorId", "name specialization isActive")
-      .sort({ date: -1 });
+    const historyOptions = {
+      sort: { date: -1 },
+      limit: 200,
+    };
+    
+    const medicalRecords = await medicalRecordRepository.findWithFilters(historyQuery, historyOptions);
 
     // Group by record type
     const history = {

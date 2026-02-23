@@ -14,6 +14,7 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +26,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { verticalScale } from "../../utils/responsive";
 import { usePatientAppointmentsInfinite } from "../../hooks/useAppointments";
+import { appointmentService } from "../../services";
 
 const MyAppointmentsScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
@@ -77,6 +79,39 @@ const MyAppointmentsScreen = ({ navigation }) => {
     refetch();
   }, [refetch]);
 
+  const handleRescheduleAppointment = useCallback((appointment) => {
+    navigation.navigate("AppointmentBooking", {
+      rescheduleId: appointment._id || appointment.id,
+    });
+  }, [navigation]);
+
+  const handleCancelAppointment = useCallback((appointment) => {
+    Alert.alert(
+      "Cancel Appointment",
+      `Are you sure you want to cancel your appointment with ${appointment.doctorName}?`,
+      [
+        { text: "Keep Appointment", style: "cancel" },
+        {
+          text: "Cancel Appointment",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await appointmentService.cancelAppointment(
+                appointment._id || appointment.id,
+                "Cancelled by patient"
+              );
+              refetch();
+              Alert.alert("Success", "Appointment cancelled successfully.");
+            } catch (err) {
+              logError(err, { context: "MyAppointmentsScreen.handleCancelAppointment" });
+              Alert.alert("Error", "Failed to cancel appointment. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  }, [refetch]);
+
   const renderAppointment = ({ item }) => (
     <View style={styles.appointmentCard}>
       <View style={styles.cardHeader}>
@@ -95,7 +130,9 @@ const MyAppointmentsScreen = ({ navigation }) => {
         </View>
         <View style={[styles.statusBadge, styles[`status_${item.status}`]]}>
           <Text style={styles.statusText}>
-            {item.status === "confirmed" ? "Confirmed" : "Scheduled"}
+            {item.status
+              ? item.status.charAt(0).toUpperCase() + item.status.slice(1).replace(/_/g, ' ')
+              : 'Scheduled'}
           </Text>
         </View>
       </View>
@@ -120,7 +157,11 @@ const MyAppointmentsScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.cardFooter}>
-        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          activeOpacity={0.7}
+          onPress={() => handleRescheduleAppointment(item)}
+        >
           <Ionicons
             name="calendar-outline"
             size={18}
@@ -131,6 +172,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={[styles.actionButton, styles.cancelButton]}
           activeOpacity={0.7}
+          onPress={() => handleCancelAppointment(item)}
         >
           <Ionicons
             name="close-circle-outline"

@@ -55,6 +55,20 @@ class AppointmentService {
       );
     }
 
+    const [hourPart, minutePart] = String(appointmentTime).split(":");
+    const appointmentDateTime = new Date(appointmentDate);
+    if (
+      Number.isNaN(appointmentDateTime.getTime()) ||
+      Number.isNaN(Number(hourPart)) ||
+      Number.isNaN(Number(minutePart))
+    ) {
+      throw new AppError("Invalid appointment date or time", 400);
+    }
+    appointmentDateTime.setHours(Number(hourPart), Number(minutePart), 0, 0);
+    if (appointmentDateTime <= new Date()) {
+      throw new AppError("Cannot book appointment in the past", 400);
+    }
+
     // Check if slot is available
     const isAvailable = await appointmentRepository.isSlotAvailable(
       doctorId,
@@ -251,8 +265,10 @@ class AppointmentService {
       offset,
     });
 
-    // Get total count (approximation)
-    const total = appointments.length;
+    // Get accurate total count from DB (not just current page length)
+    const total = await appointmentRepository.countAll({
+      hospitalId, patientId, doctorId, status, startDate, endDate,
+    });
 
     return {
       appointments,
@@ -289,7 +305,10 @@ class AppointmentService {
       offset,
     });
 
-    const total = appointments.length;
+    // Get accurate total count from DB
+    const total = await appointmentRepository.countByPatient(patientId, {
+      status, startDate, endDate,
+    });
 
     return {
       appointments,
@@ -327,7 +346,10 @@ class AppointmentService {
       offset,
     });
 
-    const total = appointments.length;
+    // Get accurate total count from DB
+    const total = await appointmentRepository.countByDoctor(doctorId, {
+      status, startDate, endDate,
+    });
 
     return {
       appointments,
@@ -497,14 +519,38 @@ class AppointmentService {
       throw new AppError("Doctor not found", 404);
     }
 
+    const requestedDate = new Date(date);
+    if (Number.isNaN(requestedDate.getTime())) {
+      throw new AppError("Invalid date format", 400);
+    }
+
     // Get doctor profile for consultation fee
     const doctorProfile = await doctorRepository.findByUserId(doctorId);
 
     // Get all appointments for the doctor on the specified date
-    const startOfDay = new Date(date);
+    const startOfDay = new Date(requestedDate);
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
+    const endOfDay = new Date(requestedDate);
     endOfDay.setHours(23, 59, 59, 999);
+
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
+    if (endOfDay < todayStart) {
+      return {
+        date,
+        doctor: {
+          id: doctor.id,
+          name: doctor.name,
+          specialization: doctorProfile?.specialization,
+          consultationFee: doctorProfile?.consultation_fee,
+        },
+        availableSlots: [],
+        slots: [],
+        bookedSlots: [],
+      };
+    }
 
     const appointments = await appointmentRepository.findByDoctor(doctorId, {
       startDate: startOfDay,
@@ -528,10 +574,23 @@ class AppointmentService {
       }
     }
 
-    // Filter out booked slots
-    const availableSlots = allSlots.filter(
+    const slotsAfterBookedFilter = allSlots.filter(
       (slot) => !bookedSlots.includes(slot)
     );
+
+    const isToday = startOfDay.getTime() === todayStart.getTime();
+    const minimumBookableTime = new Date(now.getTime() + 30 * 60 * 1000);
+
+    const availableSlots = isToday
+      ? slotsAfterBookedFilter.filter((slot) => {
+          const [slotHour, slotMinute] = slot
+            .split(":")
+            .map((value) => Number(value));
+          const slotDateTime = new Date(startOfDay);
+          slotDateTime.setHours(slotHour, slotMinute, 0, 0);
+          return slotDateTime > minimumBookableTime;
+        })
+      : slotsAfterBookedFilter;
 
     return {
       date,
@@ -542,6 +601,7 @@ class AppointmentService {
         consultationFee: doctorProfile?.consultation_fee,
       },
       availableSlots,
+      slots: availableSlots,
       bookedSlots,
     };
   }

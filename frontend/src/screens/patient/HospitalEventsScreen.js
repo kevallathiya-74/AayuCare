@@ -23,15 +23,14 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
-import {
-  verticalScale,
-} from "../../utils/responsive";
+
 import { showError, logError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { eventService } from "../../services";
 
 const HospitalEventsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
+  const [registeringId, setRegisteringId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
@@ -91,7 +90,7 @@ const HospitalEventsScreen = ({ navigation }) => {
             text: "Register",
             onPress: async () => {
               try {
-                setLoading(true);
+                setRegisteringId(event._id);
                 await eventService.registerForEvent(event._id);
                 Alert.alert(
                   "Success",
@@ -107,7 +106,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 });
                 Alert.alert("Error", errorMsg);
               } finally {
-                setLoading(false);
+                setRegisteringId(null);
               }
             },
           },
@@ -259,7 +258,7 @@ const HospitalEventsScreen = ({ navigation }) => {
               spotsRemaining <= 0 && styles.registerButtonDisabled,
             ]}
             onPress={() => handleRegister(event)}
-            disabled={loading || spotsRemaining <= 0}
+            disabled={registeringId === event._id || spotsRemaining <= 0}
           >
             <LinearGradient
               colors={

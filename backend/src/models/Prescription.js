@@ -85,8 +85,16 @@ const prescriptionSchema = new mongoose.Schema({
 });
 
 // Indexes
+prescriptionSchema.index({ patientId: 1, hospitalId: 1, prescriptionDate: -1 });
+prescriptionSchema.index({ appointmentId: 1 });
 prescriptionSchema.index({ patientId: 1, prescriptionDate: -1 });
 prescriptionSchema.index({ doctorId: 1, prescriptionDate: -1 });
 prescriptionSchema.index({ pharmacyStatus: 1 });
+prescriptionSchema.index({ hospitalId: 1, pharmacyStatus: 1, createdAt: -1 });
+
+// Validate at least one medicine is present
+prescriptionSchema.path('medicines').validate(function(value) {
+    return Array.isArray(value) && value.length >= 1;
+}, 'At least one medicine is required in a prescription');
 
 module.exports = mongoose.model('Prescription', prescriptionSchema);

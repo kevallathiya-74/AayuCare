@@ -4,6 +4,7 @@ const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const logger = require("../utils/logger");
 const { deleteCacheByPattern } = require("../config/redis");
+const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
 
 /**
  * @desc    Create new appointment
@@ -15,7 +16,7 @@ exports.createAppointment = async (req, res, next) => {
     const appointmentData = {
       ...req.body,
       patientId:
-        req.user.role === "patient" ? req.user._id : req.body.patientId,
+        req.user.role === "patient" ? req.user.id : req.body.patientId,
       hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
     };
 
@@ -27,10 +28,20 @@ exports.createAppointment = async (req, res, next) => {
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after appointment creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.APPOINTMENT_CREATE,
+      entityType: "appointment",
+      entityId: appointment.id || null,
+      newValues: { patientId: appointment.patientId, doctorId: appointment.doctorId, date: appointment.appointmentDate },
+      req,
+    });
 
     res.status(201).json({
       status: "success",
@@ -83,16 +94,16 @@ exports.getAppointmentsCursor = async (req, res, next) => {
 
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointmentsCursor(
-        req.user._id,
+        req.user.id,
         filters
       );
     } else if (req.user.role === "doctor") {
       result = await appointmentService.getDoctorAppointmentsCursor(
-        req.user._id,
+        req.user.id,
         filters
       );
-    } else if (req.user.role === "admin") {
-      // Admin can view all appointments or filter by patient/doctor
+    } else if (req.user.role === "admin" || req.user.role === "super_admin") {
+      // Admin/super_admin can view all appointments or filter by patient/doctor
       const { patientId, doctorId } = req.query;
       if (patientId) {
         result = await appointmentService.getPatientAppointmentsCursor(
@@ -108,6 +119,8 @@ exports.getAppointmentsCursor = async (req, res, next) => {
         // No filters - get all appointments (admin only)
         result = await appointmentService.getAllAppointmentsCursor(filters);
       }
+    } else {
+      return next(new AppError("Not authorized to view appointments", 403));
     }
 
     res.status(200).json({
@@ -160,16 +173,16 @@ exports.getAppointments = async (req, res, next) => {
 
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointments(
-        req.user._id,
+        req.user.id,
         filters
       );
     } else if (req.user.role === "doctor") {
       result = await appointmentService.getDoctorAppointments(
-        req.user._id,
+        req.user.id,
         filters
       );
-    } else if (req.user.role === "admin") {
-      // Admin can view all appointments or filter by patient/doctor
+    } else if (req.user.role === "admin" || req.user.role === "super_admin") {
+      // Admin/super_admin can view all appointments or filter by patient/doctor
       const { patientId, doctorId } = req.query;
       if (patientId) {
         result = await appointmentService.getPatientAppointments(
@@ -185,6 +198,8 @@ exports.getAppointments = async (req, res, next) => {
         // No filters - get all appointments (admin only)
         result = await appointmentService.getAllAppointments(filters);
       }
+    } else {
+      return next(new AppError("Not authorized to view appointments", 403));
     }
 
     res.status(200).json({
@@ -205,8 +220,9 @@ exports.getAppointment = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Validate ObjectId format to prevent casting errors
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    // Validate UUID format for PostgreSQL IDs
+    const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (!UUID_REGEX.test(id)) {
       return next(new AppError("Invalid appointment ID format", 400));
     }
 
@@ -215,8 +231,8 @@ exports.getAppointment = async (req, res, next) => {
     // Check authorization
     if (
       req.user.role !== "admin" &&
-      appointment.patientId._id.toString() !== req.user._id.toString() &&
-      appointment.doctorId._id.toString() !== req.user._id.toString()
+      appointment.patientId !== req.user.id &&
+      appointment.doctorId !== req.user.id
     ) {
       return next(new AppError("Not authorized to view this appointment", 403));
     }
@@ -246,7 +262,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     const appointment = await appointmentService.updateAppointmentStatus(
       req.params.id,
       status,
-      req.user._id,
+      req.user.id,
       req.user.role
     );
 
@@ -254,10 +270,20 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after appointment status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: status === "completed" ? AUDIT_ACTIONS.APPOINTMENT_COMPLETE : AUDIT_ACTIONS.APPOINTMENT_UPDATE,
+      entityType: "appointment",
+      entityId: req.params.id,
+      newValues: { status },
+      req,
+    });
 
     res.status(200).json({
       status: "success",
@@ -276,11 +302,15 @@ exports.updateAppointmentStatus = async (req, res, next) => {
  */
 exports.cancelAppointment = async (req, res, next) => {
   try {
+    const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (!UUID_REGEX.test(req.params.id)) {
+      return next(new AppError("Invalid appointment ID format", 400));
+    }
     const { cancelReason } = req.body;
 
     const appointment = await appointmentService.cancelAppointment(
       req.params.id,
-      req.user._id,
+      req.user.id,
       req.user.role,
       cancelReason
     );
@@ -289,10 +319,20 @@ exports.cancelAppointment = async (req, res, next) => {
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after appointment cancellation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.APPOINTMENT_CANCEL,
+      entityType: "appointment",
+      entityId: req.params.id,
+      newValues: { cancelReason, cancelledBy: req.user.id },
+      req,
+    });
 
     res.status(200).json({
       status: "success",
@@ -311,10 +351,14 @@ exports.cancelAppointment = async (req, res, next) => {
  */
 exports.updateAppointment = async (req, res, next) => {
   try {
+    const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (!UUID_REGEX.test(req.params.id)) {
+      return next(new AppError("Invalid appointment ID format", 400));
+    }
     const appointment = await appointmentService.updateAppointment(
       req.params.id,
       req.body,
-      req.user._id,
+      req.user.id,
       req.user.role
     );
 
@@ -322,6 +366,7 @@ exports.updateAppointment = async (req, res, next) => {
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after appointment update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -372,7 +417,7 @@ exports.getAvailableSlots = async (req, res, next) => {
 exports.getAppointmentStats = async (req, res, next) => {
   try {
     const statsPayload = await appointmentService.getAppointmentStats(
-      req.user._id,
+      req.user.id,
       req.user.role
     );
 
@@ -399,7 +444,7 @@ exports.getPatientAppointments = async (req, res, next) => {
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
     const isOwnData =
-      req.user.userId === patientId || req.user._id.toString() === patientId;
+      req.user.userId === patientId || req.user.id === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         status: "error",
@@ -412,7 +457,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
       patient = await userRepository.findById(patientId);
     } else {
-      // Legacy MongoDB ObjectId lookup
+      // Short user ID (e.g. PAT5) lookup
       patient = await userRepository.findByUserId(patientId);
     }
 

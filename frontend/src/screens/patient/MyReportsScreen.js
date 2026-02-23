@@ -15,6 +15,8 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Linking,
+  Share,
 } from "react-native";
 import {
   SafeAreaView,
@@ -85,7 +87,7 @@ const MyReportsScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, [user, isConnected]);
+  }, [user?.id, isConnected]);
 
   useEffect(() => {
     fetchReports();
@@ -185,14 +187,36 @@ const MyReportsScreen = ({ navigation }) => {
         </View>
       </View>
       <View style={styles.reportRight}>
-        <TouchableOpacity style={styles.downloadButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.downloadButton}
+          activeOpacity={0.7}
+          onPress={() => {
+            const url = item.recordData?.attachments?.[0];
+            if (url) {
+              Linking.openURL(url).catch(() =>
+                Alert.alert("Error", "Unable to open the file.")
+              );
+            } else {
+              Alert.alert("Not Available", "No downloadable file is attached to this report.");
+            }
+          }}
+        >
           <Ionicons
             name="download-outline"
             size={20}
             color={healthColors.primary.main}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.shareButton}
+          activeOpacity={0.7}
+          onPress={() => {
+            Share.share({
+              title: item.title,
+              message: `${item.title}\nType: ${item.type}\nDate: ${item.date}\nDoctor: ${item.doctor}`,
+            }).catch(() => {});
+          }}
+        >
           <Ionicons
             name="share-outline"
             size={20}

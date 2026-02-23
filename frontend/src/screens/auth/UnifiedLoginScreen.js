@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
   devToggleText: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.info.main,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   devButtons: {
     flexDirection: "row",
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   },
   devButtonText: {
     fontSize: theme.typography.sizes.overline,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
 });

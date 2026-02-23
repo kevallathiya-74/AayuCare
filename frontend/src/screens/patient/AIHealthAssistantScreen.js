@@ -14,7 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  ActivityIndicator,
+  Alert,
 } from "react-native";
 import {
   SafeAreaView,
@@ -30,7 +30,7 @@ import {
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { aiService } from "../../services";
+import { aiService, healthMetricsService } from "../../services";
 
 const AIHealthAssistantScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
@@ -48,25 +48,73 @@ const AIHealthAssistantScreen = ({ navigation }) => {
   ]);
   const scrollViewRef = useRef();
 
+  const [healthInsights, setHealthInsights] = useState(null);
+
+  // Fetch real health metrics to populate insights
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const response = await healthMetricsService.getMetrics(user.id);
+        const metrics = response?.data || [];
+        if (!Array.isArray(metrics) || metrics.length === 0) return;
+
+        const bpMetrics = metrics
+          .filter((m) => m.type === "bp")
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const latestBP = bpMetrics[0];
+
+        if (latestBP?.value) {
+          const bpValue = `${latestBP.value.systolic}/${latestBP.value.diastolic}`;
+          const sys = latestBP.value.systolic;
+          const dia = latestBP.value.diastolic;
+
+          let riskLevel = "NORMAL (0/100)";
+          let recommendations = [
+            "DIET: Balanced nutrition and hydration",
+            "EXERCISE: 30 min walk daily",
+            "WATER: 8-10 glasses per day",
+            "SLEEP: 7-8 hours recommended",
+          ];
+
+          if (sys > 140 || dia > 90) {
+            riskLevel = "HIGH (70/100)";
+            recommendations = [
+              "DIET: Low salt, more vegetables, avoid processed foods",
+              "EXERCISE: Light walking, avoid strenuous activity",
+              "MEDICATION: Follow prescribed BP medication",
+              "CONSULT: Visit doctor within 1 week",
+            ];
+          } else if (sys > 130 || dia > 85) {
+            riskLevel = "MODERATE (40/100)";
+            recommendations = [
+              "DIET: Reduce salt intake, increase potassium",
+              "EXERCISE: 30 min moderate walk daily",
+              "MONITOR: Check BP weekly",
+              "SLEEP: 7-8 hours, reduce stress",
+            ];
+          }
+
+          setHealthInsights({
+            bp: {
+              value: bpValue,
+              recommendations,
+              risk: riskLevel,
+              preventiveCare: sys > 130 ? "Monthly BP monitoring" : "Regular annual checkups",
+            },
+          });
+        }
+      } catch (_err) {
+        // Silently fail — AI screen works without pre-loaded insights
+      }
+    })();
+  }, [user?.id]);
+
   const quickSuggestions = [
     { id: 1, text: "I have a headache and fever", icon: "medical" },
     { id: 2, text: "Diet tips for better health", icon: "restaurant" },
     { id: 3, text: "Feeling stressed and anxious", icon: "fitness" },
   ];
-
-  const healthInsights = {
-    bp: {
-      value: "130/85",
-      recommendations: [
-        "DIET: Low salt, more vegetables",
-        "EXERCISE: 30 min walk daily",
-        "WATER: 8-10 glasses per day",
-        "SLEEP: 7-8 hours recommended",
-      ],
-      risk: "MODERATE (25/100)",
-      preventiveCare: "Regular checkups",
-    },
-  };
 
   const handleSend = async () => {
     if (message.trim()) {
@@ -194,7 +242,11 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>AI Health Assistant</Text>
-        <TouchableOpacity style={styles.voiceButton}>
+        <TouchableOpacity
+          style={styles.voiceButton}
+          onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
+          activeOpacity={0.7}
+        >
           <Ionicons name="mic" size={24} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>
@@ -264,7 +316,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           ))}
 
           {/* Health Insights */}
-          {messages.length <= 1 && (
+          {messages.length <= 1 && healthInsights && (
             <View style={styles.insightsSection}>
               <View style={styles.insightsHeader}>
                 <Ionicons
@@ -298,7 +350,11 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.doctorButton}>
+              <TouchableOpacity
+                style={styles.doctorButton}
+                onPress={() => navigation.navigate("AppointmentBooking")}
+                activeOpacity={0.8}
+              >
                 <Ionicons name="call" size={20} color={theme.colors.white} />
                 <Text style={styles.doctorButtonText}>Talk to Real Doctor</Text>
               </TouchableOpacity>
@@ -318,7 +374,11 @@ const AIHealthAssistantScreen = ({ navigation }) => {
               multiline
               maxLength={500}
             />
-            <TouchableOpacity style={styles.micButton}>
+            <TouchableOpacity
+              style={styles.micButton}
+              onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
+              activeOpacity={0.7}
+            >
               <Ionicons
                 name="mic-outline"
                 size={24}
@@ -470,7 +530,7 @@ const styles = StyleSheet.create({
   },
   riskLabel: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.warning.main,
     marginBottom: 6,
   },
@@ -491,7 +551,7 @@ const styles = StyleSheet.create({
   },
   doctorButtonText: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
   inputSection: {

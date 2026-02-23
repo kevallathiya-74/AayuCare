@@ -31,6 +31,16 @@ import logger from "../../utils/logger";
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
   const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
+
+  // Map actionUrl path strings to registered React Navigation route names
+  const ACTION_ROUTE_MAP = {
+    '/appointments': isAdminUser ? 'Appointments' : 'MyAppointments',
+    '/prescriptions': 'MyPrescriptions',
+    '/medical-records': 'MedicalRecords',
+    '/profile': isAdminUser ? 'ManageDoctors' : 'Profile',
+    '/events': isAdminUser ? 'HospitalEventsScreen' : 'HospitalEvents',
+    '/emergency': 'Emergency',
+  };
   const { isConnected } = useNetworkStatus();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,10 +123,18 @@ const NotificationsScreen = ({ navigation }) => {
           setUnreadCount((prev) => Math.max(0, prev - 1));
         }
 
-        // Navigate based on notification type
-        if (notification.actionUrl) {
-          // Handle deep linking
-          navigation.navigate(notification.actionUrl);
+        // Navigate based on notification actionUrl
+        if (notification.actionUrl && typeof notification.actionUrl === 'string') {
+          try {
+            // Map URL-style paths to registered RN route names
+            const routeName = ACTION_ROUTE_MAP[notification.actionUrl];
+            if (routeName) {
+              navigation.navigate(routeName);
+            }
+            // If no mapping found, silently ignore (unknown/external URL)
+          } catch (_e) {
+            // navigation error — silently ignore
+          }
         }
       } catch (err) {
         logError(err, {
@@ -329,7 +347,7 @@ const NotificationsScreen = ({ navigation }) => {
         <ErrorRecovery
           error={error}
           onRetry={fetchNotifications}
-          onBack={() => navigation.goBack()}
+          onGoBack={() => navigation.goBack()}
         />
       </SafeAreaView>
     );

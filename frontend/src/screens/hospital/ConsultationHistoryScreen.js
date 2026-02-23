@@ -28,6 +28,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [error, setError] = useState(null);
 
   const fetchConsultations = useCallback(
     async (pageNum = 1, refresh = false) => {
@@ -37,6 +38,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         } else {
           setLoading(true);
         }
+        setError(null);
 
         const filters = {
           page: pageNum,
@@ -63,6 +65,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         logError(error, {
           context: "ConsultationHistoryScreen.fetchConsultations",
         });
+        setError("Unable to load consultation history. Pull to refresh.");
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -72,6 +75,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
   );
 
   useEffect(() => {
+    setPage(1);
     fetchConsultations(1, true);
   }, [filter]);
 
@@ -120,8 +124,9 @@ const ConsultationHistoryScreen = ({ navigation }) => {
     <TouchableOpacity
       style={styles.consultationCard}
       onPress={() =>
-        navigation.navigate("PatientManagement", {
-          patientId: item.patientId?._id,
+        navigation.navigate("PatientDetails", {
+          patientId: item.patientUserId || item.patientId,
+          patientName: item.patientName,
         })
       }
       activeOpacity={0.7}
@@ -140,7 +145,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
               {item.patientName || "Unknown Patient"}
             </Text>
             <Text style={styles.patientId}>
-              ID: {item.patientId || "N/A"}
+              {item.patientUserId || item.patientId || "N/A"}
             </Text>
           </View>
         </View>
@@ -280,13 +285,17 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           !loading && (
             <View style={styles.emptyState}>
               <Ionicons
-                name="file-tray-outline"
+                name={error ? "alert-circle-outline" : "file-tray-outline"}
                 size={80}
-                color={healthColors.text.disabled}
+                color={error ? healthColors.error.main : healthColors.text.disabled}
               />
-              <Text style={styles.emptyStateTitle}>No Consultations Found</Text>
+              <Text style={styles.emptyStateTitle}>
+                {error ? "Error Loading Data" : "No Consultations Found"}
+              </Text>
               <Text style={styles.emptyStateText}>
-                {filter === "all"
+                {error
+                  ? error
+                  : filter === "all"
                   ? "You haven't had any consultations yet"
                   : `No ${filter} consultations found`}
               </Text>
@@ -376,7 +385,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
   },
   filterTextActive: {

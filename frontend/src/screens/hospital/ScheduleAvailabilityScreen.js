@@ -51,7 +51,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       setLoading(true);
       const response = await doctorService.getSchedule();
       // Backend returns { status, data: { schedules: [] } or data: [...] }
-      setSchedules(response.data?.schedules || response.data || []);
+      const data = response.data?.schedules || response.data;
+      setSchedules(Array.isArray(data) ? data : []);
     } catch (error) {
       Alert.alert("Error", "Failed to load schedule");
     } finally {
@@ -519,7 +520,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   dayLabelInactive: {
@@ -566,7 +567,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   modalContainer: {
     flex: 1,
@@ -589,7 +590,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   modalContent: {
@@ -601,7 +602,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 12,
   },
@@ -660,7 +661,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   breakTimeEditor: {
     flexDirection: "row",

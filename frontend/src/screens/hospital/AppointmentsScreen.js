@@ -213,13 +213,9 @@ const AppointmentsScreen = ({ navigation }) => {
     return status.replace(/_/g, " ");
   };
 
-  const handleAppointmentPress = (appointment) => {
-    Alert.alert(
-      "Appointment Details",
-      `Patient: ${appointment.patientName || "N/A"}\nDoctor: ${appointment.doctorName || "N/A"}\nStatus: ${appointment.status || "N/A"}`,
-      [{ text: "OK" }]
-    );
-  };
+  const handleAppointmentPress = useCallback((appointment) => {
+    navigation.navigate('AppointmentDetails', { appointment, appointmentId: appointment?.id || appointment?._id });
+  }, [navigation]);
 
   const renderAppointment = useCallback(
     ({ item }) => (
@@ -271,7 +267,7 @@ const AppointmentsScreen = ({ navigation }) => {
         )}
       </TouchableOpacity>
     ),
-    []
+    [handleAppointmentPress]
   );
 
   const renderEmptyState = () => (

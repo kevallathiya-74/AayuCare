@@ -1746,7 +1746,7 @@ const styles = StyleSheet.create({
   },
   roleText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: "white",
     letterSpacing: 0.5,
   },
@@ -1774,7 +1774,7 @@ const styles = StyleSheet.create({
   healthText: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   healthButton: {
     paddingHorizontal: 12,
@@ -1784,7 +1784,7 @@ const styles = StyleSheet.create({
   },
   healthButtonText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   section: {
     paddingHorizontal: getScreenPadding(),
@@ -1804,7 +1804,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   // Statistics Cards
@@ -1857,7 +1857,7 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: "white",
     marginBottom: 4,
   },
@@ -1922,7 +1922,7 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textAlign: "center",
     minHeight: 34,
@@ -1972,7 +1972,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
     marginTop: 12,
   },
@@ -2078,7 +2078,7 @@ const styles = StyleSheet.create({
   },
   profileInfoValue: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   profileDivider: {
@@ -2111,7 +2111,7 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.error.main,
   },
   // Menu Styles
@@ -2232,7 +2232,7 @@ const styles = StyleSheet.create({
   menuItemTextDanger: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.error.main,
   },
   menuBadge: {
@@ -2309,7 +2309,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
@@ -2327,7 +2327,7 @@ const styles = StyleSheet.create({
   },
   userStatusText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.success.main,
   },
   viewAllButton: {
@@ -2366,7 +2366,7 @@ const styles = StyleSheet.create({
   },
   recordTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
@@ -2445,7 +2445,7 @@ const styles = StyleSheet.create({
   },
   notificationTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 2,
   },
@@ -2487,7 +2487,7 @@ const styles = StyleSheet.create({
   },
   healthValue: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   statusBadge: {
@@ -2503,7 +2503,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   profileFooterSpacer: {
     height: 50,

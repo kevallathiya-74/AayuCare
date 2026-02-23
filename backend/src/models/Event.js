@@ -42,18 +42,19 @@ const eventSchema = new mongoose.Schema({
     startTime: {
         type: String,
         required: [true, 'Start time is required'],
+        match: [/^([01]\d|2[0-3]):([0-5]\d)$/, 'Start time must be in HH:MM format (24-hour)'],
     },
     endTime: {
         type: String,
         required: [true, 'End time is required'],
+        match: [/^([01]\d|2[0-3]):([0-5]\d)$/, 'End time must be in HH:MM format (24-hour)'],
     },
     venue: {
         type: String,
         required: [true, 'Venue is required'],
     },
     organizer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: false,
     },
     availableSpots: {
@@ -65,9 +66,9 @@ const eventSchema = new mongoose.Schema({
         default: 0,
     },
     registrations: [{
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+        userId: {
+            type: String,
+            required: [true, 'User ID is required for registration'],
         },
         registeredAt: {
             type: Date,

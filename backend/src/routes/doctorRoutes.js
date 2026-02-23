@@ -4,13 +4,9 @@ const doctorController = require("../controllers/doctorController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
-const { updateDoctorProfileSchema } = require("../validators/schemas");
-const {
-  cacheDoctorList,
-  cacheDoctorAvailability,
-  cacheDashboard,
-  invalidateCache,
-} = require("../middleware/cache");
+const { validateUpdateAppointmentStatus } = require("../validators/appointmentValidator");
+const { updateDoctorProfileSchema, walkInPatientSchema } = require("../validators/schemas");
+const { cacheDoctorList, cacheDoctorAvailability, cacheDashboard, invalidateCache } = require("../middleware/cache");
 
 /**
  * Protected routes (Doctor only) - Must come before public routes
@@ -93,6 +89,7 @@ router.patch(
   protect,
   attachHospitalId,
   authorize("doctor"),
+  validateUpdateAppointmentStatus,
   doctorController.updateAppointmentStatus
 );
 
@@ -116,9 +113,43 @@ router.get(
 /**
  * @route   GET /api/doctors
  * @desc    Get all doctors
- * @access  Public
+ * @access  Public (requires hospitalId query param)
  */
-router.get("/", cacheDoctorList, doctorController.getDoctors);
+router.get("/", (req, res, next) => {
+  if (!req.query.hospitalId) {
+    return res.status(400).json({ status: "error", message: "hospitalId query parameter is required" });
+  }
+  next();
+}, cacheDoctorList, doctorController.getDoctors);
+
+/**
+ * @route   GET /api/doctors/me/consultation-history
+ * @desc    Get consultation history for logged-in doctor
+ * @access  Private (Doctor)
+ * NOTE: Must remain BEFORE /:id to avoid Express route shadowing
+ */
+router.get(
+  "/me/consultation-history",
+  protect,
+  attachHospitalId,
+  authorize("doctor"),
+  doctorController.getConsultationHistory
+);
+
+/**
+ * @route   GET /api/doctors/me/schedule
+ * @desc    Get doctor's weekly schedule
+ * @access  Private (Doctor)
+ * NOTE: Must remain BEFORE /:id to avoid Express route shadowing
+ */
+router.get(
+  "/me/schedule",
+  protect,
+  attachHospitalId,
+  authorize("doctor"),
+  cacheDoctorAvailability,
+  doctorController.getSchedule
+);
 
 /**
  * @route   GET /api/doctors/:id
@@ -135,7 +166,9 @@ router.get("/:id", doctorController.getDoctor);
 router.post(
   "/me/walk-in-patient",
   protect,
+  attachHospitalId,
   authorize("doctor"),
+  validateBody(walkInPatientSchema),
   doctorController.registerWalkInPatient
 );
 
@@ -147,35 +180,11 @@ router.post(
 router.put(
   "/me/profile",
   protect,
+  attachHospitalId,
   authorize("doctor"),
   validateBody(updateDoctorProfileSchema),
   doctorController.updateProfile
   // Cache invalidation now handled inside controller
-);
-
-/**
- * @route   GET /api/doctors/consultation-history
- * @desc    Get consultation history for logged-in doctor
- * @access  Private (Doctor)
- */
-router.get(
-  "/me/consultation-history",
-  protect,
-  authorize("doctor"),
-  doctorController.getConsultationHistory
-);
-
-/**
- * @route   GET /api/doctors/schedule
- * @desc    Get doctor's weekly schedule
- * @access  Private (Doctor)
- */
-router.get(
-  "/me/schedule",
-  protect,
-  authorize("doctor"),
-  cacheDoctorAvailability,
-  doctorController.getSchedule
 );
 
 /**
@@ -186,6 +195,7 @@ router.get(
 router.put(
   "/me/schedule/:dayOfWeek",
   protect,
+  attachHospitalId,
   authorize("doctor"),
   doctorController.updateSchedule
   // Cache invalidation now handled inside controller
@@ -199,6 +209,7 @@ router.put(
 router.patch(
   "/me/schedule/:dayOfWeek/toggle",
   protect,
+  attachHospitalId,
   authorize("doctor"),
   doctorController.toggleDayAvailability
   // Cache invalidation now handled inside controller

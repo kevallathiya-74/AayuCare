@@ -12,9 +12,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { theme, healthColors } from "../../theme";
-import { spacing } from "../../theme/spacing";
-import { textStyles } from "../../theme/typography";
+import { theme, healthColors, spacing, textStyles } from "../../theme";
 import { getSafeAreaEdges } from "../../utils/responsive";
 import { Card } from "../../components/common";
 import { patientService } from "../../services";
@@ -22,6 +20,7 @@ import { updateUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const GENDERS = ["male", "female", "other"];
 
 const PatientEditProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -34,14 +33,18 @@ const PatientEditProfileScreen = ({ navigation }) => {
     phone: user?.phone || "",
     address: user?.address || "",
     bloodGroup: user?.bloodGroup || "",
+    gender: user?.gender || "",
+    dateOfBirth: user?.dateOfBirth ? user.dateOfBirth.slice(0, 10) : "",
     emergencyContactName:
       user?.emergencyContactName || user?.emergencyContact?.name || "",
     emergencyContactPhone:
       user?.emergencyContactPhone || user?.emergencyContact?.phone || "",
+    emergencyContactRelation:
+      user?.emergencyContactRelation || user?.emergencyContact?.relation || "",
   });
 
   const canSave = useMemo(() => {
-    return form.name.trim().length > 0 && form.phone.trim().length >= 10;
+    return form.name.trim().length > 0 && /^\+?[1-9]\d{9,14}$/.test(form.phone.trim());
   }, [form.name, form.phone]);
 
   const handleChange = (key, value) => {
@@ -72,6 +75,19 @@ const PatientEditProfileScreen = ({ navigation }) => {
       return false;
     }
 
+    if (form.gender && !GENDERS.includes(form.gender.toLowerCase())) {
+      Alert.alert("Validation Error", "Gender must be male, female, or other");
+      return false;
+    }
+
+    if (form.dateOfBirth) {
+      const dob = new Date(form.dateOfBirth);
+      if (isNaN(dob.getTime()) || dob >= new Date()) {
+        Alert.alert("Validation Error", "Enter a valid date of birth (YYYY-MM-DD)");
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -86,8 +102,11 @@ const PatientEditProfileScreen = ({ navigation }) => {
         phone: form.phone.trim(),
         address: form.address.trim() || undefined,
         bloodGroup: form.bloodGroup || undefined,
+        gender: form.gender ? form.gender.toLowerCase() : undefined,
+        dateOfBirth: form.dateOfBirth.trim() || undefined,
         emergencyContactName: form.emergencyContactName.trim() || undefined,
         emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
+        emergencyContactRelation: form.emergencyContactRelation.trim() || undefined,
       };
 
       const response = await patientService.updatePatientProfile(user.id, payload);
@@ -97,6 +116,8 @@ const PatientEditProfileScreen = ({ navigation }) => {
         updateUser({
           ...payload,
           ...updatedProfile,
+          gender: updatedProfile.gender || payload.gender,
+          dateOfBirth: updatedProfile.dateOfBirth || payload.dateOfBirth,
           emergencyContact: {
             name:
               updatedProfile.emergencyContact?.name ||
@@ -108,7 +129,11 @@ const PatientEditProfileScreen = ({ navigation }) => {
               updatedProfile.emergencyContactPhone ||
               payload.emergencyContactPhone ||
               null,
-            relation: updatedProfile.emergencyContact?.relation || null,
+            relation:
+              updatedProfile.emergencyContact?.relation ||
+              updatedProfile.emergencyContactRelation ||
+              payload.emergencyContactRelation ||
+              null,
           },
         })
       );
@@ -169,6 +194,20 @@ const PatientEditProfileScreen = ({ navigation }) => {
             placeholder="A+, O+, AB-"
           />
           <Field
+            label="Gender"
+            value={form.gender}
+            onChangeText={(v) => handleChange("gender", v.toLowerCase())}
+            placeholder="male, female, other"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Date of Birth"
+            value={form.dateOfBirth}
+            onChangeText={(v) => handleChange("dateOfBirth", v)}
+            placeholder="YYYY-MM-DD"
+            keyboardType="numbers-and-punctuation"
+          />
+          <Field
             label="Emergency Contact Name"
             value={form.emergencyContactName}
             onChangeText={(v) => handleChange("emergencyContactName", v)}
@@ -180,6 +219,12 @@ const PatientEditProfileScreen = ({ navigation }) => {
             onChangeText={(v) => handleChange("emergencyContactPhone", v.replace(/[^0-9+]/g, ""))}
             keyboardType="phone-pad"
             placeholder="Enter contact phone"
+          />
+          <Field
+            label="Emergency Contact Relation"
+            value={form.emergencyContactRelation}
+            onChangeText={(v) => handleChange("emergencyContactRelation", v)}
+            placeholder="e.g. Father, Spouse, Friend"
           />
         </Card>
 
@@ -272,7 +317,7 @@ const styles = StyleSheet.create({
   saveText: {
     ...textStyles.body,
     color: theme.colors.white,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
 

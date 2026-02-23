@@ -7,12 +7,13 @@ import axios from 'axios';
 import appStorage from '../utils/appStorage';
 import { STORAGE_KEYS } from '../utils/constants';
 import { APP_CONFIG } from '../config/appConfig';
-import offlineHandler from '../utils/offlineHandler';
 
 // Runtime guard: Ensure appStorage is properly wired
 if (!appStorage || typeof appStorage.getItem !== 'function') {
-  console.error('[API] CRITICAL: appStorage module not properly loaded!');
-  console.error('[API] appStorage:', appStorage);
+  if (__DEV__) {
+    console.error('[API] CRITICAL: appStorage module not properly loaded!');
+    console.error('[API] appStorage:', appStorage);
+  }
   throw new Error('appStorage module is not properly initialized');
 }
 
@@ -25,10 +26,12 @@ const api = axios.create({
   },
 });
 
-// Log API URL for debugging
-console.log('[API] API Base URL:', APP_CONFIG.api.baseURL);
-console.log('[API] Environment:', APP_CONFIG.env.isDevelopment ? 'Development' : 'Production');
-console.log('[API] Expo Go:', APP_CONFIG.env.isExpoGo);
+// Log API URL for debugging (dev only)
+if (__DEV__) {
+  console.log('[API] API Base URL:', APP_CONFIG.api.baseURL);
+  console.log('[API] Environment:', APP_CONFIG.env.isDevelopment ? 'Development' : 'Production');
+  console.log('[API] Expo Go:', APP_CONFIG.env.isExpoGo);
+}
 
 // Request interceptor - Add auth token
 api.interceptors.request.use(
@@ -53,12 +56,16 @@ api.interceptors.request.use(
 
       return config;
     } catch (error) {
-      console.error('[ERROR] Error getting auth token:', error);
+      if (__DEV__) {
+        console.error('[ERROR] Error getting auth token:', error);
+      }
       return config;
     }
   },
   (error) => {
-    console.error('[ERROR] Request interceptor error:', error);
+    if (__DEV__) {
+      console.error('[ERROR] Request interceptor error:', error);
+    }
     return Promise.reject(error);
   }
 );
@@ -80,12 +87,25 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
-      console.log('[API] 401 error - Session expired, clearing storage');
+      if (__DEV__) {
+        console.log('[API] 401 error - Session expired, clearing storage');
+      }
       
       // Better Auth doesn't use refresh tokens - session is managed server-side
       // Clear storage and force re-login
       await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
       await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+
+      // Dispatch logout to Redux so UI state is also cleared
+      try {
+        const store = require('../store/store').default;
+        const { logoutUser } = require('../store/slices/authSlice');
+        store.dispatch(logoutUser());
+      } catch (storeErr) {
+        if (__DEV__) {
+          console.warn('[API] Could not dispatch logoutUser to Redux store:', storeErr);
+        }
+      }
       
       const authError = new Error('Session expired. Please login again.');
       authError.code = 'AUTH_EXPIRED';
@@ -95,9 +115,11 @@ api.interceptors.response.use(
     // Handle network errors
     if (!error.response) {
       const networkError = new Error('Unable to connect to server. Please check your internet connection and try again.');
-      console.error('[NETWORK] Network Error');
-      console.error('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
-      console.error('[INFO] API Base URL:', APP_CONFIG.api.baseURL);
+      if (__DEV__) {
+        console.error('[NETWORK] Network Error');
+        console.error('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
+        console.error('[INFO] API Base URL:', APP_CONFIG.api.baseURL);
+      }
       return Promise.reject(networkError);
     }
 
@@ -107,7 +129,9 @@ api.interceptors.response.use(
       error.response?.data?.error ||
       error.message ||
       'An error occurred';
-    console.error('[ERROR] API Error:', errorMessage);
+    if (__DEV__) {
+      console.error('[ERROR] API Error:', errorMessage);
+    }
 
     return Promise.reject(new Error(errorMessage));
   }

@@ -43,6 +43,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     address: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    emergencyContactRelation: "",
     allergies: "",
     chronicConditions: "",
   });
@@ -78,6 +79,10 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         address: patient.address || "",
         emergencyContactName: patient.emergencyContactName || "",
         emergencyContactPhone: patient.emergencyContactPhone || "",
+        emergencyContactRelation:
+          patient.emergencyContactRelation ||
+          patient.emergencyContact?.relation ||
+          "",
         allergies: Array.isArray(patient.allergies)
           ? patient.allergies.join(", ")
           : "",
@@ -164,6 +169,9 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       if (formData.emergencyContactPhone && formData.emergencyContactPhone.trim()) {
         updateData.emergencyContactPhone = formData.emergencyContactPhone.trim();
       }
+      if (formData.emergencyContactRelation && formData.emergencyContactRelation.trim()) {
+        updateData.emergencyContactRelation = formData.emergencyContactRelation.trim();
+      }
       if (formData.allergies && formData.allergies.trim()) {
         updateData.allergies = formData.allergies
           .split(",")
@@ -183,7 +191,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         updateData
       );
 
-      if (response.status === "success") {
+      if (response.success === true) {
         // Call onSuccess first to trigger parent refetch
         if (onSuccess) {
           onSuccess();
@@ -253,6 +261,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       address: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
+      emergencyContactRelation: "",
       allergies: "",
       chronicConditions: "",
     });
@@ -554,6 +563,12 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "+911234567890",
               "call",
               "phone-pad"
+            )}
+            {renderInput(
+              "emergencyContactRelation",
+              "Emergency Contact Relation",
+              "e.g. Father, Spouse, Friend",
+              "people"
             )}
             {renderInput(
               "allergies",

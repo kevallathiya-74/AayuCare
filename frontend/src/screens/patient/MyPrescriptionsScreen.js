@@ -13,6 +13,7 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import {
   SafeAreaView,
@@ -79,13 +80,11 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       style={styles.prescriptionCard}
       activeOpacity={0.7}
       onPress={() => {
-        // TODO: Create PrescriptionDetails screen
         Alert.alert(
           "Prescription Details",
           `Doctor: ${item.doctorName}\nMedications: ${item.medications?.length || 0}`,
           [{ text: "OK" }]
         );
-        // navigation.navigate("PrescriptionDetails", { prescription: item });
       }}
     >
       <View style={styles.prescriptionHeader}>

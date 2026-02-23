@@ -30,6 +30,7 @@ class DoctorService {
     const offset = (parsedPage - 1) * parsedLimit;
 
     let filteredDoctors;
+    let total;
     if (search) {
       filteredDoctors = await doctorRepository.search(search, hospitalId, {
         includeInactive,
@@ -37,6 +38,8 @@ class DoctorService {
         limit: parsedLimit,
         offset,
       });
+      // Get accurate total from DB
+      total = await doctorRepository.countSearch(search, hospitalId, { includeInactive, specialization });
     } else {
       const doctors = await doctorRepository.findAll({
         hospitalId,
@@ -47,9 +50,9 @@ class DoctorService {
       filteredDoctors = includeInactive
         ? doctors
         : doctors.filter((doctor) => doctor.isActive);
+      // Get accurate total from DB
+      total = await doctorRepository.countAll({ hospitalId, specialization, includeInactive });
     }
-
-    const total = filteredDoctors.length;
 
     return {
       doctors: filteredDoctors,

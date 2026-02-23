@@ -80,6 +80,23 @@ const healthMetricsService = {
     },
 
     /**
+     * Update an existing health metric entry
+     * @param {string} patientId - Patient user ID
+     * @param {string} metricId - Metric entry ID
+     * @param {object} metricData - Updated metric data
+     * @returns {Promise} - Updated metric
+     */
+    async updateMetric(patientId, metricId, metricData) {
+        try {
+            const response = await api.put(`/patients/${patientId}/health-metrics/${metricId}`, metricData);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'healthMetricsService.updateMetric', patientId, metricId });
+            throw error;
+        }
+    },
+
+    /**
      * Delete a metric entry
      * @param {string} patientId - Patient ID
      * @param {string} metricId - Metric ID

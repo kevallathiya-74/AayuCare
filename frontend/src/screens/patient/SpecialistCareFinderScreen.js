@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   feeRangeText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   specialtiesSection: {
     marginBottom: verticalScale(16),
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   feeText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   availabilityText: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
   },
   consultationTypeText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.disabled,
   },
   consultationTypeTextActive: {
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
   viewProfileButton: {
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
   },
   viewProfileText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   loadingContainer: {
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: {
     fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginTop: 16,
     marginBottom: 8,

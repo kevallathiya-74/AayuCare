@@ -41,7 +41,9 @@ const getApiBaseUrl = () => {
   // Check for explicit environment variable first
   const envUrl = getEnvVar("API_BASE_URL");
   if (envUrl) {
-    console.log('[APP_CONFIG] Using explicit API URL:', envUrl);
+    if (__DEV__) {
+      console.log('[APP_CONFIG] Using explicit API URL:', envUrl);
+    }
     return envUrl;
   }
 
@@ -56,14 +58,18 @@ const getApiBaseUrl = () => {
     if (manifestUrl) {
       const localIp = manifestUrl.split(':')[0]; // Extract IP from exp://192.168.x.x:8081
       const localBackendUrl = `http://${localIp}:5000/api`;
-      console.log('[APP_CONFIG] Development mode - using local backend:', localBackendUrl);
+      if (__DEV__) {
+        console.log('[APP_CONFIG] Development mode - using local backend:', localBackendUrl);
+      }
       return localBackendUrl;
     }
   }
 
   // Fallback to production backend (Render)
   const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
-  console.log('[APP_CONFIG] Using production backend:', prodUrl);
+  if (__DEV__) {
+    console.log('[APP_CONFIG] Using production backend:', prodUrl);
+  }
   return prodUrl;
 };
 

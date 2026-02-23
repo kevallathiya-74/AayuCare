@@ -3,8 +3,8 @@
  * Handles push notifications, in-app alerts, and notification management
  */
 
-const Notification = require('../models/Notification');
-const User = require('../models/User');
+const notificationRepository = require('../repositories/notificationRepository');
+const userRepository = require('../repositories/userRepository');
 const twilioService = require('./twilioService');
 const logger = require('../utils/logger');
 
@@ -14,7 +14,7 @@ class NotificationService {
      */
     async createNotification(notificationData) {
         try {
-            const notification = await Notification.create(notificationData);
+            const notification = await notificationRepository.create(notificationData);
             logger.info(`[Notification] Created: ${notification._id}`);
             
             // Send push notification if enabled
@@ -41,15 +41,15 @@ class NotificationService {
         try {
             // Create in-app notification
             await this.createNotification({
-                userId: patient._id,
+                userId: patient.id,
                 hospitalId: appointment.hospitalId,
                 type: 'appointment',
                 title: 'Appointment Reminder',
                 message: `Your appointment with Dr. ${doctor.name} is tomorrow at ${appointment.appointmentTime}`,
                 priority: 'high',
                 metadata: {
-                    appointmentId: appointment._id,
-                    doctorId: doctor._id,
+                    appointmentId: appointment.id,
+                    doctorId: doctor.id,
                 },
             });
 
@@ -68,12 +68,12 @@ class NotificationService {
     async sendPrescriptionNotification(prescription, patient, doctor) {
         try {
             await this.createNotification({
-                userId: patient._id,
+                userId: patient.id,
                 hospitalId: prescription.hospitalId,
                 type: 'prescription',
                 title: 'Prescription Ready',
                 message: `Your prescription from Dr. ${doctor.name} is ready for collection`,
-                priority: 'normal',
+                priority: 'medium',
                 metadata: {
                     prescriptionId: prescription._id,
                 },
@@ -92,13 +92,13 @@ class NotificationService {
      */
     async sendHealthAlert(userId, hospitalId, alertData) {
         try {
-            const user = await User.findById(userId);
+            const user = await userRepository.findById(userId);
             if (!user) {
                 throw new Error('User not found');
             }
 
             await this.createNotification({
-                userId: user._id,
+                userId: user.id,
                 hospitalId,
                 type: 'health_alert',
                 title: alertData.title || 'Health Alert',
@@ -130,13 +130,14 @@ class NotificationService {
 
         const skip = (page - 1) * limit;
 
-        const notifications = await Notification.find(query)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+        const notifications = await notificationRepository.findWithFilters(query, {
+            offset: skip,
+            limit: limit,
+            sort: { createdAt: -1 }
+        });
 
-        const total = await Notification.countDocuments(query);
-        const unreadCount = await Notification.countDocuments({ userId, read: false });
+        const total = await notificationRepository.count(query);
+        const unreadCount = await notificationRepository.count({ userId, read: false });
 
         return {
             notifications,
@@ -154,7 +155,7 @@ class NotificationService {
      * Mark notification as read
      */
     async markAsRead(notificationId, userId) {
-        const notification = await Notification.findOne({
+        const notification = await notificationRepository.findOne({
             _id: notificationId,
             userId,
         });
@@ -163,18 +164,19 @@ class NotificationService {
             throw new Error('Notification not found');
         }
 
-        notification.read = true;
-        notification.readAt = new Date();
-        await notification.save();
+        const updated = await notificationRepository.update(notificationId, {
+            read: true,
+            readAt: new Date()
+        });
 
-        return notification;
+        return updated || notification;
     }
 
     /**
      * Mark all notifications as read
      */
     async markAllAsRead(userId) {
-        await Notification.updateMany(
+        await notificationRepository.updateMany(
             { userId, read: false },
             { read: true, readAt: new Date() }
         );
@@ -184,10 +186,10 @@ class NotificationService {
      * Delete notification
      */
     async deleteNotification(notificationId, userId) {
-        const notification = await Notification.findOneAndDelete({
-            _id: notificationId,
-            userId,
-        });
+        const notification = await notificationRepository.deleteByIdAndUserId(
+            notificationId,
+            userId
+        );
 
         if (!notification) {
             throw new Error('Notification not found');
@@ -210,7 +212,7 @@ class NotificationService {
      */
     async sendSMSNotification(notification) {
         try {
-            const user = await User.findById(notification.userId);
+            const user = await userRepository.findById(notification.userId);
             if (!user || !user.phone) {
                 return;
             }

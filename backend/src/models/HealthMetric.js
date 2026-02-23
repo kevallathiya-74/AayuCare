@@ -14,8 +14,7 @@ const healthMetricSchema = new mongoose.Schema({
         uppercase: true,
     },
     patient: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: [true, 'Patient reference is required'],
         index: true,
     },
@@ -56,8 +55,7 @@ const healthMetricSchema = new mongoose.Schema({
         trim: true,
     },
     recordedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: false,
     },
     source: {
@@ -73,6 +71,7 @@ const healthMetricSchema = new mongoose.Schema({
 });
 
 // Compound indexes for efficient queries
+healthMetricSchema.index({ hospitalId: 1, patient: 1, timestamp: -1 });
 healthMetricSchema.index({ patient: 1, type: 1, timestamp: -1 });
 healthMetricSchema.index({ patient: 1, timestamp: -1 });
 
@@ -143,7 +142,23 @@ healthMetricSchema.pre('save', function(next) {
         }
         metric.unit = 'glasses';
     }
-    
+
+    // Validate heart rate
+    if (metric.type === 'heart-rate') {
+        if (typeof metric.value !== 'number' || metric.value < 20 || metric.value > 300) {
+            return next(new Error('Heart rate must be a number between 20 and 300'));
+        }
+        metric.unit = 'bpm';
+    }
+
+    // Validate oxygen saturation
+    if (metric.type === 'oxygen') {
+        if (typeof metric.value !== 'number' || metric.value < 0 || metric.value > 100) {
+            return next(new Error('Oxygen saturation must be a number between 0 and 100'));
+        }
+        metric.unit = '%';
+    }
+
     next();
 });
 

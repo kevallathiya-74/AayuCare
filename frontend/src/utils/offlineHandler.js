@@ -7,7 +7,7 @@
 
 import React from 'react';
 import NetInfo from '@react-native-community/netinfo';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import appStorage from './appStorage';
 import { showError, showSuccess, logError } from './errorHandler';
 
 const QUEUE_STORAGE_KEY = '@aayucare_request_queue';
@@ -108,7 +108,7 @@ class OfflineHandler {
      */
     async saveQueue() {
         try {
-            await AsyncStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(this.requestQueue));
+            await appStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(this.requestQueue));
         } catch (error) {
             logError(error, 'OfflineHandler.saveQueue');
         }
@@ -119,7 +119,7 @@ class OfflineHandler {
      */
     async loadQueue() {
         try {
-            const queueJson = await AsyncStorage.getItem(QUEUE_STORAGE_KEY);
+            const queueJson = await appStorage.getItem(QUEUE_STORAGE_KEY);
             if (queueJson) {
                 this.requestQueue = JSON.parse(queueJson);
             }

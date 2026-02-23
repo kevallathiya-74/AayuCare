@@ -2,6 +2,9 @@ const Schedule = require("../models/Schedule");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
 
+const DAY_ORDER = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 };
+const sortByDayOfWeek = (arr) => arr.slice().sort((a, b) => (DAY_ORDER[a.dayOfWeek] ?? 7) - (DAY_ORDER[b.dayOfWeek] ?? 7));
+
 /**
  * Schedule Repository - MongoDB data access layer
  * No business logic - pure database operations only
@@ -23,9 +26,7 @@ class ScheduleRepository {
    * @returns {Promise<Object|null>} Schedule object or null
    */
   async findById(id) {
-    return await Schedule.findById(id)
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    return await Schedule.findById(id).lean();
   }
 
   /**
@@ -35,31 +36,33 @@ class ScheduleRepository {
    * @returns {Promise<Object|null>} Schedule object or null
    */
   async findByDoctorAndDay(doctorId, dayOfWeek) {
-    return await Schedule.findOne({ doctorId, dayOfWeek })
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    return await Schedule.findOne({ doctorId, dayOfWeek }).lean();
   }
 
   /**
    * Find all schedules for a doctor
    * @param {string} doctorId - Doctor ID
+   * @param {string} [hospitalId] - Optional hospital scope
    * @returns {Promise<Array>} Array of schedules
    */
-  async findByDoctor(doctorId) {
-    return await Schedule.find({ doctorId })
-      .sort({ dayOfWeek: 1 })
-      .lean();
+  async findByDoctor(doctorId, hospitalId = null) {
+    const filter = { doctorId };
+    if (hospitalId) filter.hospitalId = hospitalId;
+    const results = await Schedule.find(filter).lean();
+    return sortByDayOfWeek(results);
   }
 
   /**
    * Find available schedules for a doctor
    * @param {string} doctorId - Doctor ID
+   * @param {string} [hospitalId] - Optional hospital scope
    * @returns {Promise<Array>} Array of available schedules
    */
-  async findAvailableByDoctor(doctorId) {
-    return await Schedule.find({ doctorId, isAvailable: true })
-      .sort({ dayOfWeek: 1 })
-      .lean();
+  async findAvailableByDoctor(doctorId, hospitalId = null) {
+    const filter = { doctorId, isAvailable: true };
+    if (hospitalId) filter.hospitalId = hospitalId;
+    const results = await Schedule.find(filter).lean();
+    return sortByDayOfWeek(results);
   }
 
   /**
@@ -72,9 +75,7 @@ class ScheduleRepository {
     return await Schedule.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    })
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    }).lean();
   }
 
   /**
@@ -93,9 +94,7 @@ class ScheduleRepository {
         runValidators: true,
         upsert: true,
       }
-    )
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    ).lean();
   }
 
   /**
@@ -110,9 +109,7 @@ class ScheduleRepository {
       { doctorId, dayOfWeek },
       { $push: { timeSlots: timeSlot } },
       { new: true, upsert: true, runValidators: true }
-    )
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    ).lean();
   }
 
   /**
@@ -127,9 +124,7 @@ class ScheduleRepository {
       { doctorId, dayOfWeek },
       { $pull: { timeSlots: { _id: timeSlotId } } },
       { new: true }
-    )
-      .populate("doctorId", "name specialization userId")
-      .lean();
+    ).lean();
   }
 
   /**
@@ -181,12 +176,10 @@ class ScheduleRepository {
    * @param {string} dayOfWeek - Day of week
    * @returns {Promise<Array>} Array of available time slots
    */
-  async getAvailableTimeSlots(doctorId, dayOfWeek) {
-    const schedule = await Schedule.findOne({
-      doctorId,
-      dayOfWeek,
-      isAvailable: true,
-    }).lean();
+  async getAvailableTimeSlots(doctorId, dayOfWeek, hospitalId = null) {
+    const filter = { doctorId, dayOfWeek, isAvailable: true };
+    if (hospitalId) filter.hospitalId = hospitalId;
+    const schedule = await Schedule.findOne(filter).lean();
 
     if (!schedule) {
       return [];

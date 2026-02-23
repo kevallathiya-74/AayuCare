@@ -19,7 +19,7 @@ const store = configureStore({
         getDefaultMiddleware({
             serializableCheck: {
                 // Ignore these action types for serialization checks
-                ignoredActions: ['auth/loginUser/fulfilled', 'auth/loadUser/fulfilled'],
+                ignoredActions: ['auth/login/fulfilled', 'auth/loadUser/fulfilled'],
                 // Ignore these field paths in all actions
                 ignoredActionPaths: ['payload.timestamp', 'meta.arg.timestamp'],
                 // Ignore these paths in the state

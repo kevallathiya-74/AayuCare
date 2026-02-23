@@ -42,6 +42,7 @@ router.post(
 // @access  Private (Patient own data or Doctor/Admin)
 router.get(
   "/patient/:patientId",
+  authorize("patient", "doctor", "admin"),
   cacheMiddleware(60),
   prescriptionController.getPatientPrescriptions
 );
@@ -51,6 +52,7 @@ router.get(
 // @access  Private (Doctor own data or Admin)
 router.get(
   "/doctor/:doctorId",
+  authorize("doctor", "admin"),
   cacheMiddleware(60),
   prescriptionController.getDoctorPrescriptions
 );

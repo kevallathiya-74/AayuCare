@@ -19,16 +19,17 @@ class PatientRepository {
       address,
       emergencyContactName,
       emergencyContactPhone,
+      emergencyContactRelation,
       allergies,
       chronicConditions,
     } = patientData;
 
     const sql = `
             INSERT INTO patients (user_id, date_of_birth, gender, blood_group, address, 
-                                 emergency_contact_name, emergency_contact_phone, allergies, chronic_conditions)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                                 emergency_contact_name, emergency_contact_phone, emergency_contact_relation, allergies, chronic_conditions)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, user_id, date_of_birth, gender, blood_group, address,
-                      emergency_contact_name, emergency_contact_phone, allergies, chronic_conditions,
+                      emergency_contact_name, emergency_contact_phone, emergency_contact_relation, allergies, chronic_conditions,
                       created_at, updated_at
         `;
 
@@ -40,6 +41,7 @@ class PatientRepository {
       address || null,
       emergencyContactName || null,
       emergencyContactPhone || null,
+      emergencyContactRelation || null,
       allergies || [],
       chronicConditions || [],
     ]);
@@ -86,6 +88,7 @@ class PatientRepository {
       "address",
       "emergency_contact_name",
       "emergency_contact_phone",
+      "emergency_contact_relation",
       "allergies",
       "chronic_conditions",
     ];
@@ -114,7 +117,7 @@ class PatientRepository {
             SET ${updateFields.join(", ")}
             WHERE user_id = $${paramCount}
             RETURNING id, user_id, date_of_birth, gender, blood_group, address,
-                      emergency_contact_name, emergency_contact_phone, allergies, chronic_conditions,
+                      emergency_contact_name, emergency_contact_phone, emergency_contact_relation, allergies, chronic_conditions,
                       created_at, updated_at
         `;
 

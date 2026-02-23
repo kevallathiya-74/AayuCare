@@ -1,8 +1,7 @@
 /**
  * AayuCare - Auth Controller
  * Custom endpoints extending Better Auth
- * Fully refactored to use repository pattern where applicable
- * Note: Better Auth-specific MongoDB queries remain for session management
+ * Fully refactored to use PostgreSQL repository pattern
  */
 
 const { getAuth } = require("../lib/auth");
@@ -12,7 +11,9 @@ const doctorRepository = require("../repositories/doctorRepository");
 const patientRepository = require("../repositories/patientRepository");
 const { createUserWithProfile } = require("../utils/transaction");
 const logger = require("../utils/logger");
-const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const { deleteCacheByPattern } = require("../config/redis");
+const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
 
 /**
  * @desc    Get user email by userId (for Better Auth login)
@@ -44,20 +45,6 @@ exports.getEmailByUserId = async (req, res, next) => {
     const userIdUppercase = sanitizedUserId.toUpperCase();
     let user = await userRepository.findByUserId(userIdUppercase);
 
-    // Fallback to MongoDB for backward compatibility
-    if (!user) {
-      if (!mongoose.connection || mongoose.connection.readyState !== 1) {
-        return res.status(503).json({
-          status: "error",
-          message: "Database not available",
-        });
-      }
-
-      const db = mongoose.connection.getClient().db("aayucare");
-      const userCollection = db.collection("user");
-      user = await userCollection.findOne({ userId: userIdUppercase });
-    }
-
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -75,28 +62,19 @@ exports.getEmailByUserId = async (req, res, next) => {
       stack: error.stack,
       userId: req.body.userId
     });
-    res.status(500).json({
-      status: "error",
-      message: error.message || "Internal server error",
-    });
+    next(error);
   }
 };
 
 /**
  * @desc    Get current session token (for mobile apps after Better Auth login)
  * @route   POST /api/user/current-session
- * @access  Public (called immediately after Better Auth login)
+ * @access  Private (requires authentication)
  */
 exports.getCurrentSession = async (req, res, next) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({
-        status: "error",
-        message: "User ID is required",
-      });
-    }
+    // Use authenticated user's UUID — never trust req.body.userId
+    const userId = req.user.id;
 
     // Query PostgreSQL session table (Better Auth uses PostgreSQL now)
     const { query } = require("../config/postgres");
@@ -130,12 +108,8 @@ exports.getCurrentSession = async (req, res, next) => {
     logger.error("Error in getCurrentSession", {
       error: error.message,
       stack: error.stack,
-      userId: req.user?.userId
     });
-    res.status(500).json({
-      status: "error",
-      message: error.message || "Internal server error",
-    });
+    next(error);
   }
 };
 
@@ -182,7 +156,6 @@ exports.getProfileByEmail = async (req, res, next) => {
     // Add role-specific fields from related tables
     if (user.role === "admin") {
       // Admin-specific fields can be added here if needed
-      userProfile.department = user.department; // If exists in users table
     } else if (user.role === "doctor") {
       // Fetch doctor profile
       const doctor = await doctorRepository.findByUserId(user.id);
@@ -191,8 +164,7 @@ exports.getProfileByEmail = async (req, res, next) => {
         userProfile.qualification = doctor.qualification;
         userProfile.experience = doctor.experience;
         userProfile.consultationFee = doctor.consultation_fee;
-        userProfile.availableFrom = doctor.available_from;
-        userProfile.availableTo = doctor.available_to;
+        userProfile.availability = doctor.availability || {};
       }
     } else if (user.role === "patient") {
       // Fetch patient profile
@@ -204,10 +176,11 @@ exports.getProfileByEmail = async (req, res, next) => {
         userProfile.address = patient.address;
         userProfile.emergencyContactName = patient.emergency_contact_name;
         userProfile.emergencyContactPhone = patient.emergency_contact_phone;
+        userProfile.emergencyContactRelation = patient.emergency_contact_relation || null;
         userProfile.emergencyContact = {
           name: patient.emergency_contact_name || null,
           phone: patient.emergency_contact_phone || null,
-          relation: null,
+          relation: patient.emergency_contact_relation || null,
         };
         userProfile.allergies = patient.allergies || [];
         userProfile.chronicConditions = patient.chronic_conditions || [];
@@ -225,10 +198,7 @@ exports.getProfileByEmail = async (req, res, next) => {
       stack: error.stack,
       email: req.body.email
     });
-    res.status(500).json({
-      status: "error",
-      message: error.message || "Internal server error",
-    });
+    next(error);
   }
 };
 
@@ -308,6 +278,7 @@ exports.updateProfile = async (req, res, next) => {
         "address",
         "emergencyContactName",
         "emergencyContactPhone",
+        "emergencyContactRelation",
       ].forEach((key) => {
         if (req.body[key] !== undefined) {
           patientUpdates[key] = req.body[key];
@@ -320,7 +291,6 @@ exports.updateProfile = async (req, res, next) => {
     }
 
     // Invalidate relevant caches after profile update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
@@ -332,6 +302,15 @@ exports.updateProfile = async (req, res, next) => {
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.PROFILE_UPDATE,
+      entityType: "user",
+      entityId: req.user.id,
+      newValues: filteredUpdates,
+      req,
+    });
 
     res.status(200).json({
       status: "success",
@@ -362,14 +341,13 @@ exports.changePassword = async (req, res, next) => {
       );
     }
 
-    const user = await userRepository.findById(req.user.id, true);
+    const user = await userRepository.findByEmail(req.user.email, true);
 
     if (!user) {
       return next(new AppError("User not found", 404));
     }
 
-    // Verify current password (you'll need bcrypt)
-    const bcrypt = require("bcrypt");
+    // Verify current password
     const isValid = await bcrypt.compare(currentPassword, user.password_hash);
 
     if (!isValid) {
@@ -377,13 +355,12 @@ exports.changePassword = async (req, res, next) => {
     }
 
     // Hash new password
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await bcrypt.hash(newPassword, 12);
 
     // Update password
     await userRepository.update(req.user.id, { password_hash: passwordHash });
 
     // Invalidate session-related caches after password change
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:session:*");
       await deleteCacheByPattern("cache:session:*");
@@ -393,6 +370,14 @@ exports.changePassword = async (req, res, next) => {
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.PASSWORD_CHANGE,
+      entityType: "user",
+      entityId: req.user.id,
+      req,
+    });
 
     res.status(200).json({
       status: "success",

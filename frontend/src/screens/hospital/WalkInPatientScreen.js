@@ -38,7 +38,7 @@ const WalkInPatientScreen = ({ navigation }) => {
     phone: "",
     bloodGroup: "",
     chiefComplaint: "",
-    emergencyContact: "",
+    address: "",
   });
 
   const genderOptions = ["male", "female", "other"];
@@ -61,14 +61,24 @@ const WalkInPatientScreen = ({ navigation }) => {
       showError("Please enter valid age (1-120)");
       return false;
     }
-    if (!formData.phone.trim() || formData.phone.length !== 10) {
+    
+    // Enhanced phone validation
+    const phonePattern = /^\d{10}$/;
+    if (!formData.phone.trim() || !phonePattern.test(formData.phone.trim())) {
       showError("Please enter valid 10-digit phone number");
       return false;
     }
+    
     if (!formData.chiefComplaint.trim()) {
       showError("Please enter chief complaint/symptoms");
       return false;
     }
+    
+    if (formData.chiefComplaint.trim().length < 2) {
+      showError("Chief complaint must be at least 2 characters");
+      return false;
+    }
+    
     return true;
   };
 
@@ -86,7 +96,7 @@ const WalkInPatientScreen = ({ navigation }) => {
         phone: formData.phone.trim(),
         bloodGroup: formData.bloodGroup || undefined,
         symptoms: formData.chiefComplaint.trim(),
-        address: formData.emergencyContact || undefined,
+        address: formData.address || undefined,
         hospitalId: user?.hospitalId,
       };
 
@@ -95,19 +105,21 @@ const WalkInPatientScreen = ({ navigation }) => {
       const { data, isExisting } = response;
 
       Alert.alert(
-        "Success",
+        "Registration Successful",
         isExisting
-          ? `${data.name} (${data.userId}) - Patient already registered. Added to today's queue.`
-          : `${data.name} (${data.userId}) has been registered as a walk-in patient and added to today's queue.`,
+          ? `${data.name} (ID: ${data.userId}) is already registered. They have been added to today's appointment queue.`
+          : `${data.name} (ID: ${data.userId}) has been registered as a new walk-in patient and scheduled for consultation.`,
         [
           {
             text: "View Queue",
+            style: "default",
             onPress: () => {
-              navigation.navigate("DoctorTabs", { screen: "Today" });
+              navigation.navigate("DoctorTabs", { screen: "TodaysAppointments" });
             },
           },
           {
             text: "Register Another",
+            style: "default",
             onPress: () => {
               setFormData({
                 name: "",
@@ -116,7 +128,7 @@ const WalkInPatientScreen = ({ navigation }) => {
                 phone: "",
                 bloodGroup: "",
                 chiefComplaint: "",
-                emergencyContact: "",
+                address: "",
               });
             },
           },
@@ -124,7 +136,23 @@ const WalkInPatientScreen = ({ navigation }) => {
       );
     } catch (err) {
       logError(err, { context: "WalkInPatientScreen.handleRegister" });
-      showError("Failed to register patient. Please try again.");
+      
+      // Provide specific error messages based on error type
+      let errorMessage = "Failed to register patient. Please try again.";
+      
+      if (err.response?.status === 400) {
+        errorMessage = "Invalid patient data. Please check all fields and try again.";
+      } else if (err.response?.status === 401) {
+        errorMessage = "Authentication error. Please login again.";
+      } else if (err.response?.status === 403) {
+        errorMessage = "You don't have permission to register patients.";
+      } else if (err.response?.status >= 500) {
+        errorMessage = "Server error. Please try again in a moment.";
+      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -334,28 +362,26 @@ const WalkInPatientScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Emergency Contact */}
+          {/* Address */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Emergency Contact</Text>
+            <Text style={styles.label}>Address (Optional)</Text>
             <View style={styles.inputWrapper}>
               <Ionicons
-                name="alert-circle-outline"
+                name="location-outline"
                 size={18}
                 color={healthColors.text.disabled}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Emergency contact number"
-                value={formData.emergencyContact}
+                placeholder="Patient's home address"
+                value={formData.address}
                 onChangeText={(value) =>
                   handleInputChange(
-                    "emergencyContact",
-                    value.replace(/[^0-9]/g, "")
+                    "address",
+                    value
                   )
                 }
-                keyboardType="phone-pad"
-                maxLength={10}
                 placeholderTextColor={healthColors.text.disabled}
               />
             </View>
@@ -517,7 +543,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 8,
   },
@@ -584,7 +610,7 @@ const styles = StyleSheet.create({
   genderText: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   genderTextActive: {
     color: theme.colors.white,
@@ -612,7 +638,7 @@ const styles = StyleSheet.create({
   bloodGroupText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   bloodGroupTextActive: {
     color: theme.colors.white,

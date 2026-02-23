@@ -1,4 +1,4 @@
-const { getCache, setCache } = require("../config/redis");
+const { getCache, setCache, deleteCacheByPattern } = require("../config/redis");
 const logger = require("../utils/logger");
 
 /**
@@ -100,7 +100,12 @@ const cacheDoctorList = cacheMiddleware(300, (req) => {
 const cachePatientAppointments = cacheMiddleware(30, (req) => {
   const patientId = req.user?.id;
   const status = req.query.status || "all";
-  return `cache:appointments:patient:${patientId}:${status}`;
+  const startDate = req.query.startDate || "";
+  const endDate = req.query.endDate || "";
+  const doctorId = req.query.doctorId || "";
+  const page = req.query.page || "1";
+  const limit = req.query.limit || "20";
+  return `cache:appointments:patient:${patientId}:${status}:${startDate}:${endDate}:${doctorId}:${page}:${limit}`;
 });
 
 /**
@@ -115,13 +120,15 @@ const cacheDashboard = cacheMiddleware(60, (req) => {
 /**
  * Invalidate cache by pattern
  * Use this after data mutations (POST, PUT, DELETE)
+ * Always includes the API version prefix to match stored keys.
  */
 const invalidateCache = (pattern) => {
   return async (req, res, next) => {
     try {
-      const { deleteCacheByPattern } = require("../config/redis");
-      await deleteCacheByPattern(pattern);
-      logger.debug(`Cache invalidated: ${pattern}`);
+      // Ensure pattern matches the versioned keys stored by cacheMiddleware
+      const versionedPattern = pattern.startsWith(`${API_VERSION}:`) ? pattern : `${API_VERSION}:${pattern}`;
+      await deleteCacheByPattern(versionedPattern);
+      logger.debug(`Cache invalidated: ${versionedPattern}`);
     } catch (error) {
       logger.error("Cache invalidation error:", error.message);
     }

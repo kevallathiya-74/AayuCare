@@ -78,13 +78,10 @@ class PrescriptionService {
     }
 
     handleError(error) {
-        if (error.response) {
-            return error.response.data.message || 'An error occurred';
-        } else if (error.request) {
-            return 'Network error. Please check your connection.';
-        } else {
-            return error.message || 'An unexpected error occurred';
-        }
+        const message = error.response?.data?.message
+            || error.message
+            || 'An unexpected error occurred';
+        return new Error(message);
     }
 }
 

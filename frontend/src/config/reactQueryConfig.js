@@ -10,7 +10,7 @@
  * - Error handling
  */
 
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { logError } from '../utils/errorHandler';
 import { APP_CONFIG } from './appConfig';
 
@@ -23,13 +23,29 @@ import { APP_CONFIG } from './appConfig';
  * - Never retry 401/403 errors (auth failures)
  */
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      if (__DEV__) {
+        console.error('[React Query] Query error:', error);
+      }
+      logError(error, { context: 'ReactQuery.query' });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      if (__DEV__) {
+        console.error('[React Query] Mutation error:', error);
+      }
+      logError(error, { context: 'ReactQuery.mutation' });
+    },
+  }),
   defaultOptions: {
     queries: {
       // Stale time: How long data is considered fresh
       staleTime: 5 * 60 * 1000, // 5 minutes default
 
-      // Cache time: How long unused data stays in cache
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      // gcTime: How long unused data stays in cache (React Query v5 — was cacheTime in v4)
+      gcTime: 10 * 60 * 1000, // 10 minutes
 
       // Retry failed requests (except auth errors)
       retry: (failureCount, error) => {
@@ -56,26 +72,10 @@ export const queryClient = new QueryClient({
 
       // Don't refetch on mount by default (staleTime handles this)
       refetchOnMount: true,
-
-      // Error handling
-      onError: (error) => {
-        if (__DEV__) {
-          console.error('[React Query] Query error:', error);
-        }
-        logError(error, { context: 'ReactQuery.query' });
-      },
     },
     mutations: {
       // Retry mutations only once
       retry: 1,
-
-      // Error handling for mutations
-      onError: (error) => {
-        if (__DEV__) {
-          console.error('[React Query] Mutation error:', error);
-        }
-        logError(error, { context: 'ReactQuery.mutation' });
-      },
     },
   },
 });
@@ -177,43 +177,43 @@ export const invalidateRelatedQueries = async (queryClient, entityType, action =
   switch (entityType) {
     case 'appointment':
       invalidations.push(
-        queryClient.invalidateQueries(queryKeys.appointments.all),
-        queryClient.invalidateQueries(queryKeys.dashboardStats.admin()),
-        queryClient.invalidateQueries(queryKeys.notifications.all)
+        queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
       );
       break;
 
     case 'patient':
       invalidations.push(
-        queryClient.invalidateQueries(queryKeys.patients.all),
-        queryClient.invalidateQueries(queryKeys.dashboardStats.admin())
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() })
       );
       break;
 
     case 'doctor':
       invalidations.push(
-        queryClient.invalidateQueries(queryKeys.doctors.all),
-        queryClient.invalidateQueries(queryKeys.dashboardStats.admin())
+        queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() })
       );
       break;
 
     case 'medicalRecord':
       invalidations.push(
-        queryClient.invalidateQueries(queryKeys.medicalRecords.all),
-        queryClient.invalidateQueries(queryKeys.patients.all)
+        queryClient.invalidateQueries({ queryKey: queryKeys.medicalRecords.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all })
       );
       break;
 
     case 'prescription':
       invalidations.push(
-        queryClient.invalidateQueries(queryKeys.prescriptions.all),
-        queryClient.invalidateQueries(queryKeys.patients.all)
+        queryClient.invalidateQueries({ queryKey: queryKeys.prescriptions.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all })
       );
       break;
 
     case 'notification':
       invalidations.push(
-        queryClient.invalidateQueries(queryKeys.notifications.all)
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
       );
       break;
 

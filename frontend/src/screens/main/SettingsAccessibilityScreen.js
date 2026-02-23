@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   },
   changeButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   languageOptions: {
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   },
   languageChipText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   settingRow: {

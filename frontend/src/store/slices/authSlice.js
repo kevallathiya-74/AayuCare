@@ -13,6 +13,7 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authService from "../../services/auth.service";
+import logger from "../../utils/logger";
 
 // Runtime guard: Prevent accidental 'storage' references
 if (typeof storage !== 'undefined' && typeof window === 'undefined') {
@@ -34,20 +35,17 @@ export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log("[authSlice] Login thunk started with:", credentials.userId);
+      logger.debug("authSlice", "Login thunk started", { userId: credentials.userId });
       const response = await authService.login(credentials);
-      console.log(
-        "[authSlice] Login response:",
-        JSON.stringify(response, null, 2)
-      );
-      console.log("[authSlice] User:", response?.user);
-      console.log("[authSlice] Token:", response?.token ? "exists" : "missing");
+      logger.debug("authSlice", "Login response received", {
+        hasUser: !!response?.user,
+        hasToken: !!response?.token,
+      });
       return response;
     } catch (error) {
-      console.error("[authSlice] Login error:", error);
+      logger.error("authSlice", "Login error", error?.message || error);
       const errorMessage =
         error?.message || error?.toString() || "Login failed";
-      console.error("[authSlice] Error message:", errorMessage);
       return rejectWithValue(errorMessage);
     }
   }
@@ -57,12 +55,12 @@ export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("[authSlice] Logout thunk started");
+      logger.debug("authSlice", "Logout thunk started");
       await authService.logout();
-      console.log("[authSlice] Logout complete");
+      logger.debug("authSlice", "Logout complete");
       return null;
     } catch (error) {
-      console.log("[authSlice] Logout error:", error);
+      logger.error("authSlice", "Logout error", error?.message || error);
       return rejectWithValue(error.message || "Logout failed");
     }
   }
@@ -72,25 +70,21 @@ export const loadUser = createAsyncThunk(
   "auth/loadUser",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("[authSlice] Load user thunk started");
+      logger.debug("authSlice", "Load user thunk started");
 
-      // Get session from local storage (instant, no network call)
+      // Validate stored token and restore session (reads from AsyncStorage)
       const session = await authService.getSession();
 
       if (!session || !session.user) {
-        console.log(
-          "[authSlice] No valid session found - user not authenticated"
-        );
+        logger.debug("authSlice", "No valid session found - user not authenticated");
         return null;
       }
 
-      console.log(
-        "[authSlice] User loaded from session:",
-        session.user.id || session.user.email
-      );
-      return session.user;
+      logger.debug("authSlice", "User loaded from session", { id: session.user.id });
+      // Return both user and token so the reducer can restore full state
+      return { user: session.user, token: session.token || null };
     } catch (error) {
-      console.error("[authSlice] Load user error:", error?.message || error);
+      logger.error("authSlice", "Load user error", error?.message || error);
       // Always return null instead of rejecting - allows app to continue
       return null;
     }
@@ -154,23 +148,21 @@ const authSlice = createSlice({
       })
       // Load user
       .addCase(loadUser.pending, (state) => {
-        console.log('[authSlice] loadUser.pending - setting isLoading = true');
         state.isLoading = true;
       })
       .addCase(loadUser.fulfilled, (state, action) => {
-        console.log('[authSlice] loadUser.fulfilled - payload:', action.payload ? 'user found' : 'no user');
         state.isLoading = false;
-        if (action.payload) {
-          state.user = action.payload;
+        if (action.payload?.user) {
+          state.user = action.payload.user;
+          state.token = action.payload.token || null;
           state.isAuthenticated = true;
         } else {
           state.user = null;
+          state.token = null;
           state.isAuthenticated = false;
         }
-        console.log('[authSlice] loadUser complete - isLoading:', state.isLoading, 'isAuthenticated:', state.isAuthenticated);
       })
       .addCase(loadUser.rejected, (state) => {
-        console.log('[authSlice] loadUser.rejected');
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;

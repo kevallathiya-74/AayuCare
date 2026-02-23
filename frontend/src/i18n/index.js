@@ -5,7 +5,7 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import appStorage from '../utils/appStorage';
 import * as Localization from 'expo-localization';
 
 import en from '../locales/en.json';
@@ -13,12 +13,6 @@ import hi from '../locales/hi.json';
 import gu from '../locales/gu.json';
 
 const LANGUAGE_STORAGE_KEY = '@aayucare_language';
-
-// Simplified language detection - remove async detector
-const getInitialLanguage = () => {
-    // Default to English for initial load
-    return 'en';
-};
 
 // Initialize i18n immediately without async detection
 i18n
@@ -46,7 +40,7 @@ i18n
 // Load saved language after initialization
 setTimeout(async () => {
     try {
-        const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        const savedLanguage = await appStorage.getItem(LANGUAGE_STORAGE_KEY);
         if (savedLanguage && ['en', 'hi', 'gu'].includes(savedLanguage)) {
             await i18n.changeLanguage(savedLanguage);
         }
@@ -61,7 +55,7 @@ export default i18n;
 export const changeLanguage = async (languageCode) => {
     try {
         await i18n.changeLanguage(languageCode);
-        await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, languageCode);
+        await appStorage.setItem(LANGUAGE_STORAGE_KEY, languageCode);
         return true;
     } catch (error) {
         console.error('Error changing language:', error);

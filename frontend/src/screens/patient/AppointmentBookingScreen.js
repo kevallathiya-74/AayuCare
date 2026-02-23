@@ -42,25 +42,19 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   // Get authenticated user for hospitalId
   const { user } = useSelector((state) => state.auth);
   
-  const [selectedSpecialty, setSelectedSpecialty] = useState("Cardiology");
+  const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [appointmentType, setAppointmentType] = useState("in-person");
   const [date, setDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState("15 Dec 2025");
-  const [selectedTime, setSelectedTime] = useState("10:30 AM");
+  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedTime, setSelectedTime] = useState("");
   const [reason, setReason] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
 
   // API integration states
   const [doctors, setDoctors] = useState([]);
-  const [specialties, setSpecialties] = useState([
-    "Cardiology",
-    "Pulmonology",
-    "Neurology",
-    "Pediatrics",
-    "Orthopedics",
-  ]);
+  const [specialties, setSpecialties] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -80,13 +74,33 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       setLoadingDoctors(true);
       setError(null);
       try {
-        const response = await doctorService.getDoctors({
-          specialization: specialty,
-        });
-        if (response?.data?.doctors) {
-          setDoctors(response.data.doctors);
+        const filters = specialty ? { specialization: specialty } : {};
+        const response = await doctorService.getDoctors(filters);
+        // doctorService already unwraps response.data.data — check .doctors directly
+        const doctorsList = response?.doctors || response?.data?.doctors;
+        if (doctorsList) {
+          const fetchedDoctors = doctorsList;
+          setDoctors(fetchedDoctors);
+
+          if (!specialty) {
+            const derivedSpecialties = [
+              ...new Set(
+                fetchedDoctors
+                  .map((doctor) => doctor?.specialization)
+                  .filter(Boolean)
+              ),
+            ];
+            setSpecialties(derivedSpecialties);
+            if (derivedSpecialties.length > 0) {
+              setSelectedSpecialty((prev) => prev || derivedSpecialties[0]);
+            }
+          }
         } else {
           setDoctors([]);
+          if (!specialty) {
+            setSpecialties([]);
+            setSelectedSpecialty("");
+          }
         }
       } catch (err) {
         logError(err, {
@@ -112,20 +126,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         doctorId,
         appointmentDate
       );
-      if (response?.data?.slots) {
-        setTimeSlots(response.data.slots);
+      const apiSlots = response?.data?.availableSlots || response?.data?.slots;
+      if (Array.isArray(apiSlots)) {
+        setTimeSlots(apiSlots);
       } else {
-        // Fallback to default slots if API doesn't provide them
-        setTimeSlots([
-          "10:00 AM",
-          "10:30 AM",
-          "11:00 AM",
-          "11:30 AM",
-          "12:00 PM",
-          "2:00 PM",
-          "2:30 PM",
-          "3:00 PM",
-        ]);
+        setTimeSlots([]);
       }
     } catch (err) {
       logError(err, {
@@ -133,21 +138,17 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         doctorId,
         appointmentDate,
       });
-      // Use fallback slots on error
-      setTimeSlots([
-        "10:00 AM",
-        "10:30 AM",
-        "11:00 AM",
-        "11:30 AM",
-        "12:00 PM",
-        "2:00 PM",
-        "2:30 PM",
-        "3:00 PM",
-      ]);
+      setTimeSlots([]);
+      showError("Failed to load available time slots");
     } finally {
       setLoadingTimeSlots(false);
     }
   }, []);
+
+  // Initial load: fetch all doctors to derive specialty list dynamically
+  useEffect(() => {
+    fetchDoctors();
+  }, [fetchDoctors]);
 
   // Load doctors when specialty changes
   useEffect(() => {
@@ -195,7 +196,6 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       return;
     }
 
-    setLoading(true);
     try {
       // Map appointment type to backend-accepted values
       const appointmentTypeMap = {
@@ -205,6 +205,21 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       
       // Convert time from 12-hour format (e.g., "10:30 AM") to 24-hour format (e.g., "10:30")
       const time24Hour = convertTo24Hour(selectedTime);
+
+      const [slotHour, slotMinute] = time24Hour
+        .split(":")
+        .map((value) => Number(value));
+      const selectedDateTime = new Date(date);
+      selectedDateTime.setHours(slotHour, slotMinute, 0, 0);
+      if (selectedDateTime <= new Date()) {
+        Alert.alert(
+          "Invalid Selection",
+          "Please select a future date and time for your appointment."
+        );
+        return;
+      }
+
+      setLoading(true);
       
       // Prepare appointment data with correct field names and formats
       const appointmentData = {
@@ -266,7 +281,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Book Appointment</Text>
-        <TouchableOpacity style={styles.calendarButton}>
+        <TouchableOpacity
+          style={styles.calendarButton}
+          onPress={() => navigation.navigate("MyAppointments")}
+          activeOpacity={0.7}
+        >
           <Ionicons
             name="calendar"
             size={24}
@@ -305,7 +324,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 size={22}
                 color={healthColors.primary.main}
               />
-              <Text style={styles.specialtyText}>{selectedSpecialty}</Text>
+              <Text style={styles.specialtyText}>
+                {selectedSpecialty || "Select Specialty"}
+              </Text>
               <Ionicons
                 name="chevron-down"
                 size={20}
@@ -335,38 +356,51 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     </TouchableOpacity>
                   </View>
                   <ScrollView style={styles.modalBody}>
-                    {specialties.map((specialty) => (
-                      <TouchableOpacity
-                        key={specialty}
-                        style={[
-                          styles.specialtyOption,
-                          selectedSpecialty === specialty &&
-                            styles.specialtyOptionSelected,
-                        ]}
-                        onPress={() => {
-                          setSelectedSpecialty(specialty);
-                          setShowSpecialtyModal(false);
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.specialtyOptionText,
-                            selectedSpecialty === specialty &&
-                              styles.specialtyOptionTextSelected,
-                          ]}
-                        >
-                          {specialty}
+                    {specialties.length === 0 ? (
+                      <View style={styles.emptyState}>
+                        <Ionicons
+                          name="information-circle-outline"
+                          size={32}
+                          color={healthColors.text.disabled}
+                        />
+                        <Text style={styles.emptyStateText}>
+                          No specialties available
                         </Text>
-                        {selectedSpecialty === specialty && (
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={22}
-                            color={healthColors.primary.main}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    ))}
+                      </View>
+                    ) : (
+                      specialties.map((specialty) => (
+                        <TouchableOpacity
+                          key={specialty}
+                          style={[
+                            styles.specialtyOption,
+                            selectedSpecialty === specialty &&
+                              styles.specialtyOptionSelected,
+                          ]}
+                          onPress={() => {
+                            setSelectedSpecialty(specialty);
+                            setShowSpecialtyModal(false);
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.specialtyOptionText,
+                              selectedSpecialty === specialty &&
+                                styles.specialtyOptionTextSelected,
+                            ]}
+                          >
+                            {specialty}
+                          </Text>
+                          {selectedSpecialty === specialty && (
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={22}
+                              color={healthColors.primary.main}
+                            />
+                          )}
+                        </TouchableOpacity>
+                      ))
+                    )}
                   </ScrollView>
                 </View>
               </View>
@@ -430,7 +464,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       <View style={styles.ratingContainer}>
                         <Ionicons name="star" size={14} color={theme.colors.warning.main} />
                         <Text style={styles.ratingText}>
-                          {doctor.rating || "4.5"} reviews
+                          {doctor.rating ? `${doctor.rating} ★` : "N/A"}
                         </Text>
                       </View>
                       <View style={styles.feeContainer}>
@@ -774,7 +808,7 @@ const styles = StyleSheet.create({
   specialtyText: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   doctorCard: {
@@ -835,7 +869,7 @@ const styles = StyleSheet.create({
   },
   feeText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   typeRow: {
@@ -896,7 +930,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   timeLabelRow: {
@@ -907,7 +941,7 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   timeSlotsGrid: {
@@ -932,7 +966,7 @@ const styles = StyleSheet.create({
   },
   timeSlotText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   timeSlotTextSelected: {
@@ -1043,7 +1077,7 @@ const styles = StyleSheet.create({
   },
   datePickerDone: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   paymentNote: {
