@@ -22,7 +22,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =====================================================
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id VARCHAR(50) UNIQUE NOT NULL,
+    user_id VARCHAR(50) UNIQUE NOT NULL CHECK (user_id ~ '^(PAT|DOC|ADM|SADM)[0-9]+$'),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20) NOT NULL,
@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS patients (
     address TEXT,
     emergency_contact_name VARCHAR(255),
     emergency_contact_phone VARCHAR(20),
+    emergency_contact_relation VARCHAR(100),
     allergies TEXT[],
     chronic_conditions TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -101,9 +102,9 @@ CREATE TABLE IF NOT EXISTS appointments (
     doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     hospital_id VARCHAR(50) NOT NULL,
     appointment_date DATE NOT NULL,
-    appointment_time VARCHAR(20) NOT NULL,
+    appointment_time VARCHAR(20) NOT NULL CHECK (appointment_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
     status VARCHAR(20) NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show')),
-    type VARCHAR(50) DEFAULT 'consultation',
+    type VARCHAR(50) DEFAULT 'consultation' CHECK (type IN ('consultation', 'follow_up', 'emergency', 'clinic_visit', 'telemedicine')),
     symptoms TEXT[],
     chief_complaint TEXT,
     notes TEXT,
@@ -121,6 +122,12 @@ CREATE INDEX idx_appointments_hospital_id ON appointments(hospital_id);
 CREATE INDEX idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX idx_appointments_status ON appointments(status);
 CREATE INDEX idx_appointments_date_time ON appointments(appointment_date, appointment_time);
+
+-- Composite indexes for high-frequency queries (patient/doctor history lookups)
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_date ON appointments(patient_id, appointment_date DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_date ON appointments(doctor_id, appointment_date DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_cancelled_by ON appointments(cancelled_by);
+CREATE INDEX IF NOT EXISTS idx_users_hospital_role ON users(hospital_id, role);
 
 -- =====================================================
 -- PAYMENTS TABLE (Financial transactions)
@@ -149,6 +156,30 @@ CREATE INDEX idx_payments_appointment_id ON payments(appointment_id);
 CREATE INDEX idx_payments_patient_id ON payments(patient_id);
 CREATE INDEX idx_payments_status ON payments(status);
 CREATE INDEX idx_payments_created_at ON payments(created_at);
+
+-- =====================================================
+-- AUDIT LOGS TABLE (Compliance & Security Tracking)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id VARCHAR(100),
+    old_values JSONB,
+    new_values JSONB,
+    ip_address INET,
+    user_agent TEXT,
+    successful BOOLEAN DEFAULT TRUE,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create indexes for audit_logs
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
 
 -- =====================================================
 -- TRIGGERS FOR UPDATED_AT

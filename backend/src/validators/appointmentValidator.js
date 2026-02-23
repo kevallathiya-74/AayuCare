@@ -5,7 +5,6 @@
 
 const { body, param, query, validationResult } = require("express-validator");
 const { AppError } = require("../middleware/errorHandler");
-const mongoose = require("mongoose");
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
@@ -19,10 +18,23 @@ const validate = (req, res, next) => {
   next();
 };
 
-// Custom validator for MongoDB ObjectId
-const isValidObjectId = (value) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
+// UUID regex (PostgreSQL format)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Short user/resource ID (e.g., PAT5, DOC1, APT-1234-1, HOSP1)
+const SHORT_ID_REGEX = /^[A-Za-z0-9_-]{1,50}$/;
+
+// Accepts PostgreSQL UUID or short friendly ID (e.g. PAT5, DOC1)
+const isValidId = (value) => {
+  if (!UUID_REGEX.test(value) && !SHORT_ID_REGEX.test(value)) {
     throw new Error("Invalid ID format");
+  }
+  return true;
+};
+
+// Appointment route IDs must be PostgreSQL UUIDs
+const isValidAppointmentId = (value) => {
+  if (!UUID_REGEX.test(value)) {
+    throw new Error("Invalid appointment ID format");
   }
   return true;
 };
@@ -48,7 +60,7 @@ exports.validateCreateAppointment = [
   body("doctorId")
     .notEmpty()
     .withMessage("Doctor ID is required")
-    .custom(isValidObjectId),
+    .custom(isValidId),
 
   body("appointmentDate")
     .notEmpty()
@@ -72,15 +84,20 @@ exports.validateCreateAppointment = [
   body("type")
     .notEmpty()
     .withMessage("Appointment type is required")
-    .isIn(["clinic_visit", "telemedicine", "emergency", "follow_up", "walk-in"])
+    .isIn([
+      "consultation",
+      "follow_up",
+      "emergency",
+      "clinic_visit",
+      "telemedicine",
+    ])
     .withMessage("Invalid appointment type"),
 
   body("hospitalId")
-    .notEmpty()
-    .withMessage("Hospital ID is required")
+    .optional()
     .trim()
-    .isLength({ min: 1, max: 50 })
-    .withMessage("Hospital ID must be between 1 and 50 characters"),
+    .isLength({ max: 50 })
+    .withMessage("Hospital ID must not exceed 50 characters"),
 
   body("symptoms")
     .optional()
@@ -109,13 +126,12 @@ exports.validateCreateAppointment = [
 ];
 
 exports.validateUpdateAppointmentStatus = [
-  param("id").custom(isValidObjectId),
+  param("id").custom(isValidAppointmentId),
 
   body("status")
     .notEmpty()
     .withMessage("Status is required")
     .isIn([
-      "scheduled",
       "confirmed",
       "in_progress",
       "completed",
@@ -128,7 +144,7 @@ exports.validateUpdateAppointmentStatus = [
 ];
 
 exports.validateCancelAppointment = [
-  param("id").custom(isValidObjectId),
+  param("id").custom(isValidAppointmentId),
 
   body("cancelReason")
     .optional()
@@ -183,7 +199,7 @@ exports.validateGetAppointments = [
 ];
 
 exports.validateGetAvailableSlots = [
-  param("doctorId").custom(isValidObjectId),
+  param("doctorId").custom(isValidId),
 
   query("date").notEmpty().withMessage("Date is required").custom(isValidDate),
 

@@ -6,7 +6,7 @@
 const express = require("express");
 const router = express.Router();
 const aiController = require("../controllers/aiController");
-const { protect } = require("../middleware/auth");
+const { protect, authorize } = require("../middleware/auth");
 const {
   validateAnalyzeSymptoms,
   validateRiskScore,
@@ -74,6 +74,7 @@ router.post(
 // @access  Private (Doctor/Admin only)
 router.post(
   "/analyze-medical-record/:recordId",
+  authorize("doctor", "admin"),
   aiController.analyzeMedicalRecord
 );
 

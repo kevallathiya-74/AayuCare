@@ -133,7 +133,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           const response = await doctorService.searchMyPatients(
             searchQuery.trim()
           );
-          setSearchResults(response?.data || []);
+          setSearchResults(response?.data?.patients || response?.data || []);
         } catch (err) {
           logError(err, { context: "DoctorHomeScreen.realtimeSearch" });
           setSearchResults([]);
@@ -182,24 +182,21 @@ const DoctorHomeScreen = ({ navigation }) => {
     async (appointment) => {
       try {
         const appointmentId = appointment._id || appointment.id;
-        const patientName = appointment.patientName || "Patient";
+        if (!appointmentId) {
+          Alert.alert("Error", "Invalid appointment ID");
+          return;
+        }
 
-        await doctorService.updateAppointmentStatus(
-          appointmentId,
-          "in_progress"
-        );
-        Alert.alert(
-          "Consultation Started",
-          `Consultation started for ${patientName}`
-        );
+        await doctorService.updateAppointmentStatus(appointmentId, "in_progress");
         fetchDashboardData();
         refreshCount(); // Sync tab badge count after status change
+        navigation.navigate("Consultation", { appointment });
       } catch (err) {
         logError(err, { context: "DoctorHomeScreen.handleStartConsultation" });
-        Alert.alert("Error", "Failed to start consultation");
+        Alert.alert("Error", "Failed to start consultation. Please try again.");
       }
     },
-    [fetchDashboardData, refreshCount]
+    [fetchDashboardData, refreshCount, navigation]
   );
 
   const getGreeting = useCallback(() => {
@@ -251,6 +248,20 @@ const DoctorHomeScreen = ({ navigation }) => {
     }
   }, []);
 
+  const visibleTodaysAppointments = useMemo(() => {
+    return (todaysAppointments || []).filter((appointment) => {
+      const normalizedStatus = String(appointment?.status || "")
+        .toLowerCase()
+        .replace(/-/g, "_");
+
+      return (
+        normalizedStatus === "scheduled" ||
+        normalizedStatus === "confirmed" ||
+        normalizedStatus === "in_progress"
+      );
+    });
+  }, [todaysAppointments]);
+
   if (loading) {
     return (
       <SafeAreaView
@@ -272,7 +283,7 @@ const DoctorHomeScreen = ({ navigation }) => {
     >
       <StatusBar
         barStyle="dark-content"
-        backgroundColor={healthColors.background.main}
+        backgroundColor={healthColors.background.primary}
       />
 
       <ScrollView
@@ -320,14 +331,7 @@ const DoctorHomeScreen = ({ navigation }) => {
             <View style={styles.bannerRightIcons}>
               <TouchableOpacity
                 style={styles.bannerIconButton}
-                onPress={() =>
-                  Alert.alert(
-                    "Notifications",
-                    notificationCount > 0
-                      ? `You have ${notificationCount} pending appointment${notificationCount > 1 ? "s" : ""}`
-                      : "No pending appointments"
-                  )
-                }
+                onPress={() => navigation.navigate("NotificationsScreen")}
                 accessibilityRole="button"
                 accessibilityLabel={
                   notificationCount > 0
@@ -571,7 +575,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         {/* Today's Appointments */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>TODAY'S APPOINTMENTS:</Text>
-          {todaysAppointments.length === 0 ? (
+          {visibleTodaysAppointments.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons
                 name="calendar-outline"
@@ -583,7 +587,7 @@ const DoctorHomeScreen = ({ navigation }) => {
               </Text>
             </View>
           ) : (
-            todaysAppointments.map((appointment) => (
+            visibleTodaysAppointments.map((appointment) => (
               <View
                 key={appointment._id || appointment.id}
                 style={styles.appointmentCard}
@@ -642,7 +646,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                   </View>
                 </View>
                 <Text style={styles.appointmentReason}>
-                  ID: {appointment.patientId || "N/A"} | Age:{" "}
+                  Patient: {appointment.patientId || "N/A"} | Age:{" "}
                   {appointment.age || "N/A"} |{" "}
                   {appointment.reason || "General Consultation"}
                 </Text>
@@ -653,6 +657,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                     onPress={() =>
                       navigation.navigate("PatientManagement", {
                         patientId: appointment.patientId,
+                        patientName: appointment.patientName,
                       })
                     }
                     accessibilityRole="button"
@@ -664,12 +669,34 @@ const DoctorHomeScreen = ({ navigation }) => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionButtonPrimary}
-                    onPress={() => handleStartConsultation(appointment)}
+                    onPress={() => {
+                      const normalizedStatus = String(appointment?.status || "")
+                        .toLowerCase()
+                        .replace(/-/g, "_");
+
+                      if (
+                        normalizedStatus !== "scheduled" &&
+                        normalizedStatus !== "confirmed" &&
+                        normalizedStatus !== "in_progress"
+                      ) {
+                        Alert.alert(
+                          "Unavailable",
+                          "Consultation can only be started for scheduled or confirmed appointments."
+                        );
+                        return;
+                      }
+
+                      handleStartConsultation(appointment);
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={`Start consultation with ${appointment.patientName}`}
                   >
                     <Text style={styles.actionButtonPrimaryText}>
-                      Start Consultation
+                      {String(appointment?.status || "")
+                        .toLowerCase()
+                        .replace(/-/g, "_") === "in_progress"
+                        ? "Continue Consultation"
+                        : "Start Consultation"}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1089,7 +1116,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: healthColors.background.main,
+    backgroundColor: healthColors.background.primary,
   },
   welcomeBanner: {
     paddingTop: 12,
@@ -1259,7 +1286,7 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   progressBar: {
     height: 8,
@@ -1330,7 +1357,7 @@ const styles = StyleSheet.create({
   },
   searchResultName: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   searchResultDetails: {
@@ -1382,7 +1409,7 @@ const styles = StyleSheet.create({
   appointmentTypeBadge: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: healthColors.background.main,
+    backgroundColor: healthColors.background.primary,
   },
   appointmentPatientRow: {
     flexDirection: "row",
@@ -1397,7 +1424,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   appointmentPatient: {
     fontSize: theme.typography.sizes.bodyLarge,
@@ -1417,14 +1444,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: healthColors.background.main,
+    backgroundColor: healthColors.background.primary,
     borderWidth: 1,
     borderColor: healthColors.primary.main,
     alignItems: "center",
   },
   actionButtonSecondaryText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   actionButtonPrimary: {
@@ -1436,7 +1463,7 @@ const styles = StyleSheet.create({
   },
   actionButtonPrimaryText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.background.card,
   },
   addWalkinButton: {
@@ -1452,7 +1479,7 @@ const styles = StyleSheet.create({
   },
   addWalkinText: {
     fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
     marginLeft: 8,
   },
@@ -1488,7 +1515,7 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   quickActionsGrid: {
     flexDirection: "row",
@@ -1517,7 +1544,7 @@ const styles = StyleSheet.create({
   },
   quickActionTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textAlign: "center",
     lineHeight: 16,
@@ -1617,7 +1644,7 @@ const styles = StyleSheet.create({
   },
   menuItemTextDanger: {
     color: healthColors.error.main,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   menuBadge: {
     backgroundColor: healthColors.error.main,

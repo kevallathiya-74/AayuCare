@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 13,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textAlign: "center",
     lineHeight: 16,

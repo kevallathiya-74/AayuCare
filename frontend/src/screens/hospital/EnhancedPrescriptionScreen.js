@@ -15,12 +15,14 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
@@ -53,6 +55,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const [diagnosis, setDiagnosis] = useState("");
   const [instructions, setInstructions] = useState("");
   const [nextVisit, setNextVisit] = useState("");
+  // Date picker state for Next Visit field
+  const [nextVisitDate, setNextVisitDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [sendOptions, setSendOptions] = useState({
     patientApp: true,
     hospitalPharmacy: true,
@@ -71,6 +76,19 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   });
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [discount] = useState(15); // Hospital pharmacy discount percentage
+
+  const getDisplayPatientId = useCallback((entry) => {
+    if (!entry) return "N/A";
+
+    const preferredId =
+      entry.userId || entry.user_id || entry.formatted_user_id || null;
+
+    if (preferredId) {
+      return String(preferredId);
+    }
+
+    return "N/A";
+  }, []);
 
   const fetchPatientDetails = useCallback(async () => {
     if (!selectedPatientId) {
@@ -91,7 +109,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         Alert.alert("Error", "Unable to fetch patient details");
       }
     } catch (err) {
-      logError(err, "EnhancedPrescriptionScreen.fetchPatientDetails");
+      logError(err, { context: "EnhancedPrescriptionScreen.fetchPatientDetails" });
       Alert.alert("Error", "Unable to fetch patient details");
     } finally {
       setLoading(false);
@@ -128,7 +146,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
 
       setPatientOptions(uniquePatients.filter((entry) => entry?.id || entry?._id || entry?.userId));
     } catch (err) {
-      logError(err, "EnhancedPrescriptionScreen.fetchPatientOptions");
+      logError(err, { context: "EnhancedPrescriptionScreen.fetchPatientOptions" });
       setPatientOptions([]);
     } finally {
       setLoadingPatients(false);
@@ -152,10 +170,35 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     setEstimatedCost(cost);
   }, [medications]);
 
-  const sanitizeDateInput = (value) =>
-    value
-      .replace(/[^0-9-]/g, "")
-      .slice(0, 10);
+  // Format a Date object to YYYY-MM-DD for the API
+  const formatDateToISO = (date) => {
+    if (!date) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  // User-friendly display: e.g. "15 Mar 2026"
+  const formatDateDisplay = (date) => {
+    if (!date) return "";
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const handleDatePickerChange = (_event, selectedDate) => {
+    // On Android the picker closes automatically; on iOS we close manually
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+    if (selectedDate) {
+      setNextVisitDate(selectedDate);
+      setNextVisit(formatDateToISO(selectedDate));
+    }
+  };
 
   const handleAddMedicine = () => setShowAddMedicine(true);
 
@@ -245,7 +288,15 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     if (nextVisit) {
       const isValidFollowUpDate = /^\d{4}-\d{2}-\d{2}$/.test(nextVisit);
       if (!isValidFollowUpDate) {
-        Alert.alert("Invalid Date", "Please enter Next Visit in YYYY-MM-DD format.");
+        Alert.alert("Invalid Date", "Next visit date is invalid. Please pick a date using the calendar.");
+        return;
+      }
+      // Follow-up date must be in the future
+      const followUp = new Date(nextVisit);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (followUp < today) {
+        Alert.alert("Invalid Date", "Next visit date must be today or a future date.");
         return;
       }
     }
@@ -262,8 +313,10 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           frequency: med.frequency || "morning, evening",
           duration: med.duration,
           instructions: med.instructions || "",
+          unitPrice: med.unitPrice || undefined,
+          price: med.unitPrice || undefined,
         })),
-        instructions: instructions.trim(),
+        instructions: instructions.trim() || undefined,
         followUpDate: nextVisit || undefined,
         sendOptions,
       };
@@ -289,7 +342,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         );
       }
     } catch (err) {
-      logError(err, "EnhancedPrescriptionScreen.handleSavePrescription");
+      logError(err, { context: "EnhancedPrescriptionScreen.handleSavePrescription" });
       Alert.alert("Error", "Unable to save prescription. Please try again.");
     } finally {
       setSaving(false);
@@ -394,7 +447,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
       >
-        {/* No Patient Selected State */}
+        {/* Patient Selected State */}
         {!loading && !selectedPatientId && (
           <View style={styles.emptyStateContainer}>
             <Ionicons
@@ -404,9 +457,31 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             />
             <Text style={styles.emptyStateTitle}>No Patient Selected</Text>
             <Text style={styles.emptyStateText}>
-              Select a patient to create a prescription.
+              Select a patient below to create a prescription.
             </Text>
             {renderPatientPicker()}
+          </View>
+        )}
+
+        {/* Patient fetch failed - show error + allow re-selection */}
+        {!loading && selectedPatientId && !patient && (
+          <View style={styles.emptyStateContainer}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={64}
+              color={healthColors.error.main}
+            />
+            <Text style={styles.emptyStateTitle}>Patient Not Found</Text>
+            <Text style={styles.emptyStateText}>
+              Could not load patient details. Please select a different patient.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyStateButton}
+              onPress={() => setSelectedPatientId(null)}
+            >
+              <Ionicons name="person-add-outline" size={18} color={theme.colors.white} />
+              <Text style={styles.emptyStateButtonText}>Select Patient</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -423,7 +498,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Patient:</Text>
                   <Text style={styles.infoValue}>
-                    {patient?.name || "N/A"} ({(patient?.userId || patient?.id || "N/A").toString().slice(-8)}
+                    {patient?.name || "N/A"} ({getDisplayPatientId(patient)}
                     )
                   </Text>
                 </View>
@@ -527,23 +602,91 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               />
             </View>
 
-            {/* Next Visit */}
+            {/* Next Visit - Date Picker */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>NEXT VISIT:</Text>
-              <View style={styles.dateSelector}>
+              <TouchableOpacity
+                style={styles.dateSelector}
+                onPress={() => setShowDatePicker(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Pick next visit date"
+              >
                 <Ionicons
                   name="calendar"
                   size={20}
                   color={healthColors.primary.main}
                 />
-                <TextInput
-                  style={styles.dateText}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={healthColors.text.disabled}
-                  value={nextVisit}
-                  onChangeText={(value) => setNextVisit(sanitizeDateInput(value))}
-                />
-              </View>
+                <Text
+                  style={[
+                    styles.dateText,
+                    !nextVisitDate && { color: healthColors.text.disabled },
+                  ]}
+                >
+                  {nextVisitDate ? formatDateDisplay(nextVisitDate) : "Tap to select date"}
+                </Text>
+                {nextVisitDate ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setNextVisitDate(null);
+                      setNextVisit("");
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={18}
+                      color={healthColors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={healthColors.text.secondary}
+                  />
+                )}
+              </TouchableOpacity>
+
+              {/* iOS inline picker shown in a modal; Android shown as dialog */}
+              {showDatePicker && (
+                Platform.OS === "ios" ? (
+                  <Modal
+                    transparent
+                    animationType="slide"
+                    onRequestClose={() => setShowDatePicker(false)}
+                  >
+                    <View style={styles.datePickerOverlay}>
+                      <View style={styles.datePickerContainer}>
+                        <View style={styles.datePickerHeader}>
+                          <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                            <Text style={styles.datePickerCancel}>Cancel</Text>
+                          </TouchableOpacity>
+                          <Text style={styles.datePickerTitle}>Next Visit Date</Text>
+                          <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                            <Text style={styles.datePickerDone}>Done</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                          value={nextVisitDate || new Date()}
+                          mode="date"
+                          display="spinner"
+                          minimumDate={new Date()}
+                          onChange={handleDatePickerChange}
+                          style={{ width: "100%" }}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                ) : (
+                  <DateTimePicker
+                    value={nextVisitDate || new Date()}
+                    mode="date"
+                    display="default"
+                    minimumDate={new Date()}
+                    onChange={handleDatePickerChange}
+                  />
+                )
+              )}
             </View>
 
             {/* Send Options */}
@@ -812,12 +955,12 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   infoValue: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   medicationsCard: {
     backgroundColor: healthColors.background.card,
@@ -868,7 +1011,7 @@ const styles = StyleSheet.create({
   },
   timingText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   removeButton: {
@@ -889,7 +1032,7 @@ const styles = StyleSheet.create({
   },
   addMedicineText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
   instructionsInput: {
@@ -916,7 +1059,7 @@ const styles = StyleSheet.create({
   dateText: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginLeft: 12,
   },
@@ -1039,7 +1182,7 @@ const styles = StyleSheet.create({
   },
   emptyStateButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
   emptyStateButtonTextSecondary: {
@@ -1067,7 +1210,7 @@ const styles = StyleSheet.create({
   },
   patientListName: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   patientListSubtext: {
@@ -1169,15 +1312,50 @@ const styles = StyleSheet.create({
   modalCancelText: {
     color: healthColors.text.secondary,
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   modalSaveText: {
     color: theme.colors.white,
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
   },
   bottomSpacer: {
     height: 80,
+  },
+  // Date picker overlay (iOS modal)
+  datePickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "flex-end",
+  },
+  datePickerContainer: {
+    backgroundColor: healthColors.background.card,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 20,
+  },
+  datePickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  datePickerTitle: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.primary,
+  },
+  datePickerCancel: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+  },
+  datePickerDone: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.primary.main,
   },
 });
 

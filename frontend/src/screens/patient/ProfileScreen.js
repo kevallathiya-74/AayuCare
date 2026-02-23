@@ -23,9 +23,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
-import { theme, healthColors } from "../../theme";
-import { textStyles } from "../../theme/typography";
-import { spacing } from "../../theme/spacing";
+import { theme, healthColors, textStyles, spacing } from "../../theme";
 import {
   getSafeAreaEdges,
   verticalScale,
@@ -75,9 +73,8 @@ const ProfileScreen = ({ navigation }) => {
             : 0,
         records:
           recordsRes.status === "fulfilled"
-            ? recordsRes.value?.data?.medicalRecords?.length ||
-              recordsRes.value?.data?.length ||
-              0
+            ? recordsRes.value?.medicalRecords?.length ||
+              (Array.isArray(recordsRes.value) ? recordsRes.value.length : 0)
             : 0,
         prescriptions:
           prescriptionsRes.status === "fulfilled"
@@ -284,7 +281,7 @@ const ProfileScreen = ({ navigation }) => {
                 color="rgba(255, 255, 255, 0.9)"
               />
               <Text style={styles.userIdText}>
-                ID: {user?.userId || "PAT1"}
+                ID: {user?.userId || "\u2014"}
               </Text>
             </View>
           </View>
@@ -401,7 +398,7 @@ const ProfileScreen = ({ navigation }) => {
                 <Ionicons
                   name="chevron-forward"
                   size={20}
-                  color={healthColors.textSecondary}
+                  color={healthColors.text.secondary}
                 />
               </TouchableOpacity>
             ))}
@@ -431,7 +428,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.lg,
@@ -448,7 +445,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.md,
     borderWidth: 4,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: theme.withOpacity(theme.colors.text.white, 0.3),
   },
   userName: {
     ...textStyles.h1,
@@ -457,7 +454,7 @@ const styles = StyleSheet.create({
   },
   userRole: {
     ...textStyles.body,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: theme.withOpacity(theme.colors.text.white, 0.8),
     textTransform: "capitalize",
   },
   userIdBadge: {
@@ -465,15 +462,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     marginTop: spacing.xs,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   userIdText: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: theme.typography.weights.semiBold,
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
+    fontWeight: theme.typography.weights.semibold,
   },
   statsContainer: {
     flexDirection: "row",
@@ -548,7 +545,7 @@ const styles = StyleSheet.create({
   infoValue: {
     ...textStyles.body,
     color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     flex: 1,
     textAlign: "right",
     fontSize: theme.typography.sizes.bodyMedium,
@@ -574,7 +571,7 @@ const styles = StyleSheet.create({
   actionText: {
     ...textStyles.body,
     flex: 1,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     fontSize: theme.typography.sizes.bodyMedium,
   },
 });

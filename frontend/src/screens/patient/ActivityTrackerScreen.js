@@ -58,7 +58,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
     }
   }, [user?.id]);
 
-  const fetchActivityData = async () => {
+  const fetchActivityData = useCallback(async () => {
     try {
       if (!isConnected) {
         showError("No internet connection");
@@ -115,13 +115,13 @@ const ActivityTrackerScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, isConnected]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchActivityData();
     setRefreshing(false);
-  }, [user?.id]);
+  }, [fetchActivityData]);
 
   const handleRetry = () => {
     setError(null);
@@ -151,7 +151,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
         <ErrorRecovery
           error={error}
           onRetry={handleRetry}
-          onBack={() => navigation.goBack()}
+          onGoBack={() => navigation.goBack()}
         />
       </SafeAreaView>
     );
@@ -249,7 +249,11 @@ const ActivityTrackerScreen = ({ navigation }) => {
                 <Text style={styles.sleepTimeValue}>{sleepData.wakeTime}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.reportButton}>
+            <TouchableOpacity
+              style={styles.reportButton}
+              onPress={() => navigation.navigate("MyReports")}
+              activeOpacity={0.7}
+            >
               <Text style={styles.reportButtonText}>View Weekly Report</Text>
               <Ionicons
                 name="chevron-forward"
@@ -330,7 +334,11 @@ const ActivityTrackerScreen = ({ navigation }) => {
         </View>
 
         {/* Progress Button */}
-        <TouchableOpacity style={styles.progressButton}>
+        <TouchableOpacity
+          style={styles.progressButton}
+          onPress={() => navigation.navigate("MyReports")}
+          activeOpacity={0.7}
+        >
           <LinearGradient
             colors={[healthColors.primary.main, healthColors.primary.dark]}
             style={styles.progressGradient}
@@ -378,7 +386,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
   },
   content: {
     padding: getScreenPadding(),

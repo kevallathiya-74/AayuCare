@@ -3,16 +3,17 @@
  * Handles AI-powered health analysis and recommendations
  */
 
-const MedicalRecord = require("../models/MedicalRecord");
+const medicalRecordRepository = require("../repositories/medicalRecordRepository");
 const userRepository = require("../repositories/userRepository");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
 
 /**
  * @desc    Analyze symptoms and provide AI insights
  * @route   POST /api/ai/analyze-symptoms
  * @access  Private
  */
-exports.analyzeSymptoms = async (req, res) => {
+exports.analyzeSymptoms = async (req, res, next) => {
   try {
     const { symptoms = [], duration, severity = "moderate" } = req.body;
 
@@ -30,7 +31,6 @@ exports.analyzeSymptoms = async (req, res) => {
     const whenToSeekHelp = getEmergencySignals(symptoms);
 
     // Invalidate AI-related caches after analysis
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:ai:*");
       await deleteCacheByPattern("cache:ai:*");
@@ -56,11 +56,7 @@ exports.analyzeSymptoms = async (req, res) => {
       stack: error.stack,
       userId: req.user?.userId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to analyze symptoms",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -69,12 +65,12 @@ exports.analyzeSymptoms = async (req, res) => {
  * @route   GET /api/ai/health-insights/:patientId
  * @access  Private
  */
-exports.getHealthInsights = async (req, res) => {
+exports.getHealthInsights = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
     // Verify access rights
-    const isOwnData = req.user.userId === patientId;
+    const isOwnData = req.user.id === patientId || req.user.userId === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         success: false,
@@ -82,15 +78,11 @@ exports.getHealthInsights = async (req, res) => {
       });
     }
 
-    // Get patient data - supports both userId and id
+    // Get patient data - supports both UUID (users.id) and custom userId (users.user_id)
+    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     let patient;
-    if (patientId.match(/^[0-9]+$/)) {
-      // Try finding by id first
+    if (uuidRegex.test(patientId)) {
       patient = await userRepository.findById(patientId);
-      // If not found, try userId
-      if (!patient) {
-        patient = await userRepository.findByUserId(patientId);
-      }
     } else {
       patient = await userRepository.findByUserId(patientId);
     }
@@ -104,9 +96,10 @@ exports.getHealthInsights = async (req, res) => {
     }
 
     // Get recent medical records using patient.id
-    const records = await MedicalRecord.find({ patientId: patient.id })
-      .sort({ createdAt: -1 })
-      .limit(10);
+    const records = await medicalRecordRepository.findByPatientId(patient.id, {
+      sort: { createdAt: -1 },
+      limit: 10
+    });
 
     // Generate comprehensive insights
     const insights = generateHealthInsights(patient, records);
@@ -122,11 +115,7 @@ exports.getHealthInsights = async (req, res) => {
       stack: error.stack,
       patientId: req.params.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate health insights",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -135,7 +124,7 @@ exports.getHealthInsights = async (req, res) => {
  * @route   POST /api/ai/risk-score
  * @access  Private
  */
-exports.calculateRiskScore = async (req, res) => {
+exports.calculateRiskScore = async (req, res, next) => {
   try {
     const {
       age = 30,
@@ -201,7 +190,6 @@ exports.calculateRiskScore = async (req, res) => {
       riskScore < 30 ? "low" : riskScore < 60 ? "medium" : "high";
 
     // Invalidate AI-related caches after risk calculation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:ai:*");
       await deleteCacheByPattern("cache:ai:*");
@@ -240,11 +228,7 @@ exports.calculateRiskScore = async (req, res) => {
       stack: error.stack,
       userId: req.user?.userId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to calculate risk score",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -253,7 +237,7 @@ exports.calculateRiskScore = async (req, res) => {
  * @route   POST /api/ai/diet-recommendations
  * @access  Private
  */
-exports.getDietRecommendations = async (req, res) => {
+exports.getDietRecommendations = async (req, res, next) => {
   try {
     const {
       age,
@@ -274,7 +258,6 @@ exports.getDietRecommendations = async (req, res) => {
     );
 
     // Invalidate AI-related caches after generating diet recommendations
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:ai:*");
       await deleteCacheByPattern("cache:ai:*");
@@ -294,11 +277,7 @@ exports.getDietRecommendations = async (req, res) => {
       stack: error.stack,
       userId: req.user?.userId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate diet recommendations",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -307,7 +286,7 @@ exports.getDietRecommendations = async (req, res) => {
  * @route   POST /api/ai/exercise-recommendations
  * @access  Private
  */
-exports.getExerciseRecommendations = async (req, res) => {
+exports.getExerciseRecommendations = async (req, res, next) => {
   try {
     const {
       age,
@@ -319,7 +298,6 @@ exports.getExerciseRecommendations = async (req, res) => {
     const exercisePlan = generateExercisePlan(age, fitness, conditions, goal);
 
     // Invalidate AI-related caches after generating exercise recommendations
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:ai:*");
       await deleteCacheByPattern("cache:ai:*");
@@ -339,11 +317,7 @@ exports.getExerciseRecommendations = async (req, res) => {
       stack: error.stack,
       userId: req.user?.userId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to generate exercise recommendations",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -352,7 +326,7 @@ exports.getExerciseRecommendations = async (req, res) => {
  * @route   POST /api/ai/analyze-medical-record/:recordId
  * @access  Private (Doctor/Admin)
  */
-exports.analyzeMedicalRecord = async (req, res) => {
+exports.analyzeMedicalRecord = async (req, res, next) => {
   try {
     if (req.user.role !== "doctor" && req.user.role !== "admin") {
       return res.status(403).json({
@@ -362,7 +336,7 @@ exports.analyzeMedicalRecord = async (req, res) => {
     }
 
     const { recordId } = req.params;
-    const record = await MedicalRecord.findById(recordId);
+    const record = await medicalRecordRepository.findById(recordId);
 
     if (!record) {
       return res.status(404).json({
@@ -374,9 +348,18 @@ exports.analyzeMedicalRecord = async (req, res) => {
     // Generate AI analysis
     const aiAnalysis = await analyzeRecordWithAI(record);
 
-    // Update record with AI insights
-    record.aiAnalysis = aiAnalysis;
-    await record.save();
+    // Update record with AI insights — record is a .lean() plain object; use repository.update()
+    await medicalRecordRepository.update(recordId, { aiAnalysis });
+
+    // Invalidate caches after record analysis
+    try {
+      await deleteCacheByPattern("v1:cache:ai:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await deleteCacheByPattern("cache:ai:*");
+      logger.debug("Cache invalidated after medical record analysis");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
 
     res.json({
       success: true,
@@ -390,11 +373,7 @@ exports.analyzeMedicalRecord = async (req, res) => {
       stack: error.stack,
       recordId: req.params.recordId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to analyze medical record",
-      error: error.message,
-    });
+    next(error);
   }
 };
 

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const medicalRecordController = require("../controllers/medicalRecordController");
-const { protect, restrictTo } = require("../middleware/auth");
+const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
 const { createMedicalRecordSchema } = require("../validators/schemas");
@@ -14,7 +14,7 @@ router.use(attachHospitalId);
 // Get all medical records (Admin only) - must be before /:id route
 router.get(
   "/",
-  restrictTo("admin"),
+  authorize("admin"),
   cacheMiddleware(60),
   medicalRecordController.getAllMedicalRecords
 );
@@ -22,7 +22,7 @@ router.get(
 // Create medical record (Doctor only)
 router.post(
   "/",
-  restrictTo("doctor", "admin"),
+  authorize("doctor", "admin"),
   validateBody(createMedicalRecordSchema),
   medicalRecordController.createMedicalRecord
   // Cache invalidation now handled inside controller
@@ -38,7 +38,7 @@ router.get(
 // Get patient's complete history (Doctor, Admin only)
 router.get(
   "/history/:patientId",
-  restrictTo("doctor", "admin"),
+  authorize("doctor", "admin"),
   cacheMiddleware(120),
   medicalRecordController.getPatientHistory
 );
@@ -53,7 +53,7 @@ router.get(
 // Update medical record (Doctor, Admin only)
 router.put(
   "/:id",
-  restrictTo("doctor", "admin"),
+  authorize("doctor", "admin"),
   validateBody(createMedicalRecordSchema),
   medicalRecordController.updateMedicalRecord
   // Cache invalidation now handled inside controller
@@ -62,7 +62,7 @@ router.put(
 // Delete medical record (Doctor, Admin only)
 router.delete(
   "/:id",
-  restrictTo("doctor", "admin"),
+  authorize("doctor", "admin"),
   medicalRecordController.deleteMedicalRecord
   // Cache invalidation now handled inside controller
 );

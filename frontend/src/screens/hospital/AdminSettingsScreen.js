@@ -205,6 +205,9 @@ const AdminSettingsScreen = ({ navigation }) => {
             <Text style={styles.profileEmail}>
               {user?.email || "admin@aayucare.com"}
             </Text>
+            <Text style={styles.profileEmail}>
+              ID: {user?.userId || "—"}
+            </Text>
           </View>
         </View>
 

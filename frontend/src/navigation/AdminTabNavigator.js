@@ -9,7 +9,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme/healthColors";
+import { healthColors } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import {

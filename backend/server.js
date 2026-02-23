@@ -102,8 +102,13 @@ const initializeDatabases = async () => {
   }
 };
 
-// Initialize databases
-initializeDatabases();
+// Initialize databases - server will NOT accept connections until all DBs are ready
+initializeDatabases()
+  .then(() => startServer())
+  .catch((err) => {
+    logger.error('❌ Fatal: Could not initialize databases, aborting server start:', err);
+    process.exit(1);
+  });
 
 // Security Middleware
 app.use(helmet());
@@ -164,8 +169,8 @@ const authLimiter = rateLimit({
   message: "Too many login attempts, please try again after 15 minutes",
   skipSuccessfulRequests: true, // Don't count successful logins
 });
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/sign-in", authLimiter);
+app.use("/api/auth/sign-up", authLimiter);
 
 // Logging
 if (process.env.NODE_ENV === "development") {
@@ -293,15 +298,18 @@ app.all("*", (req, res) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+let server;
 
-const server = app.listen(PORT, "0.0.0.0", () => {
-  logger.info(
-    `🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
-  );
-  logger.info(`🌐 API URL: http://localhost:${PORT}`);
-  logger.info(`📱 Expo Go will auto-detect your computer's IP address`);
-  logger.info(`ℹ️  Make sure phone and computer are on the same WiFi network`);
-});
+function startServer() {
+  server = app.listen(PORT, "0.0.0.0", () => {
+    logger.info(
+      `🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+    );
+    logger.info(`🌐 API URL: http://localhost:${PORT}`);
+    logger.info(`📱 Expo Go will auto-detect your computer's IP address`);
+    logger.info(`ℹ️  Make sure phone and computer are on the same WiFi network`);
+  });
+}
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
@@ -312,6 +320,31 @@ process.on("unhandledRejection", (err) => {
   server.close(() => {
     process.exit(1);
   });
+});
+
+// Handle SIGINT (Ctrl+C)
+process.on("SIGINT", async () => {
+  logger.info("🛑 SIGINT RECEIVED. Shutting down gracefully");
+
+  if (server) {
+    server.close(async () => {
+      try {
+        await mongoose.connection.close();
+        logger.info("✅ MongoDB connection closed");
+        await closePool();
+        logger.info("✅ PostgreSQL connection closed");
+        await closeRedis();
+        logger.info("✅ Redis connection closed");
+        logger.info("✅ Process terminated!");
+        process.exit(0);
+      } catch (error) {
+        logger.error("❌ Error during graceful shutdown:", error);
+        process.exit(1);
+      }
+    });
+  } else {
+    process.exit(0);
+  }
 });
 
 // Handle SIGTERM

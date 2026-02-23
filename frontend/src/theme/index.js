@@ -146,9 +146,9 @@ export const theme = {
       steps: healthColors.health.steps,
       teal: healthColors.hospital.teal,
       navy: healthColors.hospital.navy,
-      purple: "#7E57C2",
-      pink: "#EC4899",
-      cyan: "#00BCD4",
+      purple: healthColors.accent.purple,
+      pink: healthColors.accent.pink,
+      cyan: healthColors.accent.cyan,
     },
 
     // Status Colors

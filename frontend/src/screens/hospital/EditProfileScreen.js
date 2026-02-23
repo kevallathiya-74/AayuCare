@@ -32,10 +32,16 @@ const EditProfileScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     specialization: user?.specialization || "",
+    qualification: user?.qualification || "",
     department: user?.department || "",
     phone: user?.phone || "",
     email: user?.email || "",
-    yearsOfExperience: user?.yearsOfExperience?.toString() || "0",
+    yearsOfExperience:
+      (user?.experience ?? user?.yearsOfExperience)?.toString() || "0",
+    consultationFee:
+      (user?.consultationFee ?? user?.consultation_fee)?.toString() || "",
+    licenseNumber: user?.licenseNumber || user?.license_number || "",
+    bio: user?.bio || "",
   });
 
   const handleInputChange = (field, value) => {
@@ -58,6 +64,25 @@ const EditProfileScreen = ({ navigation }) => {
       );
       return false;
     }
+    const expNum = parseInt(formData.yearsOfExperience);
+    if (isNaN(expNum) || expNum < 0 || expNum > 60) {
+      Alert.alert("Validation Error", "Experience must be between 0 and 60 years");
+      return false;
+    }
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        Alert.alert("Validation Error", "Please enter a valid email address");
+        return false;
+      }
+    }
+    if (formData.consultationFee.trim()) {
+      const fee = parseFloat(formData.consultationFee);
+      if (isNaN(fee) || fee < 0) {
+        Alert.alert("Validation Error", "Consultation fee must be a positive number");
+        return false;
+      }
+    }
     return true;
   };
 
@@ -67,12 +92,22 @@ const EditProfileScreen = ({ navigation }) => {
     try {
       setLoading(true);
       const response = await doctorService.updateProfile({
-        ...formData,
-        yearsOfExperience: parseInt(formData.yearsOfExperience) || 0,
+        name: formData.name.trim(),
+        email: formData.email.trim() || undefined,
+        phone: formData.phone.trim(),
+        specialization: formData.specialization.trim(),
+        qualification: formData.qualification.trim() || undefined,
+        department: formData.department.trim() || undefined,
+        experience: parseInt(formData.yearsOfExperience) || 0,
+        consultationFee: formData.consultationFee.trim()
+          ? parseFloat(formData.consultationFee)
+          : undefined,
+        licenseNumber: formData.licenseNumber.trim() || undefined,
+        bio: formData.bio.trim() || undefined,
       });
 
       if (response.success) {
-        dispatch(setUser(response.data));
+        dispatch(setUser({ ...user, ...response.data }));
         Alert.alert("Success", "Profile Updated Successfully", [
           {
             text: "OK",
@@ -186,6 +221,74 @@ const EditProfileScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.inputGroup}>
+            <Text style={styles.label}>Qualification</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="school-outline"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., MBBS, MD"
+                value={formData.qualification}
+                onChangeText={(value) =>
+                  handleInputChange("qualification", value)
+                }
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>License Number</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="card-outline"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Medical license number"
+                value={formData.licenseNumber}
+                onChangeText={(value) =>
+                  handleInputChange("licenseNumber", value)
+                }
+                autoCapitalize="characters"
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Consultation Fee (₹)</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="cash-outline"
+                size={18}
+                color={healthColors.text.disabled}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 500"
+                value={formData.consultationFee}
+                onChangeText={(value) =>
+                  handleInputChange(
+                    "consultationFee",
+                    value.replace(/[^0-9.]/g, "")
+                  )
+                }
+                keyboardType="decimal-pad"
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>
               Phone Number <Text style={styles.required}>*</Text>
             </Text>
@@ -255,6 +358,26 @@ const EditProfileScreen = ({ navigation }) => {
                 placeholderTextColor={healthColors.text.disabled}
               />
             </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Bio</Text>
+            <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Brief professional bio…"
+                value={formData.bio}
+                onChangeText={(value) => handleInputChange("bio", value)}
+                multiline
+                numberOfLines={4}
+                maxLength={1000}
+                textAlignVertical="top"
+                placeholderTextColor={healthColors.text.disabled}
+              />
+            </View>
+            <Text style={styles.charCount}>
+              {formData.bio.length}/1000
+            </Text>
           </View>
         </View>
 
@@ -346,7 +469,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     marginBottom: 8,
   },
@@ -371,6 +494,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
+  },
+  textAreaWrapper: {
+    alignItems: "flex-start",
+    paddingTop: 12,
+    paddingBottom: 8,
+    minHeight: 100,
+  },
+  textArea: {
+    minHeight: 88,
+    paddingVertical: 0,
+  },
+  charCount: {
+    fontSize: 11,
+    color: healthColors.text.disabled,
+    textAlign: "right",
+    marginTop: 4,
   },
   noteContainer: {
     flexDirection: "row",

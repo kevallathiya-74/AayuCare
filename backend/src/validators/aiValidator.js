@@ -106,6 +106,11 @@ exports.validateDietRecommendations = [
     .isArray()
     .withMessage("Allergies must be an array"),
 
+  body("goal")
+    .optional()
+    .isIn(["maintain", "lose", "gain"])
+    .withMessage("Goal must be maintain, lose, or gain"),
+
   validate,
 ];
 
@@ -127,6 +132,11 @@ exports.validateExerciseRecommendations = [
     .isArray()
     .withMessage("Conditions must be an array"),
 
+  body("goal")
+    .optional()
+    .isIn(["fitness", "lose_weight", "gain_muscle", "cardio", "flexibility"])
+    .withMessage("Goal must be one of: fitness, lose_weight, gain_muscle, cardio, flexibility"),
+
   validate,
 ];
 
@@ -135,8 +145,8 @@ exports.validatePatientId = [
     .trim()
     .notEmpty()
     .withMessage("Patient ID is required")
-    .isLength({ min: 3, max: 20 })
-    .withMessage("Patient ID must be between 3 and 20 characters"),
+    .isLength({ min: 3, max: 50 })
+    .withMessage("Patient ID must be between 3 and 50 characters"),
 
   validate,
 ];

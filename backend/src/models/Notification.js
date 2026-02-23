@@ -7,10 +7,10 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true,
         index: true,
+        trim: true,
     },
     title: {
         type: String,
@@ -24,7 +24,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert'],
+        enum: ['appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert', 'health_alert'],
         required: true,
         default: 'system',
     },
@@ -37,6 +37,10 @@ const notificationSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
         index: true,
+    },
+    readAt: {
+        type: Date,
+        default: null,
     },
     data: {
         type: mongoose.Schema.Types.Mixed,
@@ -54,12 +58,19 @@ const notificationSchema = new mongoose.Schema({
         type: Date,
         // Auto-delete old notifications
     },
+    hospitalId: {
+        type: String,
+        index: true,
+        trim: true,
+    },
 }, {
     timestamps: true,
 });
 
 // Indexes for efficient queries
 notificationSchema.index({ userId: 1, read: 1, createdAt: -1 });
+notificationSchema.index({ hospitalId: 1, type: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, type: 1, read: 1 });
 notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Methods

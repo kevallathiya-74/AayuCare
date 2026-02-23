@@ -3,39 +3,42 @@
  * Hospital events, camps, and health programs management
  */
 
-const Event = require('../models/Event');
+const eventRepository = require('../repositories/eventRepository');
 const logger = require('../utils/logger');
-const { logError } = require('../utils/logger');
+const { logError } = logger;
+const { deleteCacheByPattern } = require('../config/redis');
 
 /**
  * Get all upcoming events
  * @route   GET /api/events
  * @access  Public
  */
-exports.getUpcomingEvents = async (req, res) => {
+exports.getUpcomingEvents = async (req, res, next) => {
     try {
-        const { type, limit = 20 } = req.query;
+        const { type, limit = 20, hospitalId } = req.query;
         
         const query = {
             isActive: true,
             date: { $gte: new Date() },
             status: { $in: ['upcoming', 'ongoing'] },
+            ...(hospitalId && { hospitalId: hospitalId.toUpperCase() }),
         };
         
         if (type) {
             query.type = type;
         }
         
-        const events = await Event.find(query)
-            .sort({ date: 1 })
-            .limit(parseInt(limit))
-            .populate('organizer', 'name email')
-            .lean();
+        const events = await eventRepository.findWithFilters(query, {
+            limit: parseInt(limit),
+            sort: { date: 1 }
+        });
         
-        // Calculate spots remaining
+        // Calculate spots remaining (0 availableSpots means unlimited)
         const eventsWithSpots = events.map(event => ({
             ...event,
-            spotsRemaining: event.availableSpots - event.registeredCount,
+            spotsRemaining: event.availableSpots === 0
+                ? null
+                : Math.max(0, event.availableSpots - event.registeredCount),
         }));
         
         res.status(200).json({
@@ -45,11 +48,7 @@ exports.getUpcomingEvents = async (req, res) => {
         });
     } catch (error) {
         logError(error, { context: 'eventController.getUpcomingEvents' });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch events',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
@@ -58,13 +57,11 @@ exports.getUpcomingEvents = async (req, res) => {
  * @route   GET /api/events/:eventId
  * @access  Public
  */
-exports.getEventById = async (req, res) => {
+exports.getEventById = async (req, res, next) => {
     try {
         const { eventId } = req.params;
         
-        const event = await Event.findById(eventId)
-            .populate('organizer', 'name email phone')
-            .populate('registrations.user', 'name email phone');
+        const event = await eventRepository.findById(eventId);
         
         if (!event) {
             return res.status(404).json({
@@ -73,9 +70,6 @@ exports.getEventById = async (req, res) => {
             });
         }
         
-        // Update status if needed
-        event.updateStatus();
-        await event.save();
         
         res.status(200).json({
             success: true,
@@ -83,11 +77,7 @@ exports.getEventById = async (req, res) => {
         });
     } catch (error) {
         logError(error, { context: 'eventController.getEventById', eventId: req.params.eventId });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch event',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
@@ -96,19 +86,19 @@ exports.getEventById = async (req, res) => {
  * @route   POST /api/events
  * @access  Private/Admin
  */
-exports.createEvent = async (req, res) => {
+exports.createEvent = async (req, res, next) => {
     try {
         const eventData = {
             ...req.body,
-            organizer: req.user._id,
+            organizer: req.user.id,
         };
         
-        const event = await Event.create(eventData);
+        const event = await eventRepository.create(eventData);
         
         // Invalidate event-related caches after creation
-        const { deleteCacheByPattern } = require('../config/redis');
         try {
             await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('v1:cache:dashboard:*');
             await deleteCacheByPattern('cache:event:*');
             logger.debug('Cache invalidated after event creation');
         } catch (cacheError) {
@@ -121,12 +111,8 @@ exports.createEvent = async (req, res) => {
             data: event,
         });
     } catch (error) {
-        logError(error, { context: 'eventController.createEvent', userId: req.user._id });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to create event',
-            error: error.message,
-        });
+        logError(error, { context: 'eventController.createEvent', userId: req.user.id });
+        next(error);
     }
 };
 
@@ -135,12 +121,12 @@ exports.createEvent = async (req, res) => {
  * @route   POST /api/events/:eventId/register
  * @access  Private
  */
-exports.registerForEvent = async (req, res) => {
+exports.registerForEvent = async (req, res, next) => {
     try {
         const { eventId } = req.params;
-        const userId = req.user._id;
+        const userId = req.user.id;
         
-        const event = await Event.findById(eventId);
+        const event = await eventRepository.findById(eventId);
         
         if (!event) {
             return res.status(404).json({
@@ -150,11 +136,9 @@ exports.registerForEvent = async (req, res) => {
         }
         
         // Check if already registered
-        const alreadyRegistered = event.registrations.some(
-            reg => reg.user.toString() === userId.toString()
-        );
+        const isAlreadyRegistered = await eventRepository.isUserRegistered(eventId, userId);
         
-        if (alreadyRegistered) {
+        if (isAlreadyRegistered) {
             return res.status(400).json({
                 success: false,
                 message: 'You are already registered for this event',
@@ -177,19 +161,18 @@ exports.registerForEvent = async (req, res) => {
             });
         }
         
-        // Add registration
-        event.registrations.push({
-            user: userId,
+        // Register user for event
+        const registrationData = {
+            userId: userId,
             status: 'registered',
-        });
-        event.registeredCount += 1;
+        };
         
-        await event.save();
+        const updatedEvent = await eventRepository.registerUser(eventId, registrationData);
         
         // Invalidate event-related caches after registration
-        const { deleteCacheByPattern } = require('../config/redis');
         try {
             await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('v1:cache:dashboard:*');
             await deleteCacheByPattern('cache:event:*');
             logger.debug('Cache invalidated after event registration');
         } catch (cacheError) {
@@ -199,15 +182,11 @@ exports.registerForEvent = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Successfully registered for event',
-            data: event,
+            data: updatedEvent,
         });
     } catch (error) {
         logError(error, { context: 'eventController.registerForEvent', eventId: req.params.eventId });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to register for event',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
@@ -216,12 +195,12 @@ exports.registerForEvent = async (req, res) => {
  * @route   DELETE /api/events/:eventId/register
  * @access  Private
  */
-exports.cancelRegistration = async (req, res) => {
+exports.cancelRegistration = async (req, res, next) => {
     try {
         const { eventId } = req.params;
-        const userId = req.user._id;
+        const userId = req.user.id;
         
-        const event = await Event.findById(eventId);
+        const event = await eventRepository.findById(eventId);
         
         if (!event) {
             return res.status(404).json({
@@ -230,27 +209,23 @@ exports.cancelRegistration = async (req, res) => {
             });
         }
         
-        // Find and remove registration
-        const registrationIndex = event.registrations.findIndex(
-            reg => reg.user.toString() === userId.toString()
-        );
+        // Check if user is registered
+        const isRegistered = await eventRepository.isUserRegistered(eventId, userId);
         
-        if (registrationIndex === -1) {
+        if (!isRegistered) {
             return res.status(404).json({
                 success: false,
                 message: 'Registration not found',
             });
         }
         
-        event.registrations.splice(registrationIndex, 1);
-        event.registeredCount = Math.max(0, event.registeredCount - 1);
-        
-        await event.save();
+        // Unregister user from event
+        await eventRepository.unregisterUser(eventId, userId);
         
         // Invalidate event-related caches after cancellation
-        const { deleteCacheByPattern } = require('../config/redis');
         try {
             await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('v1:cache:dashboard:*');
             await deleteCacheByPattern('cache:event:*');
             logger.debug('Cache invalidated after event registration cancellation');
         } catch (cacheError) {
@@ -263,11 +238,7 @@ exports.cancelRegistration = async (req, res) => {
         });
     } catch (error) {
         logError(error, { context: 'eventController.cancelRegistration', eventId: req.params.eventId });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to cancel registration',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
@@ -276,15 +247,11 @@ exports.cancelRegistration = async (req, res) => {
  * @route   PUT /api/events/:eventId
  * @access  Private/Admin
  */
-exports.updateEvent = async (req, res) => {
+exports.updateEvent = async (req, res, next) => {
     try {
         const { eventId } = req.params;
         
-        const event = await Event.findByIdAndUpdate(
-            eventId,
-            req.body,
-            { new: true, runValidators: true }
-        );
+        const event = await eventRepository.update(eventId, req.body);
         
         if (!event) {
             return res.status(404).json({
@@ -294,9 +261,9 @@ exports.updateEvent = async (req, res) => {
         }
         
         // Invalidate event-related caches after update
-        const { deleteCacheByPattern } = require('../config/redis');
         try {
             await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('v1:cache:dashboard:*');
             await deleteCacheByPattern('cache:event:*');
             logger.debug('Cache invalidated after event update');
         } catch (cacheError) {
@@ -310,11 +277,7 @@ exports.updateEvent = async (req, res) => {
         });
     } catch (error) {
         logError(error, { context: 'eventController.updateEvent', eventId: req.params.eventId });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update event',
-            error: error.message,
-        });
+        next(error);
     }
 };
 
@@ -323,11 +286,11 @@ exports.updateEvent = async (req, res) => {
  * @route   DELETE /api/events/:eventId
  * @access  Private/Admin
  */
-exports.deleteEvent = async (req, res) => {
+exports.deleteEvent = async (req, res, next) => {
     try {
         const { eventId } = req.params;
         
-        const event = await Event.findByIdAndDelete(eventId);
+        const event = await eventRepository.delete(eventId);
         
         if (!event) {
             return res.status(404).json({
@@ -337,9 +300,9 @@ exports.deleteEvent = async (req, res) => {
         }
         
         // Invalidate event-related caches after deletion
-        const { deleteCacheByPattern } = require('../config/redis');
         try {
             await deleteCacheByPattern('v1:cache:event:*');
+            await deleteCacheByPattern('v1:cache:dashboard:*');
             await deleteCacheByPattern('cache:event:*');
             logger.debug('Cache invalidated after event deletion');
         } catch (cacheError) {
@@ -352,10 +315,6 @@ exports.deleteEvent = async (req, res) => {
         });
     } catch (error) {
         logError(error, { context: 'eventController.deleteEvent', eventId: req.params.eventId });
-        res.status(500).json({
-            success: false,
-            message: 'Failed to delete event',
-            error: error.message,
-        });
+        next(error);
     }
 };

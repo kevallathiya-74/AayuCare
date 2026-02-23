@@ -145,7 +145,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           hospitalName: user?.hospitalName,
         };
         const response = await adminService.createUser(doctorData);
-        if (response.status === "success" || response.success || response.user) {
+        if (response.success === true || response.user) {
           if (onSuccess) onSuccess();
           onClose();
           setTimeout(() => {
@@ -168,7 +168,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           availability: parsedAvailability,
         };
         const response = await adminService.updateUserProfile(doctor.userId, updateData);
-        if (response.status === "success") {
+        if (response.success === true) {
           if (onSuccess) onSuccess();
           onClose();
           setTimeout(() => {

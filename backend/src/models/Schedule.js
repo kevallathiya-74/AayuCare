@@ -25,9 +25,16 @@ const timeSlotSchema = new mongoose.Schema({
 const scheduleSchema = new mongoose.Schema(
   {
     doctorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
       required: true,
+      index: true,
+    },
+    hospitalId: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+      uppercase: true,
     },
     dayOfWeek: {
       type: String,
@@ -67,8 +74,8 @@ const scheduleSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for efficient queries
-scheduleSchema.index({ doctorId: 1, dayOfWeek: 1 }, { unique: true });
+// Compound index for efficient queries — hospitalId ensures per-hospital uniqueness
+scheduleSchema.index({ doctorId: 1, hospitalId: 1, dayOfWeek: 1 }, { unique: true });
 
 // Virtual for formatted display
 scheduleSchema.virtual("displayDay").get(function () {

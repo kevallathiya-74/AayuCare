@@ -214,37 +214,32 @@ class UserRepository {
    * @param {string} hospitalId - Hospital ID (optional)
    * @returns {Promise<string>} Next ID in format PAT1, DOC1, ADM1, etc.
    */
-  async getNextUserId(role, hospitalId = null) {
-    const prefix = role === 'patient' ? 'PAT' : role === 'doctor' ? 'DOC' : 'ADM';
-    
-    // Use numeric sorting by extracting the number from user_id
-    let sql = `
-      SELECT user_id FROM users 
+  async getNextUserId(role) {
+    let prefix;
+    if (role === 'patient') prefix = 'PAT';
+    else if (role === 'doctor') prefix = 'DOC';
+    else if (role === 'super_admin') prefix = 'SADM';
+    else prefix = 'ADM';
+
+    // Global scope — user_id is UNIQUE across the entire table,
+    // so numbering must be global, not per-hospital.
+    const sql = `
+      SELECT user_id FROM users
       WHERE role = $1 AND user_id LIKE $2
+      ORDER BY CAST(SUBSTRING(user_id FROM '[0-9]+') AS INTEGER) DESC
+      LIMIT 1
     `;
-    
-    const params = [role, `${prefix}%`];
-    
-    if (hospitalId) {
-      sql += ` AND hospital_id = $3`;
-      params.push(hospitalId);
-    }
-    
-    // CRITICAL FIX: Sort by numeric value, not string (PAT10 > PAT9, not PAT9 > PAT10)
-    sql += ` ORDER BY CAST(SUBSTRING(user_id FROM '[0-9]+') AS INTEGER) DESC LIMIT 1`;
-    
-    const result = await query(sql, params);
-    
+
+    const result = await query(sql, [role, `${prefix}%`]);
+
     if (result.rows.length === 0) {
       return `${prefix}1`;
     }
-    
+
     // Extract number from last ID (e.g., PAT123 -> 123)
     const lastId = result.rows[0].user_id;
-    const lastNumber = parseInt(lastId.replace(prefix, '')) || 0;
-    const nextNumber = lastNumber + 1;
-    
-    return `${prefix}${nextNumber}`;
+    const lastNumber = parseInt(lastId.replace(prefix, ''), 10) || 0;
+    return `${prefix}${lastNumber + 1}`;
   }
 
   /**
@@ -389,6 +384,90 @@ class UserRepository {
   }
 
   /**
+   * Find patients who have had at least one appointment with a specific doctor.
+   * Used by the doctor's "My Patients" / Patient Management screen — ensures a
+   * doctor only sees patients linked to them via the appointments table, not all
+   * hospital patients.
+   *
+   * @param {string} doctorId   - UUID of the doctor (users.id)
+   * @param {string} hospitalId - Hospital scope for multi-tenancy
+   * @param {number} limit      - Page size (max 100)
+   * @param {number} offset     - Pagination offset
+   * @param {string} searchTerm - Optional text filter (name, email, phone, user_id)
+   * @returns {Promise<{data: Array, total: number, page: number, limit: number}>}
+   */
+  async findPatientsByDoctor(doctorId, hospitalId, limit = 20, offset = 0, searchTerm = '') {
+    // Filter by hospital + role + doctor-specific appointment link.
+    let whereConditions = `u.hospital_id = $1 AND u.role = 'patient' AND a.doctor_id = $2`;
+    const params = [hospitalId, doctorId];
+    let paramIndex = 3;
+
+    if (searchTerm && searchTerm.trim()) {
+      const searchPattern = `%${searchTerm.trim()}%`;
+      whereConditions += ` AND (
+        u.name ILIKE $${paramIndex}
+        OR u.email ILIKE $${paramIndex}
+        OR u.phone ILIKE $${paramIndex}
+        OR u.user_id ILIKE $${paramIndex}
+      )`;
+      params.push(searchPattern);
+      paramIndex++;
+    }
+
+    // DISTINCT deduplicates patients who have multiple appointments with this doctor.
+    const sql = `
+      SELECT DISTINCT
+             u.id, u.user_id, u.name, u.email, u.phone, u.hospital_id, u.is_active,
+             p.date_of_birth, p.gender, p.blood_group, p.address,
+             p.emergency_contact_name, p.emergency_contact_phone,
+             p.allergies, p.chronic_conditions
+      FROM users u
+      INNER JOIN patients p  ON u.id = p.user_id
+      INNER JOIN appointments a ON a.patient_id = u.id
+      WHERE ${whereConditions}
+      ORDER BY u.name ASC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    const countSql = `
+      SELECT COUNT(DISTINCT u.id)
+      FROM users u
+      INNER JOIN patients p  ON u.id = p.user_id
+      INNER JOIN appointments a ON a.patient_id = u.id
+      WHERE ${whereConditions}
+    `;
+
+    const [dataResult, countResult] = await Promise.all([
+      query(sql, [...params, limit, offset]),
+      query(countSql, params),
+    ]);
+
+    const mappedData = dataResult.rows.map(row => ({
+      _id: row.id,
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      hospitalId: row.hospital_id,
+      isActive: row.is_active,
+      dateOfBirth: row.date_of_birth,
+      gender: row.gender,
+      bloodGroup: row.blood_group,
+      address: row.address,
+      emergencyContactName: row.emergency_contact_name,
+      emergencyContactPhone: row.emergency_contact_phone,
+      allergies: row.allergies,
+      chronicConditions: row.chronic_conditions,
+    }));
+
+    const total = parseInt(countResult.rows[0].count, 10);
+    const page = Math.floor(offset / limit) + 1;
+
+    return { data: mappedData, total, page, limit };
+  }
+
+  /**
    * Check if email exists
    * @param {string} email - Email address
    * @returns {Promise<boolean>} True if exists
@@ -408,6 +487,24 @@ class UserRepository {
     const sql = `SELECT 1 FROM users WHERE phone = $1 LIMIT 1`;
     const result = await query(sql, [phone]);
     return result.rowCount > 0;
+  }
+
+  /**
+   * Find multiple users by their UUIDs in a single batch query.
+   * Used to avoid N+1 queries when enriching lists (e.g. prescriptions).
+   * @param {string[]} ids - Array of user UUID strings
+   * @returns {Promise<Object[]>} Array of user objects (may be shorter than ids if some not found)
+   */
+  async findByIds(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) return [];
+    const sql = `
+      SELECT id, user_id, name, email, phone, role, hospital_id, hospital_name,
+             is_active, email_verified, phone_verified
+      FROM users
+      WHERE id = ANY($1::uuid[])
+    `;
+    const result = await query(sql, [ids]);
+    return result.rows;
   }
 }
 

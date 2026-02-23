@@ -20,9 +20,7 @@ import {
 } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from "../../theme";
-import { textStyles } from "../../theme/typography";
-import { spacing } from "../../theme/spacing";
+import { theme, healthColors, textStyles, spacing } from "../../theme";
 import {
   Card,
   Tabs,
@@ -95,13 +93,13 @@ const MedicalRecordsScreen = ({ navigation }) => {
   const getRecordIcon = (type) => {
     switch (type) {
       case "lab_report":
-        return { name: "flask", color: theme.colors.info.dark };
+        return { name: "flask", color: healthColors.info.main };
       case "prescription":
         return { name: "pill", color: theme.colors.success.dark };
       case "doctor_visit":
-        return { name: "stethoscope", color: theme.colors.warning.dark };
+        return { name: "stethoscope", color: healthColors.warning.main };
       case "test_result":
-        return { name: "clipboard-text", color: theme.colors.healthcare.purple };
+        return { name: "clipboard-text", color: healthColors.accent?.purple || healthColors.primary.main };
       case "imaging":
         return { name: "image-outline", color: theme.colors.error.dark };
       default:
@@ -245,7 +243,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
         <FlatList
           data={records}
           renderItem={renderRecord}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item, index) => item._id || String(index)}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -326,7 +324,7 @@ const styles = StyleSheet.create({
   },
   recordTitle: {
     ...textStyles.bodyLarge,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   recordDate: {
@@ -364,7 +362,7 @@ const styles = StyleSheet.create({
   },
   riskText: {
     ...textStyles.bodySmall,
-    fontWeight: theme.typography.weights.semiBold,
+    fontWeight: theme.typography.weights.semibold,
     marginLeft: spacing.xs,
   },
 });

@@ -5,7 +5,7 @@
  */
 
 const { AppError } = require('./errorHandler');
-const User = require('../models/User');
+const userRepository = require('../repositories/userRepository');
 
 /**
  * Attach hospitalId to request based on authenticated user
@@ -51,6 +51,9 @@ exports.enforceHospitalScope = (options = {}) => {
             if (req.method === 'GET') {
                 req.query.hospitalId = req.user.hospitalId;
             }
+
+            // Always attach hospitalId directly on the request for all methods
+            req.hospitalId = req.user.hospitalId;
 
             // For POST/PUT/PATCH operations, enforce hospitalId in body
             if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
@@ -122,14 +125,15 @@ exports.restrictToSameHospital = async (req, res, next) => {
         }
 
         // Get target user
-        const targetUser = await User.findById(userId).select('hospitalId');
+        const targetUser = await userRepository.findById(userId);
         
         if (!targetUser) {
             return next(new AppError('User not found', 404));
         }
 
-        // Verify same hospital
-        if (targetUser.hospitalId !== req.user.hospitalId) {
+        // Verify same hospital — handle both camelCase (normalized) and snake_case (raw DB column)
+        const targetHospitalId = targetUser.hospitalId || targetUser.hospital_id;
+        if (targetHospitalId !== req.user.hospitalId) {
             return next(new AppError('Cannot access users from other hospitals', 403));
         }
 

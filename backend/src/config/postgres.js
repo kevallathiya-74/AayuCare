@@ -32,13 +32,18 @@ pool.on("remove", (client) => {
 
 // Log pool statistics every 60 seconds in development
 if (process.env.NODE_ENV !== 'production') {
-  setInterval(() => {
+  const poolStatsInterval = setInterval(() => {
     logger.debug('📊 PostgreSQL Pool Stats:', {
       total: pool.totalCount,
       idle: pool.idleCount,
       waiting: pool.waitingCount,
     });
   }, 60000);
+
+  // Do not keep one-off scripts/processes alive solely for debug logging.
+  if (typeof poolStatsInterval.unref === "function") {
+    poolStatsInterval.unref();
+  }
 }
 
 /**

@@ -4,8 +4,7 @@
  * Manages health records and vitals state.
  */
 
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import apiClient from '../../services/apiClient';
+import { createSlice } from '@reduxjs/toolkit';
 
 // Initial state
 const initialState = {

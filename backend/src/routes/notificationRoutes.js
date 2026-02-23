@@ -7,7 +7,7 @@ const router = express.Router();
 const notificationController = require("../controllers/notificationController");
 const { protect, authorize } = require("../middleware/auth");
 const { validateBody } = require("../middleware/validation");
-const { createNotificationSchema } = require("../validators/schemas");
+const { createNotificationSchema, broadcastNotificationSchema } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // Protected routes (all users)
@@ -27,13 +27,6 @@ router.get(
   notificationController.getUnreadCount
 );
 
-// Mark notification as read
-router.put(
-  "/:id/read",
-  notificationController.markAsRead
-  // Cache invalidation now handled inside controller
-);
-
 // Mark all as read
 router.put(
   "/mark-all-read",
@@ -41,10 +34,10 @@ router.put(
   // Cache invalidation now handled inside controller
 );
 
-// Delete notification
-router.delete(
-  "/:id",
-  notificationController.deleteNotification
+// Mark notification as read
+router.put(
+  "/:id/read",
+  notificationController.markAsRead
   // Cache invalidation now handled inside controller
 );
 
@@ -52,6 +45,13 @@ router.delete(
 router.delete(
   "/clear-all",
   notificationController.clearAllNotifications
+  // Cache invalidation now handled inside controller
+);
+
+// Delete notification
+router.delete(
+  "/:id",
+  notificationController.deleteNotification
   // Cache invalidation now handled inside controller
 );
 
@@ -66,7 +66,7 @@ router.post(
 router.post(
   "/broadcast",
   authorize("admin"),
-  validateBody(createNotificationSchema),
+  validateBody(broadcastNotificationSchema),
   notificationController.broadcastNotification
   // Cache invalidation now handled inside controller
 );

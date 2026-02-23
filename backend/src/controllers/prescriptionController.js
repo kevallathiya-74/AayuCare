@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Prescription Controller
  * Handles prescription creation, retrieval, and management
  * Fully refactored to use repository pattern
@@ -6,8 +6,9 @@
 
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
-const Prescription = require("../models/Prescription");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
+const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
 
 const resolveUserByIdentifier = async (identifier) => {
   const value = String(identifier || "").trim();
@@ -38,7 +39,7 @@ const enrichPrescriptionUsers = async (prescriptions = []) => {
     ),
   ];
 
-  const users = await Promise.all(userIds.map((id) => userRepository.findById(id)));
+  const users = await userRepository.findByIds(userIds);
   const userMap = new Map(users.filter(Boolean).map((user) => [user.id, user]));
 
   return prescriptions.map((entry) => ({
@@ -55,7 +56,7 @@ const enrichPrescriptionUsers = async (prescriptions = []) => {
  * @route   GET /api/prescriptions
  * @access  Private (Admin)
  */
-exports.getAllPrescriptions = async (req, res) => {
+exports.getAllPrescriptions = async (req, res, next) => {
   try {
     const { limit = 50, skip = 0, pharmacyStatus, startDate, endDate } = req.query;
 
@@ -68,12 +69,8 @@ exports.getAllPrescriptions = async (req, res) => {
       endDate,
     });
 
-    // Map to include patient and doctor names from populated data
-    const prescriptionsWithNames = prescriptions.map((prescription) => ({
-      ...prescription,
-      patientName: prescription.patientId?.name || "Unknown Patient",
-      doctorName: prescription.doctorId?.name || "Unknown Doctor",
-    }));
+    // Enrich with patient and doctor names via batch lookup
+    const prescriptionsWithNames = await enrichPrescriptionUsers(prescriptions);
 
     res.status(200).json({
       success: true,
@@ -82,11 +79,7 @@ exports.getAllPrescriptions = async (req, res) => {
     });
   } catch (error) {
     logger.error("Error fetching all prescriptions:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch prescriptions",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -95,7 +88,7 @@ exports.getAllPrescriptions = async (req, res) => {
  * @route   POST /api/prescriptions
  * @access  Private (Doctor/Admin)
  */
-exports.createPrescription = async (req, res) => {
+exports.createPrescription = async (req, res, next) => {
   try {
     const {
       patientId,
@@ -111,6 +104,14 @@ exports.createPrescription = async (req, res) => {
     const doctorId = req.user.id || req.user._id;
     const meds = medications || medicines || [];
 
+    // Guard: doctor session must be valid
+    if (!doctorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid doctor session",
+      });
+    }
+
     // Validate required fields
     if (!patientId || !Array.isArray(meds) || meds.length === 0) {
       return res.status(400).json({
@@ -125,13 +126,6 @@ exports.createPrescription = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Patient not found",
-      });
-    }
-
-    if (!doctorId) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid doctor session",
       });
     }
 
@@ -163,14 +157,22 @@ exports.createPrescription = async (req, res) => {
     });
 
     // Invalidate relevant caches after prescription creation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:prescription:*");
-      await deleteCacheByPattern("cache:prescription:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after prescription creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.PRESCRIPTION_CREATE,
+      entityType: "prescription",
+      entityId: prescription._id ? String(prescription._id) : null,
+      newValues: { patientId: patient.id, doctorId, medicationsCount: normalizedMedicines.length },
+      req,
+    });
 
     res.status(201).json({
       success: true,
@@ -183,11 +185,7 @@ exports.createPrescription = async (req, res) => {
       stack: error.stack,
       patientId: req.body.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to create prescription",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -196,7 +194,7 @@ exports.createPrescription = async (req, res) => {
  * @route   GET /api/prescriptions/patient/:patientId
  * @access  Private (Patient own data or Doctor/Admin)
  */
-exports.getPatientPrescriptions = async (req, res) => {
+exports.getPatientPrescriptions = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
@@ -236,11 +234,7 @@ exports.getPatientPrescriptions = async (req, res) => {
       stack: error.stack,
       patientId: req.params.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch prescriptions",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -249,7 +243,7 @@ exports.getPatientPrescriptions = async (req, res) => {
  * @route   GET /api/prescriptions/doctor/:doctorId
  * @access  Private (Doctor own data or Admin)
  */
-exports.getDoctorPrescriptions = async (req, res) => {
+exports.getDoctorPrescriptions = async (req, res, next) => {
   try {
     const { doctorId } = req.params;
 
@@ -289,11 +283,7 @@ exports.getDoctorPrescriptions = async (req, res) => {
       stack: error.stack,
       doctorId: req.params.doctorId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch prescriptions",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -302,7 +292,7 @@ exports.getDoctorPrescriptions = async (req, res) => {
  * @route   GET /api/prescriptions/:prescriptionId
  * @access  Private
  */
-exports.getPrescriptionById = async (req, res) => {
+exports.getPrescriptionById = async (req, res, next) => {
   try {
     const { prescriptionId } = req.params;
 
@@ -315,13 +305,13 @@ exports.getPrescriptionById = async (req, res) => {
       });
     }
 
-    // Check access rights
+    // Check access rights â€” compare UUIDs only (patientId stored as UUID in Prescription)
     const isPatientOwner =
       prescription.patientId &&
-      (req.user.id === prescription.patientId || req.user.userId === prescription.patientId);
+      req.user.id === prescription.patientId;
     const isDoctorOwner =
       prescription.doctorId &&
-      (req.user.id === prescription.doctorId || req.user.userId === prescription.doctorId);
+      req.user.id === prescription.doctorId;
 
     if (req.user.role !== "admin" && !isDoctorOwner && !isPatientOwner) {
       return res.status(403).json({
@@ -342,11 +332,7 @@ exports.getPrescriptionById = async (req, res) => {
       stack: error.stack,
       prescriptionId: req.params.prescriptionId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch prescription",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -355,24 +341,30 @@ exports.getPrescriptionById = async (req, res) => {
  * @route   PATCH /api/prescriptions/:prescriptionId/status
  * @access  Private (Doctor/Admin)
  */
-exports.updatePrescriptionStatus = async (req, res) => {
+exports.updatePrescriptionStatus = async (req, res, next) => {
   try {
     const { prescriptionId } = req.params;
-    const { status } = req.body;
+    const pharmacyStatus = req.body.pharmacyStatus || req.body.status;
 
-    const validStatuses = ["active", "completed", "cancelled"];
-    if (!validStatuses.includes(status)) {
+    const validStatuses = [
+      "pending",
+      "sent_to_pharmacy",
+      "preparing",
+      "ready",
+      "dispensed",
+    ];
+
+    if (!pharmacyStatus || !validStatuses.includes(pharmacyStatus)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status. Must be active, completed, or cancelled",
+        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
       });
     }
 
-    const prescription = await Prescription.findByIdAndUpdate(
+    const prescription = await prescriptionRepository.updatePharmacyStatus(
       prescriptionId,
-      { status },
-      { new: true, runValidators: true }
-    ).populate("doctorId", "name specialization isActive");
+      pharmacyStatus
+    );
 
     if (!prescription) {
       return res.status(404).json({
@@ -382,10 +374,10 @@ exports.updatePrescriptionStatus = async (req, res) => {
     }
 
     // Invalidate relevant caches after prescription status update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:prescription:*");
       await deleteCacheByPattern("cache:prescription:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after prescription status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -403,11 +395,7 @@ exports.updatePrescriptionStatus = async (req, res) => {
       prescriptionId: req.params.prescriptionId,
       status: req.body.status,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update prescription status",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -416,7 +404,7 @@ exports.updatePrescriptionStatus = async (req, res) => {
  * @route   PATCH /api/prescriptions/:prescriptionId
  * @access  Private (Doctor/Admin)
  */
-exports.updatePharmacyStatus = async (req, res) => {
+exports.updatePharmacyStatus = async (req, res, next) => {
   try {
     const { prescriptionId } = req.params;
     const { pharmacyStatus } = req.body;
@@ -450,10 +438,10 @@ exports.updatePharmacyStatus = async (req, res) => {
     }
 
     // Invalidate relevant caches
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:prescription:*");
       await deleteCacheByPattern("cache:prescription:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after pharmacy status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -471,11 +459,7 @@ exports.updatePharmacyStatus = async (req, res) => {
       prescriptionId: req.params.prescriptionId,
       pharmacyStatus: req.body.pharmacyStatus,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update pharmacy status",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -484,11 +468,11 @@ exports.updatePharmacyStatus = async (req, res) => {
  * @route   DELETE /api/prescriptions/:prescriptionId
  * @access  Private (Admin only)
  */
-exports.deletePrescription = async (req, res) => {
+exports.deletePrescription = async (req, res, next) => {
   try {
     const { prescriptionId } = req.params;
 
-    const prescription = await Prescription.findByIdAndDelete(prescriptionId);
+    const prescription = await prescriptionRepository.delete(prescriptionId);
 
     if (!prescription) {
       return res.status(404).json({
@@ -498,10 +482,10 @@ exports.deletePrescription = async (req, res) => {
     }
 
     // Invalidate relevant caches after prescription deletion
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:prescription:*");
       await deleteCacheByPattern("cache:prescription:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after prescription deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -517,10 +501,7 @@ exports.deletePrescription = async (req, res) => {
       stack: error.stack,
       prescriptionId: req.params.prescriptionId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete prescription",
-      error: error.message,
-    });
+    next(error);
   }
 };
+

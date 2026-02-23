@@ -38,7 +38,7 @@ const DoctorProfileScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState({
     totalPatients: 0,
-    rating: 0,
+    rating: null,
     yearsExperience: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ const DoctorProfileScreen = ({ navigation }) => {
       if (response?.success) {
         setStats({
           totalPatients: response.data.totalPatients || 0,
-          rating: response.data.averageRating || 0,
+          rating: response.data.averageRating ?? null,
           yearsExperience: response.data.yearsExperience || 0,
         });
       }
@@ -164,7 +164,7 @@ const DoctorProfileScreen = ({ navigation }) => {
               {user?.department || "OPD"}
             </Text>
             <Text style={styles.doctorId}>
-              ID: {user?.userId || "DOC1"}
+              ID: {user?.userId || "—"}
             </Text>
           </View>
 
@@ -188,7 +188,7 @@ const DoctorProfileScreen = ({ navigation }) => {
             <View
               style={styles.statBox}
               accessible={true}
-              accessibilityLabel={`${loading ? "Loading" : stats.rating} star rating`}
+              accessibilityLabel={`${loading ? "Loading" : (stats.rating != null ? stats.rating + " star" : "No rating yet")}`}
             >
               {loading ? (
                 <ActivityIndicator
@@ -196,7 +196,9 @@ const DoctorProfileScreen = ({ navigation }) => {
                   color={healthColors.primary.main}
                 />
               ) : (
-                <Text style={styles.statValue}>{stats.rating.toFixed(1)}</Text>
+                <Text style={styles.statValue}>
+                  {stats.rating != null ? stats.rating.toFixed(1) : "N/A"}
+                </Text>
               )}
               <Text style={styles.statLabel}>Rating</Text>
             </View>

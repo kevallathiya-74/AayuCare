@@ -1,10 +1,14 @@
-const doctorService = require("../services/doctorService");
+﻿const doctorService = require("../services/doctorService");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
 const doctorRepository = require("../repositories/doctorRepository");
 const scheduleRepository = require("../repositories/scheduleRepository");
+const patientRepository = require("../repositories/patientRepository");
+const medicalRecordRepository = require("../repositories/medicalRecordRepository");
+const bcrypt = require("bcryptjs");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
 
 /**
  * Calculate age from date of birth
@@ -34,6 +38,20 @@ const calculateAge = (dateOfBirth) => {
   } catch (error) {
     return null;
   }
+};
+
+const normalizeAppointmentStatus = (status) =>
+  String(status || "")
+    .toLowerCase()
+    .replace(/-/g, "_");
+
+const APPOINTMENT_STATUS_TRANSITIONS = {
+  scheduled: ["confirmed", "in_progress", "cancelled"],
+  confirmed: ["in_progress", "completed", "cancelled", "no_show"],
+  in_progress: ["completed", "cancelled"],
+  completed: [],
+  cancelled: [],
+  no_show: [],
 };
 
 const formatAppointmentTime = (appointment) => {
@@ -131,7 +149,7 @@ exports.getDoctorStats = async (req, res, next) => {
  * @route   GET /api/doctors/dashboard
  * @access  Private (Doctor only)
  */
-exports.getDoctorDashboard = async (req, res) => {
+exports.getDoctorDashboard = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const today = new Date();
@@ -142,14 +160,14 @@ exports.getDoctorDashboard = async (req, res) => {
     // Build query base with hospitalId filter
     const baseFilters = { 
       doctorId,
-      hospitalId: (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : null 
+      hospitalId: (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : undefined
     };
 
     // Run all queries in parallel
     const [
       todaysAppointments,
       completedToday,
-      totalPatientsData,
+      totalUniquePatients,
       upcomingAppointmentsCount,
       recentPrescriptions,
     ] = await Promise.all([
@@ -166,8 +184,11 @@ exports.getDoctorDashboard = async (req, res) => {
         endDate: today,
         status: 'completed',
       }),
-      // Total unique patients
-      appointmentRepository.findByDoctor(doctorId, baseFilters),
+      // Total unique patients (completed appointments, all time)
+      appointmentRepository.countUniquePatientsForDoctor(
+        doctorId,
+        (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : "MAIN"
+      ),
       // Upcoming appointments (next 7 days) - count scheduled/confirmed
       appointmentRepository.findByDoctor(doctorId, {
         ...baseFilters,
@@ -181,47 +202,110 @@ exports.getDoctorDashboard = async (req, res) => {
       }),
     ]);
 
-    // Calculate total unique patients from appointments
-    const uniquePatientIds = new Set(
-      todaysAppointments
-        .map((apt) => apt.patientId || apt.patient_id)
-        .filter(Boolean)
-    );
-    const totalPatients = Array.from(uniquePatientIds);
-    
+
+    const parseAppointmentDateTime = (appointment) => {
+      const rawDate = appointment.appointmentDate || appointment.appointment_date;
+      const rawTime = appointment.appointmentTime || appointment.appointment_time;
+
+      if (!rawDate || !rawTime) return null;
+
+      const datePart = String(rawDate).slice(0, 10);
+      const timePart = String(rawTime).slice(0, 5);
+      const [year, month, day] = datePart.split("-").map(Number);
+      const [hours, minutes] = timePart.split(":").map(Number);
+
+      if (
+        Number.isNaN(year) ||
+        Number.isNaN(month) ||
+        Number.isNaN(day) ||
+        Number.isNaN(hours) ||
+        Number.isNaN(minutes)
+      ) {
+        return null;
+      }
+
+      return new Date(year, month - 1, day, hours, minutes, 0, 0);
+    };
+
+    const now = new Date();
+
+    // Dashboard should only show actionable appointments for today.
+    // - scheduled/confirmed: only future slots
+    // - in_progress: always visible for today
+    const visibleTodaysAppointments = todaysAppointments.filter((apt) => {
+      const status = String(apt.status || "").toLowerCase();
+
+      if (status === "in_progress") {
+        return true;
+      }
+
+      if (status !== "scheduled" && status !== "confirmed") {
+        return false;
+      }
+
+      const appointmentDateTime = parseAppointmentDateTime(apt);
+      if (!appointmentDateTime) {
+        return false;
+      }
+
+      return appointmentDateTime > now;
+    });
+
     // Count completed appointments
     const completedCount = Array.isArray(completedToday) ? completedToday.length : 0;
 
+    const pendingCount = visibleTodaysAppointments.filter((apt) => {
+      const status = String(apt.status || "").toLowerCase();
+      return status === "scheduled" || status === "confirmed";
+    }).length;
+
+    const nextVisibleAppointment = visibleTodaysAppointments.find((apt) => {
+      const status = String(apt.status || "").toLowerCase();
+      return status === "scheduled" || status === "confirmed";
+    });
+
     const schedule = {
-      totalAppointments: todaysAppointments.length,
+      totalAppointments: visibleTodaysAppointments.length + completedCount,
       completed: completedCount,
-      pending: todaysAppointments.length - completedCount,
-      nextPatient:
-        todaysAppointments.find((apt) => apt.status !== "completed")
-          ?.patientName || "No pending",
-      nextTime: formatAppointmentTime(
-        todaysAppointments.find((apt) => apt.status !== "completed")
-      ),
+      pending: pendingCount,
+      nextPatient: nextVisibleAppointment?.patientName || "No pending",
+      nextTime: formatAppointmentTime(nextVisibleAppointment),
     };
 
     // Format appointments for frontend
-    const formattedAppointments = todaysAppointments.map((apt) => {
+    const formattedAppointments = visibleTodaysAppointments.map((apt) => {
       const age = apt.dateOfBirth || apt.date_of_birth
         ? calculateAge(apt.dateOfBirth || apt.date_of_birth)
         : null;
 
       return {
         _id: apt.id,
+        appointmentId: apt.id,
         id: apt.id,
         time: formatAppointmentTime(apt),
+        appointmentDate: apt.appointmentDate || apt.appointment_date || null,
+        appointmentTime: apt.appointmentTime || apt.appointment_time || null,
         patientName: apt.patientName || apt.patient_name || "Unknown",
-        patientId: apt.patientId || apt.patient_user_id || apt.patient_id,
+        patientId: apt.patientUserId || apt.patient_user_id || apt.patientId,
+        patientUUID: apt.patientUserId || apt.patient_user_id || apt.patientId,
         age: age !== null ? age : "N/A",
-        reason: apt.reason || "Consultation",
+        reason: apt.reason || apt.chiefComplaint || "Consultation",
         status: apt.status,
         type: apt.type || apt.appointment_type || "in-person",
       };
     });
+
+    // Enrich recent prescriptions with patient names via batch lookup
+    const enrichedPrescriptions = await (async () => {
+      if (!Array.isArray(recentPrescriptions) || recentPrescriptions.length === 0) return [];
+      const patientIds = [...new Set(recentPrescriptions.map(p => p.patientId).filter(Boolean))];
+      const users = await userRepository.findByIds(patientIds);
+      const userMap = new Map(users.map(u => [u.id, u]));
+      return recentPrescriptions.map(p => ({
+        ...p,
+        patientName: userMap.get(p.patientId)?.name || "Unknown",
+      }));
+    })();
 
     res.json({
       success: true,
@@ -229,17 +313,17 @@ exports.getDoctorDashboard = async (req, res) => {
         schedule,
         todaysAppointments: formattedAppointments,
         stats: {
-          totalPatients: totalPatients.length,
+          totalPatients: totalUniquePatients,
           upcomingAppointments: Array.isArray(upcomingAppointmentsCount) ? upcomingAppointmentsCount.length : 0,
           prescriptionsToday: recentPrescriptions.filter(
             (p) => new Date(p.createdAt || p.created_at) >= today
           ).length,
         },
-        recentPrescriptions: recentPrescriptions.map((p) => ({
+        recentPrescriptions: enrichedPrescriptions.map((p) => ({
           id: p.id || p._id,
-          patientName: p.patient_name || p.patientId?.name || "Unknown",
+          patientName: p.patientName || "Unknown",
           date: p.createdAt || p.created_at,
-          medicationsCount: p.medications?.length || 0,
+          medicationsCount: p.medicines?.length || 0,
         })),
       },
     });
@@ -247,13 +331,9 @@ exports.getDoctorDashboard = async (req, res) => {
     logger.error("Doctor dashboard error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id || req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to load dashboard data",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -262,65 +342,130 @@ exports.getDoctorDashboard = async (req, res) => {
  * @route   GET /api/doctors/appointments/today
  * @access  Private (Doctor only)
  */
-exports.getTodaysAppointments = async (req, res) => {
+exports.getTodaysAppointments = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { filter = "all" } = req.query;
+    const normalizedFilter = String(filter || "all").toLowerCase();
+
+    // Validate filter early - before any other work
+    const allowedFilters = new Set(["all", "pending", "completed"]);
+    if (!allowedFilters.has(normalizedFilter)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid filter. Allowed values: all, pending, completed",
+      });
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const filters = {
-      doctorId,
-      startDate: today,
-      endDate: today,
-    };
+    // For completed: show last 30 days of completed appointments (no date restriction)
+    // For others: restrict to today only
+    const filters = { doctorId };
+
+    if (normalizedFilter !== "completed") {
+      filters.startDate = today;
+      filters.endDate = today;
+    }
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
 
-    // Apply filter
-    if (filter === "completed") {
-      filters.status = "completed";
-    } else if (filter === "pending") {
-      filters.status = "scheduled,confirmed";
+    // Apply status filter
+    if (normalizedFilter === "completed") {
+      filters.status = "completed,cancelled,no_show";
+      // Last 30 days
+      const past30 = new Date(today);
+      past30.setDate(past30.getDate() - 30);
+      filters.startDate = past30;
+    } else if (normalizedFilter === "pending") {
+      filters.status = "scheduled,confirmed,in_progress";
     }
 
     const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
 
+    const parseAppointmentDateTime = (appointment) => {
+      const rawDate = appointment.appointmentDate || appointment.appointment_date;
+      const rawTime = appointment.appointmentTime || appointment.appointment_time;
+
+      if (!rawDate || !rawTime) return null;
+
+      const datePart = String(rawDate).slice(0, 10);
+      const timePart = String(rawTime).slice(0, 5);
+      const [year, month, day] = datePart.split("-").map(Number);
+      const [hours, minutes] = timePart.split(":").map(Number);
+
+      if (
+        Number.isNaN(year) ||
+        Number.isNaN(month) ||
+        Number.isNaN(day) ||
+        Number.isNaN(hours) ||
+        Number.isNaN(minutes)
+      ) {
+        return null;
+      }
+
+      return new Date(year, month - 1, day, hours, minutes, 0, 0);
+    };
+
+    // Strict upcoming-only for Today/Pending: hide completed/cancelled/no_show and past-time slots.
+    const visibleAppointments =
+      normalizedFilter === "completed"
+        ? appointments
+        : appointments.filter((apt) => {
+            const status = normalizeAppointmentStatus(apt.status);
+
+            if (status === "in_progress") {
+              return true;
+            }
+
+            if (status !== "scheduled" && status !== "confirmed") {
+              return false;
+            }
+
+            const appointmentDateTime = parseAppointmentDateTime(apt);
+            if (!appointmentDateTime) {
+              return false;
+            }
+
+            return appointmentDateTime > new Date();
+          });
+
     res.json({
       success: true,
-      count: appointments.length,
-      data: appointments.map((apt) => ({
-        _id: apt.id,
-        id: apt.id,
-        time: formatAppointmentTime(apt),
-        patientName: apt.patientName || apt.patient_name || "Unknown",
-        patientId: apt.patientId || apt.patient_user_id || apt.patient_id,
-        patientPhoto: apt.patientAvatar || apt.patient_avatar || null,
-        age: apt.patientAge || apt.patient_age || "N/A",
-        gender: apt.patientGender || apt.patient_gender || "N/A",
-        phone: apt.patientPhone || apt.patient_phone || "N/A",
-        reason: apt.reason || "Consultation",
-        status: apt.status,
-        type: apt.type || apt.appointment_type || "in-person",
-      })),
+      count: visibleAppointments.length,
+      data: visibleAppointments.map((apt) => {
+        const formattedTime = formatAppointmentTime(apt);
+        return {
+          _id: apt.id,
+          id: apt.id,
+          time: formattedTime,
+          timeSlot: formattedTime,
+          appointmentDate: apt.appointmentDate || apt.appointment_date,
+          patientName: apt.patientName || apt.patient_name || "Unknown",
+          patientId: apt.patientUserId || apt.patientId || apt.patient_id,
+          patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
+          patientPhoto: null,
+          age: apt.dateOfBirth ? calculateAge(apt.dateOfBirth) : (apt.patientAge || "N/A"),
+          gender: apt.gender || "N/A",
+          phone: apt.patientPhone || "N/A",
+          reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
+          reason: apt.reason || apt.chiefComplaint || "Consultation",
+          status: apt.status || "scheduled",
+          type: apt.type || "in-person",
+        };
+      }),
     });
   } catch (error) {
     logger.error("Today appointments error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id || req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to load appointments",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -329,7 +474,7 @@ exports.getTodaysAppointments = async (req, res) => {
  * @route   GET /api/doctors/appointments/upcoming
  * @access  Private (Doctor only)
  */
-exports.getUpcomingAppointments = async (req, res) => {
+exports.getUpcomingAppointments = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { page = 1, limit = 10 } = req.query;
@@ -361,17 +506,25 @@ exports.getUpcomingAppointments = async (req, res) => {
 
     res.json({
       success: true,
-      data: appointments.map((apt) => ({
-        _id: apt.id,
-        id: apt.id,
-        date: apt.appointmentDate || apt.appointment_date,
-        time: formatAppointmentTime(apt),
-        patientName: apt.patientName || apt.patient_name || "Unknown",
-        patientId: apt.patientId || apt.patient_user_id || apt.patient_id,
-        reason: apt.reason || "Consultation",
-        status: apt.status,
-        type: apt.type || apt.appointment_type || "in-person",
-      })),
+      data: appointments.map((apt) => {
+        const formattedTime = formatAppointmentTime(apt);
+        return {
+          _id: apt.id,
+          id: apt.id,
+          date: apt.appointmentDate || apt.appointment_date,
+          time: formattedTime,
+          timeSlot: formattedTime,
+          appointmentDate: apt.appointmentDate || apt.appointment_date,
+          patientName: apt.patientName || apt.patient_name || "Unknown",
+          patientId: apt.patientUserId || apt.patientId || apt.patient_id,
+          patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
+          phone: apt.patientPhone || "N/A",
+          reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
+          reason: apt.reason || apt.chiefComplaint || "Consultation",
+          status: apt.status || "scheduled",
+          type: apt.type || "in-person",
+        };
+      }),
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -383,13 +536,9 @@ exports.getUpcomingAppointments = async (req, res) => {
     logger.error("Upcoming appointments error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id || req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to load upcoming appointments",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -398,7 +547,7 @@ exports.getUpcomingAppointments = async (req, res) => {
  * @route   GET /api/doctors/patients/search
  * @access  Private (Doctor only)
  */
-exports.searchPatients = async (req, res) => {
+exports.searchPatients = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { q } = req.query;
@@ -419,7 +568,10 @@ exports.searchPatients = async (req, res) => {
     const effectiveHospitalId =
       req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
-    const result = await userRepository.findPatientsByHospital(
+    // Use findPatientsByDoctor so only patients who have had an appointment with
+    // this specific doctor are returned - not all patients in the hospital.
+    const result = await userRepository.findPatientsByDoctor(
+      doctorId,
       effectiveHospitalId,
       limit,
       skip,
@@ -432,6 +584,7 @@ exports.searchPatients = async (req, res) => {
     logger.info("Search results:", {
       count: paginatedPatients.length,
       total,
+      doctorId,
       hospitalId: effectiveHospitalId,
     });
 
@@ -452,11 +605,7 @@ exports.searchPatients = async (req, res) => {
       stack: error.stack,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to search patients",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -465,7 +614,7 @@ exports.searchPatients = async (req, res) => {
  * @route   GET /api/doctors/me/patients/:patientId
  * @access  Private (Doctor, Admin)
  */
-exports.getPatientDetails = async (req, res) => {
+exports.getPatientDetails = async (req, res, next) => {
   try {
     const userId = req.user.id || req.user._id;
     const userRole = req.user.role;
@@ -549,24 +698,17 @@ exports.getPatientDetails = async (req, res) => {
 
     const appointments = patientAppointments.slice(0, 10);
 
-    // Get medical records from MongoDB
-    const MedicalRecord = require("../models/MedicalRecord");
-    const medicalRecordsQuery = {
+    // Get medical records from MongoDB using repository
+    const medicalRecordsFilters = {
       patientId: { $in: [resolvedPatientId, resolvedPatientUserId].filter(Boolean) },
     };
     
     if (req.hospitalId && req.user.role !== "super_admin") {
-      medicalRecordsQuery.hospitalId = req.hospitalId;
+      medicalRecordsFilters.hospitalId = req.hospitalId;
     }
 
-    const dbMedicalRecords = await MedicalRecord.find(medicalRecordsQuery)
-      .select("recordType title date diagnosis symptoms vitalSigns createdAt")
-      .sort({ date: -1 })
-      .limit(10)
-      .lean();
-
-    // Map medical records to proper format
-    const medicalRecords = mapArray(dbMedicalRecords, mapMedicalRecordData);
+    const dbMedicalRecords = await medicalRecordRepository.findWithFilters(medicalRecordsFilters, 1, 10);
+    const medicalRecords = dbMedicalRecords.data || [];
 
     const prescriptionFilters = {
       patientId: resolvedPatientId,
@@ -615,11 +757,7 @@ exports.getPatientDetails = async (req, res) => {
       role: req.user?.role,
       patientId: req.params?.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve patient details",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -628,15 +766,13 @@ exports.getPatientDetails = async (req, res) => {
  * @route   PATCH /api/doctors/appointments/:id/status
  * @access  Private (Doctor only)
  */
-exports.updateAppointmentStatus = async (req, res) => {
+exports.updateAppointmentStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status, notes } = req.body;
     const doctorId = req.user.id || req.user._id;
 
-    const normalizedStatus = String(status || "")
-      .toLowerCase()
-      .replace(/-/g, "_");
+    const normalizedStatus = normalizeAppointmentStatus(status);
 
     const validStatuses = [
       "confirmed",
@@ -661,21 +797,30 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
+    const currentStatus = normalizeAppointmentStatus(
+      appointment.status || appointment.appointment_status
+    );
+    const allowedTransitions = APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
+
+    if (!allowedTransitions.includes(normalizedStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change status from ${currentStatus} to ${normalizedStatus}`,
+      });
+    }
+
     const updateData = { status: normalizedStatus };
     if (notes) {
       updateData.notes = notes;
-    }
-    if (normalizedStatus === "completed") {
-      updateData.completed_at = new Date();
     }
 
     const updatedAppointment = await appointmentRepository.update(id, updateData);
 
     // Invalidate appointment caches after status update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after appointment status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -697,11 +842,7 @@ exports.updateAppointmentStatus = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update appointment status",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -710,28 +851,26 @@ exports.updateAppointmentStatus = async (req, res) => {
  * @route   GET /api/doctors/profile/stats
  * @access  Private (Doctor only)
  */
-exports.getDoctorProfileStats = async (req, res) => {
+exports.getDoctorProfileStats = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
+    const effectiveHospitalId = (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : undefined;
 
-    const [appointments, completedCounts, doctor] = await Promise.all([
-      appointmentRepository.findByDoctor(doctorId, {}),
+    const [totalPatients, completedCounts, doctor] = await Promise.all([
+      appointmentRepository.countUniquePatientsForDoctor(doctorId, effectiveHospitalId),
       appointmentRepository.countByStatus(doctorId, "doctor", {
         status: "completed",
+        hospitalId: effectiveHospitalId,
       }),
-      userRepository.findById(doctorId),
+      doctorRepository.findByUserId(doctorId),
     ]);
-
-    const uniquePatients = [
-      ...new Set(appointments.map((apt) => apt.patientId || apt.patient_id).filter(Boolean)),
-    ];
 
     res.json({
       success: true,
       data: {
-        totalPatients: uniquePatients.length,
+        totalPatients,
         completedConsultations: completedCounts.completed || 0,
-        averageRating: doctor?.rating || 4.5,
+        averageRating: null,  // No rating column in DB - rating system not yet implemented
         yearsExperience: doctor?.experience || 0,
       },
     });
@@ -741,11 +880,7 @@ exports.getDoctorProfileStats = async (req, res) => {
       stack: error.stack,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to load profile stats",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -754,82 +889,175 @@ exports.getDoctorProfileStats = async (req, res) => {
  * @route   POST /api/doctors/walk-in-patient
  * @access  Private (Doctor only)
  */
-exports.registerWalkInPatient = async (req, res) => {
+exports.registerWalkInPatient = async (req, res, next) => {
   try {
     const { name, age, gender, phone, bloodGroup, symptoms, address } =
       req.body;
     const doctorId = req.user.id || req.user._id;
-
-    // Validate required fields
-    if (!name || !age || !gender || !phone) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, age, gender, and phone are required",
-      });
-    }
+    const effectiveHospitalId =
+      req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
+    const normalizedPhone = String(phone || "").trim();
 
     // Check if patient with this phone already exists
-    let patient = await userRepository.findByPhone(phone);
+    let patient = await userRepository.findByPhone(normalizedPhone);
+
+    const ensurePatientProfile = async (userRecord) => {
+      const existingProfile = await patientRepository.findByUserId(userRecord.id);
+      if (existingProfile) return existingProfile;
+
+      const today = new Date();
+      const derivedBirthYear = today.getFullYear() - Number(age);
+      const derivedDateOfBirth = new Date(derivedBirthYear, 0, 1);
+
+      return patientRepository.create({
+        userId: userRecord.id,
+        dateOfBirth: Number.isNaN(derivedDateOfBirth.getTime())
+          ? null
+          : derivedDateOfBirth,
+        gender,
+        bloodGroup,
+        address,
+      });
+    };
+
+    // Helper to check appointment conflicts and get next available slot
+    const getNextAvailableSlot = async (doctorId, hospitalId) => {
+      const now = new Date();
+      let proposedTime = new Date(now.getTime() + 15 * 60 * 1000); // Start with 15 minutes from now
+      const maxAttempts = 12; // Check up to 3 hours ahead (12 x 15-minute slots)
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const localDate = `${proposedTime.getFullYear()}-${String(
+          proposedTime.getMonth() + 1
+        ).padStart(2, "0")}-${String(proposedTime.getDate()).padStart(2, "0")}`;
+        const appointmentTime = `${String(proposedTime.getHours()).padStart(2, "0")}:${String(
+          proposedTime.getMinutes()
+        ).padStart(2, "0")}`;
+
+        // Check if doctor has too many appointments in this time slot
+        const conflictCount = await appointmentRepository.countByDoctorAtTime(
+          doctorId,
+          hospitalId,
+          localDate,
+          appointmentTime
+        );
+
+        // Allow maximum 2 appointments per 15-minute slot
+        if (conflictCount < 2) {
+          return {
+            scheduledAt: proposedTime,
+            localDate,
+            appointmentTime
+          };
+        }
+
+        // Move to next 15-minute slot
+        proposedTime = new Date(proposedTime.getTime() + 15 * 60 * 1000);
+      }
+
+      // If no slot found within 3 hours, use original logic with warning
+      logger.warn(`No available slots found for doctor ${doctorId}, scheduling anyway`);
+      const fallbackTime = new Date(now.getTime() + 15 * 60 * 1000);
+      return {
+        scheduledAt: fallbackTime,
+        localDate: `${fallbackTime.getFullYear()}-${String(
+          fallbackTime.getMonth() + 1
+        ).padStart(2, "0")}-${String(fallbackTime.getDate()).padStart(2, "0")}`,
+        appointmentTime: `${String(fallbackTime.getHours()).padStart(2, "0")}:${String(
+          fallbackTime.getMinutes()
+        ).padStart(2, "0")}`
+      };
+    };
 
     if (patient && patient.role === "patient") {
+      await ensurePatientProfile(patient);
+
+      // Add walk-in appointment for existing patient when symptoms provided.
+      if (symptoms) {
+        const { scheduledAt, localDate, appointmentTime } = await getNextAvailableSlot(
+          doctorId, 
+          effectiveHospitalId
+        );
+
+        await appointmentRepository.create({
+          appointmentId: `APT-WALKIN-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 8)
+            .toUpperCase()}`,
+          patientId: patient.id,
+          doctorId,
+          hospitalId: effectiveHospitalId,
+          appointmentDate: localDate,
+          appointmentTime,
+          chiefComplaint: symptoms,
+          type: "clinic_visit",
+        });
+      }
+
       // Patient exists, return existing patient
       return res.status(200).json({
         success: true,
         message: "Patient already registered",
-        data: patient,
+        data: {
+          ...patient,
+          userId: patient.user_id || patient.userId,
+          hospitalId: patient.hospital_id || patient.hospitalId,
+        },
         isExisting: true,
       });
     }
 
-    // Generate unique userId
-    const allPatients = await userRepository.findByRole("patient");
-    const userId = `P${String(allPatients.length + 1).padStart(6, "0")}`;
+    const nextPatientUserId = await userRepository.getNextUserId("patient");
+    const generatedEmail = `${nextPatientUserId.toLowerCase()}@walkin.aayucare.local`;
+    const { randomBytes } = require("crypto");
+    const temporaryPasswordHash = await bcrypt.hash(
+      randomBytes(32).toString("hex"),
+      12
+    );
 
-    // Create new walk-in patient (Note: userRepository.create not available, using User model)
-    const User = require("../models/User");
-    patient = await User.create({
+    patient = await userRepository.create({
+      userId: nextPatientUserId,
       name,
-      userId,
-      phone,
+      email: generatedEmail,
+      phone: normalizedPhone,
+      passwordHash: temporaryPasswordHash,
       role: "patient",
-      age,
-      gender,
-      bloodGroup,
-      address,
-      hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
-      isWalkIn: true,
-      registeredBy: doctorId,
-      // No password needed for walk-in patients (admin creates later if needed)
+      hospitalId: effectiveHospitalId,
+      hospitalName: req.user.hospitalName || req.user.hospital_name || null,
     });
+
+    await ensurePatientProfile(patient);
 
     // Create appointment immediately if needed
     if (symptoms) {
-      // Format time in 24-hour HH:MM format (not 12-hour with AM/PM)
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const appointmentTime = `${hours}:${minutes}`; // e.g., "14:30"
+      const { scheduledAt, localDate, appointmentTime } = await getNextAvailableSlot(
+        doctorId, 
+        effectiveHospitalId
+      );
 
       await appointmentRepository.create({
-        patient_id: patient.id || patient._id,
-        doctor_id: doctorId,
-        hospital_id: req.hospitalId || req.user.hospitalId || "MAIN",
-        appointment_date: new Date(),
-        appointment_time: appointmentTime, // HH:MM format in 24-hour
-        chief_complaint: symptoms,
-        status: "scheduled",
-        appointment_type: "walk-in",
+        appointmentId: `APT-WALKIN-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)
+          .toUpperCase()}`,
+        patientId: patient.id,
+        doctorId,
+        hospitalId: effectiveHospitalId,
+        appointmentDate: localDate,
+        appointmentTime,
+        chiefComplaint: symptoms,
+        type: "clinic_visit",
       });
     }
 
     // Invalidate relevant caches after walk-in patient registration
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("cache:patient:*");
       await deleteCacheByPattern("v1:cache:appointments:*");
       await deleteCacheByPattern("cache:appointments:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after walk-in patient registration");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -838,7 +1066,11 @@ exports.registerWalkInPatient = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Walk-in patient registered successfully",
-      data: patient,
+      data: {
+        ...patient,
+        userId: patient.user_id || patient.userId,
+        hospitalId: patient.hospital_id || patient.hospitalId,
+      },
       isExisting: false,
     });
   } catch (error) {
@@ -847,67 +1079,7 @@ exports.registerWalkInPatient = async (req, res) => {
       stack: error.stack,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to register walk-in patient",
-      error: error.message,
-    });
-  }
-};
-
-/**
- * @desc    Get doctor profile stats
- * @route   GET /api/doctors/profile/stats
- * @access  Private (Doctor)
- */
-exports.getProfileStats = async (req, res, next) => {
-  try {
-    const doctorId = req.user.id || req.user._id;
-
-    // Get total unique patients treated
-    const filters = {
-      doctorId,
-      status: ["completed", "confirmed"],
-    };
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
-    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
-    const uniquePatients = [
-      ...new Set(appointments.map((apt) => apt.patientId || apt.patient_id).filter(Boolean)),
-    ];
-
-    // Get years of experience from user profile
-    const doctor = await userRepository.findById(doctorId);
-    const yearsExperience =
-      doctor?.years_of_experience ||
-      (doctor?.created_at
-        ? new Date().getFullYear() - new Date(doctor.created_at).getFullYear()
-        : 0);
-
-    // Calculate average rating
-    // TODO: Implement actual rating system - requires ratings table in PostgreSQL
-    //       with columns: id, doctor_id, patient_id, rating, review, created_at
-    //       Then calculate: SELECT AVG(rating) FROM ratings WHERE doctor_id = $1
-    const avgRating = null; // null indicates rating system not implemented
-
-    res.status(200).json({
-      success: true,
-      data: {
-        totalPatients: uniquePatients.length,
-        averageRating: avgRating,
-        yearsExperience,
-      },
-    });
-  } catch (error) {
-    logger.error("Get profile stats error:", {
-      error: error.message,
-      doctorId: req.user?._id,
-    });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch profile statistics",
-    });
+    next(error);
   }
 };
 
@@ -962,7 +1134,6 @@ exports.updateProfile = async (req, res, next) => {
     const doctor = await doctorRepository.findByUserId(doctorId);
 
     // Invalidate relevant caches after profile update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
@@ -983,10 +1154,7 @@ exports.updateProfile = async (req, res, next) => {
       error: error.message,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update profile",
-    });
+    next(error);
   }
 };
 
@@ -1040,10 +1208,10 @@ exports.getConsultationHistory = async (req, res, next) => {
       data: {
         consultations: appointments,
         pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(total / limit),
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / parseInt(limit)),
           totalItems: total,
-          itemsPerPage: limit,
+          itemsPerPage: parseInt(limit),
         },
       },
     });
@@ -1052,10 +1220,7 @@ exports.getConsultationHistory = async (req, res, next) => {
       error: error.message,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch consultation history",
-    });
+    next(error);
   }
 };
 
@@ -1064,7 +1229,7 @@ exports.getConsultationHistory = async (req, res, next) => {
  * @route   GET /api/doctors/me/schedule
  * @access  Private (Doctor)
  */
-exports.getSchedule = async (req, res) => {
+exports.getSchedule = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
 
@@ -1081,26 +1246,24 @@ exports.getSchedule = async (req, res) => {
         "saturday",
         "sunday",
       ];
-      const created = [];
-      for (const day of daysOfWeek) {
-        const scheduleData = {
-          doctor_id: doctorId,
-          day_of_week: day,
-          is_available: !["saturday", "sunday"].includes(day),
-          time_slots: !["saturday", "sunday"].includes(day)
+      const defaultSchedulePromises = daysOfWeek.map((day) => {
+        const isWeekday = !["saturday", "sunday"].includes(day);
+        return scheduleRepository.create({
+          doctorId,
+          dayOfWeek: day,
+          isAvailable: isWeekday,
+          timeSlots: isWeekday
             ? [
-                { start_time: "09:00", end_time: "12:00", is_available: true },
-                { start_time: "14:00", end_time: "17:00", is_available: true },
+                { startTime: "09:00", endTime: "12:00", isAvailable: true },
+                { startTime: "14:00", endTime: "17:00", isAvailable: true },
               ]
             : [],
-          break_time: { start_time: "12:00", end_time: "14:00" },
-        };
-        const schedule = await scheduleRepository.create(scheduleData);
-        created.push(schedule);
-      }
+          breakTime: isWeekday ? { startTime: "12:00", endTime: "14:00" } : null,
+        });
+      });
+      const created = await Promise.all(defaultSchedulePromises);
       
       // Invalidate relevant caches after default schedule creation
-      const { deleteCacheByPattern } = require("../config/redis");
       try {
         await deleteCacheByPattern("v1:cache:doctors:*");
         await deleteCacheByPattern("v1:cache:doctor:*");
@@ -1124,10 +1287,7 @@ exports.getSchedule = async (req, res) => {
       error: error.message,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch schedule",
-    });
+    next(error);
   }
 };
 
@@ -1136,7 +1296,7 @@ exports.getSchedule = async (req, res) => {
  * @route   PUT /api/doctors/me/schedule/:dayOfWeek
  * @access  Private (Doctor)
  */
-exports.updateSchedule = async (req, res) => {
+exports.updateSchedule = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { dayOfWeek } = req.params;
@@ -1164,19 +1324,19 @@ exports.updateSchedule = async (req, res) => {
 
     if (schedule) {
       const updateData = {};
-      if (isAvailable !== undefined) updateData.is_available = isAvailable;
-      if (timeSlots) updateData.time_slots = timeSlots;
-      if (breakTime) updateData.break_time = breakTime;
+      if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
+      if (timeSlots) updateData.timeSlots = timeSlots;
+      if (breakTime) updateData.breakTime = breakTime;
       if (notes !== undefined) updateData.notes = notes;
       
-      schedule = await scheduleRepository.update(schedule.id, updateData);
+      schedule = await scheduleRepository.update(schedule._id, updateData);
     } else {
       schedule = await scheduleRepository.create({
-        doctor_id: doctorId,
-        day_of_week: dayOfWeek.toLowerCase(),
-        is_available: isAvailable !== undefined ? isAvailable : true,
-        time_slots: timeSlots || [],
-        break_time: breakTime || null,
+        doctorId,
+        dayOfWeek: dayOfWeek.toLowerCase(),
+        isAvailable: isAvailable !== undefined ? isAvailable : true,
+        timeSlots: timeSlots || [],
+        breakTime: breakTime || null,
         notes: notes || "",
       });
     }
@@ -1187,10 +1347,10 @@ exports.updateSchedule = async (req, res) => {
     });
 
     // Invalidate relevant caches after schedule update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:doctors:*");
       await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after schedule update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -1206,10 +1366,7 @@ exports.updateSchedule = async (req, res) => {
       error: error.message,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update schedule",
-    });
+    next(error);
   }
 };
 
@@ -1218,7 +1375,7 @@ exports.updateSchedule = async (req, res) => {
  * @route   PATCH /api/doctors/me/schedule/:dayOfWeek/toggle
  * @access  Private (Doctor)
  */
-exports.toggleDayAvailability = async (req, res) => {
+exports.toggleDayAvailability = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { dayOfWeek } = req.params;
@@ -1232,21 +1389,21 @@ exports.toggleDayAvailability = async (req, res) => {
       });
     }
 
-    const updatedSchedule = await scheduleRepository.update(schedule.id, {
-      is_available: !schedule.is_available,
+    const updatedSchedule = await scheduleRepository.update(schedule._id, {
+      isAvailable: !schedule.isAvailable,
     });
 
     logger.info("Day availability toggled:", {
       doctorId,
       dayOfWeek,
-      isAvailable: updatedSchedule.is_available,
+      isAvailable: updatedSchedule?.isAvailable,
     });
 
     // Invalidate relevant caches after availability toggle
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:doctors:*");
       await deleteCacheByPattern("v1:cache:doctor:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after availability toggle");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -1262,9 +1419,8 @@ exports.toggleDayAvailability = async (req, res) => {
       error: error.message,
       doctorId: req.user?._id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to toggle availability",
-    });
+    next(error);
   }
 };
+
+

@@ -36,13 +36,15 @@ const passwordChangeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Public routes (with rate limiting for security)
+// Strictly public: email-by-userid is rate-limited; used only for auth flow
 router.post("/email-by-userid", sensitiveAuthLimiter, authController.getEmailByUserId);
-router.post("/profile-by-email", sensitiveAuthLimiter, authController.getProfileByEmail);
-router.post("/current-session", authController.getCurrentSession);
 
-// Protected routes
+// Protected routes — must be authenticated
 router.use(protect);
+
+// These require authentication as they return sensitive user/session data
+router.post("/profile-by-email", sensitiveAuthLimiter, authController.getProfileByEmail);
+router.post("/current-session", sensitiveAuthLimiter, authController.getCurrentSession);
 
 router.get("/me", authController.getMe);
 router.put(

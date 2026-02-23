@@ -95,6 +95,7 @@ router.get("/:id", appointmentController.getAppointment);
  */
 router.put(
   "/:id",
+  authorize("doctor", "admin"),
   validateBody(updateAppointmentSchema),
   appointmentController.updateAppointment
   // Cache invalidation now handled inside controller

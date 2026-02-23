@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Patient Controller
  * Handles patient management, search, and medical history
  */
@@ -7,10 +7,10 @@ const userRepository = require("../repositories/userRepository");
 const patientRepository = require("../repositories/patientRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
-const User = require("../models/User");
-const MedicalRecord = require("../models/MedicalRecord");
-const HealthMetric = require("../models/HealthMetric");
+const medicalRecordRepository = require("../repositories/medicalRecordRepository");
+const healthMetricRepository = require("../repositories/healthMetricRepository");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
 
 /**
  * Helper to check if the requesting user is the same as the target patient
@@ -20,11 +20,30 @@ const logger = require("../utils/logger");
  * @returns {Boolean} - True if user is the same patient
  */
 const isOwnPatientData = (user, patientId) => {
-  // Check against custom userId (e.g., "PAT001")
-  if (user.userId === patientId) return true;
+  // Check against PostgreSQL UUID id
+  if (user.id && user.id === patientId) return true;
+  // Check against custom userId (e.g., "PAT001", "PAT9")
+  if (user.userId && user.userId === patientId) return true;
   // Check against MongoDB _id (ObjectId as string)
   if (user._id && user._id.toString() === patientId) return true;
   return false;
+};
+
+/**
+ * Calculate age from date of birth
+ * @param {Date|string} dateOfBirth
+ * @returns {number|null}
+ */
+const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
+  const today = new Date();
+  const dob = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
 };
 
 /**
@@ -32,7 +51,7 @@ const isOwnPatientData = (user, patientId) => {
  * @route   GET /api/patients/search?q=query
  * @access  Private (Doctor/Admin)
  */
-exports.searchPatients = async (req, res) => {
+exports.searchPatients = async (req, res, next) => {
   try {
     const { q, page = 1, limit = 50 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -67,11 +86,7 @@ exports.searchPatients = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to search patients",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -80,7 +95,7 @@ exports.searchPatients = async (req, res) => {
  * @route   GET /api/patients/:patientId/complete-history
  * @access  Private (Doctor/Admin or Patient own data)
  */
-exports.getCompleteHistory = async (req, res) => {
+exports.getCompleteHistory = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
@@ -122,15 +137,19 @@ exports.getCompleteHistory = async (req, res) => {
     // Use patient id for querying related collections
     const patientDbId = patient.id;
 
+    // Fetch patient profile from patients table for medical fields
+    const patientProfile = await patientRepository.findByUserId(patientDbId);
+
     // Get all medical records (sorted by most recent) - MongoDB collection
     const recordQuery = { patientId: patientDbId };
     if (req.hospitalId && req.user.role !== "super_admin") {
       recordQuery.hospitalId = req.hospitalId;
     }
-    const medicalRecords = await MedicalRecord.find(recordQuery)
-      .populate("doctorId", "name specialization userId isActive")
-      .sort({ createdAt: -1 })
-      .lean();
+    const medicalRecords = await medicalRecordRepository.findWithFilters(recordQuery, {
+      populate: { doctorId: "name specialization userId isActive" },
+      sort: { createdAt: -1 },
+      lean: true
+    });
 
     // Get all appointments (sorted by most recent) - PostgreSQL
     const appointmentFilters = {
@@ -183,11 +202,11 @@ exports.getCompleteHistory = async (req, res) => {
       appointments,
       prescriptions,
       summary: {
-        allergies: patient.allergies || [],
-        bloodGroup: patient.bloodGroup || "Not specified",
-        chronicConditions: patient.medicalHistory || [],
-        age: patient.age,
-        gender: patient.gender,
+        allergies: patientProfile?.allergies || [],
+        bloodGroup: patientProfile?.blood_group || "Not specified",
+        chronicConditions: patientProfile?.chronic_conditions || [],
+        age: calculateAge(patientProfile?.date_of_birth),
+        gender: patientProfile?.gender || null,
       },
     };
 
@@ -201,11 +220,7 @@ exports.getCompleteHistory = async (req, res) => {
       stack: error.stack,
       patientId: req.params.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch patient history",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -214,7 +229,7 @@ exports.getCompleteHistory = async (req, res) => {
  * @route   GET /api/patients/:patientId/profile
  * @access  Private (Doctor/Admin or Patient own data)
  */
-exports.getPatientProfile = async (req, res) => {
+exports.getPatientProfile = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
@@ -261,15 +276,25 @@ exports.getPatientProfile = async (req, res) => {
     
     const [recordCount, appointmentCounts, prescriptionCount] =
       await Promise.all([
-        MedicalRecord.countDocuments(statsQuery),
+        medicalRecordRepository.count(statsQuery),
         appointmentRepository.countByStatus(patient.id, "patient", req.hospitalId),
         prescriptionRepository.findByPatient(patient.id, {}).then(p => p.length),
       ]);
 
+    const normalizedPatient = {
+      ...patient,
+      id: patient.id,
+      userId: patient.userId || patient.user_id || null,
+      hospitalId: patient.hospitalId || patient.hospital_id || null,
+      hospitalName: patient.hospitalName || patient.hospital_name || null,
+      isActive: patient.isActive ?? patient.is_active ?? true,
+      emailVerified: patient.emailVerified ?? patient.email_verified ?? false,
+    };
+
     res.json({
       success: true,
       data: {
-        ...patient,
+        ...normalizedPatient,
         stats: {
           totalRecords: recordCount,
           totalAppointments: appointmentCounts.total || 0,
@@ -283,11 +308,7 @@ exports.getPatientProfile = async (req, res) => {
       stack: error.stack,
       patientId: req.params.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch patient profile",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -296,7 +317,7 @@ exports.getPatientProfile = async (req, res) => {
  * @route   PATCH /api/patients/:patientId/profile
  * @access  Private (Patient own data or Admin)
  */
-exports.updatePatientProfile = async (req, res) => {
+exports.updatePatientProfile = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
@@ -316,6 +337,7 @@ exports.updatePatientProfile = async (req, res) => {
       "address",
       "emergencyContactName",
       "emergencyContactPhone",
+      "emergencyContactRelation",
       "allergies",
       "chronicConditions",
     ];
@@ -388,7 +410,7 @@ exports.updatePatientProfile = async (req, res) => {
       emergencyContact: {
         name: refreshedPatientProfile?.emergency_contact_name || null,
         phone: refreshedPatientProfile?.emergency_contact_phone || null,
-        relation: null,
+        relation: refreshedPatientProfile?.emergency_contact_relation || null,
       },
       allergies: refreshedPatientProfile?.allergies || [],
       chronicConditions: refreshedPatientProfile?.chronic_conditions || [],
@@ -396,7 +418,6 @@ exports.updatePatientProfile = async (req, res) => {
     };
 
     // Invalidate relevant caches after patient profile update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("cache:patient:*");
@@ -418,11 +439,7 @@ exports.updatePatientProfile = async (req, res) => {
       stack: error.stack,
       patientId: req.params.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update patient profile",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -431,7 +448,7 @@ exports.updatePatientProfile = async (req, res) => {
  * @route   GET /api/patients/:patientId/health-metrics
  * @access  Private (Patient own data, Doctor, or Admin)
  */
-exports.getHealthMetrics = async (req, res) => {
+exports.getHealthMetrics = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
@@ -468,10 +485,11 @@ exports.getHealthMetrics = async (req, res) => {
       metricsQuery.hospitalId = req.hospitalId;
     }
     
-    const metrics = await HealthMetric.find(metricsQuery)
-      .sort({ timestamp: -1 })
-      .limit(100)
-      .lean();
+    const metrics = await healthMetricRepository.findWithFilters(metricsQuery, {
+      sort: { timestamp: -1 },
+      limit: 100,
+      lean: true
+    });
 
     res.json({
       success: true,
@@ -484,11 +502,7 @@ exports.getHealthMetrics = async (req, res) => {
       stack: error.stack,
       patientId: req.params.patientId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch health metrics",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -497,7 +511,7 @@ exports.getHealthMetrics = async (req, res) => {
  * @route   POST /api/patients/:patientId/health-metrics
  * @access  Private
  */
-exports.addHealthMetric = async (req, res) => {
+exports.addHealthMetric = async (req, res, next) => {
   try {
     const { patientId } = req.params;
     const { type, value, notes, timestamp } = req.body;
@@ -514,34 +528,44 @@ exports.addHealthMetric = async (req, res) => {
       });
     }
 
-    // Get patient ObjectId for storing metric
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
-    } else {
-      query.userId = patientId;
+    // Validate metric type against HealthMetric model enum
+    const validTypes = ['bp','sugar','weight','bmi','temperature','steps','sleep','water','exercise','stress','heart-rate','oxygen'];
+    if (!type || !validTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid metric type. Must be one of: ${validTypes.join(', ')}`,
+      });
     }
-    const patient = await User.findOne(query).select("_id");
 
-    const patientObjectId = patient ? patient._id : patientId;
-    const metric = await HealthMetric.create({
-      patient: patientObjectId,
+    // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
+    let patient;
+    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (uuidRegex.test(patientId)) {
+      patient = await userRepository.findById(patientId);
+    } else {
+      patient = await userRepository.findByUserId(patientId);
+    }
+
+    // Use patient's UUID string as the 'patient' field (HealthMetric.patient is String)
+    const patientUUID = patient ? patient.id : patientId;
+    const metric = await healthMetricRepository.create({
+      patient: patientUUID,
       hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       type,
       value,
       notes,
       timestamp: timestamp || Date.now(),
-      recordedBy: req.user._id,
+      recordedBy: req.user.id,
       source: req.user.role === "doctor" ? "doctor" : "manual",
     });
 
     // Invalidate patient-related caches after adding health metric
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("cache:patient:*");
       await deleteCacheByPattern("v1:cache:health:*");
       await deleteCacheByPattern("cache:health:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after health metric addition");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -557,11 +581,7 @@ exports.addHealthMetric = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to add health metric",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -570,7 +590,7 @@ exports.addHealthMetric = async (req, res) => {
  * @route   GET /api/patients/:patientId/activity
  * @access  Private
  */
-exports.getActivityData = async (req, res) => {
+exports.getActivityData = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
@@ -586,20 +606,20 @@ exports.getActivityData = async (req, res) => {
       });
     }
 
-    // Get patient ObjectId for querying metrics
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
+    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    let activityPatient;
+    if (uuidRegex.test(patientId)) {
+      activityPatient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      activityPatient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query).select("_id");
 
-    const patientObjectId = patient ? patient._id : patientId;
+    const patientObjectId = activityPatient ? activityPatient.id : patientId;
     const activityTypes = ["steps", "sleep", "water", "exercise", "stress"];
 
     // Get latest activity metrics
-    const latestMetrics = await HealthMetric.getLatestMetrics(
+    const latestMetrics = await healthMetricRepository.getLatestMetrics(
       patientObjectId,
       activityTypes
     );
@@ -617,7 +637,7 @@ exports.getActivityData = async (req, res) => {
       todayMetricsQuery.hospitalId = req.hospitalId;
     }
     
-    const todayMetrics = await HealthMetric.find(todayMetricsQuery).lean();
+    const todayMetrics = await healthMetricRepository.findWithFilters(todayMetricsQuery, { lean: true });
 
     res.json({
       success: true,
@@ -631,11 +651,7 @@ exports.getActivityData = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch activity data",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -644,7 +660,7 @@ exports.getActivityData = async (req, res) => {
  * @route   POST /api/patients/:patientId/activity
  * @access  Private
  */
-exports.updateActivityData = async (req, res) => {
+exports.updateActivityData = async (req, res, next) => {
   try {
     const { patientId } = req.params;
     const { type, value, notes } = req.body;
@@ -666,33 +682,33 @@ exports.updateActivityData = async (req, res) => {
       });
     }
 
-    // Get patient ObjectId for storing metric
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
+    const uuidRegexActivity = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    let updateActivityPatient;
+    if (uuidRegexActivity.test(patientId)) {
+      updateActivityPatient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      updateActivityPatient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query).select("_id");
 
-    const patientObjectId = patient ? patient._id : patientId;
-    const metric = await HealthMetric.create({
-      patient: patientObjectId,
+    const updatePatientId = updateActivityPatient ? updateActivityPatient.id : patientId;
+    const metric = await healthMetricRepository.create({
+      patient: updatePatientId,
       hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
       type,
       value,
       notes,
-      recordedBy: req.user._id,
+      recordedBy: req.user.id,
       source: "app",
     });
 
     // Invalidate patient-related caches after activity update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("cache:patient:*");
       await deleteCacheByPattern("v1:cache:health:*");
       await deleteCacheByPattern("cache:health:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after activity data update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -708,11 +724,7 @@ exports.updateActivityData = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update activity data",
-      error: error.message,
-    });
+    next(error);
   }
 };
 /**
@@ -720,7 +732,7 @@ exports.updateActivityData = async (req, res) => {
  * @route   GET /api/patients/:patientId/health-metrics/latest/:type
  * @access  Private
  */
-exports.getLatestHealthMetric = async (req, res) => {
+exports.getLatestHealthMetric = async (req, res, next) => {
   try {
     const { patientId, type } = req.params;
 
@@ -736,24 +748,27 @@ exports.getLatestHealthMetric = async (req, res) => {
       });
     }
 
-    // Get patient ObjectId
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
+    const uuidRegexLatest = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    let latestPatient;
+    if (uuidRegexLatest.test(patientId)) {
+      latestPatient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      latestPatient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query).select("_id");
 
-    const patientObjectId = patient ? patient._id : patientId;
-    const metricsQuery = { patient: patientObjectId, type };
+    const latestPatientId = latestPatient ? latestPatient.id : patientId;
+    const metricsQuery = { patient: latestPatientId, type };
     if (req.hospitalId && req.user.role !== "super_admin") {
       metricsQuery.hospitalId = req.hospitalId;
     }
     
-    const latestMetric = await HealthMetric.findOne(metricsQuery)
-      .sort({ timestamp: -1 })
-      .lean();
+    const latestMetricResult = await healthMetricRepository.findWithFilters(metricsQuery, {
+      sort: { timestamp: -1 },
+      limit: 1,
+      lean: true
+    });
+    const latestMetric = latestMetricResult.length > 0 ? latestMetricResult[0] : null;
 
     if (!latestMetric) {
       return res.status(404).json({
@@ -773,11 +788,7 @@ exports.getLatestHealthMetric = async (req, res) => {
       patientId: req.params.patientId,
       type: req.params.type,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch latest health metric",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -786,7 +797,73 @@ exports.getLatestHealthMetric = async (req, res) => {
  * @route   DELETE /api/patients/:patientId/health-metrics/:metricId
  * @access  Private (Patient own data or Admin)
  */
-exports.deleteHealthMetric = async (req, res) => {
+exports.updateHealthMetric = async (req, res, next) => {
+  try {
+    const { patientId, metricId } = req.params;
+    const { value, notes, timestamp } = req.body;
+
+    if (
+      req.user.role !== "admin" &&
+      req.user.role !== "doctor" &&
+      !isOwnPatientData(req.user, patientId)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update metrics for this patient",
+      });
+    }
+
+    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    let patient;
+    if (uuidRegex.test(patientId)) {
+      patient = await userRepository.findById(patientId);
+    } else {
+      patient = await userRepository.findByUserId(patientId);
+    }
+    const resolvedPatientId = patient ? patient.id : patientId;
+
+    const existing = await healthMetricRepository.findWithFilters(
+      { _id: metricId, patient: resolvedPatientId },
+      { limit: 1 }
+    );
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: "Metric not found" });
+    }
+
+    const updates = {};
+    if (value !== undefined) updates.value = value;
+    if (notes !== undefined) updates.notes = notes;
+    if (timestamp !== undefined) updates.timestamp = timestamp;
+
+    const updated = await healthMetricRepository.update(metricId, updates);
+
+    try {
+      await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("cache:patient:*");
+      await deleteCacheByPattern("v1:cache:health:*");
+      await deleteCacheByPattern("cache:health:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
+      logger.debug("Cache invalidated after health metric update");
+    } catch (cacheError) {
+      logger.warn("Failed to invalidate cache:", cacheError.message);
+    }
+
+    res.json({
+      success: true,
+      message: "Health metric updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    logger.error("Update health metric error:", {
+      error: error.message,
+      stack: error.stack,
+      metricId: req.params.metricId,
+    });
+    next(error);
+  }
+};
+
+exports.deleteHealthMetric = async (req, res, next) => {
   try {
     const { patientId, metricId } = req.params;
 
@@ -801,36 +878,40 @@ exports.deleteHealthMetric = async (req, res) => {
       });
     }
 
-    // Get patient ObjectId
-    const query = { role: "patient" };
-    if (patientId.match(/^[0-9a-fA-F]{24}$/)) {
-      query.$or = [{ userId: patientId }, { _id: patientId }];
+    // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
+    const uuidRegexDel = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    let deletePatient;
+    if (uuidRegexDel.test(patientId)) {
+      deletePatient = await userRepository.findById(patientId);
     } else {
-      query.userId = patientId;
+      deletePatient = await userRepository.findByUserId(patientId);
     }
-    const patient = await User.findOne(query).select("_id");
 
-    const patientObjectId = patient ? patient._id : patientId;
+    const deletePatientId = deletePatient ? deletePatient.id : patientId;
     
-    const metric = await HealthMetric.findOneAndDelete({
+    // First find the metric to verify it belongs to the patient
+    const existingMetric = await healthMetricRepository.findWithFilters({
       _id: metricId,
-      patient: patientObjectId,
-    });
-
-    if (!metric) {
+      patient: deletePatientId,
+    }, { limit: 1 });
+    
+    if (existingMetric.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Metric not found",
       });
     }
+    
+    const metric = existingMetric[0];
+    await healthMetricRepository.delete(metricId);
 
     // Invalidate patient-related caches after metric deletion
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("cache:patient:*");
       await deleteCacheByPattern("v1:cache:health:*");
       await deleteCacheByPattern("cache:health:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after health metric deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -847,10 +928,6 @@ exports.deleteHealthMetric = async (req, res) => {
       stack: error.stack,
       metricId: req.params.metricId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete health metric",
-      error: error.message,
-    });
+    next(error);
   }
 };

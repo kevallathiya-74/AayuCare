@@ -8,10 +8,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initializeSentry } from "./src/config/sentry";
 import queryClient from "./src/config/reactQueryConfig";
 
-console.log("═══════════════════════════════════════════");
-console.log("[App.js] File loading...");
-console.log("═══════════════════════════════════════════");
-
 // Global error handler to catch unhandled errors
 if (__DEV__) {
   const originalConsoleError = console.error;
@@ -29,12 +25,9 @@ if (__DEV__) {
 
   // Set up global error handler
   const errorHandler = (error, isFatal) => {
-    console.log("═══════════════════════════════════════════");
     console.log("[GLOBAL ERROR CAUGHT]");
     console.log("Error:", error?.message || error);
     console.log("Stack:", error?.stack);
-    console.log("Fatal:", isFatal);
-    console.log("═══════════════════════════════════════════");
     if (isFatal) {
       console.log("[FATAL ERROR] App will restart");
     }
@@ -53,21 +46,15 @@ LogBox.ignoreLogs([
 console.log("[App.js] Importing dependencies...");
 
 import store from "./src/store/store";
-console.log("[App.js] Store imported");
 
 import AppNavigator from "./src/navigation/AppNavigator";
-console.log("[App.js] AppNavigator imported");
 
 import ErrorBoundary from "./src/components/common/ErrorBoundary";
-console.log("[App.js] ErrorBoundary imported");
 
 // Initialize i18n
-console.log("[App.js] Initializing i18n...");
 import "./src/i18n";
-console.log("[App.js] i18n initialized");
 
 // Import theme safely with fallback
-console.log("[App.js] Loading unified theme system...");
 let paperTheme;
 try {
   // Import unified theme
@@ -78,8 +65,8 @@ try {
     colors: {
       primary: theme.colors.primary,
       accent: theme.colors.secondary,
-      background: theme.colors.background.main,
-      surface: theme.colors.background.paper,
+      background: theme.colors.background.primary,
+      surface: theme.colors.background.secondary,
       text: theme.colors.text.primary,
       disabled: theme.colors.grays.gray400,
       placeholder: theme.colors.text.secondary,
@@ -104,11 +91,10 @@ try {
       },
     },
   };
-
-  console.log("[App] ✅ Unified Theme System Loaded");
-  console.log("[App] Theme Colors:", Object.keys(paperTheme.colors).length);
 } catch (e) {
-  console.error("[App] Theme loading failed:", e.message);
+  if (__DEV__) {
+    console.error("[App] Theme loading failed:", e.message);
+  }
   // Use a minimal fallback theme
   paperTheme = {
     colors: {},
@@ -116,42 +102,22 @@ try {
   };
 }
 
-console.log("[App.js] Initializing Sentry...");
 // Initialize Sentry (safe guards built into initializeSentry)
 initializeSentry();
-console.log("[App.js] Sentry initialization complete");
-
-console.log("[App.js] Centralized QueryClient loaded from reactQueryConfig");
-console.log("[App.js] Defining App component...");
 
 export default function App() {
-  console.log("[App] Component rendering...");
-
   useEffect(() => {
-    // Simple logging for debugging - don't block rendering
-    const logInit = () => {
-      console.log("[App] Starting...");
+    if (__DEV__) {
+      // Simple dev-only diagnostic logging
       if (!paperTheme || !paperTheme.colors || !paperTheme.fonts) {
         console.warn("[App] Theme not fully loaded");
-      } else {
-        console.log(
-          "[App] Theme OK - Colors:",
-          Object.keys(paperTheme.colors).length,
-          "properties"
-        );
       }
-      console.log("[App] Ready");
-    };
-
-    // Run async to avoid blocking
-    setTimeout(logInit, 0);
+    }
   }, []);
 
-  console.log("[App] Returning JSX...");
-
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <SafeAreaProvider>
         <View style={styles.container}>
           <ReduxProvider store={store}>
             <QueryClientProvider client={queryClient}>
@@ -162,8 +128,8 @@ export default function App() {
             </QueryClientProvider>
           </ReduxProvider>
         </View>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -46,6 +46,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     address: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    emergencyContactRelation: "",
     allergies: "",
     chronicConditions: "",
   });
@@ -73,8 +74,10 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = "Password must contain uppercase, lowercase, and a number";
     }
 
     if (
@@ -103,17 +106,6 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      logger.debug("AddPatientModal", "Submitting patient form");
-      logger.debug("AddPatientModal", "Address diagnostics", {
-        value: formData.address,
-        type: typeof formData.address,
-        length: formData.address ? formData.address.length : 0,
-        trimmed: formData.address ? formData.address.trim() : '',
-        trimmedLength: formData.address ? formData.address.trim().length : 0,
-        hasValue: !!formData.address,
-        hasTrimmedValue: !!(formData.address && formData.address.trim())
-      });
-
       // Backend will generate auto-increment userId (PAT1, PAT2, PAT3...)
       // Prepare patient data without userId
       const patientData = {
@@ -134,21 +126,16 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         patientData.bloodGroup = formData.bloodGroup;
       }
       if (formData.address && formData.address.trim()) {
-        logger.debug("AddPatientModal", "Adding address to payload");
         patientData.address = formData.address.trim();
-      } else {
-        logger.debug("AddPatientModal", "Address skipped due to empty value");
-        logger.debug("AddPatientModal", "Address empty condition diagnostics", {
-          hasAddress: !!formData.address,
-          addressValue: formData.address,
-          trimValue: formData.address ? formData.address.trim() : ''
-        });
       }
       if (formData.emergencyContactName && formData.emergencyContactName.trim()) {
         patientData.emergencyContactName = formData.emergencyContactName.trim();
       }
       if (formData.emergencyContactPhone && formData.emergencyContactPhone.trim()) {
         patientData.emergencyContactPhone = formData.emergencyContactPhone.trim();
+      }
+      if (formData.emergencyContactRelation && formData.emergencyContactRelation.trim()) {
+        patientData.emergencyContactRelation = formData.emergencyContactRelation.trim();
       }
       if (formData.allergies && formData.allergies.trim()) {
         patientData.allergies = formData.allergies
@@ -162,12 +149,11 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           .map((item) => item.trim())
           .filter(Boolean);
       }
-      logger.debug("AddPatientModal", "Submitting create user payload");
 
       // Call create API
       const response = await adminService.createUser(patientData);
 
-      if (response.status === "success") {
+      if (response.success === true) {
         // Call onSuccess first to trigger parent refetch
         if (onSuccess) {
           onSuccess();
@@ -241,6 +227,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       address: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
+      emergencyContactRelation: "",
       allergies: "",
       chronicConditions: "",
     });
@@ -557,6 +544,13 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "+911234567890",
               "call",
               "phone-pad"
+            )}
+            {renderInput(
+              "emergencyContactRelation",
+              "Emergency Contact Relation",
+              "e.g. Father, Spouse, Friend",
+              "people",
+              "default"
             )}
             {renderInput(
               "allergies",

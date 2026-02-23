@@ -6,6 +6,8 @@
 import authClient from "./betterAuth.service";
 import { APP_CONFIG } from "../config/appConfig";
 import api from "./apiClient";
+import appStorage from '../utils/appStorage';
+import { STORAGE_KEYS } from '../utils/constants';
 
 // Re-export Better Auth methods
 export const { signIn, signUp, signOut, useSession } = authClient;
@@ -88,7 +90,7 @@ const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
 export const login = async (credentials) => {
   try {
     const userInput = credentials.userId || credentials.email;
-    console.log('[auth.service] Login attempt with:', isEmail(userInput) ? 'email' : 'userId');
+    if (__DEV__) { console.log('[auth.service] Login attempt with:', isEmail(userInput) ? 'email' : 'userId'); }
     
     // Validate credentials
     if (!userInput || !credentials.password) {
@@ -99,8 +101,8 @@ export const login = async (credentials) => {
 
     // If input is not an email, convert userId to email
     if (!isEmail(email)) {
-      console.log('[auth.service] Converting userId to email...');
-      console.log('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/user/email-by-userid`);
+      if (__DEV__) { console.log('[auth.service] Converting userId to email...'); }
+      if (__DEV__) { console.log('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/user/email-by-userid`); }
       
       const emailResponse = await fetchWithTimeout(
         `${APP_CONFIG.api.baseURL}/user/email-by-userid`,
@@ -114,11 +116,11 @@ export const login = async (credentials) => {
         10000 // 10 second timeout
       );
 
-      console.log('[auth.service] Email lookup response status:', emailResponse.status);
+      if (__DEV__) { console.log('[auth.service] Email lookup response status:', emailResponse.status); }
 
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json().catch(() => ({}));
-        console.error('[auth.service] Email lookup failed:', errorData);
+        if (__DEV__) { console.error('[auth.service] Email lookup failed:', errorData); }
         
         if (emailResponse.status === 404) {
           throw new Error('User ID not found.');
@@ -136,19 +138,19 @@ export const login = async (credentials) => {
         throw new Error('Invalid server response. Please try again.');
       }
 
-      console.log('[auth.service] Email found for userId');
+      if (__DEV__) { console.log('[auth.service] Email found for userId'); }
     } else {
-      console.log('[auth.service] Using email directly for login');
+      if (__DEV__) { console.log('[auth.service] Using email directly for login'); }
     }
 
     // Sign in using Better Auth with email and password
-    console.log('[auth.service] Attempting Better Auth sign-in...');
+    if (__DEV__) { console.log('[auth.service] Attempting Better Auth sign-in...'); }
     const result = await signIn.email({
       email: email,
       password: credentials.password,
     });
 
-    console.log('[auth.service] Better Auth sign-in completed');
+    if (__DEV__) { console.log('[auth.service] Better Auth sign-in completed'); }
 
     if (!result.data?.user) {
       throw new Error('Invalid email/password combination.');
@@ -157,7 +159,7 @@ export const login = async (credentials) => {
     const betterAuthUserId = result.data.user.id;
 
     // Fetch full user profile with user-friendly data
-    console.log('[auth.service] Fetching full user profile...');
+    if (__DEV__) { console.log('[auth.service] Fetching full user profile...'); }
     const profileResponse = await fetchWithTimeout(
       `${APP_CONFIG.api.baseURL}/user/profile-by-email`,
       {
@@ -171,60 +173,63 @@ export const login = async (credentials) => {
     );
 
     if (!profileResponse.ok) {
-      console.error('[auth.service] Profile fetch failed');
+      if (__DEV__) { console.error('[auth.service] Profile fetch failed'); }
       throw new Error('Failed to fetch user profile');
     }
 
     const profileData = await profileResponse.json();
     const normalizedUser = normalizeUserProfile(profileData.data || {});
-    console.log('[auth.service] Profile fetched for role:', normalizedUser.role);
+    if (__DEV__) { console.log('[auth.service] Profile fetched for role:', normalizedUser.role); }
 
-    // Fetch the session token from backend
-    console.log('[auth.service] Fetching session token...');
-    let sessionToken = null;
-    try {
-      const sessionResponse = await fetchWithTimeout(
-        `${APP_CONFIG.api.baseURL}/user/current-session`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+    // Prefer the session token returned directly by Better Auth (most reliable - no race condition)
+    let sessionToken = result.data?.session?.token || result.data?.token || null;
+
+    if (sessionToken) {
+      if (__DEV__) { console.log('[auth.service] Session token obtained directly from sign-in response'); }
+    } else {
+      // Fallback: fetch the session from the backend (handles edge cases where
+      // the token is not embedded in the sign-in response)
+      if (__DEV__) { console.log('[auth.service] Token not in sign-in response, fetching from backend...'); }
+      try {
+        const sessionResponse = await fetchWithTimeout(
+          `${APP_CONFIG.api.baseURL}/user/current-session`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: betterAuthUserId }),
           },
-          body: JSON.stringify({ userId: betterAuthUserId }),
-        },
-        5000
-      );
+          5000
+        );
 
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        sessionToken = sessionData.token;
-        console.log('[auth.service] Session token retrieved:', sessionToken ? 'exists' : 'missing');
-      } else {
-        console.warn('[auth.service] Session fetch failed:', sessionResponse.status);
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          sessionToken = sessionData.token;
+          if (__DEV__) { console.log('[auth.service] Session token retrieved from backend:', sessionToken ? 'exists' : 'missing'); }
+        } else {
+          if (__DEV__) { console.warn('[auth.service] Backend session fetch failed:', sessionResponse.status); }
+        }
+      } catch (sessionError) {
+        if (__DEV__) { console.error('[auth.service] Error fetching session from backend:', sessionError); }
       }
-    } catch (sessionError) {
-      console.error('[auth.service] Error fetching session:', sessionError);
     }
 
     // Store session token in appStorage for API interceptor
     if (sessionToken) {
-      const appStorage = (await import('../utils/appStorage')).default;
-      const { STORAGE_KEYS } = await import('../utils/constants');
       await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-      console.log('[auth.service] Session token stored in appStorage');
+      if (__DEV__) { console.log('[auth.service] Session token stored in appStorage'); }
     } else {
-      console.warn('[auth.service] No session token available - API calls may fail');
+      if (__DEV__) { console.warn('[auth.service] No session token available - API calls may fail'); }
     }
 
-    console.log('[auth.service] Login successful for role:', profileData.data.role);
+    if (__DEV__) { console.log('[auth.service] Login successful for role:', profileData.data.role); }
 
     return {
       user: normalizedUser,
       token: sessionToken,
     };
   } catch (error) {
-    console.error('[auth.service] Login error:', error.message);
-    console.error('[auth.service] Error details:', error);
+    if (__DEV__) { console.error('[auth.service] Login error:', error.message); }
+    if (__DEV__) { console.error('[auth.service] Error details:', error); }
     
     // Re-throw with user-friendly message
     if (error.message.includes('fetch failed') || error.message.includes('Network request failed')) {
@@ -240,6 +245,17 @@ export const login = async (credentials) => {
 };
 
 export const register = async (userData) => {
+  // Validate required fields before calling API
+  if (!userData.email || !userData.email.trim()) {
+    throw new Error('Email is required');
+  }
+  if (!userData.password || userData.password.length < 6) {
+    throw new Error('Password must be at least 6 characters');
+  }
+  if (!userData.name || !userData.name.trim()) {
+    throw new Error('Name is required');
+  }
+
   const result = await signUp.email({
     email: userData.email,
     password: userData.password,
@@ -250,15 +266,17 @@ export const register = async (userData) => {
   // Extract and store session token
   const sessionToken = result.data?.session?.token;
   if (sessionToken) {
-    const appStorage = (await import('../utils/appStorage')).default;
-    const { STORAGE_KEYS } = await import('../utils/constants');
     await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-    console.log('[auth.service] Registration token stored');
+    if (__DEV__) { console.log('[auth.service] Registration token stored'); }
   }
 
+  // Normalize user profile for consistent camelCase shape in Redux
+  const rawUser = result.data?.user;
+  const normalizedUser = rawUser ? normalizeUserProfile(rawUser) : null;
+
   return {
-    success: !!result.data?.user,
-    user: result.data?.user,
+    success: !!rawUser,
+    user: normalizedUser,
     token: sessionToken,
   };
 };
@@ -266,41 +284,68 @@ export const register = async (userData) => {
 export const logout = async () => {
   try {
     // Clear token from appStorage
-    const appStorage = (await import('../utils/appStorage')).default;
-    const { STORAGE_KEYS } = await import('../utils/constants');
     await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
     await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-    console.log('[auth.service] Storage cleared');
+    if (__DEV__) { console.log('[auth.service] Storage cleared'); }
 
     // Sign out from Better Auth
     await signOut();
-    console.log('[auth.service] Logout complete');
+    if (__DEV__) { console.log('[auth.service] Logout complete'); }
   } catch (error) {
-    console.error('[auth.service] Logout error:', error);
+    if (__DEV__) { console.error('[auth.service] Logout error:', error); }
     // Continue even if error - best effort logout
   }
 };
 
 export const getSession = async () => {
   try {
-    console.log('[auth.service] Checking for active session...');
-    
-    // Better Auth expo client doesn't expose a direct getSession() method
-    // Sessions are managed internally by the auth client after successful login
-    // The session token is stored in SecureStore automatically
-    
-    // TODO: Implement session persistence
-    // For now, users must log in each time they open the app
-    // To persist sessions, we need to:
-    // 1. Store session token after login
-    // 2. Validate token on app startup
-    // 3. Restore user data if token is valid
-    
-    console.log('[auth.service] No active session - user needs to log in');
-    return null;
-    
+    if (__DEV__) { console.log('[auth.service] Checking for active session...'); }
+
+    // Read the session token we stored in AsyncStorage at login time
+    const storedToken = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+
+    if (!storedToken) {
+      if (__DEV__) { console.log('[auth.service] No token in AsyncStorage - user must log in'); }
+      return null;
+    }
+
+    // Validate the token against the backend using the existing /user/me endpoint
+    // (checks the token against the PostgreSQL session table for expiry)
+    const validateResponse = await fetchWithTimeout(
+      `${APP_CONFIG.api.baseURL}/user/me`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          'Content-Type': 'application/json',
+        },
+      },
+      8000
+    );
+
+    if (!validateResponse.ok) {
+      // Token expired or invalid - clear it so the user is prompted to log in
+      if (__DEV__) { console.log('[auth.service] Stored token is no longer valid, clearing storage'); }
+      await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+      await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+      return null;
+    }
+
+    const sessionData = await validateResponse.json();
+    // /user/me returns { status: 'success', data: { user: {...}, session: {...} } }
+    const userProfile = sessionData.data?.user || sessionData.user || null;
+
+    if (!userProfile) {
+      if (__DEV__) { console.log('[auth.service] Session valid but no user data returned'); }
+      return null;
+    }
+
+    const normalizedUser = normalizeUserProfile(userProfile);
+    if (__DEV__) { console.log('[auth.service] Session restored for:', normalizedUser.role, normalizedUser.email); }
+    return { user: normalizedUser, token: storedToken };
   } catch (error) {
-    console.error('[auth.service] getSession error:', error);
+    if (__DEV__) { console.error('[auth.service] getSession error:', error?.message || error); }
+    // Network error - don't clear storage (user might be offline)
     return null;
   }
 };

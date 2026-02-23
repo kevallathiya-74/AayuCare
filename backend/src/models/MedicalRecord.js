@@ -93,9 +93,11 @@ const medicalRecordSchema = new mongoose.Schema({
 });
 
 // Indexes for faster queries
+medicalRecordSchema.index({ patientId: 1, hospitalId: 1, createdAt: -1 });
 medicalRecordSchema.index({ patientId: 1, date: -1 });
 medicalRecordSchema.index({ doctorId: 1, date: -1 });
 medicalRecordSchema.index({ recordType: 1 });
 medicalRecordSchema.index({ 'aiAnalysis.riskScore': -1 });
+medicalRecordSchema.index({ hospitalId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('MedicalRecord', medicalRecordSchema);

@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme/healthColors";
+import { healthColors } from "../theme";
 import { textStyles } from "../theme/typography";
 import { spacing } from "../theme/spacing";
 

@@ -15,7 +15,6 @@ const initAuth = () => {
   if (auth) return auth;
 
   try {
-    // Create PostgreSQL connection pool for Better Auth
     authPool = new Pool({
       host: process.env.POSTGRES_HOST || "localhost",
       port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
@@ -36,7 +35,7 @@ const initAuth = () => {
 
       // Map to existing PostgreSQL users table
       user: {
-        modelName: "users", // Use our existing 'users' table name
+        modelName: "users", 
         fields: {
           emailVerified: "email_verified",
           createdAt: "created_at",
@@ -149,13 +148,13 @@ const initAuth = () => {
         updateAge: 60 * 60 * 24, // Update every 24 hours
         cookieCache: {
           enabled: true,
-          maxAge: 60 * 5, // 5 minutes
+          maxAge: 60 * 5,
         },
       },
 
       // Map account table fields  
       account: {
-        modelName: "account", // Better Auth will create this table
+        modelName: "account",
         fields: {
           accountId: "account_id",
           providerId: "provider_id",
@@ -175,7 +174,6 @@ const initAuth = () => {
         requireEmailVerification: false,
         minPasswordLength: 6,
         maxPasswordLength: 128,
-        // Use bcrypt for password hashing (for compatibility with seeded users)
         password: {
           hash: async (password) => {
             return await bcrypt.hash(password, 12);
@@ -187,16 +185,13 @@ const initAuth = () => {
       },
 
       advanced: {
-        cookieSameSite: "none", // Changed from "lax" for mobile app compatibility
-        cookieSecure: false, // Disabled for development (allow HTTP)
-        useSecureCookies: false, // Disabled for development
-        // Allow requests without Origin header (for React Native/Expo mobile apps)
+        cookieSameSite: "none", 
+        cookieSecure: false,
+        useSecureCookies: false, 
         requireOriginHeader: false,
-        // Disable CSRF protection for mobile apps (React Native/Expo)
         disableCSRFCheck: true,
-        // Disable subdomain cookies
         crossSubdomainCookies: {
-          enabled: false,
+        enabled: false,
         },
       },
 
@@ -206,7 +201,7 @@ const initAuth = () => {
         "http://localhost:19006",
         "http://localhost:8081",
         "exp://192.168.137.1:8081",
-        "*", // Allow all origins for mobile app
+        "*",
       ].filter(Boolean),
     });
 

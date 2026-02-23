@@ -111,7 +111,8 @@ const deleteCache = async (key) => {
 
 /**
  * Delete multiple cache keys by pattern
- * Uses SCAN for production-safe iteration (non-blocking)
+ * Uses SCAN for production-safe iteration (non-blocking, O(1) per call)
+ * ioredis scan() returns [nextCursorString, keysArray] — NOT an object with .cursor/.keys
  * @param {string} pattern - Key pattern (e.g., "user:*")
  * @returns {Promise<number>} Number of keys deleted
  */
@@ -120,30 +121,34 @@ const deleteCacheByPattern = async (pattern) => {
     const keys = [];
     let cursor = "0";
 
-    // Use SCAN instead of KEYS for production safety (non-blocking, O(1) per call)
+    // ioredis SCAN signature: scan(cursor, 'MATCH', pattern, 'COUNT', count)
+    // returns [nextCursorString, keysArray]
     do {
-      const result = await redisClient.scan(cursor, {
-        MATCH: pattern,
-        COUNT: 100, // Scan 100 keys at a time
-      });
-
-      cursor = result.cursor;
-      if (result.keys.length > 0) {
-        keys.push(...result.keys);
+      const [nextCursor, batch] = await redisClient.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100
+      );
+      cursor = nextCursor;
+      if (batch.length > 0) {
+        keys.push(...batch);
       }
     } while (cursor !== "0");
 
     if (keys.length === 0) return 0;
 
-    // Delete in batches to avoid blocking
+    // Delete in batches of 100 to avoid blocking Redis
     const batchSize = 100;
     let deleted = 0;
     for (let i = 0; i < keys.length; i += batchSize) {
-      const batch = keys.slice(i, i + batchSize);
-      await redisClient.del(...batch);
-      deleted += batch.length;
+      const batchKeys = keys.slice(i, i + batchSize);
+      await redisClient.del(...batchKeys);
+      deleted += batchKeys.length;
     }
 
+    logger.debug(`Redis: deleted ${deleted} keys matching "${pattern}"`);
     return deleted;
   } catch (error) {
     logger.error("Redis pattern delete error:", error.message);

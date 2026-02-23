@@ -29,7 +29,7 @@ import { logError } from '../utils/errorHandler';
 export function useAppointmentsInfinite(filters = {}, options = {}) {
   return useInfiniteQuery({
     queryKey: queryKeys.appointments.infinite(filters),
-    
+
     queryFn: async ({ pageParam = null }) => {
       try {
         const response = await appointmentService.getAppointmentsCursor({
@@ -38,7 +38,6 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
           limit: filters.limit || 20,
         });
 
-        // Backend returns { status: "success", data: {...} }
         if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointments');
         }
@@ -51,17 +50,12 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
     },
 
     getNextPageParam: (lastPage) => {
-      // Return next cursor if there are more pages
       return lastPage.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined;
     },
 
-    // Stale time: 2 minutes for appointment lists
+    initialPageParam: null,
     staleTime: 2 * 60 * 1000,
-
-    // Enabled by default, can be overridden
     enabled: true,
-
-    // Custom options
     ...options,
   });
 }
@@ -69,15 +63,15 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
 /**
  * Hook: Fetch patient appointments with infinite scroll
  * Backend filters by authenticated user's patientId automatically
- * 
+ *
  * @param {String} patientId - Patient ID (optional, backend uses authenticated user)
  * @param {Object} filters - Filter options
  * @param {Object} options - Additional React Query options
  */
 export function usePatientAppointmentsInfinite(patientId, filters = {}, options = {}) {
   return useInfiniteQuery({
-    queryKey: queryKeys.appointments.patient(patientId),
-    
+    queryKey: [...queryKeys.appointments.patient(patientId), filters],
+
     queryFn: async ({ pageParam = null }) => {
       try {
         // Use main cursor endpoint - backend filters by authenticated user
@@ -87,7 +81,6 @@ export function usePatientAppointmentsInfinite(patientId, filters = {}, options 
           limit: filters.limit || 20,
         });
 
-        // Backend returns { status: "success", data: {...} }
         if (response.status !== 'success') {
           throw new Error(response.message || 'Failed to fetch appointments');
         }
@@ -103,6 +96,7 @@ export function usePatientAppointmentsInfinite(patientId, filters = {}, options 
       return lastPage.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined;
     },
 
+    initialPageParam: null,
     staleTime: 2 * 60 * 1000,
     enabled: !!patientId && options.enabled !== false,
     ...options,
@@ -119,7 +113,8 @@ export function usePatientAppointmentsInfinite(patientId, filters = {}, options 
  */
 export function useDoctorAppointmentsInfinite(doctorId, filters = {}, options = {}) {
   return useInfiniteQuery({
-    queryKey: queryKeys.appointments.doctor(doctorId),
+    // Include filters in queryKey so different filter combinations use separate cache entries
+    queryKey: [...queryKeys.appointments.doctor(doctorId), filters],
     
     queryFn: async ({ pageParam = null }) => {
       try {
@@ -146,6 +141,7 @@ export function useDoctorAppointmentsInfinite(doctorId, filters = {}, options = 
       return lastPage.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined;
     },
 
+    initialPageParam: null,
     staleTime: 2 * 60 * 1000,
     enabled: !!doctorId && options.enabled !== false,
     ...options,
@@ -243,7 +239,7 @@ export function useUpdateAppointmentStatus() {
       
       // Update the cache for this specific appointment
       queryClient.setQueryData(
-        queryKeys.appointments.detail(updatedAppointment._id),
+        queryKeys.appointments.detail(updatedAppointment.id),
         updatedAppointment
       );
     },

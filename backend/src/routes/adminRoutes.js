@@ -32,6 +32,8 @@ const {
   registerSchema,
   updateProfileSchema,
   changePasswordSchema,
+  updateUserRoleSchema,
+  bulkUpdateUsersSchema,
 } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
@@ -71,9 +73,10 @@ router.delete("/users/:userId", deleteUser
   // Cache invalidation now handled inside controller
 );
 // PERMANENT DELETE - Use with extreme caution (violates healthcare compliance)
-// Rate limited to 5 deletions per hour for security
+// Rate limited to 5 deletions per hour for security — super_admin ONLY
 router.delete(
-  "/users/:userId/permanent", 
+  "/users/:userId/permanent",
+  authorize("super_admin"),
   criticalOperationLimiter,
   permanentDeleteUser
   // Cache invalidation now handled inside controller  
@@ -85,12 +88,14 @@ router.patch(
 );
 router.patch(
   "/users/:userId/role",
+  validateBody(updateUserRoleSchema),
   updateUserRole
   // Cache invalidation now handled inside controller
 );
 
 router.post(
   "/users/bulk",
+  validateBody(bulkUpdateUsersSchema),
   bulkUpdateUsers
   // Cache invalidation now handled inside controller
 );

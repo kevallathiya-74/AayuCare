@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
@@ -125,7 +125,7 @@ const ChangePasswordScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
@@ -212,7 +212,7 @@ const ChangePasswordScreen = ({ navigation }) => {
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <ActivityIndicator color={healthColors.white} />
+              <ActivityIndicator color={healthColors.text.white} />
             ) : (
               <Text style={styles.submitButtonText}>Change Password</Text>
             )}
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.button.disabled,
   },
   submitButtonText: {
-    color: healthColors.white,
+    color: healthColors.text.white,
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
   },

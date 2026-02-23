@@ -88,11 +88,6 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     }
   }, [normalizedUserRole]);
 
-  // Initial load
-  useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
-
   // Ensure list refreshes once auth role is available/hydrated
   useEffect(() => {
     if (!normalizedUserRole) {
@@ -303,21 +298,25 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   );
 
   useEffect(() => {
-    if (!patientIdFromRoute || loading || patients.length === 0) {
-      return;
-    }
+    if (!patientIdFromRoute) return;
 
+    // Clear route param immediately to prevent re-trigger on re-renders.
+    navigation.setParams({ patientId: undefined, patientName: undefined });
+
+    // Try to find patient in already-loaded list for richer data;
+    // fall back to a minimal stub — PatientDetailsModal fetches its own data.
     const matchedPatient = patients.find((patient) => {
       const ids = [patient?._id, patient?.id, patient?.userId].filter(Boolean);
       return ids.includes(patientIdFromRoute);
     });
 
-    if (matchedPatient) {
-      handlePatientPress(matchedPatient);
-    }
-
-    navigation.setParams({ patientId: undefined, patientName: undefined });
-  }, [patientIdFromRoute, patients, loading, navigation]);
+    handlePatientPress(matchedPatient || {
+      _id: patientIdFromRoute,
+      id: patientIdFromRoute,
+      userId: patientIdFromRoute,
+      name: route?.params?.patientName || "",
+    });
+  }, [patientIdFromRoute]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderPatient = useCallback(
     ({ item }) => {
@@ -550,7 +549,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search patients by name, email, phone..."
+            placeholder="Search patients by name"
             placeholderTextColor={healthColors.text.tertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}

@@ -1,42 +1,30 @@
-/**
+﻿/**
  * Notification Controller
  * Handles notification CRUD operations and user notifications
  */
 
-const Notification = require("../models/Notification");
-const mongoose = require("mongoose");
+const notificationRepository = require("../repositories/notificationRepository");
 const logger = require("../utils/logger");
+const { deleteCacheByPattern } = require("../config/redis");
 
+// Resolve user's UUID string id from the authenticated request
 const resolveUserId = (req) =>
-  req.user?._id || req.user?.mongoId || req.user?.id || req.user?.userId;
-
-const toObjectId = (value) => {
-  if (!value) return null;
-  const id = typeof value === "string" ? value : value.toString();
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return new mongoose.Types.ObjectId(id);
-};
+  req.user?.id || req.user?.userId || req.user?._id?.toString();
 
 /**
  * @desc    Get user notifications
  * @route   GET /api/notifications
  * @access  Private
  */
-exports.getUserNotifications = async (req, res) => {
+exports.getUserNotifications = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, read } = req.query;
-    const userId = toObjectId(resolveUserId(req));
+    const userId = resolveUserId(req);
 
     if (!userId) {
-      return res.json({
-        success: true,
-        data: [],
-        pagination: {
-          total: 0,
-          page: parseInt(page),
-          pages: 0,
-        },
-        unreadCount: 0,
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required to fetch notifications",
       });
     }
 
@@ -45,14 +33,17 @@ exports.getUserNotifications = async (req, res) => {
       query.read = read === "true";
     }
 
-    const notifications = await Notification.find(query)
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .lean();
+    const notifications = await notificationRepository.findWithFilters(
+      query,
+      {
+        sort: { createdAt: -1 },
+        limit: parseInt(limit),
+        offset: (parseInt(page) - 1) * parseInt(limit),
+      }
+    );
 
-    const total = await Notification.countDocuments(query);
-    const unreadCount = await Notification.getUnreadCount(userId);
+    const total = await notificationRepository.count(query);
+    const unreadCount = await notificationRepository.getUnreadCount(userId);
 
     res.json({
       success: true,
@@ -69,11 +60,7 @@ exports.getUserNotifications = async (req, res) => {
       error: error.message,
       userId: resolveUserId(req),
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch notifications",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -82,10 +69,10 @@ exports.getUserNotifications = async (req, res) => {
  * @route   GET /api/notifications/unread-count
  * @access  Private
  */
-exports.getUnreadCount = async (req, res) => {
+exports.getUnreadCount = async (req, res, next) => {
   try {
-    const userId = toObjectId(resolveUserId(req));
-    const count = userId ? await Notification.getUnreadCount(userId) : 0;
+    const userId = resolveUserId(req);
+    const count = userId ? await notificationRepository.getUnreadCount(userId) : 0;
 
     res.json({
       success: true,
@@ -98,11 +85,7 @@ exports.getUnreadCount = async (req, res) => {
       error: error.message,
       userId: resolveUserId(req),
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to get unread count",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -111,10 +94,10 @@ exports.getUnreadCount = async (req, res) => {
  * @route   PUT /api/notifications/:id/read
  * @access  Private
  */
-exports.markAsRead = async (req, res) => {
+exports.markAsRead = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = toObjectId(resolveUserId(req));
+    const userId = resolveUserId(req);
 
     if (!userId) {
       return res.status(400).json({
@@ -123,22 +106,21 @@ exports.markAsRead = async (req, res) => {
       });
     }
 
-    const notification = await Notification.findOne({
-      _id: id,
-      userId,
-    });
+    const notification = await notificationRepository.findById(id);
 
-    if (!notification) {
+    if (!notification || notification.userId !== userId) {
       return res.status(404).json({
         success: false,
         message: "Notification not found",
       });
     }
 
-    await notification.markAsRead();
+    await notificationRepository.markAsRead(id, userId);
+
+    // Refetch to return the updated document
+    const updatedNotification = await notificationRepository.findById(id);
 
     // Invalidate relevant caches after notification update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:notification:*");
       await deleteCacheByPattern("cache:notification:*");
@@ -150,18 +132,14 @@ exports.markAsRead = async (req, res) => {
     res.json({
       success: true,
       message: "Notification marked as read",
-      data: notification,
+      data: updatedNotification,
     });
   } catch (error) {
     logger.error("Mark as read error:", {
       error: error.message,
       notificationId: req.params.id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark notification as read",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -170,9 +148,9 @@ exports.markAsRead = async (req, res) => {
  * @route   PUT /api/notifications/mark-all-read
  * @access  Private
  */
-exports.markAllAsRead = async (req, res) => {
+exports.markAllAsRead = async (req, res, next) => {
   try {
-    const userId = toObjectId(resolveUserId(req));
+    const userId = resolveUserId(req);
 
     if (!userId) {
       return res.status(400).json({
@@ -181,10 +159,9 @@ exports.markAllAsRead = async (req, res) => {
       });
     }
 
-    const result = await Notification.markAllAsRead(userId);
+    const result = await notificationRepository.markAllAsRead(userId);
 
     // Invalidate relevant caches after marking all as read
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:notification:*");
       await deleteCacheByPattern("cache:notification:*");
@@ -203,11 +180,7 @@ exports.markAllAsRead = async (req, res) => {
       error: error.message,
       userId: resolveUserId(req),
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to mark all notifications as read",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -216,10 +189,10 @@ exports.markAllAsRead = async (req, res) => {
  * @route   DELETE /api/notifications/:id
  * @access  Private
  */
-exports.deleteNotification = async (req, res) => {
+exports.deleteNotification = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = toObjectId(resolveUserId(req));
+    const userId = resolveUserId(req);
 
     if (!userId) {
       return res.status(400).json({
@@ -228,12 +201,9 @@ exports.deleteNotification = async (req, res) => {
       });
     }
 
-    const notification = await Notification.findOneAndDelete({
-      _id: id,
-      userId,
-    });
+    const result = await notificationRepository.delete(id, userId);
 
-    if (!notification) {
+    if (!result) {
       return res.status(404).json({
         success: false,
         message: "Notification not found",
@@ -241,7 +211,6 @@ exports.deleteNotification = async (req, res) => {
     }
 
     // Invalidate relevant caches after notification deletion
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:notification:*");
       await deleteCacheByPattern("cache:notification:*");
@@ -259,11 +228,7 @@ exports.deleteNotification = async (req, res) => {
       error: error.message,
       notificationId: req.params.id,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete notification",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -272,9 +237,9 @@ exports.deleteNotification = async (req, res) => {
  * @route   DELETE /api/notifications/clear-all
  * @access  Private
  */
-exports.clearAllNotifications = async (req, res) => {
+exports.clearAllNotifications = async (req, res, next) => {
   try {
-    const userId = toObjectId(resolveUserId(req));
+    const userId = resolveUserId(req);
 
     if (!userId) {
       return res.status(400).json({
@@ -283,10 +248,9 @@ exports.clearAllNotifications = async (req, res) => {
       });
     }
 
-    const result = await Notification.deleteMany({ userId });
+    const result = await notificationRepository.deleteAllForUser(userId);
 
     // Invalidate relevant caches after clearing all notifications
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:notification:*");
       await deleteCacheByPattern("cache:notification:*");
@@ -305,11 +269,7 @@ exports.clearAllNotifications = async (req, res) => {
       error: error.message,
       userId: resolveUserId(req),
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to clear notifications",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -318,12 +278,23 @@ exports.clearAllNotifications = async (req, res) => {
  * @route   POST /api/notifications
  * @access  Private (Admin/System)
  */
-exports.createNotification = async (req, res) => {
+exports.createNotification = async (req, res, next) => {
   try {
     const { userId, title, message, type, priority, data, actionUrl, icon } =
       req.body;
 
-    const notification = await Notification.create({
+    // Validate required fields
+    if (!userId || typeof userId !== "string" || !userId.trim()) {
+      return res.status(400).json({ success: false, message: "userId is required" });
+    }
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return res.status(400).json({ success: false, message: "title is required" });
+    }
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ success: false, message: "message is required" });
+    }
+
+    const notification = await notificationRepository.create({
       userId,
       title,
       message,
@@ -332,13 +303,14 @@ exports.createNotification = async (req, res) => {
       data,
       actionUrl,
       icon,
+      hospitalId: req.hospitalId || req.user?.hospitalId,
     });
 
     // Invalidate relevant caches after notification creation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:notification:*");
       await deleteCacheByPattern("cache:notification:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after notification creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -351,11 +323,7 @@ exports.createNotification = async (req, res) => {
     });
   } catch (error) {
     logger.error("Create notification error:", { error: error.message });
-    res.status(500).json({
-      success: false,
-      message: "Failed to create notification",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -364,7 +332,7 @@ exports.createNotification = async (req, res) => {
  * @route   POST /api/notifications/broadcast
  * @access  Private (Admin only)
  */
-exports.broadcastNotification = async (req, res) => {
+exports.broadcastNotification = async (req, res, next) => {
   try {
     const { userIds, title, message, type, priority, data, actionUrl, icon } =
       req.body;
@@ -376,6 +344,21 @@ exports.broadcastNotification = async (req, res) => {
       });
     }
 
+    if (userIds.length > 1000) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot broadcast to more than 1000 recipients per request",
+      });
+    }
+
+    if (!title || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "title and message are required",
+      });
+    }
+
+    const hospitalId = req.hospitalId || req.user?.hospitalId;
     const notifications = userIds.map((userId) => ({
       userId,
       title,
@@ -385,15 +368,16 @@ exports.broadcastNotification = async (req, res) => {
       data,
       actionUrl,
       icon: icon || "notifications",
+      hospitalId,
     }));
 
-    const result = await Notification.insertMany(notifications);
+    const result = await notificationRepository.createBulk(notifications);
 
     // Invalidate relevant caches after broadcast notification
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:notification:*");
       await deleteCacheByPattern("cache:notification:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after broadcast notification");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -406,10 +390,7 @@ exports.broadcastNotification = async (req, res) => {
     });
   } catch (error) {
     logger.error("Broadcast notification error:", { error: error.message });
-    res.status(500).json({
-      success: false,
-      message: "Failed to broadcast notification",
-      error: error.message,
-    });
+    next(error);
   }
 };
+

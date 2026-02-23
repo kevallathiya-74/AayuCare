@@ -18,13 +18,10 @@ const registerSchema = Joi.object({
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .message('Password must be at least 8 characters and contain uppercase, lowercase, and number')
     .required(),
-  role: Joi.string().valid("admin", "doctor", "patient").required(),
-  hospitalId: Joi.string().when("role", {
-    is: Joi.not("super_admin"),
-    then: Joi.required(),
-    otherwise: Joi.optional(),
-  }),
+  role: Joi.string().valid("doctor", "patient").required(),
+  hospitalId: Joi.string().required(),
   hospitalName: Joi.string().max(255).optional(),
+  isActive: Joi.boolean().default(true),
 
   // Doctor specific fields
   specialization: Joi.string().when("role", {
@@ -106,6 +103,11 @@ const registerSchema = Joi.object({
       then: Joi.optional(),
       otherwise: Joi.forbidden(),
     }),
+  emergencyContactRelation: Joi.string().max(100).when("role", {
+    is: "patient",
+    then: Joi.optional(),
+    otherwise: Joi.forbidden(),
+  }),
   allergies: Joi.array().items(Joi.string()).when("role", {
     is: "patient",
     then: Joi.optional(),
@@ -119,22 +121,66 @@ const registerSchema = Joi.object({
 });
 
 // Login validation
-const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-});
+const loginSchema = Joi.alternatives().try(
+  // Email-based login
+  Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).required(),
+  }),
+  // UserId-based login
+  Joi.object({
+    userId: Joi.string().min(3).required(),
+    password: Joi.string().min(6).required(),
+  }),
+  // Identifier-based login (frontend compatibility)
+  Joi.object({
+    identifier: Joi.alternatives().try(
+      Joi.string().email(),
+      Joi.string().min(3)
+    ).required(),
+    password: Joi.string().min(6).required(),
+  })
+);
 
 // Appointment creation validation
 const createAppointmentSchema = Joi.object({
   doctorId: Joi.string().uuid().required(),
   patientId: Joi.string().uuid().optional(),
-  appointmentDate: Joi.date().required(),
-  appointmentTime: Joi.string().required(),
+  appointmentDate: Joi.date()
+    .required()
+    .custom((value, helpers) => {
+      const selected = new Date(value);
+      selected.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selected < today) {
+        return helpers.error("date.min");
+      }
+      return value;
+    })
+    .messages({
+      "date.min": "Appointment date cannot be in the past",
+    }),
+  appointmentTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Appointment time must be in HH:MM format (24-hour)",
+    }),
   type: Joi.string()
-    .valid("consultation", "follow_up", "emergency")
+    .valid(
+      "consultation",
+      "follow_up",
+      "emergency",
+      "clinic_visit",
+      "telemedicine"
+    )
     .default("consultation"),
   symptoms: Joi.array().items(Joi.string()).optional(),
   chiefComplaint: Joi.string().max(500).optional(),
+  hospitalId: Joi.string().max(50).optional(),
+  notes: Joi.string().max(1000).optional(),
 });
 
 // Appointment update validation
@@ -171,6 +217,8 @@ const updatePaymentSchema = Joi.object({
   transactionId: Joi.string().max(255).optional(),
   paymentGateway: Joi.string().max(50).optional(),
   paidAt: Joi.date().optional(),
+  refundAmount: Joi.number().min(0).optional(),
+  refundedAt: Joi.date().optional(),
 }).min(1);
 
 // User profile update validation
@@ -202,6 +250,7 @@ const updateProfileSchema = Joi.object({
   emergencyContactPhone: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .optional(),
+  emergencyContactRelation: Joi.string().max(100).optional(),
   allergies: Joi.array().items(Joi.string()).optional(),
   chronicConditions: Joi.array().items(Joi.string()).optional(),
 }).min(1);
@@ -220,6 +269,11 @@ const changePasswordSchema = Joi.object({
 
 // Doctor profile update validation
 const updateDoctorProfileSchema = Joi.object({
+  name: Joi.string().min(2).max(255).optional(),
+  email: Joi.string().email().optional(),
+  phone: Joi.string()
+    .pattern(/^\+?[1-9]\d{1,14}$/)
+    .optional(),
   specialization: Joi.string().max(255).optional(),
   qualification: Joi.string().max(255).optional(),
   experience: Joi.number().integer().min(0).optional(),
@@ -233,82 +287,210 @@ const updateDoctorProfileSchema = Joi.object({
 
 // Patient profile update validation
 const updatePatientProfileSchema = Joi.object({
+  // Common user fields — allowed so they pass through stripUnknown
+  name: Joi.string().min(2).max(255).optional(),
+  email: Joi.string().email().optional(),
+  phone: Joi.string()
+    .pattern(/^\+?[1-9]\d{1,14}$/)
+    .optional(),
+  // Patient-specific fields
   dateOfBirth: Joi.date().optional(),
   gender: Joi.string().lowercase().valid("male", "female", "other").optional(),
-  bloodGroup: Joi.string().optional(),
+  bloodGroup: Joi.string().valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-").optional(),
   address: Joi.string().max(500).optional(),
   emergencyContactName: Joi.string().max(255).optional(),
   emergencyContactPhone: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .optional(),
+  emergencyContactRelation: Joi.string().max(100).optional(),
   allergies: Joi.array().items(Joi.string()).optional(),
   chronicConditions: Joi.array().items(Joi.string()).optional(),
 }).min(1);
 
 // Prescription validation
 const createPrescriptionSchema = Joi.object({
-  appointmentId: Joi.string().uuid().optional(),
-  patientId: Joi.string().uuid().required(),
-  diagnosis: Joi.string().max(1000).optional(),
+  appointmentId: Joi.string().optional(),
+  // Accept UUID or custom userId format (e.g. PAT1)
+  patientId: Joi.string().min(1).required(),
+  diagnosis: Joi.string().max(1000).optional().allow(""),
+  // Accept both key names – controller handles both
   medications: Joi.array()
+    .items(
+      Joi.object({
+        name: Joi.string().required(),
+        dosage: Joi.string().required(),
+        // frequency built from timings on frontend (e.g. "morning, evening")
+        frequency: Joi.string().required(),
+        duration: Joi.string().required(),
+        instructions: Joi.string().optional().allow(""),
+        // pricing info kept for pharmacy cost calculation
+        price: Joi.number().min(0).optional(),
+        unitPrice: Joi.number().min(0).optional(),
+      })
+    )
+    .min(1)
+    .optional(),
+  medicines: Joi.array()
     .items(
       Joi.object({
         name: Joi.string().required(),
         dosage: Joi.string().required(),
         frequency: Joi.string().required(),
         duration: Joi.string().required(),
-        instructions: Joi.string().optional(),
+        instructions: Joi.string().optional().allow(""),
+        price: Joi.number().min(0).optional(),
+        unitPrice: Joi.number().min(0).optional(),
       })
     )
-    .required(),
-  instructions: Joi.string().max(1000).optional(),
-  followUpDate: Joi.date().optional(),
-});
-
-// Medical record validation
-const createMedicalRecordSchema = Joi.object({
-  patientId: Joi.string().uuid().required(),
-  doctorId: Joi.string().uuid().required(),
-  appointmentId: Joi.string().uuid().optional(),
-  diagnosis: Joi.string().max(1000).required(),
-  symptoms: Joi.array().items(Joi.string()).optional(),
-  vitalSigns: Joi.object({
-    bloodPressure: Joi.string().optional(),
-    heartRate: Joi.number().optional(),
-    temperature: Joi.number().optional(),
-    weight: Joi.number().optional(),
-    height: Joi.number().optional(),
+    .min(1)
+    .optional(),
+  instructions: Joi.string().max(1000).optional().allow(""),
+  followUpDate: Joi.date().optional().allow("", null),
+  // Send options for patient app and pharmacy routing
+  sendOptions: Joi.object({
+    patientApp: Joi.boolean().optional(),
+    hospitalPharmacy: Joi.boolean().optional(),
+    externalPharmacy: Joi.boolean().optional(),
   }).optional(),
-  prescriptions: Joi.array().items(Joi.string()).optional(),
-  labResults: Joi.array().items(Joi.string()).optional(),
-  notes: Joi.string().max(2000).optional(),
+}).or("medications", "medicines"); // at least one must be provided
+
+// Medical record validation 
+const createMedicalRecordSchema = Joi.object({
+  patientId: Joi.string().min(1).required(),
+  // recordType is required by the model
+  recordType: Joi.string()
+    .valid('lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'other')
+    .required(),
+  title: Joi.string().min(1).max(500).required(),
+  description: Joi.string().max(2000).optional().allow(''),
+  date: Joi.date().optional(),
+  diagnosis: Joi.string().max(1000).optional().allow(''),
+  symptoms: Joi.array().items(Joi.string()).optional(),
+  medications: Joi.array()
+    .items(
+      Joi.object({
+        name: Joi.string().optional(),
+        dosage: Joi.string().optional(),
+        frequency: Joi.string().optional(),
+        duration: Joi.string().optional(),
+      })
+    )
+    .optional(),
+  labResults: Joi.array()
+    .items(
+      Joi.object({
+        testName: Joi.string().optional(),
+        value: Joi.string().optional(),
+        unit: Joi.string().optional(),
+        normalRange: Joi.string().optional(),
+        status: Joi.string().valid('normal', 'abnormal', 'critical').optional(),
+      })
+    )
+    .optional(),
+  files: Joi.array()
+    .items(
+      Joi.object({
+        url: Joi.string().optional(),
+        fileName: Joi.string().optional(),
+        fileType: Joi.string().optional(),
+        fileSize: Joi.number().optional(),
+      })
+    )
+    .optional(),
 });
 
 // Event validation
 const createEventSchema = Joi.object({
   title: Joi.string().min(3).max(255).required(),
   description: Joi.string().max(2000).required(),
-  eventType: Joi.string()
-    .valid("camp", "workshop", "seminar", "health_checkup", "awareness")
+  type: Joi.string()
+    .valid('blood-donation', 'screening', 'vaccination', 'workshop', 'health-camp', 'awareness', 'other')
     .required(),
-  startDate: Joi.date().required(),
-  endDate: Joi.date().greater(Joi.ref("startDate")).required(),
-  location: Joi.string().max(500).required(),
-  capacity: Joi.number().integer().min(1).optional(),
-  registrationDeadline: Joi.date().less(Joi.ref("startDate")).optional(),
-  isPublic: Joi.boolean().default(true),
+  hospitalId: Joi.string().uppercase().max(50).optional(),
+  date: Joi.date().required(),
+  startTime: Joi.string().required(),
+  endTime: Joi.string().required(),
+  // model uses 'venue', not 'location'
+  venue: Joi.string().max(500).required(),
+  availableSpots: Joi.number().integer().min(0).optional(),
+  requirements: Joi.array().items(Joi.string()).optional(),
+  benefits: Joi.array().items(Joi.string()).optional(),
+  contactInfo: Joi.object({
+    phone: Joi.string().optional(),
+    email: Joi.string().email().optional(),
+  }).optional(),
+  icon: Joi.string().optional(),
+  color: Joi.string().optional(),
+});
+
+const updateEventSchema = Joi.object({
+  title: Joi.string().min(3).max(255).optional(),
+  description: Joi.string().max(2000).optional(),
+  type: Joi.string()
+    .valid('blood-donation', 'screening', 'vaccination', 'workshop', 'health-camp', 'awareness', 'other')
+    .optional(),
+  date: Joi.date().optional(),
+  startTime: Joi.string().optional(),
+  endTime: Joi.string().optional(),
+  venue: Joi.string().max(500).optional(),
+  availableSpots: Joi.number().integer().min(0).optional(),
+  requirements: Joi.array().items(Joi.string()).optional(),
+  benefits: Joi.array().items(Joi.string()).optional(),
+  contactInfo: Joi.object({
+    phone: Joi.string().optional(),
+    email: Joi.string().email().optional(),
+  }).optional(),
+  icon: Joi.string().optional(),
+  color: Joi.string().optional(),
+  status: Joi.string().valid('upcoming', 'ongoing', 'completed', 'cancelled').optional(),
+  isActive: Joi.boolean().optional(),
 });
 
 // Notification validation
 const createNotificationSchema = Joi.object({
-  userId: Joi.string().uuid().optional(),
-  title: Joi.string().min(3).max(255).required(),
-  message: Joi.string().max(1000).required(),
+  userId: Joi.string().optional(),
+  title: Joi.string().min(1).max(255).required(),
+  message: Joi.string().max(2000).required(),
   type: Joi.string()
-    .valid("info", "warning", "success", "error", "appointment", "payment")
-    .default("info"),
-  priority: Joi.string().valid("low", "medium", "high").default("medium"),
-  actionUrl: Joi.string().uri().optional(),
+    .valid('appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert', 'health_alert')
+    .default('system'),
+  priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+  data: Joi.object().unknown(true).optional(),
+  actionUrl: Joi.string().optional(),
+  icon: Joi.string().optional(),
+  expiresAt: Joi.date().optional(),
+});
+
+// Broadcast notification validation (admin send to multiple users)
+const broadcastNotificationSchema = Joi.object({
+  userIds: Joi.array().items(Joi.string()).min(1).required(),
+  title: Joi.string().min(1).max(255).required(),
+  message: Joi.string().max(2000).required(),
+  type: Joi.string()
+    .valid('appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert', 'health_alert')
+    .default('system'),
+  priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+  data: Joi.object().unknown(true).optional(),
+  actionUrl: Joi.string().optional(),
+  icon: Joi.string().optional(),
+  expiresAt: Joi.date().optional(),
+});
+
+// Walk-in patient registration validation
+const walkInPatientSchema = Joi.object({
+  name: Joi.string().min(2).max(255).required(),
+  age: Joi.number().integer().min(1).max(120).required(),
+  gender: Joi.string().lowercase().valid("male", "female", "other").required(),
+  phone: Joi.string()
+    .pattern(/^\+?[0-9]{7,15}$/)
+    .required()
+    .messages({ 'string.pattern.base': 'Phone number must be 7-15 digits, optionally starting with +' }),
+  bloodGroup: Joi.string()
+    .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+    .optional(),
+  symptoms: Joi.string().min(2).max(500).required(),
+  address: Joi.string().max(500).optional(),
+  hospitalId: Joi.string().max(50).optional(),
 });
 
 // ID validation helper
@@ -328,6 +510,22 @@ module.exports = {
   createPrescriptionSchema,
   createMedicalRecordSchema,
   createEventSchema,
+  updateEventSchema,
   createNotificationSchema,
+  broadcastNotificationSchema,
+  walkInPatientSchema,
   uuidSchema,
+  updateUserRoleSchema: Joi.object({
+    role: Joi.string().valid("doctor", "patient", "admin").required(),
+    version: Joi.number().optional(),
+  }),
+  bulkUpdateUsersSchema: Joi.object({
+    operations: Joi.array().items(
+      Joi.object({
+        userId: Joi.string().required(),
+        action: Joi.string().valid("activate", "deactivate", "delete", "updateRole").required(),
+        data: Joi.object().optional(),
+      })
+    ).min(1).max(100).required(),
+  }),
 };

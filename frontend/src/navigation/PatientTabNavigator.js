@@ -7,20 +7,14 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme/healthColors";
+import { healthColors } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 
 // Patient Screens
 import PatientDashboard from "../screens/patient/PatientDashboard";
-import MyAppointmentsScreen from "../screens/patient/MyAppointmentsScreen";
-import MyReportsScreen from "../screens/patient/MyReportsScreen";
-import NotificationsScreen from "../screens/patient/NotificationsScreen";
 import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
-import WomensHealthScreen from "../screens/patient/WomensHealthScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
-import HospitalEventsScreen from "../screens/patient/HospitalEventsScreen";
-import PharmacyBillingScreen from "../screens/patient/PharmacyBillingScreen";
 import SettingsScreen from "../screens/main/SettingsScreen";
 
 const Tab = createBottomTabNavigator();

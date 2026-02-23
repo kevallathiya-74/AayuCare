@@ -353,6 +353,38 @@ class DoctorRepository {
     
     return mappedDoctors;
   }
+
+  /**
+   * Count all doctors matching filters (used for accurate pagination)
+   */
+  async countAll(filters = {}) {
+    const { hospitalId, specialization, includeInactive = false } = filters;
+    let sql = `SELECT COUNT(*) AS count FROM doctors d INNER JOIN users u ON d.user_id = u.id WHERE 1=1`;
+    const params = [];
+    let p = 1;
+    if (!includeInactive) sql += ` AND u.is_active = true`;
+    if (hospitalId) { sql += ` AND u.hospital_id = $${p++}`; params.push(hospitalId); }
+    if (specialization) { sql += ` AND d.specialization ILIKE $${p++}`; params.push(`%${specialization}%`); }
+    const result = await query(sql, params);
+    return Number(result.rows[0]?.count || 0);
+  }
+
+  /**
+   * Count doctors matching search + filters (used for accurate pagination)
+   */
+  async countSearch(searchTerm, hospitalId = null, options = {}) {
+    const { includeInactive = false, specialization } = options;
+    let sql = `SELECT COUNT(*) AS count FROM doctors d INNER JOIN users u ON d.user_id = u.id WHERE 1=1`;
+    const params = [];
+    let p = 1;
+    if (!includeInactive) sql += ` AND u.is_active = true`;
+    if (hospitalId) { sql += ` AND u.hospital_id = $${p++}`; params.push(hospitalId); }
+    if (specialization) { sql += ` AND d.specialization ILIKE $${p++}`; params.push(`%${specialization}%`); }
+    sql += ` AND (u.name ILIKE $${p} OR u.email ILIKE $${p} OR d.specialization ILIKE $${p} OR d.qualification ILIKE $${p})`;
+    params.push(`%${searchTerm}%`);
+    const result = await query(sql, params);
+    return Number(result.rows[0]?.count || 0);
+  }
 }
 
 module.exports = new DoctorRepository();

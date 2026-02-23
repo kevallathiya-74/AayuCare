@@ -109,13 +109,15 @@ class PatientService {
     }
 
     handleError(error) {
+        let message;
         if (error.response) {
-            return error.response.data.message || 'An error occurred';
+            message = error.response.data?.message || 'An error occurred';
         } else if (error.request) {
-            return 'Network error. Please check your connection.';
+            message = 'Network error. Please check your connection.';
         } else {
-            return error.message || 'An unexpected error occurred';
+            message = error.message || 'An unexpected error occurred';
         }
+        return new Error(message);
     }
 }
 

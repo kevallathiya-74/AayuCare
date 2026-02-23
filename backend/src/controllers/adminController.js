@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin Controller
  * Handles admin dashboard stats, user management, and system operations
  */
@@ -9,19 +9,20 @@ const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const doctorRepository = require("../repositories/doctorRepository");
 const patientRepository = require("../repositories/patientRepository");
-const MedicalRecord = require("../models/MedicalRecord");
-const User = require("../models/User");
+const medicalRecordRepository = require("../repositories/medicalRecordRepository");
+const notificationRepository = require("../repositories/notificationRepository");
 const logger = require("../utils/logger");
 const { query } = require("../config/postgres");
-const { redisClient } = require("../config/redis");
+const { redisClient, deleteCacheByPattern } = require("../config/redis");
 const { withTransaction } = require("../utils/transaction");
+const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
 
 /**
  * @desc    Get dashboard statistics
  * @route   GET /api/admin/dashboard/stats
  * @access  Private (Admin only)
  */
-exports.getDashboardStats = async (req, res) => {
+exports.getDashboardStats = async (req, res, next) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -177,11 +178,7 @@ exports.getDashboardStats = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch dashboard statistics",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -190,7 +187,7 @@ exports.getDashboardStats = async (req, res) => {
  * @route   GET /api/admin/activities
  * @access  Private (Admin only)
  */
-exports.getRecentActivities = async (req, res) => {
+exports.getRecentActivities = async (req, res, next) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 10, 100); // Enforce max 100
 
@@ -268,11 +265,7 @@ exports.getRecentActivities = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch recent activities",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -281,44 +274,17 @@ exports.getRecentActivities = async (req, res) => {
  * @route   GET /api/admin/users
  * @access  Private (Admin only)
  */
-exports.getUsers = async (req, res) => {
+exports.getUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const mongoQuery = {};
-
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      mongoQuery.hospitalId = req.hospitalId;
-    }
-    
-    // Debug logging
-    logger.debug('getUsers query', {
-      mongoQuery: JSON.stringify(mongoQuery),
-      hospitalId: req.hospitalId,
-      userRole: req.user?.role
-    });
-
-    if (role) {
-      mongoQuery.role = role;
-    }
-
-    if (search) {
-      // Validate search query length to prevent ReDoS
-      if (search.length > 100) {
-        return res.status(400).json({ 
-          status: 'error',
-          message: 'Search query too long (max 100 characters)' 
-        });
-      }
-      // Sanitize regex to prevent injection
-      const sanitizedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      mongoQuery.$or = [
-        { name: { $regex: sanitizedSearch, $options: "i" } },
-        { email: { $regex: sanitizedSearch, $options: "i" } },
-        { userId: { $regex: sanitizedSearch, $options: "i" } },
-      ];
+    // Validate search query length to prevent ReDoS
+    if (search && search.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query too long (max 100 characters)",
+      });
     }
 
     // Build PostgreSQL query
@@ -326,8 +292,10 @@ exports.getUsers = async (req, res) => {
     const params = [];
     let paramIndex = 1;
 
-    // Always filter out inactive users (soft deleted)
-    conditions.push(`is_active = true`);
+    // By default exclude inactive users; pass includeInactive=true to show all
+    if (req.query.includeInactive !== 'true') {
+      conditions.push(`is_active = true`);
+    }
 
     if (req.hospitalId && req.user.role !== "super_admin") {
       conditions.push(`hospital_id = $${paramIndex}`);
@@ -356,7 +324,7 @@ exports.getUsers = async (req, res) => {
                u.is_active, u.email_verified, u.phone_verified, u.created_at, u.updated_at,
                d.specialization, d.qualification, d.experience, d.department, d.consultation_fee, d.bio,
                p.date_of_birth, p.gender, p.blood_group, p.address, 
-               p.emergency_contact_name, p.emergency_contact_phone
+               p.emergency_contact_name, p.emergency_contact_phone, p.emergency_contact_relation
         FROM users u
         LEFT JOIN doctors d ON u.id = d.user_id AND u.role = 'doctor'
         LEFT JOIN patients p ON u.id = p.user_id AND u.role = 'patient'
@@ -367,9 +335,40 @@ exports.getUsers = async (req, res) => {
       query(`SELECT COUNT(*) FROM users ${whereClause}`, params)
     ]);
 
-    const users = usersResult.rows;
+    // Map snake_case PostgreSQL columns to camelCase for frontend consistency
+    const users = usersResult.rows.map((row) => ({
+      _id: row.id,
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      role: row.role,
+      hospitalId: row.hospital_id,
+      hospitalName: row.hospital_name,
+      isActive: row.is_active,
+      emailVerified: row.email_verified,
+      phoneVerified: row.phone_verified,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      // Doctor-specific fields (null for patients)
+      specialization: row.specialization,
+      qualification: row.qualification,
+      experience: row.experience,
+      department: row.department,
+      consultationFee: row.consultation_fee,
+      bio: row.bio,
+      // Patient-specific fields (null for doctors)
+      dateOfBirth: row.date_of_birth,
+      gender: row.gender,
+      bloodGroup: row.blood_group,
+      address: row.address,
+      emergencyContactName: row.emergency_contact_name,
+      emergencyContactPhone: row.emergency_contact_phone,
+      emergencyContactRelation: row.emergency_contact_relation,
+    }));
     const total = parseInt(countResult.rows[0].count);
-    
+
     // Debug logging
     logger.debug('getUsers results', {
       foundCount: users.length,
@@ -391,11 +390,7 @@ exports.getUsers = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch users",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -404,7 +399,7 @@ exports.getUsers = async (req, res) => {
  * @route   PATCH /api/admin/users/:userId/status
  * @access  Private (Admin only)
  */
-exports.updateUserStatus = async (req, res) => {
+exports.updateUserStatus = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { isActive } = req.body;
@@ -433,6 +428,14 @@ exports.updateUserStatus = async (req, res) => {
       });
     }
 
+    // Hospital scope check â€” prevent cross-hospital modifications
+    if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied â€” user belongs to a different hospital",
+      });
+    }
+
     logger.info("[STATUS_UPDATE] User found", {
       userId: user.user_id,
       currentStatus: user.is_active,
@@ -449,7 +452,6 @@ exports.updateUserStatus = async (req, res) => {
     });
 
     // Invalidate relevant caches after status update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
@@ -463,6 +465,16 @@ exports.updateUserStatus = async (req, res) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.USER_STATUS_CHANGE,
+      entityType: "user",
+      entityId: user.id,
+      oldValues: { isActive: user.is_active },
+      newValues: { isActive },
+      req,
+    });
+
     res.json({
       success: true,
       message: `User ${isActive ? "activated" : "deactivated"} successfully`,
@@ -474,11 +486,7 @@ exports.updateUserStatus = async (req, res) => {
       stack: error.stack,
       userId: req.params.userId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update user status",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -487,7 +495,7 @@ exports.updateUserStatus = async (req, res) => {
  * @route   PATCH /api/admin/users/:userId/role
  * @access  Private (Admin only)
  */
-exports.updateUserRole = async (req, res) => {
+exports.updateUserRole = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { role, version } = req.body;
@@ -506,6 +514,14 @@ exports.updateUserRole = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    // Hospital scope check â€” prevent cross-hospital role changes
+    if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied â€” user belongs to a different hospital",
       });
     }
 
@@ -543,16 +559,26 @@ exports.updateUserRole = async (req, res) => {
     });
 
     // Invalidate relevant caches after role update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
       await deleteCacheByPattern("v1:cache:doctor:*");
       await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after role update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
+
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.ROLE_CHANGE,
+      entityType: "user",
+      entityId: user.id,
+      oldValues: { role: user.role },
+      newValues: { role },
+      req,
+    });
 
     res.json({
       success: true,
@@ -565,11 +591,7 @@ exports.updateUserRole = async (req, res) => {
       stack: error.stack,
       userId: req.params.userId,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to update user role",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -578,8 +600,8 @@ exports.updateUserRole = async (req, res) => {
  * @route   POST /api/admin/users/bulk
  * @access  Private (Admin only)
  */
-exports.bulkUpdateUsers = async (req, res) => {
-  const client = require("../config/postgres").getClient();
+exports.bulkUpdateUsers = async (req, res, next) => {
+  const client = await require("../config/postgres").getClient();
   await client.query('BEGIN');
 
   try {
@@ -610,16 +632,24 @@ exports.bulkUpdateUsers = async (req, res) => {
       try {
         // Find user by userId first
         const userResult = await client.query(
-          'SELECT id FROM users WHERE user_id = $1',
+          'SELECT id, hospital_id FROM users WHERE user_id = $1',
           [userId]
         );
-        
+
         if (userResult.rows.length === 0) {
           results.push({ userId, action, success: false, error: 'User not found' });
           continue;
         }
-        
-        const userUuid = userResult.rows[0].id;
+
+        const userRow = userResult.rows[0];
+
+        // Hospital scope check â€” prevent cross-hospital bulk operations
+        if (req.hospitalId && req.user.role !== "super_admin" && userRow.hospital_id !== req.hospitalId) {
+          results.push({ userId, action, success: false, error: "Access denied â€” cross-hospital operation" });
+          continue;
+        }
+
+        const userUuid = userRow.id;
 
         switch (action) {
           case "activate":
@@ -659,12 +689,12 @@ exports.bulkUpdateUsers = async (req, res) => {
     });
 
     // Invalidate relevant caches after bulk user update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
       await deleteCacheByPattern("v1:cache:patient:*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after bulk user update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -681,11 +711,9 @@ exports.bulkUpdateUsers = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Bulk update failed. All changes have been rolled back.",
-      error: error.message,
-    });
+    next(error);
+  } finally {
+    client.release();
   }
 };
 
@@ -694,7 +722,7 @@ exports.bulkUpdateUsers = async (req, res) => {
  * @route   GET /api/admin/system/health
  * @access  Private (Admin only)
  */
-exports.getSystemHealth = async (req, res) => {
+exports.getSystemHealth = async (req, res, next) => {
   try {
     const services = {
       mongodb: { connected: false },
@@ -743,17 +771,7 @@ exports.getSystemHealth = async (req, res) => {
     });
   } catch (error) {
     logger.error("System health check error:", { error: error.message });
-    res.status(500).json({
-      success: false,
-      data: {
-        status: "critical",
-        issues: 3,
-        database: {
-          connected: false,
-        },
-        error: error.message,
-      },
-    });
+    next(error);
   }
 };
 
@@ -762,7 +780,7 @@ exports.getSystemHealth = async (req, res) => {
  * @route   GET /api/admin/security
  * @access  Private (Admin only)
  */
-exports.getSecuritySettings = async (req, res) => {
+exports.getSecuritySettings = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
@@ -781,6 +799,7 @@ exports.getSecuritySettings = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const hasHospSec = req.hospitalId && req.user.role !== "super_admin";
     const statsResult = await query(`
       SELECT 
         COUNT(*) FILTER (WHERE is_active = true AND last_login >= $1) as active_users_7d,
@@ -788,7 +807,8 @@ exports.getSecuritySettings = async (req, res) => {
         COUNT(*) as total_users,
         COUNT(*) FILTER (WHERE email_verified = true) as verified_users
       FROM users
-    `, [sevenDaysAgo, today]);
+      ${hasHospSec ? "WHERE hospital_id = $3" : ""}
+    `, hasHospSec ? [sevenDaysAgo, today, req.hospitalId] : [sevenDaysAgo, today]);
 
     const sessionStatsResult = await query(
       `SELECT COUNT(*)::int AS active_sessions
@@ -843,10 +863,7 @@ exports.getSecuritySettings = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch security settings',
-    });
+    next(error);
   }
 };
 
@@ -855,7 +872,7 @@ exports.getSecuritySettings = async (req, res) => {
  * @route   POST /api/admin/security/change-password
  * @access  Private (Admin only)
  */
-exports.changePassword = async (req, res) => {
+exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user.userId;
@@ -930,7 +947,6 @@ exports.changePassword = async (req, res) => {
     logger.info(`Password changed for user: ${userId}`);
 
     // Invalidate relevant caches after password change
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:session:*");
       await deleteCacheByPattern("cache:session:*");
@@ -951,10 +967,7 @@ exports.changePassword = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      error: 'Failed to change password',
-    });
+    next(error);
   }
 };
 
@@ -963,7 +976,7 @@ exports.changePassword = async (req, res) => {
  * @route   POST /api/admin/security/logout-all
  * @access  Private (Admin only)
  */
-exports.logoutAllDevices = async (req, res) => {
+exports.logoutAllDevices = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
@@ -986,7 +999,6 @@ exports.logoutAllDevices = async (req, res) => {
     logger.info(`Logged out all devices for user: ${userId}`);
 
     // Invalidate relevant caches after logout all devices
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:session:*");
       await deleteCacheByPattern("cache:session:*");
@@ -1007,10 +1019,7 @@ exports.logoutAllDevices = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      error: 'Failed to logout from all devices',
-    });
+    next(error);
   }
 };
 
@@ -1019,37 +1028,40 @@ exports.logoutAllDevices = async (req, res) => {
  * @route   GET /api/admin/medical-records
  * @access  Private (Admin only)
  */
-exports.getMedicalRecordsOverview = async (req, res) => {
+exports.getMedicalRecordsOverview = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, patientId } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const query = {};
+    const mongoFilter = {};
 
     // Add hospitalId filter for multi-tenancy
     if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+      mongoFilter.hospitalId = req.hospitalId;
     }
 
     if (patientId) {
-      query.patientId = patientId;
+      mongoFilter.patientId = patientId;
     }
 
     const [records, total] = await Promise.all([
-      MedicalRecord.find(query)
-        .select("recordType title patientId doctorId createdAt updatedAt hospitalId")
-        .populate("patientId", "name userId")
-        .populate("doctorId", "name specialization")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(),
-      MedicalRecord.countDocuments(query),
+      medicalRecordRepository.findWithFilters(mongoFilter, {
+        select: "recordType title patientId doctorId createdAt updatedAt hospitalId",
+        populate: {
+          patientId: "name userId",
+          doctorId: "name specialization"
+        },
+        sort: { createdAt: -1 },
+        offset: skip,
+        limit: parseInt(limit),
+        lean: true
+      }),
+      medicalRecordRepository.count(mongoFilter),
     ]);
 
-    // Aggregate by record type
-    const typeStats = await MedicalRecord.aggregate([
-      { $match: query },
+    // Aggregate by record type - using repository aggregation method
+    const typeStats = await medicalRecordRepository.aggregate([
+      { $match: mongoFilter },
       { $group: { _id: "$recordType", count: { $sum: 1 } } },
     ]);
 
@@ -1071,11 +1083,7 @@ exports.getMedicalRecordsOverview = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch medical records overview",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1084,7 +1092,7 @@ exports.getMedicalRecordsOverview = async (req, res) => {
  * @route   GET /api/admin/system/metrics
  * @access  Private (Admin only)
  */
-exports.getSystemMetrics = async (req, res) => {
+exports.getSystemMetrics = async (req, res, next) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1176,11 +1184,7 @@ exports.getSystemMetrics = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch system metrics",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1189,42 +1193,35 @@ exports.getSystemMetrics = async (req, res) => {
  * @route   GET /api/admin/notifications/manage
  * @access  Private (Admin only)
  */
-exports.getNotificationsManagement = async (req, res) => {
+exports.getNotificationsManagement = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, type, status } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const query = {};
+    const mongoFilter = {};
 
     // Add hospitalId filter for multi-tenancy
     if (req.hospitalId && req.user.role !== "super_admin") {
-      query.hospitalId = req.hospitalId;
+      mongoFilter.hospitalId = req.hospitalId;
     }
 
     if (type) {
-      query.type = type;
+      mongoFilter.type = type;
     }
 
     if (status) {
-      query.read = status === "read";
+      mongoFilter.read = status === "read";
     }
 
-    const Notification = require("../models/Notification");
-
     const [notifications, total, unreadCount] = await Promise.all([
-      Notification.find(query)
-        .populate("userId", "name role")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .lean(),
-      Notification.countDocuments(query),
-      Notification.countDocuments({ ...query, read: false }),
+      notificationRepository.findWithFilters(mongoFilter, { limit: parseInt(limit), offset: skip }),
+      notificationRepository.count(mongoFilter),
+      notificationRepository.count({ ...mongoFilter, read: false }),
     ]);
 
     // Type distribution
-    const typeStats = await Notification.aggregate([
-      { $match: query },
+    const typeStats = await notificationRepository.aggregate([
+      { $match: mongoFilter },
       { $group: { _id: "$type", count: { $sum: 1 } } },
     ]);
 
@@ -1250,11 +1247,7 @@ exports.getNotificationsManagement = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch notifications",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1263,7 +1256,7 @@ exports.getNotificationsManagement = async (req, res) => {
  * @route   POST /api/admin/users
  * @access  Private (Admin only)
  */
-exports.createUser = async (req, res) => {
+exports.createUser = async (req, res, next) => {
   try {
     const {
       name,
@@ -1286,6 +1279,7 @@ exports.createUser = async (req, res) => {
       address,
       emergencyContactName,
       emergencyContactPhone,
+      emergencyContactRelation,
       allergies,
       chronicConditions,
     } = req.body;
@@ -1310,7 +1304,7 @@ exports.createUser = async (req, res) => {
     // Validate required fields
     if (!name || !email || !phone || !password || !role) {
       return res.status(400).json({
-        status: "error",
+        success: false,
         message: "Name, email, phone, password, and role are required",
       });
     }
@@ -1318,7 +1312,7 @@ exports.createUser = async (req, res) => {
     // Validate role
     if (!["doctor", "patient"].includes(role)) {
       return res.status(400).json({
-        status: "error",
+        success: false,
         message: "Role must be either doctor or patient",
       });
     }
@@ -1327,7 +1321,7 @@ exports.createUser = async (req, res) => {
     if (role === "doctor") {
       if (!specialization || !qualification) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: "Specialization and qualification are required for doctors",
         });
       }
@@ -1339,20 +1333,20 @@ exports.createUser = async (req, res) => {
 
     if (emailExists) {
       return res.status(400).json({
-        status: "error",
+        success: false,
         message: "Email already exists",
       });
     }
 
     if (phoneExists) {
       return res.status(400).json({
-        status: "error",
+        success: false,
         message: "Phone number already exists",
       });
     }
 
     // Generate auto-increment userId (PAT1, DOC1, ADM1 format)
-    const userId = await userRepository.getNextUserId(role, req.hospitalId || req.user.hospitalId);
+    const userId = await userRepository.getNextUserId(role);
 
     // Hash password
     const bcrypt = require('bcryptjs');
@@ -1439,6 +1433,11 @@ exports.createUser = async (req, res) => {
         patientValues.push(emergencyContactPhone);
         paramIndex++;
       }
+      if (emergencyContactRelation) {
+        patientFields.push('emergency_contact_relation');
+        patientValues.push(emergencyContactRelation);
+        paramIndex++;
+      }
       if (Array.isArray(allergies) && allergies.length > 0) {
         patientFields.push('allergies');
         patientValues.push(allergies);
@@ -1485,7 +1484,6 @@ exports.createUser = async (req, res) => {
     logger.info(`Admin ${req.user.userId} created new ${role}: ${userId}`);
 
     // Invalidate relevant caches after user creation
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
@@ -1499,8 +1497,17 @@ exports.createUser = async (req, res) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.USER_REGISTER,
+      entityType: "user",
+      entityId: user.id,
+      newValues: { userId: user.userId, role, email: user.email },
+      req,
+    });
+
     res.status(201).json({
-      status: "success",
+      success: true,
       message: `${role.charAt(0).toUpperCase() + role.slice(1)} created successfully`,
       data: { user: userResponse },
     });
@@ -1516,22 +1523,18 @@ exports.createUser = async (req, res) => {
       // Unique constraint violation
       if (error.message.includes('phone')) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: "Phone number already exists",
         });
       } else if (error.message.includes('email')) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: "Email already exists",
         });
       }
     }
 
-    res.status(500).json({
-      status: "error",
-      message: "Failed to create user",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1540,7 +1543,7 @@ exports.createUser = async (req, res) => {
  * @route   PUT /api/admin/users/:userId
  * @access  Private (Admin only)
  */
-exports.updateUserProfile = async (req, res) => {
+exports.updateUserProfile = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const {
@@ -1562,6 +1565,7 @@ exports.updateUserProfile = async (req, res) => {
       address,
       emergencyContactName,
       emergencyContactPhone,
+      emergencyContactRelation,
       allergies,
       chronicConditions,
     } = req.body;
@@ -1598,7 +1602,7 @@ exports.updateUserProfile = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: "error",
+        success: false,
         message: "User not found or access denied",
       });
     }
@@ -1606,7 +1610,7 @@ exports.updateUserProfile = async (req, res) => {
     // Check hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
       return res.status(403).json({
-        status: "error",
+        success: false,
         message: "Access denied",
       });
     }
@@ -1619,7 +1623,7 @@ exports.updateUserProfile = async (req, res) => {
       );
       if (emailCheck.rows.length > 0) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: "Email already exists",
         });
       }
@@ -1632,7 +1636,7 @@ exports.updateUserProfile = async (req, res) => {
       );
       if (phoneCheck.rows.length > 0) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: "Phone number already exists",
         });
       }
@@ -1659,7 +1663,7 @@ exports.updateUserProfile = async (req, res) => {
       if (doctorCheck.rows.length === 0) {
         logger.error('Doctor record not found for user', { userId: user.id, customUserId: userId });
         return res.status(404).json({
-          status: "error",
+          success: false,
           message: "Doctor profile not found. Please contact support.",
         });
       }
@@ -1720,7 +1724,7 @@ exports.updateUserProfile = async (req, res) => {
         if (result.rowCount === 0) {
           logger.error('Doctor update failed - no rows affected', { userId: user.id });
           return res.status(500).json({
-            status: "error",
+            success: false,
             message: "Failed to update doctor profile",
           });
         }
@@ -1735,7 +1739,7 @@ exports.updateUserProfile = async (req, res) => {
       if (patientCheck.rows.length === 0) {
         logger.error('Patient record not found for user', { userId: user.id, customUserId: userId });
         return res.status(404).json({
-          status: "error",
+          success: false,
           message: "Patient profile not found. Please contact support.",
         });
       }
@@ -1774,6 +1778,11 @@ exports.updateUserProfile = async (req, res) => {
         patientValues.push(emergencyContactPhone);
         paramIndex++;
       }
+      if (emergencyContactRelation) {
+        patientUpdates.push(`emergency_contact_relation = $${paramIndex}`);
+        patientValues.push(emergencyContactRelation);
+        paramIndex++;
+      }
       if (Array.isArray(allergies)) {
         patientUpdates.push(`allergies = $${paramIndex}`);
         patientValues.push(allergies);
@@ -1795,7 +1804,7 @@ exports.updateUserProfile = async (req, res) => {
         if (result.rowCount === 0) {
           logger.error('Patient update failed - no rows affected', { userId: user.id });
           return res.status(500).json({
-            status: "error",
+            success: false,
             message: "Failed to update patient profile",
           });
         }
@@ -1819,13 +1828,13 @@ exports.updateUserProfile = async (req, res) => {
     }
 
     // Invalidate relevant caches after successful update
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
       await deleteCacheByPattern("v1:cache:doctor:*");
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("v1:cache:*patients*");
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -1835,7 +1844,7 @@ exports.updateUserProfile = async (req, res) => {
     logger.info(`Admin ${req.user.userId} updated profile of ${userId}`);
 
     res.json({
-      status: "success",
+      success: true,
       message: "User Profile Updated Successfully",
       data: { user: userResponse },
     });
@@ -1844,11 +1853,7 @@ exports.updateUserProfile = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      status: "error",
-      message: "Failed to update user profile",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1857,7 +1862,7 @@ exports.updateUserProfile = async (req, res) => {
  * @route   DELETE /api/admin/users/:userId
  * @access  Private (Admin only)
  */
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -1866,7 +1871,7 @@ exports.deleteUser = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: "error",
+        success: false,
         message: "User not found or access denied",
       });
     }
@@ -1874,7 +1879,7 @@ exports.deleteUser = async (req, res) => {
     // Check hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
       return res.status(403).json({
-        status: "error",
+        success: false,
         message: "Access denied",
       });
     }
@@ -1882,7 +1887,7 @@ exports.deleteUser = async (req, res) => {
     // Prevent deleting admin users
     if (["admin", "super_admin"].includes(user.role)) {
       return res.status(403).json({
-        status: "error",
+        success: false,
         message: "Cannot delete admin users",
       });
     }
@@ -1901,7 +1906,7 @@ exports.deleteUser = async (req, res) => {
 
       if (activeAppointments > 0) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: `Cannot delete doctor with ${activeAppointments} active appointments. Please reschedule or cancel them first.`,
         });
       }
@@ -1910,27 +1915,11 @@ exports.deleteUser = async (req, res) => {
     // Soft delete - set isActive to false in PostgreSQL
     await userRepository.update(user.id, { isActive: false });
 
-    // Also update MongoDB User if exists (for consistency)
-    try {
-      const mongoUser = await User.findOne({ userId: user.user_id });
-      if (mongoUser) {
-        mongoUser.isActive = false;
-        await mongoUser.save();
-        logger.info(`MongoDB User ${user.user_id} also marked as inactive`);
-      }
-    } catch (mongoError) {
-      // Log but don't fail the request if MongoDB update fails
-      logger.warn(`Failed to update MongoDB User ${user.user_id}:`, {
-        error: mongoError.message,
-      });
-    }
-
     logger.info(
       `Admin ${req.user.userId} soft-deleted user ${userId} (${user.role})`
     );
 
     // Invalidate relevant caches after user deletion
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
@@ -1945,7 +1934,7 @@ exports.deleteUser = async (req, res) => {
     }
 
     res.json({
-      status: "success",
+      success: true,
       message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} deleted successfully`,
       data: {
         userId: user.user_id,
@@ -1957,11 +1946,7 @@ exports.deleteUser = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
-    res.status(500).json({
-      status: "error",
-      message: "Failed to delete user",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -1990,7 +1975,7 @@ exports.deleteUser = async (req, res) => {
  * - Cannot be reversed
  * - Is logged for audit purposes
  */
-exports.permanentDeleteUser = async (req, res) => {
+exports.permanentDeleteUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -1999,7 +1984,7 @@ exports.permanentDeleteUser = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: "error",
+        success: false,
         message: "User not found",
       });
     }
@@ -2007,7 +1992,7 @@ exports.permanentDeleteUser = async (req, res) => {
     // Check hospital access (multi-tenancy)
     if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
       return res.status(403).json({
-        status: "error",
+        success: false,
         message: "Access denied - user belongs to different hospital",
       });
     }
@@ -2015,7 +2000,7 @@ exports.permanentDeleteUser = async (req, res) => {
     // Prevent deleting admin users (security)
     if (["admin", "super_admin"].includes(user.role)) {
       return res.status(403).json({
-        status: "error",
+        success: false,
         message: "Cannot permanently delete admin users",
       });
     }
@@ -2034,7 +2019,7 @@ exports.permanentDeleteUser = async (req, res) => {
 
       if (activeAppointments > 0) {
         return res.status(400).json({
-          status: "error",
+          success: false,
           message: `Cannot delete doctor with ${activeAppointments} active appointments. Please reschedule or cancel them first.`,
         });
       }
@@ -2068,24 +2053,32 @@ exports.permanentDeleteUser = async (req, res) => {
       logger.info(`Deleted user record from PostgreSQL: ${user.user_id}`);
     });
 
-    // 3. Delete from MongoDB User collection (outside transaction as it's different DB)
+    // MongoDB cleanup â€” remove orphaned documents for the deleted user
     try {
-      const mongoUser = await User.findOneAndDelete({ userId: user.user_id });
-      if (mongoUser) {
-        logger.info(`Deleted MongoDB User document: ${user.user_id}`);
-      } else {
-        logger.warn(`MongoDB User not found: ${user.user_id}`);
+      const mongoCleanupTasks = [];
+      if (user.role === "patient") {
+        mongoCleanupTasks.push(
+          prescriptionRepository.deleteMany({ patientId: user.user_id })
+        );
+        mongoCleanupTasks.push(
+          medicalRecordRepository.deleteMany({ patientId: user.user_id })
+        );
       }
-    } catch (mongoError) {
-      logger.error(`Failed to delete MongoDB User ${user.user_id}:`, {
-        error: mongoError.message,
-        stack: mongoError.stack,
+      // Clean up notifications for all roles
+      mongoCleanupTasks.push(notificationRepository.deleteAllForUser(user.user_id));
+      const cleanupResults = await Promise.allSettled(mongoCleanupTasks);
+      cleanupResults.forEach((result, i) => {
+        if (result.status === "rejected") {
+          logger.warn(`MongoDB cleanup task ${i} failed:`, result.reason?.message);
+        }
       });
-      // Note: PostgreSQL deletion already committed, log this inconsistency
-      logger.error("DATABASE INCONSISTENCY: PostgreSQL deleted but MongoDB failed", {
+      logger.info("MongoDB cleanup completed for deleted user", { userId: user.user_id });
+    } catch (mongoCleanupError) {
+      logger.warn("MongoDB cleanup failed for deleted user:", {
         userId: user.user_id,
-        error: mongoError.message,
+        error: mongoCleanupError.message,
       });
+      // Don't fail the request â€” PostgreSQL deletion already succeeded
     }
 
     // FINAL AUDIT LOG - Record successful completion
@@ -2096,9 +2089,16 @@ exports.permanentDeleteUser = async (req, res) => {
       timestamp: new Date().toISOString(),
       success: true,
     });
+    await writeAuditLog({
+      userId: req.user.id,
+      action: AUDIT_ACTIONS.USER_DELETE,
+      entityType: "user",
+      entityId: user.id,
+      oldValues: { userId: user.user_id, role: user.role, email: user.email },
+      req,
+    });
 
     // Invalidate relevant caches after permanent deletion
-    const { deleteCacheByPattern } = require("../config/redis");
     try {
       await deleteCacheByPattern("v1:cache:user:*");
       await deleteCacheByPattern("v1:cache:doctors:*");
@@ -2106,13 +2106,14 @@ exports.permanentDeleteUser = async (req, res) => {
       await deleteCacheByPattern("v1:cache:patient:*");
       await deleteCacheByPattern("v1:cache:*patients*"); // Invalidate all patient-related caches
       await deleteCacheByPattern("v1:cache:/api/admin/users*"); // Invalidate admin user list cache
+      await deleteCacheByPattern("v1:cache:dashboard:*");
       logger.debug("Cache invalidated after permanent user deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
     res.json({
-      status: "success",
+      success: true,
       message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} permanently deleted. This action cannot be undone.`,
       data: {
         userId: user.user_id,
@@ -2127,11 +2128,7 @@ exports.permanentDeleteUser = async (req, res) => {
       userId: req.params.userId,
       requestedBy: req.user?.userId,
     });
-    res.status(500).json({
-      status: "error",
-      message: "Failed to permanently delete user",
-      error: error.message,
-    });
+    next(error);
   }
 };
 
@@ -2152,3 +2149,4 @@ function getTimeAgo(date) {
   if (hours < 24) return `${hours} hours ago`;
   return `${days} days ago`;
 }
+

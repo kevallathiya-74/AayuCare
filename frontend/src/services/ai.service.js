@@ -76,7 +76,7 @@ class AIService {
 
   /**
    * Get exercise recommendations
-   * @param {Object} data - { age, fitness, conditions }
+   * @param {Object} data - { age, fitness, conditions, goal }
    * @returns {Promise<Object>} - Exercise plan
    */
   async getExerciseRecommendations(data) {
@@ -85,6 +85,24 @@ class AIService {
       return response.data;
     } catch (error) {
       logError(error, { context: "AIService.getExerciseRecommendations" });
+      throw error;
+    }
+  }
+
+  /**
+   * Analyze a specific medical record with AI (doctor/admin only)
+   * @param {String} recordId - MongoDB ObjectId of the medical record
+   * @returns {Promise<Object>} - AI analysis of the medical record
+   */
+  async analyzeMedicalRecord(recordId) {
+    try {
+      if (!recordId) {
+        throw new Error("Medical record ID is required");
+      }
+      const response = await api.post(`/ai/analyze-medical-record/${recordId}`);
+      return response.data;
+    } catch (error) {
+      logError(error, { context: "AIService.analyzeMedicalRecord", recordId });
       throw error;
     }
   }

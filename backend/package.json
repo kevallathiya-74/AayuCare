@@ -8,16 +8,7 @@
     "dev": "nodemon server.js",
     "init:postgres": "node scripts/initPostgres.js",
     "cleanup:db": "node scripts/cleanupDatabase.js",
-    "seed:db": "node scripts/seedDatabase.js",
-    "migrate:better-auth": "node scripts/runBetterAuthMigration.js",
-    "sync:auth-accounts": "node scripts/syncUsersToAuthAccounts.js",
-    "setup": "npm install && npm run init:postgres && npm run cleanup:db",
-    "setup:full": "npm install && npm run init:postgres && npm run cleanup:db && npm run seed:db && npm run migrate:better-auth && npm run sync:auth-accounts",
-    "test:login": "node scripts/testMobileLogin.js",
-    "test:login:admin": "node scripts/testMobileLogin.js admin",
-    "test:login:doctor": "node scripts/testMobileLogin.js doctor",
-    "test:login:patient": "node scripts/testMobileLogin.js patient",
-    "check:users": "node scripts/checkUserIds.js"
+    "seed:db": "node scripts/seedDatabase.js"
   },
   "keywords": [],
   "author": "",

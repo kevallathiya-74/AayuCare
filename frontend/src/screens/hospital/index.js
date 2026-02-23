@@ -3,6 +3,7 @@
  * Export all hospital-related screens
  */
 
+export { default as DoctorPatientsScreen } from "./DoctorPatientsScreen";
 export { default as DoctorHomeScreen } from "./DoctorHomeScreen";
 export { default as DoctorProfileScreen } from "./DoctorProfileScreen";
 export { default as TodaysAppointmentsScreen } from "./TodaysAppointmentsScreen";

@@ -84,6 +84,15 @@ router.post(
   patientController.addHealthMetric
 );
 
+// @route   PUT /api/patients/:patientId/health-metrics/:metricId
+// @desc    Update a specific health metric entry
+// @access  Private (Patient own data, Doctor, or Admin)
+router.put(
+  "/:patientId/health-metrics/:metricId",
+  authorize("patient", "admin", "doctor"),
+  patientController.updateHealthMetric
+);
+
 // @route   DELETE /api/patients/:patientId/health-metrics/:metricId
 // @desc    Delete a specific health metric entry
 // @access  Private (Patient own data or Admin)

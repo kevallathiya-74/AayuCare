@@ -13,7 +13,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
 import { loadUser } from "../store/slices/authSlice";
-import { healthColors } from "../theme/healthColors";
+import { healthColors } from "../theme";
 import logger from "../utils/logger";
 
 // Splash & Selection
@@ -46,6 +46,7 @@ import SecuritySettingsScreen from "../screens/hospital/SecuritySettingsScreen";
 // Doctor Profile Screens
 import EditProfileScreen from "../screens/hospital/EditProfileScreen";
 import ConsultationHistoryScreen from "../screens/hospital/ConsultationHistoryScreen";
+import ConsultationScreen from "../screens/hospital/ConsultationScreen";
 import ScheduleAvailabilityScreen from "../screens/hospital/ScheduleAvailabilityScreen";
 
 import {
@@ -67,6 +68,8 @@ import AppointmentBookingScreen from "../screens/patient/AppointmentBookingScree
 import MedicalRecordsScreen from "../screens/patient/MedicalRecordsScreen";
 import AISymptomChecker from "../screens/patient/AISymptomChecker";
 import EmergencyServices from "../screens/patient/EmergencyServices";
+import MyAppointmentsScreen from "../screens/patient/MyAppointmentsScreen";
+import MyReportsScreen from "../screens/patient/MyReportsScreen";
 
 // User Main App
 import { SettingsScreen, SettingsAccessibilityScreen } from "../screens/main";
@@ -154,7 +157,7 @@ const AppNavigator = () => {
 
       // Navigate to appropriate tab navigator based on role
       logger.debug("AppNavigator", "Navigating to target", targetScreen);
-      setTimeout(() => {
+      if (navigationRef.current?.isReady()) {
         if (userRole === "admin") {
           navigationRef.current?.reset({
             index: 0,
@@ -171,7 +174,7 @@ const AppNavigator = () => {
             routes: [{ name: "PatientTabs" }],
           });
         }
-      }, 300); // Slightly longer delay to ensure state is fully updated
+      }
     }
   }, [isAuthenticated, user]);
 
@@ -308,8 +311,23 @@ const AppNavigator = () => {
                   component={ManagePatientsScreen}
                 />
                 <Stack.Screen
+                  name="PatientDetails"
+                  component={ManagePatientsScreen}
+                />
+                <Stack.Screen
                   name="CreatePrescription"
                   component={EnhancedPrescriptionScreen}
+                />
+                <Stack.Screen
+                  name="Consultation"
+                  component={ConsultationScreen}
+                  options={{
+                    headerShown: true,
+                    headerShadowVisible: false,
+                    headerBackVisible: false,
+                    headerStyle: { backgroundColor: healthColors.background.primary },
+                    gestureEnabled: false,
+                  }}
                 />
                 <Stack.Screen
                   name="SettingsAccessibility"
@@ -376,6 +394,22 @@ const AppNavigator = () => {
                   component={AISymptomChecker}
                 />
                 <Stack.Screen name="Emergency" component={EmergencyServices} />
+                <Stack.Screen
+                  name="Notifications"
+                  component={NotificationsScreen}
+                />
+                <Stack.Screen
+                  name="MyAppointments"
+                  component={MyAppointmentsScreen}
+                />
+                <Stack.Screen
+                  name="MyReports"
+                  component={MyReportsScreen}
+                />
+                <Stack.Screen
+                  name="HealthMetrics"
+                  component={ActivityTrackerScreen}
+                />
                 <Stack.Screen
                   name="SettingsAccessibility"
                   component={SettingsAccessibilityScreen}

@@ -127,7 +127,7 @@ const AISymptomChecker = ({ navigation }) => {
         {/* Possible Conditions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Possible Conditions</Text>
-          {analysis.possibleConditions.map((condition, index) => (
+          {(analysis.possibleConditions || []).map((condition, index) => (
             <View key={index} style={styles.conditionCard}>
               <View style={styles.conditionHeader}>
                 <Text style={styles.conditionName}>{condition.name}</Text>
@@ -183,7 +183,7 @@ const AISymptomChecker = ({ navigation }) => {
         {/* Recommendations */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recommendations</Text>
-          {analysis.recommendations.map((rec, index) => (
+          {(analysis.recommendations || []).map((rec, index) => (
             <View key={index} style={styles.recommendationItem}>
               <Ionicons
                 name="checkmark-circle"
@@ -201,7 +201,7 @@ const AISymptomChecker = ({ navigation }) => {
             <Ionicons name="warning" size={20} color={theme.colors.error.main} />
             <Text style={styles.warningTitle}>Seek Immediate Help If:</Text>
           </View>
-          {analysis.whenToSeekHelp.map((item, index) => (
+          {(analysis.whenToSeekHelp || []).map((item, index) => (
             <Text key={index} style={styles.warningItem}>
               • {item}
             </Text>

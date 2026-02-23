@@ -55,6 +55,9 @@ const healthColors = {
     green: "#66BB6A",
     lavender: "#CE93D8",
     aqua: "#4DD0E1",
+    purple: "#7E57C2",
+    pink: "#EC4899",
+    cyan: "#00BCD4",
   },
 
   // Semantic Colors
