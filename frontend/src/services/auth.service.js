@@ -158,22 +158,30 @@ export const login = async (credentials) => {
 
     const betterAuthUserId = result.data.user.id;
 
+    // Extract session token immediately from sign-in response (before any protected API calls)
+    let sessionToken = result.data?.session?.token || result.data?.token || null;
+    if (__DEV__) { console.log('[auth.service] Session token from sign-in:', sessionToken ? 'exists' : 'missing'); }
+
+    // Build auth headers for subsequent protected requests
+    const authHeaders = {
+      'Content-Type': 'application/json',
+      ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {}),
+    };
+
     // Fetch full user profile with user-friendly data
     if (__DEV__) { console.log('[auth.service] Fetching full user profile...'); }
     const profileResponse = await fetchWithTimeout(
       `${APP_CONFIG.api.baseURL}/user/profile-by-email`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: authHeaders,
         body: JSON.stringify({ email: email }),
       },
       10000
     );
 
     if (!profileResponse.ok) {
-      if (__DEV__) { console.error('[auth.service] Profile fetch failed'); }
+      if (__DEV__) { console.error('[auth.service] Profile fetch failed', profileResponse.status); }
       throw new Error('Failed to fetch user profile');
     }
 
@@ -181,21 +189,15 @@ export const login = async (credentials) => {
     const normalizedUser = normalizeUserProfile(profileData.data || {});
     if (__DEV__) { console.log('[auth.service] Profile fetched for role:', normalizedUser.role); }
 
-    // Prefer the session token returned directly by Better Auth (most reliable - no race condition)
-    let sessionToken = result.data?.session?.token || result.data?.token || null;
-
-    if (sessionToken) {
-      if (__DEV__) { console.log('[auth.service] Session token obtained directly from sign-in response'); }
-    } else {
-      // Fallback: fetch the session from the backend (handles edge cases where
-      // the token is not embedded in the sign-in response)
+    // If token was not in the sign-in response, fetch it from the backend now
+    if (!sessionToken) {
       if (__DEV__) { console.log('[auth.service] Token not in sign-in response, fetching from backend...'); }
       try {
         const sessionResponse = await fetchWithTimeout(
           `${APP_CONFIG.api.baseURL}/user/current-session`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders,
             body: JSON.stringify({ userId: betterAuthUserId }),
           },
           5000

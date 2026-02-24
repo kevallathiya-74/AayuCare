@@ -63,7 +63,7 @@ const WalkInPatientScreen = ({ navigation }) => {
     }
     
     // Enhanced phone validation
-    const phonePattern = /^\d{10}$/;
+    const phonePattern = /^\+?[0-9]{7,15}$/;
     if (!formData.phone.trim() || !phonePattern.test(formData.phone.trim())) {
       showError("Please enter valid 10-digit phone number");
       return false;
@@ -312,7 +312,7 @@ const WalkInPatientScreen = ({ navigation }) => {
               />
               <TextInput
                 style={styles.input}
-                placeholder="10-digit mobile number"
+                placeholder="mobile number"
                 value={formData.phone}
                 onChangeText={(value) =>
                   handleInputChange("phone", value.replace(/[^0-9]/g, ""))

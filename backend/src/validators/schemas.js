@@ -493,6 +493,61 @@ const walkInPatientSchema = Joi.object({
   hospitalId: Joi.string().max(50).optional(),
 });
 
+// Health metric schemas
+const addHealthMetricSchema = Joi.object({
+  type: Joi.string()
+    .valid("bp", "sugar", "weight", "bmi", "temperature", "steps", "sleep", "water", "exercise", "stress", "heart-rate", "oxygen")
+    .required()
+    .messages({ "any.only": "Invalid metric type" }),
+  value: Joi.alternatives()
+    .try(Joi.number(), Joi.object())
+    .required()
+    .messages({ "alternatives.match": "Value is required" }),
+  notes: Joi.string().max(500).optional().allow(""),
+  timestamp: Joi.date().optional(),
+});
+
+const updateHealthMetricSchema = Joi.object({
+  value: Joi.alternatives()
+    .try(Joi.number(), Joi.object())
+    .optional(),
+  notes: Joi.string().max(500).optional().allow(""),
+  timestamp: Joi.date().optional(),
+});
+
+const activityUpdateSchema = Joi.object({
+  type: Joi.string()
+    .valid("steps", "sleep", "water", "exercise", "stress")
+    .required()
+    .messages({ "any.only": "Invalid activity type. Must be one of: steps, sleep, water, exercise, stress" }),
+  value: Joi.alternatives()
+    .try(Joi.number(), Joi.object())
+    .required()
+    .messages({ "alternatives.match": "Value is required" }),
+  notes: Joi.string().max(500).optional().allow(""),
+});
+
+const scheduleUpdateSchema = Joi.object({
+  isAvailable: Joi.boolean().optional(),
+  timeSlots: Joi.array()
+    .items(
+      Joi.object({
+        startTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
+        endTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
+        maxPatients: Joi.number().integer().min(1).optional(),
+        consultationDuration: Joi.number().integer().min(5).max(120).optional(),
+      })
+    )
+    .optional(),
+  breakTime: Joi.object({
+    start: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
+    end: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
+  })
+    .optional()
+    .allow(null),
+  notes: Joi.string().max(500).optional().allow(""),
+});
+
 // ID validation helper
 const uuidSchema = Joi.string().uuid();
 
@@ -515,6 +570,10 @@ module.exports = {
   broadcastNotificationSchema,
   walkInPatientSchema,
   uuidSchema,
+  addHealthMetricSchema,
+  updateHealthMetricSchema,
+  activityUpdateSchema,
+  scheduleUpdateSchema,
   updateUserRoleSchema: Joi.object({
     role: Joi.string().valid("doctor", "patient", "admin").required(),
     version: Joi.number().optional(),

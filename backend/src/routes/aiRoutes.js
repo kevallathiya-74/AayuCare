@@ -13,6 +13,7 @@ const {
   validateDietRecommendations,
   validateExerciseRecommendations,
   validatePatientId,
+  validateRecordId,
 } = require("../validators/aiValidator");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
@@ -75,6 +76,7 @@ router.post(
 router.post(
   "/analyze-medical-record/:recordId",
   authorize("doctor", "admin"),
+  validateRecordId,
   aiController.analyzeMedicalRecord
 );
 

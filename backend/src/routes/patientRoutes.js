@@ -9,7 +9,12 @@ const patientController = require("../controllers/patientController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
-const { updatePatientProfileSchema } = require("../validators/schemas");
+const {
+  updatePatientProfileSchema,
+  addHealthMetricSchema,
+  updateHealthMetricSchema,
+  activityUpdateSchema,
+} = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // All routes require authentication
@@ -81,6 +86,7 @@ router.get(
 router.post(
   "/:patientId/health-metrics",
   authorize("patient", "doctor", "admin"),
+  validateBody(addHealthMetricSchema),
   patientController.addHealthMetric
 );
 
@@ -90,6 +96,7 @@ router.post(
 router.put(
   "/:patientId/health-metrics/:metricId",
   authorize("patient", "admin", "doctor"),
+  validateBody(updateHealthMetricSchema),
   patientController.updateHealthMetric
 );
 
@@ -117,6 +124,7 @@ router.get(
 router.post(
   "/:patientId/activity",
   authorize("patient", "admin"),
+  validateBody(activityUpdateSchema),
   patientController.updateActivityData
 );
 

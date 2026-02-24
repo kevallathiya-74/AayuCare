@@ -6,6 +6,7 @@
 const notificationRepository = require("../repositories/notificationRepository");
 const logger = require("../utils/logger");
 const { deleteCacheByPattern } = require("../config/redis");
+const { AppError } = require("../middleware/errorHandler");
 
 // Resolve user's UUID string id from the authenticated request
 const resolveUserId = (req) =>
@@ -22,10 +23,7 @@ exports.getUserNotifications = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required to fetch notifications",
-      });
+      return next(new AppError("Authentication required to fetch notifications", 401));
     }
 
     const query = { userId };
