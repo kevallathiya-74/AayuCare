@@ -115,12 +115,23 @@ router.get(
  * @desc    Get all doctors
  * @access  Public (requires hospitalId query param)
  */
-router.get("/", (req, res, next) => {
-  if (!req.query.hospitalId) {
-    return res.status(400).json({ status: "error", message: "hospitalId query parameter is required" });
-  }
-  next();
-}, cacheDoctorList, doctorController.getDoctors);
+router.get("/",
+  // Optional auth: if authenticated, derive hospitalId from token
+  require("../middleware/auth").optionalAuth,
+  (req, res, next) => {
+    // Use hospitalId from query param, or fall back to authenticated user's hospitalId
+    if (!req.query.hospitalId) {
+      if (req.user?.hospitalId) {
+        req.query.hospitalId = req.user.hospitalId;
+      } else {
+        return res.status(400).json({ status: "error", message: "hospitalId query parameter is required" });
+      }
+    }
+    next();
+  },
+  cacheDoctorList,
+  doctorController.getDoctors
+);
 
 /**
  * @route   GET /api/doctors/me/consultation-history

@@ -53,7 +53,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       if (searchTerm) {
         setSearchLoading(true);
       }
-      const response = await doctorService.getAllDoctors(searchTerm ? { search: searchTerm } : {});
+      const response = await doctorService.getAllDoctors(searchTerm ? { search: searchTerm, ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) } : { ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) });
       // Backend returns { doctors: [], pagination: {} } after service unwraps it
       const doctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
       logger.debug("ManageDoctorsScreen", `Loaded ${doctorsList.length} doctors`);

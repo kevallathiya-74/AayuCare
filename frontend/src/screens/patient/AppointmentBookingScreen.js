@@ -35,7 +35,7 @@ import { useSelector } from "react-redux";
 import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { formatDate, formatTime, formatCurrency, convertTo24Hour } from "../../utils/helpers";
+import { formatDate, formatTime, formatCurrency, convertTo24Hour, convertTo12Hour } from "../../utils/helpers";
 import { doctorService, appointmentService } from "../../services";
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
@@ -74,7 +74,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       setLoadingDoctors(true);
       setError(null);
       try {
-        const filters = specialty ? { specialization: specialty } : {};
+        const filters = {
+          ...(specialty ? { specialization: specialty } : {}),
+          ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
+        };
         const response = await doctorService.getDoctors(filters);
         // doctorService already unwraps response.data.data — check .doctors directly
         const doctorsList = response?.doctors || response?.data?.doctors;
@@ -665,7 +668,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       selectedTime === slot && styles.timeSlotTextSelected,
                     ]}
                   >
-                    {slot}
+                    {convertTo12Hour(slot)}
                   </Text>
                   {selectedTime === slot && (
                     <Ionicons name="checkmark" size={16} color={theme.colors.white} />

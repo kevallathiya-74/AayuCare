@@ -27,6 +27,7 @@ import { theme, healthColors } from "../../theme";
 import { showError, logError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { eventService } from "../../services";
+import { convertTo12Hour } from "../../utils/helpers";
 
 const HospitalEventsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -209,7 +210,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           <View style={styles.eventDetailRow}>
             <Ionicons name="time-outline" size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>
-              {event.startTime} - {event.endTime}
+              {convertTo12Hour(event.startTime)} - {convertTo12Hour(event.endTime)}
             </Text>
           </View>
           <View style={styles.eventDetailRow}>
@@ -240,7 +241,7 @@ const HospitalEventsScreen = ({ navigation }) => {
             onPress={() =>
               Alert.alert(
                 "Event Details",
-                `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${event.startTime} - ${event.endTime}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`
+                `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${convertTo12Hour(event.startTime)} - ${convertTo12Hour(event.endTime)}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`
               )
             }
           >

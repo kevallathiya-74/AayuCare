@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import doctorService from "../../services/doctor.service";
 import { theme, healthColors } from "../../theme";
+import { convertTo12Hour } from "../../utils/helpers";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -268,7 +269,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                           color={healthColors.primary.main}
                         />
                         <Text style={styles.timeSlotText}>
-                          {slot.startTime} - {slot.endTime}
+                          {convertTo12Hour(slot.startTime)} - {convertTo12Hour(slot.endTime)}
                         </Text>
                       </View>
                     ))}
@@ -284,8 +285,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                       color={healthColors.warning.main}
                     />
                     <Text style={styles.breakTimeText}>
-                      Break: {schedule.breakTime.startTime} -{" "}
-                      {schedule.breakTime.endTime}
+                      Break: {convertTo12Hour(schedule.breakTime.startTime)} -{" "}
+                      {convertTo12Hour(schedule.breakTime.endTime)}
                     </Text>
                   </View>
                 )}

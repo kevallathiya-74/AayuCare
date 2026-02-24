@@ -82,7 +82,8 @@ export const formatTime = (date) => {
   const minutes = String(d.getMinutes()).padStart(2, '0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;
-  return `${hours}:${minutes} ${ampm}`;
+  const paddedHours = String(hours).padStart(2, '0');
+  return `${paddedHours}:${minutes} ${ampm}`;
 };
 
 /**
@@ -96,7 +97,8 @@ export const convertTo12Hour = (time24) => {
   let hours = parseInt(hours24, 10);
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;
-  return `${hours}:${minutes} ${ampm}`;
+  const paddedHours = String(hours).padStart(2, '0');
+  return `${paddedHours}:${minutes} ${ampm}`;
 };
 
 /**
