@@ -168,21 +168,57 @@ exports.verifyOwnership = (field = "userId") => {
 };
 
 /**
- * Optional auth - doesn't fail if no token
+ * Optional auth - doesn't fail if no token, supports both cookie and Bearer token
  */
 exports.optionalAuth = async (req, res, next) => {
   try {
     const auth = getAuth();
-    const session = await auth.api.getSession({
-      headers: req.headers,
-    });
 
-    if (session && session.user && session.user.isActive) {
+    // Try cookie-based session first
+    let session = null;
+    try {
+      session = await auth.api.getSession({ headers: req.headers });
+    } catch (_) {
+      // Ignore cookie errors
+    }
+
+    // Fallback: try Bearer token (mobile clients)
+    if (!session?.user) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          const sessionResult = await query(
+            `SELECT token, user_id as "userId", expires_at as "expiresAt"
+             FROM session
+             WHERE token = $1 AND expires_at > NOW()
+             LIMIT 1`,
+            [token]
+          );
+          if (sessionResult.rows.length > 0) {
+            const userResult = await query(
+              `SELECT id, user_id as "userId", name, email, phone, role,
+                      hospital_id as "hospitalId", hospital_name as "hospitalName",
+                      is_active as "isActive", email_verified as "emailVerified"
+               FROM users WHERE id = $1`,
+              [sessionResult.rows[0].userId]
+            );
+            if (userResult.rows.length > 0 && userResult.rows[0].isActive) {
+              session = { user: userResult.rows[0], session: sessionResult.rows[0] };
+            }
+          }
+        } catch (_) {
+          // Ignore token errors
+        }
+      }
+    }
+
+    if (session?.user?.isActive) {
       req.user = session.user;
       req.session = session.session;
     }
   } catch (error) {
-    // Continue without auth
+    // Always continue - optional auth never blocks
   }
   next();
 };

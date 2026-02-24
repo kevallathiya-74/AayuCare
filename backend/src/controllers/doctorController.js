@@ -61,8 +61,9 @@ const formatAppointmentTime = (appointment) => {
     const parsed = new Date(`1970-01-01T${normalized}`);
     if (!Number.isNaN(parsed.getTime())) {
       return parsed.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
+        hour: "numeric",
         minute: "2-digit",
+        hour12: true,
       });
     }
   }
@@ -72,8 +73,9 @@ const formatAppointmentTime = (appointment) => {
     const parsedDate = new Date(rawDate);
     if (!Number.isNaN(parsedDate.getTime())) {
       return parsedDate.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
+        hour: "numeric",
         minute: "2-digit",
+        hour12: true,
       });
     }
   }

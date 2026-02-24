@@ -301,10 +301,25 @@ const PatientDashboard = ({ navigation }) => {
       edges={getSafeAreaEdges("withTabBar")}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={healthColors.background.primary}
+        barStyle="light-content"
+        backgroundColor={healthColors.primary.main}
+        translucent={false}
       />
 
+      {/* Scrollable Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[healthColors.primary.main]}
+            tintColor={healthColors.primary.main}
+          />
+        }
+      >
       {/* Enhanced Welcome Banner */}
       <LinearGradient
         colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -411,19 +426,6 @@ const PatientDashboard = ({ navigation }) => {
         </View>
       </LinearGradient>
 
-      {/* Scrollable Content */}
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[healthColors.primary.main]}
-            tintColor={healthColors.primary.main}
-          />
-        }
-      >
         {/* Health Status Card */}
         <View style={styles.healthStatusSection}>
           <View style={styles.sectionHeader}>
@@ -1085,10 +1087,9 @@ const styles = StyleSheet.create({
   },
   welcomeBanner: {
     paddingTop: 12,
-    paddingBottom: 24, // spacing.lg for better visual hierarchy
-    borderBottomLeftRadius: 16, // Standard border radius
+    paddingBottom: 24,
+    borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    ...theme.shadows.lg,
   },
   bannerTopRow: {
     flexDirection: "row",
@@ -1275,9 +1276,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginRight: 8,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
-    paddingTop: 16,
-    paddingBottom: verticalScale(32), // spacing.xxxl for proper footer spacing
+    paddingTop: 0,
+    paddingBottom: verticalScale(32),
     flexGrow: 1,
   },
   quickActionsGrid: {

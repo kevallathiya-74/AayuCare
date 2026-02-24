@@ -21,7 +21,7 @@ const logger = require('../src/utils/logger');
 const { withTransaction } = require('../src/utils/transaction');
 
 // Common password for all seed users (hashed)
-const COMMON_PASSWORD = process.env.SEED_USER_PASSWORD || 'AayuCare!2026';
+const COMMON_PASSWORD = process.env.SEED_USER_PASSWORD || 'password123';
 const HOSPITAL_ID = 'MAIN';
 const HOSPITAL_NAME = 'AayuCare Main Hospital';
 
@@ -509,7 +509,7 @@ async function seedDatabase() {
     logger.info(`   Patients: ${stats.patients.created} created, ${stats.patients.skipped} skipped`);
     logger.info('');
     logger.info('🔐 Login Credentials:');
-    logger.info('   Common Password: password123');
+    logger.info(`   Common Password: ${COMMON_PASSWORD}`);
     logger.info('');
     logger.info('📧 Sample Logins:');
     logger.info('   Admin:   rajesh.kumar@aayucare.com');

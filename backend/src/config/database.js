@@ -25,11 +25,11 @@ const connectDB = async () => {
 
     const mongoURI = process.env.MONGODB_URI;
 
-    // Extract and validate database name from URI
-    const dbNameMatch = mongoURI.match(/\.net\/([^?]+)/);
+    // Extract and validate database name from URI (supports both local and Atlas)
+    const dbNameMatch = mongoURI.match(/\/([^/?]+)(?:\?|$)/);
     const dbName = dbNameMatch ? dbNameMatch[1] : "unknown";
 
-    if (dbName === "unknown" || !dbName) {
+    if (dbName === "unknown" || !dbName || dbName === mongoURI.split("//")[1]?.split(":")[0]) {
       logger.warn(
         "⚠️  WARNING: No database name specified in URI. Connection may fail."
       );

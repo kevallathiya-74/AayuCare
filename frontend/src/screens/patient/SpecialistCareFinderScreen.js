@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { useSelector } from "react-redux";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -34,6 +35,7 @@ import { formatCurrency } from "../../utils/helpers";
 import { doctorService } from "../../services";
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
+  const { user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -72,6 +74,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       const filters = {};
       if (selectedSpecialty !== "All") {
         filters.specialization = selectedSpecialty;
+      }
+      if (user?.hospitalId) {
+        filters.hospitalId = user.hospitalId;
       }
 
       const response = await doctorService.getDoctors(filters);

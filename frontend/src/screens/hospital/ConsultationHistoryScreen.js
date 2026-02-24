@@ -19,6 +19,7 @@ import {
 } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { convertTo12Hour } from "../../utils/helpers";
 
 const ConsultationHistoryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -181,7 +182,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
               size={16}
               color={healthColors.text.secondary}
             />
-            <Text style={styles.detailText}>{item.appointmentTime}</Text>
+            <Text style={styles.detailText}>{convertTo12Hour(item.appointmentTime)}</Text>
           </View>
         )}
         {item.reason && (

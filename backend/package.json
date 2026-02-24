@@ -41,5 +41,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }

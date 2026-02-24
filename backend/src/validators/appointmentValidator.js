@@ -48,10 +48,10 @@ const isValidDate = (value) => {
   return true;
 };
 
-// Custom validator for time format (HH:MM)
+// Custom validator for time format (HH:MM, 24-hour internally)
 const isValidTime = (value) => {
   if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
-    throw new Error("Time must be in HH:MM format");
+    throw new Error("Appointment time must be in HH:MM format (e.g., 09:00, 14:30)");
   }
   return true;
 };

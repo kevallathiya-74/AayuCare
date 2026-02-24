@@ -166,7 +166,7 @@ const createAppointmentSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "Appointment time must be in HH:MM format (24-hour)",
+        "Appointment time must be in HH:MM format (e.g., 09:00, 14:30)",
     }),
   type: Joi.string()
     .valid(
