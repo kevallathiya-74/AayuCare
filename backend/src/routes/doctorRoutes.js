@@ -5,7 +5,7 @@ const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
 const { validateUpdateAppointmentStatus } = require("../validators/appointmentValidator");
-const { updateDoctorProfileSchema, walkInPatientSchema } = require("../validators/schemas");
+const { updateDoctorProfileSchema, walkInPatientSchema, scheduleUpdateSchema } = require("../validators/schemas");
 const { cacheDoctorList, cacheDoctorAvailability, cacheDashboard, invalidateCache } = require("../middleware/cache");
 
 /**
@@ -197,6 +197,7 @@ router.put(
   protect,
   attachHospitalId,
   authorize("doctor"),
+  validateBody(scheduleUpdateSchema),
   doctorController.updateSchedule
   // Cache invalidation now handled inside controller
 );

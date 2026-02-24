@@ -150,3 +150,14 @@ exports.validatePatientId = [
 
   validate,
 ];
+
+exports.validateRecordId = [
+  param("recordId")
+    .trim()
+    .notEmpty()
+    .withMessage("Record ID is required")
+    .matches(/^[0-9a-fA-F]{24}$/)
+    .withMessage("Invalid medical record ID format (must be a 24-character hex string)"),
+
+  validate,
+];

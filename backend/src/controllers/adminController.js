@@ -4,6 +4,7 @@
  */
 
 const mongoose = require("mongoose");
+const { AppError } = require("../middleware/errorHandler");
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
@@ -1723,10 +1724,7 @@ exports.updateUserProfile = async (req, res, next) => {
         
         if (result.rowCount === 0) {
           logger.error('Doctor update failed - no rows affected', { userId: user.id });
-          return res.status(500).json({
-            success: false,
-            message: "Failed to update doctor profile",
-          });
+          return next(new AppError("Failed to update doctor profile. Please try again.", 500));
         }
       }
     } else if (user.role === "patient") {
@@ -1803,10 +1801,7 @@ exports.updateUserProfile = async (req, res, next) => {
         
         if (result.rowCount === 0) {
           logger.error('Patient update failed - no rows affected', { userId: user.id });
-          return res.status(500).json({
-            success: false,
-            message: "Failed to update patient profile",
-          });
+          return next(new AppError("Failed to update patient profile. Please try again.", 500));
         }
       }
     }

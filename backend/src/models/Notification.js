@@ -76,6 +76,7 @@ notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 // Methods
 notificationSchema.methods.markAsRead = async function() {
     this.read = true;
+    this.readAt = new Date();
     return await this.save();
 };
 
@@ -87,7 +88,7 @@ notificationSchema.statics.getUnreadCount = async function(userId) {
 notificationSchema.statics.markAllAsRead = async function(userId) {
     return await this.updateMany(
         { userId, read: false },
-        { read: true }
+        { read: true, readAt: new Date() }
     );
 };
 
