@@ -8,7 +8,7 @@
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { healthColors } from "../../theme/healthColors";
+import { theme, healthColors } from "../../theme";
 import { textStyles } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
 
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   },
   content: {
     backgroundColor: healthColors.background.primary,
-    borderRadius: healthColors.borderRadius.large,
+    borderRadius: theme.borderRadius.lg,
     padding: spacing.xl,
     alignItems: "center",
     minWidth: 120,

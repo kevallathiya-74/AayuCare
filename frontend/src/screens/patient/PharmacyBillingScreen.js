@@ -27,6 +27,7 @@ import {
 } from "../../utils/responsive";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
+import { SkeletonCardRow } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
@@ -165,9 +166,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading prescription...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );

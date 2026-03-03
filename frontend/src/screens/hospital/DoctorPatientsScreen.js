@@ -12,7 +12,6 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -26,6 +25,7 @@ import { theme, healthColors } from "../../theme";
 import { getScreenPadding, verticalScale } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { SkeletonCardRow } from "../../components/common";
 
 const DoctorPatientsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -216,9 +216,8 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
       {/* List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading patients…</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
         <FlatList

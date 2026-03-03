@@ -28,6 +28,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { eventService } from "../../services";
 import { convertTo12Hour } from "../../utils/helpers";
+import { SkeletonCardRow } from "../../components/common";
 
 const HospitalEventsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -384,9 +385,8 @@ const HospitalEventsScreen = ({ navigation }) => {
 
       {/* Events List */}
       {loading && !refreshing ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading events...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>

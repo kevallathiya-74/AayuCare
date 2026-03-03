@@ -28,7 +28,7 @@ import { logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useAppointmentsInfinite } from "../../hooks/useAppointments";
-import { EmptyState } from "../../components/common";
+import { EmptyState, SkeletonCardRow } from "../../components/common";
 import appointmentService from "../../services/appointment.service";
 
 const AppointmentsScreen = ({ navigation }) => {
@@ -402,9 +402,8 @@ const AppointmentsScreen = ({ navigation }) => {
       </View>
 
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading appointments...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
         <FlatList
@@ -609,4 +608,5 @@ const styles = StyleSheet.create({
 });
 
 export default AppointmentsScreen;
+
 

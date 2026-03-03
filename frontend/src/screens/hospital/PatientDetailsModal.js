@@ -11,7 +11,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +18,7 @@ import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
+import { SkeletonCardRow } from "../../components/common";
 
 const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
   const [loading, setLoading] = useState(true);
@@ -584,12 +584,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
           {/* Content */}
           {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator
-                size="large"
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.loadingText}>Loading patient details...</Text>
+            <View style={{ padding: 16, gap: 12 }}>
+              {[1, 2, 3].map((i) => (<SkeletonCardRow key={i} />))}
             </View>
           ) : error ? (
             <View style={styles.errorContainer}>

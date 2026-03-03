@@ -13,7 +13,6 @@ import {
   TextInput,
   ScrollView,
   RefreshControl,
-  ActivityIndicator,
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +21,7 @@ import { theme, healthColors } from "../../theme";
 import apiClient from "../../services/apiClient";
 import { formatDate } from "../../utils/helpers";
 import { logError } from "../../utils/errorHandler";
+import { SkeletonCardRow } from "../../components/common";
 
 const FILTERS = ["all", "pending", "preparing", "ready", "dispensed"];
 
@@ -248,9 +248,8 @@ const PharmacyManagementScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>Pharmacy Management</Text>
           <View style={styles.headerIconBtn} />
         </View>
-        <View style={styles.centerState}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.centerStateText}>Loading pharmacy orders...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );

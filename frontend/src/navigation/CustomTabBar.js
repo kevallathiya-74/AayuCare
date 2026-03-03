@@ -1,39 +1,129 @@
 /**
  * AayuCare - CustomTabBar
  *
- * Custom bottom tab bar with simple animations
- * Features: active tab indicator, icon transitions
+ * Premium bottom tab bar shared across all role navigators.
+ * Features: active pill indicator, badge support, icon transitions,
+ *           safe-area insets, spring press feedback.
  */
 
-import React from "react";
+import React, { useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme";
-import { textStyles } from "../theme/typography";
-import { spacing } from "../theme/spacing";
+import { theme, healthColors } from "../theme";
+
+// Full route → icon map covering all three tab navigators
+const ICON_MAP = {
+  Dashboard: { focused: "home", unfocused: "home-outline" },
+  Appointments: { focused: "calendar", unfocused: "calendar-outline" },
+  TodaysAppointments: { focused: "calendar", unfocused: "calendar-outline" },
+  Reports: { focused: "document-text", unfocused: "document-text-outline" },
+  Settings: { focused: "settings", unfocused: "settings-outline" },
+  Patients: { focused: "people", unfocused: "people-outline" },
+  Profile: { focused: "person", unfocused: "person-outline" },
+  Health: { focused: "fitness", unfocused: "fitness-outline" },
+  Info: { focused: "library", unfocused: "library-outline" },
+  More: { focused: "apps", unfocused: "apps-outline" },
+};
+
+const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.85, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, friction: 4, tension: 100, useNativeDriver: true }).start();
+  };
+
+  const label =
+    options.tabBarLabel !== undefined
+      ? options.tabBarLabel
+      : options.title !== undefined
+        ? options.title
+        : route.name;
+
+  const badge = options.tabBarBadge;
+  const icons = ICON_MAP[route.name] || { focused: "ellipse", unfocused: "ellipse-outline" };
+
+  let iconEl;
+  if (typeof options.tabBarIcon === "function") {
+    iconEl = options.tabBarIcon({
+      focused: isFocused,
+      color: isFocused ? healthColors.primary.main : healthColors.text.tertiary,
+      size: 22,
+    });
+  } else {
+    iconEl = (
+      <Ionicons
+        name={isFocused ? icons.focused : icons.unfocused}
+        size={22}
+        color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
+      />
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      accessibilityLabel={options.tabBarAccessibilityLabel}
+      testID={options.tabBarTestID}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={styles.tab}
+      activeOpacity={1}
+    >
+      <Animated.View
+        style={[
+          styles.tabInner,
+          isFocused && styles.tabInnerActive,
+          { transform: [{ scale: scaleAnim }] },
+        ]}
+      >
+        <View style={styles.iconWrap}>
+          {iconEl}
+          {badge !== undefined && badge !== null ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {typeof badge === "number" && badge > 99 ? "99+" : badge}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <Text
+          style={[
+            styles.label,
+            { color: isFocused ? healthColors.primary.main : healthColors.text.tertiary },
+            isFocused && styles.labelActive,
+          ]}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+      </Animated.View>
+      {isFocused ? <View style={styles.activeDot} /> : null}
+    </TouchableOpacity>
+  );
+};
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const insets = useSafeAreaInsets();
-  const bottomPadding = Math.max(insets.bottom, spacing.sm);
+  const bottomPad = Math.max(insets.bottom, 8);
 
   return (
-    <View style={[styles.container, { paddingBottom: bottomPadding }]}>
+    <View style={[styles.container, { paddingBottom: bottomPad }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-              ? options.title
-              : route.name;
-
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -42,72 +132,24 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             target: route.key,
             canPreventDefault: true,
           });
-
           if (!isFocused && !event.defaultPrevented) {
             navigation.navigate(route.name);
           }
         };
 
         const onLongPress = () => {
-          navigation.emit({
-            type: "tabLongPress",
-            target: route.key,
-          });
-        };
-
-        // Get icon name based on route
-        const getIconName = () => {
-          switch (route.name) {
-            case "Home":
-              return isFocused ? "home" : "home-outline";
-            case "Doctors":
-              return isFocused ? "people" : "people-outline";
-            case "Appointments":
-              return isFocused ? "calendar" : "calendar-outline";
-            case "Profile":
-              return isFocused ? "person" : "person-outline";
-            default:
-              return "ellipse";
-          }
+          navigation.emit({ type: "tabLongPress", target: route.key });
         };
 
         return (
-          <TouchableOpacity
-            key={index}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
+          <TabItem
+            key={route.key}
+            route={route}
+            options={options}
+            isFocused={isFocused}
             onPress={onPress}
             onLongPress={onLongPress}
-            style={styles.tab}
-            activeOpacity={0.7}
-          >
-            <View style={styles.tabContent}>
-              <Ionicons
-                name={getIconName()}
-                size={24}
-                color={
-                  isFocused
-                    ? healthColors.primary.main
-                    : healthColors.text.tertiary
-                }
-              />
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    color: isFocused
-                      ? healthColors.primary.main
-                      : healthColors.text.tertiary,
-                  },
-                ]}
-              >
-                {label}
-              </Text>
-            </View>
-            {isFocused && <View style={styles.indicator} />}
-          </TouchableOpacity>
+          />
         );
       })}
     </View>
@@ -119,46 +161,79 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: healthColors.background.primary,
     borderTopWidth: 1,
-    borderTopColor: healthColors.neutral.gray200,
-    paddingTop: spacing.sm,
+    borderTopColor: healthColors.border.light,
+    paddingTop: 6,
     ...Platform.select({
       ios: {
-        shadowColor: healthColors.shadows.medium,
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
       },
       android: {
-        elevation: 8,
+        elevation: 10,
       },
     }),
   },
   tab: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.sm,
+    justifyContent: "flex-start",
   },
-  tabContent: {
+  tabInner: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: theme.borderRadius.md,
+    minWidth: 56,
+  },
+  tabInnerActive: {
+    backgroundColor: healthColors.primary.main + "12",
+  },
+  iconWrap: {
+    position: "relative",
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
   },
-  label: {
-    ...textStyles.caption,
-    marginTop: 4,
-    fontWeight: "600",
-  },
-  indicator: {
+  badge: {
     position: "absolute",
-    top: 0,
-    width: 40,
-    height: 3,
-    backgroundColor: healthColors.primary.main,
+    top: -4,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: healthColors.error.main,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: healthColors.background.primary,
+  },
+  badgeText: {
+    color: healthColors.white,
+    fontSize: 9,
+    fontWeight: "700",
+    lineHeight: 12,
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: "600",
+    marginTop: 3,
+    letterSpacing: 0.2,
+  },
+  labelActive: {
+    fontWeight: "700",
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
     borderRadius: 2,
+    backgroundColor: healthColors.primary.main,
+    marginTop: 3,
   },
 });
 
 export default CustomTabBar;
-
-
-

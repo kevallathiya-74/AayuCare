@@ -1,15 +1,10 @@
 /**
- * Doctor Home Screen (Screen 8)
- * Main dashboard for doctors with today's schedule and quick patient access
+ * Doctor Home Screen — lean orchestrator
+ * Sub-components live in ./components/
+ * All data logic stays here.
  */
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -18,78 +13,66 @@ import {
   TouchableOpacity,
   StatusBar,
   RefreshControl,
-  TextInput,
   Alert,
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  Animated,
   Dimensions,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
-import {
-  getScreenPadding,
-  verticalScale,
-  getSafeAreaEdges,
-  getContainerWidth,
-  isTablet,
-} from "../../utils/responsive";
-import Avatar from "../../components/common/Avatar";
-import LanguageSelector from "../../components/common/LanguageSelector";
+import { getScreenPadding, getSafeAreaEdges } from "../../utils/responsive";
 import { logoutUser } from "../../store/slices/authSlice";
 import { showConfirmation, logError } from "../../utils/errorHandler";
 import { doctorService } from "../../services";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
+import { EmptyState, SectionHeader } from "../../components/common";
+import { useDrawer } from "../../hooks/useDrawer";
+import { DrawerMenu } from "../../components/layout";
+import {
+  DoctorHeader,
+  ScheduleStatsCard,
+  PatientSearchBar,
+  TodayAppointmentCard,
+} from "./components";
 
-const { width } = Dimensions.get("window");
+const QUICK_ACTIONS = [
+  { icon: "calendar", color: healthColors.primary.main, label: "Today's\nAppointments", screen: "DoctorTabs", params: { screen: "TodaysAppointments" } },
+  { icon: "people", color: healthColors.secondary.main, label: "Patient\nManagement", screen: "PatientManagement" },
+  { icon: "document-text", color: healthColors.accent.coral, label: "Create\nPrescription", screen: "CreatePrescription" },
+  { icon: "person-add", color: healthColors.accent.green || "#43A047", label: "Walk-in\nPatient", screen: "WalkInPatient" },
+];
 
 const DoctorHomeScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
+
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState(null);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
-  const insets = useSafeAreaInsets();
-
   const [schedule, setSchedule] = useState({
-    totalAppointments: 0,
-    completed: 0,
-    pending: 0,
-    nextPatient: "Loading...",
-    nextTime: "--:--",
+    totalAppointments: 0, completed: 0, pending: 0,
+    nextPatient: "Loading…", nextTime: "--:--",
   });
-
   const [todaysAppointments, setTodaysAppointments] = useState([]);
 
-  // Calculate notification count from pending appointments
-  const notificationCount = schedule.pending || 0;
+  const { refreshCount } = useDoctorAppointments();
 
+  // ── Data fetching ──
   const fetchDashboardData = useCallback(async () => {
     try {
       setError(null);
       const response = await doctorService.getDashboard();
-
       if (response?.success) {
-        // Ensure all schedule fields have safe fallback values
         setSchedule({
           totalAppointments: response.data.schedule?.totalAppointments || 0,
           completed: response.data.schedule?.completed || 0,
           pending: response.data.schedule?.pending || 0,
-          nextPatient:
-            response.data.schedule?.nextPatient || "No upcoming patients",
+          nextPatient: response.data.schedule?.nextPatient || "No upcoming patients",
           nextTime: response.data.schedule?.nextTime || "--:--",
         });
         setTodaysAppointments(response.data.todaysAppointments || []);
@@ -102,14 +85,8 @@ const DoctorHomeScreen = ({ navigation }) => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
-  // Get refreshCount from context to sync tab badge
-  const { refreshCount } = useDoctorAppointments();
-
-  // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchDashboardData();
@@ -120,190 +97,120 @@ const DoctorHomeScreen = ({ navigation }) => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchDashboardData();
-    refreshCount(); // Also refresh tab badge count
+    refreshCount();
     setRefreshing(false);
   }, [fetchDashboardData, refreshCount]);
 
-  // Real-time search with debouncing (triggers after 1 character)
+  // ── Patient search (debounced) ──
+  const searchTimeout = useRef(null);
   useEffect(() => {
-    const delaySearch = setTimeout(async () => {
-      if (searchQuery.trim().length >= 1) {
-        setSearching(true);
-        try {
-          const response = await doctorService.searchMyPatients(
-            searchQuery.trim()
-          );
-          setSearchResults(response?.data?.patients || response?.data || []);
-        } catch (err) {
-          logError(err, { context: "DoctorHomeScreen.realtimeSearch" });
-          setSearchResults([]);
-        } finally {
-          setSearching(false);
-        }
-      } else {
+    clearTimeout(searchTimeout.current);
+    if (searchQuery.trim().length < 1) {
+      setSearchResults([]);
+      return;
+    }
+    searchTimeout.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await doctorService.searchMyPatients(searchQuery.trim());
+        setSearchResults(res?.data?.patients || res?.data || []);
+      } catch (err) {
+        logError(err, { context: "DoctorHomeScreen.search" });
         setSearchResults([]);
+      } finally {
+        setSearching(false);
       }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(delaySearch);
+    }, 500);
+    return () => clearTimeout(searchTimeout.current);
   }, [searchQuery]);
 
-  // Menu animation handlers
-  useEffect(() => {
-    if (menuVisible) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: -width * 0.8,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [menuVisible, slideAnim]);
-
-  const closeMenu = useCallback(() => {
-    setMenuVisible(false);
-  }, []);
-
+  // ── Handlers ──
   const handleLogout = useCallback(() => {
-    showConfirmation(
-      "Are you sure you want to logout?",
-      () => dispatch(logoutUser()),
-      () => {},
-      "Logout"
-    );
+    showConfirmation("Are you sure you want to logout?", () => dispatch(logoutUser()), () => {}, "Logout");
   }, [dispatch]);
 
-  const handleStartConsultation = useCallback(
-    async (appointment) => {
-      try {
-        const appointmentId = appointment._id || appointment.id;
-        if (!appointmentId) {
-          Alert.alert("Error", "Invalid appointment ID");
-          return;
-        }
+  const handleStartConsultation = useCallback(async (appointment) => {
+    try {
+      const id = appointment._id || appointment.id;
+      if (!id) { Alert.alert("Error", "Invalid appointment ID"); return; }
+      await doctorService.updateAppointmentStatus(id, "in_progress");
+      fetchDashboardData();
+      refreshCount();
+      navigation.navigate("Consultation", { appointment });
+    } catch (err) {
+      logError(err, { context: "DoctorHomeScreen.startConsultation" });
+      Alert.alert("Error", "Failed to start consultation. Please try again.");
+    }
+  }, [fetchDashboardData, refreshCount, navigation]);
 
-        await doctorService.updateAppointmentStatus(appointmentId, "in_progress");
-        fetchDashboardData();
-        refreshCount(); // Sync tab badge count after status change
-        navigation.navigate("Consultation", { appointment });
-      } catch (err) {
-        logError(err, { context: "DoctorHomeScreen.handleStartConsultation" });
-        Alert.alert("Error", "Failed to start consultation. Please try again.");
-      }
-    },
-    [fetchDashboardData, refreshCount, navigation]
-  );
+  const handleViewHistory = useCallback((appointment) => {
+    navigation.navigate("PatientManagement", {
+      patientId: appointment.patientId,
+      patientName: appointment.patientName,
+    });
+  }, [navigation]);
 
+  // ── Greeting helpers ──
   const getGreeting = useCallback(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Good Morning";
-    if (hour >= 12 && hour < 17) return "Good Afternoon";
-    if (hour >= 17 && hour < 21) return "Good Evening";
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return "Good Morning";
+    if (h >= 12 && h < 17) return "Good Afternoon";
+    if (h >= 17 && h < 21) return "Good Evening";
     return "Good Night";
   }, []);
 
   const getGreetingIcon = useCallback(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "sunny"; // Morning sun
-    if (hour >= 12 && hour < 17) return "partly-sunny"; // Afternoon
-    if (hour >= 17 && hour < 21) return "moon"; // Evening moon
-    return "moon-outline"; // Night
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return "sunny";
+    if (h >= 12 && h < 17) return "partly-sunny";
+    if (h >= 17 && h < 21) return "moon";
+    return "moon-outline";
   }, []);
 
-  const getStatusColor = useCallback((status) => {
-    const normalizedStatus = (status || "").replace(/-/g, "_");
-    switch (normalizedStatus) {
-      case "completed":
-        return healthColors.success.main;
-      case "in_progress":
-        return healthColors.info.main;
-      case "cancelled":
-      case "no_show":
-        return healthColors.error.main;
-      default:
-        return healthColors.warning.main;
-    }
-  }, []);
+  // ── Visible appointments ──
+  const visibleAppointments = useMemo(() => (todaysAppointments || []).filter((a) => {
+    const s = String(a?.status || "").toLowerCase().replace(/-/g, "_");
+    return s === "scheduled" || s === "confirmed" || s === "in_progress";
+  }), [todaysAppointments]);
 
-  const getStatusLabel = useCallback((status) => {
-    const normalizedStatus = (status || "").replace(/-/g, "_");
-    switch (normalizedStatus) {
-      case "completed":
-        return "Completed";
-      case "in_progress":
-        return "In Progress";
-      case "cancelled":
-        return "Cancelled";
-      case "no_show":
-        return "No Show";
-      case "confirmed":
-        return "Confirmed";
-      default:
-        return "Pending";
-    }
-  }, []);
+  // ── Drawer menu ──
+  const nav = (screen, params) => () => { closeMenu(); setTimeout(() => navigation.navigate(screen, params), 100); };
+  const menuSections = useMemo(() => [
+    {
+      title: "NAVIGATION",
+      items: [
+        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("DoctorTabs", { screen: "Dashboard" }) },
+        { icon: "calendar", iconColor: healthColors.secondary.main, label: "My Appointments", onPress: nav("DoctorTabs", { screen: "TodaysAppointments" }) },
+        { icon: "people", iconColor: healthColors.accent.aqua, label: "Patient Management", onPress: nav("PatientManagement") },
+        { icon: "document-text", iconColor: healthColors.accent.coral, label: "Create Prescription", onPress: nav("CreatePrescription") },
+        { icon: "person-add", iconColor: healthColors.accent.green || "#43A047", label: "Walk-in Patient", onPress: nav("WalkInPatient") },
+      ],
+    },
+    {
+      title: "ACCOUNT",
+      items: [
+        { icon: "person", iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("Profile") },
+        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("DoctorTabs", { screen: "Settings" }) },
+      ],
+    },
+  ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const visibleTodaysAppointments = useMemo(() => {
-    return (todaysAppointments || []).filter((appointment) => {
-      const normalizedStatus = String(appointment?.status || "")
-        .toLowerCase()
-        .replace(/-/g, "_");
-
-      return (
-        normalizedStatus === "scheduled" ||
-        normalizedStatus === "confirmed" ||
-        normalizedStatus === "in_progress"
-      );
-    });
-  }, [todaysAppointments]);
-
-  if (loading) {
-    return (
-      <SafeAreaView
-        style={styles.container}
-        edges={getSafeAreaEdges("withTabBar")}
-      >
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading dashboard...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
+  // ── Render ──
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={getSafeAreaEdges("withTabBar")}
-    >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={healthColors.background.primary}
-      />
+    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+      <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[healthColors.primary.main]}
-            tintColor={healthColors.primary.main}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh}
+            colors={[healthColors.primary.main]} tintColor={healthColors.primary.main} />
         }
       >
+        {/* Error banner */}
         {error && (
           <View style={styles.errorBanner}>
-            <Ionicons
-              name="warning"
-              size={20}
-              color={healthColors.error.main}
-            />
+            <Ionicons name="warning" size={18} color={healthColors.error.main} />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity onPress={fetchDashboardData}>
               <Text style={styles.retryText}>Retry</Text>
@@ -311,1395 +218,122 @@ const DoctorHomeScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* Enhanced Welcome Banner */}
-        <LinearGradient
-          colors={[healthColors.primary.main, healthColors.primary.dark]}
-          style={styles.welcomeBanner}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          {/* Top Icons Row */}
-          <View style={styles.bannerTopRow}>
-            <TouchableOpacity
-              style={styles.bannerIconButton}
-              onPress={() => setMenuVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Open menu"
-            >
-              <Ionicons name="menu" size={24} color={theme.colors.text.white} />
-            </TouchableOpacity>
-            <View style={styles.bannerRightIcons}>
-              <TouchableOpacity
-                style={styles.bannerIconButton}
-                onPress={() => navigation.navigate("NotificationsScreen")}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  notificationCount > 0
-                    ? `${notificationCount} pending appointments`
-                    : "No notifications"
-                }
-              >
-                <Ionicons
-                  name="notifications"
-                  size={24}
-                  color={theme.colors.text.white}
-                />
-                {notificationCount > 0 && (
-                  <View style={styles.bannerNotificationBadge}>
-                    <Text style={styles.bannerNotificationBadgeText}>
-                      {String(notificationCount)}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              <LanguageSelector compact iconColor={theme.colors.text.white} />
-              <TouchableOpacity
-                style={styles.bannerIconButton}
-                onPress={() => navigation.navigate("Profile")}
-                accessibilityRole="button"
-                accessibilityLabel="View profile"
-              >
-                <Ionicons
-                  name="person"
-                  size={24}
-                  color={theme.colors.text.white}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+        {/* ── Hero Header ── */}
+        <DoctorHeader
+          user={user}
+          greeting={getGreeting()}
+          greetingIcon={getGreetingIcon()}
+          notificationCount={schedule.pending}
+          onMenuOpen={openMenu}
+          onNotificationPress={() => navigation.navigate("NotificationsScreen")}
+          onProfilePress={() => navigation.navigate("Profile")}
+        />
 
-          {/* Greeting Section */}
-          <View style={styles.bannerGreeting}>
-            <View style={styles.greetingRow}>
-              <Ionicons
-                name={getGreetingIcon()}
-                size={28}
-                color={theme.colors.text.white}
-                style={styles.greetingIcon}
-              />
-              <View>
-                <Text style={styles.bannerTimeGreeting}>{getGreeting()}</Text>
-                <Text style={styles.bannerWelcomeText}>
-                  {user?.name || "Doctor"}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.bannerInfoCard}>
-              <View style={styles.bannerInfoRow}>
-                <Ionicons
-                  name="medical"
-                  size={16}
-                  color={theme.colors.text.white}
-                />
-                <Text style={styles.bannerInfoText}>
-                  {user?.specialization || "General Physician"}
-                </Text>
-              </View>
-              <View style={styles.bannerInfoRow}>
-                <Ionicons
-                  name="business"
-                  size={16}
-                  color={theme.colors.text.white}
-                />
-                <Text style={styles.bannerInfoText}>
-                  {user?.department || "OPD"}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
+        <View style={styles.body}>
+          {/* ── Schedule Stats ── */}
+          <ScheduleStatsCard schedule={schedule} />
 
-        {/* Today's Schedule */}
-        <View style={styles.section}>
-          <View style={styles.scheduleCard}>
-            <View style={styles.scheduleHeader}>
-              <Ionicons
-                name="calendar-outline"
-                size={22}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.scheduleTitle}>TODAY'S SCHEDULE</Text>
-            </View>
-            <View style={styles.divider} />
+          {/* ── Patient Search ── */}
+          <SectionHeader title="Patient Search" style={styles.sectionHeader} />
+          <PatientSearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            searching={searching}
+            results={searchResults}
+            onClear={() => { setSearchQuery(""); setSearchResults([]); }}
+            onSelectPatient={(p) =>
+              navigation.navigate("PatientManagement", {
+                patientId: p.userId || p._id,
+              })
+            }
+          />
 
-            <View style={styles.scheduleStats}>
-              <View style={styles.scheduleStat}>
-                <View style={styles.scheduleIconCircle}>
-                  <Ionicons
-                    name="calendar-number-outline"
-                    size={28}
-                    color={healthColors.primary.main}
-                  />
-                </View>
-                <Text style={styles.scheduleStatValue}>
-                  {String(schedule.totalAppointments)}
-                </Text>
-                <Text style={styles.scheduleStatLabel}>Appointments</Text>
-              </View>
-              <View style={styles.scheduleStat}>
-                <View style={styles.scheduleIconCircle}>
-                  <Ionicons
-                    name="time-outline"
-                    size={28}
-                    color={healthColors.info.main}
-                  />
-                </View>
-                <Text style={styles.scheduleStatValue}>
-                  {schedule.nextTime}
-                </Text>
-                <Text style={styles.scheduleStatLabel}>Next Patient</Text>
-              </View>
-            </View>
-
-            <View style={styles.progressContainer}>
-              <View style={styles.progressRow}>
-                <View style={styles.progressItem}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={16}
-                    color={healthColors.success.main}
-                  />
-                  <Text style={styles.progressLabel}>
-                    Completed: {String(schedule.completed)}
-                  </Text>
-                </View>
-                <View style={styles.progressItem}>
-                  <Ionicons
-                    name="hourglass-outline"
-                    size={16}
-                    color={healthColors.warning.main}
-                  />
-                  <Text style={styles.progressLabel}>
-                    Pending: {String(schedule.pending)}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width:
-                        schedule.totalAppointments > 0
-                          ? `${(schedule.completed / schedule.totalAppointments) * 100}%`
-                          : "0%",
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-
-            <View style={styles.nextPatientCard}>
-              <Text style={styles.nextPatientLabel}>Next Patient:</Text>
-              <Text style={styles.nextPatientName}>{schedule.nextPatient}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Quick Patient Search */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>QUICK PATIENT SEARCH:</Text>
-          <View style={styles.searchContainer}>
-            <Ionicons
-              name="search"
-              size={20}
-              color={healthColors.text.secondary}
-              style={styles.searchIcon}
+          {/* ── Today's Appointments ── */}
+          <SectionHeader title="Today's Appointments" style={styles.sectionHeader} />
+          {visibleAppointments.length === 0 ? (
+            <EmptyState
+              icon="calendar-outline"
+              title="No Appointments Today"
+              message="You have no scheduled or confirmed appointments right now."
             />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Enter patient name..."
-              placeholderTextColor={healthColors.text.secondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              accessibilityLabel="Search patients by name"
-              accessibilityHint="Type patient name to search"
-            />
-            {searching && (
-              <ActivityIndicator
-                size="small"
-                color={healthColors.primary.main}
-              />
-            )}
-            {searchQuery.length > 0 && !searching && (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchQuery("");
-                  setSearchResults([]);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Clear search"
-              >
-                <Ionicons
-                  name="close-circle"
-                  size={20}
-                  color={healthColors.text.secondary}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-          {searchResults.length > 0 && (
-            <View style={styles.searchResultsContainer}>
-              {searchResults.map((patient) => (
-                <TouchableOpacity
-                  key={patient._id || patient.id}
-                  style={styles.searchResultItem}
-                  onPress={() =>
-                    navigation.navigate("PatientManagement", {
-                      patientId: patient.userId || patient._id,
-                    })
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`View ${patient.name}, ${patient.age || "Unknown age"} years old`}
-                >
-                  <View style={styles.searchResultInfo}>
-                    <Text style={styles.searchResultName}>
-                      {patient.name || "Unknown Patient"}
-                    </Text>
-                    <Text style={styles.searchResultDetails}>
-                      {patient.age ? `Age: ${patient.age} | ` : ""}ID:{" "}
-                      {patient.userId || "N/A"}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={healthColors.text.secondary}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Today's Appointments */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>TODAY'S APPOINTMENTS:</Text>
-          {visibleTodaysAppointments.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons
-                name="calendar-outline"
-                size={48}
-                color={healthColors.text.secondary}
-              />
-              <Text style={styles.emptyStateText}>
-                No appointments scheduled for today
-              </Text>
-            </View>
           ) : (
-            visibleTodaysAppointments.map((appointment) => (
-              <View
-                key={appointment._id || appointment.id}
-                style={styles.appointmentCard}
-                accessible={true}
-                accessibilityLabel={`Appointment with ${appointment.patientName} at ${appointment.time}, Status: ${getStatusLabel(appointment.status)}`}
-              >
-                <View style={styles.appointmentHeader}>
-                  <View style={styles.appointmentTime}>
-                    <Ionicons
-                      name="time-outline"
-                      size={16}
-                      color={healthColors.primary.main}
-                    />
-                    <Text style={styles.appointmentTimeText}>
-                      {appointment.time || "--:--"}
-                    </Text>
-                  </View>
-                  <View style={styles.appointmentTypeBadge}>
-                    <Ionicons
-                      name={
-                        appointment.type === "telemedicine"
-                          ? "videocam"
-                          : "medical"
-                      }
-                      size={14}
-                      color={
-                        appointment.type === "telemedicine"
-                          ? healthColors.info.main
-                          : healthColors.primary.main
-                      }
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.appointmentPatientRow}>
-                  <Text style={styles.appointmentPatient}>
-                    {appointment.patientName || "Unknown Patient"}
-                  </Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor:
-                          getStatusColor(appointment.status) + "20",
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        { color: getStatusColor(appointment.status) },
-                      ]}
-                    >
-                      {getStatusLabel(appointment.status)}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.appointmentReason}>
-                  Patient: {appointment.patientId || "N/A"} | Age:{" "}
-                  {appointment.age || "N/A"} |{" "}
-                  {appointment.reason || "General Consultation"}
-                </Text>
-
-                <View style={styles.appointmentActions}>
-                  <TouchableOpacity
-                    style={styles.actionButtonSecondary}
-                    onPress={() =>
-                      navigation.navigate("PatientManagement", {
-                        patientId: appointment.patientId,
-                        patientName: appointment.patientName,
-                      })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={`View history for ${appointment.patientName}`}
-                  >
-                    <Text style={styles.actionButtonSecondaryText}>
-                      View History
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionButtonPrimary}
-                    onPress={() => {
-                      const normalizedStatus = String(appointment?.status || "")
-                        .toLowerCase()
-                        .replace(/-/g, "_");
-
-                      if (
-                        normalizedStatus !== "scheduled" &&
-                        normalizedStatus !== "confirmed" &&
-                        normalizedStatus !== "in_progress"
-                      ) {
-                        Alert.alert(
-                          "Unavailable",
-                          "Consultation can only be started for scheduled or confirmed appointments."
-                        );
-                        return;
-                      }
-
-                      handleStartConsultation(appointment);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Start consultation with ${appointment.patientName}`}
-                  >
-                    <Text style={styles.actionButtonPrimaryText}>
-                      {String(appointment?.status || "")
-                        .toLowerCase()
-                        .replace(/-/g, "_") === "in_progress"
-                        ? "Continue Consultation"
-                        : "Start Consultation"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+            visibleAppointments.map((appt) => (
+              <TodayAppointmentCard
+                key={appt._id || appt.id}
+                appointment={appt}
+                onViewHistory={handleViewHistory}
+                onStartConsultation={handleStartConsultation}
+              />
             ))
           )}
-        </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>QUICK ACTIONS:</Text>
-          <View style={styles.quickActionsGrid}>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() =>
-                navigation.navigate("DoctorTabs", {
-                  screen: "TodaysAppointments",
-                })
-              }
-              accessibilityRole="button"
-              accessibilityLabel="View today's appointments"
-            >
-              <View
-                style={[
-                  styles.quickActionIcon,
-                  { backgroundColor: healthColors.primary.main + "15" },
-                ]}
+          {/* ── Quick Actions ── */}
+          <SectionHeader title="Quick Actions" style={styles.sectionHeader} />
+          <View style={styles.quickGrid}>
+            {QUICK_ACTIONS.map(({ icon, color, label, screen, params }) => (
+              <TouchableOpacity
+                key={label}
+                style={styles.quickCard}
+                onPress={() => navigation.navigate(screen, params)}
+                activeOpacity={0.75}
               >
-                <Ionicons
-                  name="calendar"
-                  size={28}
-                  color={healthColors.primary.main}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>
-                Today's{"\n"}Appointments
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate("PatientManagement")}
-              accessibilityRole="button"
-              accessibilityLabel="Manage patients"
-            >
-              <View
-                style={[
-                  styles.quickActionIcon,
-                  { backgroundColor: healthColors.secondary.main + "15" },
-                ]}
-              >
-                <Ionicons
-                  name="people"
-                  size={28}
-                  color={healthColors.secondary.main}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>
-                Patient{"\n"}Management
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate("CreatePrescription")}
-              accessibilityRole="button"
-              accessibilityLabel="Create prescription"
-            >
-              <View
-                style={[
-                  styles.quickActionIcon,
-                  { backgroundColor: healthColors.accent.coral + "15" },
-                ]}
-              >
-                <Ionicons
-                  name="document-text"
-                  size={28}
-                  color={healthColors.accent.coral}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>
-                Create{"\n"}Prescription
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              onPress={() => navigation.navigate("WalkInPatient")}
-              accessibilityRole="button"
-              accessibilityLabel="Add walk-in patient"
-            >
-              <View
-                style={[
-                  styles.quickActionIcon,
-                  { backgroundColor: healthColors.accent.green + "15" },
-                ]}
-              >
-                <Ionicons
-                  name="person-add"
-                  size={28}
-                  color={healthColors.accent.green}
-                />
-              </View>
-              <Text style={styles.quickActionTitle}>Walk-in{"\n"}Patient</Text>
-            </TouchableOpacity>
+                <View style={[styles.quickIcon, { backgroundColor: color + "18" }]}>
+                  <Ionicons name={icon} size={26} color={color} />
+                </View>
+                <Text style={styles.quickLabel}>{label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
-
-        <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Side Menu Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      {/* ── Side Drawer ── */}
+      <DrawerMenu
         visible={menuVisible}
-        onRequestClose={closeMenu}
-      >
-        <View style={styles.menuOverlay}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={closeMenu}
-          />
-          <Animated.View
-            style={[
-              styles.menuDrawer,
-              {
-                transform: [{ translateX: slideAnim }],
-              },
-            ]}
-          >
-            <LinearGradient
-              colors={[healthColors.primary.main, healthColors.primary.dark]}
-              style={styles.menuHeader}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.menuHeaderContent}>
-                <View style={styles.menuProfileSection}>
-                  <View style={styles.menuAvatar}>
-                    <Ionicons
-                      name="person"
-                      size={32}
-                      color={theme.colors.text.white}
-                    />
-                  </View>
-                  <View style={styles.menuUserInfo}>
-                    <Text style={styles.menuUserName}>
-                      {user?.name || "Doctor"}
-                    </Text>
-                    <Text style={styles.menuUserRole}>
-                      {user?.specialization || "General Physician"}
-                    </Text>
-                    <Text style={styles.menuUserId}>
-                      ID: {user?.userId || "DOC1"}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.menuCloseButton}
-                  onPress={closeMenu}
-                >
-                  <Ionicons
-                    name="close"
-                    size={28}
-                    color={theme.colors.text.white}
-                  />
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
-
-            <ScrollView
-              style={styles.menuContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Navigation Items */}
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>NAVIGATION</Text>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => {
-                      navigation.navigate("DoctorTabs", {
-                        screen: "Dashboard",
-                      });
-                    }, 100);
-                  }}
-                >
-                  <Ionicons
-                    name="home"
-                    size={22}
-                    color={healthColors.primary.main}
-                  />
-                  <Text style={styles.menuItemText}>Dashboard</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => {
-                      navigation.navigate("DoctorTabs", {
-                        screen: "TodaysAppointments",
-                      });
-                    }, 100);
-                  }}
-                >
-                  <Ionicons
-                    name="calendar"
-                    size={22}
-                    color={healthColors.secondary.main}
-                  />
-                  <Text style={styles.menuItemText}>My Appointments</Text>
-                  {schedule.pending > 0 && (
-                    <View style={styles.menuBadge}>
-                      <Text style={styles.menuBadgeText}>
-                        {String(schedule.pending)}
-                      </Text>
-                    </View>
-                  )}
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => {
-                      navigation.navigate("PatientManagement");
-                    }, 100);
-                  }}
-                >
-                  <Ionicons
-                    name="people"
-                    size={22}
-                    color={healthColors.accent.aqua}
-                  />
-                  <Text style={styles.menuItemText}>Patient Management</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    navigation.navigate("CreatePrescription");
-                  }}
-                >
-                  <Ionicons
-                    name="document-text"
-                    size={22}
-                    color={healthColors.accent.coral}
-                  />
-                  <Text style={styles.menuItemText}>Create Prescription</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setMenuVisible(false);
-                    navigation.navigate("WalkInPatient");
-                  }}
-                >
-                  <Ionicons
-                    name="person-add"
-                    size={22}
-                    color={healthColors.accent.green}
-                  />
-                  <Text style={styles.menuItemText}>Add Walk-in Patient</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Quick Stats */}
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>TODAY'S STATS</Text>
-                <View style={styles.menuStatsGrid}>
-                  <View style={styles.menuStatCard}>
-                    <Text style={styles.menuStatValue}>
-                      {String(schedule.totalAppointments)}
-                    </Text>
-                    <Text style={styles.menuStatLabel}>Appointments</Text>
-                  </View>
-                  <View style={styles.menuStatCard}>
-                    <Text style={styles.menuStatValue}>
-                      {String(schedule.completed)}
-                    </Text>
-                    <Text style={styles.menuStatLabel}>Completed</Text>
-                  </View>
-                  <View style={styles.menuStatCard}>
-                    <Text style={styles.menuStatValue}>
-                      {String(schedule.pending)}
-                    </Text>
-                    <Text style={styles.menuStatLabel}>Pending</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Settings & Account */}
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>ACCOUNT</Text>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => {
-                      navigation.navigate("Settings");
-                    }, 100);
-                  }}
-                >
-                  <Ionicons
-                    name="settings"
-                    size={22}
-                    color={healthColors.text.secondary}
-                  />
-                  <Text style={styles.menuItemText}>Settings</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => {
-                      Alert.alert(
-                        "Help & Support",
-                        "Contact: support@aayucare.com\nPhone: 1800-123-4567"
-                      );
-                    }, 100);
-                  }}
-                >
-                  <Ionicons
-                    name="help-circle"
-                    size={22}
-                    color={healthColors.info.main}
-                  />
-                  <Text style={styles.menuItemText}>Help & Support</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.menuItem, styles.menuItemDanger]}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => {
-                      handleLogout();
-                    }, 100);
-                  }}
-                >
-                  <Ionicons
-                    name="log-out"
-                    size={22}
-                    color={healthColors.error.main}
-                  />
-                  <Text
-                    style={[styles.menuItemText, styles.menuItemTextDanger]}
-                  >
-                    Logout
-                  </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.error.main}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.menuFooter}>
-                <Text style={styles.menuFooterText}>
-                  AayuCare Doctor v1.0.0
-                </Text>
-                <Text style={styles.menuFooterText}>
-                  © 2025 AayuCare Hospital
-                </Text>
-              </View>
-            </ScrollView>
-          </Animated.View>
-        </View>
-      </Modal>
+        onClose={closeMenu}
+        slideAnim={slideAnim}
+        drawerWidth={drawerWidth}
+        user={user}
+        role="Doctor"
+        menuSections={menuSections}
+        onLogout={handleLogout}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: healthColors.background.primary,
-  },
-  welcomeBanner: {
-    paddingTop: 12,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-  },
-  bannerTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 16,
-  },
-  bannerRightIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  bannerIconButton: {
-    padding: 8,
-    position: "relative",
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  bannerNotificationBadge: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    backgroundColor: healthColors.error.main,
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: theme.colors.text.white,
-  },
-  bannerNotificationBadgeText: {
-    fontSize: theme.typography.sizes.overline,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  bannerGreeting: {
-    paddingHorizontal: getScreenPadding(),
-  },
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16, // spacing.md
-  },
-  greetingIcon: {
-    marginRight: 12,
-  },
-  bannerTimeGreeting: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.medium,
-    color: theme.withOpacity(theme.colors.text.white, 0.9),
-    marginBottom: 4,
-    letterSpacing: 0.3,
-  },
-  bannerWelcomeText: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  bannerInfoCard: {
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.15),
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: theme.withOpacity(theme.colors.text.white, 0.2),
-  },
-  bannerInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  bannerInfoText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.colors.text.white,
-    marginLeft: 8,
-    fontWeight: theme.typography.weights.medium,
-  },
-  section: {
-    paddingHorizontal: getScreenPadding(),
-    marginTop: verticalScale(24), // spacing.lg for better section separation
-  },
-  sectionTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  scheduleCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  scheduleHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  scheduleTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    letterSpacing: 0.5,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: healthColors.border.light,
-    marginVertical: 12,
-  },
-  scheduleStats: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 16,
-  },
-  scheduleStat: {
-    alignItems: "center",
-  },
-  scheduleIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: healthColors.primary.main + "15",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  scheduleStatValue: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: 4,
-  },
-  scheduleStatLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    marginTop: 4,
-  },
-  progressContainer: {
-    marginBottom: 16,
-  },
-  progressRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  progressItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  progressLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: healthColors.border.light,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: healthColors.success.main,
-    borderRadius: 4,
-  },
-  nextPatientCard: {
-    backgroundColor: healthColors.primary.main + "10",
-    padding: 12,
-    borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: healthColors.primary.main,
-  },
-  nextPatientLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    marginBottom: 4,
-  },
-  nextPatientName: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.primary.main,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12, // Ensure proper internal padding
-    minHeight: Math.max(48, 48), // Enforce 48dp minimum
-    borderWidth: 1, // Reduced from 2 for subtlety
-    borderColor: healthColors.border.light,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    paddingVertical: 0, // Remove default TextInput padding
-  },
-  searchResultsContainer: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  searchResultItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-    minHeight: 48, // Enforce minimum touch target
-  },
-  searchResultInfo: {
-    flex: 1,
-  },
-  searchResultName: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-  },
-  searchResultDetails: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    marginTop: 2,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  emptyStateText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: 12,
-    textAlign: "center",
-  },
-  appointmentCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: healthColors.primary.main,
-    borderWidth: 1, // Reduced from 2 for subtlety
-    borderColor: healthColors.border.light,
-  },
-  appointmentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  appointmentTime: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  appointmentTimeText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  appointmentTypeBadge: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: healthColors.background.primary,
-  },
-  appointmentPatientRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  appointmentPatient: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  appointmentReason: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginBottom: 12,
-  },
-  appointmentActions: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  actionButtonSecondary: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: healthColors.background.primary,
-    borderWidth: 1,
-    borderColor: healthColors.primary.main,
-    alignItems: "center",
-  },
-  actionButtonSecondaryText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.primary.main,
-  },
-  actionButtonPrimary: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: healthColors.primary.main,
-    alignItems: "center",
-  },
-  actionButtonPrimaryText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.background.card,
-  },
-  addWalkinButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.background.card,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: healthColors.primary.main,
-    borderStyle: "dashed",
-  },
-  addWalkinText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.primary.main,
-    marginLeft: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.medium,
-  },
+  container: { flex: 1, backgroundColor: healthColors.background.secondary },
+  body: { paddingHorizontal: getScreenPadding(), paddingTop: 20, paddingBottom: 24 },
+  sectionHeader: { marginTop: 24, marginBottom: 12 },
+
   errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.error.main + "15",
-    marginHorizontal: getScreenPadding(),
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: healthColors.error.main,
-    gap: 8,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: healthColors.error.background,
+    paddingHorizontal: 16, paddingVertical: 10,
   },
-  errorText: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.error.main,
-    fontWeight: theme.typography.weights.medium,
-  },
-  retryText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  quickActionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    justifyContent: "space-between",
-  },
-  quickActionCard: {
-    width: "48%",
+  errorText: { flex: 1, fontSize: 13, color: healthColors.error.main },
+  retryText: { fontSize: 13, color: healthColors.primary.main, fontWeight: "600" },
+
+  quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  quickCard: {
+    width: "47%",
     backgroundColor: healthColors.background.card,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.card,
     padding: 16,
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-    minHeight: 110,
-    justifyContent: "center",
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  quickActionTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  // Menu Drawer Styles
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: theme.withOpacity(theme.colors.grays.black, 0.5),
-    justifyContent: "flex-start",
-  },
-  menuDrawer: {
-    width: "80%",
-    maxWidth: 320,
-    height: "100%",
-    backgroundColor: healthColors.background.card,
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-  },
-  menuHeader: {
-    paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
-  },
-  menuHeaderContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  menuProfileSection: {
-    flex: 1,
-    flexDirection: "row",
-    gap: 12,
-  },
-  menuAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: theme.withOpacity(theme.colors.text.white, 0.3),
-  },
-  menuUserInfo: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  menuUserName: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-    marginBottom: 2,
-  },
-  menuUserRole: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.withOpacity(theme.colors.text.white, 0.9),
-    marginBottom: 2,
-  },
-  menuUserId: {
-    fontSize: theme.typography.sizes.caption,
-    color: theme.withOpacity(theme.colors.text.white, 0.7),
-  },
-  menuCloseButton: {
-    padding: 4,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuSection: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  menuSectionTitle: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.tertiary,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  menuItemText: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.medium,
-    color: healthColors.text.primary,
-  },
-  menuItemDanger: {
-    backgroundColor: healthColors.error.main + "08",
-  },
-  menuItemTextDanger: {
-    color: healthColors.error.main,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  menuBadge: {
-    backgroundColor: healthColors.error.main,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  menuBadgeText: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  menuStatsGrid: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  menuStatCard: {
-    flex: 1,
-    backgroundColor: healthColors.primary.main + "10",
-    borderRadius: 8,
-    padding: 12,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: healthColors.primary.main + "20",
+    borderColor: healthColors.border.light,
+    ...theme.shadows.sm,
   },
-  menuStatValue: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.primary.main,
-    marginBottom: 4,
+  quickIcon: {
+    width: 52, height: 52, borderRadius: 26,
+    justifyContent: "center", alignItems: "center", marginBottom: 10,
   },
-  menuStatLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-  },
-  menuFooter: {
-    padding: 16,
-    alignItems: "center",
-    gap: 4,
-  },
-  menuFooterText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-  },
-  bottomSpacer: {
-    height: verticalScale(20),
+  quickLabel: {
+    fontSize: 12, fontWeight: "700", color: healthColors.text.primary,
+    textAlign: "center", lineHeight: 17,
   },
 });
 
 export default DoctorHomeScreen;
-
-
-

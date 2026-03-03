@@ -25,6 +25,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import { logoutUser } from "../../store/slices/authSlice";
+import { SkeletonCardRow } from "../../components/common";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -248,9 +249,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>Security Settings</Text>
           <View style={styles.backButton} />
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading security settings...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );

@@ -22,3 +22,15 @@ export { default as LanguageSelector } from "./LanguageSelector";
 export { default as CompactActionCard } from "./CompactActionCard";
 export * from "./CustomIcons";
 
+// ui/ sub-folder — new atomic components
+export { default as SkeletonLoader, SkeletonCardRow, SkeletonStatGrid } from "../ui/SkeletonLoader";
+export { default as SectionHeader } from "../ui/SectionHeader";
+export { default as ModalSheet } from "../ui/ModalSheet";
+
+// health/ sub-folder
+export { default as StatCard } from "../health/StatCard";
+
+// layout/ sub-folder
+export { default as DrawerMenu } from "../layout/DrawerMenu";
+export { default as ScreenHeader } from "../layout/ScreenHeader";
+

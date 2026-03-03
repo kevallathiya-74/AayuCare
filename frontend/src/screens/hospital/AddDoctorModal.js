@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import useDoctorForm from "./useDoctorForm";
+import useDoctorForm from "../../hooks/useDoctorForm";
 import {
   Modal,
   View,

@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
+import CustomTabBar from "./CustomTabBar";
 import {
   AdminAppointmentProvider,
   useAdminAppointments,
@@ -82,6 +83,7 @@ const AdminTabsInner = () => {
         },
         tabBarHideOnKeyboard: true,
       })}
+      tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tab.Screen
         name="Dashboard"

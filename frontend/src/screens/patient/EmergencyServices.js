@@ -14,7 +14,6 @@ import {
   Linking,
   Alert,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import {
   SafeAreaView,

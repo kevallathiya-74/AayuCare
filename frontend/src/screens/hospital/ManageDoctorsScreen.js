@@ -28,7 +28,7 @@ import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
-import { EmptyState } from "../../components/common";
+import { EmptyState, SkeletonCardRow } from "../../components/common";
 import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 
@@ -490,10 +490,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       </View>
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading doctors...</Text>
-        </View>
+        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : (
         <FlatList
           data={doctors}
@@ -887,4 +884,5 @@ const styles = StyleSheet.create({
 });
 
 export default ManageDoctorsScreen;
+
 

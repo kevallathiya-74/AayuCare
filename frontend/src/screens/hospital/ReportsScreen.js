@@ -11,7 +11,6 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  ActivityIndicator,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -24,7 +23,7 @@ import { theme, healthColors } from "../../theme";
 import { medicalRecordService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
-import { EmptyState } from "../../components/common";
+import { EmptyState, SkeletonCardRow } from "../../components/common";
 
 const ReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
@@ -198,10 +197,7 @@ const ReportsScreen = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading reports...</Text>
-        </View>
+        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : (
         <FlatList
           data={filteredReports}
@@ -328,4 +324,5 @@ const styles = StyleSheet.create({
 });
 
 export default ReportsScreen;
+
 

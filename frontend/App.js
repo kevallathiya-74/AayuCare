@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useFonts } from "./src/hooks/useFonts";
 import { StatusBar } from "expo-status-bar";
 import { Provider as ReduxProvider } from "react-redux";
 import { Provider as PaperProvider } from "react-native-paper";
@@ -43,9 +44,8 @@ LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
 ]);
 
-console.log("[App.js] Importing dependencies...");
-
 import store from "./src/store/store";
+import { ToastProvider } from "./src/context/ToastContext";
 
 import AppNavigator from "./src/navigation/AppNavigator";
 
@@ -106,24 +106,29 @@ try {
 initializeSentry();
 
 export default function App() {
+  const { fontsLoaded, onLayoutRootView } = useFonts();
+
   useEffect(() => {
     if (__DEV__) {
-      // Simple dev-only diagnostic logging
       if (!paperTheme || !paperTheme.colors || !paperTheme.fonts) {
         console.warn("[App] Theme not fully loaded");
       }
     }
   }, []);
 
+  if (!fontsLoaded) return null;
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <View style={styles.container}>
+        <View style={styles.container} onLayout={onLayoutRootView}>
           <ReduxProvider store={store}>
             <QueryClientProvider client={queryClient}>
               <PaperProvider theme={paperTheme}>
-                <StatusBar style="dark" />
-                <AppNavigator />
+                <ToastProvider>
+                  <StatusBar style="dark" />
+                  <AppNavigator />
+                </ToastProvider>
               </PaperProvider>
             </QueryClientProvider>
           </ReduxProvider>

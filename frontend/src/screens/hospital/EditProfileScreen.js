@@ -5,8 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import {
@@ -18,11 +16,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
-  verticalScale,
 } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { setUser } from "../../store/slices/authSlice";
+import { Input, Button } from "../../components/common";
 
 const EditProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -157,228 +155,87 @@ const EditProfileScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.formSection}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Full Name <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="person-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your name"
-                value={formData.name}
-                onChangeText={(value) => handleInputChange("name", value)}
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Specialization <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="medical-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Cardiologist"
-                value={formData.specialization}
-                onChangeText={(value) =>
-                  handleInputChange("specialization", value)
-                }
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Department</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="business-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Cardiology"
-                value={formData.department}
-                onChangeText={(value) => handleInputChange("department", value)}
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Qualification</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="school-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., MBBS, MD"
-                value={formData.qualification}
-                onChangeText={(value) =>
-                  handleInputChange("qualification", value)
-                }
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>License Number</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="card-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Medical license number"
-                value={formData.licenseNumber}
-                onChangeText={(value) =>
-                  handleInputChange("licenseNumber", value)
-                }
-                autoCapitalize="characters"
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Consultation Fee (₹)</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="cash-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., 500"
-                value={formData.consultationFee}
-                onChangeText={(value) =>
-                  handleInputChange(
-                    "consultationFee",
-                    value.replace(/[^0-9.]/g, "")
-                  )
-                }
-                keyboardType="decimal-pad"
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Phone Number <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="call-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="10-digit mobile number"
-                value={formData.phone}
-                onChangeText={(value) =>
-                  handleInputChange("phone", value.replace(/[^0-9]/g, ""))
-                }
-                keyboardType="phone-pad"
-                maxLength={10}
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="mail-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="your.email@hospital.com"
-                value={formData.email}
-                onChangeText={(value) => handleInputChange("email", value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Years of Experience</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="time-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Years"
-                value={formData.yearsOfExperience}
-                onChangeText={(value) =>
-                  handleInputChange(
-                    "yearsOfExperience",
-                    value.replace(/[^0-9]/g, "")
-                  )
-                }
-                keyboardType="numeric"
-                maxLength={2}
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Bio</Text>
-            <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Brief professional bio…"
-                value={formData.bio}
-                onChangeText={(value) => handleInputChange("bio", value)}
-                multiline
-                numberOfLines={4}
-                maxLength={1000}
-                textAlignVertical="top"
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-            <Text style={styles.charCount}>
-              {formData.bio.length}/1000
-            </Text>
-          </View>
+          <Input
+            label="Full Name *"
+            placeholder="Enter your name"
+            value={formData.name}
+            onChangeText={(v) => handleInputChange("name", v)}
+            leftIcon={<Ionicons name="person-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Specialization *"
+            placeholder="e.g., Cardiologist"
+            value={formData.specialization}
+            onChangeText={(v) => handleInputChange("specialization", v)}
+            leftIcon={<Ionicons name="medical-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Department"
+            placeholder="e.g., Cardiology"
+            value={formData.department}
+            onChangeText={(v) => handleInputChange("department", v)}
+            leftIcon={<Ionicons name="business-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Qualification"
+            placeholder="e.g., MBBS, MD"
+            value={formData.qualification}
+            onChangeText={(v) => handleInputChange("qualification", v)}
+            leftIcon={<Ionicons name="school-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="License Number"
+            placeholder="Medical license number"
+            value={formData.licenseNumber}
+            onChangeText={(v) => handleInputChange("licenseNumber", v)}
+            autoCapitalize="characters"
+            leftIcon={<Ionicons name="card-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Consultation Fee (₹)"
+            placeholder="e.g., 500"
+            value={formData.consultationFee}
+            onChangeText={(v) => handleInputChange("consultationFee", v.replace(/[^0-9.]/g, ""))}
+            keyboardType="decimal-pad"
+            leftIcon={<Ionicons name="cash-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Phone Number *"
+            placeholder="10-digit mobile number"
+            value={formData.phone}
+            onChangeText={(v) => handleInputChange("phone", v.replace(/[^0-9]/g, ""))}
+            keyboardType="phone-pad"
+            maxLength={10}
+            leftIcon={<Ionicons name="call-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Email"
+            placeholder="your.email@hospital.com"
+            value={formData.email}
+            onChangeText={(v) => handleInputChange("email", v)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            leftIcon={<Ionicons name="mail-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Years of Experience"
+            placeholder="Years"
+            value={formData.yearsOfExperience}
+            onChangeText={(v) => handleInputChange("yearsOfExperience", v.replace(/[^0-9]/g, ""))}
+            keyboardType="numeric"
+            maxLength={2}
+            leftIcon={<Ionicons name="time-outline" size={18} color={healthColors.text.disabled} />}
+          />
+          <Input
+            label="Bio"
+            placeholder="Brief professional bio…"
+            value={formData.bio}
+            onChangeText={(v) => handleInputChange("bio", v)}
+            multiline
+            numberOfLines={4}
+            maxLength={1000}
+          />
+          <Text style={styles.charCount}>{formData.bio.length}/1000</Text>
         </View>
 
         <View style={styles.noteContainer}>
@@ -393,21 +250,17 @@ const EditProfileScreen = ({ navigation }) => {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+        <Button
+          variant="primary"
+          size="large"
+          fullWidth
+          gradient
+          loading={loading}
           onPress={handleSave}
-          disabled={loading}
-          activeOpacity={0.8}
+          style={styles.saveButton}
         >
-          {loading ? (
-            <ActivityIndicator color={theme.colors.white} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={22} color={theme.colors.white} />
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          Save Changes
+        </Button>
       </ScrollView>
     </SafeAreaView>
   );

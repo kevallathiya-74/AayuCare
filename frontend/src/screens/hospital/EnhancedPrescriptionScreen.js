@@ -32,6 +32,7 @@ import {
 import { prescriptionService, patientService, doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { formatCurrency } from "../../utils/helpers";
+import { SkeletonCardRow } from "../../components/common";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -398,9 +399,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading patient details...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );

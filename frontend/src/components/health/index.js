@@ -1,2 +1,4 @@
-// Health components - currently using inline implementations in screens
-
+/**
+ * AayuCare – Health Component Library
+ */
+export { default as StatCard } from "./StatCard";

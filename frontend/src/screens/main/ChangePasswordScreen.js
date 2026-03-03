@@ -1,11 +1,9 @@
 import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -16,15 +14,13 @@ import { theme, healthColors } from "../../theme";
 import authService from "../../services/auth.service";
 import { logoutUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
+import { Input, Button } from "../../components/common";
 
 const ChangePasswordScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,34 +90,18 @@ const ChangePasswordScreen = ({ navigation }) => {
     value,
     onChangeText,
     secure,
-    onToggleSecure,
     placeholder,
     error,
   }) => (
-    <View style={styles.inputBlock}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <View style={[styles.inputWrapper, error && styles.inputWrapperError]}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.disabled}
-          secureTextEntry={secure}
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!isSubmitting}
-        />
-        <TouchableOpacity onPress={onToggleSecure} disabled={isSubmitting}>
-          <Ionicons
-            name={secure ? "eye-off-outline" : "eye-outline"}
-            size={20}
-            color={healthColors.text.secondary}
-          />
-        </TouchableOpacity>
-      </View>
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    <Input
+      label={label}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      secureTextEntry={secure}
+      error={error}
+      disabled={isSubmitting}
+    />
   );
 
   return (
@@ -154,8 +134,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                 setFieldErrors((prev) => ({ ...prev, currentPassword: "" }));
               }
             },
-            secure: !showCurrentPassword,
-            onToggleSecure: () => setShowCurrentPassword((prev) => !prev),
+            secure: true,
             placeholder: "Enter current password",
             error: fieldErrors.currentPassword,
           })}
@@ -169,8 +148,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                 setFieldErrors((prev) => ({ ...prev, newPassword: "" }));
               }
             },
-            secure: !showNewPassword,
-            onToggleSecure: () => setShowNewPassword((prev) => !prev),
+            secure: true,
             placeholder: "Enter new password",
             error: fieldErrors.newPassword,
           })}
@@ -200,23 +178,22 @@ const ChangePasswordScreen = ({ navigation }) => {
                 setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
               }
             },
-            secure: !showConfirmPassword,
-            onToggleSecure: () => setShowConfirmPassword((prev) => !prev),
+            secure: true,
             placeholder: "Confirm new password",
             error: fieldErrors.confirmPassword,
           })}
 
-          <TouchableOpacity
-            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
+            gradient
+            loading={isSubmitting}
             onPress={handleSubmit}
-            disabled={isSubmitting}
+            style={styles.submitButton}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color={healthColors.text.white} />
-            ) : (
-              <Text style={styles.submitButtonText}>Change Password</Text>
-            )}
-          </TouchableOpacity>
+            Change Password
+          </Button>
         </View>
       </ScrollView>
     </SafeAreaView>

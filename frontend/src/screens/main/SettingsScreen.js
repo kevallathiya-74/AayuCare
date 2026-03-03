@@ -12,7 +12,6 @@ import {
   StyleSheet,
   ScrollView,
   Switch,
-  ActivityIndicator,
 } from "react-native";
 import {
   SafeAreaView,
@@ -24,6 +23,7 @@ import {
   ListItem,
   ErrorRecovery,
   NetworkStatusIndicator,
+  SkeletonCardRow,
 } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
@@ -151,9 +151,8 @@ const SettingsScreen = ({ navigation }) => {
       {error ? (
         <ErrorRecovery error={error} onRetry={() => setError(null)} />
       ) : loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading settings...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
         <ScrollView

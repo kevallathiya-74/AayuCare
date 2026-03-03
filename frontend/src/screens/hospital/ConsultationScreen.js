@@ -550,10 +550,10 @@ const ConsultationScreen = ({ navigation, route }) => {
             accessibilityLabel="Complete consultation"
           >
             {completing ? (
-              <ActivityIndicator size="small" color={healthColors.white} />
+              <ActivityIndicator size="small" color={"#fff"} />
             ) : (
               <>
-                <Ionicons name="checkmark-circle" size={20} color={healthColors.white} />
+                <Ionicons name="checkmark-circle" size={20} color={"#fff"} />
                 <Text style={styles.completeButtonText}>Complete Consultation</Text>
               </>
             )}
@@ -856,7 +856,7 @@ const styles = StyleSheet.create({
   completeButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: healthColors.white,
+    color: "#fff",
     letterSpacing: 0.3,
   },
 });

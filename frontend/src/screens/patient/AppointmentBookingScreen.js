@@ -32,7 +32,8 @@ import {
   getKeyboardConfig,
 } from "../../utils/responsive";
 import { useSelector } from "react-redux";
-import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow } from "../../components/common";
+import { Input, Button } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatDate, formatTime, formatCurrency, convertTo24Hour, convertTo12Hour } from "../../utils/helpers";
@@ -686,10 +687,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               </View>
               <Text style={styles.stepTitle}>REASON FOR VISIT:</Text>
             </View>
-            <TextInput
-              style={styles.reasonInput}
-              placeholder="Enter reason for visit..."
-              placeholderTextColor={healthColors.text.disabled}
+            <Input
+              label="Reason for visit"
+              placeholder="Describe your symptoms or reason..."
               value={reason}
               onChangeText={setReason}
               multiline
@@ -699,37 +699,16 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
 
           {/* Confirm Button */}
           <View style={styles.section}>
-            <TouchableOpacity
-              style={[
-                styles.confirmButton,
-                loading && styles.confirmButtonDisabled,
-              ]}
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              gradient
+              loading={loading}
               onPress={handleConfirm}
-              disabled={loading}
             >
-              <View style={styles.confirmButtonContent}>
-                {loading ? (
-                  <>
-                    <ActivityIndicator size="small" color={theme.colors.white} />
-                    <Text
-                      style={[
-                        styles.confirmButtonText,
-                        { marginLeft: 8 },
-                      ]}
-                    >
-                      BOOKING...
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.confirmButtonText}>
-                      CONFIRM APPOINTMENT
-                    </Text>
-                    <Ionicons name="arrow-forward" size={20} color={theme.colors.white} />
-                  </>
-                )}
-              </View>
-            </TouchableOpacity>
+              Confirm Appointment
+            </Button>
           </View>
 
           <View style={styles.bottomSpacer} />

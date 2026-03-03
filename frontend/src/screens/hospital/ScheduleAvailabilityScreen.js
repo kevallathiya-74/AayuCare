@@ -22,6 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import doctorService from "../../services/doctor.service";
 import { theme, healthColors } from "../../theme";
 import { convertTo12Hour } from "../../utils/helpers";
+import { SkeletonCardRow } from "../../components/common";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -170,9 +171,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>Schedule & Availability</Text>
           <View style={styles.headerRightSpacer} />
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading schedule...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );
@@ -698,4 +698,5 @@ const styles = StyleSheet.create({
 });
 
 export default ScheduleAvailabilityScreen;
+
 
