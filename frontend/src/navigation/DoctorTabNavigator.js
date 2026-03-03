@@ -11,6 +11,7 @@ import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { healthColors } from "../theme";
 import ErrorBoundary from "../components/common/ErrorBoundary";
+import CustomTabBar from "./CustomTabBar";
 import {
   DoctorAppointmentProvider,
   useDoctorAppointments,
@@ -80,6 +81,7 @@ const DoctorTabsInner = () => {
         },
         tabBarHideOnKeyboard: true,
       })}
+      tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tab.Screen
         name="Dashboard"

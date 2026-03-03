@@ -10,11 +10,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Image,
   Alert,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { useSelector } from "react-redux";
@@ -28,7 +26,7 @@ import {
   verticalScale,
   getScreenPadding,
 } from "../../utils/responsive";
-import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
@@ -398,11 +396,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>DOCTOR LIST:</Text>
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator
-                size="large"
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.loadingText}>Loading specialists...</Text>
+              <SkeletonCardRow />
+              <SkeletonCardRow />
+              <SkeletonCardRow />
             </View>
           ) : doctors.length === 0 ? (
             <View style={styles.emptyState}>

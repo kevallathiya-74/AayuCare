@@ -316,10 +316,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       />
 
       {loading && consultations.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading consultations...</Text>
-        </View>
+        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       )}
     </SafeAreaView>
   );
@@ -505,6 +502,7 @@ const styles = StyleSheet.create({
 });
 
 export default ConsultationHistoryScreen;
+
 
 
 

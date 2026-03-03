@@ -84,10 +84,10 @@ const Card = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: healthColors.card.background,
+    backgroundColor: healthColors.background.card,
     borderRadius: responsiveBorderRadius.medium,
     borderWidth: 1,
-    borderColor: healthColors.card.border,
+    borderColor: healthColors.border.light,
   },
   withPadding: {
     padding: theme.spacing.md,

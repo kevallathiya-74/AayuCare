@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import useDoctorForm from "./useDoctorForm";
+import useDoctorForm from "../../hooks/useDoctorForm";
 import {
   Modal,
   View,
@@ -12,12 +12,12 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
+import { Button } from "../../components/common";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -161,17 +161,14 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
+            <Button
+              variant="primary"
+              loading={loading}
               onPress={handleSubmit}
-              disabled={loading}
+              style={styles.submitButton}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.colors.white} />
-              ) : (
-                <Text style={styles.submitButtonText}>Add Doctor</Text>
-              )}
-            </TouchableOpacity>
+              Add Doctor
+            </Button>
           </View>
         </View>
       </KeyboardAvoidingView>

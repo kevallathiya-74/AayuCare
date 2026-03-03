@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
-  ActivityIndicator,
   RefreshControl,
   Linking,
 } from "react-native";
@@ -21,8 +20,9 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors, textStyles, spacing } from "../../theme";
 import {
   getScreenPadding,
   verticalScale,
@@ -145,81 +145,45 @@ const DoctorProfileScreen = ({ navigation }) => {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Profile</Text>
-        </View>
-
-        {/* Profile Card */}
-        <View
-          style={styles.profileCard}
-          accessible={true}
-          accessibilityLabel={`Profile of Dr. ${user?.name || "Doctor"}, ${user?.specialization || "Specialist"}`}
+        {/* Gradient Hero Header */}
+        <LinearGradient
+          colors={[healthColors.primary.main, healthColors.primary.dark]}
+          style={styles.hero}
         >
-          <Avatar size={80} name={user?.name || "Doctor"} />
-          <View style={styles.profileInfo}>
-            <Text style={styles.doctorName}>{user?.name || "Doctor"}</Text>
-            <Text style={styles.specialization}>
-              {user?.specialization || "Specialist"} •{" "}
-              {user?.department || "OPD"}
-            </Text>
-            <Text style={styles.doctorId}>
-              ID: {user?.userId || "—"}
-            </Text>
+          <Avatar size={90} name={user?.name || "Doctor"} />
+          <Text style={styles.doctorNameHero}>{user?.name || "Doctor"}</Text>
+          <Text style={styles.specializationHero}>
+            {user?.specialization || "Specialist"} · {user?.department || "OPD"}
+          </Text>
+          <View style={styles.idBadge}>
+            <Ionicons name="card-outline" size={13} color="rgba(255,255,255,0.85)" />
+            <Text style={styles.idBadgeText}>ID: {user?.userId || "—"}</Text>
           </View>
 
-          <View style={styles.statsRow}>
-            <View
-              style={styles.statBox}
-              accessible={true}
-              accessibilityLabel={`${loading ? "Loading" : stats.totalPatients} patients`}
-            >
-              {loading ? (
-                <ActivityIndicator
-                  size="small"
-                  color={healthColors.primary.main}
-                />
-              ) : (
-                <Text style={styles.statValue}>{stats.totalPatients}</Text>
-              )}
-              <Text style={styles.statLabel}>Patients</Text>
+          {/* Stats row inside hero */}
+          <View style={styles.heroStats}>
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatValue}>
+                {loading ? "--" : stats.totalPatients}
+              </Text>
+              <Text style={styles.heroStatLabel}>Patients</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View
-              style={styles.statBox}
-              accessible={true}
-              accessibilityLabel={`${loading ? "Loading" : (stats.rating != null ? stats.rating + " star" : "No rating yet")}`}
-            >
-              {loading ? (
-                <ActivityIndicator
-                  size="small"
-                  color={healthColors.primary.main}
-                />
-              ) : (
-                <Text style={styles.statValue}>
-                  {stats.rating != null ? stats.rating.toFixed(1) : "N/A"}
-                </Text>
-              )}
-              <Text style={styles.statLabel}>Rating</Text>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatValue}>
+                {loading ? "--" : (stats.rating != null ? stats.rating.toFixed(1) : "N/A")}
+              </Text>
+              <Text style={styles.heroStatLabel}>Rating</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View
-              style={styles.statBox}
-              accessible={true}
-              accessibilityLabel={`${loading ? "Loading" : stats.yearsExperience} years of experience`}
-            >
-              {loading ? (
-                <ActivityIndicator
-                  size="small"
-                  color={healthColors.primary.main}
-                />
-              ) : (
-                <Text style={styles.statValue}>{stats.yearsExperience}</Text>
-              )}
-              <Text style={styles.statLabel}>Years Exp</Text>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatValue}>
+                {loading ? "--" : stats.yearsExperience}
+              </Text>
+              <Text style={styles.heroStatLabel}>Yrs Exp</Text>
             </View>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Options */}
         <View style={styles.optionsSection}>
@@ -278,72 +242,67 @@ const DoctorProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: healthColors.background.primary,
+    backgroundColor: healthColors.background.secondary,
   },
-  header: {
-    padding: getScreenPadding(),
-    paddingBottom: 12,
-  },
-  headerTitle: {
-    fontSize: theme.typography.sizes.h3,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  profileCard: {
-    backgroundColor: healthColors.background.card,
-    marginHorizontal: getScreenPadding(),
-    marginBottom: verticalScale(20),
-    borderRadius: 16,
-    padding: 20,
+  hero: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
-  profileInfo: {
-    alignItems: "center",
-    marginTop: 16,
-    marginBottom: 20,
+  doctorNameHero: {
+    ...textStyles.h1,
+    color: theme.colors.white,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
-  doctorName: {
-    fontSize: theme.typography.sizes.h2,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginBottom: 4,
-  },
-  specialization: {
+  specializationHero: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginBottom: 4,
+    color: "rgba(255,255,255,0.85)",
+    marginBottom: spacing.xs,
   },
-  doctorId: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-    fontFamily: "monospace",
-  },
-  statsRow: {
+  idBadge: {
     flexDirection: "row",
-    width: "100%",
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: healthColors.border.light,
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginBottom: spacing.lg,
   },
-  statBox: {
+  idBadgeText: {
+    fontSize: theme.typography.sizes.caption,
+    color: "rgba(255,255,255,0.9)",
+    fontWeight: theme.typography.weights.semibold,
+  },
+  heroStats: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    width: "100%",
+  },
+  heroStatItem: {
     flex: 1,
     alignItems: "center",
   },
-  statDivider: {
+  heroStatDivider: {
     width: 1,
-    backgroundColor: healthColors.border.light,
+    backgroundColor: "rgba(255,255,255,0.3)",
   },
-  statValue: {
-    fontSize: theme.typography.sizes.h4,
+  heroStatValue: {
+    fontSize: theme.typography.sizes.h3,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.primary.main,
-    marginBottom: 4,
+    color: theme.colors.white,
+    marginBottom: 2,
   },
-  statLabel: {
+  heroStatLabel: {
     fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
+    color: "rgba(255,255,255,0.8)",
   },
   optionsSection: {
     backgroundColor: healthColors.background.card,

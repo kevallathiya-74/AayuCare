@@ -33,7 +33,7 @@ import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
-import { EmptyState } from "../../components/common";
+import { EmptyState, SkeletonCardRow } from "../../components/common";
 
 const STATUS_FILTERS_BY_TAB = {
   today: [
@@ -611,9 +611,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   if (loading && !refreshing) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading appointments...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );

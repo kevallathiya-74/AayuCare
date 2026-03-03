@@ -12,7 +12,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -295,14 +294,9 @@ const ProfileScreen = ({ navigation }) => {
               size={24}
               color={healthColors.primary.main}
             />
-            {loadingStats ? (
-              <ActivityIndicator
-                size="small"
-                color={healthColors.primary.main}
-              />
-            ) : (
-              <Text style={styles.statValue}>{stats.appointments}</Text>
-            )}
+            <Text style={styles.statValue}>
+              {loadingStats ? "--" : stats.appointments}
+            </Text>
             <Text style={styles.statLabel}>Appointments</Text>
           </View>
           <View style={styles.statCard}>
@@ -311,14 +305,9 @@ const ProfileScreen = ({ navigation }) => {
               size={24}
               color={healthColors.success.main}
             />
-            {loadingStats ? (
-              <ActivityIndicator
-                size="small"
-                color={healthColors.success.main}
-              />
-            ) : (
-              <Text style={styles.statValue}>{stats.records}</Text>
-            )}
+            <Text style={styles.statValue}>
+              {loadingStats ? "--" : stats.records}
+            </Text>
             <Text style={styles.statLabel}>Records</Text>
           </View>
           <View style={styles.statCard}>
@@ -327,11 +316,9 @@ const ProfileScreen = ({ navigation }) => {
               size={24}
               color={healthColors.info.main}
             />
-            {loadingStats ? (
-              <ActivityIndicator size="small" color={healthColors.info.main} />
-            ) : (
-              <Text style={styles.statValue}>{stats.prescriptions}</Text>
-            )}
+            <Text style={styles.statValue}>
+              {loadingStats ? "--" : stats.prescriptions}
+            </Text>
             <Text style={styles.statLabel}>Prescriptions</Text>
           </View>
         </View>

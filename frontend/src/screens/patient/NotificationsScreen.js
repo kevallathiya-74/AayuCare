@@ -11,7 +11,6 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  ActivityIndicator,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -22,7 +21,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { adminService, notificationService } from "../../services";
@@ -417,10 +416,7 @@ const NotificationsScreen = ({ navigation }) => {
 
       {/* Notifications List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading notifications...</Text>
-        </View>
+        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : notifications.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons
@@ -621,4 +617,5 @@ const styles = StyleSheet.create({
 });
 
 export default NotificationsScreen;
+
 

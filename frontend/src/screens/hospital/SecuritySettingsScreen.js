@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  TextInput,
   StatusBar,
   Modal,
 } from "react-native";
@@ -25,6 +24,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import { logoutUser } from "../../store/slices/authSlice";
+import { SkeletonCardRow, Input } from "../../components/common";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -248,9 +248,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>Security Settings</Text>
           <View style={styles.backButton} />
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading security settings...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );
@@ -493,129 +492,72 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 <Text style={styles.passwordSubmitError}>{passwordSubmitError}</Text>
               )}
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Current Password</Text>
-                <View style={styles.passwordInput}>
-                  <TextInput
-                    style={styles.input}
-                    value={currentPassword}
-                    onChangeText={(text) => {
-                      setCurrentPassword(text);
-                      if (passwordErrors.currentPassword || passwordSubmitError) {
-                        setPasswordErrors((prev) => ({
-                          ...prev,
-                          currentPassword: "",
-                        }));
-                        setPasswordSubmitError("");
-                      }
-                    }}
-                    secureTextEntry={!showCurrentPassword}
-                    placeholder="Enter current password"
-                    placeholderTextColor={healthColors.text.disabled}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowCurrentPassword(!showCurrentPassword)}
-                  >
-                    <Ionicons
-                      name={showCurrentPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color={healthColors.text.secondary}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {!!passwordErrors.currentPassword && (
-                  <Text style={styles.passwordFieldError}>
-                    {passwordErrors.currentPassword}
-                  </Text>
-                )}
-              </View>
+              <Input
+                label="Current Password"
+                value={currentPassword}
+                onChangeText={(text) => {
+                  setCurrentPassword(text);
+                  if (passwordErrors.currentPassword || passwordSubmitError) {
+                    setPasswordErrors((prev) => ({
+                      ...prev,
+                      currentPassword: "",
+                    }));
+                    setPasswordSubmitError("");
+                  }
+                }}
+                secureTextEntry
+                placeholder="Enter current password"
+                error={passwordErrors.currentPassword}
+              />
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>New Password</Text>
-                <View style={styles.passwordInput}>
-                  <TextInput
-                    style={styles.input}
-                    value={newPassword}
-                    onChangeText={(text) => {
-                      setNewPassword(text);
-                      if (passwordErrors.newPassword || passwordSubmitError) {
-                        setPasswordErrors((prev) => ({ ...prev, newPassword: "" }));
-                        setPasswordSubmitError("");
-                      }
-                    }}
-                    secureTextEntry={!showNewPassword}
-                    placeholder="Enter new password"
-                    placeholderTextColor={healthColors.text.disabled}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    <Ionicons
-                      name={showNewPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color={healthColors.text.secondary}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {!!passwordErrors.newPassword && (
-                  <Text style={styles.passwordFieldError}>
-                    {passwordErrors.newPassword}
-                  </Text>
-                )}
-              </View>
+              <Input
+                label="New Password"
+                value={newPassword}
+                onChangeText={(text) => {
+                  setNewPassword(text);
+                  if (passwordErrors.newPassword || passwordSubmitError) {
+                    setPasswordErrors((prev) => ({ ...prev, newPassword: "" }));
+                    setPasswordSubmitError("");
+                  }
+                }}
+                secureTextEntry
+                placeholder="Enter new password"
+                error={passwordErrors.newPassword}
+              />
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Confirm New Password</Text>
-                <View style={styles.passwordInput}>
-                  <TextInput
-                    style={styles.input}
-                    value={confirmPassword}
-                    onChangeText={(text) => {
-                      setConfirmPassword(text);
-                      if (passwordErrors.confirmPassword || passwordSubmitError) {
-                        setPasswordErrors((prev) => ({
-                          ...prev,
-                          confirmPassword: "",
-                        }));
-                        setPasswordSubmitError("");
-                      }
-                    }}
-                    secureTextEntry={!showConfirmPassword}
-                    placeholder="Confirm new password"
-                    placeholderTextColor={healthColors.text.disabled}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    <Ionicons
-                      name={showConfirmPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color={healthColors.text.secondary}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {!!confirmPassword && (
-                  <Text
-                    style={[
-                      styles.passwordHint,
-                      {
-                        color: doPasswordsMatch
-                          ? healthColors.success.main
-                          : healthColors.error.main,
-                      },
-                    ]}
-                  >
-                    {doPasswordsMatch
-                      ? "Passwords match"
-                      : "Passwords do not match"}
-                  </Text>
-                )}
-                {!!passwordErrors.confirmPassword && (
-                  <Text style={styles.passwordFieldError}>
-                    {passwordErrors.confirmPassword}
-                  </Text>
-                )}
-              </View>
+              <Input
+                label="Confirm New Password"
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (passwordErrors.confirmPassword || passwordSubmitError) {
+                    setPasswordErrors((prev) => ({
+                      ...prev,
+                      confirmPassword: "",
+                    }));
+                    setPasswordSubmitError("");
+                  }
+                }}
+                secureTextEntry
+                placeholder="Confirm new password"
+                error={passwordErrors.confirmPassword}
+              />
+              {!!confirmPassword && (
+                <Text
+                  style={[
+                    styles.passwordHint,
+                    {
+                      color: doPasswordsMatch
+                        ? healthColors.success.main
+                        : healthColors.error.main,
+                    },
+                  ]}
+                >
+                  {doPasswordsMatch
+                    ? "Passwords match"
+                    : "Passwords do not match"}
+                </Text>
+              )}
 
               <View style={styles.passwordRulesContainer}>
                 <Text style={styles.passwordRulesTitle}>Password must include:</Text>

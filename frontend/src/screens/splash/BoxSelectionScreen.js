@@ -1,7 +1,7 @@
 /**
- * Premium Box Selection Screen
- * Vibrant, beautiful design with enhanced colors
- * Optimized for Indian users with proper typography system
+ * BoxSelectionScreen — Role selection screen
+ * Preserved: all navigation handlers
+ * Enhanced: simplified responsive code, cleaner card design
  */
 
 import React from "react";
@@ -13,65 +13,16 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
-import { fontFamilies, fontWeights, lineHeights } from "../../theme/typography";
-import { createTextShadow } from "../../utils/platformStyles";
 import logger from "../../utils/logger";
 
-if (!healthColors || !theme) {
-  logger.error("BoxSelectionScreen", "Missing theme imports", {
-    healthColors: !!healthColors,
-    theme: !!theme,
-  });
-}
-
-const { width, height } = Dimensions.get("window");
-
-// Check if it's a small screen (height < 700)
-const isSmallScreen = height < 700;
-const isMediumScreen = height >= 700 && height < 850;
-
-// Responsive font sizes for cross-device consistency
-const responsiveFonts = {
-  // Primary heading - "Continue as"
-  title: isSmallScreen ? 24 : 28,
-  titleLineHeight: (isSmallScreen ? 24 : 28) * lineHeights.tight,
-
-  // Secondary text - description
-  subtitle: isSmallScreen ? 13 : 15,
-  subtitleLineHeight: (isSmallScreen ? 13 : 15) * lineHeights.normal,
-
-  // Card title - "Hospital", "User"
-  cardTitle: isSmallScreen ? 22 : 26,
-  cardTitleLineHeight: (isSmallScreen ? 22 : 26) * lineHeights.tight,
-
-  // Card subtitle - description
-  cardSubtitle: isSmallScreen ? 12 : 14,
-  cardSubtitleLineHeight: (isSmallScreen ? 12 : 14) * lineHeights.normal,
-
-  // Badge text - "Coming Soon"
-  badge: 10,
-  badgeLineHeight: 10 * lineHeights.normal,
-
-  // Footer text
-  footer: isSmallScreen ? 11 : 13,
-  footerLineHeight: (isSmallScreen ? 11 : 13) * lineHeights.normal,
-};
-
-// Responsive dimensions - scale based on screen size
-const responsiveSizes = {
-  logoContainer: isSmallScreen ? 90 : 110,
-  logo: isSmallScreen ? 80 : 100,
-  iconCircle: isSmallScreen ? 65 : 80,
-  iconSize: isSmallScreen ? 32 : 40,
-  arrowCircle: isSmallScreen ? 44 : 54,
-  arrowSize: isSmallScreen ? 20 : 24,
-  footerDot: 6,
-};
+const { height } = Dimensions.get("window");
+const SMALL = height < 700;
 
 const BoxSelectionScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -85,39 +36,33 @@ const BoxSelectionScreen = ({ navigation }) => {
   };
 
   const handleUserPress = () => {
-    // Coming soon - User section not available yet
-    alert(
-      "[UNDER CONSTRUCTION] User Section Coming Soon!\n\nThis feature is currently under development. Please use the Hospital login for now."
+    Alert.alert(
+      "Coming Soon",
+      "The User (General Health) section is currently under development. Please use Hospital login for now.",
+      [{ text: "OK", style: "default" }]
     );
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={healthColors.background.primary}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
 
-      {/* Header with Logo */}
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
+        <View style={styles.logoWrap}>
           <Image
             source={require("../../../assets/images/aayucare-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-          Continue as
-        </Text>
-        <Text style={styles.subtitle} numberOfLines={2}>
-          Choose your role to get started
-        </Text>
+        <Text style={styles.title}>Continue as</Text>
+        <Text style={styles.subtitle}>Choose your role to get started</Text>
       </View>
 
-      {/* Selection Cards */}
+      {/* Cards */}
       <View style={styles.cardsContainer}>
-        {/* Hospital Card - Professional Teal + Navy */}
+        {/* Hospital Card */}
         <TouchableOpacity
           style={styles.card}
           onPress={handleHospitalPress}
@@ -126,293 +71,197 @@ const BoxSelectionScreen = ({ navigation }) => {
           accessibilityLabel="Continue as Hospital user"
         >
           <LinearGradient
-            colors={healthColors.hospital.gradient}
+            colors={healthColors.hospital?.gradient || [healthColors.primary.main, healthColors.primary.dark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.cardGradient}
           >
-            {/* Icon Circle */}
+            {/* Decoration */}
+            <View style={styles.decor1} />
+            <View style={styles.decor2} />
+
             <View style={styles.iconCircle}>
-              <Ionicons
-                name="business"
-                size={responsiveSizes.iconSize}
-                color={theme.colors.white}
-              />
+              <Ionicons name="business" size={SMALL ? 30 : 38} color="#fff" />
             </View>
-
-            {/* Card Content */}
-            <View style={styles.cardContent}>
+            <View style={styles.cardBody}>
               <Text style={styles.cardTitle}>Hospital</Text>
-              <Text style={styles.cardSubtitle}>
-                Admin, Doctor & Patient Access
-              </Text>
+              <Text style={styles.cardSub}>Admin, Doctor & Patient Access</Text>
             </View>
-
-            {/* Arrow */}
             <View style={styles.arrowCircle}>
-              <Ionicons
-                name="arrow-forward"
-                size={responsiveSizes.arrowSize}
-                color={theme.colors.white}
-              />
+              <Ionicons name="arrow-forward" size={SMALL ? 18 : 22} color="#fff" />
             </View>
-
-            {/* Decorative Elements */}
-            <View style={styles.decorCircle1} />
-            <View style={styles.decorCircle2} />
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Spacer between cards */}
-        <View style={styles.cardSpacer} />
+        <View style={styles.spacer} />
 
-        {/* User Card - Sky Wellness Blue */}
+        {/* User Card */}
         <TouchableOpacity
           style={[styles.card, styles.disabledCard]}
           onPress={handleUserPress}
           activeOpacity={0.85}
           accessibilityRole="button"
-          accessibilityLabel="User section - Coming Soon"
+          accessibilityLabel="User section — Coming Soon"
         >
           <LinearGradient
-            colors={healthColors.secondary.gradient}
+            colors={healthColors.secondary?.gradient || [healthColors.secondary.main, healthColors.secondary.dark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.cardGradient}
           >
-            {/* Coming Soon Badge */}
+            {/* Coming soon badge */}
             <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>Coming Soon</Text>
+              <Text style={styles.comingSoonText}>COMING SOON</Text>
             </View>
 
-            {/* Icon Circle */}
+            {/* Decoration */}
+            <View style={styles.decor1} />
+            <View style={styles.decor2} />
+
             <View style={styles.iconCircle}>
-              <Ionicons
-                name="person"
-                size={responsiveSizes.iconSize}
-                color={theme.colors.white}
-              />
+              <Ionicons name="person" size={SMALL ? 30 : 38} color="#fff" />
             </View>
-
-            {/* Card Content */}
-            <View style={styles.cardContent}>
+            <View style={styles.cardBody}>
               <Text style={styles.cardTitle}>User</Text>
-              <Text style={styles.cardSubtitle}>General Health Services</Text>
+              <Text style={styles.cardSub}>General Health Services</Text>
             </View>
-
-            {/* Decorative Elements */}
-            <View style={styles.decorCircle1} />
-            <View style={styles.decorCircle2} />
           </LinearGradient>
         </TouchableOpacity>
       </View>
 
       {/* Footer */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
-        ]}
-      >
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + 8, 20) }]}>
         <View style={styles.footerDot} />
-        <View style={styles.footerSpacer} />
-        <Text style={styles.footerText}>Secure • Private • Trusted</Text>
+        <Text style={styles.footerText}>  Secure • Private • Trusted</Text>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: healthColors.background.primary,
-  },
+  container: { flex: 1, backgroundColor: healthColors.background.primary },
+
   header: {
-    paddingTop: isSmallScreen ? theme.spacing.lg : theme.spacing.xxl,
-    paddingHorizontal: theme.spacing.xxl,
-    marginBottom: isSmallScreen ? theme.spacing.lg : theme.spacing.xl,
+    paddingTop: SMALL ? 16 : 28,
+    paddingHorizontal: 28,
+    marginBottom: SMALL ? 16 : 24,
     alignItems: "center",
   },
-  logoContainer: {
-    width: responsiveSizes.logoContainer,
-    height: responsiveSizes.logoContainer,
-    borderRadius: responsiveSizes.logoContainer / 2,
-    backgroundColor: healthColors.white,
+  logoWrap: {
+    width: SMALL ? 88 : 104,
+    height: SMALL ? 88 : 104,
+    borderRadius: SMALL ? 44 : 52,
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: isSmallScreen ? 16 : 20,
+    marginBottom: SMALL ? 14 : 18,
     borderWidth: 1,
-    borderColor: theme.colors.border.light,
+    borderColor: healthColors.border.light,
     ...theme.shadows.sm,
   },
-  logo: {
-    width: responsiveSizes.logo,
-    height: responsiveSizes.logo,
-    marginBottom: 16,
-  },
+  logo: { width: SMALL ? 72 : 88, height: SMALL ? 72 : 88 },
   title: {
-    fontFamily: fontFamilies.heading,
-    fontSize: responsiveFonts.title,
-    lineHeight: responsiveFonts.titleLineHeight,
-    fontWeight: fontWeights.bold,
-    color: theme.colors.text.primary,
+    fontSize: SMALL ? 24 : 28,
+    fontWeight: "800",
+    color: healthColors.text.primary,
     marginBottom: 4,
     textAlign: "center",
-    includeFontPadding: false, // Android fix for font alignment
   },
   subtitle: {
-    fontFamily: fontFamilies.body,
-    fontSize: responsiveFonts.subtitle,
-    lineHeight: responsiveFonts.subtitleLineHeight,
-    fontWeight: fontWeights.medium,
-    color: theme.colors.text.secondary,
+    fontSize: SMALL ? 13 : 15,
+    color: healthColors.text.secondary,
     textAlign: "center",
-    includeFontPadding: false,
+    fontWeight: "500",
   },
+
   cardsContainer: {
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: "center",
-    paddingBottom: isSmallScreen ? 16 : 24,
+    paddingBottom: SMALL ? 12 : 20,
   },
-  cardSpacer: {
-    height: isSmallScreen ? 12 : 16,
-  },
+  spacer: { height: SMALL ? 12 : 16 },
+
   card: {
-    // Use flex proportions instead of fixed height for better responsiveness
-    flexBasis: isSmallScreen ? "42%" : "48%",
-    minHeight: 140, // Absolute minimum for small devices
-    maxHeight: isSmallScreen ? 160 : 200, // Prevent excessive height
+    flexBasis: SMALL ? "42%" : "47%",
+    minHeight: 140,
+    maxHeight: SMALL ? 160 : 195,
     borderRadius: 20,
     overflow: "hidden",
-    ...theme.shadows.sm,
+    ...theme.shadows.md,
   },
-  disabledCard: {
-    opacity: 0.92,
-  },
+  disabledCard: { opacity: 0.92 },
   cardGradient: {
     flex: 1,
     padding: 20,
     justifyContent: "center",
     position: "relative",
   },
+
   iconCircle: {
-    width: responsiveSizes.iconCircle,
-    height: responsiveSizes.iconCircle,
-    borderRadius: responsiveSizes.iconCircle / 2,
-    backgroundColor: theme.withOpacity(theme.colors.white, 0.3),
+    width: SMALL ? 62 : 76,
+    height: SMALL ? 62 : 76,
+    borderRadius: SMALL ? 31 : 38,
+    backgroundColor: "rgba(255,255,255,0.28)",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
-    borderWidth: 2.5,
-    borderColor: theme.withOpacity(theme.colors.white, 0.4),
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.38)",
   },
-  cardContent: {
-    flex: 1,
-  },
+  cardBody: { flex: 1 },
   cardTitle: {
-    fontFamily: fontFamilies.heading,
-    fontSize: responsiveFonts.cardTitle,
-    lineHeight: responsiveFonts.cardTitleLineHeight,
-    fontWeight: fontWeights.bold,
-    color: healthColors.white,
+    fontSize: SMALL ? 22 : 26,
+    fontWeight: "800",
+    color: "#fff",
     marginBottom: 2,
-    includeFontPadding: false,
-    ...createTextShadow({
-      color: theme.withOpacity(theme.colors.black, 0.15),
-      offset: { width: 0, height: 2 },
-      radius: 8,
-    }),
   },
-  cardSubtitle: {
-    fontFamily: fontFamilies.body,
-    fontSize: responsiveFonts.cardSubtitle,
-    lineHeight: responsiveFonts.cardSubtitleLineHeight,
-    fontWeight: fontWeights.medium,
-    color: healthColors.white,
-    opacity: 0.98,
-    includeFontPadding: false,
-    ...createTextShadow({
-      color: theme.withOpacity(theme.colors.black, 0.1),
-      offset: { width: 0, height: 1 },
-      radius: 4,
-    }),
+  cardSub: {
+    fontSize: SMALL ? 12 : 13,
+    color: "rgba(255,255,255,0.88)",
+    fontWeight: "500",
   },
   arrowCircle: {
     position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: responsiveSizes.arrowCircle,
-    height: responsiveSizes.arrowCircle,
-    borderRadius: responsiveSizes.arrowCircle / 2,
-    backgroundColor: theme.withOpacity(theme.colors.white, 0.3),
+    bottom: 18, right: 18,
+    width: SMALL ? 42 : 52,
+    height: SMALL ? 42 : 52,
+    borderRadius: SMALL ? 21 : 26,
+    backgroundColor: "rgba(255,255,255,0.28)",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2.5,
-    borderColor: theme.withOpacity(theme.colors.white, 0.4),
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.38)",
   },
+
   comingSoonBadge: {
-    position: "absolute",
-    top: 14,
-    right: 14,
+    position: "absolute", top: 12, right: 12,
     backgroundColor: healthColors.warning.main,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    ...theme.shadows.lg,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 14, zIndex: 1,
   },
-  comingSoonText: {
-    fontFamily: fontFamilies.body,
-    fontSize: responsiveFonts.badge,
-    lineHeight: responsiveFonts.badgeLineHeight,
-    fontWeight: fontWeights.bold,
-    color: healthColors.white,
-    includeFontPadding: false,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+  comingSoonText: { color: "#fff", fontSize: 10, fontWeight: "700", letterSpacing: 0.4 },
+
+  decor1: {
+    position: "absolute", top: -32, right: -32,
+    width: 100, height: 100, borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
-  decorCircle1: {
-    position: "absolute",
-    top: -35,
-    right: -35,
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: theme.withOpacity(theme.colors.white, 0.12),
+  decor2: {
+    position: "absolute", bottom: -22, left: -22,
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
-  decorCircle2: {
-    position: "absolute",
-    bottom: -25,
-    left: -25,
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: theme.withOpacity(theme.colors.white, 0.1),
-  },
+
   footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: isSmallScreen ? 12 : 16,
-  },
-  footerSpacer: {
-    width: 8,
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    paddingTop: 12,
   },
   footerDot: {
-    width: responsiveSizes.footerDot,
-    height: responsiveSizes.footerDot,
-    borderRadius: responsiveSizes.footerDot / 2,
+    width: 7, height: 7, borderRadius: 3.5,
     backgroundColor: healthColors.success.main,
   },
-  footerText: {
-    fontFamily: fontFamilies.body,
-    fontSize: responsiveFonts.footer,
-    lineHeight: responsiveFonts.footerLineHeight,
-    fontWeight: fontWeights.medium,
-    color: theme.colors.text.tertiary,
-    includeFontPadding: false,
-    letterSpacing: 0.3,
-  },
+  footerText: { fontSize: 13, color: healthColors.text.tertiary, fontWeight: "500" },
 });
 
 export default BoxSelectionScreen;

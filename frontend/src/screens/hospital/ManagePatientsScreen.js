@@ -28,7 +28,7 @@ import { patientService, adminService, doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import logger from "../../utils/logger";
-import { EmptyState } from "../../components/common";
+import { EmptyState, SkeletonCardRow } from "../../components/common";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
@@ -581,10 +581,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       {/* Patients List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading patients...</Text>
-        </View>
+        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : (
         <FlatList
           data={patients}
@@ -842,3 +839,4 @@ const styles = StyleSheet.create({
 });
 
 export default ManagePatientsScreen;
+

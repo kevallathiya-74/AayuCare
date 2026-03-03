@@ -7,13 +7,13 @@ import {
   FlatList,
   Modal,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
+import { Input } from "../../components/common";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -200,23 +200,17 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
   };
 
   const renderInput = (key, label, placeholder, icon, keyboardType = "default", secureTextEntry = false) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <Ionicons name={icon} size={18} color={healthColors.text.secondary} style={styles.inputIcon} />
-        <TextInput
-          style={styles.input}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          value={formData[key] || ""}
-          onChangeText={(value) => handleInputChange(key, value)}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          autoCapitalize={key === "email" ? "none" : "sentences"}
-        />
-      </View>
-      {errors[key] ? <Text style={styles.errorText}>{errors[key]}</Text> : null}
-    </View>
+    <Input
+      label={label}
+      placeholder={placeholder}
+      value={formData[key] || ""}
+      onChangeText={(value) => handleInputChange(key, value)}
+      leftIcon={<Ionicons name={icon} size={18} color={healthColors.text.secondary} />}
+      keyboardType={keyboardType}
+      secureTextEntry={secureTextEntry}
+      autoCapitalize={key === "email" ? "none" : "sentences"}
+      error={errors[key]}
+    />
   );
 
   const renderPicker = (key, label, icon, options) => (

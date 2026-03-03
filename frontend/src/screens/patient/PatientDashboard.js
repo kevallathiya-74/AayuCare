@@ -1,94 +1,74 @@
 /**
- * Patient Dashboard
- * Hospital-linked patient interface
- * Clear, reassuring design with zero medical jargon
+ * Patient Dashboard — lean orchestrator
+ * Visual sub-components live in ./components/
+ * All data logic stays here.
  */
 
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   StatusBar,
-  Platform,
-  Dimensions,
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  Animated,
   RefreshControl,
-  Linking,
-  Alert,
+  Dimensions,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import CompactActionCard from "../../components/common/CompactActionCard";
-import LanguageSelector from "../../components/common/LanguageSelector";
 import { logoutUser } from "../../store/slices/authSlice";
-import {
-  getScreenPadding,
-  verticalScale,
-  getGridColumns,
-  getSafeAreaEdges,
-} from "../../utils/responsive";
+import { getSafeAreaEdges, getScreenPadding } from "../../utils/responsive";
 import { healthMetricsService, notificationService } from "../../services";
 import { logError } from "../../utils/errorHandler";
-import { calculateAge, formatMedicalHistoryDuration } from "../../utils/dateHelpers";
+import { SectionHeader } from "../../components/common";
+import { useDrawer } from "../../hooks/useDrawer";
+import { DrawerMenu } from "../../components/layout";
+import {
+  PatientHeader,
+  HealthStatusCard,
+  MedicalHistoryCard,
+  EmergencyContactCard,
+  QuickActionsGrid,
+} from "./components";
 
 const { width } = Dimensions.get("window");
 
 const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user, isLoading } = useSelector((state) => state.auth);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [healthMetrics, setHealthMetrics] = useState([]);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
-  const insets = useSafeAreaInsets();
 
+  // ── Shared drawer hook ──
+  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
+
+  // ── Data fetching ──
   const fetchUnreadNotifications = useCallback(async () => {
     try {
       const response = await notificationService.getUnreadCount();
       setUnreadNotifications(response?.data?.count || 0);
     } catch (error) {
       logError(error, { context: "PatientDashboard.fetchUnreadNotifications" });
-      // Silently fail - notification count is not critical
     }
   }, []);
 
   const fetchHealthMetrics = useCallback(async () => {
     if (!user?.id) return;
-
     try {
       setLoadingMetrics(true);
       const response = await healthMetricsService.getMetrics(user.id);
       setHealthMetrics(response.data || []);
     } catch (error) {
       logError(error, { context: "PatientDashboard.fetchHealthMetrics" });
-      // Set empty array on error - don't show error to user for non-critical health metrics
       setHealthMetrics([]);
     } finally {
       setLoadingMetrics(false);
     }
   }, [user?.id]);
 
-  // Fetch health metrics on mount
   useEffect(() => {
     if (user?.id) {
       fetchHealthMetrics();
@@ -102,211 +82,146 @@ const PatientDashboard = ({ navigation }) => {
     setRefreshing(false);
   }, [fetchHealthMetrics, fetchUnreadNotifications]);
 
-  // Get latest metric value by type
+  // ── Metric helpers ──
   const getLatestMetric = (type) => {
-    if (!healthMetrics || !Array.isArray(healthMetrics)) return null;
-    const metricsOfType = healthMetrics.filter((m) => m.type === type);
-    if (metricsOfType.length === 0) return null;
-    return metricsOfType.sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-    )[0];
+    if (!Array.isArray(healthMetrics)) return null;
+    const filtered = healthMetrics.filter((m) => m.type === type);
+    if (!filtered.length) return null;
+    return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
   };
 
-  // Format blood pressure
   const formatBP = () => {
-    const bpMetric = getLatestMetric("bp");
-    if (!bpMetric?.value) return "N/A";
-    return `${bpMetric.value.systolic}/${bpMetric.value.diastolic}`;
+    const m = getLatestMetric("bp");
+    if (!m?.value) return "N/A";
+    return `${m.value.systolic}/${m.value.diastolic}`;
   };
-
-  // Format blood sugar
   const formatSugar = () => {
-    const sugarMetric = getLatestMetric("sugar");
-    if (!sugarMetric?.value) return "N/A";
-    return `${sugarMetric.value}`;
+    const m = getLatestMetric("sugar");
+    return m?.value ? `${m.value}` : "N/A";
   };
-
-  // Format temperature
   const formatTemp = () => {
-    const tempMetric = getLatestMetric("temperature");
-    if (!tempMetric?.value) return "N/A";
-    return `${tempMetric.value}°F`;
+    const m = getLatestMetric("temperature");
+    return m?.value ? `${m.value}°F` : "N/A";
   };
 
-  // Get health status
   const getHealthStatus = () => {
-    if (!healthMetrics || healthMetrics.length === 0) {
-      return { status: "UNKNOWN", riskScore: "N/A" };
-    }
-    // Simple risk assessment based on latest metrics
+    if (!healthMetrics.length) return { status: "UNKNOWN", riskScore: "N/A" };
     const bp = getLatestMetric("bp");
     const sugar = getLatestMetric("sugar");
     let riskScore = 0;
-
     if (bp?.value) {
       const { systolic, diastolic } = bp.value;
       if (systolic > 140 || diastolic > 90) riskScore += 30;
       else if (systolic > 130 || diastolic > 85) riskScore += 15;
     }
-
     if (sugar?.value) {
       if (sugar.value > 140) riskScore += 30;
       else if (sugar.value > 110) riskScore += 15;
     }
-
     if (riskScore < 20) return { status: "HEALTHY", riskScore };
     if (riskScore < 40) return { status: "MONITOR", riskScore };
     return { status: "CONSULT DOCTOR", riskScore };
   };
 
-  // Get last update time
   const getLastUpdateTime = () => {
-    if (!healthMetrics || healthMetrics.length === 0) return "No data";
-    const latestMetric = healthMetrics.sort(
+    if (!healthMetrics.length) return "No data";
+    const latest = healthMetrics.sort(
       (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
     )[0];
-    const date = new Date(latestMetric.timestamp);
-    const today = new Date();
-    const isToday = date.toDateString() === today.toDateString();
-
-    if (isToday) {
+    const date = new Date(latest.timestamp);
+    const isToday = date.toDateString() === new Date().toDateString();
+    if (isToday)
       return `Today ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`;
-    }
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  // Menu animation handlers
-  useEffect(() => {
-    if (menuVisible) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(slideAnim, {
-        toValue: -width * 0.8,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [menuVisible, slideAnim]);
+  const getTimeBasedGreeting = useCallback(() => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return "Good Morning";
+    if (h >= 12 && h < 17) return "Good Afternoon";
+    if (h >= 17 && h < 21) return "Good Evening";
+    return "Good Night";
+  }, []);
 
-  const closeMenu = useCallback(() => {
-    setMenuVisible(false);
+  const getGreetingIcon = useCallback(() => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return "sunny";
+    if (h >= 12 && h < 17) return "partly-sunny";
+    if (h >= 17 && h < 21) return "moon";
+    return "moon-outline";
   }, []);
 
   const handleLogout = useCallback(async () => {
     await dispatch(logoutUser());
   }, [dispatch]);
 
-  const getTimeBasedGreeting = useCallback(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Good Morning";
-    if (hour >= 12 && hour < 17) return "Good Afternoon";
-    if (hour >= 17 && hour < 21) return "Good Evening";
-    return "Good Night";
-  }, []);
-
-  const getGreetingIcon = useCallback(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "sunny";
-    if (hour >= 12 && hour < 17) return "partly-sunny";
-    if (hour >= 17 && hour < 21) return "moon";
-    return "moon-outline";
-  }, []);
-
+  // ── Action cards ──
   const actionCards = useMemo(
     () => [
-      {
-        title: "Book Appointment",
-        icon: "calendar-outline",
-        iconColor: healthColors.primary.main,
-        onPress: () => navigation.navigate("AppointmentBooking"),
-        badge: "",
-      },
-      {
-        title: "Medical Records",
-        icon: "folder-open",
-        iconColor: healthColors.accent.aqua,
-        onPress: () => navigation.navigate("MedicalRecords"),
-      },
-      {
-        title: "Prescriptions",
-        icon: "medical",
-        iconColor: healthColors.success.main,
-        onPress: () => navigation.navigate("MyPrescriptions"),
-      },
-      {
-        title: "Health Metrics",
-        icon: "stats-chart",
-        iconColor: theme.colors.healthcare.teal,
-        onPress: () => navigation.navigate("HealthMetrics"),
-      },
-      {
-        title: "AI Health Assistant",
-        icon: "chatbubbles",
-        iconColor: healthColors.secondary.main,
-        onPress: () => navigation.navigate("AIHealthAssistant"),
-      },
-      {
-        title: "AI Symptom Checker",
-        icon: "fitness-outline",
-        iconColor: theme.colors.error.main,
-        onPress: () => navigation.navigate("AISymptomChecker"),
-      },
-      {
-        title: "Disease Info",
-        icon: "information-circle",
-        iconColor: theme.colors.healthcare.purple,
-        onPress: () => navigation.navigate("DiseaseInfo"),
-      },
-      {
-        title: "Specialist Finder",
-        icon: "people",
-        iconColor: theme.colors.info.main,
-        onPress: () => navigation.navigate("SpecialistCareFinder"),
-      },
-      {
-        title: "Women's Health",
-        icon: "flower",
-        iconColor: theme.colors.healthcare.pink,
-        onPress: () => navigation.navigate("WomensHealth"),
-      },
-      {
-        title: "Hospital Events",
-        icon: "calendar-outline",
-        iconColor: theme.colors.warning.main,
-        onPress: () => navigation.navigate("HospitalEvents"),
-      },
-      {
-        title: "Pharmacy & Billing",
-        icon: "cart",
-        iconColor: theme.colors.success.main,
-        onPress: () => navigation.navigate("PharmacyBilling"),
-      },
-      {
-        title: "Activity Tracker",
-        icon: "walk",
-        iconColor: theme.colors.healthcare.cyan,
-        onPress: () => navigation.navigate("ActivityTracker"),
-      },
+      { title: "Book Appointment", icon: "calendar-outline", iconColor: healthColors.primary.main, onPress: () => navigation.navigate("AppointmentBooking") },
+      { title: "Medical Records", icon: "folder-open", iconColor: healthColors.accent.aqua, onPress: () => navigation.navigate("MedicalRecords") },
+      { title: "Prescriptions", icon: "medical", iconColor: healthColors.success.main, onPress: () => navigation.navigate("MyPrescriptions") },
+      { title: "Health Metrics", icon: "stats-chart", iconColor: theme.colors.healthcare.teal, onPress: () => navigation.navigate("HealthMetrics") },
+      { title: "AI Health Assistant", icon: "chatbubbles", iconColor: healthColors.secondary.main, onPress: () => navigation.navigate("AIHealthAssistant") },
+      { title: "AI Symptom Checker", icon: "fitness-outline", iconColor: theme.colors.error.main, onPress: () => navigation.navigate("AISymptomChecker") },
+      { title: "Disease Info", icon: "information-circle", iconColor: theme.colors.healthcare.purple, onPress: () => navigation.navigate("DiseaseInfo") },
+      { title: "Specialist Finder", icon: "people", iconColor: theme.colors.info.main, onPress: () => navigation.navigate("SpecialistCareFinder") },
+      { title: "Women's Health", icon: "flower", iconColor: theme.colors.healthcare.pink, onPress: () => navigation.navigate("WomensHealth") },
+      { title: "Hospital Events", icon: "calendar-outline", iconColor: theme.colors.warning.main, onPress: () => navigation.navigate("HospitalEvents") },
+      { title: "Pharmacy & Billing", icon: "cart", iconColor: theme.colors.success.main, onPress: () => navigation.navigate("PharmacyBilling") },
+      { title: "Activity Tracker", icon: "walk", iconColor: theme.colors.healthcare.cyan, onPress: () => navigation.navigate("ActivityTracker") },
     ],
     [navigation]
   );
 
-  return (
-    <SafeAreaView
-      style={styles.container}
-      edges={getSafeAreaEdges("withTabBar")}
-    >
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={healthColors.primary.main}
-        translucent={false}
-      />
+  // ── Drawer menu sections ──
+  const nav = (screen, params) => () => {
+    closeMenu();
+    setTimeout(() => navigation.navigate(screen, params), 100);
+  };
 
-      {/* Scrollable Content */}
+  const menuSections = useMemo(() => [
+    {
+      title: "QUICK ACCESS",
+      items: [
+        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("PatientTabs", { screen: "PatientDashboard" }) },
+        { icon: "calendar", iconColor: healthColors.primary.main, label: "Book Appointment", onPress: nav("AppointmentBooking") },
+        { icon: "folder-open", iconColor: healthColors.accent.aqua, label: "Medical Records", onPress: nav("MedicalRecords") },
+        { icon: "medical", iconColor: healthColors.success.main, label: "My Prescriptions", onPress: nav("MyPrescriptions") },
+      ],
+    },
+    {
+      title: "HEALTH & WELLNESS",
+      items: [
+        { icon: "stats-chart", iconColor: theme.colors.healthcare.teal, label: "Health Metrics", onPress: nav("HealthMetrics") },
+        { icon: "walk", iconColor: theme.colors.healthcare.cyan, label: "Activity Tracker", onPress: nav("ActivityTracker") },
+        { icon: "information-circle", iconColor: healthColors.info.main, label: "Disease Information", onPress: nav("DiseaseInfo") },
+      ],
+    },
+    {
+      title: "AI SERVICES",
+      items: [
+        { icon: "chatbubbles", iconColor: healthColors.secondary.main, label: "AI Health Assistant", onPress: nav("AIHealthAssistant") },
+        { icon: "fitness-outline", iconColor: theme.colors.error.main, label: "AI Symptom Checker", onPress: nav("AISymptomChecker") },
+        { icon: "search", iconColor: healthColors.accent.purple || healthColors.secondary.main, label: "Find Specialist", onPress: nav("SpecialistCareFinder") },
+      ],
+    },
+    {
+      title: "ACCOUNT",
+      items: [
+        { icon: "person", iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("Profile") },
+        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("PatientTabs", { screen: "More" }) },
+      ],
+    },
+  ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const healthStatus = getHealthStatus();
+
+  // ── Render ──
+  return (
+    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+      <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -320,1286 +235,85 @@ const PatientDashboard = ({ navigation }) => {
           />
         }
       >
-      {/* Enhanced Welcome Banner */}
-      <LinearGradient
-        colors={[healthColors.primary.main, healthColors.primary.dark]}
-        style={styles.welcomeBanner}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {/* Top Icons Row */}
-        <View style={styles.bannerTopRow}>
-          <TouchableOpacity
-            style={styles.bannerIconButton}
-            onPress={() => setMenuVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Open menu"
-          >
-            <Ionicons name="menu" size={24} color={theme.colors.text.white} />
-          </TouchableOpacity>
-          <Text style={styles.appTitle}>AayuCare</Text>
-          <View style={styles.bannerRightIcons}>
-            <LanguageSelector compact iconColor={theme.colors.text.white} />
-            <TouchableOpacity
-              style={styles.bannerIconButton}
-              onPress={() => navigation.navigate("Notifications")}
-              accessibilityRole="button"
-              accessibilityLabel="Notifications"
-            >
-              <Ionicons
-                name="notifications"
-                size={24}
-                color={theme.colors.text.white}
-              />
-              {unreadNotifications > 0 && (
-                <View style={styles.bannerNotificationBadge}>
-                  <Text style={styles.bannerNotificationBadgeText}>
-                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.bannerIconButton}
-              onPress={() => navigation.navigate("Profile")}
-              accessibilityRole="button"
-              accessibilityLabel="Open profile"
-            >
-              <Ionicons
-                name="person"
-                size={24}
-                color={theme.colors.text.white}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* ── Hero Header ── */}
+        <PatientHeader
+          user={user}
+          isLoading={isLoading}
+          unreadNotifications={unreadNotifications}
+          greeting={getTimeBasedGreeting()}
+          greetingIcon={getGreetingIcon()}
+          onMenuOpen={openMenu}
+          onNotificationPress={() => navigation.navigate("Notifications")}
+          onProfilePress={() => navigation.navigate("Profile")}
+        />
 
-        {/* Patient Greeting */}
-        <View style={styles.bannerGreeting}>
-          {!user || isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={theme.colors.text.white} />
-              <Text
-                style={[styles.loadingText, { color: theme.colors.text.white }]}
-              >
-                Loading profile...
-              </Text>
-            </View>
-          ) : (
+        <View style={styles.body}>
+          {/* ── Health Status ── */}
+          <SectionHeader title="Health Status" style={styles.sectionHeader} />
+          <HealthStatusCard
+            loadingMetrics={loadingMetrics}
+            status={healthStatus.status}
+            riskScore={healthStatus.riskScore}
+            bp={formatBP()}
+            sugar={formatSugar()}
+            temp={formatTemp()}
+            lastUpdated={getLastUpdateTime()}
+            onPress={() => navigation.navigate("HealthMetrics")}
+          />
+
+          {/* ── Medical History ── */}
+          {(user?.medicalHistory?.length > 0 ||
+            user?.allergies?.length > 0 ||
+            user?.currentMedications?.length > 0) && (
             <>
-              <View style={styles.greetingRow}>
-                <Ionicons
-                  name={getGreetingIcon()}
-                  size={28}
-                  color={theme.colors.text.white}
-                  style={styles.greetingIcon}
-                />
-                <View>
-                  <Text style={styles.bannerTimeGreeting}>
-                    {getTimeBasedGreeting()}
-                  </Text>
-                  <Text style={styles.bannerWelcomeText}>{user?.name || "Patient"}</Text>
-                </View>
-              </View>
-              <View style={styles.bannerInfoCard}>
-                <View style={styles.bannerInfoRow}>
-                  <Ionicons
-                    name="card-outline"
-                    size={18}
-                    color={theme.colors.text.white}
-                  />
-                  <Text style={styles.bannerInfoText}>ID: {user?.userId || "N/A"}</Text>
-                </View>
-                <View style={styles.bannerInfoRow}>
-                  <Ionicons
-                    name="person-outline"
-                    size={18}
-                    color={theme.colors.text.white}
-                  />
-                  <Text style={styles.bannerInfoText}>
-                    Age: {user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : "N/A")} • Blood: {user?.bloodGroup || "N/A"}
-                  </Text>
-                </View>
-              </View>
+              <SectionHeader title="Medical History" style={styles.sectionHeader} />
+              <MedicalHistoryCard
+                medicalHistory={user?.medicalHistory || []}
+                allergies={user?.allergies || []}
+                currentMedications={user?.currentMedications || []}
+              />
             </>
           )}
-        </View>
-      </LinearGradient>
 
-        {/* Health Status Card */}
-        <View style={styles.healthStatusSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.healthStatusTitle}>HEALTH STATUS</Text>
-          </View>
-          {loadingMetrics ? (
-            <View style={styles.healthCard}>
-              <ActivityIndicator
-                size="large"
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.loadingText}>Loading health data...</Text>
-            </View>
-          ) : (
-            <View style={styles.healthCard}>
-              <View style={styles.healthCardLeft}>
-                <View style={styles.healthIconCircle}>
-                  <Ionicons
-                    name="fitness"
-                    size={32}
-                    color={
-                      getHealthStatus().status === "HEALTHY"
-                        ? healthColors.success.main
-                        : getHealthStatus().status === "MONITOR"
-                          ? healthColors.warning.main
-                          : healthColors.error.main
-                    }
-                  />
-                </View>
-                <View style={styles.healthCardText}>
-                  <Text style={styles.healthCardTitle}>
-                    {getHealthStatus().status} Risk Score:{" "}
-                    {typeof getHealthStatus().riskScore === "number"
-                      ? `${getHealthStatus().riskScore}/100`
-                      : getHealthStatus().riskScore}
-                  </Text>
-                  <View style={styles.healthMetrics}>
-                    <View style={styles.metricItem}>
-                      <Ionicons
-                        name="pulse"
-                        size={14}
-                        color={healthColors.info.main}
-                      />
-                      <Text style={styles.healthCardDetail}>
-                        BP: {formatBP()}
-                      </Text>
-                    </View>
-                    <View style={styles.metricItem}>
-                      <Ionicons
-                        name="water"
-                        size={14}
-                        color={healthColors.warning.main}
-                      />
-                      <Text style={styles.healthCardDetail}>
-                        Sugar: {formatSugar()}
-                      </Text>
-                    </View>
-                    <View style={styles.metricItem}>
-                      <Ionicons
-                        name="thermometer"
-                        size={14}
-                        color={healthColors.error.main}
-                      />
-                      <Text style={styles.healthCardDetail}>
-                        Temp: {formatTemp()}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.healthCardUpdateRow}>
-                    <Ionicons
-                      name="time-outline"
-                      size={12}
-                      color={healthColors.text.secondary}
-                    />
-                    <Text style={styles.healthCardUpdated}>
-                      Last Updated: {getLastUpdateTime()}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-        </View>
+          {/* ── Emergency Contact ── */}
+          <SectionHeader title="Emergency" style={styles.sectionHeader} />
+          <EmergencyContactCard user={user} />
 
-        {/* Medical History Section */}
-        {(user?.medicalHistory?.length > 0 ||
-          user?.allergies?.length > 0 ||
-          user?.currentMedications?.length > 0) && (
-          <View style={styles.medicalHistorySection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>MEDICAL HISTORY</Text>
-            </View>
-            <View style={styles.medicalCard}>
-              {user?.medicalHistory?.length > 0 && (
-                <View style={styles.medicalGroup}>
-                  <View style={styles.medicalGroupHeader}>
-                    <Ionicons
-                      name="medical"
-                      size={18}
-                      color={healthColors.error.main}
-                    />
-                    <Text style={styles.medicalGroupTitle}>Conditions</Text>
-                  </View>
-                  {user.medicalHistory.map((item, index) => {
-                    const condition =
-                      typeof item === "string" ? item : item.condition || "Unknown";
-                    const duration =
-                      typeof item === "object" && item.diagnosedDate
-                        ? formatMedicalHistoryDuration(item.diagnosedDate, item.status)
-                        : null;
-                    const status =
-                      typeof item === "object" && item.status ? item.status : null;
-
-                    return (
-                      <View key={index} style={styles.medicalChip}>
-                        <Text style={styles.medicalChipText}>{condition}</Text>
-                        {duration && (
-                          <Text style={styles.medicalChipDuration}>{duration}</Text>
-                        )}
-                        {status && (
-                          <View
-                            style={[
-                              styles.statusBadge,
-                              status === "active" && styles.statusBadgeActive,
-                              status === "chronic" && styles.statusBadgeChronic,
-                              status === "resolved" && styles.statusBadgeResolved,
-                            ]}
-                          >
-                            <Text style={styles.statusBadgeText}>
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-
-              {user?.allergies?.length > 0 && (
-                <View style={styles.medicalGroup}>
-                  <View style={styles.medicalGroupHeader}>
-                    <Ionicons
-                      name="warning"
-                      size={18}
-                      color={healthColors.warning.main}
-                    />
-                    <Text style={styles.medicalGroupTitle}>Allergies</Text>
-                  </View>
-                  <View style={styles.allergiesContainer}>
-                    {user.allergies.map((allergy, index) => (
-                      <View key={index} style={styles.allergyChip}>
-                        <Ionicons
-                          name="alert-circle"
-                          size={12}
-                          color={healthColors.warning.main}
-                        />
-                        <Text style={styles.allergyChipText}>{allergy}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {user?.currentMedications?.length > 0 && (
-                <View style={styles.medicalGroup}>
-                  <View style={styles.medicalGroupHeader}>
-                    <Ionicons
-                      name="medkit"
-                      size={18}
-                      color={healthColors.primary.main}
-                    />
-                    <Text style={styles.medicalGroupTitle}>Current Medications</Text>
-                  </View>
-                  {user.currentMedications.map((medication, index) => (
-                    <View key={index} style={styles.medicationItem}>
-                      <View style={styles.medicationBullet} />
-                      <Text style={styles.medicationText}>{medication}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Emergency Contact Section */}
-        <View style={styles.emergencyContactSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>EMERGENCY CONTACT</Text>
-          </View>
-          <View style={styles.emergencyButtonsContainer}>
-            {/* Emergency Contact Button */}
-            <TouchableOpacity
-              style={styles.emergencyButtonRelative}
-              onPress={() => {
-                const phone = user?.emergencyContact?.phone;
-                if (phone) {
-                  Linking.openURL(`tel:${phone}`).catch((err) => {
-                    logError(err, "Failed to open dialer");
-                    Alert.alert("Error", "Unable to make call");
-                  });
-                } else {
-                  Alert.alert("No Contact", "Emergency contact not available");
-                }
-              }}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="call"
-                size={32}
-                color={theme.colors.text.white}
-                style={styles.emergencyButtonIcon}
-              />
-              <Text style={styles.emergencyButtonText}>
-                Emergency{"\n"}Contact
-              </Text>
-            </TouchableOpacity>
-
-            {/* Ambulance 108 Button */}
-            <TouchableOpacity
-              style={styles.emergencyButtonAmbulance}
-              onPress={() => {
-                Linking.openURL("tel:108").catch((err) => {
-                  logError(err, "Failed to open dialer for 108");
-                  Alert.alert("Error", "Unable to make call");
-                });
-              }}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="medkit"
-                size={32}
-                color={theme.colors.text.white}
-                style={styles.emergencyButtonIcon}
-              />
-              <Text style={styles.emergencyButtonText}>
-                Ambulance{"\n"}108
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Main Features Section */}
-        <View style={styles.mainFeaturesSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.emergencyTitle}>MAIN FEATURES</Text>
-          </View>
-
-          {/* Action Cards - 2-Column Grid matching Doctor Quick Actions */}
-          <View style={styles.quickActionsGrid}>
-            {actionCards.map((card, index) => (
-              <CompactActionCard
-                key={index}
-                title={card.title}
-                icon={card.icon}
-                iconColor={card.iconColor}
-                onPress={card.onPress}
-                badge={card.badge}
-              />
-            ))}
-          </View>
+          {/* ── Quick Actions ── */}
+          <SectionHeader title="Main Features" style={styles.sectionHeader} />
+          <QuickActionsGrid actionCards={actionCards} />
         </View>
       </ScrollView>
 
-      {/* Side Menu Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      {/* ── Side Drawer ── */}
+      <DrawerMenu
         visible={menuVisible}
-        onRequestClose={closeMenu}
-      >
-        <View style={styles.menuOverlay}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={closeMenu}
-          />
-          <Animated.View
-            style={[
-              styles.menuDrawer,
-              {
-                transform: [{ translateX: slideAnim }],
-              },
-            ]}
-          >
-            <LinearGradient
-              colors={[healthColors.primary.main, healthColors.primary.dark]}
-              style={styles.menuHeader}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <View style={styles.menuHeaderContent}>
-                <View style={styles.menuProfileSection}>
-                  <View style={styles.menuAvatar}>
-                    <Ionicons
-                      name="person"
-                      size={32}
-                      color={theme.colors.text.white}
-                    />
-                  </View>
-                  <View style={styles.menuUserInfo}>
-                    <Text style={styles.menuUserName}>
-                      {user?.name || "Patient"}
-                    </Text>
-                    <Text style={styles.menuUserRole}>Patient Account</Text>
-                    <Text style={styles.menuUserId}>
-                      ID: {user?.userId || "\u2014"}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.menuCloseButton}
-                  onPress={closeMenu}
-                >
-                  <Ionicons
-                    name="close"
-                    size={28}
-                    color={theme.colors.text.white}
-                  />
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
-
-            <ScrollView
-              style={styles.menuContent}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>QUICK ACCESS</Text>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () =>
-                        navigation.navigate("PatientTabs", {
-                          screen: "PatientDashboard",
-                        }),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="home"
-                    size={22}
-                    color={healthColors.primary.main}
-                  />
-                  <Text style={styles.menuItemText}>Dashboard</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("AppointmentBooking"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="calendar"
-                    size={22}
-                    color={healthColors.primary.main}
-                  />
-                  <Text style={styles.menuItemText}>Book Appointment</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("MedicalRecords"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="folder-open"
-                    size={22}
-                    color={healthColors.accent.aqua}
-                  />
-                  <Text style={styles.menuItemText}>Medical Records</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("MyPrescriptions"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="medical"
-                    size={22}
-                    color={healthColors.success.main}
-                  />
-                  <Text style={styles.menuItemText}>My Prescriptions</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>HEALTH & WELLNESS</Text>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => navigation.navigate("HealthMetrics"), 100);
-                  }}
-                >
-                  <Ionicons
-                    name="stats-chart"
-                    size={22}
-                    color={theme.colors.healthcare.teal}
-                  />
-                  <Text style={styles.menuItemText}>Health Metrics</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("ActivityTracker"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="walk"
-                    size={22}
-                    color={theme.colors.healthcare.cyan}
-                  />
-                  <Text style={styles.menuItemText}>Activity Tracker</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => navigation.navigate("DiseaseInfo"), 100);
-                  }}
-                >
-                  <Ionicons
-                    name="information-circle"
-                    size={22}
-                    color={healthColors.info.main}
-                  />
-                  <Text style={styles.menuItemText}>Disease Information</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>AI SERVICES</Text>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("AIHealthAssistant"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="chatbubbles"
-                    size={22}
-                    color={healthColors.secondary.main}
-                  />
-                  <Text style={styles.menuItemText}>AI Health Assistant</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("AISymptomChecker"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="fitness-outline"
-                    size={22}
-                    color={theme.colors.error.main}
-                  />
-                  <Text style={styles.menuItemText}>AI Symptom Checker</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () => navigation.navigate("SpecialistCareFinder"),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="search"
-                    size={22}
-                    color={healthColors.accent.purple}
-                  />
-                  <Text style={styles.menuItemText}>Find Specialist</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.menuSection}>
-                <Text style={styles.menuSectionTitle}>ACCOUNT</Text>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => navigation.navigate("Profile"), 100);
-                  }}
-                >
-                  <Ionicons
-                    name="person"
-                    size={22}
-                    color={healthColors.text.secondary}
-                  />
-                  <Text style={styles.menuItemText}>My Profile</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(
-                      () =>
-                        navigation.navigate("PatientTabs", { screen: "More" }),
-                      100
-                    );
-                  }}
-                >
-                  <Ionicons
-                    name="settings"
-                    size={22}
-                    color={healthColors.text.secondary}
-                  />
-                  <Text style={styles.menuItemText}>Settings</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.menuItem, styles.menuItemDanger]}
-                  onPress={() => {
-                    closeMenu();
-                    setTimeout(() => handleLogout(), 100);
-                  }}
-                >
-                  <Ionicons
-                    name="log-out"
-                    size={22}
-                    color={healthColors.error.main}
-                  />
-                  <Text
-                    style={[styles.menuItemText, styles.menuItemTextDanger]}
-                  >
-                    Logout
-                  </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={healthColors.error.main}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.menuFooter}>
-                <Text style={styles.menuFooterText}>
-                  AayuCare Patient v1.0.0
-                </Text>
-                <Text style={styles.menuFooterText}>
-                  © 2025 AayuCare Hospital
-                </Text>
-              </View>
-            </ScrollView>
-          </Animated.View>
-        </View>
-      </Modal>
+        onClose={closeMenu}
+        slideAnim={slideAnim}
+        drawerWidth={drawerWidth}
+        user={user}
+        role="Patient"
+        menuSections={menuSections}
+        onLogout={handleLogout}
+      />
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
   },
-  welcomeBanner: {
-    paddingTop: 12,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  bannerTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  scrollView: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+  body: {
     paddingHorizontal: getScreenPadding(),
-    marginBottom: 16, // spacing.md
+    paddingTop: 20,
+    gap: 0,
   },
-  bannerIconButton: {
-    padding: 8,
-    position: "relative",
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
-  appTitle: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  bannerRightIcons: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  bannerNotificationBadge: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    backgroundColor: healthColors.error.main,
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: theme.colors.text.white,
-  },
-  bannerNotificationBadgeText: {
-    fontSize: theme.typography.sizes.overline,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  bannerGreeting: {
-    paddingHorizontal: getScreenPadding(),
-  },
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  greetingIcon: {
-    marginRight: 12,
-  },
-  bannerTimeGreeting: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.medium,
-    color: theme.withOpacity(theme.colors.text.white, 0.9),
-    marginBottom: 2,
-    letterSpacing: 0.5,
-  },
-  bannerWelcomeText: {
-    fontSize: theme.typography.sizes.h3,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  bannerInfoCard: {
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.15),
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: theme.withOpacity(theme.colors.text.white, 0.2),
-  },
-  bannerInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  bannerInfoText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.colors.text.white,
-    marginLeft: 8,
-    fontWeight: theme.typography.weights.medium,
-  },
-  healthStatusSection: {
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 24, // spacing.lg for section separation
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12, // spacing.md
-  },
-  healthStatusTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: 8, // spacing.sm
-  },
-  healthCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: healthColors.success.background,
-    padding: 16, // spacing.md
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.success.light,
-  },
-  healthCardLeft: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    flex: 1,
-  },
-  healthIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: healthColors.success.main + "20",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16, // spacing.md
-  },
-  healthCardText: {
-    flex: 1,
-    marginRight: 12, // spacing.md
-  },
-  healthCardTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.success.main,
-    marginBottom: 8, // spacing.sm
-  },
-  healthMetrics: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 8,
-  },
-  metricItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
-    marginBottom: 4,
-  },
-  healthCardDetail: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.medium,
-    marginLeft: 4,
-  },
-  healthCardUpdateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  healthCardUpdated: {
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.secondary,
-    marginLeft: 4,
-  },
-  emergencyTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginBottom: 12, // spacing.md
-  },
-  mainFeaturesSection: {
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 24, // spacing.lg
-  },
-  sectionTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: 8,
-  },
-  notificationItem: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    lineHeight: 18,
-    marginRight: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 0,
-    paddingBottom: verticalScale(32),
-    flexGrow: 1,
-  },
-  quickActionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    justifyContent: "space-between",
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.medium,
-    marginLeft: 8,
-  },
-  // Medical History Section
-  logoutButtonProfile: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.background.card,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.error.main,
-    ...theme.shadows.sm,
-  },
-  logoutButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.error.main,
-    marginLeft: 8,
-  },
-  // Menu Styles
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: healthColors.background.overlay,
-    justifyContent: "flex-end",
-  },
-  menuDrawer: {
-    width: Math.min(width * 0.85, 400), // Max 400px for tablets
-    height: "100%",
-    backgroundColor: theme.colors.text.white,
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
-    borderRightWidth: 1,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  menuHeader: {
-    padding: 20,
-    paddingTop: 50,
-    paddingBottom: 24,
-    borderTopRightRadius: 20,
-  },
-  menuHeaderContent: {
-    position: "relative",
-  },
-  menuProfileSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 40,
-  },
-  menuAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.3),
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: theme.withOpacity(theme.colors.text.white, 0.5),
-    marginRight: 12,
-  },
-  menuUserInfo: {
-    flex: 1,
-  },
-  menuUserName: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-    marginBottom: 2,
-  },
-  menuUserRole: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.medium,
-    color: theme.withOpacity(theme.colors.text.white, 0.9),
-    marginBottom: 2,
-  },
-  menuUserId: {
-    fontSize: theme.typography.sizes.caption,
-    color: theme.withOpacity(theme.colors.text.white, 0.7),
-  },
-  menuCloseButton: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.25),
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuSection: {
-    paddingTop: 16,
-    paddingBottom: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  menuSectionTitle: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.secondary,
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    marginBottom: 6,
-    backgroundColor: "transparent",
-  },
-  menuItemText: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.medium,
-    color: healthColors.text.primary,
-    marginLeft: 12,
-  },
-  menuItemDanger: {
-    backgroundColor: theme.colors.error.background,
-    borderWidth: 1,
-    borderColor: theme.colors.error.light,
-  },
-  menuItemTextDanger: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.error.main,
-  },
-  menuFooter: {
-    padding: 24,
-    alignItems: "center",
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: healthColors.border.light,
-  },
-  menuFooterText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    marginBottom: 4,
-  },
-  // Profile Styles
-  medicalHistorySection: {
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 24,
-  },
-  medicalCard: {
-    backgroundColor: theme.colors.background.paper,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  medicalGroup: {
-    marginBottom: 16,
-  },
-  medicalGroupHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  medicalGroupTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginLeft: 6,
-  },
-  medicalChip: {
-    backgroundColor: healthColors.error.background,
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: healthColors.error.light,
-  },
-  medicalChipText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.error.main,
-    marginBottom: 4,
-  },
-  medicalChipDuration: {
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.secondary,
-  },
-  statusBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  statusBadgeActive: {
-    backgroundColor: healthColors.error.main,
-  },
-  statusBadgeChronic: {
-    backgroundColor: healthColors.warning.main,
-  },
-  statusBadgeResolved: {
-    backgroundColor: healthColors.success.main,
-  },
-  statusBadgeText: {
-    fontSize: theme.typography.sizes.overline,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-  allergiesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  allergyChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.warning.background,
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: healthColors.warning.light,
-  },
-  allergyChipText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.warning.main,
-    fontWeight: theme.typography.weights.medium,
-    marginLeft: 4,
-  },
-  medicationItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-  medicationBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: healthColors.primary.main,
-    marginRight: 10,
-  },
-  medicationText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    flex: 1,
-  },
-  // Emergency Contact Section
-  emergencyContactSection: {
-    paddingHorizontal: getScreenPadding(),
-    marginBottom: 24,
-  },
-  emergencyButtonsContainer: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  emergencyButtonRelative: {
-    flex: 1,
-    backgroundColor: healthColors.error.main,
-    borderRadius: 12,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: 140,
-    shadowColor: healthColors.neutral.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  emergencyButtonAmbulance: {
-    flex: 1,
-    backgroundColor: healthColors.error.dark,
-    borderRadius: 12,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: 140,
-    shadowColor: healthColors.neutral.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  emergencyButtonIcon: {
-    marginBottom: 12,
-  },
-  emergencyButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-    textAlign: "center",
-    lineHeight: 20,
-    letterSpacing: 0.5,
-  },
+  sectionHeader: { marginTop: 24, marginBottom: 12 },
 });
 
 export default PatientDashboard;

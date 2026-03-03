@@ -20,7 +20,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  ActivityIndicator,
   BackHandler,
   KeyboardAvoidingView,
   Platform,
@@ -37,6 +36,7 @@ import {
 } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { Button } from "../../components/common";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -541,23 +541,17 @@ const ConsultationScreen = ({ navigation, route }) => {
           </View>
 
           {/* ── Complete button ── */}
-          <TouchableOpacity
-            style={[styles.completeButton, completing && styles.completeButtonDisabled]}
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
+            gradient
+            loading={completing}
             onPress={handleComplete}
-            disabled={completing}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Complete consultation"
+            style={styles.completeButton}
           >
-            {completing ? (
-              <ActivityIndicator size="small" color={healthColors.white} />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={20} color={healthColors.white} />
-                <Text style={styles.completeButtonText}>Complete Consultation</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            Complete Consultation
+          </Button>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -856,7 +850,7 @@ const styles = StyleSheet.create({
   completeButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: healthColors.white,
+    color: "#fff",
     letterSpacing: 0.3,
   },
 });

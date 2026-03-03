@@ -4,18 +4,16 @@
  * Supports: Admin, Doctor, Patient roles
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StatusBar,
-  ActivityIndicator,
   Animated,
 } from "react-native";
 import {
@@ -29,13 +27,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../store/slices/authSlice";
 import {
   getScreenPadding,
-  verticalScale,
   getSafeAreaEdges,
   getKeyboardConfig,
-  getInputHeight,
-  getContainerWidth,
   isTablet,
 } from "../../utils/responsive";
+import { Input, Button } from "../../components/common";
 
 // Development auto-fill credentials (only available in __DEV__ mode)
 // Simple test credentials for easy development
@@ -54,9 +50,6 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [userIdFocused, setUserIdFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [showDevHelper, setShowDevHelper] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ userId: "", password: "" });
   const [formError, setFormError] = useState("");
@@ -105,25 +98,24 @@ const UnifiedLoginScreen = ({ navigation }) => {
     // Animate button press
     Animated.sequence([
       Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
+        toValue: 0.97,
+        duration: 80,
         useNativeDriver: true,
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 100,
+        duration: 120,
         useNativeDriver: true,
       }),
     ]).start();
 
     try {
-      const result = await dispatch(
+      await dispatch(
         loginUser({
           userId: userId.trim(),
           password,
         })
       ).unwrap();
-
       // Role-based navigation handled automatically by AppNavigator
     } catch (err) {
       const message = err?.message || err?.toString() || "Login failed";
@@ -150,12 +142,12 @@ const UnifiedLoginScreen = ({ navigation }) => {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom, 20) },
+            { paddingBottom: Math.max(insets.bottom + 24, 36) },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header with Gradient */}
+          {/* ── Hero Header ── */}
           <LinearGradient
             colors={[
               healthColors.primary.main,
@@ -166,11 +158,15 @@ const UnifiedLoginScreen = ({ navigation }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
+            {/* Decorative circles */}
+            <View style={styles.circleTopRight} pointerEvents="none" />
+            <View style={styles.circleBottomLeft} pointerEvents="none" />
+
             <View style={styles.logoContainer}>
               <View style={styles.logo}>
                 <Ionicons
                   name="medical"
-                  size={50}
+                  size={48}
                   color={healthColors.neutral.white}
                 />
               </View>
@@ -179,144 +175,81 @@ const UnifiedLoginScreen = ({ navigation }) => {
             </View>
           </LinearGradient>
 
-          {/* Login Form Card */}
+          {/* ── Login Form Card ── */}
           <View style={styles.formCard}>
-            <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeText}>Welcome Back!</Text>
-              <Text style={styles.subtitleText}>
-                Sign in to access your healthcare dashboard
-              </Text>
-            </View>
+            <Text style={styles.welcomeText}>Welcome Back</Text>
+            <Text style={styles.subtitleText}>
+              Sign in to access your healthcare dashboard
+            </Text>
 
-            {/* Role Indicator */}
+            {/* Role pill */}
             <View style={styles.roleIndicator}>
               <Ionicons
                 name="people"
-                size={16}
+                size={14}
                 color={healthColors.primary.main}
               />
-              <Text style={styles.roleText}>
-                All Roles: Admin • Doctor • Patient
-              </Text>
+              <Text style={styles.roleText}>Admin · Doctor · Patient</Text>
             </View>
 
-            {/* User ID Input */}
-            <View style={styles.inputContainer}>
-              <Text
-                style={[
-                  styles.label,
-                  (userIdFocused || userId) && styles.labelFocused,
-                ]}
-              >
-                Email or User ID
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  userIdFocused && styles.inputWrapperFocused,
-                  !!fieldErrors.userId && styles.inputWrapperError,
-                ]}
-              >
+            {/* ── User ID ── */}
+            <Input
+              label="Email or User ID"
+              value={userId}
+              onChangeText={(text) => {
+                setUserId(text);
+                if (fieldErrors.userId || formError) {
+                  setFieldErrors((prev) => ({ ...prev, userId: "" }));
+                  setFormError("");
+                }
+              }}
+              placeholder="Enter your email or user ID"
+              leftIcon={
                 <Ionicons
                   name="person-outline"
-                  size={20}
-                  color={
-                    userIdFocused
-                      ? healthColors.primary.main
-                      : healthColors.text.tertiary
-                  }
-                  style={styles.inputIcon}
+                  size={18}
+                  color={healthColors.text.tertiary}
                 />
-                <TextInput
-                  style={styles.input}
-                  value={userId}
-                  onChangeText={(text) => {
-                    setUserId(text);
-                    if (fieldErrors.userId || formError) {
-                      setFieldErrors((prev) => ({ ...prev, userId: "" }));
-                      setFormError("");
-                    }
-                  }}
-                  onFocus={() => setUserIdFocused(true)}
-                  onBlur={() => setUserIdFocused(false)}
-                  placeholder="Enter Email or User ID"
-                  placeholderTextColor={healthColors.text.tertiary}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordInputRef.current?.focus()}
-                  editable={!isLoading}
-                  keyboardType="email-address"
-                />
-              </View>
-              {!!fieldErrors.userId && (
-                <Text style={styles.fieldErrorText}>{fieldErrors.userId}</Text>
-              )}
-            </View>
+              }
+              error={fieldErrors.userId}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={() => passwordInputRef.current?.focus()}
+              editable={!isLoading}
+              keyboardType="email-address"
+              style={styles.inputSpacing}
+            />
 
-            {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <Text
-                style={[
-                  styles.label,
-                  (passwordFocused || password) && styles.labelFocused,
-                ]}
-              >
-                Password
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  passwordFocused && styles.inputWrapperFocused,
-                  !!fieldErrors.password && styles.inputWrapperError,
-                ]}
-              >
+            {/* ── Password ── */}
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (fieldErrors.password || formError) {
+                  setFieldErrors((prev) => ({ ...prev, password: "" }));
+                  setFormError("");
+                }
+              }}
+              placeholder="Enter your password"
+              leftIcon={
                 <Ionicons
                   name="lock-closed-outline"
-                  size={20}
-                  color={
-                    passwordFocused
-                      ? healthColors.primary.main
-                      : healthColors.text.tertiary
-                  }
-                  style={styles.inputIcon}
+                  size={18}
+                  color={healthColors.text.tertiary}
                 />
-                <TextInput
-                  ref={passwordInputRef}
-                  style={styles.input}
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    if (fieldErrors.password || formError) {
-                      setFieldErrors((prev) => ({ ...prev, password: "" }));
-                      setFormError("");
-                    }
-                  }}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  placeholder="Enter your password"
-                  placeholderTextColor={healthColors.text.tertiary}
-                  secureTextEntry={!showPassword}
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                  editable={!isLoading}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color={healthColors.text.tertiary}
-                  />
-                </TouchableOpacity>
-              </View>
-              {!!fieldErrors.password && (
-                <Text style={styles.fieldErrorText}>{fieldErrors.password}</Text>
-              )}
-            </View>
+              }
+              secureTextEntry
+              error={fieldErrors.password}
+              ref={passwordInputRef}
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+              editable={!isLoading}
+              style={styles.inputSpacing}
+            />
 
+            {/* Form-level error */}
             {!!formError && (
               <View style={styles.formErrorContainer}>
                 <Ionicons
@@ -328,7 +261,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
               </View>
             )}
 
-            {/* Forgot Password */}
+            {/* Forgot password */}
             <TouchableOpacity
               style={styles.forgotPassword}
               onPress={handleForgotPassword}
@@ -337,7 +270,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            {/* Development Helper - Quick Login Buttons */}
+            {/* ── Dev Quick-Login Helper ── */}
             {__DEV__ && (
               <View style={styles.devHelper}>
                 <TouchableOpacity
@@ -347,126 +280,90 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 >
                   <Ionicons
                     name={showDevHelper ? "chevron-up" : "chevron-down"}
-                    size={16}
+                    size={14}
                     color={healthColors.info.main}
                   />
                   <Text style={styles.devToggleText}>
-                    {showDevHelper ? "Hide" : "Quick Login"}
+                    {showDevHelper ? "Hide Quick Login" : "Quick Login"}
                   </Text>
                 </TouchableOpacity>
 
                 {showDevHelper && (
                   <View style={styles.devButtons}>
-                    <TouchableOpacity
-                      style={[styles.devButton, styles.devButtonPatient]}
-                      onPress={() => handleAutoFill("patient")}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name="people"
-                        size={16}
-                        color={healthColors.primary.main}
-                      />
-                      <Text style={styles.devButtonText}>Patient</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.devButton, styles.devButtonDoctor]}
-                      onPress={() => handleAutoFill("doctor")}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name="medical"
-                        size={16}
-                        color={healthColors.secondary.main}
-                      />
-                      <Text style={styles.devButtonText}>Doctor</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.devButton, styles.devButtonAdmin]}
-                      onPress={() => handleAutoFill("admin")}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name="shield-checkmark"
-                        size={16}
-                        color={healthColors.accent.coral}
-                      />
-                      <Text style={styles.devButtonText}>Admin</Text>
-                    </TouchableOpacity>
+                    {[
+                      { role: "patient", icon: "people", color: healthColors.primary.main },
+                      { role: "doctor", icon: "medical", color: healthColors.secondary.main },
+                      { role: "admin", icon: "shield-checkmark", color: healthColors.accent.coral },
+                    ].map(({ role, icon, color }) => (
+                      <TouchableOpacity
+                        key={role}
+                        style={[styles.devButton, { borderColor: color + "40" }]}
+                        onPress={() => handleAutoFill(role)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name={icon} size={14} color={color} />
+                        <Text style={styles.devButtonText}>
+                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 )}
               </View>
             )}
 
-            {/* Login Button */}
-            <Animated.View
-              style={[styles.animatedButtonContainer, { transform: [{ scale: scaleAnim }] }]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.loginButton,
-                  isLoading && styles.loginButtonDisabled,
-                ]}
+            {/* ── Login Button ── */}
+            <Animated.View style={[styles.loginBtnWrapper, { transform: [{ scale: scaleAnim }] }]}>
+              <Button
                 onPress={handleLogin}
-                activeOpacity={0.8}
+                loading={isLoading}
                 disabled={isLoading}
+                variant="primary"
+                gradient
+                fullWidth
+                size="large"
+                icon={
+                  !isLoading ? (
+                    <Ionicons
+                      name="arrow-forward"
+                      size={20}
+                      color={healthColors.neutral.white}
+                    />
+                  ) : null
+                }
+                iconPosition="right"
               >
-                <LinearGradient
-                  colors={[
-                    healthColors.primary.main,
-                    healthColors.primary.dark,
-                  ]}
-                  style={styles.loginButtonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color={healthColors.neutral.white} />
-                  ) : (
-                    <>
-                      <Text style={styles.loginButtonText}>Login</Text>
-                      <Ionicons
-                        name="arrow-forward"
-                        size={20}
-                        color={healthColors.neutral.white}
-                      />
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
+                Sign In
+              </Button>
             </Animated.View>
 
-            {/* Demo Credentials - Only shown in development */}
+            {/* Dev credentials reference */}
             {__DEV__ && (
               <View style={styles.demoSection}>
-                <Text style={styles.demoTitle}>Development Credentials:</Text>
-                <View style={styles.demoRow}>
-                  <Text style={styles.demoLabel}>Patient:</Text>
-                  <Text style={styles.demoValue}>patient / password123</Text>
-                </View>
-                <View style={styles.demoRow}>
-                  <Text style={styles.demoLabel}>Doctor:</Text>
-                  <Text style={styles.demoValue}>doctor / password123</Text>
-                </View>
-                <View style={styles.demoRow}>
-                  <Text style={styles.demoLabel}>Admin:</Text>
-                  <Text style={styles.demoValue}>admin / password123</Text>
-                </View>
+                <Text style={styles.demoTitle}>Dev Credentials</Text>
+                {[
+                  { label: "Patient:", value: "patient / password123" },
+                  { label: "Doctor:", value: "doctor / password123" },
+                  { label: "Admin:", value: "admin / password123" },
+                ].map(({ label, value }) => (
+                  <View key={label} style={styles.demoRow}>
+                    <Text style={styles.demoLabel}>{label}</Text>
+                    <Text style={styles.demoValue}>{value}</Text>
+                  </View>
+                ))}
               </View>
             )}
           </View>
 
-          {/* Footer */}
+          {/* ── Footer ── */}
           <View style={styles.footer}>
             <Ionicons
-              name="shield-checkmark"
-              size={16}
+              name="shield-checkmark-outline"
+              size={14}
               color={healthColors.text.tertiary}
             />
             <Text style={styles.footerText}>
-              Secure Login • Your data is protected
+              Secure Login · Your data is protected
             </Text>
           </View>
         </ScrollView>
@@ -478,166 +375,121 @@ const UnifiedLoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: healthColors.background.primary,
+    backgroundColor: healthColors.background.secondary,
   },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
+  keyboardView: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+
+  // ── Header ──
   header: {
-    paddingTop: 40,
-    paddingBottom: 50,
+    paddingTop: 44,
+    paddingBottom: 60,
     alignItems: "center",
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+    overflow: "hidden",
     ...theme.shadows.xl,
   },
-  logoContainer: {
-    alignItems: "center",
+  circleTopRight: {
+    position: "absolute",
+    top: -30,
+    right: -30,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.07),
   },
+  circleBottomLeft: {
+    position: "absolute",
+    bottom: -20,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.05),
+  },
+  logoContainer: { alignItems: "center" },
   logo: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.15),
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.14),
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 2,
-    borderColor: theme.withOpacity(theme.colors.text.white, 0.3),
+    borderColor: theme.withOpacity(theme.colors.text.white, 0.25),
     ...theme.shadows.lg,
   },
   appName: {
-    fontSize: theme.typography.sizes.h1,
-    fontWeight: theme.typography.weights.bold,
+    fontSize: 30,
+    fontWeight: "800",
     color: healthColors.neutral.white,
+    letterSpacing: 0.8,
     marginBottom: 6,
-    letterSpacing: 0.5,
   },
   tagline: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.withOpacity(theme.colors.text.white, 0.95),
-    fontWeight: theme.typography.weights.regular,
-    letterSpacing: 0.3,
+    color: theme.withOpacity(theme.colors.text.white, 0.88),
+    letterSpacing: 0.4,
   },
+
+  // ── Form Card ──
   formCard: {
-    marginTop: -32,
+    marginTop: -36,
     marginHorizontal: getScreenPadding(),
-    maxWidth: isTablet() ? 500 : 420,
+    maxWidth: isTablet() ? 480 : 440,
     width: "100%",
     alignSelf: "center",
     backgroundColor: healthColors.background.card,
-    borderRadius: 24,
+    borderRadius: 28,
     padding: 28,
     borderWidth: 1,
-    borderColor: theme.withOpacity(theme.colors.grays.black, 0.05),
+    borderColor: theme.withOpacity(healthColors.border.light, 0.6),
     ...theme.shadows.xl,
-  },
-  welcomeSection: {
-    marginBottom: 24,
   },
   welcomeText: {
     fontSize: theme.typography.sizes.h2,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: 8,
-    letterSpacing: 0.3,
+    marginBottom: 6,
+    letterSpacing: 0.2,
   },
   subtitleText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.regular,
     lineHeight: 20,
-    letterSpacing: 0.2,
+    marginBottom: 20,
   },
   roleIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.primary.main + "08",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    backgroundColor: healthColors.primary.main + "0C",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: healthColors.primary.main + "15",
+    borderColor: healthColors.primary.main + "18",
+    gap: 6,
   },
   roleText: {
-    fontSize: theme.typography.sizes.overline,
+    fontSize: 12,
     color: healthColors.primary.main,
-    marginLeft: 6,
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: theme.typography.weights.semibold,
+    letterSpacing: 0.3,
   },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-    marginBottom: 6,
-    fontWeight: theme.typography.weights.medium,
-  },
-  labelFocused: {
-    color: healthColors.primary.main,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.tertiary,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: healthColors.card.border,
-    paddingHorizontal: 16,
-    paddingVertical:
-      Platform.OS === "ios" ? 14 : 10,
-    minHeight: 52,
-    ...theme.shadows.sm,
-  },
-  inputWrapperFocused: {
-    borderColor: healthColors.primary.main,
-    backgroundColor: healthColors.background.card,
-    borderWidth: 2,
-    ...theme.shadows.md,
-  },
-  inputWrapperError: {
-    borderColor: healthColors.error.main,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.regular,
-    paddingVertical: 0,
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: 24,
-    marginTop: 8,
-    paddingVertical: 4,
-  },
-  forgotPasswordText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.medium,
-  },
-  fieldErrorText: {
-    marginTop: 6,
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.error.main,
-    fontWeight: theme.typography.weights.medium,
-  },
+  inputSpacing: { marginBottom: 16 },
+
+  // ── Form Error ──
   formErrorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     backgroundColor: healthColors.error.background,
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     marginBottom: 12,
   },
   formErrorText: {
@@ -646,93 +498,41 @@ const styles = StyleSheet.create({
     color: healthColors.error.main,
     fontWeight: theme.typography.weights.medium,
   },
-  loginButton: {
-    borderRadius: 14,
-    overflow: "hidden",
-    ...theme.shadows.lg,
-    minHeight: 54,
+
+  // ── Forgot password ──
+  forgotPassword: {
+    alignSelf: "flex-end",
+    marginBottom: 20,
+    marginTop: 2,
+    paddingVertical: 4,
   },
-  loginButtonGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    gap: 10,
-  },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.neutral.white,
-    letterSpacing: 0.5,
-  },
-  animatedButtonContainer: {
-    width: "100%",
-  },
-  demoSection: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: healthColors.background.tertiary,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.card.border,
-    borderStyle: "dashed",
-  },
-  demoTitle: {
+  forgotPasswordText: {
     fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.secondary,
-    marginBottom: 8,
+    color: healthColors.primary.main,
+    fontWeight: theme.typography.weights.semibold,
   },
-  demoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  demoLabel: {
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.tertiary,
-    fontWeight: theme.typography.weights.medium,
-  },
-  demoValue: {
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.medium,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    gap: 6,
-  },
-  footerText: {
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.tertiary,
-  },
-  // Development Helper Styles
+
+  // ── Login button wrapper ──
+  loginBtnWrapper: { width: "100%", marginTop: 8 },
+
+  // ── Dev Helper ──
   devHelper: {
-    marginTop: 16,
+    marginBottom: 16,
     backgroundColor: healthColors.info.main + "08",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: healthColors.info.main + "20",
+    borderColor: healthColors.info.main + "1A",
     overflow: "hidden",
   },
   devToggle: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 8,
+    paddingVertical: 10,
     gap: 6,
   },
   devToggleText: {
-    fontSize: theme.typography.sizes.caption,
+    fontSize: 12,
     color: healthColors.info.main,
     fontWeight: theme.typography.weights.semibold,
   },
@@ -740,37 +540,72 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     padding: 12,
-    paddingTop: 0,
+    paddingTop: 4,
   },
   devButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 5,
     paddingVertical: 10,
-    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1.5,
     backgroundColor: healthColors.background.card,
   },
-  devButtonPatient: {
-    borderColor: healthColors.primary.main + "40",
-  },
-  devButtonDoctor: {
-    borderColor: healthColors.secondary.main + "40",
-  },
-  devButtonAdmin: {
-    borderColor: healthColors.accent.coral + "40",
-  },
   devButtonText: {
-    fontSize: theme.typography.sizes.overline,
+    fontSize: 11,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
+  },
+
+  // ── Demo Section ──
+  demoSection: {
+    marginTop: 20,
+    padding: 14,
+    backgroundColor: healthColors.background.tertiary,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    borderStyle: "dashed",
+  },
+  demoTitle: {
+    fontSize: 11,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.secondary,
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  demoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  demoLabel: {
+    fontSize: 11,
+    color: healthColors.text.tertiary,
+    fontWeight: theme.typography.weights.medium,
+  },
+  demoValue: {
+    fontSize: 11,
+    color: healthColors.text.primary,
+    fontWeight: theme.typography.weights.medium,
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  },
+
+  // ── Footer ──
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 24,
+    gap: 6,
+  },
+  footerText: {
+    fontSize: 11,
+    color: healthColors.text.tertiary,
   },
 });
 
 export default UnifiedLoginScreen;
-
-
-

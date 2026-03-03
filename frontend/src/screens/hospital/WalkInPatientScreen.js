@@ -10,8 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import {
@@ -26,6 +24,7 @@ import {
 } from "../../utils/responsive";
 import { showError, logError } from "../../utils/errorHandler";
 import { doctorService } from "../../services";
+import { Input, Button } from "../../components/common";
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -206,52 +205,28 @@ const WalkInPatientScreen = ({ navigation }) => {
           </View>
 
           {/* Name */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Patient Name <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="person"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter full name"
-                value={formData.name}
-                onChangeText={(value) => handleInputChange("name", value)}
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
+          <Input
+            label="Patient Name *"
+            placeholder="Enter full name"
+            value={formData.name}
+            onChangeText={(value) => handleInputChange("name", value)}
+            leftIcon={<Ionicons name="person" size={18} color={healthColors.text.disabled} />}
+          />
 
           {/* Age & Gender */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Text style={styles.label}>
-                Age <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons
-                  name="calendar-outline"
-                  size={18}
-                  color={healthColors.text.disabled}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Age"
-                  value={formData.age}
-                  onChangeText={(value) =>
-                    handleInputChange("age", value.replace(/[^0-9]/g, ""))
-                  }
-                  keyboardType="numeric"
-                  maxLength={3}
-                  placeholderTextColor={healthColors.text.disabled}
-                />
-              </View>
+              <Input
+                label="Age *"
+                placeholder="Age"
+                value={formData.age}
+                onChangeText={(value) =>
+                  handleInputChange("age", value.replace(/[^0-9]/g, ""))
+                }
+                keyboardType="numeric"
+                maxLength={3}
+                leftIcon={<Ionicons name="calendar-outline" size={18} color={healthColors.text.disabled} />}
+              />
             </View>
 
             <View style={[styles.inputGroup, styles.halfWidth]}>
@@ -299,30 +274,17 @@ const WalkInPatientScreen = ({ navigation }) => {
           </View>
 
           {/* Phone */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Phone Number <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="call-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="mobile number"
-                value={formData.phone}
-                onChangeText={(value) =>
-                  handleInputChange("phone", value.replace(/[^0-9]/g, ""))
-                }
-                keyboardType="phone-pad"
-                maxLength={10}
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
+          <Input
+            label="Phone Number *"
+            placeholder="mobile number"
+            value={formData.phone}
+            onChangeText={(value) =>
+              handleInputChange("phone", value.replace(/[^0-9]/g, ""))
+            }
+            keyboardType="phone-pad"
+            maxLength={10}
+            leftIcon={<Ionicons name="call-outline" size={18} color={healthColors.text.disabled} />}
+          />
 
           {/* Blood Group */}
           <View style={styles.inputGroup}>
@@ -363,29 +325,13 @@ const WalkInPatientScreen = ({ navigation }) => {
           </View>
 
           {/* Address */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address (Optional)</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="location-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Patient's home address"
-                value={formData.address}
-                onChangeText={(value) =>
-                  handleInputChange(
-                    "address",
-                    value
-                  )
-                }
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
+          <Input
+            label="Address (Optional)"
+            placeholder="Patient's home address"
+            value={formData.address}
+            onChangeText={(value) => handleInputChange("address", value)}
+            leftIcon={<Ionicons name="location-outline" size={18} color={healthColors.text.disabled} />}
+          />
         </View>
 
         {/* Medical Information Section */}
@@ -402,31 +348,14 @@ const WalkInPatientScreen = ({ navigation }) => {
           </View>
 
           {/* Chief Complaint */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Chief Complaint / Symptoms <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
-              <Ionicons
-                name="document-text-outline"
-                size={18}
-                color={healthColors.text.disabled}
-                style={styles.inputIconTop}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Describe the symptoms or reason for visit"
-                value={formData.chiefComplaint}
-                onChangeText={(value) =>
-                  handleInputChange("chiefComplaint", value)
-                }
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                placeholderTextColor={healthColors.text.disabled}
-              />
-            </View>
-          </View>
+          <Input
+            label="Chief Complaint / Symptoms *"
+            placeholder="Describe the symptoms or reason for visit"
+            value={formData.chiefComplaint}
+            onChangeText={(value) => handleInputChange("chiefComplaint", value)}
+            multiline
+            numberOfLines={4}
+          />
         </View>
 
         <View style={styles.noteContainer}>
@@ -442,24 +371,17 @@ const WalkInPatientScreen = ({ navigation }) => {
         </View>
 
         {/* Register Button */}
-        <TouchableOpacity
-          style={[
-            styles.registerButton,
-            loading && styles.registerButtonDisabled,
-          ]}
+        <Button
+          variant="primary"
+          size="large"
+          fullWidth
+          gradient
+          loading={loading}
           onPress={handleRegister}
-          disabled={loading}
-          activeOpacity={0.8}
+          style={styles.registerButton}
         >
-          {loading ? (
-            <ActivityIndicator color={theme.colors.white} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle" size={22} color={theme.colors.white} />
-              <Text style={styles.registerButtonText}>Register Patient</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          Register Patient
+        </Button>
       </ScrollView>
     </SafeAreaView>
   );

@@ -34,6 +34,7 @@ import { useSelector } from 'react-redux';
 import { healthColors } from '../theme';
 import { useAppointmentsInfinite } from '../hooks/useAppointments';
 import { logError } from '../utils/errorHandler';
+import { SkeletonCardRow } from '../components/common';
 
 /**
  * Appointments List Screen with Infinite Scroll
@@ -194,9 +195,8 @@ const AppointmentsListScreen = ({ navigation, route }) => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-          <Text style={styles.loadingText}>Loading appointments...</Text>
+        <View style={{ padding: 16, gap: 12 }}>
+          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
     );
@@ -423,3 +423,4 @@ const styles = StyleSheet.create({
 });
 
 export default AppointmentsListScreen;
+

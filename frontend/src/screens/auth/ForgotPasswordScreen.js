@@ -218,7 +218,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 <Feather
                   name="shield"
                   size={16}
-                  color={healthColors.textSecondary}
+                  color={healthColors.text.secondary}
                 />
               )}
               <Text
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     marginTop: 44,
     paddingTop: 28,
     borderTopWidth: 1,
-    borderTopColor: healthColors.card.border,
+    borderTopColor: healthColors.border.light,
   },
   footerText: {
     marginLeft: 10,
