@@ -12,7 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -23,6 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
+import { Button } from "../../components/common";
 import logger from "../../utils/logger";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -583,17 +583,14 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
+            <Button
+              variant="primary"
+              loading={loading}
               onPress={handleSubmit}
-              disabled={loading}
+              style={styles.submitButton}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.colors.white} />
-              ) : (
-                <Text style={styles.submitButtonText}>Register Patient</Text>
-              )}
-            </TouchableOpacity>
+              Register Patient
+            </Button>
           </View>
         </View>
       </KeyboardAvoidingView>

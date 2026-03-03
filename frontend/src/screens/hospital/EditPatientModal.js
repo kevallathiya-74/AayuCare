@@ -12,7 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -22,6 +21,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
+import { Button } from "../../components/common";
 import logger from "../../utils/logger";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -599,17 +599,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.submitButton]}
+            <Button
+              variant="primary"
+              loading={loading}
               onPress={handleSubmit}
-              disabled={loading}
+              style={styles.submitButton}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.colors.white} />
-              ) : (
-                <Text style={styles.submitButtonText}>Save Changes</Text>
-              )}
-            </TouchableOpacity>
+              Save Changes
+            </Button>
           </View>
         </View>
       </KeyboardAvoidingView>

@@ -10,9 +10,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
-  ActivityIndicator,
   Alert,
   Platform,
   Modal,
@@ -422,11 +420,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
 
             {loadingDoctors ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator
-                  size="large"
-                  color={healthColors.primary.main}
-                />
-                <Text style={styles.loadingText}>Loading doctors...</Text>
+                <SkeletonCardRow />
+                <SkeletonCardRow />
+                <SkeletonCardRow />
               </View>
             ) : doctors.length === 0 ? (
               <View style={styles.emptyState}>

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors, spacing, textStyles } from "../../theme";
 import { getSafeAreaEdges } from "../../utils/responsive";
-import { Card, Button } from "../../components/common";
+import { Card, Button, Input } from "../../components/common";
 import { patientService } from "../../services";
 import { updateUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
@@ -245,14 +244,10 @@ const PatientEditProfileScreen = ({ navigation }) => {
 };
 
 const Field = ({ label, ...inputProps }) => (
-  <View style={styles.fieldGroup}>
-    <Text style={styles.fieldLabel}>{label}</Text>
-    <TextInput
-      style={styles.input}
-      placeholderTextColor={healthColors.text.disabled}
-      {...inputProps}
-    />
-  </View>
+  <Input
+    label={label}
+    {...inputProps}
+  />
 );
 
 const styles = StyleSheet.create({

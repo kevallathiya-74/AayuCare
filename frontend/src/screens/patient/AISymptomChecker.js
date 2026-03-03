@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
 } from "react-native";
 import {
@@ -27,6 +26,7 @@ import {
 import AITagline from "../../components/common/AITagline";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
+import { Input } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import aiService from "../../services/ai.service";
@@ -349,23 +349,20 @@ const AISymptomChecker = ({ navigation }) => {
             {/* Additional Symptoms */}
             <View style={styles.inputSection}>
               <Text style={styles.label}>Additional Symptoms (Optional)</Text>
-              <TextInput
-                style={styles.textInput}
+              <Input
                 placeholder="e.g., chest pain, dizziness"
-                placeholderTextColor={healthColors.text.tertiary}
                 value={symptoms}
                 onChangeText={setSymptoms}
                 multiline
+                numberOfLines={3}
               />
             </View>
 
             {/* Duration */}
             <View style={styles.inputSection}>
               <Text style={styles.label}>Duration</Text>
-              <TextInput
-                style={styles.input}
+              <Input
                 placeholder="e.g., 2 days, 1 week"
-                placeholderTextColor={healthColors.text.tertiary}
                 value={duration}
                 onChangeText={setDuration}
               />

@@ -22,7 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 import doctorService from "../../services/doctor.service";
 import { theme, healthColors } from "../../theme";
 import { convertTo12Hour } from "../../utils/helpers";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, Input } from "../../components/common";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -426,12 +426,10 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             {/* Notes Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Notes (Optional)</Text>
-              <TextInput
-                style={styles.notesInput}
+              <Input
+                placeholder="Add any special notes for this day..."
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Add any special notes for this day..."
-                placeholderTextColor={healthColors.text.tertiary}
                 multiline
                 numberOfLines={3}
                 maxLength={500}

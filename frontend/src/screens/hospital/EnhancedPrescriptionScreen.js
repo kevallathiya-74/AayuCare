@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   Modal,
   Alert,
@@ -32,7 +31,7 @@ import {
 import { prescriptionService, patientService, doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { formatCurrency } from "../../utils/helpers";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, Input } from "../../components/common";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -578,10 +577,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             {/* Instructions */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>DIAGNOSIS:</Text>
-              <TextInput
-                style={styles.instructionsInput}
+              <Input
                 placeholder="Enter diagnosis..."
-                placeholderTextColor={healthColors.text.disabled}
                 value={diagnosis}
                 onChangeText={setDiagnosis}
                 multiline
@@ -591,10 +588,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>INSTRUCTIONS:</Text>
-              <TextInput
-                style={styles.instructionsInput}
+              <Input
                 placeholder="Enter instructions for patient..."
-                placeholderTextColor={healthColors.text.disabled}
                 value={instructions}
                 onChangeText={setInstructions}
                 multiline
@@ -810,32 +805,28 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add Medicine</Text>
 
-            <TextInput
-              style={styles.modalInput}
+            <Input
               placeholder="Medicine name"
               value={medicineForm.name}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, name: value }))
               }
             />
-            <TextInput
-              style={styles.modalInput}
+            <Input
               placeholder="Dosage (e.g. 500mg)"
               value={medicineForm.dosage}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, dosage: value }))
               }
             />
-            <TextInput
-              style={styles.modalInput}
+            <Input
               placeholder="Duration (e.g. 5 days)"
               value={medicineForm.duration}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, duration: value }))
               }
             />
-            <TextInput
-              style={styles.modalInput}
+            <Input
               placeholder="Unit price"
               keyboardType="numeric"
               value={medicineForm.unitPrice}
@@ -843,8 +834,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 setMedicineForm((prev) => ({ ...prev, unitPrice: value }))
               }
             />
-            <TextInput
-              style={[styles.modalInput, styles.modalInputMulti]}
+            <Input
               placeholder="Instructions"
               value={medicineForm.instructions}
               onChangeText={(value) =>
