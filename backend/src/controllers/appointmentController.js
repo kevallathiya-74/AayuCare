@@ -475,13 +475,13 @@ exports.getAppointmentStats = async (req, res, next) => {
 
 /**
  * @desc    Get appointments for a specific patient
- * @route   GET /api/appointments/patient/:patientId
+ * @route   POST /api/appointments/patient
  * @access  Private (Patient own data, Doctor, Admin)
  */
 exports.getPatientAppointments = async (req, res, next) => {
   try {
     // Explicit String cast to prevent type confusion from HTTP parameter pollution
-    const patientId = String(req.params.patientId);
+    const patientId = String(req.body.patientId);
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
     const isOwnData =
