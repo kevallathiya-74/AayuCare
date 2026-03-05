@@ -239,8 +239,13 @@ exports.getCompleteHistory = async (req, res, next) => {
  */
 exports.getPatientProfile = async (req, res, next) => {
   try {
-    // Prefer patientId from request body (for POST/secure usage), fall back to route params
-    const rawPatientId = (req.body && req.body.patientId) || req.params.patientId;
+    // Prefer patientId from request body (for POST/secure usage), fall back to route params for GET
+    let rawPatientId;
+    if (req.body && typeof req.body.patientId !== "undefined" && req.body.patientId !== null) {
+      rawPatientId = req.body.patientId;
+    } else {
+      rawPatientId = req.params.patientId;
+    }
     const patientId = String(rawPatientId);
 
     // Check access rights - supports both _id and userId formats
