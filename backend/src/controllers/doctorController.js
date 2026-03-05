@@ -559,10 +559,11 @@ exports.searchPatients = async (req, res, next) => {
     const limit = Math.min(Math.max(requestedLimit, 1), 100);
     const skip = (page - 1) * limit;
 
-    if (q && q.length > 100) {
+    const searchQuery = String(q || "").trim();
+
+    if (searchQuery && searchQuery.length > 100) {
       return next(new AppError("Search query must be 100 characters or fewer", 400));
     }
-    const searchQuery = String(q || "").trim();
 
     logger.info("Search patients request:", {
       doctorId,
