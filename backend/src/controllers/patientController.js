@@ -239,13 +239,22 @@ exports.getCompleteHistory = async (req, res, next) => {
  */
 exports.getPatientProfile = async (req, res, next) => {
   try {
-    // Prefer patientId from request body (for POST/secure usage), fall back to route params for GET
-    let rawPatientId;
+    // Derive patientId from secure sources only (request body or authenticated user), not from URL params
+    let rawPatientId = null;
     if (req.body && typeof req.body.patientId !== "undefined" && req.body.patientId !== null) {
       rawPatientId = req.body.patientId;
-    } else {
-      rawPatientId = req.params.patientId;
+    } else if (req.user && req.user.role === "patient") {
+      // Allow patients to access their own profile without exposing the ID in the URL
+      rawPatientId = req.user.id || req.user.userId || req.user.user_id || null;
     }
+
+    if (!rawPatientId) {
+      return res.status(400).json({
+        success: false,
+        message: "patientId is required in the request body for this operation",
+      });
+    }
+
     const patientId = String(rawPatientId);
 
     // Check access rights - supports both _id and userId formats
