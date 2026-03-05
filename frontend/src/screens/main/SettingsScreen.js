@@ -5,13 +5,15 @@
  * Features: grouped settings, toggle switches, navigation
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Switch,
+  Linking,
+  Alert,
 } from "react-native";
 import {
   SafeAreaView,
@@ -28,6 +30,9 @@ import {
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { useSelector } from "react-redux";
+import { getItem, setItem } from "../../utils/appStorage";
+
+const SETTINGS_STORAGE_KEY = "aayucare_notification_settings";
 
 const SettingsScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -40,16 +45,51 @@ const SettingsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const userRole = useSelector((state) => state.auth?.user?.role);
 
+  // Load persisted notification preferences on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await getItem(SETTINGS_STORAGE_KEY);
+        if (stored) {
+          const prefs = JSON.parse(stored);
+          if (typeof prefs.notificationsEnabled === "boolean") setNotificationsEnabled(prefs.notificationsEnabled);
+          if (typeof prefs.appointmentReminders === "boolean") setAppointmentReminders(prefs.appointmentReminders);
+          if (typeof prefs.medicationReminders === "boolean") setMedicationReminders(prefs.medicationReminders);
+          if (typeof prefs.healthTips === "boolean") setHealthTips(prefs.healthTips);
+        }
+      } catch (err) {
+        logError(err, "SettingsScreen.loadSettings");
+      }
+    })();
+  }, []);
+
   const getEditProfileRoute = () => {
     if (userRole === "doctor") return "EditProfile";
     if (userRole === "admin") return "AdminSettings";
     return "PatientEditProfile";
   };
 
+  const openURL = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) await Linking.openURL(url);
+      else Alert.alert("Cannot Open", "Unable to open this link on your device.");
+    } catch (err) {
+      logError(err, "SettingsScreen.openURL");
+    }
+  };
+
   const handleSettingChange = async (setter, value, settingName) => {
     try {
       setter(value);
-      // TODO: Save setting to API
+      // Persist all notification prefs as a single JSON object in appStorage
+      const currentPrefs = {
+        notificationsEnabled: settingName === "pushNotifications" ? value : notificationsEnabled,
+        appointmentReminders: settingName === "appointmentReminders" ? value : appointmentReminders,
+        medicationReminders: settingName === "medicationReminders" ? value : medicationReminders,
+        healthTips: settingName === "healthTips" ? value : healthTips,
+      };
+      await setItem(SETTINGS_STORAGE_KEY, JSON.stringify(currentPrefs));
     } catch (err) {
       logError(err, `SettingsScreen.handleSettingChange.${settingName}`);
       showError("Failed to update setting");
@@ -92,12 +132,6 @@ const SettingsScreen = ({ navigation }) => {
       rightIcon: { name: "chevron-forward" },
       onPress: () => navigation.navigate("SettingsAccessibility"),
     },
-    {
-      title: "Linked Accounts",
-      leftIcon: { name: "link", color: healthColors.primary.main },
-      rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
-    },
   ];
 
   const privacySettings = [
@@ -105,19 +139,32 @@ const SettingsScreen = ({ navigation }) => {
       title: "Privacy Policy",
       leftIcon: { name: "shield-checkmark", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () => openURL("https://aayucare.in/privacy-policy"),
     },
     {
       title: "Terms of Service",
       leftIcon: { name: "document-text", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () => openURL("https://aayucare.in/terms"),
     },
     {
       title: "Data & Privacy",
       leftIcon: { name: "eye-off", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () => {
+        if (userRole === "admin") {
+          navigation.navigate("SecuritySettings");
+        } else {
+          Alert.alert(
+            "Data & Privacy",
+            "AayuCare uses end-to-end encryption for all health records. Your data is stored securely and never shared without your consent.\n\nFor full details, see our Privacy Policy.",
+            [
+              { text: "View Policy", onPress: () => openURL("https://aayucare.in/privacy-policy") },
+              { text: "OK", style: "default" },
+            ]
+          );
+        }
+      },
     },
   ];
 
@@ -129,19 +176,33 @@ const SettingsScreen = ({ navigation }) => {
         color: healthColors.primary.main,
       },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () =>
+        Alert.alert(
+          "About AayuCare",
+          "AayuCare – Your Complete Health Management Platform\n\nVersion: 1.0.0\nPlatform: Android & iOS\n\nAayuCare connects patients, doctors, and hospitals in one seamless ecosystem for better, safer healthcare.",
+          [{ text: "OK" }]
+        ),
     },
     {
       title: "Help & Support",
       leftIcon: { name: "help-circle", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () =>
+        Alert.alert(
+          "Help & Support",
+          "For assistance, contact us:",
+          [
+            { text: "Email Support", onPress: () => openURL("mailto:support@aayucare.in") },
+            { text: "WhatsApp", onPress: () => openURL("https://wa.me/919876543210") },
+            { text: "Cancel", style: "cancel" },
+          ]
+        ),
     },
     {
       title: "Rate Us",
       leftIcon: { name: "star", color: healthColors.warning.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => {},
+      onPress: () => openURL("https://play.google.com/store/apps/details?id=in.aayucare.app"),
     },
   ];
 

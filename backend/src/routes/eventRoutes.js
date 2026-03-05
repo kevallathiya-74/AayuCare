@@ -8,7 +8,7 @@ const router = express.Router();
 const eventController = require("../controllers/eventController");
 const { protect, authorize } = require("../middleware/auth");
 const { validateBody } = require("../middleware/validation");
-const { createEventSchema } = require("../validators/schemas");
+const { createEventSchema, updateEventSchema } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // Public routes
@@ -63,7 +63,7 @@ router.put(
   "/:eventId",
   protect,
   authorize("admin"),
-  validateBody(createEventSchema),
+  validateBody(updateEventSchema),
   eventController.updateEvent
   // Cache invalidation now handled inside controller
 );

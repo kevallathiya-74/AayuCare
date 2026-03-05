@@ -93,7 +93,8 @@ class PrescriptionRepository {
     }
 
     if (pharmacyStatus) {
-      query.pharmacyStatus = pharmacyStatus;
+      // Explicit String cast prevents MongoDB operator injection (e.g. { $ne: null })
+      query.pharmacyStatus = String(pharmacyStatus);
     }
 
     if (startDate || endDate) {
@@ -135,7 +136,8 @@ class PrescriptionRepository {
     const query = {};
 
     if (pharmacyStatus) {
-      query.pharmacyStatus = pharmacyStatus;
+      // Explicit String cast prevents MongoDB operator injection
+      query.pharmacyStatus = String(pharmacyStatus);
     }
 
     if (startDate || endDate) {
@@ -169,7 +171,8 @@ class PrescriptionRepository {
     const query = { hospitalId };
 
     if (pharmacyStatus) {
-      query.pharmacyStatus = pharmacyStatus;
+      // Explicit String cast prevents MongoDB operator injection
+      query.pharmacyStatus = String(pharmacyStatus);
     }
 
     if (startDate || endDate) {
@@ -192,7 +195,8 @@ class PrescriptionRepository {
    * @returns {Promise<Object>} Updated prescription
    */
   async update(id, updates) {
-    return await Prescription.findByIdAndUpdate(id, updates, {
+    // Wrap in $set to prevent MongoDB operator injection from user-controlled updates
+    return await Prescription.findByIdAndUpdate(id, { $set: updates }, {
       new: true,
       runValidators: true,
     }).lean();

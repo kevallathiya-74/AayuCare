@@ -12,6 +12,7 @@ This is a **production-grade healthcare application**.
 Any violation is considered a **critical defect**.
 
 -must follow online documention for formate, package for frontend, backend, database
+- never use placeholder always you connect real data if placeholder show so remove and end to end connect real data 
 
 ---
 

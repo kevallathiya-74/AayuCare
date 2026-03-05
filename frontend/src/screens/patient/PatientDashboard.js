@@ -125,7 +125,7 @@ const PatientDashboard = ({ navigation }) => {
 
   const getLastUpdateTime = () => {
     if (!healthMetrics.length) return "No data";
-    const latest = healthMetrics.sort(
+    const latest = [...healthMetrics].sort(
       (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
     )[0];
     const date = new Date(latest.timestamp);
@@ -184,7 +184,7 @@ const PatientDashboard = ({ navigation }) => {
     {
       title: "QUICK ACCESS",
       items: [
-        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("PatientTabs", { screen: "PatientDashboard" }) },
+        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("PatientTabs", { screen: "Dashboard" }) },
         { icon: "calendar", iconColor: healthColors.primary.main, label: "Book Appointment", onPress: nav("AppointmentBooking") },
         { icon: "folder-open", iconColor: healthColors.accent.aqua, label: "Medical Records", onPress: nav("MedicalRecords") },
         { icon: "medical", iconColor: healthColors.success.main, label: "My Prescriptions", onPress: nav("MyPrescriptions") },

@@ -25,7 +25,7 @@ import { theme, healthColors } from "../../theme";
 import { getScreenPadding, verticalScale } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, EmptyState, ErrorRecovery } from "../../components/common";
 
 const DoctorPatientsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -223,9 +223,10 @@ const DoctorPatientsScreen = ({ navigation }) => {
         <FlatList
           data={patients}
           renderItem={renderPatientCard}
-          keyExtractor={(item) => String(item.id || item._id || item.userId || Math.random())}
+          keyExtractor={(item, index) => String(item.id || item._id || item.userId || item.patientId || `patient-${index}`)}
           contentContainerStyle={[
             styles.listContent,
+            patients.length === 0 && { flexGrow: 1 },
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           refreshControl={
@@ -236,33 +237,27 @@ const DoctorPatientsScreen = ({ navigation }) => {
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              {error ? (
-                <>
-                  <Ionicons
-                    name="alert-circle-outline"
-                    size={64}
-                    color={healthColors.error.main}
-                  />
-                  <Text style={styles.emptyTitle}>Error</Text>
-                  <Text style={styles.emptyText}>{error}</Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons
-                    name="people-outline"
-                    size={64}
-                    color={healthColors.text.disabled}
-                  />
-                  <Text style={styles.emptyTitle}>No Patients Found</Text>
-                  <Text style={styles.emptyText}>
-                    {searchQuery
-                      ? `No results for "${searchQuery}"`
-                      : "Patients who have visited you will appear here"}
-                  </Text>
-                </>
-              )}
-            </View>
+            error ? (
+              <EmptyState
+                icon="alert-circle-outline"
+                title="Unable to Load Patients"
+                message={error}
+                actionLabel="Try Again"
+                onActionPress={handleRefresh}
+              />
+            ) : (
+              <EmptyState
+                icon={searchQuery ? "search-outline" : "people-outline"}
+                title={searchQuery ? "No Results Found" : "No Patients Yet"}
+                message={
+                  searchQuery
+                    ? `No patients match "${searchQuery}". Try a different name or phone number.`
+                    : "Patients who have consulted you will appear here. Register a walk-in patient to get started."
+                }
+                actionLabel={searchQuery ? undefined : "Register Walk-In"}
+                onActionPress={searchQuery ? undefined : () => navigation.navigate("WalkInPatient")}
+              />
+            )
           }
         />
       )}
@@ -416,26 +411,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: theme.typography.sizes.body,
     color: healthColors.text.secondary,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: verticalScale(80),
-    paddingHorizontal: 24,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: 16,
-  },
-  emptyText: {
-    fontSize: theme.typography.sizes.body,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    marginTop: 8,
-    lineHeight: 22,
   },
 });
 

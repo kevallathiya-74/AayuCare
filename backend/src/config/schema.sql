@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS patients (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     date_of_birth DATE,
     gender VARCHAR(20) CHECK (gender IN ('male', 'female', 'other')),
-    blood_group VARCHAR(10),
+    blood_group VARCHAR(10) CHECK (blood_group IN ('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')),
     address TEXT,
     emergency_contact_name VARCHAR(255),
     emergency_contact_phone VARCHAR(20),

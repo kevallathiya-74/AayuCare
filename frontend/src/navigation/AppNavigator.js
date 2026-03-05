@@ -330,6 +330,10 @@ const AppNavigator = () => {
                   }}
                 />
                 <Stack.Screen
+                  name="NotificationsScreen"
+                  component={NotificationsScreen}
+                />
+                <Stack.Screen
                   name="SettingsAccessibility"
                   component={SettingsAccessibilityScreen}
                 />

@@ -106,6 +106,21 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
     try {
       setSaving(true);
 
+      // Validate notes length
+      if (notes.length > 500) {
+        Alert.alert("Validation Error", "Notes must be 500 characters or fewer");
+        setSaving(false);
+        return;
+      }
+
+      // Helper: convert HH:MM to minutes for correct numeric comparison
+      const toMinutes = (t) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+      };
+      // Regex to validate HH:MM 24-hour format
+      const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
       // Validate time slots
       for (const slot of editingTimeSlots) {
         if (!slot.startTime || !slot.endTime) {
@@ -116,7 +131,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           setSaving(false);
           return;
         }
-        if (slot.startTime >= slot.endTime) {
+        if (!HHMM.test(slot.startTime) || !HHMM.test(slot.endTime)) {
+          Alert.alert("Validation Error", "Time slots must be in HH:MM format (e.g. 09:00)");
+          setSaving(false);
+          return;
+        }
+        if (toMinutes(slot.startTime) >= toMinutes(slot.endTime)) {
           Alert.alert("Validation Error", "Start time must be before end time");
           setSaving(false);
           return;

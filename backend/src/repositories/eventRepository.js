@@ -148,7 +148,8 @@ class EventRepository {
    * @returns {Promise<Object|null>} Updated event or null
    */
   async update(id, updateData) {
-    return await Event.findByIdAndUpdate(id, updateData, {
+    // Wrap in $set to prevent MongoDB operator injection from user-controlled updateData
+    return await Event.findByIdAndUpdate(id, { $set: updateData }, {
       new: true,
       runValidators: true,
     }).lean();

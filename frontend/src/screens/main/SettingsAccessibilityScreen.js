@@ -3,7 +3,7 @@
  * App settings with language, voice, notifications, and privacy
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Switch,
   StatusBar,
   Alert,
+  Linking,
 } from "react-native";
 import {
   SafeAreaView,
@@ -24,9 +25,15 @@ import {
   verticalScale,
   getScreenPadding,
 } from "../../utils/responsive";
+import { getItem, setItem } from "../../utils/appStorage";
+import { logError } from "../../utils/errorHandler";
+
+const ACCESSIBILITY_SETTINGS_KEY = "aayucare_accessibility_settings";
+const FONT_SIZE_KEY = "aayucare_font_size";
 
 const SettingsAccessibilityScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const [fontSize, setFontSize] = useState("Medium");
 
   const [settings, setSettings] = useState({
     voiceCommands: true,
@@ -42,11 +49,76 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
     darkMode: false,
   });
 
-  const toggleSetting = (key) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  // Load persisted settings on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const [storedSettings, storedFontSize] = await Promise.all([
+          getItem(ACCESSIBILITY_SETTINGS_KEY),
+          getItem(FONT_SIZE_KEY),
+        ]);
+        if (storedSettings) {
+          const parsed = JSON.parse(storedSettings);
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        }
+        if (storedFontSize) setFontSize(storedFontSize);
+      } catch (err) {
+        logError(err, "SettingsAccessibilityScreen.loadSettings");
+      }
+    })();
+  }, []);
+
+  const openURL = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) await Linking.openURL(url);
+      else Alert.alert("Cannot Open", "Unable to open this link on your device.");
+    } catch (err) {
+      logError(err, "SettingsAccessibilityScreen.openURL");
+    }
+  };
+
+  const handleFontSize = () => {
+    Alert.alert(
+      "Font Size",
+      `Current size: ${fontSize}`,
+      [
+        {
+          text: "Small",
+          onPress: async () => {
+            setFontSize("Small");
+            await setItem(FONT_SIZE_KEY, "Small");
+          },
+        },
+        {
+          text: "Medium",
+          onPress: async () => {
+            setFontSize("Medium");
+            await setItem(FONT_SIZE_KEY, "Medium");
+          },
+        },
+        {
+          text: "Large",
+          onPress: async () => {
+            setFontSize("Large");
+            await setItem(FONT_SIZE_KEY, "Large");
+          },
+        },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  };
+
+  const toggleSetting = async (key) => {
+    const updated = { ...settings, [key]: !settings[key] };
+    setSettings(updated);
+    try {
+      await setItem(ACCESSIBILITY_SETTINGS_KEY, JSON.stringify(updated));
+    } catch (err) {
+      logError(err, `SettingsAccessibilityScreen.toggleSetting.${key}`);
+      // Revert on error
+      setSettings(settings);
+    }
   };
 
   const SettingRow = ({ icon, label, value, onToggle, iconColor }) => (
@@ -252,8 +324,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
           <View style={styles.card}>
             <ActionRow
               icon="text-outline"
-              label="Font Size: Large"
-              onPress={() => {}}
+              label={`Font Size: ${fontSize}`}
+              onPress={handleFontSize}
             />
             <SettingRow
               icon="contrast-outline"
@@ -317,7 +389,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>HELP & SUPPORT:</Text>
           </View>
           <View style={styles.card}>
-            <TouchableOpacity style={styles.supportItem} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.supportItem} activeOpacity={0.7} onPress={() => openURL("tel:18001234567")}>
               <Ionicons
                 name="call"
                 size={18}
@@ -325,7 +397,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               />
               <Text style={styles.supportText}>• Call: 1800-123-4567</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.supportItem} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.supportItem} activeOpacity={0.7} onPress={() => openURL("mailto:support@aayucare.com")}>
               <Ionicons
                 name="mail"
                 size={18}

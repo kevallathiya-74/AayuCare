@@ -3,13 +3,18 @@
  * Menstrual tracker, pregnancy care, mental wellness
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
+  Linking,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -26,51 +31,141 @@ import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicat
 import ErrorRecovery from "../../components/common/ErrorRecovery";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { getItem, setItem } from "../../utils/appStorage";
+
+const BABY_SIZES = [
+  "(too early)", "(too early)", "(too early)", "(too early)",
+  "🫘 Poppy seed", "🍎 Apple seed", "🫐 Blueberry", "🫐 Raspberry",
+  "🫘 Kidney bean", "🍇 Grape", "🍊 Kumquat", "🍋 Fig",
+  "🍋 Lime", "🫑 Lemon", "🍋 Peach", "🍎 Apple",
+  "🥑 Avocado", "🥦 Turnip", "🥔 Sweet potato", "🥭 Mango",
+  "🍌 Banana", "🌽 Corn", "🥕 Carrot", "🥭 Large mango",
+  "🌽 Ear of corn", "🥦 Cauliflower", "🥬 Lettuce head", "🥒 Cucumber",
+  "🍆 Eggplant", "🥦 Butternut squash", "🥥 Coconut", "🍍 Pineapple",
+  "🥬 Napa cabbage", "🥬 Large cabbage", "🥬 Honeydew melon", "🎃 Small pumpkin",
+  "🥬 Swiss chard bunch", "🥬 Winter melon", "🎃 Mini pumpkin", "🥬 Watermelon",
+];
+
+const getCycleInsight = (day, cycleDays) => {
+  if (day <= 5) return "Menstruation phase. Rest and stay hydrated.";
+  if (day <= Math.floor(cycleDays * 0.45)) return "Follicular phase. Energy rising — great for new activities!";
+  if (day === Math.floor(cycleDays * 0.5)) return "Ovulation day. You may feel more energetic and social.";
+  return "Luteal phase. Practice self-care and manage stress.";
+};
 
 const WomensHealthScreen = ({ navigation }) => {
-  const [loading, setLoading] = useState(false);
+  const [cycleSettings, setCycleSettings] = useState({ lastPeriodDate: null, cycleDays: 28 });
+  const [pregnancySettings, setPregnancySettings] = useState({ startDate: null, totalWeeks: 40 });
+  const [cycleModalVisible, setCycleModalVisible] = useState(false);
+  const [editLastPeriod, setEditLastPeriod] = useState("");
+  const [editCycleDays, setEditCycleDays] = useState("28");
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
 
-  const menstrualData = {
-    currentDay: 12,
-    cycleDays: 28,
-    nextPeriod: 5,
-    insight: "Your energy is high today! Good day for exercise.",
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const cycleRaw = await getItem("womens_health_cycle");
+        if (cycleRaw) setCycleSettings(JSON.parse(cycleRaw));
+        const pregRaw = await getItem("womens_health_pregnancy");
+        if (pregRaw) setPregnancySettings(JSON.parse(pregRaw));
+      } catch (e) {
+        logError(e, { context: "WomensHealthScreen.loadData" });
+      }
+    };
+    loadData();
+  }, []);
+
+  const menstrualData = useMemo(() => {
+    const today = new Date();
+    const last = cycleSettings.lastPeriodDate ? new Date(cycleSettings.lastPeriodDate) : null;
+    const daysSince = last ? Math.floor((today - last) / 86400000) : 11;
+    const cycleDays = cycleSettings.cycleDays || 28;
+    const currentDay = (daysSince % cycleDays) + 1;
+    const nextPeriod = cycleDays - currentDay;
+    return {
+      currentDay,
+      cycleDays,
+      nextPeriod: nextPeriod < 0 ? 0 : nextPeriod,
+      insight: getCycleInsight(currentDay, cycleDays),
+    };
+  }, [cycleSettings]);
+
+  const pregnancyData = useMemo(() => {
+    const today = new Date();
+    const start = pregnancySettings.startDate ? new Date(pregnancySettings.startDate) : null;
+    const week = start ? Math.min(Math.floor((today - start) / (86400000 * 7)), 40) : 24;
+    const totalWeeks = pregnancySettings.totalWeeks || 40;
+    const weeksLeft = totalWeeks - week;
+    const dueDate = start
+      ? new Date(start.getTime() + totalWeeks * 7 * 86400000)
+      : null;
+    const dueDateStr = dueDate
+      ? dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+      : "Not set";
+    return {
+      week,
+      totalWeeks,
+      babySize: BABY_SIZES[Math.min(week, BABY_SIZES.length - 1)] || "🥭 Mango",
+      tips: ["Prenatal vitamin intake", "Gentle yoga exercises", "Stay well hydrated"],
+      nextCheckup: weeksLeft <= 4 ? "Weekly checkups" : dueDateStr,
+    };
+  }, [pregnancySettings]);
+
+  const openCycleModal = () => {
+    const lastStr = cycleSettings.lastPeriodDate
+      ? new Date(cycleSettings.lastPeriodDate).toISOString().split("T")[0]
+      : "";
+    setEditLastPeriod(lastStr);
+    setEditCycleDays(String(cycleSettings.cycleDays || 28));
+    setCycleModalVisible(true);
   };
 
-  const pregnancyData = {
-    week: 24,
-    totalWeeks: 40,
-    babySize: "🥭 Mango",
-    tips: [
-      "Prenatal vitamin intake",
-      "Gentle yoga exercises",
-      "Hydration is key",
-    ],
-    nextCheckup: "20 Dec",
+  const saveCycleData = async () => {
+    const lastDate = new Date(editLastPeriod);
+    if (!editLastPeriod || isNaN(lastDate.getTime())) {
+      Alert.alert("Invalid Date", "Please enter a valid date in YYYY-MM-DD format.");
+      return;
+    }
+    const days = parseInt(editCycleDays, 10);
+    if (isNaN(days) || days < 20 || days > 45) {
+      Alert.alert("Invalid Cycle", "Cycle length must be between 20 and 45 days.");
+      return;
+    }
+    try {
+      const data = { lastPeriodDate: lastDate.toISOString(), cycleDays: days };
+      await setItem("womens_health_cycle", JSON.stringify(data));
+      setCycleSettings(data);
+      setCycleModalVisible(false);
+    } catch (e) {
+      logError(e, { context: "WomensHealthScreen.saveCycleData" });
+      showError("Failed to save cycle data");
+    }
+  };
+
+  const handleWellnessActivity = (activity) => {
+    if (activity.name === "Counseling Support") {
+      Linking.openURL("tel:1091").catch(() =>
+        Alert.alert("Helpline", "Women's Helpline: 1091")
+      );
+    } else if (activity.name === "Breathing Exercises") {
+      Alert.alert(
+        "Breathing Exercise",
+        "Breathe in for 4 seconds → Hold for 4 seconds → Breathe out for 6 seconds.\n\nRepeat 5 times for best results."
+      );
+    } else if (activity.name === "Guided Meditation") {
+      Alert.alert(
+        "Guided Meditation",
+        "Find a quiet space, close your eyes, and focus on your breath.\n\nSuggested apps: Calm, Headspace, or Insight Timer."
+      );
+    }
   };
 
   const mentalWellnessActivities = [
-    {
-      icon: "fitness",
-      name: "Breathing Exercises",
-      duration: "5 min",
-      color: theme.colors.success.main,
-    },
-    {
-      icon: "musical-notes",
-      name: "Guided Meditation",
-      duration: "10 min",
-      color: theme.colors.healthcare.purple,
-    },
-    {
-      icon: "call",
-      name: "Counseling Support",
-      action: "Call Now",
-      color: theme.colors.error.main,
-    },
+    { icon: "fitness", name: "Breathing Exercises", duration: "5 min", color: theme.colors.success.main },
+    { icon: "musical-notes", name: "Guided Meditation", duration: "10 min", color: theme.colors.healthcare.purple },
+    { icon: "call", name: "Counseling Support", action: "Call Now", color: theme.colors.error.main },
   ];
 
   const handleRetry = () => {
@@ -112,7 +207,7 @@ const WomensHealthScreen = ({ navigation }) => {
             </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity onPress={openCycleModal}>
           <Ionicons name="calendar" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
@@ -159,7 +254,7 @@ const WomensHealthScreen = ({ navigation }) => {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.calendarButton}>
+            <TouchableOpacity style={styles.calendarButton} onPress={openCycleModal}>
               <Ionicons name="stats-chart-outline" size={18} color={theme.colors.healthcare.pink} />
               <Text style={styles.calendarButtonText}>View Full Calendar</Text>
               <Ionicons name="chevron-forward" size={16} color={theme.colors.healthcare.pink} />
@@ -196,7 +291,7 @@ const WomensHealthScreen = ({ navigation }) => {
                   size={18}
                   color={healthColors.text.secondary}
                 />
-                <Text style={styles.babySize}>Baby Size: Mango</Text>
+                <Text style={styles.babySize}>Baby Size: {pregnancyData.babySize}</Text>
               </View>
             </View>
 
@@ -228,7 +323,15 @@ const WomensHealthScreen = ({ navigation }) => {
                   Next Checkup: {pregnancyData.nextCheckup}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.scheduleButton}>
+              <TouchableOpacity
+                style={styles.scheduleButton}
+                onPress={() =>
+                  Alert.alert(
+                    "Immunization Schedule",
+                    "Recommended vaccines during pregnancy:\n\n• Tdap (28-36 weeks)\n• Flu vaccine (any trimester)\n• COVID-19 booster (safe anytime)\n\nConsult your OB-GYN for a personalised schedule."
+                  )
+                }
+              >
                 <Ionicons name="medical-outline" size={18} color={theme.colors.healthcare.pink} />
                 <Text style={styles.scheduleButtonText}>
                   Immunization Schedule
@@ -251,7 +354,11 @@ const WomensHealthScreen = ({ navigation }) => {
           </View>
           <View style={styles.card}>
             {mentalWellnessActivities.map((activity, index) => (
-              <TouchableOpacity key={index} style={styles.activityItem}>
+              <TouchableOpacity
+                key={index}
+                style={styles.activityItem}
+                onPress={() => handleWellnessActivity(activity)}
+              >
                 <View
                   style={[
                     styles.activityIcon,
@@ -292,7 +399,14 @@ const WomensHealthScreen = ({ navigation }) => {
         </View>
 
         {/* Emergency Contact */}
-        <TouchableOpacity style={styles.emergencyButton}>
+        <TouchableOpacity
+          style={styles.emergencyButton}
+          onPress={() =>
+            Linking.openURL("tel:1091").catch(() =>
+              Alert.alert("Women's Helpline", "Call 1091 for support.")
+            )
+          }
+        >
           <LinearGradient
             colors={[theme.colors.error.main, theme.colors.error.dark]}
             style={styles.emergencyGradient}
@@ -304,6 +418,53 @@ const WomensHealthScreen = ({ navigation }) => {
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Cycle Settings Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={cycleModalVisible}
+        onRequestClose={() => setCycleModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Menstrual Cycle Settings</Text>
+              <TouchableOpacity onPress={() => setCycleModalVisible(false)}>
+                <Ionicons name="close-circle" size={28} color="#888" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Last Period Start Date (YYYY-MM-DD)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. 2025-07-01"
+                value={editLastPeriod}
+                onChangeText={setEditLastPeriod}
+                keyboardType="numbers-and-punctuation"
+                maxLength={10}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Cycle Length (days, 20–45)</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="28"
+                value={editCycleDays}
+                onChangeText={setEditCycleDays}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+
+            <TouchableOpacity style={styles.saveButton} onPress={saveCycleData}>
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -551,6 +712,59 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   emergencyText: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.white,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing.xxxxl,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: theme.spacing.xl,
+  },
+  modalTitle: {
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  inputGroup: {
+    marginBottom: theme.spacing.lg,
+  },
+  inputLabel: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.secondary,
+    marginBottom: theme.spacing.xs,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    backgroundColor: healthColors.background.primary,
+  },
+  saveButton: {
+    backgroundColor: theme.colors.healthcare.pink,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
+    marginTop: theme.spacing.sm,
+  },
+  saveButtonText: {
     fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,

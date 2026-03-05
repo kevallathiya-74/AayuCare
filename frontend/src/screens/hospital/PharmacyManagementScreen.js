@@ -18,10 +18,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
-import apiClient from "../../services/apiClient";
+import prescriptionService from "../../services/prescription.service";
 import { formatDate } from "../../utils/helpers";
 import { logError } from "../../utils/errorHandler";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, EmptyState } from "../../components/common";
 
 const FILTERS = ["all", "pending", "preparing", "ready", "dispensed"];
 
@@ -148,22 +148,6 @@ const OrderCard = ({ order }) => {
   );
 };
 
-const EmptyState = ({ onViewAll }) => {
-  return (
-    <View style={styles.emptyStateWrap}>
-      <View style={styles.emptyIconWrap}>
-        <Ionicons name="medkit-outline" size={theme.iconSizes.lg} color={healthColors.text.tertiary} />
-      </View>
-      <Text style={styles.emptyTitle}>No Pending Orders</Text>
-      <Text style={styles.emptySubtitle}>
-        Prescriptions will appear here once created by doctors.
-      </Text>
-      <TouchableOpacity onPress={onViewAll} style={styles.emptyActionBtn} activeOpacity={0.85}>
-        <Text style={styles.emptyActionText}>View All Orders</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 const PharmacyManagementScreen = ({ navigation }) => {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -176,8 +160,8 @@ const PharmacyManagementScreen = ({ navigation }) => {
   const fetchPrescriptions = useCallback(async () => {
     try {
       setError(null);
-      const response = await apiClient.get("/prescriptions");
-      const data = response.data?.prescriptions || response.data || [];
+      const response = await prescriptionService.getAllPrescriptions();
+      const data = response?.prescriptions || response?.data || response || [];
       setPrescriptions(Array.isArray(data) ? data : []);
     } catch (err) {
       logError(err, { context: "PharmacyManagementScreen.fetchPrescriptions" });
@@ -347,7 +331,19 @@ const PharmacyManagementScreen = ({ navigation }) => {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
         }
-        ListEmptyComponent={<EmptyState onViewAll={() => setSelectedFilter("all")} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon="medkit-outline"
+            title={selectedFilter === "all" ? "No Orders Found" : `No ${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Orders`}
+            message={
+              selectedFilter === "all"
+                ? "Prescriptions will appear here once created by doctors."
+                : "No orders match this filter. Try viewing all orders."
+            }
+            actionLabel={selectedFilter !== "all" ? "View All Orders" : undefined}
+            onActionPress={selectedFilter !== "all" ? () => setSelectedFilter("all") : undefined}
+          />
+        }
       />
     </SafeAreaView>
   );
@@ -529,51 +525,6 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: theme.typography.fontSizes.caption,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
-  },
-
-  emptyStateWrap: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xl,
-  },
-  emptyIconWrap: {
-    width: theme.spacing.xxxl,
-    height: theme.spacing.xxxl,
-    borderRadius: theme.spacing.xxxl,
-    backgroundColor: healthColors.background.secondary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: theme.spacing.sm + theme.spacing.xs,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.fontSizes.h6,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    marginTop: theme.spacing.xs,
-    fontSize: theme.typography.fontSizes.bodyMedium,
-    fontWeight: theme.typography.weights.regular,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    lineHeight: theme.typography.fontSizes.bodyMedium * 1.35,
-  },
-  emptyActionBtn: {
-    marginTop: theme.spacing.md,
-    minHeight: theme.touchTargets.min,
-    borderRadius: theme.borderRadius.button,
-    paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyActionText: {
-    fontSize: theme.typography.fontSizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
     color: theme.colors.text.white,
   },
 

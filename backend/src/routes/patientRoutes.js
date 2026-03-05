@@ -8,12 +8,13 @@ const router = express.Router();
 const patientController = require("../controllers/patientController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
-const { validateBody } = require("../middleware/validation");
+const { validateBody, validateParams } = require("../middleware/validation");
 const {
   updatePatientProfileSchema,
   addHealthMetricSchema,
   updateHealthMetricSchema,
   activityUpdateSchema,
+  getMetricTypeParamsSchema,
 } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
@@ -77,6 +78,7 @@ router.get(
 router.get(
   "/:patientId/health-metrics/latest/:type",
   authorize("patient", "doctor", "admin"),
+  validateParams(getMetricTypeParamsSchema),
   patientController.getLatestHealthMetric
 );
 

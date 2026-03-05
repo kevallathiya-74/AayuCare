@@ -408,8 +408,8 @@ const createEventSchema = Joi.object({
     .required(),
   hospitalId: Joi.string().uppercase().max(50).optional(),
   date: Joi.date().required(),
-  startTime: Joi.string().required(),
-  endTime: Joi.string().required(),
+  startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'startTime must be in HH:MM 24-hour format (e.g. 09:00)' }),
+  endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'endTime must be in HH:MM 24-hour format (e.g. 17:00)' }),
   // model uses 'venue', not 'location'
   venue: Joi.string().max(500).required(),
   availableSpots: Joi.number().integer().min(0).optional(),
@@ -430,8 +430,8 @@ const updateEventSchema = Joi.object({
     .valid('blood-donation', 'screening', 'vaccination', 'workshop', 'health-camp', 'awareness', 'other')
     .optional(),
   date: Joi.date().optional(),
-  startTime: Joi.string().optional(),
-  endTime: Joi.string().optional(),
+  startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).optional().messages({ 'string.pattern.base': 'startTime must be in HH:MM 24-hour format' }),
+  endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).optional().messages({ 'string.pattern.base': 'endTime must be in HH:MM 24-hour format' }),
   venue: Joi.string().max(500).optional(),
   availableSpots: Joi.number().integer().min(0).optional(),
   requirements: Joi.array().items(Joi.string()).optional(),
@@ -513,7 +513,7 @@ const updateHealthMetricSchema = Joi.object({
     .optional(),
   notes: Joi.string().max(500).optional().allow(""),
   timestamp: Joi.date().optional(),
-});
+}).min(1);
 
 const activityUpdateSchema = Joi.object({
   type: Joi.string()
@@ -532,20 +532,63 @@ const scheduleUpdateSchema = Joi.object({
   timeSlots: Joi.array()
     .items(
       Joi.object({
-        startTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
-        endTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
+        startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'startTime must be in HH:MM format' }),
+        endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'endTime must be in HH:MM format' }),
         maxPatients: Joi.number().integer().min(1).optional(),
         consultationDuration: Joi.number().integer().min(5).max(120).optional(),
+        isAvailable: Joi.boolean().optional(),
       })
     )
     .optional(),
   breakTime: Joi.object({
-    start: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
-    end: Joi.string().pattern(/^\d{2}:\d{2}$/).required(),
+    startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'Break startTime must be in HH:MM format' }),
+    endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'Break endTime must be in HH:MM format' }),
   })
     .optional()
     .allow(null),
   notes: Joi.string().max(500).optional().allow(""),
+}).min(1);
+
+// Prescription status update validation
+const updatePrescriptionStatusSchema = Joi.object({
+  status: Joi.string()
+    .valid('pending', 'sent_to_pharmacy', 'preparing', 'ready', 'dispensed', 'cancelled')
+    .required()
+    .messages({ 'any.only': 'Invalid prescription status' }),
+  notes: Joi.string().max(500).optional().allow(''),
+});
+
+// Pharmacy status update validation
+const updatePrescriptionPharmacySchema = Joi.object({
+  pharmacyStatus: Joi.string()
+    .valid('pending', 'processing', 'ready', 'dispensed', 'cancelled')
+    .optional(),
+  pharmacyId: Joi.string().max(100).optional(),
+  dispensedAt: Joi.date().optional(),
+  pharmacyNotes: Joi.string().max(500).optional().allow(''),
+}).min(1);
+
+// Admin: update user active/inactive status
+const updateUserStatusSchema = Joi.object({
+  isActive: Joi.boolean().required()
+    .messages({ 'any.required': 'isActive (boolean) is required' }),
+  reason: Joi.string().max(500).optional().allow(''),
+});
+
+// Params schema: validate :type in /patients/:id/health-metrics/latest/:type
+const getMetricTypeParamsSchema = Joi.object({
+  type: Joi.string()
+    .valid('bp', 'sugar', 'weight', 'bmi', 'temperature', 'steps', 'sleep', 'water', 'exercise', 'stress', 'heart-rate', 'oxygen')
+    .required()
+    .messages({ 'any.only': 'Invalid metric type. Allowed: bp, sugar, weight, bmi, temperature, steps, sleep, water, exercise, stress, heart-rate, oxygen' }),
+});
+
+// Schedule day-of-week param validation (used for PUT /me/schedule/:dayOfWeek and PATCH toggle)
+const scheduleParamsSchema = Joi.object({
+  dayOfWeek: Joi.string()
+    .valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')
+    .required()
+    .messages({ 'any.only': 'dayOfWeek must be a valid day name: monday, tuesday, wednesday, thursday, friday, saturday, sunday' }),
 });
 
 // ID validation helper
@@ -587,4 +630,9 @@ module.exports = {
       })
     ).min(1).max(100).required(),
   }),
+  updatePrescriptionStatusSchema,
+  updatePrescriptionPharmacySchema,
+  updateUserStatusSchema,
+  getMetricTypeParamsSchema,
+  scheduleParamsSchema,
 };

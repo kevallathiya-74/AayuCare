@@ -67,6 +67,54 @@ const eventService = {
             throw error;
         }
     },
+
+    // ── Admin routes ──────────────────────────────────────────────
+
+    /**
+     * Create a new event (admin only)
+     * @param {object} eventData - Event data (title, description, type, date, startTime, endTime, venue, etc.)
+     * @returns {Promise} - Created event
+     */
+    async createEvent(eventData) {
+        try {
+            const response = await api.post('/events', eventData);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'eventService.createEvent' });
+            throw error;
+        }
+    },
+
+    /**
+     * Update an event (admin only)
+     * @param {string} eventId - Event ID
+     * @param {object} eventData - Fields to update
+     * @returns {Promise} - Updated event
+     */
+    async updateEvent(eventId, eventData) {
+        try {
+            const response = await api.put(`/events/${eventId}`, eventData);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'eventService.updateEvent', eventId });
+            throw error;
+        }
+    },
+
+    /**
+     * Delete an event (admin only)
+     * @param {string} eventId - Event ID
+     * @returns {Promise} - Deletion confirmation
+     */
+    async deleteEvent(eventId) {
+        try {
+            const response = await api.delete(`/events/${eventId}`);
+            return response.data;
+        } catch (error) {
+            logError(error, { context: 'eventService.deleteEvent', eventId });
+            throw error;
+        }
+    },
 };
 
 export default eventService;

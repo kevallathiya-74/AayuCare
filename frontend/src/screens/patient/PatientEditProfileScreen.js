@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
+  Modal,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -26,6 +29,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
 
   const [saving, setSaving] = useState(false);
+  const [showDobPicker, setShowDobPicker] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
@@ -87,6 +91,12 @@ const PatientEditProfileScreen = ({ navigation }) => {
     }
 
     return true;
+  };
+
+  const handleDobChange = (event, date) => {
+    if (Platform.OS === "android") setShowDobPicker(false);
+    if (event.type === "dismissed") return;
+    if (date) handleChange("dateOfBirth", date.toISOString().split("T")[0]);
   };
 
   const handleSave = async () => {
@@ -185,26 +195,49 @@ const PatientEditProfileScreen = ({ navigation }) => {
             onChangeText={(v) => handleChange("address", v)}
             placeholder="Enter address"
           />
-          <Field
-            label="Blood Group"
-            value={form.bloodGroup}
-            onChangeText={(v) => handleChange("bloodGroup", v.toUpperCase())}
-            placeholder="A+, O+, AB-"
-          />
-          <Field
-            label="Gender"
-            value={form.gender}
-            onChangeText={(v) => handleChange("gender", v.toLowerCase())}
-            placeholder="male, female, other"
-            autoCapitalize="none"
-          />
-          <Field
-            label="Date of Birth"
-            value={form.dateOfBirth}
-            onChangeText={(v) => handleChange("dateOfBirth", v)}
-            placeholder="YYYY-MM-DD"
-            keyboardType="numbers-and-punctuation"
-          />
+          {/* Blood Group Selector */}
+          <View style={styles.pickerGroup}>
+            <Text style={styles.pickerLabel}>Blood Group</Text>
+            <View style={styles.chipRow}>
+              {BLOOD_GROUPS.map((bg) => (
+                <TouchableOpacity
+                  key={bg}
+                  style={[styles.chip, form.bloodGroup === bg && styles.chipActive]}
+                  onPress={() => handleChange("bloodGroup", bg)}
+                >
+                  <Text style={[styles.chipText, form.bloodGroup === bg && styles.chipTextActive]}>{bg}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Gender Selector */}
+          <View style={styles.pickerGroup}>
+            <Text style={styles.pickerLabel}>Gender</Text>
+            <View style={styles.chipRow}>
+              {GENDERS.map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.chip, form.gender === g && styles.chipActive]}
+                  onPress={() => handleChange("gender", g)}
+                >
+                  <Text style={[styles.chipText, form.gender === g && styles.chipTextActive]}>
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          {/* Date of Birth Picker */}
+          <View style={styles.pickerGroup}>
+            <Text style={styles.pickerLabel}>Date of Birth</Text>
+            <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowDobPicker(true)}>
+              <Ionicons name="calendar-outline" size={18} color={healthColors.text.secondary} />
+              <Text style={[styles.datePickerText, !form.dateOfBirth && styles.datePickerPlaceholder]}>
+                {form.dateOfBirth || "Select date of birth"}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={healthColors.text.tertiary} />
+            </TouchableOpacity>
+          </View>
           <Field
             label="Emergency Contact Name"
             value={form.emergencyContactName}
@@ -239,6 +272,49 @@ const PatientEditProfileScreen = ({ navigation }) => {
           Save Changes
         </Button>
       </ScrollView>
+
+      {/* Date of Birth Picker */}
+      {Platform.OS === "ios" ? (
+        <Modal
+          transparent
+          animationType="slide"
+          visible={showDobPicker}
+          onRequestClose={() => setShowDobPicker(false)}
+        >
+          <View style={styles.pickerModalOverlay}>
+            <View style={styles.pickerModalContent}>
+              <View style={styles.pickerModalHeader}>
+                <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                  <Text style={styles.pickerDone}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.pickerTitle}>Date of Birth</Text>
+                <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                  <Text style={styles.pickerDone}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={form.dateOfBirth ? new Date(form.dateOfBirth) : new Date(2000, 0, 1)}
+                mode="date"
+                display="spinner"
+                maximumDate={new Date()}
+                minimumDate={new Date(1900, 0, 1)}
+                onChange={handleDobChange}
+              />
+            </View>
+          </View>
+        </Modal>
+      ) : (
+        showDobPicker && (
+          <DateTimePicker
+            value={form.dateOfBirth ? new Date(form.dateOfBirth) : new Date(2000, 0, 1)}
+            mode="date"
+            display="default"
+            maximumDate={new Date()}
+            minimumDate={new Date(1900, 0, 1)}
+            onChange={handleDobChange}
+          />
+        )
+      )}
     </SafeAreaView>
   );
 };
@@ -312,6 +388,88 @@ const styles = StyleSheet.create({
   saveText: {
     ...textStyles.body,
     color: theme.colors.white,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  pickerGroup: {
+    marginBottom: spacing.md,
+  },
+  pickerLabel: {
+    ...textStyles.bodySmall,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.secondary,
+    marginBottom: spacing.xs,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    backgroundColor: healthColors.background.secondary,
+  },
+  chipActive: {
+    backgroundColor: healthColors.primary.main,
+    borderColor: healthColors.primary.main,
+  },
+  chipText: {
+    ...textStyles.bodySmall,
+    color: healthColors.text.secondary,
+  },
+  chipTextActive: {
+    color: theme.colors.white,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  datePickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    backgroundColor: healthColors.background.secondary,
+  },
+  datePickerText: {
+    flex: 1,
+    ...textStyles.bodyMedium,
+    color: healthColors.text.primary,
+  },
+  datePickerPlaceholder: {
+    color: healthColors.text.tertiary,
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+  },
+  pickerModalContent: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  pickerModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  pickerTitle: {
+    ...textStyles.bodyLarge,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  pickerDone: {
+    ...textStyles.bodyMedium,
+    color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semibold,
   },
 });

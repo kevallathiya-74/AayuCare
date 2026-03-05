@@ -31,6 +31,7 @@ router.post(
 // Get patient's medical records
 router.get(
   "/patient/:patientId",
+  authorize("patient", "doctor", "admin"),
   cacheMiddleware(120),
   medicalRecordController.getPatientMedicalRecords
 );

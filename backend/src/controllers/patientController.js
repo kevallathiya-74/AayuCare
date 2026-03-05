@@ -11,6 +11,7 @@ const medicalRecordRepository = require("../repositories/medicalRecordRepository
 const healthMetricRepository = require("../repositories/healthMetricRepository");
 const logger = require("../utils/logger");
 const { deleteCacheByPattern } = require("../config/redis");
+const { AppError } = require("../middleware/errorHandler");
 
 /**
  * Helper to check if the requesting user is the same as the target patient
@@ -59,7 +60,10 @@ exports.searchPatients = async (req, res, next) => {
     // Get hospitalId from request (set by hospitalMiddleware)
     const hospitalId = req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : "MAIN";
 
-    // Sanitize search query if provided
+    // Sanitize search query — enforce max length to prevent DB overload
+    if (q && q.length > 100) {
+      return next(new AppError("Search query must be 100 characters or fewer", 400));
+    }
     const searchTerm = q && q.trim().length >= 1 ? q.trim() : '';
 
     // Get patients with search from repository
@@ -97,7 +101,7 @@ exports.searchPatients = async (req, res, next) => {
  */
 exports.getCompleteHistory = async (req, res, next) => {
   try {
-    const { patientId } = req.params;
+    const patientId = String(req.params.patientId);
 
     // Check access rights - supports both _id and userId formats
     if (
@@ -218,7 +222,6 @@ exports.getCompleteHistory = async (req, res, next) => {
     logger.error("Complete history error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
     });
     next(error);
   }
@@ -231,7 +234,7 @@ exports.getCompleteHistory = async (req, res, next) => {
  */
 exports.getPatientProfile = async (req, res, next) => {
   try {
-    const { patientId } = req.params;
+    const patientId = String(req.params.patientId);
 
     // Check access rights - supports both _id and userId formats
     if (
@@ -306,7 +309,6 @@ exports.getPatientProfile = async (req, res, next) => {
     logger.error("Patient profile error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
     });
     next(error);
   }
@@ -437,7 +439,6 @@ exports.updatePatientProfile = async (req, res, next) => {
     logger.error("Patient profile update error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
     });
     next(error);
   }
@@ -450,7 +451,7 @@ exports.updatePatientProfile = async (req, res, next) => {
  */
 exports.getHealthMetrics = async (req, res, next) => {
   try {
-    const { patientId } = req.params;
+    const patientId = String(req.params.patientId);
 
     // Check access rights - supports both _id and userId formats
     if (
@@ -500,7 +501,6 @@ exports.getHealthMetrics = async (req, res, next) => {
     logger.error("Get health metrics error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
     });
     next(error);
   }
@@ -592,7 +592,7 @@ exports.addHealthMetric = async (req, res, next) => {
  */
 exports.getActivityData = async (req, res, next) => {
   try {
-    const { patientId } = req.params;
+    const patientId = String(req.params.patientId);
 
     // Check access rights - supports both _id and userId formats
     if (
@@ -615,7 +615,14 @@ exports.getActivityData = async (req, res, next) => {
       activityPatient = await userRepository.findByUserId(patientId);
     }
 
-    const patientObjectId = activityPatient ? activityPatient.id : patientId;
+    // Must resolve to a real patient — never fall back to raw URL param as DB key
+    if (!activityPatient || activityPatient.role !== 'patient') {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient not found',
+      });
+    }
+    const patientObjectId = activityPatient.id;
     const activityTypes = ["steps", "sleep", "water", "exercise", "stress"];
 
     // Get latest activity metrics
@@ -734,7 +741,8 @@ exports.updateActivityData = async (req, res, next) => {
  */
 exports.getLatestHealthMetric = async (req, res, next) => {
   try {
-    const { patientId, type } = req.params;
+    const patientId = String(req.params.patientId);
+    const type = String(req.params.type);
 
     // Check access rights - supports both _id and userId formats
     if (
@@ -757,8 +765,16 @@ exports.getLatestHealthMetric = async (req, res, next) => {
       latestPatient = await userRepository.findByUserId(patientId);
     }
 
-    const latestPatientId = latestPatient ? latestPatient.id : patientId;
-    const metricsQuery = { patient: latestPatientId, type };
+    // Must resolve to a real patient — never fall back to raw URL param as DB key
+    if (!latestPatient || latestPatient.role !== 'patient') {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient not found',
+      });
+    }
+    const latestPatientId = latestPatient.id;
+    // Explicit String cast on type prevents MongoDB operator injection
+    const metricsQuery = { patient: latestPatientId, type: String(type) };
     if (req.hospitalId && req.user.role !== "super_admin") {
       metricsQuery.hospitalId = req.hospitalId;
     }
@@ -785,8 +801,6 @@ exports.getLatestHealthMetric = async (req, res, next) => {
     logger.error("Get latest health metric error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
-      type: req.params.type,
     });
     next(error);
   }

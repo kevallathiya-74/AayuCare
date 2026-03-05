@@ -24,7 +24,7 @@ import {
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
-import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { activityService } from "../../services";
@@ -178,7 +178,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
             </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity onPress={() => navigation.navigate("MyReports")}>
           <Ionicons name="bar-chart" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
@@ -306,7 +306,14 @@ const ActivityTrackerScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>STRESS RELIEF:</Text>
           <View style={styles.card}>
-            {stressActivities.map((activity, index) => (
+            {stressActivities.length === 0 ? (
+              <EmptyState
+                icon="fitness-outline"
+                title="No Activities Today"
+                message="No exercise logged yet today. Try a short walk or a stretching session."
+                style={{ paddingVertical: 16 }}
+              />
+            ) : stressActivities.map((activity, index) => (
               <TouchableOpacity key={index} style={styles.activityItem}>
                 <View
                   style={[

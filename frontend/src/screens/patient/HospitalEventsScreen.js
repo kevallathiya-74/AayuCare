@@ -28,11 +28,12 @@ import { showError, logError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { eventService } from "../../services";
 import { convertTo12Hour } from "../../utils/helpers";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, EmptyState } from "../../components/common";
 
 const HospitalEventsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [registeringId, setRegisteringId] = useState(null);
+  const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
@@ -94,6 +95,7 @@ const HospitalEventsScreen = ({ navigation }) => {
               try {
                 setRegisteringId(event._id);
                 await eventService.registerForEvent(event._id);
+                setRegisteredEventIds((prev) => new Set([...prev, event._id]));
                 Alert.alert(
                   "Success",
                   `Successfully registered for "${event.title}"!`
@@ -107,6 +109,42 @@ const HospitalEventsScreen = ({ navigation }) => {
                   eventId: event._id,
                 });
                 Alert.alert("Error", errorMsg);
+              } finally {
+                setRegisteringId(null);
+              }
+            },
+          },
+        ]
+      );
+    },
+    [fetchEvents]
+  );
+
+  const handleCancelRegistration = useCallback(
+    async (event) => {
+      Alert.alert(
+        "Cancel Registration",
+        `Are you sure you want to cancel your registration for "${event.title}"?`,
+        [
+          { text: "Keep Registration", style: "cancel" },
+          {
+            text: "Cancel Registration",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                setRegisteringId(event._id);
+                await eventService.cancelRegistration(event._id);
+                setRegisteredEventIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(event._id);
+                  return next;
+                });
+                Alert.alert("Done", `Registration cancelled for "${event.title}".`);
+                await fetchEvents();
+              } catch (err) {
+                const msg = err.response?.data?.message || "Failed to cancel registration";
+                logError(err, { context: "HospitalEventsScreen.handleCancelRegistration", eventId: event._id });
+                Alert.alert("Error", msg);
               } finally {
                 setRegisteringId(null);
               }
@@ -254,32 +292,51 @@ const HospitalEventsScreen = ({ navigation }) => {
             <Text style={styles.detailsButtonText}>Details</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.registerButton,
-              spotsRemaining <= 0 && styles.registerButtonDisabled,
-            ]}
-            onPress={() => handleRegister(event)}
-            disabled={registeringId === event._id || spotsRemaining <= 0}
-          >
-            <LinearGradient
-              colors={
-                spotsRemaining > 0
-                  ? [eventColor, eventColor + "DD"]
-                  : [healthColors.text.disabled, healthColors.text.disabled]
-              }
-              style={styles.registerGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+          {registeredEventIds.has(event._id) ? (
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => handleCancelRegistration(event)}
+              disabled={registeringId === event._id}
             >
-              <Text style={styles.registerButtonText}>
-                {spotsRemaining > 0 ? "Register" : "Full"}
-              </Text>
-              {spotsRemaining > 0 && (
-                <Ionicons name="arrow-forward" size={16} color={theme.colors.white} />
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={[healthColors.error.main, healthColors.error.dark ?? healthColors.error.main + "DD"]}
+                style={styles.registerGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.registerButtonText}>
+                  {registeringId === event._id ? "Cancelling..." : "Cancel Registration"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.registerButton,
+                spotsRemaining <= 0 && styles.registerButtonDisabled,
+              ]}
+              onPress={() => handleRegister(event)}
+              disabled={registeringId === event._id || spotsRemaining <= 0}
+            >
+              <LinearGradient
+                colors={
+                  spotsRemaining > 0
+                    ? [eventColor, eventColor + "DD"]
+                    : [healthColors.text.disabled, healthColors.text.disabled]
+                }
+                style={styles.registerGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.registerButtonText}>
+                  {spotsRemaining > 0 ? "Register" : "Full"}
+                </Text>
+                {spotsRemaining > 0 && (
+                  <Ionicons name="arrow-forward" size={16} color={theme.colors.white} />
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
@@ -318,27 +375,17 @@ const HospitalEventsScreen = ({ navigation }) => {
   );
 
   const renderEmpty = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="calendar-outline"
-        size={80}
-        color={healthColors.text.disabled}
-      />
-      <Text style={styles.emptyTitle}>No Events Found</Text>
-      <Text style={styles.emptyText}>
-        {filter === "all"
-          ? "No events available at the moment."
-          : `No ${filter} events at the moment.`}
-      </Text>
-      {filter !== "all" && (
-        <TouchableOpacity
-          style={styles.resetFilterButton}
-          onPress={() => setFilter("all")}
-        >
-          <Text style={styles.resetFilterText}>Show All Events</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    <EmptyState
+      icon="calendar-outline"
+      title={filter === "all" ? "No Events Found" : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Events`}
+      message={
+        filter === "all"
+          ? "No events are available at the moment. Check back soon."
+          : `No ${filter} events at the moment. Try viewing all events.`
+      }
+      actionLabel={filter !== "all" ? "Show All Events" : undefined}
+      onActionPress={filter !== "all" ? () => setFilter("all") : undefined}
+    />
   );
 
   return (
@@ -410,6 +457,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[
             styles.listContent,
+            filteredEvents.length === 0 && { flexGrow: 1 },
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           refreshControl={
@@ -664,37 +712,6 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.small,
   },
   retryButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.white,
-  },
-  emptyState: {
-    paddingVertical: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: theme.spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xs,
-  },
-  emptyText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  resetFilterButton: {
-    marginTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: healthColors.primary.main,
-    borderRadius: theme.borderRadius.small,
-  },
-  resetFilterText: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,

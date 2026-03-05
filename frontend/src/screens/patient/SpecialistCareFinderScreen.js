@@ -26,7 +26,7 @@ import {
   verticalScale,
   getScreenPadding,
 } from "../../utils/responsive";
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow } from "../../components/common";
+import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
@@ -56,9 +56,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchDoctors();
-  }, [selectedSpecialty, selectedAvailability]);
+  }, [fetchDoctors]);
 
-  const fetchDoctors = async () => {
+  const fetchDoctors = useCallback(async () => {
     try {
       if (!isConnected) {
         showError("No internet connection");
@@ -100,7 +100,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSpecialty, feeRange, isConnected, user?.hospitalId]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -232,10 +232,11 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.viewProfileButton}
           onPress={() =>
-            Alert.alert(
-              "Doctor Profile",
-              `Viewing profile for ${doctor.name} - Full profile coming soon!`
-            )
+            navigation.navigate("AppointmentBooking", {
+              doctorId: doctor._id || doctor.id,
+              doctorName: doctor.name,
+              specialization: doctor.specialization || doctor.specialty,
+            })
           }
         >
           <Text style={styles.viewProfileText}>View Profile</Text>
@@ -401,17 +402,11 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               <SkeletonCardRow />
             </View>
           ) : doctors.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons
-                name="medical-outline"
-                size={64}
-                color={healthColors.text.disabled}
-              />
-              <Text style={styles.emptyStateTitle}>No Specialists Found</Text>
-              <Text style={styles.emptyStateText}>
-                Try adjusting your filters or check back later.
-              </Text>
-            </View>
+            <EmptyState
+              icon="search-outline"
+              title="No Specialists Found"
+              message="No doctors match your current filters. Try a different specialty or availability."
+            />
           ) : (
             <>
               {doctors.map(renderDoctorCard)}
@@ -681,24 +676,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: 12,
-  },
-  emptyState: {
-    paddingVertical: 48,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyStateTitle: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    paddingHorizontal: getScreenPadding(),
   },
   doctorCountContainer: {
     paddingVertical: 16,

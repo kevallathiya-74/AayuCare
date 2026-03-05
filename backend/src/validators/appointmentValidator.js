@@ -132,6 +132,7 @@ exports.validateUpdateAppointmentStatus = [
     .notEmpty()
     .withMessage("Status is required")
     .isIn([
+      "scheduled",
       "confirmed",
       "in_progress",
       "completed",

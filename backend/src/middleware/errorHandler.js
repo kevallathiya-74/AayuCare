@@ -47,6 +47,22 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
+    // PostgreSQL check constraint violation
+    if (err.code === '23514') {
+        return res.status(400).json({
+            success: false,
+            message: `Invalid value: ${err.constraint || 'data validation failed'}`,
+        });
+    }
+
+    // PostgreSQL invalid value for enum / data type
+    if (err.code === '22P02') {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid data format in request',
+        });
+    }
+
     // Handle specific well-known error types before env branching
     if (err.name === 'JsonWebTokenError') {
         return res.status(401).json({

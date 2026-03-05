@@ -214,8 +214,23 @@ const AppointmentsScreen = ({ navigation }) => {
   };
 
   const handleAppointmentPress = useCallback((appointment) => {
-    navigation.navigate('AppointmentDetails', { appointment, appointmentId: appointment?.id || appointment?._id });
-  }, [navigation]);
+    const dateStr = formatDate(appointment?.appointmentDate);
+    const status = formatStatusLabel(appointment?.status);
+    Alert.alert(
+      "Appointment Details",
+      [
+        `Doctor: ${appointment?.doctorName || "Unknown"}`,
+        `Patient: ${appointment?.patientName || "Unknown"}`,
+        `Date: ${dateStr}`,
+        `Status: ${status}`,
+        appointment?.reason ? `Reason: ${appointment.reason}` : null,
+        appointment?.type ? `Type: ${appointment.type}` : null,
+        appointment?.chiefComplaint ? `Chief Complaint: ${appointment.chiefComplaint}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
+  }, []);
 
   const renderAppointment = useCallback(
     ({ item }) => (

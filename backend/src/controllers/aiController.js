@@ -69,8 +69,11 @@ exports.getHealthInsights = async (req, res, next) => {
   try {
     const { patientId } = req.params;
 
+    // Explicit String cast to prevent type confusion from HTTP parameter pollution
+    const safePatientId = String(patientId);
+
     // Verify access rights
-    const isOwnData = req.user.id === patientId || req.user.userId === patientId;
+    const isOwnData = req.user.id === safePatientId || req.user.userId === safePatientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
       return res.status(403).json({
         success: false,
@@ -81,10 +84,10 @@ exports.getHealthInsights = async (req, res, next) => {
     // Get patient data - supports both UUID (users.id) and custom userId (users.user_id)
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     let patient;
-    if (uuidRegex.test(patientId)) {
-      patient = await userRepository.findById(patientId);
+    if (uuidRegex.test(safePatientId)) {
+      patient = await userRepository.findById(safePatientId);
     } else {
-      patient = await userRepository.findByUserId(patientId);
+      patient = await userRepository.findByUserId(safePatientId);
     }
     
     // Verify it's actually a patient
@@ -113,7 +116,6 @@ exports.getHealthInsights = async (req, res, next) => {
     logger.error("Health insights error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
     });
     next(error);
   }

@@ -3,7 +3,7 @@
  * Health library with categories, disease details, symptoms, prevention
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,9 @@ import {
   TouchableOpacity,
   Modal,
   ActivityIndicator,
+  TextInput,
+  Linking,
+  Alert,
 } from "react-native";
 import {
   SafeAreaView,
@@ -32,14 +35,47 @@ import { useNetworkStatus } from "../../utils/offlineHandler";
 const DiseaseInfoScreen = ({ navigation }) => {
   const [selectedDisease, setSelectedDisease] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [videoModalVisible, setVideoModalVisible] = useState(false);
-  const [imageGalleryVisible, setImageGalleryVisible] = useState(false);
   const [dietChartVisible, setDietChartVisible] = useState(false);
   const [exercisePlanVisible, setExercisePlanVisible] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categories;
+    return categories.filter((c) =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+
+  const openURL = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert("Cannot Open", "Unable to open this link on your device.");
+      }
+    } catch (e) {
+      logError(e, { context: "DiseaseInfoScreen.openURL", url });
+      Alert.alert("Error", "Failed to open link.");
+    }
+  };
+
+  const quickAccessLinks = {
+    "Video Library": "https://www.youtube.com/@WHO",
+    "Articles": "https://www.who.int/news-room/fact-sheets",
+    "Latest News": "https://www.healthline.com/health-news",
+  };
+
+  const featuredTopicLinks = {
+    "COVID-19 Updates": "https://www.who.int/emergencies/diseases/novel-  coronavirus-2019",
+    "Mental Health Awareness": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
+    "Nutrition Guide": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
+  };
 
   const categories = [
     { icon: "heart", name: "Heart", color: healthColors.error.main },
@@ -73,10 +109,127 @@ const DiseaseInfoScreen = ({ navigation }) => {
         "Stress management",
         "Adequate sleep",
       ],
-      statistics: {
-        prevalence: "8.7% of adults",
-        riskAge: "45+ years",
-      },
+      statistics: { prevalence: "8.7% of adults", riskAge: "45+ years" },
+    },
+    Heart: {
+      name: "Cardiovascular Disease",
+      icon: "heart",
+      color: healthColors.error.main,
+      description:
+        "A group of disorders affecting the heart and blood vessels, including coronary artery disease, heart failure, and arrhythmias.",
+      symptoms: [
+        "Chest pain or pressure",
+        "Shortness of breath",
+        "Irregular heartbeat",
+        "Fatigue and dizziness",
+        "Swelling in legs or ankles",
+        "Pain radiating to arm or jaw",
+      ],
+      prevention: [
+        "Quit smoking",
+        "Exercise 150 min/week",
+        "Control blood pressure",
+        "Maintain healthy cholesterol",
+        "Eat heart-healthy foods",
+        "Limit alcohol intake",
+      ],
+      statistics: { prevalence: "Leading cause of death", riskAge: "40+ years" },
+    },
+    Lung: {
+      name: "Respiratory Diseases",
+      icon: "pulse",
+      color: healthColors.info.main,
+      description:
+        "Conditions affecting the lungs and airways, including asthma, COPD, pneumonia, and lung cancer.",
+      symptoms: [
+        "Persistent cough",
+        "Shortness of breath",
+        "Wheezing",
+        "Chest tightness",
+        "Mucus production",
+        "Frequent respiratory infections",
+      ],
+      prevention: [
+        "Avoid smoking and second-hand smoke",
+        "Reduce air pollution exposure",
+        "Wear mask in dusty environments",
+        "Get annual flu vaccine",
+        "Maintain good indoor air quality",
+        "Regular lung function tests",
+      ],
+      statistics: { prevalence: "10% of population", riskAge: "All ages" },
+    },
+    Brain: {
+      name: "Neurological Disorders",
+      icon: "bulb-outline",
+      color: theme.colors.healthcare.purple,
+      description:
+        "Disorders affecting the brain, spinal cord, and nerves, including stroke, epilepsy, Parkinson's disease, and Alzheimer's.",
+      symptoms: [
+        "Sudden severe headache",
+        "Memory loss or confusion",
+        "Weakness or numbness",
+        "Vision disturbances",
+        "Difficulty speaking",
+        "Loss of balance or coordination",
+      ],
+      prevention: [
+        "Control blood pressure",
+        "Exercise regularly",
+        "Avoid head injuries (wear helmets)",
+        "Manage diabetes and cholesterol",
+        "Avoid smoking and excess alcohol",
+        "Stay mentally active",
+      ],
+      statistics: { prevalence: "1 in 6 people", riskAge: "55+ years" },
+    },
+    Bone: {
+      name: "Musculoskeletal Disorders",
+      icon: "bandage-outline",
+      color: healthColors.text.secondary,
+      description:
+        "Conditions affecting bones, muscles, and joints, including arthritis, osteoporosis, and back pain.",
+      symptoms: [
+        "Joint pain and stiffness",
+        "Swelling around joints",
+        "Limited range of motion",
+        "Bone tenderness",
+        "Muscle weakness",
+        "Frequent fractures",
+      ],
+      prevention: [
+        "Calcium and Vitamin D intake",
+        "Weight-bearing exercises",
+        "Avoid smoking",
+        "Maintain healthy weight",
+        "Ergonomic posture",
+        "Regular bone density check",
+      ],
+      statistics: { prevalence: "30% of adults over 50", riskAge: "50+ years" },
+    },
+    Eye: {
+      name: "Ocular Diseases",
+      icon: "eye",
+      color: theme.colors.healthcare.teal,
+      description:
+        "Conditions affecting vision and eye health, including glaucoma, cataracts, diabetic retinopathy, and macular degeneration.",
+      symptoms: [
+        "Blurred or cloudy vision",
+        "Eye pain or redness",
+        "Flashes of light or floaters",
+        "Loss of peripheral vision",
+        "Sensitivity to light",
+        "Double vision",
+      ],
+      prevention: [
+        "Annual eye examinations",
+        "Wear UV-protective sunglasses",
+        "Control blood sugar (prevent diabetic retinopathy)",
+        "Eat leafy greens and fish",
+        "Limit screen time and take breaks",
+        "Avoid smoking",
+      ],
+      statistics: { prevalence: "2.2 billion people affected", riskAge: "40+ years" },
     },
   };
 
@@ -85,12 +238,22 @@ const DiseaseInfoScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
 
-      if (category.name === "Diabetes") {
-        setSelectedDisease(diseaseDetails.Diabetes);
+      const info = diseaseDetails[category.name];
+      if (info) {
+        setSelectedDisease(info);
         setModalVisible(true);
       } else {
-        // For other categories, show coming soon message
-        alert(`${category.name} information coming soon!`);
+        // Fallback: generic placeholder for unmapped categories
+        setSelectedDisease({
+          name: `${category.name} Conditions`,
+          icon: category.icon,
+          color: category.color,
+          description: `Information about ${category.name} related conditions and disorders.`,
+          symptoms: ["Consult your doctor for specific symptoms"],
+          prevention: ["Regular checkups", "Healthy lifestyle"],
+          statistics: { prevalence: "Varies", riskAge: "All ages" },
+        });
+        setModalVisible(true);
       }
     } catch (err) {
       logError(err, {
@@ -146,11 +309,29 @@ const DiseaseInfoScreen = ({ navigation }) => {
             <Text style={styles.headerSubtitle}>Health Library</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity onPress={() => setSearchVisible((v) => !v)}>
           <Ionicons name="search" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
+      {searchVisible && (
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color={healthColors.text.tertiary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search diseases..."
+            placeholderTextColor={healthColors.text.tertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoFocus
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={18} color={healthColors.text.tertiary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -159,7 +340,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
       >
         {/* Categories Grid */}
         <View style={styles.categoriesGrid}>
-          {categories.map((category, index) => (
+          {filteredCategories.map((category, index) => (
             <TouchableOpacity
               key={index}
               style={styles.categoryCard}
@@ -194,32 +375,29 @@ const DiseaseInfoScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>QUICK ACCESS</Text>
           </View>
           <View style={styles.quickAccessCard}>
-            <TouchableOpacity style={styles.quickAccessItem}>
+            <TouchableOpacity
+              style={styles.quickAccessItem}
+              onPress={() => openURL(quickAccessLinks["Video Library"])}
+            >
               <Ionicons name="videocam" size={24} color={healthColors.error.main} />
               <Text style={styles.quickAccessText}>Video Library</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={healthColors.text.tertiary}
-              />
+              <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAccessItem}>
+            <TouchableOpacity
+              style={styles.quickAccessItem}
+              onPress={() => openURL(quickAccessLinks["Articles"])}
+            >
               <Ionicons name="document-text" size={24} color={healthColors.info.main} />
               <Text style={styles.quickAccessText}>Articles</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={healthColors.text.tertiary}
-              />
+              <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAccessItem}>
+            <TouchableOpacity
+              style={styles.quickAccessItem}
+              onPress={() => openURL(quickAccessLinks["Latest News"])}
+            >
               <Ionicons name="newspaper" size={24} color={healthColors.warning.main} />
               <Text style={styles.quickAccessText}>Latest News</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={healthColors.text.tertiary}
-              />
+              <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -233,7 +411,11 @@ const DiseaseInfoScreen = ({ navigation }) => {
               "Mental Health Awareness",
               "Nutrition Guide",
             ].map((topic, index) => (
-              <TouchableOpacity key={index} style={styles.topicItem}>
+              <TouchableOpacity
+                key={index}
+                style={styles.topicItem}
+                onPress={() => openURL(featuredTopicLinks[topic])}
+              >
                 <View style={styles.topicDot} />
                 <Text style={styles.topicText}>{topic}</Text>
                 <Ionicons name="arrow-forward" size={18} color={theme.colors.healthcare.purple} />
@@ -291,8 +473,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   {/* Video Section */}
                   <TouchableOpacity
                     style={styles.videoSection}
-                    onPress={() => setVideoModalVisible(true)}
-                  >
+                    onPress={() => openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent((selectedDisease?.name || "") + " disease education")}`)}>
                     <LinearGradient
                       colors={[healthColors.warning.main, healthColors.warning.dark]}
                       style={styles.videoGradient}
@@ -310,8 +491,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   {/* Image Gallery Button */}
                   <TouchableOpacity
                     style={[styles.videoSection, { marginTop: 0 }]}
-                    onPress={() => setImageGalleryVisible(true)}
-                  >
+                    onPress={() => openURL(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent((selectedDisease?.name || "") + " anatomy diagram")}`)}>
                     <LinearGradient
                       colors={[healthColors.info.main, healthColors.info.dark]}
                       style={styles.videoGradient}
@@ -410,78 +590,6 @@ const DiseaseInfoScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-      {/* Video Player Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={videoModalVisible}
-        onRequestClose={() => setVideoModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: "70%" }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Educational Video</Text>
-              <TouchableOpacity onPress={() => setVideoModalVisible(false)}>
-                <Ionicons
-                  name="close-circle"
-                  size={32}
-                  color={healthColors.text.tertiary}
-                />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.videoPlayerPlaceholder}>
-              <Ionicons
-                name="play-circle-outline"
-                size={80}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.placeholderText}>Video Player</Text>
-              <Text style={styles.placeholderSubtext}>
-                Educational video about {selectedDisease?.name}
-              </Text>
-              <Text style={styles.placeholderNote}>
-                Integration with video player required
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Image Gallery Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={imageGalleryVisible}
-        onRequestClose={() => setImageGalleryVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: "80%" }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Image Gallery</Text>
-              <TouchableOpacity onPress={() => setImageGalleryVisible(false)}>
-                <Ionicons
-                  name="close-circle"
-                  size={32}
-                  color={healthColors.text.tertiary}
-                />
-              </TouchableOpacity>
-            </View>
-            <ScrollView contentContainerStyle={styles.galleryGrid}>
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <View key={item} style={styles.galleryItem}>
-                  <Ionicons
-                    name="image-outline"
-                    size={48}
-                    color={healthColors.primary.main}
-                  />
-                  <Text style={styles.galleryItemText}>Image {item}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
       {/* Diet Chart Modal */}
       <Modal
         animationType="slide"
@@ -492,7 +600,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Diet Chart for Diabetes</Text>
+              <Text style={styles.modalTitle}>Diet Chart for {selectedDisease?.name || "Diabetes"}</Text>
               <TouchableOpacity onPress={() => setDietChartVisible(false)}>
                 <Ionicons
                   name="close-circle"
@@ -657,7 +765,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Exercise Plan for Diabetes</Text>
+              <Text style={styles.modalTitle}>Exercise Plan for {selectedDisease?.name || "Diabetes"}</Text>
               <TouchableOpacity onPress={() => setExercisePlanVisible(false)}>
                 <Ionicons
                   name="close-circle"
@@ -1050,50 +1158,24 @@ const styles = StyleSheet.create({
     color: theme.withOpacity(theme.colors.white, 0.9),
     marginTop: 8,
   },
-  videoPlayerPlaceholder: {
-    padding: theme.spacing.xxxxl,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeholderText: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.md,
-  },
-  placeholderSubtext: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.sm,
-    textAlign: "center",
-  },
-  placeholderNote: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-    marginTop: theme.spacing.md,
-    fontStyle: "italic",
-  },
-  galleryGrid: {
+  searchBar: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    padding: theme.spacing.md,
-  },
-  galleryItem: {
-    width: "30%",
-    aspectRatio: 1,
-    backgroundColor: healthColors.background.primary,
-    borderRadius: theme.borderRadius.md,
-    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: healthColors.background.primary,
+    marginHorizontal: getScreenPadding(),
+    marginBottom: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderWidth: 1,
     borderColor: healthColors.border.light,
-    marginRight: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  galleryItemText: {
-    fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.secondary,
-    marginTop: 4,
+  searchInput: {
+    flex: 1,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    paddingVertical: 0,
   },
   dietSection: {
     marginBottom: theme.spacing.lg,

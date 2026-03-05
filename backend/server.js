@@ -48,6 +48,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
+const mongoSanitize = require("express-mongo-sanitize");
 
 const connectDB = require("./src/config/database");
 const { connectPostgres, closePool } = require("./src/config/postgres");
@@ -67,6 +68,7 @@ const prescriptionRoutes = require("./src/routes/prescriptionRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const eventRoutes = require("./src/routes/eventRoutes");
 const notificationRoutes = require("./src/routes/notificationRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
 
 const app = express();
 
@@ -194,6 +196,10 @@ app.all("/api/auth/*", (req, res, next) => {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Sanitize request data to prevent MongoDB operator injection ($gt, $where, etc.)
+// Strips keys that begin with '$' or contain '.' from req.body, req.params, and req.query
+app.use(mongoSanitize({ replaceWith: '_' }));
+
 // Disable ETags to prevent 304 Not Modified responses (causes frontend cache issues)
 app.set('etag', false);
 
@@ -209,6 +215,7 @@ app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // API Root route
 app.get("/api", (req, res) => {

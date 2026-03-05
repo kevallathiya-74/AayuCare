@@ -34,7 +34,7 @@ import { useSelector } from 'react-redux';
 import { healthColors } from '../theme';
 import { useAppointmentsInfinite } from '../hooks/useAppointments';
 import { logError } from '../utils/errorHandler';
-import { SkeletonCardRow } from '../components/common';
+import { SkeletonCardRow, EmptyState, ErrorRecovery } from '../components/common';
 
 /**
  * Appointments List Screen with Infinite Scroll
@@ -87,7 +87,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
     return (
       <TouchableOpacity
         style={styles.appointmentCard}
-        onPress={() => navigation.navigate('AppointmentDetail', { appointmentId: appointment._id })}
+        onPress={() => navigation.navigate(user.role === 'patient' ? 'MyAppointments' : 'Appointments', { appointmentId: appointment._id })}
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
@@ -153,23 +153,17 @@ const AppointmentsListScreen = ({ navigation, route }) => {
     if (isLoading) return null;
 
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="calendar-outline" size={64} color={healthColors.grays.gray400} />
-        <Text style={styles.emptyTitle}>No Appointments</Text>
-        <Text style={styles.emptyText}>
-          {filters.status 
-            ? `No ${filters.status} appointments found`
-            : 'You don\'t have any appointments yet'}
-        </Text>
-        {user.role === 'patient' && (
-          <TouchableOpacity
-            style={styles.emptyButton}
-            onPress={() => navigation.navigate('BookAppointment')}
-          >
-            <Text style={styles.emptyButtonText}>Book Appointment</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      <EmptyState
+        icon="calendar-outline"
+        title="No Appointments"
+        message={
+          filters.status
+            ? `No ${filters.status} appointments found.`
+            : "You don't have any appointments yet."
+        }
+        actionLabel={user.role === 'patient' ? 'Book Appointment' : undefined}
+        onActionPress={user.role === 'patient' ? () => navigation.navigate('AppointmentBooking') : undefined}
+      />
     );
   }, [isLoading, filters.status, user.role, navigation]);
 
@@ -179,14 +173,11 @@ const AppointmentsListScreen = ({ navigation, route }) => {
     
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={healthColors.error.main} />
-          <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
-          <Text style={styles.errorText}>{errorMessage}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorRecovery
+          error={errorMessage}
+          onRetry={handleRefresh}
+          onGoBack={() => navigation.goBack()}
+        />
       </SafeAreaView>
     );
   }
@@ -207,8 +198,8 @@ const AppointmentsListScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Appointments</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('AppointmentFilters')}>
-          <Ionicons name="filter" size={24} color={healthColors.primary.main} />
+        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back">
+          <Ionicons name="arrow-back" size={24} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>
 
@@ -216,7 +207,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
         data={appointments}
         renderItem={renderAppointmentItem}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, appointments.length === 0 && { flexGrow: 1 }]}
         
         // Infinite scroll configuration
         onEndReached={handleLoadMore}
@@ -358,67 +349,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 60,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    color: healthColors.text.secondary,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  emptyButton: {
-    backgroundColor: healthColors.primary.main,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  emptyButtonText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semibold,
-    color: 'white',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  errorTitle: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  errorText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    color: healthColors.text.secondary,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  retryButton: {
-    backgroundColor: healthColors.primary.main,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semibold,
-    color: 'white',
   },
 });
 
