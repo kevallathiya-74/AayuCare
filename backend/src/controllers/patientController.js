@@ -741,13 +741,13 @@ exports.updateActivityData = async (req, res, next) => {
 };
 /**
  * @desc    Get latest health metric by type
- * @route   GET /api/patients/:patientId/health-metrics/latest/:type
+ * @route   POST /api/patients/health-metrics/latest
  * @access  Private
  */
 exports.getLatestHealthMetric = async (req, res, next) => {
   try {
-    const patientId = String(req.params.patientId);
-    const type = String(req.params.type);
+    const patientId = String(req.body.patientId);
+    const type = String(req.body.type);
 
     // Check access rights - supports both _id and userId formats
     if (
