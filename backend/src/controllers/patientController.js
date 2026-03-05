@@ -60,6 +60,11 @@ exports.searchPatients = async (req, res, next) => {
     // Get hospitalId from request (set by hospitalMiddleware)
     const hospitalId = req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : "MAIN";
 
+    // Validate query parameter type to prevent type confusion (arrays, objects, etc.)
+    if (q !== undefined && typeof q !== "string") {
+      return next(new AppError("Invalid search query parameter", 400));
+    }
+
     // Sanitize search query — enforce max length to prevent DB overload
     if (q && q.length > 100) {
       return next(new AppError("Search query must be 100 characters or fewer", 400));
