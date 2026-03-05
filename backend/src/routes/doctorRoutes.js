@@ -3,9 +3,9 @@ const router = express.Router();
 const doctorController = require("../controllers/doctorController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
-const { validateBody } = require("../middleware/validation");
+const { validateBody, validateParams } = require("../middleware/validation");
 const { validateUpdateAppointmentStatus } = require("../validators/appointmentValidator");
-const { updateDoctorProfileSchema, walkInPatientSchema, scheduleUpdateSchema } = require("../validators/schemas");
+const { updateDoctorProfileSchema, walkInPatientSchema, scheduleUpdateSchema, scheduleParamsSchema } = require("../validators/schemas");
 const { cacheDoctorList, cacheDoctorAvailability, cacheDashboard, invalidateCache } = require("../middleware/cache");
 
 /**
@@ -208,6 +208,7 @@ router.put(
   protect,
   attachHospitalId,
   authorize("doctor"),
+  validateParams(scheduleParamsSchema),
   validateBody(scheduleUpdateSchema),
   doctorController.updateSchedule
   // Cache invalidation now handled inside controller
@@ -223,6 +224,7 @@ router.patch(
   protect,
   attachHospitalId,
   authorize("doctor"),
+  validateParams(scheduleParamsSchema),
   doctorController.toggleDayAvailability
   // Cache invalidation now handled inside controller
 );

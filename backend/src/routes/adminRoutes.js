@@ -24,6 +24,7 @@ const {
   updateUserProfile,
   deleteUser,
   permanentDeleteUser,
+  getAuditLogs,
 } = require("../controllers/adminController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
@@ -34,6 +35,7 @@ const {
   changePasswordSchema,
   updateUserRoleSchema,
   bulkUpdateUsersSchema,
+  updateUserStatusSchema,
 } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
@@ -83,6 +85,7 @@ router.delete(
 );
 router.patch(
   "/users/:userId/status",
+  validateBody(updateUserStatusSchema),
   updateUserStatus
   // Cache invalidation now handled inside controller
 );
@@ -104,6 +107,9 @@ router.get("/system/metrics", cacheMiddleware(30), getSystemMetrics);
 
 // Medical records routes
 router.get("/medical-records", cacheMiddleware(60), getMedicalRecordsOverview);
+
+// Audit logs routes (compliance & security)
+router.get("/audit-logs", cacheMiddleware(30), getAuditLogs);
 
 // Notifications routes
 router.get(

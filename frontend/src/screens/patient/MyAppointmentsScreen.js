@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../theme";
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { verticalScale } from "../../utils/responsive";
@@ -154,34 +154,51 @@ const MyAppointmentsScreen = ({ navigation }) => {
           />
           <Text style={styles.infoText}>{item.time}</Text>
         </View>
+        {!!item.type && (
+          <View style={styles.infoRow}>
+            <Ionicons name="medical-outline" size={16} color={healthColors.text.secondary} />
+            <Text style={styles.infoText}>
+              {item.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            </Text>
+          </View>
+        )}
+        {!!item.chiefComplaint && (
+          <View style={styles.infoRow}>
+            <Ionicons name="chatbox-ellipses-outline" size={16} color={healthColors.text.secondary} />
+            <Text style={styles.infoText} numberOfLines={2}>{item.chiefComplaint}</Text>
+          </View>
+        )}
+        {!!item.cancellationReason && item.status === "cancelled" && (
+          <View style={styles.infoRow}>
+            <Ionicons name="alert-circle-outline" size={16} color={healthColors.error.main} />
+            <Text style={[styles.infoText, { color: healthColors.error.main }]}>
+              Reason: {item.cancellationReason}
+            </Text>
+          </View>
+        )}
       </View>
 
-      <View style={styles.cardFooter}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          activeOpacity={0.7}
-          onPress={() => handleRescheduleAppointment(item)}
-        >
-          <Ionicons
-            name="calendar-outline"
-            size={18}
-            color={healthColors.primary.main}
-          />
-          <Text style={styles.actionText}>Reschedule</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.cancelButton]}
-          activeOpacity={0.7}
-          onPress={() => handleCancelAppointment(item)}
-        >
-          <Ionicons
-            name="close-circle-outline"
-            size={18}
-            color={healthColors.error.main}
-          />
-          <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Action buttons — only for active (not yet complete/cancelled) appointments */}
+      {item.status !== "cancelled" && item.status !== "completed" && item.status !== "no_show" && (
+        <View style={styles.cardFooter}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            activeOpacity={0.7}
+            onPress={() => handleRescheduleAppointment(item)}
+          >
+            <Ionicons name="calendar-outline" size={18} color={healthColors.primary.main} />
+            <Text style={styles.actionText}>Reschedule</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.cancelButton]}
+            activeOpacity={0.7}
+            onPress={() => handleCancelAppointment(item)}
+          >
+            <Ionicons name="close-circle-outline" size={18} color={healthColors.error.main} />
+            <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
@@ -261,6 +278,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
           keyExtractor={(item) => item._id || item.id}
           contentContainerStyle={[
             styles.listContent,
+            appointments.length === 0 && { flexGrow: 1 },
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           showsVerticalScrollIndicator={false}
@@ -288,18 +306,17 @@ const MyAppointmentsScreen = ({ navigation }) => {
             ) : null
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons
-                name="calendar-outline"
-                size={64}
-                color={healthColors.text.tertiary}
-              />
-              <Text style={styles.emptyText}>
-                {selectedTab === "upcoming"
-                  ? "No upcoming appointments"
-                  : "No past appointments"}
-              </Text>
-            </View>
+            <EmptyState
+              icon={selectedTab === "upcoming" ? "calendar-outline" : "time-outline"}
+              title={selectedTab === "upcoming" ? "No Upcoming Appointments" : "No Past Appointments"}
+              message={
+                selectedTab === "upcoming"
+                  ? "You have no appointments scheduled. Book one to get started."
+                  : "Your completed and cancelled appointments will appear here."
+              }
+              actionLabel={selectedTab === "upcoming" ? "Book Appointment" : undefined}
+              onActionPress={selectedTab === "upcoming" ? () => navigation.navigate("AppointmentBooking") : undefined}
+            />
           }
         />
       )}
@@ -407,6 +424,18 @@ const styles = StyleSheet.create({
   status_confirmed: {
     backgroundColor: healthColors.success.background,
   },
+  status_completed: {
+    backgroundColor: healthColors.success.background,
+  },
+  status_in_progress: {
+    backgroundColor: healthColors.primary.main + "20",
+  },
+  status_cancelled: {
+    backgroundColor: healthColors.error.background,
+  },
+  status_no_show: {
+    backgroundColor: healthColors.text.secondary + "20",
+  },
   statusText: {
     fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.semibold,
@@ -459,18 +488,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: verticalScale(80),
-    gap: theme.spacing.md,
-  },
-  emptyText: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    textAlign: "center",
   },
   footerLoader: {
     paddingVertical: theme.spacing.md,

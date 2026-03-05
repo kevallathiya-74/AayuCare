@@ -25,16 +25,14 @@ import {
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
-import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
-import ErrorRecovery from "../../components/common/ErrorRecovery";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, NetworkStatusIndicator, ErrorRecovery, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
-import { prescriptionService } from "../../services";
+import { prescriptionService, paymentService } from "../../services";
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
-  const [selectedPayment, setSelectedPayment] = useState("card");
+  const [paymentResult, setPaymentResult] = useState(null);
   const [selectedPurchase, setSelectedPurchase] = useState("hospital");
   const [loading, setLoading] = useState(false);
   const [fetchingPrescription, setFetchingPrescription] = useState(true);
@@ -125,12 +123,24 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       setLoading(true);
       setError(null);
 
-      // Simulate payment processing
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await paymentService.createPayment({
+        amount: total,
+        paymentMethod: selectedPayment,
+        purchaseType: selectedPurchase,
+        prescriptionId: prescription?.id || null,
+        medicines: prescription?.medicines || [],
+      });
 
-      alert(
-        `Payment of ${formatCurrency(total)} via ${selectedPayment.toUpperCase()} initiated!`
-      );
+      if (response?.success) {
+        setPaymentResult(response.data);
+        Alert.alert(
+          "Payment Successful",
+          `Payment of ${formatCurrency(total)} via ${selectedPayment.toUpperCase()} processed successfully!\nPayment ID: ${response.data?.payment_id || "N/A"}`,
+          [{ text: "OK" }]
+        );
+      } else {
+        throw new Error(response?.message || "Payment failed");
+      }
     } catch (err) {
       logError(err, {
         context: "PharmacyBillingScreen.handlePayment",
@@ -202,24 +212,13 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.headerRightSpacer} />
         </LinearGradient>
-        <View style={styles.emptyState}>
-          <Ionicons
-            name="medical-outline"
-            size={80}
-            color={healthColors.text.tertiary}
-          />
-          <Text style={styles.emptyTitle}>No Active Prescription</Text>
-          <Text style={styles.emptySubtitle}>
-            You need a valid prescription to purchase medicines.{"\n"}
-            Please visit a doctor first.
-          </Text>
-          <TouchableOpacity
-            style={styles.bookButton}
-            onPress={() => navigation.navigate("AppointmentBooking")}
-          >
-            <Text style={styles.bookButtonText}>Book Appointment</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          icon="receipt-outline"
+          title="No Active Prescription"
+          message="You need a valid prescription to purchase medicines. Please book an appointment and consult a doctor first."
+          actionLabel="Book Appointment"
+          onActionPress={() => navigation.navigate("AppointmentBooking")}
+        />
       </SafeAreaView>
     );
   }
@@ -246,7 +245,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             </Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity
+          onPress={() =>
+            paymentResult
+              ? Alert.alert(
+                  "Payment Receipt",
+                  `Payment ID: ${paymentResult.payment_id}\nAmount: ${formatCurrency(total)}\nMethod: ${selectedPayment.toUpperCase()}\nStatus: ${paymentResult.status || "completed"}`
+                )
+              : Alert.alert("No Receipt", "Complete a payment to view the receipt.")
+          }
+        >
           <Ionicons name="receipt" size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
@@ -547,37 +555,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: getScreenPadding(),
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptySubtitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    marginTop: theme.spacing.sm,
-    lineHeight: 22,
-  },
-  bookButton: {
-    marginTop: theme.spacing.xl,
-    backgroundColor: healthColors.primary.main,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-  },
-  bookButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.semibold,
   },
   header: {
     flexDirection: "row",

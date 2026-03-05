@@ -30,7 +30,7 @@ import {
   getKeyboardConfig,
 } from "../../utils/responsive";
 import { useSelector } from "react-redux";
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow } from "../../components/common";
+import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from "../../components/common";
 import { Input, Button } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
@@ -115,7 +115,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         setLoadingDoctors(false);
       }
     },
-    [isConnected]
+    [isConnected, user?.hospitalId]
   );
 
   // Fetch available time slots for selected doctor and date
@@ -193,6 +193,22 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       return;
     }
 
+    if (reason.trim().length < 10) {
+      Alert.alert(
+        "Too Short",
+        "Please describe your symptoms or reason in at least 10 characters."
+      );
+      return;
+    }
+
+    if (reason.trim().length > 500) {
+      Alert.alert(
+        "Too Long",
+        "Reason must be 500 characters or fewer."
+      );
+      return;
+    }
+
     if (!isConnected) {
       showError("No internet connection");
       return;
@@ -244,7 +260,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             {
               text: "OK",
               onPress: () =>
-                navigation.navigate("PatientTabs", { screen: "Home" }),
+                navigation.navigate("PatientTabs", { screen: "Dashboard" }),
             },
           ]
         );
@@ -359,16 +375,12 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                   </View>
                   <ScrollView style={styles.modalBody}>
                     {specialties.length === 0 ? (
-                      <View style={styles.emptyState}>
-                        <Ionicons
-                          name="information-circle-outline"
-                          size={32}
-                          color={healthColors.text.disabled}
-                        />
-                        <Text style={styles.emptyStateText}>
-                          No specialties available
-                        </Text>
-                      </View>
+                      <EmptyState
+                        icon="information-circle-outline"
+                        title="No Specialties Available"
+                        message="Please check back later."
+                        style={{ paddingVertical: 24 }}
+                      />
                     ) : (
                       specialties.map((specialty) => (
                         <TouchableOpacity
@@ -425,16 +437,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 <SkeletonCardRow />
               </View>
             ) : doctors.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons
-                  name="medkit-outline"
-                  size={48}
-                  color={healthColors.text.disabled}
-                />
-                <Text style={styles.emptyStateText}>
-                  No doctors available for {selectedSpecialty}
-                </Text>
-              </View>
+              <EmptyState
+                icon="medkit-outline"
+                title="No Doctors Available"
+                message={`No doctors found for ${selectedSpecialty || "this specialty"}. Try selecting a different specialty.`}
+              />
             ) : (
               doctors.map((doctor) => (
                 <TouchableOpacity
@@ -1073,19 +1080,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-  },
-  emptyStateText: {
-    marginTop: 12,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
   },
   confirmButtonDisabled: {
     opacity: 0.6,

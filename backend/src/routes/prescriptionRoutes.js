@@ -9,7 +9,7 @@ const prescriptionController = require("../controllers/prescriptionController");
 const { protect, authorize } = require("../middleware/auth");
 const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
-const { createPrescriptionSchema } = require("../validators/schemas");
+const { createPrescriptionSchema, updatePrescriptionStatusSchema, updatePrescriptionPharmacySchema } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
 // All routes require authentication
@@ -72,6 +72,7 @@ router.get(
 router.patch(
   "/:prescriptionId/status",
   authorize("doctor", "admin"),
+  validateBody(updatePrescriptionStatusSchema),
   prescriptionController.updatePrescriptionStatus
   // Cache invalidation now handled inside controller
 );
@@ -82,6 +83,7 @@ router.patch(
 router.patch(
   "/:prescriptionId",
   authorize("admin"),
+  validateBody(updatePrescriptionPharmacySchema),
   prescriptionController.updatePharmacyStatus
   // Cache invalidation now handled inside controller
 );

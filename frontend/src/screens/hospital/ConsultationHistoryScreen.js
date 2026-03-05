@@ -20,6 +20,7 @@ import {
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { convertTo12Hour } from "../../utils/helpers";
+import { SkeletonCardRow, EmptyState } from "../../components/common";
 
 const ConsultationHistoryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -276,6 +277,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         keyExtractor={(item) => item._id}
         contentContainerStyle={[
           styles.listContent,
+          consultations.length === 0 && { flexGrow: 1 },
           { paddingBottom: Math.max(insets.bottom, 20) },
         ]}
         refreshing={refreshing}
@@ -284,23 +286,25 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
           !loading && (
-            <View style={styles.emptyState}>
-              <Ionicons
-                name={error ? "alert-circle-outline" : "file-tray-outline"}
-                size={80}
-                color={error ? healthColors.error.main : healthColors.text.disabled}
+            error ? (
+              <EmptyState
+                icon="alert-circle-outline"
+                title="Error Loading Data"
+                message={error}
+                actionLabel="Try Again"
+                onActionPress={handleRefresh}
               />
-              <Text style={styles.emptyStateTitle}>
-                {error ? "Error Loading Data" : "No Consultations Found"}
-              </Text>
-              <Text style={styles.emptyStateText}>
-                {error
-                  ? error
-                  : filter === "all"
-                  ? "You haven't had any consultations yet"
-                  : `No ${filter} consultations found`}
-              </Text>
-            </View>
+            ) : (
+              <EmptyState
+                icon="file-tray-outline"
+                title={filter === "all" ? "No Consultations Yet" : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Consultations`}
+                message={
+                  filter === "all"
+                    ? "Your consultation history will appear here after your first appointment."
+                    : `No ${filter} consultations found. Try the All tab to see everything.`
+                }
+              />
+            )
           )
         }
         ListFooterComponent={
@@ -467,23 +471,6 @@ const styles = StyleSheet.create({
   contactText: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.disabled,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: verticalScale(80),
-  },
-  emptyStateTitle: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
   },
   loadingContainer: {
     flex: 1,

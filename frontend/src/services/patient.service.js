@@ -78,18 +78,12 @@ class PatientService {
     }
 
     /**
-     * Get patient profile
+     * Get patient profile (alias for getPatientById)
      * @param {String} patientId - Patient ID
      * @returns {Promise<Object>} - Patient profile
      */
     async getPatientProfile(patientId) {
-        try {
-            const response = await api.get(`/patients/${patientId}/profile`);
-            return response.data;
-        } catch (error) {
-            logError(error, { context: 'PatientService.getPatientProfile', patientId });
-            throw this.handleError(error);
-        }
+        return this.getPatientById(patientId);
     }
 
     /**

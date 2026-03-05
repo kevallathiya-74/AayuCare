@@ -30,6 +30,7 @@ import { EmergencyIcon } from "../../components/common/CustomIcons";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
 import { showError, logError } from "../../utils/errorHandler";
+import { useSelector } from "react-redux";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 
 const EmergencyServices = ({ navigation }) => {
@@ -37,33 +38,49 @@ const EmergencyServices = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const { user } = useSelector((state) => state.auth);
 
+  // Build hospitals list: user's own hospital first, then generic placeholders
+  const nearbyHospitals = [
+    ...(user?.hospitalName
+      ? [
+          {
+            name: user.hospitalName,
+            distance: "Your Hospital",
+            phone: user?.hospitalPhone || "108",
+            emergency: true,
+          },
+        ]
+      : []),
+    {
+      name: "Find Nearest Hospital",
+      distance: "Open Maps",
+      phone: null,
+      emergency: true,
+      openMaps: true,
+    },
+  ];
+
+  const handleOpenMaps = async (query = "hospitals near me") => {
+    try {
+      const encoded = encodeURIComponent(query);
+      const mapsUrl =
+        Platform.OS === "ios"
+          ? `maps:0,0?q=${encoded}`
+          : `geo:0,0?q=${encoded}`;
+      const webUrl = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+      const canOpen = await Linking.canOpenURL(mapsUrl);
+      await Linking.openURL(canOpen ? mapsUrl : webUrl);
+    } catch (err) {
+      logError(err, { context: "EmergencyServices.handleOpenMaps" });
+      showError("Could not open maps. Please search manually.");
+    }
+  };
   const emergencyNumbers = [
     { name: "Ambulance", number: "108", icon: "medical", color: healthColors.error.main },
     { name: "Police", number: "100", icon: "shield", color: healthColors.info.main },
     { name: "Fire Brigade", number: "101", icon: "flame", color: healthColors.warning.main },
     { name: "Women Helpline", number: "1091", icon: "woman", color: healthColors.error.light },
-  ];
-
-  const nearbyHospitals = [
-    {
-      name: "City General Hospital",
-      distance: "2.5 km",
-      phone: "+91-2222-222222",
-      emergency: true,
-    },
-    {
-      name: "Apollo Hospital",
-      distance: "3.8 km",
-      phone: "+91-3333-333333",
-      emergency: true,
-    },
-    {
-      name: "Fortis Healthcare",
-      distance: "5.2 km",
-      phone: "+91-4444-444444",
-      emergency: true,
-    },
   ];
 
   const handleEmergencyCall = async (number, name) => {
@@ -241,7 +258,7 @@ const EmergencyServices = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Nearby Hospitals</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => handleOpenMaps("hospitals near me")}>
               <Text style={styles.viewAllText}>View Map</Text>
             </TouchableOpacity>
           </View>
@@ -277,11 +294,13 @@ const EmergencyServices = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.callButton}
                 onPress={() =>
-                  handleEmergencyCall(hospital.phone, hospital.name)
+                  hospital.openMaps
+                    ? handleOpenMaps("hospitals near me")
+                    : handleEmergencyCall(hospital.phone, hospital.name)
                 }
               >
                 <Ionicons
-                  name="call"
+                  name={hospital.openMaps ? "map" : "call"}
                   size={20}
                   color={healthColors.primary.main}
                 />

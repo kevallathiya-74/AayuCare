@@ -9,6 +9,7 @@ const medicalRecordRepository = require("../repositories/medicalRecordRepository
 const bcrypt = require("bcryptjs");
 const logger = require("../utils/logger");
 const { deleteCacheByPattern } = require("../config/redis");
+const { AppError } = require("../middleware/errorHandler");
 
 /**
  * Calculate age from date of birth
@@ -557,7 +558,12 @@ exports.searchPatients = async (req, res, next) => {
     const requestedLimit = parseInt(req.query.limit, 10) || 20;
     const limit = Math.min(Math.max(requestedLimit, 1), 100);
     const skip = (page - 1) * limit;
+
     const searchQuery = String(q || "").trim();
+
+    if (searchQuery && searchQuery.length > 100) {
+      return next(new AppError("Search query must be 100 characters or fewer", 400));
+    }
 
     logger.info("Search patients request:", {
       doctorId,
@@ -625,8 +631,6 @@ exports.getPatientDetails = async (req, res, next) => {
     logger.info("Get patient details request:", {
       userId,
       userRole,
-      patientId,
-      userIdString: req.user.userId,
     });
 
     // Get complete patient details (users + patients table joined)
@@ -757,7 +761,6 @@ exports.getPatientDetails = async (req, res, next) => {
       stack: error.stack,
       userId: req.user?._id,
       role: req.user?.role,
-      patientId: req.params?.patientId,
     });
     next(error);
   }

@@ -5,6 +5,7 @@
 
 const eventRepository = require('../repositories/eventRepository');
 const logger = require('../utils/logger');
+const { AppError } = require('../middleware/errorHandler');
 const { logError } = logger;
 const { deleteCacheByPattern } = require('../config/redis');
 
@@ -16,6 +17,12 @@ const { deleteCacheByPattern } = require('../config/redis');
 exports.getUpcomingEvents = async (req, res, next) => {
     try {
         const { type, limit = 20, hospitalId } = req.query;
+
+        // Whitelist allowed event types from the Event model enum
+        const ALLOWED_EVENT_TYPES = ['health_camp', 'awareness', 'vaccination', 'screening', 'seminar', 'workshop', 'other'];
+        if (type && !ALLOWED_EVENT_TYPES.includes(type)) {
+            return next(new AppError(`Invalid event type. Allowed: ${ALLOWED_EVENT_TYPES.join(', ')}`, 400));
+        }
         
         const query = {
             isActive: true,

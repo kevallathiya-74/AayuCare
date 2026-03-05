@@ -18,7 +18,7 @@ import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
-import { SkeletonCardRow } from "../../components/common";
+import { SkeletonCardRow, EmptyState } from "../../components/common";
 
 const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
   const [loading, setLoading] = useState(true);
@@ -268,14 +268,12 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
     if (appointments.length === 0) {
       return (
-        <View style={styles.emptyTabContent}>
-          <Ionicons
-            name="calendar-outline"
-            size={60}
-            color={healthColors.text.tertiary}
-          />
-          <Text style={styles.emptyText}>No appointments found</Text>
-        </View>
+        <EmptyState
+          icon="calendar-outline"
+          title="No Appointments"
+          message="This patient hasn't booked any appointments yet."
+          style={{ paddingVertical: 32 }}
+        />
       );
     }
 
@@ -357,14 +355,12 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
     if (records.length === 0) {
       return (
-        <View style={styles.emptyTabContent}>
-          <Ionicons
-            name="document-text-outline"
-            size={60}
-            color={healthColors.text.tertiary}
-          />
-          <Text style={styles.emptyText}>No medical records found</Text>
-        </View>
+        <EmptyState
+          icon="folder-open-outline"
+          title="No Medical Records"
+          message="Medical records for this patient will appear here once added by a doctor."
+          style={{ paddingVertical: 32 }}
+        />
       );
     }
 
@@ -416,14 +412,12 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
     if (prescriptions.length === 0) {
       return (
-        <View style={styles.emptyTabContent}>
-          <Ionicons
-            name="medical-outline"
-            size={60}
-            color={healthColors.text.tertiary}
-          />
-          <Text style={styles.emptyText}>No prescriptions found</Text>
-        </View>
+        <EmptyState
+          icon="medical-outline"
+          title="No Prescriptions"
+          message="Prescriptions issued to this patient will appear here."
+          style={{ paddingVertical: 32 }}
+        />
       );
     }
 
@@ -1016,19 +1010,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: theme.colors.white,
   },
-  emptyTabContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-    minHeight: 200,
-  },
-  emptyText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    color: healthColors.text.tertiary,
-    marginTop: 16,
-    textAlign: "center",
-  },
+
 });
 
 export default PatientDetailsModal;

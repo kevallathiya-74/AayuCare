@@ -34,6 +34,22 @@ export const getPatientMedicalRecords = async (patientId, filters = {}) => {
 export const getPatientRecords = getPatientMedicalRecords;
 
 /**
+ * Get complete patient history including records, appointments, and prescriptions
+ * (Doctor/Admin only)
+ * @param {string} patientId - Patient ID
+ * @returns {Promise<Object>} - Full history with medical records, appointments, prescriptions
+ */
+export const getPatientHistory = async (patientId) => {
+    try {
+        const response = await api.get(`/medical-records/history/${patientId}`);
+        return response.data;
+    } catch (error) {
+        logError(error, { context: 'medicalRecordService.getPatientHistory', patientId });
+        throw error;
+    }
+};
+
+/**
  * Get all medical records
  */
 export const getAllRecords = async () => {
@@ -91,6 +107,7 @@ export const deleteMedicalRecord = async (recordId) => {
 export default {
     getPatientMedicalRecords,
     getPatientRecords,
+    getPatientHistory,
     getAllRecords,
     createMedicalRecord,
     updateMedicalRecord,

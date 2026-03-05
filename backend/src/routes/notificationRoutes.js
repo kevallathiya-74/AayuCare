@@ -6,7 +6,7 @@ const express = require("express");
 const router = express.Router();
 const notificationController = require("../controllers/notificationController");
 const { protect, authorize } = require("../middleware/auth");
-const { validateBody } = require("../middleware/validation");
+const { validateBody, validateObjectId } = require("../middleware/validation");
 const { createNotificationSchema, broadcastNotificationSchema } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
 
@@ -37,6 +37,7 @@ router.put(
 // Mark notification as read
 router.put(
   "/:id/read",
+  validateObjectId('id'),
   notificationController.markAsRead
   // Cache invalidation now handled inside controller
 );
@@ -51,6 +52,7 @@ router.delete(
 // Delete notification
 router.delete(
   "/:id",
+  validateObjectId('id'),
   notificationController.deleteNotification
   // Cache invalidation now handled inside controller
 );

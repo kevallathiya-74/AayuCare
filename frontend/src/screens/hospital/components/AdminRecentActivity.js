@@ -7,6 +7,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../../theme";
+import { EmptyState } from "../../../components/common";
 
 const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => (
   <View style={styles.section}>
@@ -20,11 +21,12 @@ const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => 
 
     <View style={styles.card}>
       {activities.length === 0 ? (
-        <View style={styles.empty}>
-          <Ionicons name="information-circle-outline" size={40} color={healthColors.text.disabled} />
-          <Text style={styles.emptyTitle}>No recent activities</Text>
-          <Text style={styles.emptySub}>Activities will appear here as they occur</Text>
-        </View>
+        <EmptyState
+          icon="time-outline"
+          title="No Recent Activities"
+          message="Activities will appear here as they occur."
+          style={styles.compactEmpty}
+        />
       ) : (
         activities.map((activity, i) => (
           <View key={activity.id || activity._id || i} style={styles.row}>
@@ -71,9 +73,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   activityText: { fontSize: 13, fontWeight: "500", color: healthColors.text.primary, lineHeight: 18 },
   timeText: { fontSize: 11, color: healthColors.text.tertiary, marginTop: 3 },
-  empty: { padding: 32, alignItems: "center", gap: 8 },
-  emptyTitle: { fontSize: 14, fontWeight: "600", color: healthColors.text.secondary },
-  emptySub: { fontSize: 12, color: healthColors.text.tertiary, textAlign: "center" },
+  compactEmpty: { flex: 0, paddingVertical: 24, paddingHorizontal: 16 },
 });
 
 export default AdminRecentActivity;

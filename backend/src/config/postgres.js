@@ -92,12 +92,14 @@ const query = async (text, params) => {
     const duration = Date.now() - start;
 
     if (process.env.NODE_ENV === "development") {
-      logger.debug("Executed query", { text, duration, rows: result.rowCount });
+      // Omit query text from logs to avoid leaking schema/data
+      logger.debug("Executed query", { duration, rows: result.rowCount });
     }
 
     return result;
   } catch (error) {
-    logger.error("Query error:", { text, error: error.message });
+    // Do NOT log query text — it may reveal schema/data to log aggregators
+    logger.error("Query error:", { error: error.message, code: error.code });
     throw error;
   }
 };

@@ -509,7 +509,7 @@ async function seedDatabase() {
     logger.info(`   Patients: ${stats.patients.created} created, ${stats.patients.skipped} skipped`);
     logger.info('');
     logger.info('🔐 Login Credentials:');
-    logger.info(`   Common Password: ${COMMON_PASSWORD}`);
+    logger.info(`   Common Password: ${'*'.repeat(COMMON_PASSWORD.length)} (see LOGIN_CREDENTIALS.md)`);  // Do not log plaintext credentials
     logger.info('');
     logger.info('📧 Sample Logins:');
     logger.info('   Admin:   rajesh.kumar@aayucare.com');

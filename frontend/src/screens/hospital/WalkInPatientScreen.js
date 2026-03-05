@@ -23,6 +23,7 @@ import {
   getScreenPadding,
 } from "../../utils/responsive";
 import { showError, logError } from "../../utils/errorHandler";
+import { validateAge, validateBloodGroup } from "../../utils/formValidators";
 import { doctorService } from "../../services";
 import { Input, Button } from "../../components/common";
 
@@ -52,12 +53,15 @@ const WalkInPatientScreen = ({ navigation }) => {
       showError("Please enter patient name");
       return false;
     }
-    if (
-      !formData.age ||
-      parseInt(formData.age) < 1 ||
-      parseInt(formData.age) > 120
-    ) {
-      showError("Please enter valid age (1-120)");
+    const ageValidation = validateAge(formData.age);
+    if (!ageValidation.valid) {
+      showError(ageValidation.error);
+      return false;
+    }
+
+    const bgValidation = validateBloodGroup(formData.bloodGroup);
+    if (!bgValidation.valid) {
+      showError(bgValidation.error);
       return false;
     }
     

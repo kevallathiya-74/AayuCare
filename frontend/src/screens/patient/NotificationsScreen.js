@@ -21,7 +21,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { adminService, notificationService } from "../../services";
@@ -418,15 +418,11 @@ const NotificationsScreen = ({ navigation }) => {
       {loading ? (
         <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : notifications.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons
-            name="notifications-outline"
-            size={80}
-            color={healthColors.text.tertiary}
-          />
-          <Text style={styles.emptyTitle}>No Notifications</Text>
-          <Text style={styles.emptySubtitle}>You're all caught up!</Text>
-        </View>
+        <EmptyState
+          icon="notifications-outline"
+          title="No Notifications"
+          message="You're all caught up! We'll let you know when something needs your attention."
+        />
       ) : (
         <FlatList
           data={notifications}
@@ -595,24 +591,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
     fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: theme.spacing.xxxxl,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptySubtitle: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.xs,
-    textAlign: "center",
   },
 });
 

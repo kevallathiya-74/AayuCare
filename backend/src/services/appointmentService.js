@@ -84,10 +84,7 @@ class AppointmentService {
     // Create appointment and payment atomically using transaction
     const { appointment, payment } = await createAppointmentWithPayment(
       {
-        appointmentId: `APT-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)
-          .toUpperCase()}`,
+        appointmentId: `APT-${Date.now()}-${require('crypto').randomBytes(5).toString('hex').toUpperCase()}`,
         patientId,
         doctorId,
         hospitalId: hospitalId || doctor.hospital_id,

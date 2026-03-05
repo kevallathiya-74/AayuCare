@@ -277,8 +277,16 @@ exports.getRecentActivities = async (req, res, next) => {
  */
 exports.getUsers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, role, search } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // Prevent HTTP Parameter Pollution (HPP) type confusion — coerce all scalar params to strings
+    const ALLOWED_ROLES = ['admin', 'doctor', 'patient', 'super_admin'];
+    const rawRole = Array.isArray(req.query.role) ? req.query.role[0] : req.query.role;
+    const role = rawRole && ALLOWED_ROLES.includes(String(rawRole)) ? String(rawRole) : undefined;
+    const rawPage  = Array.isArray(req.query.page)  ? req.query.page[0]  : req.query.page;
+    const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
+    const search   = Array.isArray(req.query.search) ? String(req.query.search[0]) : req.query.search;
+    const page  = rawPage  ? parseInt(String(rawPage),  10) || 1  : 1;
+    const limit = rawLimit ? parseInt(String(rawLimit), 10) || 20 : 20;
+    const skip = (page - 1) * limit;
 
     // Validate search query length to prevent ReDoS
     if (search && search.length > 100) {
@@ -1031,8 +1039,20 @@ exports.logoutAllDevices = async (req, res, next) => {
  */
 exports.getMedicalRecordsOverview = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, patientId } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const rawPatientIdSource = req.body && Object.prototype.hasOwnProperty.call(req.body, "patientId") ? req.body.patientId : undefined;
+    const rawPatientId = Array.isArray(rawPatientIdSource) ? rawPatientIdSource[0] : rawPatientIdSource;
+    const rawPage  = Array.isArray(req.query.page)  ? req.query.page[0]  : req.query.page;
+    const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
+    const page  = rawPage  ? parseInt(String(rawPage),  10) || 1  : 1;
+    const limit = rawLimit ? parseInt(String(rawLimit), 10) || 20 : 20;
+    const skip = (page - 1) * limit;
+
+    // Validate patientId UUID format before using in MongoDB filter
+    const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const patientId = rawPatientId && UUID_RE.test(String(rawPatientId)) ? String(rawPatientId) : undefined;
+    if (rawPatientId && !patientId) {
+      return next(new AppError('Invalid patient ID format', 400));
+    }
 
     const mongoFilter = {};
 
@@ -2144,4 +2164,97 @@ function getTimeAgo(date) {
   if (hours < 24) return `${hours} hours ago`;
   return `${days} days ago`;
 }
+
+/**
+ * @desc    Get audit logs with optional filtering and pagination
+ * @route   GET /api/admin/audit-logs
+ * @access  Private (Admin, super_admin)
+ */
+exports.getAuditLogs = async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      limit = 50,
+      startDate,
+      endDate,
+      action,
+      userId,
+    } = req.query;
+
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    // Build WHERE clauses dynamically
+    const conditions = [];
+    const params = [];
+    let paramIdx = 1;
+
+    if (startDate) {
+      conditions.push(`al.created_at >= $${paramIdx++}`);
+      params.push(new Date(startDate));
+    }
+    if (endDate) {
+      // Include the full end day
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(`al.created_at <= $${paramIdx++}`);
+      params.push(end);
+    }
+    if (action) {
+      conditions.push(`al.action = $${paramIdx++}`);
+      params.push(action);
+    }
+    if (userId) {
+      conditions.push(`al.user_id = $${paramIdx++}::uuid`);
+      params.push(userId);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    // Count total for pagination
+    const countResult = await query(
+      `SELECT COUNT(*) as total FROM audit_logs al ${whereClause}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    // Fetch paginated audit logs with actor name
+    const logsResult = await query(
+      `SELECT
+         al.id,
+         al.action,
+         al.entity_type,
+         al.entity_id,
+         al.old_values,
+         al.new_values,
+         al.ip_address,
+         al.user_agent,
+         al.successful,
+         al.error_message,
+         al.created_at,
+         u.name         AS actor_name,
+         u.user_id      AS actor_user_id,
+         u.role         AS actor_role
+       FROM audit_logs al
+       LEFT JOIN users u ON al.user_id = u.id
+       ${whereClause}
+       ORDER BY al.created_at DESC
+       LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+      [...params, parseInt(limit, 10), offset]
+    );
+
+    res.json({
+      success: true,
+      data: logsResult.rows,
+      pagination: {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        total,
+        pages: Math.ceil(total / parseInt(limit, 10)),
+      },
+    });
+  } catch (error) {
+    logger.error("getAuditLogs error:", { error: error.message, stack: error.stack });
+    next(error);
+  }
+};
 

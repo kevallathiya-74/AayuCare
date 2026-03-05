@@ -13,6 +13,8 @@ import {
   StatusBar,
   RefreshControl,
   Alert,
+  Modal,
+  ScrollView,
 } from "react-native";
 import {
   SafeAreaView,
@@ -21,7 +23,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatDate } from "../../utils/helpers";
@@ -32,6 +34,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedPrescription, setSelectedPrescription] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
@@ -78,13 +81,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     <TouchableOpacity
       style={styles.prescriptionCard}
       activeOpacity={0.7}
-      onPress={() => {
-        Alert.alert(
-          "Prescription Details",
-          `Doctor: ${item.doctorName}\nMedications: ${item.medications?.length || 0}`,
-          [{ text: "OK" }]
-        );
-      }}
+      onPress={() => setSelectedPrescription(item)}
     >
       <View style={styles.prescriptionHeader}>
         <View style={styles.prescriptionIcon}>
@@ -150,17 +147,13 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="medical-outline"
-        size={80}
-        color={healthColors.text.tertiary}
-      />
-      <Text style={styles.emptyTitle}>No Prescriptions Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Your prescriptions from doctor visits will appear here
-      </Text>
-    </View>
+    <EmptyState
+      icon="medical-outline"
+      title="No Prescriptions Yet"
+      message="Your prescriptions from doctor visits will appear here. Book an appointment to get started."
+      actionLabel="Book Appointment"
+      onActionPress={() => navigation.navigate("AppointmentBooking")}
+    />
   );
 
   if (error && !prescriptions.length) {
@@ -201,6 +194,116 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       </View>
 
       {/* Content */}
+
+      {/* Prescription Detail Modal */}
+      <Modal
+        visible={!!selectedPrescription}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSelectedPrescription(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={styles.modalIcon}>
+                  <Ionicons name="medical" size={22} color={healthColors.primary.main} />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>Prescription Details</Text>
+                  <Text style={styles.modalSubtitle}>
+                    {formatDate(selectedPrescription?.prescriptionDate || selectedPrescription?.createdAt)}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedPrescription(null)}
+                style={styles.modalClose}
+              >
+                <Ionicons name="close" size={22} color={healthColors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {/* Doctor */}
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>Prescribed By</Text>
+                <Text style={styles.detailValue}>
+                  Dr. {selectedPrescription?.doctorName || "Unknown Doctor"}
+                </Text>
+              </View>
+
+              {/* Diagnosis */}
+              {!!selectedPrescription?.diagnosis && (
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Diagnosis</Text>
+                  <Text style={styles.detailValue}>{selectedPrescription.diagnosis}</Text>
+                </View>
+              )}
+
+              {/* Medications */}
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>Medications</Text>
+                {(selectedPrescription?.medications || selectedPrescription?.medicines || []).length === 0 ? (
+                  <Text style={styles.detailValueMuted}>No medications listed</Text>
+                ) : (
+                  (selectedPrescription?.medications || selectedPrescription?.medicines || []).map((med, idx) => (
+                    <View key={idx} style={styles.medRow}>
+                      <View style={styles.medBullet}>
+                        <Ionicons name="medical-outline" size={14} color={healthColors.primary.main} />
+                      </View>
+                      <View style={styles.medInfo}>
+                        <Text style={styles.medName}>
+                          {med.name || med.medicationName || med.medicine || `Medication ${idx + 1}`}
+                        </Text>
+                        {!!med.dosage && (
+                          <Text style={styles.medMeta}>Dosage: {med.dosage}</Text>
+                        )}
+                        {!!med.frequency && (
+                          <Text style={styles.medMeta}>Frequency: {med.frequency}</Text>
+                        )}
+                        {!!med.duration && (
+                          <Text style={styles.medMeta}>Duration: {med.duration}</Text>
+                        )}
+                        {!!med.instructions && (
+                          <Text style={styles.medMeta}>Instructions: {med.instructions}</Text>
+                        )}
+                      </View>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              {/* Notes */}
+              {!!selectedPrescription?.notes && (
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Doctor Notes</Text>
+                  <Text style={styles.detailValue}>{selectedPrescription.notes}</Text>
+                </View>
+              )}
+
+              {/* Status */}
+              {!!selectedPrescription?.status && (
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Status</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedPrescription.status.charAt(0).toUpperCase() + selectedPrescription.status.slice(1)}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalDismiss}
+              onPress={() => setSelectedPrescription(null)}
+            >
+              <Text style={styles.modalDismissText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {loading ? (
         <View style={{ padding: 16, gap: 12 }}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
@@ -260,6 +363,123 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    backgroundColor: healthColors.background.card,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    maxHeight: "85%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  modalHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+  },
+  modalIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: healthColors.primary.light + "20",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  modalSubtitle: {
+    fontSize: theme.typography.sizes.sm,
+    color: healthColors.text.secondary,
+    marginTop: 2,
+  },
+  modalClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: healthColors.background.tertiary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBody: {
+    padding: theme.spacing.lg,
+  },
+  detailSection: {
+    marginBottom: theme.spacing.lg,
+  },
+  detailSectionTitle: {
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.secondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: theme.spacing.xs,
+  },
+  detailValue: {
+    fontSize: theme.typography.sizes.md,
+    color: healthColors.text.primary,
+    lineHeight: 22,
+  },
+  detailValueMuted: {
+    fontSize: theme.typography.sizes.md,
+    color: healthColors.text.tertiary,
+    fontStyle: "italic",
+  },
+  medRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  medBullet: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: healthColors.primary.light + "20",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  medInfo: {
+    flex: 1,
+  },
+  medName: {
+    fontSize: theme.typography.sizes.md,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.primary,
+  },
+  medMeta: {
+    fontSize: theme.typography.sizes.sm,
+    color: healthColors.text.secondary,
+    marginTop: 2,
+  },
+  modalDismiss: {
+    margin: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.md,
+    backgroundColor: healthColors.primary.main,
+    borderRadius: theme.borderRadius.md,
+    alignItems: "center",
+  },
+  modalDismissText: {
+    fontSize: theme.typography.sizes.md,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.white,
   },
   content: {
     padding: theme.spacing.lg,
@@ -354,24 +574,6 @@ const styles = StyleSheet.create({
   moreText: {
     fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: theme.spacing.xxxxl,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  emptySubtitle: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.xs,
-    textAlign: "center",
   },
 });
 

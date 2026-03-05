@@ -189,8 +189,8 @@ const DoctorHomeScreen = ({ navigation }) => {
     {
       title: "ACCOUNT",
       items: [
-        { icon: "person", iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("Profile") },
-        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("DoctorTabs", { screen: "Settings" }) },
+        { icon: "person", iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("DoctorTabs", { screen: "Profile" }) },
+        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("Settings") },
       ],
     },
   ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -226,7 +226,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           notificationCount={schedule.pending}
           onMenuOpen={openMenu}
           onNotificationPress={() => navigation.navigate("NotificationsScreen")}
-          onProfilePress={() => navigation.navigate("Profile")}
+          onProfilePress={() => navigation.navigate("EditProfile")}
         />
 
         <View style={styles.body}>

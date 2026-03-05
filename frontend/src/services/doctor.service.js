@@ -16,19 +16,9 @@ class DoctorService {
    */
   async getDoctors(filters = {}) {
     try {
-      // Add cache-busting timestamp to force fresh data
-      const params = new URLSearchParams({
-        ...filters,
-        _t: Date.now().toString(),
-      }).toString();
-
-      const response = await api.get(`/doctors?${params}`, {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+      const params = new URLSearchParams(filters).toString();
+      const url = params ? `/doctors?${params}` : "/doctors";
+      const response = await api.get(url);
       return response.data?.data || response.data;
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctors" });

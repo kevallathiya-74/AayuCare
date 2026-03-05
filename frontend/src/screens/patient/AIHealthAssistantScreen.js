@@ -120,7 +120,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
     if (message.trim()) {
       const userMessage = message.trim();
       const newMessage = {
-        id: messages.length + 1,
+        id: Date.now(),
         type: "user",
         text: userMessage,
       };
@@ -173,7 +173,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         }
 
         const aiResponse = {
-          id: messages.length + 2,
+          id: Date.now() + 1,
           type: "ai",
           text:
             aiText ||
@@ -187,7 +187,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
 
         // Provide helpful fallback response instead of error
         const fallbackResponse = {
-          id: messages.length + 2,
+          id: Date.now() + 1,
           type: "ai",
           text: "I'm having trouble connecting right now. In the meantime, here are general tips:\n\n• Stay hydrated\n• Get adequate rest\n• If symptoms persist or worsen, please consult a doctor\n\nPlease try again later for AI-powered analysis.",
         };

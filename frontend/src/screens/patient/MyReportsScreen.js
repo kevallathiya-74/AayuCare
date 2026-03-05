@@ -12,11 +12,12 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-
   Alert,
   RefreshControl,
   Linking,
   Share,
+  Modal,
+  ScrollView,
 } from "react-native";
 import {
   SafeAreaView,
@@ -25,7 +26,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow } from "../../components/common";
+import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { medicalRecordService } from "../../services";
@@ -35,6 +36,9 @@ const MyReportsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [filterType, setFilterType] = useState(null);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const user = useSelector((state) => state.auth.user);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
@@ -118,6 +122,10 @@ const MyReportsScreen = ({ navigation }) => {
     return record.recordType === "imaging" ? "Image" : "PDF";
   };
 
+  const FILTER_OPTIONS = ["All", "Lab Report", "Imaging", "Test Result", "Doctor Visit", "Prescription"];
+
+  const filteredReports = filterType ? reports.filter((r) => r.type === filterType) : reports;
+
   const getFileIcon = (fileType) => {
     return fileType === "PDF" ? "document-text" : "image";
   };
@@ -153,12 +161,7 @@ const MyReportsScreen = ({ navigation }) => {
   const renderReport = ({ item }) => (
     <TouchableOpacity
       style={styles.reportCard}
-      onPress={() =>
-        Alert.alert(
-          "Report Viewer",
-          `Viewing ${item.title} - Full report viewer coming soon!`
-        )
-      }
+      onPress={() => setSelectedReport(item)}
       activeOpacity={0.7}
     >
       {/* Removed navigation to non-existent ReportViewer screen */}
@@ -247,14 +250,14 @@ const MyReportsScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Reports</Text>
-        <TouchableOpacity style={styles.filterButton} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.filterButton} activeOpacity={0.7} onPress={() => setFilterModalVisible(true)}>
           <Ionicons name="filter" size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Reports List */}
       <FlatList
-        data={reports}
+        data={filteredReports}
         renderItem={renderReport}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
@@ -272,20 +275,130 @@ const MyReportsScreen = ({ navigation }) => {
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="document-text-outline"
-              size={64}
-              color={healthColors.text.disabled}
-            />
-            <Text style={styles.emptyStateTitle}>No Reports Found</Text>
-            <Text style={styles.emptyStateText}>
-              Your medical reports will appear here once they are uploaded by
-              your doctor.
-            </Text>
-          </View>
+          <EmptyState
+            icon="document-text-outline"
+            title="No Reports Found"
+            message="Your medical reports will appear here once they are uploaded by your doctor."
+          />
         }
       />
+
+      {/* Report Detail Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={!!selectedReport}
+        onRequestClose={() => setSelectedReport(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={2}>{selectedReport?.title}</Text>
+              <TouchableOpacity onPress={() => setSelectedReport(null)}>
+                <Ionicons name="close-circle" size={28} color={healthColors.text.tertiary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {selectedReport && (
+                <>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="calendar-outline" size={15} color={healthColors.text.secondary} />
+                    <Text style={styles.detailText}>{selectedReport.date}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="folder-outline" size={15} color={healthColors.text.secondary} />
+                    <Text style={styles.detailText}>{selectedReport.type}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="person-outline" size={15} color={healthColors.text.secondary} />
+                    <Text style={styles.detailText}>Dr. {selectedReport.doctor}</Text>
+                  </View>
+                  {selectedReport.recordData?.description && (
+                    <View style={styles.detailBlock}>
+                      <Text style={styles.detailBlockTitle}>Description</Text>
+                      <Text style={styles.detailBlockBody}>{selectedReport.recordData.description}</Text>
+                    </View>
+                  )}
+                  {selectedReport.recordData?.diagnosis && (
+                    <View style={styles.detailBlock}>
+                      <Text style={styles.detailBlockTitle}>Diagnosis</Text>
+                      <Text style={styles.detailBlockBody}>{selectedReport.recordData.diagnosis}</Text>
+                    </View>
+                  )}
+                  {selectedReport.recordData?.aiAnalysis?.summary && (
+                    <View style={[styles.detailBlock, { borderLeftColor: healthColors.primary.main, borderLeftWidth: 3 }]}>
+                      <Text style={styles.detailBlockTitle}>AI Analysis</Text>
+                      <Text style={styles.detailBlockBody}>{selectedReport.recordData.aiAnalysis.summary}</Text>
+                    </View>
+                  )}
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity
+                      style={styles.modalActionBtn}
+                      onPress={() => {
+                        const url = selectedReport.recordData?.attachments?.[0];
+                        url
+                          ? Linking.openURL(url).catch(() => Alert.alert("Error", "Unable to open file."))
+                          : Alert.alert("Not Available", "No file attached.");
+                      }}
+                    >
+                      <Ionicons name="download-outline" size={18} color={healthColors.primary.main} />
+                      <Text style={styles.modalActionText}>Download</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.modalActionBtn}
+                      onPress={() =>
+                        Share.share({
+                          title: selectedReport.title,
+                          message: `${selectedReport.title}\nType: ${selectedReport.type}\nDate: ${selectedReport.date}\nDoctor: ${selectedReport.doctor}`,
+                        }).catch(() => {})
+                      }
+                    >
+                      <Ionicons name="share-outline" size={18} color={healthColors.text.secondary} />
+                      <Text style={styles.modalActionText}>Share</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={filterModalVisible}
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: "60%" }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter by Type</Text>
+              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+                <Ionicons name="close-circle" size={28} color={healthColors.text.tertiary} />
+              </TouchableOpacity>
+            </View>
+            {FILTER_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                style={[styles.filterOption, filterType === (opt === "All" ? null : opt) && styles.filterOptionActive]}
+                onPress={() => {
+                  setFilterType(opt === "All" ? null : opt);
+                  setFilterModalVisible(false);
+                }}
+              >
+                <Text style={[styles.filterOptionText, filterType === (opt === "All" ? null : opt) && styles.filterOptionTextActive]}>
+                  {opt}
+                </Text>
+                {filterType === (opt === "All" ? null : opt) && (
+                  <Ionicons name="checkmark" size={18} color={healthColors.primary.main} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -416,28 +529,101 @@ const styles = StyleSheet.create({
   emptyListContent: {
     flexGrow: 1,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: theme.spacing.xl,
-    minHeight: 400,
-  },
-  emptyStateTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.xs,
-  },
-  emptyStateText: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
   headerRightSpacer: {
     width: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: theme.spacing.xl,
+    maxHeight: "85%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: theme.spacing.lg,
+  },
+  modalTitle: {
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: theme.spacing.sm,
+  },
+  detailText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+  },
+  detailBlock: {
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.md,
+    backgroundColor: healthColors.background.secondary,
+    borderRadius: theme.borderRadius.md,
+  },
+  detailBlockTitle: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+    marginBottom: 4,
+  },
+  detailBlockBody: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+    lineHeight: 22,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+  },
+  modalActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  modalActionText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+  },
+  filterOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
+  filterOptionActive: {
+    backgroundColor: healthColors.primary.main + "10",
+    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  filterOptionText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+  },
+  filterOptionTextActive: {
+    color: healthColors.primary.main,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
 

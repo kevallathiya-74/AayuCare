@@ -63,7 +63,7 @@ class PrescriptionService {
     }
 
     /**
-     * Update prescription status
+     * Update prescription status (doctor/admin)
      * @param {String} prescriptionId - Prescription ID
      * @param {String} status - New status
      * @returns {Promise<Object>} - Updated prescription
@@ -71,6 +71,51 @@ class PrescriptionService {
     async updatePrescriptionStatus(prescriptionId, status) {
         try {
             const response = await api.patch(`/prescriptions/${prescriptionId}/status`, { status });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Update pharmacy status for a prescription (admin only)
+     * @param {String} prescriptionId - Prescription ID
+     * @param {String} pharmacyStatus - New pharmacy status (pending|sent_to_pharmacy|preparing|ready|dispensed)
+     * @param {Object} paymentData - Optional payment info
+     * @returns {Promise<Object>} - Updated prescription
+     */
+    async updatePharmacyStatus(prescriptionId, pharmacyStatus, paymentData = {}) {
+        try {
+            const response = await api.patch(`/prescriptions/${prescriptionId}`, { pharmacyStatus, ...paymentData });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Get all prescriptions (admin only)
+     * @param {Object} params - Optional query params (page, limit)
+     * @returns {Promise<Array>} - List of all prescriptions
+     */
+    async getAllPrescriptions(params = {}) {
+        try {
+            const queryString = new URLSearchParams(params).toString();
+            const response = await api.get(`/prescriptions${queryString ? `?${queryString}` : ''}`);
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Delete a prescription (admin only)
+     * @param {String} prescriptionId - Prescription ID
+     * @returns {Promise<Object>} - Deletion confirmation
+     */
+    async deletePrescription(prescriptionId) {
+        try {
+            const response = await api.delete(`/prescriptions/${prescriptionId}`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);

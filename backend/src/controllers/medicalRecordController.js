@@ -25,6 +25,20 @@ exports.getAllMedicalRecords = async (req, res, next) => {
       limit = 10,
     } = req.query;
 
+    // Validate recordType against allowed enum
+    const VALID_RECORD_TYPES = ['lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'vaccination', 'other'];
+    if (recordType && !VALID_RECORD_TYPES.includes(String(recordType))) {
+      return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
+    }
+    // Validate UUID-format IDs if provided
+    const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (patientId && !UUID_RE.test(String(patientId))) {
+      return next(new AppError('Invalid patient ID format', 400));
+    }
+    if (doctorId && !UUID_RE.test(String(doctorId))) {
+      return next(new AppError('Invalid doctor ID format', 400));
+    }
+
     // Build query
     const query = {};
 
@@ -182,6 +196,12 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
   try {
     const { patientId } = req.params;
     const { recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
+
+    // Validate recordType against allowed enum
+    const VALID_RECORD_TYPES = ['lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'vaccination', 'other'];
+    if (recordType && !VALID_RECORD_TYPES.includes(String(recordType))) {
+      return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
+    }
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
     const isOwnData = req.user.userId === patientId;
@@ -402,13 +422,15 @@ exports.deleteMedicalRecord = async (req, res, next) => {
 exports.getPatientHistory = async (req, res, next) => {
   try {
     const { patientId } = req.params;
+    // Explicit String cast to prevent type confusion from HPP attacks
+    const safePatientId = String(patientId);
 
     // Find patient by UUID or custom userId
     let patient;
-    if (UUID_REGEX.test(patientId)) {
-      patient = await userRepository.findById(patientId);
+    if (UUID_REGEX.test(safePatientId)) {
+      patient = await userRepository.findById(safePatientId);
     } else {
-      patient = await userRepository.findByUserId(patientId);
+      patient = await userRepository.findByUserId(safePatientId);
     }
     
     // Verify it's actually a patient

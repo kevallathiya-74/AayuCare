@@ -217,8 +217,8 @@ exports.getPatientPrescriptions = async (req, res, next) => {
 
     const prescriptions = await prescriptionRepository.findByPatient(patient.id, {
       hospitalId: req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined,
-      limit: parseInt(req.query.limit || 50),
-      skip: parseInt(req.query.skip || 0),
+      limit: Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 100),
+      skip: Math.max(parseInt(String(req.query.skip  || '0'),  10) || 0,  0),
     });
 
     const enriched = await enrichPrescriptionUsers(prescriptions);
@@ -232,7 +232,6 @@ exports.getPatientPrescriptions = async (req, res, next) => {
     logger.error("Get patient prescriptions error:", {
       error: error.message,
       stack: error.stack,
-      patientId: req.params.patientId,
     });
     next(error);
   }
@@ -266,8 +265,8 @@ exports.getDoctorPrescriptions = async (req, res, next) => {
 
     const prescriptions = await prescriptionRepository.findByDoctor(doctor.id, {
       hospitalId: req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined,
-      limit: parseInt(req.query.limit || 50),
-      skip: parseInt(req.query.skip || 0),
+      limit: Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 100),
+      skip: Math.max(parseInt(String(req.query.skip  || '0'),  10) || 0,  0),
     });
 
     const enriched = await enrichPrescriptionUsers(prescriptions);
@@ -281,7 +280,6 @@ exports.getDoctorPrescriptions = async (req, res, next) => {
     logger.error("Get doctor prescriptions error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.params.doctorId,
     });
     next(error);
   }
@@ -330,7 +328,6 @@ exports.getPrescriptionById = async (req, res, next) => {
     logger.error("Get prescription by ID error:", {
       error: error.message,
       stack: error.stack,
-      prescriptionId: req.params.prescriptionId,
     });
     next(error);
   }

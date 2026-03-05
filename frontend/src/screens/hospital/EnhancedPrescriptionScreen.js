@@ -31,7 +31,7 @@ import {
 import { prescriptionService, patientService, doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { formatCurrency } from "../../utils/helpers";
-import { SkeletonCardRow, Input } from "../../components/common";
+import { SkeletonCardRow, Input, EmptyState } from "../../components/common";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -446,18 +446,14 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
       >
-        {/* Patient Selected State */}
+        {/* No Patient Selected */}
         {!loading && !selectedPatientId && (
           <View style={styles.emptyStateContainer}>
-            <Ionicons
-              name="person-add-outline"
-              size={80}
-              color={healthColors.text.disabled}
+            <EmptyState
+              icon="person-add-outline"
+              title="No Patient Selected"
+              message="Select a patient below to create a prescription."
             />
-            <Text style={styles.emptyStateTitle}>No Patient Selected</Text>
-            <Text style={styles.emptyStateText}>
-              Select a patient below to create a prescription.
-            </Text>
             {renderPatientPicker()}
           </View>
         )}
@@ -465,22 +461,13 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         {/* Patient fetch failed - show error + allow re-selection */}
         {!loading && selectedPatientId && !patient && (
           <View style={styles.emptyStateContainer}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={64}
-              color={healthColors.error.main}
+            <EmptyState
+              icon="alert-circle-outline"
+              title="Patient Not Found"
+              message="Could not load patient details. Please select a different patient."
+              actionLabel="Select Different Patient"
+              onActionPress={() => setSelectedPatientId(null)}
             />
-            <Text style={styles.emptyStateTitle}>Patient Not Found</Text>
-            <Text style={styles.emptyStateText}>
-              Could not load patient details. Please select a different patient.
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyStateButton}
-              onPress={() => setSelectedPatientId(null)}
-            >
-              <Ionicons name="person-add-outline" size={18} color={theme.colors.white} />
-              <Text style={styles.emptyStateButtonText}>Select Patient</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -1136,47 +1123,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: getScreenPadding(),
     paddingVertical: verticalScale(80),
-  },
-  emptyStateTitle: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginTop: 20,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptyStateText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 32,
-    maxWidth: "80%",
-  },
-  emptyStateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.primary.main,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginBottom: 12,
-    minWidth: "70%",
-    gap: 8,
-  },
-  emptyStateButtonSecondary: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: healthColors.primary.main,
-  },
-  emptyStateButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.white,
-  },
-  emptyStateButtonTextSecondary: {
-    color: healthColors.primary.main,
   },
   patientListCard: {
     width: "100%",

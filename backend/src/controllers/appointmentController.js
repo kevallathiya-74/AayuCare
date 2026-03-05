@@ -60,8 +60,15 @@ exports.createAppointment = async (req, res, next) => {
  */
 exports.getAllAppointmentsCursor = async (req, res, next) => {
   try {
-    // Add hospitalId from authenticated user for multi-tenancy
-    const filters = { ...req.query };
+    // Whitelist safe filter fields — never spread req.query directly into DB filters
+    const { status, startDate, endDate, date, cursor, limit } = req.query;
+    const filters = {};
+    if (status)    filters.status    = String(status);
+    if (startDate) filters.startDate = String(startDate);
+    if (endDate)   filters.endDate   = String(endDate);
+    if (date)      filters.date      = String(date);
+    if (cursor)    filters.cursor    = String(cursor);
+    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
@@ -79,15 +86,22 @@ exports.getAllAppointmentsCursor = async (req, res, next) => {
 
 /**
  * @desc    Get appointments with cursor-based pagination (patient or doctor specific)
- * @route   GET /api/appointments/cursor
+ * @route   POST /api/appointments/cursor
  * @access  Private
  */
 exports.getAppointmentsCursor = async (req, res, next) => {
   try {
     let result;
     
-    // Add hospitalId to filters for multi-tenancy (skip for super_admin)
-    const filters = { ...req.query };
+    // Whitelist safe filter fields — never spread req.query directly into DB filters
+    const { status, startDate, endDate, date, cursor, limit } = req.query;
+    const filters = {};
+    if (status)    filters.status    = String(status);
+    if (startDate) filters.startDate = String(startDate);
+    if (endDate)   filters.endDate   = String(endDate);
+    if (date)      filters.date      = String(date);
+    if (cursor)    filters.cursor    = String(cursor);
+    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
@@ -104,7 +118,13 @@ exports.getAppointmentsCursor = async (req, res, next) => {
       );
     } else if (req.user.role === "admin" || req.user.role === "super_admin") {
       // Admin/super_admin can view all appointments or filter by patient/doctor
-      const { patientId, doctorId } = req.query;
+      const rawPid = Array.isArray(req.body.patientId) ? req.body.patientId[0] : req.body.patientId;
+      const rawDid = Array.isArray(req.body.doctorId)  ? req.body.doctorId[0]  : req.body.doctorId;
+      const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      const patientId = rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
+      const doctorId  = rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
+      if (rawPid && !patientId) return next(new AppError("Invalid patient ID format", 400));
+      if (rawDid && !doctorId)  return next(new AppError("Invalid doctor ID format",  400));
       if (patientId) {
         result = await appointmentService.getPatientAppointmentsCursor(
           patientId,
@@ -139,8 +159,15 @@ exports.getAppointmentsCursor = async (req, res, next) => {
  */
 exports.getAllAppointments = async (req, res, next) => {
   try {
-    // Add hospitalId from authenticated user for multi-tenancy
-    const filters = { ...req.query };
+    // Whitelist safe filter fields — never spread req.query directly into DB filters
+    const { status, startDate, endDate, date, page, limit } = req.query;
+    const filters = {};
+    if (status)    filters.status    = String(status);
+    if (startDate) filters.startDate = String(startDate);
+    if (endDate)   filters.endDate   = String(endDate);
+    if (date)      filters.date      = String(date);
+    if (page)      filters.page      = parseInt(String(page), 10) || 1;
+    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
@@ -165,8 +192,15 @@ exports.getAppointments = async (req, res, next) => {
   try {
     let result;
     
-    // Add hospitalId to filters for multi-tenancy (skip for super_admin)
-    const filters = { ...req.query };
+    // Whitelist safe filter fields — never spread req.query directly into DB filters
+    const { status, startDate, endDate, date, page, limit } = req.query;
+    const filters = {};
+    if (status)    filters.status    = String(status);
+    if (startDate) filters.startDate = String(startDate);
+    if (endDate)   filters.endDate   = String(endDate);
+    if (date)      filters.date      = String(date);
+    if (page)      filters.page      = parseInt(String(page), 10) || 1;
+    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
@@ -183,7 +217,13 @@ exports.getAppointments = async (req, res, next) => {
       );
     } else if (req.user.role === "admin" || req.user.role === "super_admin") {
       // Admin/super_admin can view all appointments or filter by patient/doctor
-      const { patientId, doctorId } = req.query;
+      const rawPid = Array.isArray(req.body.patientId) ? req.body.patientId[0] : req.body.patientId;
+      const rawDid = Array.isArray(req.body.doctorId)  ? req.body.doctorId[0]  : req.body.doctorId;
+      const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      const patientId = rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
+      const doctorId  = rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
+      if (rawPid && !patientId) return next(new AppError("Invalid patient ID format", 400));
+      if (rawDid && !doctorId)  return next(new AppError("Invalid doctor ID format",  400));
       if (patientId) {
         result = await appointmentService.getPatientAppointments(
           patientId,
@@ -435,12 +475,13 @@ exports.getAppointmentStats = async (req, res, next) => {
 
 /**
  * @desc    Get appointments for a specific patient
- * @route   GET /api/appointments/patient/:patientId
+ * @route   POST /api/appointments/patient
  * @access  Private (Patient own data, Doctor, Admin)
  */
 exports.getPatientAppointments = async (req, res, next) => {
   try {
-    const { patientId } = req.params;
+    // Explicit String cast to prevent type confusion from HTTP parameter pollution
+    const patientId = String(req.body.patientId);
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
     const isOwnData =

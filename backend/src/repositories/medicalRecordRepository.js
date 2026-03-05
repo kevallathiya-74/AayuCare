@@ -66,8 +66,16 @@ class MedicalRecordRepository {
    */
   async findWithFilters(filters = {}, options = {}) {
     const { limit = 50, offset = 0, sort = { createdAt: -1 } } = options;
-    
-    return await MedicalRecord.find(filters)
+    // Build a safe query with only known, explicitly typed fields
+    // to prevent MongoDB operator injection from caller-supplied filter objects
+    const safeQuery = {};
+    if (filters.patientId)  safeQuery.patientId  = String(filters.patientId);
+    if (filters.doctorId)   safeQuery.doctorId   = String(filters.doctorId);
+    if (filters.hospitalId) safeQuery.hospitalId = String(filters.hospitalId);
+    if (filters.recordType) safeQuery.recordType = String(filters.recordType);
+    if (filters.date) safeQuery.date = filters.date; // already a constructed range object
+
+    return await MedicalRecord.find(safeQuery)
       .sort(sort)
       .limit(limit)
       .skip(offset)

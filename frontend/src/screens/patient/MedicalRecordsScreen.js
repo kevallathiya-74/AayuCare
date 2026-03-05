@@ -13,6 +13,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Modal,
+  ScrollView,
 } from "react-native";
 import {
   SafeAreaView,
@@ -39,6 +41,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const user = useSelector((state) => state.auth.user);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
@@ -112,12 +115,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
     return (
       <TouchableOpacity
-        onPress={() =>
-          Alert.alert(
-            "Medical Record",
-            `Viewing details for ${item.title || item.recordType} - Full record viewer coming soon!`
-          )
-        }
+        onPress={() => setSelectedRecord(item)}
         activeOpacity={0.7}
       >
         {/* Removed navigation to non-existent RecordDetail screen */}
@@ -265,6 +263,109 @@ const MedicalRecordsScreen = ({ navigation }) => {
       )}
 
       <LoadingOverlay visible={loading} message="Loading records..." />
+
+      {/* Record Detail Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={!!selectedRecord}
+        onRequestClose={() => setSelectedRecord(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                {selectedRecord?.title || selectedRecord?.recordType}
+              </Text>
+              <TouchableOpacity onPress={() => setSelectedRecord(null)}>
+                <Ionicons name="close-circle" size={28} color={healthColors.text.tertiary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {selectedRecord && (
+                <>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="calendar-outline" size={16} color={healthColors.text.secondary} />
+                    <Text style={styles.detailLabel}>Date:</Text>
+                    <Text style={styles.detailValue}>
+                      {new Date(selectedRecord.date).toLocaleDateString("en-IN", {
+                        day: "numeric", month: "long", year: "numeric",
+                      })}
+                    </Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Ionicons name="document-outline" size={16} color={healthColors.text.secondary} />
+                    <Text style={styles.detailLabel}>Type:</Text>
+                    <Text style={styles.detailValue}>
+                      {selectedRecord.recordType?.replace(/_/g, " ")}
+                    </Text>
+                  </View>
+
+                  {selectedRecord.doctorId && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="person-outline" size={16} color={healthColors.text.secondary} />
+                      <Text style={styles.detailLabel}>Doctor:</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedRecord.doctorId.name}
+                        {selectedRecord.doctorId.specialization
+                          ? ` · ${selectedRecord.doctorId.specialization}`
+                          : ""}
+                      </Text>
+                    </View>
+                  )}
+
+                  {selectedRecord.description && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailSectionTitle}>Description</Text>
+                      <Text style={styles.detailBody}>{selectedRecord.description}</Text>
+                    </View>
+                  )}
+
+                  {selectedRecord.diagnosis && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailSectionTitle}>Diagnosis</Text>
+                      <Text style={styles.detailBody}>{selectedRecord.diagnosis}</Text>
+                    </View>
+                  )}
+
+                  {selectedRecord.notes && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailSectionTitle}>Notes</Text>
+                      <Text style={styles.detailBody}>{selectedRecord.notes}</Text>
+                    </View>
+                  )}
+
+                  {selectedRecord.aiAnalysis?.summary && (
+                    <View style={[styles.detailSection, styles.aiBox]}>
+                      <Text style={styles.detailSectionTitle}>AI Analysis</Text>
+                      <Text style={styles.detailBody}>{selectedRecord.aiAnalysis.summary}</Text>
+                      {selectedRecord.aiAnalysis.riskScore != null && (
+                        <Text style={styles.riskScoreText}>
+                          Risk Score: {selectedRecord.aiAnalysis.riskScore}/100
+                        </Text>
+                      )}
+                    </View>
+                  )}
+
+                  {selectedRecord.files?.length > 0 && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailSectionTitle}>
+                        Attachments ({selectedRecord.files.length})
+                      </Text>
+                      {selectedRecord.files.map((f, i) => (
+                        <Text key={i} style={styles.fileItem}>
+                          • {f.name || `File ${i + 1}`}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -364,6 +465,79 @@ const styles = StyleSheet.create({
     ...textStyles.bodySmall,
     fontWeight: theme.typography.weights.semibold,
     marginLeft: spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: spacing.xl,
+    maxHeight: "85%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    ...textStyles.h4,
+    color: healthColors.text.primary,
+    flex: 1,
+    marginRight: spacing.md,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  detailLabel: {
+    ...textStyles.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.secondary,
+    marginRight: 4,
+  },
+  detailValue: {
+    ...textStyles.bodyMedium,
+    color: healthColors.text.primary,
+    flex: 1,
+  },
+  detailSection: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: healthColors.background.secondary,
+    borderRadius: theme.borderRadius.md,
+  },
+  detailSectionTitle: {
+    ...textStyles.bodyMedium,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  detailBody: {
+    ...textStyles.bodyMedium,
+    color: healthColors.text.secondary,
+    lineHeight: 22,
+  },
+  aiBox: {
+    borderLeftWidth: 3,
+    borderLeftColor: healthColors.primary.main,
+  },
+  riskScoreText: {
+    ...textStyles.bodySmall,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.warning.main,
+    marginTop: spacing.xs,
+  },
+  fileItem: {
+    ...textStyles.bodySmall,
+    color: healthColors.text.secondary,
+    marginTop: 4,
   },
 });
 
