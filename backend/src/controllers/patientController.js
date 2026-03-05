@@ -592,12 +592,12 @@ exports.addHealthMetric = async (req, res, next) => {
 
 /**
  * @desc    Get activity tracking data (steps, sleep, water, stress)
- * @route   GET /api/patients/:patientId/activity
+ * @route   POST /api/patients/activity
  * @access  Private
  */
 exports.getActivityData = async (req, res, next) => {
   try {
-    const patientId = String(req.params.patientId);
+    const patientId = String(req.body.patientId);
 
     // Check access rights - supports both _id and userId formats
     if (
