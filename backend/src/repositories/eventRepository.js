@@ -2,6 +2,44 @@ const Event = require("../models/Event");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
 
+// Sanitize user-provided update data before using it in MongoDB update queries
+// Only allow a fixed set of fields to be updated and block any MongoDB operators.
+const ALLOWED_EVENT_UPDATE_FIELDS = [
+  "title",
+  "description",
+  "date",
+  "location",
+  "type",
+  "capacity",
+  "status",
+  "tags",
+];
+
+function sanitizeEventUpdateData(updateData) {
+  if (!updateData || typeof updateData !== "object") {
+    return {};
+  }
+
+  const safeUpdate = {};
+
+  for (const [key, value] of Object.entries(updateData)) {
+    // Disallow MongoDB operators and non-whitelisted fields
+    if (key.startsWith("$") || !ALLOWED_EVENT_UPDATE_FIELDS.includes(key)) {
+      continue;
+    }
+
+    // Optionally, restrict complex nested objects unless explicitly allowed
+    if (value && typeof value === "object" && !(value instanceof Date)) {
+      // Skip nested objects/arrays by default to avoid embedding query objects
+      continue;
+    }
+
+    safeUpdate[key] = value;
+  }
+
+  return safeUpdate;
+}
+
 /**
  * Event Repository - MongoDB data access layer
  * No business logic - pure database operations only
@@ -148,11 +186,17 @@ class EventRepository {
    * @returns {Promise<Object|null>} Updated event or null
    */
   async update(id, updateData) {
-    // Wrap in $set to prevent MongoDB operator injection from user-controlled updateData
-    return await Event.findByIdAndUpdate(id, { $set: updateData }, {
-      new: true,
-      runValidators: true,
-    }).lean();
+    // Sanitize user-controlled updateData to prevent MongoDB operator injection
+    const safeUpdateData = sanitizeEventUpdateData(updateData);
+
+    return await Event.findByIdAndUpdate(
+      id,
+      { $set: safeUpdateData },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).lean();
   }
 
   /**
