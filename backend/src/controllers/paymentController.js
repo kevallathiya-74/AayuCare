@@ -110,21 +110,27 @@ exports.createPayment = async (req, res, next) => {
  */
 exports.getPatientPayments = async (req, res, next) => {
   try {
-    const { patientId } = req.params;
     const requestingUser = req.user;
 
-    // Patients can only view their own payments; admins can view any
-    if (
-      requestingUser.role === "patient" &&
-      requestingUser.id !== patientId
-    ) {
-      return next(new AppError("Access denied", 403));
+    // Determine which patient's payments to fetch:
+    // - Patients can only view their own payments (ignore URL param)
+    // - Admins/other roles can view any patient's payments via path param
+    let patientIdToQuery;
+    if (requestingUser.role === "patient") {
+      patientIdToQuery = requestingUser.id;
+    } else {
+      const { patientId } = req.params;
+      patientIdToQuery = patientId;
+    }
+
+    if (!patientIdToQuery) {
+      return next(new AppError("Patient identifier is required", 400));
     }
 
     const { status, startDate, endDate, page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    const payments = await paymentRepository.findByPatient(patientId, {
+    const payments = await paymentRepository.findByPatient(patientIdToQuery, {
       status,
       startDate,
       endDate,
