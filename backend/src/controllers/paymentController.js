@@ -119,7 +119,7 @@ exports.getPatientPayments = async (req, res, next) => {
     if (requestingUser.role === "patient") {
       patientIdToQuery = requestingUser.id;
     } else {
-      const { patientId } = req.params;
+      const { patientId } = req.body;
       patientIdToQuery = patientId;
     }
 
