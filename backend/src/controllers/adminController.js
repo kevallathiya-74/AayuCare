@@ -1039,7 +1039,8 @@ exports.logoutAllDevices = async (req, res, next) => {
  */
 exports.getMedicalRecordsOverview = async (req, res, next) => {
   try {
-    const rawPatientId = Array.isArray(req.query.patientId) ? req.query.patientId[0] : req.query.patientId;
+    const rawPatientIdSource = req.body && Object.prototype.hasOwnProperty.call(req.body, "patientId") ? req.body.patientId : undefined;
+    const rawPatientId = Array.isArray(rawPatientIdSource) ? rawPatientIdSource[0] : rawPatientIdSource;
     const rawPage  = Array.isArray(req.query.page)  ? req.query.page[0]  : req.query.page;
     const rawLimit = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
     const page  = rawPage  ? parseInt(String(rawPage),  10) || 1  : 1;
