@@ -217,8 +217,8 @@ exports.getAppointments = async (req, res, next) => {
       );
     } else if (req.user.role === "admin" || req.user.role === "super_admin") {
       // Admin/super_admin can view all appointments or filter by patient/doctor
-      const rawPid = Array.isArray(req.query.patientId) ? req.query.patientId[0] : req.query.patientId;
-      const rawDid = Array.isArray(req.query.doctorId)  ? req.query.doctorId[0]  : req.query.doctorId;
+      const rawPid = Array.isArray(req.body.patientId) ? req.body.patientId[0] : req.body.patientId;
+      const rawDid = Array.isArray(req.body.doctorId)  ? req.body.doctorId[0]  : req.body.doctorId;
       const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
       const patientId = rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
       const doctorId  = rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
