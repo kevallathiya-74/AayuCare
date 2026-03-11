@@ -26,6 +26,7 @@ import { SkeletonCardRow, Input } from "../../components/common";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [schedules, setSchedules] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,12 +52,13 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
   const fetchSchedule = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await doctorService.getSchedule();
-      // Backend returns { status, data: { schedules: [] } or data: [...] }
+      // Backend returns { success, data: [...] }
       const data = response.data?.schedules || response.data;
       setSchedules(Array.isArray(data) ? data : []);
-    } catch (error) {
-      Alert.alert("Error", "Failed to load schedule");
+    } catch (err) {
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -65,11 +67,16 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
   const toggleDayAvailability = async (dayOfWeek) => {
     try {
       const response = await doctorService.toggleDayAvailability(dayOfWeek);
-      setSchedules((prev) =>
-        prev.map((s) =>
-          s.dayOfWeek === dayOfWeek ? { ...s, ...response.data } : s
-        )
-      );
+      // Upsert: update if exists, otherwise add the new schedule entry
+      setSchedules((prev) => {
+        const exists = prev.some((s) => s.dayOfWeek === dayOfWeek);
+        if (exists) {
+          return prev.map((s) =>
+            s.dayOfWeek === dayOfWeek ? { ...s, ...response.data } : s
+          );
+        }
+        return [...prev, response.data];
+      });
       Alert.alert("Success", response.message || "Availability updated");
     } catch (error) {
       Alert.alert("Error", "Failed to toggle availability");
@@ -155,11 +162,15 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         scheduleData
       );
 
-      setSchedules((prev) =>
-        prev.map((s) =>
-          s.dayOfWeek === selectedDay.id ? { ...s, ...response.data } : s
-        )
-      );
+      setSchedules((prev) => {
+        const exists = prev.some((s) => s.dayOfWeek === selectedDay.id);
+        if (exists) {
+          return prev.map((s) =>
+            s.dayOfWeek === selectedDay.id ? { ...s, ...response.data } : s
+          );
+        }
+        return [...prev, response.data];
+      });
 
       setModalVisible(false);
       Alert.alert("Success", "Schedule updated successfully");
@@ -193,6 +204,37 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         </View>
         <View style={{ padding: 16, gap: 12 }}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={healthColors.text.primary}
+            />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Schedule & Availability</Text>
+          <View style={styles.headerRightSpacer} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={healthColors.error.main} />
+          <Text style={styles.errorTitle}>Failed to load schedule</Text>
+          <Text style={styles.errorMessage}>
+            {error?.response?.data?.message || error?.message || "Something went wrong. Please try again."}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchSchedule}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -712,6 +754,37 @@ const styles = StyleSheet.create({
   },
   headerRightSpacer: {
     width: 24,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.primary,
+    textAlign: "center",
+  },
+  errorMessage: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  retryButton: {
+    marginTop: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    backgroundColor: healthColors.primary.main,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
 

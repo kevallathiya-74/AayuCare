@@ -48,9 +48,14 @@ const initialForm = {
   availability: "",
 };
 
+const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const DAY_LABELS = { monday: "Mon", tuesday: "Tue", wednesday: "Wed", thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun" };
+const TIME_SLOTS = ["09:00-12:00", "12:00-14:00", "14:00-17:00", "17:00-20:00"];
+
 export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
   const { user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState(initialForm);
+  const [availabilitySlots, setAvailabilitySlots] = useState({});
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showSpecializationPicker, setShowSpecializationPicker] = useState(false);
@@ -68,11 +73,18 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         consultationFee: doctor.consultationFee?.toString() || "500",
         licenseNumber: doctor.license_number || doctor.licenseNumber || "",
         bio: doctor.bio || "",
-        availability: doctor.availability ? JSON.stringify(doctor.availability) : "",
       });
+      // Parse availability into structured state
+      let parsed = {};
+      if (doctor.availability) {
+        parsed = typeof doctor.availability === "object" ? doctor.availability : {};
+        try { if (typeof doctor.availability === "string") parsed = JSON.parse(doctor.availability); } catch {}
+      }
+      setAvailabilitySlots(parsed);
       setErrors({});
     } else if (mode === "add") {
       setFormData(initialForm);
+      setAvailabilitySlots({});
       setErrors({});
     }
   }, [mode, doctor]);
@@ -95,16 +107,6 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     if (formData.consultationFee && (isNaN(formData.consultationFee) || parseInt(formData.consultationFee) < 0)) newErrors.consultationFee = "Consultation fee must be a positive number";
     if (!formData.licenseNumber.trim()) newErrors.licenseNumber = "License number is required";
     if (!formData.bio.trim()) newErrors.bio = "Bio is required";
-    if (formData.availability.trim()) {
-      try {
-        const parsed = JSON.parse(formData.availability);
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          newErrors.availability = "Availability must be a valid JSON object";
-        }
-      } catch {
-        newErrors.availability = "Availability must be valid JSON";
-      }
-    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -125,7 +127,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     setLoading(true);
     try {
       if (mode === "add") {
-        const parsedAvailability = formData.availability ? JSON.parse(formData.availability) : {};
+        const parsedAvailability = availabilitySlots;
         const doctorData = {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
@@ -153,7 +155,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           }, 300);
         }
       } else if (mode === "edit" && doctor) {
-        const parsedAvailability = formData.availability ? JSON.parse(formData.availability) : {};
+        const parsedAvailability = availabilitySlots;
         const updateData = {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
@@ -200,9 +202,89 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
 
   const handleClose = () => {
     setFormData(initialForm);
+    setAvailabilitySlots({});
     setErrors({});
     onClose();
   };
+
+  const toggleDay = (day) => {
+    setAvailabilitySlots((prev) => {
+      if (prev[day]) {
+        const next = { ...prev };
+        delete next[day];
+        return next;
+      }
+      return { ...prev, [day]: ["09:00-12:00", "14:00-17:00"] };
+    });
+  };
+
+  const toggleSlot = (day, slot) => {
+    setAvailabilitySlots((prev) => {
+      const current = prev[day] || [];
+      if (current.includes(slot)) {
+        const updated = current.filter((s) => s !== slot);
+        if (updated.length === 0) {
+          const next = { ...prev };
+          delete next[day];
+          return next;
+        }
+        return { ...prev, [day]: updated };
+      }
+      return { ...prev, [day]: [...current, slot] };
+    });
+  };
+
+  const renderAvailabilityPicker = () => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>Availability</Text>
+      <View style={styles.availabilityBox}>
+        {/* Day toggle chips */}
+        <View style={styles.daysRow}>
+          {DAYS.map((day) => {
+            const active = !!availabilitySlots[day];
+            return (
+              <TouchableOpacity
+                key={day}
+                style={[styles.dayChip, active && styles.dayChipActive]}
+                onPress={() => toggleDay(day)}
+              >
+                <Text style={[styles.dayChipText, active && styles.dayChipTextActive]}>
+                  {DAY_LABELS[day]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {/* Time slots per active day */}
+        {DAYS.filter((day) => availabilitySlots[day]).map((day) => (
+          <View key={day} style={styles.daySlotRow}>
+            <Text style={styles.daySlotLabel}>
+              {day.charAt(0).toUpperCase() + day.slice(1)}
+            </Text>
+            <View style={styles.slotsWrap}>
+              {TIME_SLOTS.map((slot) => {
+                const active = (availabilitySlots[day] || []).includes(slot);
+                return (
+                  <TouchableOpacity
+                    key={slot}
+                    style={[styles.slotChip, active && styles.slotChipActive]}
+                    onPress={() => toggleSlot(day, slot)}
+                  >
+                    <Text style={[styles.slotChipText, active && styles.slotChipTextActive]}>
+                      {slot}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        ))}
+        {Object.keys(availabilitySlots).length === 0 && (
+          <Text style={styles.availabilityHint}>Tap a day to add availability</Text>
+        )}
+      </View>
+    </View>
+  );
 
   const renderInput = (
     key,
@@ -210,11 +292,12 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     placeholder,
     icon,
     keyboardType = "default",
-    secureTextEntry = false
+    secureTextEntry = false,
+    multiline = false
   ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
+      <View style={[styles.inputWrapper, errors[key] && styles.inputError, multiline && styles.inputWrapperMultiline]}>
         <Ionicons
           name={icon}
           size={18}
@@ -222,7 +305,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           style={styles.inputIcon}
         />
         <TextInput
-          style={styles.input}
+          style={[styles.input, multiline && styles.inputMultiline]}
           placeholder={placeholder}
           placeholderTextColor={healthColors.text.tertiary}
           value={formData[key] || ""}
@@ -230,6 +313,8 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
           autoCapitalize={key === "email" ? "none" : "sentences"}
+          multiline={multiline}
+          textAlignVertical={multiline ? "top" : "center"}
         />
       </View>
       {errors[key] ? <Text style={styles.errorText}>{errors[key]}</Text> : null}
@@ -323,6 +408,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     handleClose,
     renderInput,
     renderPicker,
+    renderAvailabilityPicker,
     SPECIALIZATIONS,
   };
 }
@@ -346,6 +432,10 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
     paddingHorizontal: theme.spacing.md,
   },
+  inputWrapperMultiline: {
+    alignItems: "flex-start",
+    paddingVertical: theme.spacing.sm,
+  },
   inputError: {
     borderColor: healthColors.error.main,
   },
@@ -357,6 +447,85 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     fontSize: theme.typography.sizes.body,
     color: healthColors.text.primary,
+  },
+  inputMultiline: {
+    minHeight: 100,
+    paddingTop: theme.spacing.sm,
+    fontFamily: "monospace",
+  },
+  availabilityBox: {
+    backgroundColor: healthColors.background.card,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    padding: theme.spacing.md,
+  },
+  daysRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: theme.spacing.sm,
+  },
+  dayChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    backgroundColor: healthColors.background.primary,
+  },
+  dayChipActive: {
+    backgroundColor: healthColors.primary.main,
+    borderColor: healthColors.primary.main,
+  },
+  dayChipText: {
+    fontSize: theme.typography.sizes.sm,
+    color: healthColors.text.secondary,
+    fontWeight: theme.typography.weights.medium,
+  },
+  dayChipTextActive: {
+    color: "#fff",
+  },
+  daySlotRow: {
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: healthColors.border.light,
+  },
+  daySlotLabel: {
+    fontSize: theme.typography.sizes.sm,
+    fontWeight: theme.typography.weights.semibold,
+    color: healthColors.text.primary,
+    marginBottom: 6,
+  },
+  slotsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  slotChip: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: healthColors.primary.main,
+    backgroundColor: healthColors.background.primary,
+  },
+  slotChipActive: {
+    backgroundColor: healthColors.primary.main + "20",
+  },
+  slotChipText: {
+    fontSize: 11,
+    color: healthColors.primary.main,
+  },
+  slotChipTextActive: {
+    fontWeight: theme.typography.weights.semibold,
+  },
+  availabilityHint: {
+    fontSize: theme.typography.sizes.sm,
+    color: healthColors.text.tertiary,
+    textAlign: "center",
+    paddingVertical: theme.spacing.sm,
   },
   pickerText: {
     flex: 1,

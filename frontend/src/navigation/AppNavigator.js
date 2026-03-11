@@ -58,6 +58,7 @@ import {
 // New Patient Screens
 import NotificationsScreen from "../screens/patient/NotificationsScreen";
 import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
+import HealthMetricsScreen from "../screens/patient/HealthMetricsScreen";
 import WomensHealthScreen from "../screens/patient/WomensHealthScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
 import HospitalEventsScreen from "../screens/patient/HospitalEventsScreen";
@@ -281,6 +282,10 @@ const AppNavigator = () => {
                   component={SettingsAccessibilityScreen}
                 />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
+                <Stack.Screen
+                  name="EditProfile"
+                  component={EditProfileScreen}
+                />
               </>
             )}
 
@@ -412,7 +417,7 @@ const AppNavigator = () => {
                 />
                 <Stack.Screen
                   name="HealthMetrics"
-                  component={ActivityTrackerScreen}
+                  component={HealthMetricsScreen}
                 />
                 <Stack.Screen
                   name="SettingsAccessibility"

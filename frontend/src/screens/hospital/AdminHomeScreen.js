@@ -72,7 +72,7 @@ const AdminHomeScreen = ({ navigation }) => {
         notificationService.getUnreadCount().catch(() => null),
         eventService.getUpcomingEvents({ limit: 100 }).catch(() => null),
         adminService.getUsers({ role: "doctor", limit: 10 }).catch(() => null),
-        adminService.getUsers({ role: "patient", limit: 10 }).catch(() => null),
+        adminService.getUsers({ role: "patient", limit: 5 }).catch(() => null),
         adminService.getSystemMetrics().catch(() => null),
       ]);
 

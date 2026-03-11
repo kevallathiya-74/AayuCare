@@ -211,7 +211,7 @@ const healthColors = {
 
   // Gradient Combinations
   gradients: {
-    primary: ["#00ACC1", "#4DD0E1"],
+    primary: ["#00ACC1", "#00838F"],
     secondary: ["#81D4FA", "#4FC3F7"],
     warm: ["#FF9800", "#FFB74D"],
     cool: ["#00ACC1", "#81D4FA"],

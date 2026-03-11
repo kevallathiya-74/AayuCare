@@ -204,8 +204,8 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     }
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
-    const isOwnData = req.user.userId === patientId;
-    if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
+    const isOwnData = req.user.id === patientId || req.user.userId === patientId;
+    if (req.user.role !== "admin" && req.user.role !== "doctor" && req.user.role !== "super_admin" && !isOwnData) {
       return res.status(403).json({
         status: "error",
         message: "Not authorized to view these medical records",

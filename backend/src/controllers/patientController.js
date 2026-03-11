@@ -613,7 +613,7 @@ exports.addHealthMetric = async (req, res, next) => {
  */
 exports.getActivityData = async (req, res, next) => {
   try {
-    const patientId = String(req.body.patientId);
+    const patientId = String(req.params.patientId);
 
     // Check access rights - supports both _id and userId formats
     if (

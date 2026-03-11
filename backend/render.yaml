@@ -17,10 +17,16 @@ services:
         value: 5000
       - key: MONGODB_URI
         sync: false # Set manually in Render dashboard
+      - key: DATABASE_URL
+        sync: false # Neon PostgreSQL connection string — set manually
+      - key: REDIS_URL
+        sync: false # Upstash Redis URL — set manually
       - key: JWT_SECRET
         generateValue: true # Render will auto-generate
       - key: BETTER_AUTH_SECRET
         generateValue: true # Render will auto-generate for Better Auth
+      - key: BETTER_AUTH_URL
+        value: https://aayucare-backend.onrender.com/api/auth/better
       - key: BACKEND_URL
         value: https://aayucare-backend.onrender.com
       - key: JWT_EXPIRE
