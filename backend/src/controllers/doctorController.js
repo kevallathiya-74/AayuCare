@@ -1237,10 +1237,13 @@ exports.getConsultationHistory = async (req, res, next) => {
 exports.getSchedule = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
+    const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
-    const schedules = await scheduleRepository.findAvailableByDoctor(doctorId);
+    // Use findByDoctor (not findAvailableByDoctor) so all 7 days are always returned,
+    // including days with isAvailable: false — the frontend needs the full week.
+    const schedules = await scheduleRepository.findByDoctor(doctorId, hospitalId);
 
-    // Create default schedule if none exists
+    // Create default schedule if none exists for this doctor+hospital
     if (schedules.length === 0) {
       const daysOfWeek = [
         "monday",
@@ -1255,6 +1258,7 @@ exports.getSchedule = async (req, res, next) => {
         const isWeekday = !["saturday", "sunday"].includes(day);
         return scheduleRepository.create({
           doctorId,
+          hospitalId,
           dayOfWeek: day,
           isAvailable: isWeekday,
           timeSlots: isWeekday
@@ -1336,8 +1340,10 @@ exports.updateSchedule = async (req, res, next) => {
       
       schedule = await scheduleRepository.update(schedule._id, updateData);
     } else {
+      const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
       schedule = await scheduleRepository.create({
         doctorId,
+        hospitalId,
         dayOfWeek: dayOfWeek.toLowerCase(),
         isAvailable: isAvailable !== undefined ? isAvailable : true,
         timeSlots: timeSlots || [],
@@ -1384,13 +1390,23 @@ exports.toggleDayAvailability = async (req, res, next) => {
   try {
     const doctorId = req.user.id || req.user._id;
     const { dayOfWeek } = req.params;
+    const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
-    const schedule = await scheduleRepository.findByDoctorAndDay(doctorId, dayOfWeek.toLowerCase());
+    let schedule = await scheduleRepository.findByDoctorAndDay(doctorId, dayOfWeek.toLowerCase());
 
+    // If no schedule record exists for this day (e.g. doctor registered before defaults were
+    // seeded), create it now as available so the toggle makes sense.
     if (!schedule) {
-      return res.status(404).json({
-        success: false,
-        message: "Schedule not found for this day",
+      schedule = await scheduleRepository.create({
+        doctorId,
+        hospitalId,
+        dayOfWeek: dayOfWeek.toLowerCase(),
+        isAvailable: true,
+        timeSlots: [
+          { startTime: "09:00", endTime: "12:00", isAvailable: true },
+          { startTime: "14:00", endTime: "17:00", isAvailable: true },
+        ],
+        breakTime: { startTime: "12:00", endTime: "14:00" },
       });
     }
 

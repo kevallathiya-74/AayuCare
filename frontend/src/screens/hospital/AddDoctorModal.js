@@ -44,6 +44,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
     handleClose,
     renderInput,
     renderPicker,
+    renderAvailabilityPicker,
   } = useDoctorForm({ mode: "add", onClose, onSuccess });
 
   return (
@@ -142,12 +143,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "Short professional bio",
               "information-circle"
             )}
-            {renderInput(
-              "availability",
-              "Availability (JSON)",
-              '{"monday": ["09:00-12:00"]}',
-              "calendar"
-            )}
+            {renderAvailabilityPicker()}
 
             <Text style={styles.noteText}>* Required fields</Text>
           </ScrollView>

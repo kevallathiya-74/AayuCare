@@ -481,7 +481,7 @@ exports.getAppointmentStats = async (req, res, next) => {
 exports.getPatientAppointments = async (req, res, next) => {
   try {
     // Explicit String cast to prevent type confusion from HTTP parameter pollution
-    const patientId = String(req.body.patientId);
+    const patientId = String(req.params.patientId);
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
     const isOwnData =

@@ -2,17 +2,32 @@ const { Pool } = require("pg");
 const logger = require("../utils/logger");
 
 // PostgreSQL connection pool configuration
-const poolConfig = {
-  host: process.env.POSTGRES_HOST || "localhost",
-  port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  database: process.env.POSTGRES_DB,
-  max: parseInt(process.env.POSTGRES_MAX_POOL, 10) || 20,
-  min: parseInt(process.env.POSTGRES_MIN_POOL, 10) || 5,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+// Supports both DATABASE_URL (Neon/cloud) and individual env vars (local)
+const buildPoolConfig = () => {
+  if (process.env.DATABASE_URL) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      max: parseInt(process.env.POSTGRES_MAX_POOL, 10) || 20,
+      min: parseInt(process.env.POSTGRES_MIN_POOL, 10) || 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      ssl: { rejectUnauthorized: false },
+    };
+  }
+  return {
+    host: process.env.POSTGRES_HOST || "localhost",
+    port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    max: parseInt(process.env.POSTGRES_MAX_POOL, 10) || 20,
+    min: parseInt(process.env.POSTGRES_MIN_POOL, 10) || 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  };
 };
+
+const poolConfig = buildPoolConfig();
 
 // Create connection pool
 const pool = new Pool(poolConfig);
@@ -53,12 +68,13 @@ const connectPostgres = async () => {
   try {
     // Validate environment variables
     if (
-      !process.env.POSTGRES_USER ||
-      !process.env.POSTGRES_PASSWORD ||
-      !process.env.POSTGRES_DB
+      !process.env.DATABASE_URL &&
+      (!process.env.POSTGRES_USER ||
+        !process.env.POSTGRES_PASSWORD ||
+        !process.env.POSTGRES_DB)
     ) {
       throw new Error(
-        "PostgreSQL credentials not defined in environment variables"
+        "PostgreSQL credentials not defined in environment variables (set DATABASE_URL or individual POSTGRES_* vars)"
       );
     }
 
@@ -67,8 +83,11 @@ const connectPostgres = async () => {
     const result = await client.query("SELECT NOW()");
     client.release();
 
+    const dbName = process.env.DATABASE_URL
+      ? new URL(process.env.DATABASE_URL).pathname.slice(1)
+      : process.env.POSTGRES_DB;
     logger.info("✅ PostgreSQL Connected Successfully");
-    logger.info(`📊 Database: ${process.env.POSTGRES_DB}`);
+    logger.info(`📊 Database: ${dbName}`);
     logger.info(`🕐 Server Time: ${result.rows[0].now}`);
 
     return pool;

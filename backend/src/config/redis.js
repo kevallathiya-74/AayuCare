@@ -2,22 +2,35 @@ const Redis = require("ioredis");
 const logger = require("../utils/logger");
 
 // Redis client configuration
-const redisConfig = {
-  host: process.env.REDIS_HOST || "localhost",
-  port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: parseInt(process.env.REDIS_DB, 10) || 0,
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  maxRetriesPerRequest: 3,
-  enableReadyCheck: true,
-  lazyConnect: false,
+// Supports REDIS_URL (Upstash/cloud) or individual REDIS_HOST/PORT/PASSWORD (local)
+const buildRedisConfig = () => {
+  const base = {
+    retryStrategy: (times) => {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: true,
+    lazyConnect: false,
+  };
+  if (process.env.REDIS_URL) {
+    return { ...base, url: process.env.REDIS_URL, tls: {} };
+  }
+  return {
+    ...base,
+    host: process.env.REDIS_HOST || "localhost",
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    password: process.env.REDIS_PASSWORD || undefined,
+    db: parseInt(process.env.REDIS_DB, 10) || 0,
+  };
 };
 
-// Create Redis client
-const redisClient = new Redis(redisConfig);
+const redisConfig = buildRedisConfig();
+
+// Create Redis client — ioredis accepts a URL string or config object
+const redisClient = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL)
+  : new Redis(redisConfig);
 
 // Connection event handlers
 redisClient.on("connect", () => {

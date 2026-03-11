@@ -32,6 +32,29 @@ import ErrorRecovery from "../../components/common/ErrorRecovery";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 
+// Static data defined outside component to avoid re-creation on every render
+// and to ensure they are initialized before any hook (useMemo) references them.
+const quickAccessLinks = {
+  "Video Library": "https://www.youtube.com/@WHO",
+  "Articles": "https://www.who.int/news-room/fact-sheets",
+  "Latest News": "https://www.healthline.com/health-news",
+};
+
+const featuredTopicLinks = {
+  "COVID-19 Updates": "https://www.who.int/emergencies/diseases/novel-coronavirus-2019",
+  "Mental Health Awareness": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
+  "Nutrition Guide": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
+};
+
+const categories = [
+  { icon: "heart", name: "Heart", color: healthColors.error.main },
+  { icon: "pulse", name: "Lung", color: healthColors.info.main },
+  { icon: "bulb-outline", name: "Brain", color: theme.colors.healthcare.purple },
+  { icon: "water", name: "Diabetes", color: healthColors.warning.main },
+  { icon: "bandage-outline", name: "Bone", color: healthColors.text.secondary },
+  { icon: "eye", name: "Eye", color: theme.colors.healthcare.teal },
+];
+
 const DiseaseInfoScreen = ({ navigation }) => {
   const [selectedDisease, setSelectedDisease] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -64,27 +87,6 @@ const DiseaseInfoScreen = ({ navigation }) => {
       Alert.alert("Error", "Failed to open link.");
     }
   };
-
-  const quickAccessLinks = {
-    "Video Library": "https://www.youtube.com/@WHO",
-    "Articles": "https://www.who.int/news-room/fact-sheets",
-    "Latest News": "https://www.healthline.com/health-news",
-  };
-
-  const featuredTopicLinks = {
-    "COVID-19 Updates": "https://www.who.int/emergencies/diseases/novel-  coronavirus-2019",
-    "Mental Health Awareness": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
-    "Nutrition Guide": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
-  };
-
-  const categories = [
-    { icon: "heart", name: "Heart", color: healthColors.error.main },
-    { icon: "pulse", name: "Lung", color: healthColors.info.main },
-    { icon: "bulb-outline", name: "Brain", color: theme.colors.healthcare.purple },
-    { icon: "water", name: "Diabetes", color: healthColors.warning.main },
-    { icon: "bandage-outline", name: "Bone", color: healthColors.text.secondary },
-    { icon: "eye", name: "Eye", color: theme.colors.healthcare.teal },
-  ];
 
   const diseaseDetails = {
     Diabetes: {

@@ -86,7 +86,7 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
         <Text style={styles.sectionTitle}>Account Settings</Text>
         <View style={styles.card}>
           <ActionRow icon="settings-outline" label="Settings" onPress={() => onNavigate("AdminSettings")} />
-          <ActionRow icon="create-outline" label="Edit Profile" onPress={() => onNavigate("Settings")} />
+          <ActionRow icon="create-outline" label="Edit Profile" onPress={() => onNavigate("EditProfile")} />
           <ActionRow icon="key-outline" label="Change Password" onPress={() => onNavigate("SecuritySettings")} />
           <ActionRow icon="shield-outline" label="Privacy & Security" onPress={() => onNavigate("SecuritySettings")} last />
         </View>

@@ -20,11 +20,6 @@ dns.setDefaultResultOrder("ipv4first");
 const requiredEnvVars = [
   'MONGODB_URI',
   'JWT_SECRET',
-  'POSTGRES_HOST',
-  'POSTGRES_USER',
-  'POSTGRES_PASSWORD',
-  'POSTGRES_DB',
-  'REDIS_HOST',
   'BETTER_AUTH_SECRET',
   'BETTER_AUTH_URL'
 ];
