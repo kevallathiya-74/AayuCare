@@ -14,7 +14,7 @@
  */
 
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), override: true });
 const bcrypt = require('bcryptjs');
 const { query, closePool } = require('../src/config/postgres');
 const logger = require('../src/utils/logger');
