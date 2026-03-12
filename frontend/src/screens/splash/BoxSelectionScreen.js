@@ -51,7 +51,7 @@ const BoxSelectionScreen = ({ navigation }) => {
       <View style={styles.header}>
         <View style={styles.logoWrap}>
           <Image
-            source={require("../../../assets/images/aayucare-logo.png")}
+            source={require("../../../assets/icons/aayucare-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />

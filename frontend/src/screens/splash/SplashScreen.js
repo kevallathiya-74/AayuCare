@@ -118,7 +118,7 @@ const SplashScreen = ({ navigation }) => {
           <Animated.View style={[styles.pulseRing, { transform: [{ scale: pulseAnim }] }]} />
           <View style={styles.logoContainer}>
             <Image
-              source={require("../../../assets/images/aayucare-logo.png")}
+              source={require("../../../assets/icons/aayucare-logo.png")}
               style={styles.logo}
               resizeMode="contain"
             />

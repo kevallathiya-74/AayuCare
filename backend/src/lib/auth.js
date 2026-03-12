@@ -15,16 +15,27 @@ const initAuth = () => {
   if (auth) return auth;
 
   try {
-    authPool = new Pool({
-      host: process.env.POSTGRES_HOST || "localhost",
-      port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
-      user: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DB,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    });
+    // Use DATABASE_URL (Neon/cloud) if available, otherwise fall back to individual vars
+    const poolConfig = process.env.DATABASE_URL
+      ? {
+          connectionString: process.env.DATABASE_URL,
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 10000,
+          ssl: { rejectUnauthorized: false },
+        }
+      : {
+          host: process.env.POSTGRES_HOST || "localhost",
+          port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
+          user: process.env.POSTGRES_USER,
+          password: process.env.POSTGRES_PASSWORD,
+          database: process.env.POSTGRES_DB,
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 10000,
+        };
+
+    authPool = new Pool(poolConfig);
 
     auth = betterAuth({
       database: authPool,

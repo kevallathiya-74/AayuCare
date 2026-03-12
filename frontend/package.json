@@ -45,6 +45,7 @@
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "expo-system-ui": "~4.0.9",
     "i18next": "^22.5.1",
     "react": "19.1.0",
     "react-hook-form": "^7.49.2",
