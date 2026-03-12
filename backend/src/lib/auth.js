@@ -175,6 +175,7 @@ const initAuth = () => {
           idToken: "id_token",
           accessTokenExpiresAt: "access_token_expires_at",
           refreshTokenExpiresAt: "refresh_token_expires_at",
+          password: "password", // Map password field explicitly
           createdAt: "created_at",
           updatedAt: "updated_at",
         },
@@ -185,6 +186,8 @@ const initAuth = () => {
         requireEmailVerification: false,
         minPasswordLength: 6,
         maxPasswordLength: 128,
+        sendEmailVerificationOnSignUp: false,
+        autoSignInAfterVerification: true,
         password: {
           hash: async (password) => {
             return await bcrypt.hash(password, 12);
