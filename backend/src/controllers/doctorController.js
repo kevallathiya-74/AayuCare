@@ -1014,11 +1014,14 @@ exports.registerWalkInPatient = async (req, res, next) => {
 
     const nextPatientUserId = await userRepository.getNextUserId("patient");
     const generatedEmail = `${nextPatientUserId.toLowerCase()}@walkin.aayucare.local`;
-    const { randomBytes } = require("crypto");
-    const temporaryPasswordHash = await bcrypt.hash(
-      randomBytes(32).toString("hex"),
-      12
-    );
+    
+    // Generate a simple, memorable default password for walk-in patients
+    // Format: walkin{phone_last4} or walkin{year} if no phone
+    const phoneLast4 = normalizedPhone.length >= 4 
+      ? normalizedPhone.slice(-4) 
+      : new Date().getFullYear().toString();
+    const defaultPassword = `walkin${phoneLast4}`;
+    const temporaryPasswordHash = await bcrypt.hash(defaultPassword, 12);
 
     patient = await userRepository.create({
       userId: nextPatientUserId,
@@ -1032,6 +1035,29 @@ exports.registerWalkInPatient = async (req, res, next) => {
     });
 
     await ensurePatientProfile(patient);
+    
+    // Store the credentials for Better Auth sync
+    const credentialAccount = {
+      id: `credential:${patient.id}`,
+      account_id: generatedEmail,
+      provider_id: 'credential',
+      user_id: patient.id,
+      password: temporaryPasswordHash,
+    };
+    
+    // Sync to Better Auth account table
+    try {
+      const { query } = require("../config/postgres");
+      await query(
+        `INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET password = $5, updated_at = NOW()`,
+        [credentialAccount.id, credentialAccount.account_id, credentialAccount.provider_id, 
+         credentialAccount.user_id, credentialAccount.password]
+      );
+    } catch (syncError) {
+      logger.warn('Failed to sync walk-in patient to Better Auth:', syncError.message);
+    }
 
     // Create appointment immediately if needed
     if (symptoms) {
@@ -1075,6 +1101,11 @@ exports.registerWalkInPatient = async (req, res, next) => {
         ...patient,
         userId: patient.user_id || patient.userId,
         hospitalId: patient.hospital_id || patient.hospitalId,
+      },
+      credentials: {
+        email: generatedEmail,
+        password: defaultPassword,
+        userId: nextPatientUserId,
       },
       isExisting: false,
     });
