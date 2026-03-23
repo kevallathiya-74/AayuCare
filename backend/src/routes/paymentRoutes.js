@@ -11,6 +11,7 @@ const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
 const { createPaymentSchema } = require("../validators/schemas");
 const { cacheMiddleware } = require("../middleware/cache");
+const { idempotencyMiddleware } = require("../middleware/idempotency");
 
 // All routes require authentication
 router.use(protect);
@@ -19,7 +20,7 @@ router.use(attachHospitalId);
 // @route   POST /api/payments
 // @desc    Create a new payment (pharmacy billing)
 // @access  Private (Patient only)
-router.post("/", authorize("patient"), validateBody(createPaymentSchema), paymentController.createPayment);
+router.post("/", authorize("patient"), idempotencyMiddleware, validateBody(createPaymentSchema), paymentController.createPayment);
 
 // @route   GET /api/payments/stats
 // @desc    Get payment statistics

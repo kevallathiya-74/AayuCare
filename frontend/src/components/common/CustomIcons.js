@@ -5,7 +5,8 @@
 
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Sparkles } from "lucide-react-native";
+import DynamicIcon from "./DynamicIcon";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 
@@ -38,14 +39,14 @@ export const IconWithBackground = ({
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <Ionicons name={name} size={size} color={healthColors.neutral.white} />
+        <Sparkles size={size} color={healthColors.neutral.white} />
       </LinearGradient>
     );
   }
 
   return (
     <View style={containerStyle}>
-      <Ionicons name={name} size={size} color={color} />
+      <DynamicIcon name={name} size={size} color={color} />
     </View>
   );
 };
@@ -53,7 +54,7 @@ export const IconWithBackground = ({
 // Feature Icons
 export const AIIcon = (props) => (
   <IconWithBackground
-    name="sparkles"
+    
     gradient
     gradientColors={[healthColors.info.main, healthColors.secondary.main]}
     {...props}

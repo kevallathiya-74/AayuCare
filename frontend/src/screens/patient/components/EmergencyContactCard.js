@@ -5,7 +5,7 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Phone, BriefcaseMedical } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../../theme";
 import { logError } from "../../../utils/errorHandler";
@@ -45,7 +45,7 @@ const EmergencyContactCard = ({ user }) => {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.iconCircle}>
-            <Ionicons name="call" size={26} color={theme.colors.text.white} />
+            <Phone  size={26} color={theme.colors.text.white} />
           </View>
           <Text style={styles.buttonTitle}>Emergency</Text>
           <Text style={styles.buttonSub}>Contact</Text>
@@ -65,7 +65,7 @@ const EmergencyContactCard = ({ user }) => {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.iconCircle}>
-            <Ionicons name="medkit" size={26} color={theme.colors.text.white} />
+            <BriefcaseMedical  size={26} color={theme.colors.text.white} />
           </View>
           <Text style={styles.buttonTitle}>Ambulance</Text>
           <Text style={styles.buttonSub}>108</Text>
@@ -102,13 +102,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   buttonTitle: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "700",
     color: theme.colors.text.white,
     letterSpacing: 0.3,
   },
   buttonSub: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: theme.withOpacity(theme.colors.text.white, 0.85),
     fontWeight: "500",
   },

@@ -25,7 +25,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Menu, Bell, UserCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 import LanguageSelector from "../common/LanguageSelector";
@@ -67,7 +67,7 @@ const ScreenHeader = ({
             accessibilityLabel="Open menu"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="menu" size={24} color={healthColors.white} />
+            <Menu  size={24} color={healthColors.white} />
           </TouchableOpacity>
         ) : (
           <View style={styles.iconButton} />
@@ -92,7 +92,7 @@ const ScreenHeader = ({
               accessibilityLabel="Notifications"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="notifications" size={24} color={healthColors.white} />
+              <Bell  size={24} color={healthColors.white} />
               {notificationCount > 0 ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
@@ -111,7 +111,7 @@ const ScreenHeader = ({
               accessibilityLabel="Profile"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="person-circle" size={26} color={healthColors.white} />
+              <UserCircle  size={26} color={healthColors.white} />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: healthColors.white,
-    fontSize: 9,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
   },
   greetingRow: {

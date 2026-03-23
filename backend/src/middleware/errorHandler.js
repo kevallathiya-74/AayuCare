@@ -1,4 +1,15 @@
 const logger = require('../utils/logger');
+const { sendError } = require('../utils/apiResponse');
+
+const mapErrorCode = (statusCode) => {
+    if (statusCode === 400) return 'VALIDATION_ERROR';
+    if (statusCode === 401) return 'UNAUTHORIZED';
+    if (statusCode === 403) return 'FORBIDDEN';
+    if (statusCode === 404) return 'NOT_FOUND';
+    if (statusCode === 409) return 'CONFLICT';
+    if (statusCode >= 500) return 'INTERNAL_SERVER_ERROR';
+    return 'REQUEST_FAILED';
+};
 
 class AppError extends Error {
     constructor(message, statusCode) {
@@ -17,70 +28,43 @@ const errorHandler = (err, req, res, next) => {
 
     // MongoDB CastError (e.g., invalid ObjectId in URL param)
     if (err.name === 'CastError') {
-        return res.status(400).json({
-            success: false,
-            message: `Invalid ${err.path}: ${err.value}`,
-        });
+        return sendError(res, req, `Invalid ${err.path}: ${err.value}`, 400, 'VALIDATION_ERROR');
     }
 
     // PostgreSQL unique constraint violation
     if (err.code === '23505') {
-        return res.status(409).json({
-            success: false,
-            message: 'Resource already exists (duplicate entry)',
-        });
+        return sendError(res, req, 'Resource already exists (duplicate entry)', 409, 'CONFLICT');
     }
 
     // PostgreSQL foreign key constraint violation
     if (err.code === '23503') {
-        return res.status(400).json({
-            success: false,
-            message: 'Referenced resource does not exist',
-        });
+        return sendError(res, req, 'Referenced resource does not exist', 400, 'VALIDATION_ERROR');
     }
 
     // PostgreSQL not-null constraint violation
     if (err.code === '23502') {
-        return res.status(400).json({
-            success: false,
-            message: `Missing required field: ${err.column || 'unknown'}`,
-        });
+        return sendError(res, req, `Missing required field: ${err.column || 'unknown'}`, 400, 'VALIDATION_ERROR');
     }
 
     // PostgreSQL check constraint violation
     if (err.code === '23514') {
-        return res.status(400).json({
-            success: false,
-            message: `Invalid value: ${err.constraint || 'data validation failed'}`,
-        });
+        return sendError(res, req, `Invalid value: ${err.constraint || 'data validation failed'}`, 400, 'VALIDATION_ERROR');
     }
 
     // PostgreSQL invalid value for enum / data type
     if (err.code === '22P02') {
-        return res.status(400).json({
-            success: false,
-            message: 'Invalid data format in request',
-        });
+        return sendError(res, req, 'Invalid data format in request', 400, 'VALIDATION_ERROR');
     }
 
     // Handle specific well-known error types before env branching
     if (err.name === 'JsonWebTokenError') {
-        return res.status(401).json({
-            success: false,
-            message: 'Invalid token. Please log in again.',
-        });
+        return sendError(res, req, 'Invalid token. Please log in again.', 401, 'UNAUTHORIZED');
     }
     if (err.name === 'TokenExpiredError') {
-        return res.status(401).json({
-            success: false,
-            message: 'Token expired. Please log in again.',
-        });
+        return sendError(res, req, 'Token expired. Please log in again.', 401, 'UNAUTHORIZED');
     }
     if (err.isJoi || (err.name === 'ValidationError' && !err.errors)) {
-        return res.status(400).json({
-            success: false,
-            message: err.message,
-        });
+        return sendError(res, req, err.message, 400, 'VALIDATION_ERROR');
     }
 
     // Mongoose ValidationError with per-field details
@@ -89,11 +73,7 @@ const errorHandler = (err, req, res, next) => {
             field: e.path,
             message: e.message,
         }));
-        return res.status(400).json({
-            success: false,
-            message: 'Validation failed',
-            errors: fields,
-        });
+        return sendError(res, req, 'Validation failed', 400, 'VALIDATION_ERROR', fields);
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -103,12 +83,9 @@ const errorHandler = (err, req, res, next) => {
             statusCode: err.statusCode,
         });
 
-        res.status(err.statusCode).json({
-            status: err.status,
-            error: err,
-            message: err.message,
-            stack: err.stack,
-        });
+        const includeStack = process.env.EXPOSE_ERROR_STACK === 'true';
+        const details = includeStack ? [{ field: null, message: err.stack }] : undefined;
+        return sendError(res, req, err.message, err.statusCode, mapErrorCode(err.statusCode), details);
     } else {
         // Production - don't expose stack traces or internal error details
         logger.error('Error:', {
@@ -120,16 +97,10 @@ const errorHandler = (err, req, res, next) => {
         });
 
         if (err.isOperational) {
-            res.status(err.statusCode).json({
-                status: err.status,
-                message: err.message,
-            });
+            return sendError(res, req, err.message, err.statusCode, mapErrorCode(err.statusCode));
         } else {
             // Don't leak error details
-            res.status(500).json({
-                status: 'error',
-                message: 'Something went wrong!',
-            });
+            return sendError(res, req, 'Something went wrong!', 500, 'INTERNAL_SERVER_ERROR');
         }
     }
 };

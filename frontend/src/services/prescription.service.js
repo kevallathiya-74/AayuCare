@@ -4,6 +4,7 @@
  */
 
 import api from './apiClient';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 class PrescriptionService {
     /**
@@ -14,7 +15,7 @@ class PrescriptionService {
     async createPrescription(prescriptionData) {
         try {
             const response = await api.post('/prescriptions', prescriptionData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -28,7 +29,7 @@ class PrescriptionService {
     async getPatientPrescriptions(patientId) {
         try {
             const response = await api.get(`/prescriptions/patient/${patientId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -42,7 +43,7 @@ class PrescriptionService {
     async getPrescriptionById(prescriptionId) {
         try {
             const response = await api.get(`/prescriptions/${prescriptionId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -56,7 +57,7 @@ class PrescriptionService {
     async getDoctorPrescriptions(doctorId) {
         try {
             const response = await api.get(`/prescriptions/doctor/${doctorId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -71,7 +72,7 @@ class PrescriptionService {
     async updatePrescriptionStatus(prescriptionId, status) {
         try {
             const response = await api.patch(`/prescriptions/${prescriptionId}/status`, { status });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -80,14 +81,14 @@ class PrescriptionService {
     /**
      * Update pharmacy status for a prescription (admin only)
      * @param {String} prescriptionId - Prescription ID
-     * @param {String} pharmacyStatus - New pharmacy status (pending|sent_to_pharmacy|preparing|ready|dispensed)
+     * @param {String} pharmacyStatus - New pharmacy status (pending|preparing|ready|dispensed|cancelled)
      * @param {Object} paymentData - Optional payment info
      * @returns {Promise<Object>} - Updated prescription
      */
     async updatePharmacyStatus(prescriptionId, pharmacyStatus, paymentData = {}) {
         try {
-            const response = await api.patch(`/prescriptions/${prescriptionId}`, { pharmacyStatus, ...paymentData });
-            return response.data;
+            const response = await api.patch(`/prescriptions/${prescriptionId}/pharmacy-status`, { pharmacyStatus, ...paymentData });
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -102,7 +103,7 @@ class PrescriptionService {
         try {
             const queryString = new URLSearchParams(params).toString();
             const response = await api.get(`/prescriptions${queryString ? `?${queryString}` : ''}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }
@@ -116,7 +117,7 @@ class PrescriptionService {
     async deletePrescription(prescriptionId) {
         try {
             const response = await api.delete(`/prescriptions/${prescriptionId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
         }

@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 const healthMetricsService = {
     /**
@@ -15,7 +16,7 @@ const healthMetricsService = {
     async getMetrics(patientId) {
         try {
             const response = await api.get(`/patients/${patientId}/health-metrics`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'healthMetricsService.getMetrics', patientId });
             throw error;
@@ -31,7 +32,7 @@ const healthMetricsService = {
     async addMetric(patientId, metricData) {
         try {
             const response = await api.post(`/patients/${patientId}/health-metrics`, metricData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'healthMetricsService.addMetric', patientId });
             throw error;
@@ -56,7 +57,7 @@ const healthMetricsService = {
             });
 
             const response = await api.get(`/patients/${patientId}/health-metrics?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'healthMetricsService.getMetricsByType', patientId, type });
             throw error;
@@ -72,7 +73,7 @@ const healthMetricsService = {
     async getLatestMetric(patientId, type) {
         try {
             const response = await api.get(`/patients/${patientId}/health-metrics/latest/${type}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'healthMetricsService.getLatestMetric', patientId, type });
             throw error;
@@ -89,7 +90,7 @@ const healthMetricsService = {
     async updateMetric(patientId, metricId, metricData) {
         try {
             const response = await api.put(`/patients/${patientId}/health-metrics/${metricId}`, metricData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'healthMetricsService.updateMetric', patientId, metricId });
             throw error;
@@ -105,7 +106,7 @@ const healthMetricsService = {
     async deleteMetric(patientId, metricId) {
         try {
             const response = await api.delete(`/patients/${patientId}/health-metrics/${metricId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'healthMetricsService.deleteMetric', patientId, metricId });
             throw error;

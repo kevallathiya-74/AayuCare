@@ -15,10 +15,11 @@ import {
     Dimensions,
     Animated,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../../theme';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import DynamicIcon from './DynamicIcon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -79,7 +80,7 @@ const Tabs = ({
                 activeOpacity={0.7}
             >
                 {tab.icon && (
-                    <Ionicons
+                    <DynamicIcon
                         name={tab.icon}
                         size={20}
                         color={isActive ? healthColors.primary.main : healthColors.text.secondary}
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     badgeText: {
         ...textStyles.caption,
         color: healthColors.neutral.white,
-        fontSize: 10,
+        fontSize: theme.typography.sizes.overline,
         fontWeight: '600',
     },
     indicator: {

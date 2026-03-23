@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { User } from 'lucide-react-native';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { layout } from '../../theme/spacing';
@@ -56,8 +56,7 @@ const Avatar = ({
 
     if (variant === 'icon' || icon) {
       return (
-        <Feather
-          name={icon || 'user'}
+        <User
           size={fontSize}
           color={defaultTextColor}
         />

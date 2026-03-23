@@ -19,7 +19,18 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  ArrowLeft,
+  BriefcaseMedical,
+  Phone,
+  MapPin,
+  Info,
+  CheckCircle,
+  Shield,
+  Flame,
+  Venus,
+  Map,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 import {
@@ -34,7 +45,6 @@ import { useSelector } from "react-redux";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 
 const EmergencyServices = ({ navigation }) => {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
@@ -76,12 +86,7 @@ const EmergencyServices = ({ navigation }) => {
       showError("Could not open maps. Please search manually.");
     }
   };
-  const emergencyNumbers = [
-    { name: "Ambulance", number: "108", icon: "medical", color: healthColors.error.main },
-    { name: "Police", number: "100", icon: "shield", color: healthColors.info.main },
-    { name: "Fire Brigade", number: "101", icon: "flame", color: healthColors.warning.main },
-    { name: "Women Helpline", number: "1091", icon: "woman", color: healthColors.error.light },
-  ];
+ 
 
   const handleEmergencyCall = async (number, name) => {
     try {
@@ -185,7 +190,7 @@ const EmergencyServices = ({ navigation }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+          <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <EmergencyIcon size={32} />
@@ -216,7 +221,7 @@ const EmergencyServices = ({ navigation }) => {
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.ambulanceIcon}>
-              <Ionicons name="medkit" size={48} color={theme.colors.white} />
+              <BriefcaseMedical  size={48} color={theme.colors.white} />
             </View>
             <View style={styles.ambulanceText}>
               <Text style={styles.ambulanceTitle}>Call Ambulance</Text>
@@ -225,7 +230,7 @@ const EmergencyServices = ({ navigation }) => {
                 24/7 Emergency Service
               </Text>
             </View>
-            <Ionicons name="call" size={32} color={theme.colors.white} />
+            <Phone  size={32} color={theme.colors.white} />
           </LinearGradient>
         </TouchableOpacity>
 
@@ -233,24 +238,27 @@ const EmergencyServices = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Emergency Hotlines</Text>
           <View style={styles.numbersGrid}>
-            {emergencyNumbers.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.numberCard}
-                onPress={() => handleEmergencyCall(item.number, item.name)}
-              >
-                <View
-                  style={[
-                    styles.numberIcon,
-                    { backgroundColor: item.color + "20" },
-                  ]}
+            {emergencyNumbers.map((item) => {
+              const EmergencyIconComponent = item.Icon;
+              return (
+                <TouchableOpacity
+                  key={item.name}
+                  style={styles.numberCard}
+                  onPress={() => handleEmergencyCall(item.number, item.name)}
                 >
-                  <Ionicons name={item.icon} size={28} color={item.color} />
-                </View>
-                <Text style={styles.numberName}>{item.name}</Text>
-                <Text style={styles.numberValue}>{item.number}</Text>
-              </TouchableOpacity>
-            ))}
+                  <View
+                    style={[
+                      styles.numberIcon,
+                      { backgroundColor: item.color + "20" },
+                    ]}
+                  >
+                    <EmergencyIconComponent size={28} color={item.color} />
+                  </View>
+                  <Text style={styles.numberName}>{item.name}</Text>
+                  <Text style={styles.numberValue}>{item.number}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -265,11 +273,7 @@ const EmergencyServices = ({ navigation }) => {
           {nearbyHospitals.map((hospital, index) => (
             <View key={index} style={styles.hospitalCard}>
               <View style={styles.hospitalIcon}>
-                <Ionicons
-                  name="business"
-                  size={24}
-                  color={healthColors.primary.main}
-                />
+                <BriefcaseMedical size={24} color={healthColors.primary.main} />
               </View>
               <View style={styles.hospitalInfo}>
                 <View style={styles.hospitalHeader}>
@@ -281,11 +285,7 @@ const EmergencyServices = ({ navigation }) => {
                   )}
                 </View>
                 <View style={styles.hospitalDetails}>
-                  <Ionicons
-                    name="location"
-                    size={14}
-                    color={healthColors.text.tertiary}
-                  />
+                  <MapPin size={14} color={healthColors.text.tertiary} />
                   <Text style={styles.hospitalDistance}>
                     {hospital.distance}
                   </Text>
@@ -299,11 +299,11 @@ const EmergencyServices = ({ navigation }) => {
                     : handleEmergencyCall(hospital.phone, hospital.name)
                 }
               >
-                <Ionicons
-                  name={hospital.openMaps ? "map" : "call"}
-                  size={20}
-                  color={healthColors.primary.main}
-                />
+                {hospital.openMaps ? (
+                  <Map size={20} color={healthColors.primary.main} />
+                ) : (
+                  <Phone size={20} color={healthColors.primary.main} />
+                )}
               </TouchableOpacity>
             </View>
           ))}
@@ -314,19 +314,19 @@ const EmergencyServices = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Emergency Tips</Text>
           <View style={styles.tipsCard}>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
+              <CheckCircle size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Stay calm and speak clearly</Text>
             </View>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
+              <CheckCircle  size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Provide exact location details</Text>
             </View>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
+              <CheckCircle  size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Describe the emergency clearly</Text>
             </View>
             <View style={styles.tipItem}>
-              <Ionicons name="checkmark-circle" size={20} color={healthColors.success.main} />
+              <CheckCircle  size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>
                 Don&#39;t hang up until told to do so
               </Text>
@@ -336,8 +336,8 @@ const EmergencyServices = ({ navigation }) => {
 
         {/* Disclaimer */}
         <View style={styles.disclaimer}>
-          <Ionicons
-            name="information-circle"
+          <Info
+            
             size={20}
             color={healthColors.text.tertiary}
           />

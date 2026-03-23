@@ -19,7 +19,24 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  ArrowLeft,
+  User,
+  CreditCard,
+  Calendar,
+  FileText,
+  BriefcaseMedical,
+  ChevronRight,
+  Building2,
+  Stethoscope,
+  Phone,
+  Pencil,
+  Lock,
+  ShieldCheck,
+  CircleHelp,
+  LogOut,
+  Settings,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
 import { theme, healthColors, textStyles, spacing } from "../../theme";
@@ -51,6 +68,19 @@ const ProfileScreen = ({ navigation }) => {
   const [loadingStats, setLoadingStats] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const getCollectionCount = useCallback((payload, keys = []) => {
+    if (!payload) return 0;
+    if (Array.isArray(payload)) return payload.length;
+
+    for (const key of keys) {
+      const value = payload?.[key] || payload?.data?.[key];
+      if (Array.isArray(value)) return value.length;
+    }
+
+    if (Array.isArray(payload?.data)) return payload.data.length;
+    return 0;
+  }, []);
+
   // Fetch user statistics
   const fetchStats = useCallback(async () => {
     if (!user?.id) return;
@@ -66,20 +96,15 @@ const ProfileScreen = ({ navigation }) => {
       setStats({
         appointments:
           appointmentsRes.status === "fulfilled"
-            ? appointmentsRes.value?.data?.appointments?.length ||
-              appointmentsRes.value?.data?.length ||
-              0
+            ? getCollectionCount(appointmentsRes.value, ["appointments", "items", "rows"])
             : 0,
         records:
           recordsRes.status === "fulfilled"
-            ? recordsRes.value?.medicalRecords?.length ||
-              (Array.isArray(recordsRes.value) ? recordsRes.value.length : 0)
+            ? getCollectionCount(recordsRes.value, ["medicalRecords", "records", "items", "rows"])
             : 0,
         prescriptions:
           prescriptionsRes.status === "fulfilled"
-            ? prescriptionsRes.value?.data?.prescriptions?.length ||
-              prescriptionsRes.value?.data?.length ||
-              0
+            ? getCollectionCount(prescriptionsRes.value, ["prescriptions", "items", "rows"])
             : 0,
       });
     } catch (err) {
@@ -87,7 +112,7 @@ const ProfileScreen = ({ navigation }) => {
     } finally {
       setLoadingStats(false);
     }
-  }, [user?.id]);
+  }, [user?.id, getCollectionCount]);
 
   useEffect(() => {
     fetchStats();
@@ -135,7 +160,7 @@ const ProfileScreen = ({ navigation }) => {
   const profileSections = [
     {
       title: "Personal Information",
-      icon: "person-outline",
+      Icon: User,
       data: [
         { label: "Full Name", value: user?.name || "N/A" },
         { label: "Patient ID", value: user?.userId || "N/A" },
@@ -150,7 +175,7 @@ const ProfileScreen = ({ navigation }) => {
     },
     {
       title: "Hospital Information",
-      icon: "business-outline",
+      Icon: Building2,
       data: [
         { label: "Hospital", value: user?.hospitalName || "N/A" },
         { label: "Hospital ID", value: user?.hospitalId || "N/A" },
@@ -160,7 +185,7 @@ const ProfileScreen = ({ navigation }) => {
     },
     {
       title: "Medical Information",
-      icon: "medical-outline",
+      Icon: Stethoscope,
       data: [
         {
           label: "Medical History",
@@ -175,7 +200,7 @@ const ProfileScreen = ({ navigation }) => {
     },
     {
       title: "Emergency Contact",
-      icon: "call-outline",
+      Icon: Phone,
       data: [
         {
           label: "Contact Name",
@@ -196,25 +221,25 @@ const ProfileScreen = ({ navigation }) => {
   const actionItems = [
     {
       title: "Edit Profile",
-      icon: "create-outline",
+      Icon: Pencil,
       color: healthColors.primary.main,
       onPress: () => navigation.navigate("PatientEditProfile"),
     },
     {
       title: "Change Password",
-      icon: "lock-closed-outline",
+      Icon: Lock,
       color: healthColors.info.main,
       onPress: () => navigation.navigate("ChangePassword"),
     },
     {
       title: "Privacy Settings",
-      icon: "shield-checkmark-outline",
+      Icon: ShieldCheck,
       color: healthColors.success.main,
       onPress: () => navigation.navigate("SettingsAccessibility"),
     },
     {
       title: "Help & Support",
-      icon: "help-circle-outline",
+      Icon: CircleHelp,
       color: healthColors.warning.main,
       onPress: () =>
         Alert.alert(
@@ -225,7 +250,7 @@ const ProfileScreen = ({ navigation }) => {
     },
     {
       title: "Logout",
-      icon: "log-out-outline",
+      Icon: LogOut,
       color: healthColors.error.main,
       onPress: handleLogout,
     },
@@ -260,13 +285,13 @@ const ProfileScreen = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+            <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
 
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Ionicons
-                name="person"
+              <User
+                
                 size={60}
                 color={healthColors.primary.main}
               />
@@ -274,8 +299,8 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.userName}>{user?.name || "User"}</Text>
             <Text style={styles.userRole}>{user?.role || "Patient"}</Text>
             <View style={styles.userIdBadge}>
-              <Ionicons
-                name="card-outline"
+              <CreditCard
+                
                 size={14}
                 color="rgba(255, 255, 255, 0.9)"
               />
@@ -289,8 +314,8 @@ const ProfileScreen = ({ navigation }) => {
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Ionicons
-              name="calendar-outline"
+            <Calendar
+              
               size={24}
               color={healthColors.primary.main}
             />
@@ -300,8 +325,8 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.statLabel}>Appointments</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons
-              name="document-text-outline"
+            <FileText
+              
               size={24}
               color={healthColors.success.main}
             />
@@ -311,8 +336,8 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.statLabel}>Records</Text>
           </View>
           <View style={styles.statCard}>
-            <Ionicons
-              name="medkit-outline"
+            <BriefcaseMedical
+              
               size={24}
               color={healthColors.info.main}
             />
@@ -324,15 +349,13 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         {/* Profile Sections */}
-        {profileSections.map((section, index) => (
+        {profileSections.map((section, index) => {
+          const SectionIcon = section.Icon;
+          return (
           <View key={index} style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionIconContainer}>
-                <Ionicons
-                  name={section.icon}
-                  size={20}
-                  color={healthColors.primary.main}
-                />
+                <SectionIcon size={20} color={healthColors.primary.main} />
               </View>
               <Text style={styles.sectionTitle}>{section.title}</Text>
             </View>
@@ -347,48 +370,43 @@ const ProfileScreen = ({ navigation }) => {
               ))}
             </Card>
           </View>
-        ))}
+        )})}
 
         {/* Action Items */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconContainer}>
-              <Ionicons
-                name="settings-outline"
-                size={20}
-                color={healthColors.primary.main}
-              />
+              <Settings size={20} color={healthColors.primary.main} />
             </View>
             <Text style={styles.sectionTitle}>Account Actions</Text>
           </View>
           <Card style={styles.card}>
-            {actionItems.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.actionItem,
-                  index !== actionItems.length - 1 && styles.actionItemBorder,
-                ]}
-                onPress={item.onPress}
-              >
-                <View
+            {actionItems.map((item, index) => {
+              const ActionIcon = item.Icon;
+              return (
+                <TouchableOpacity
+                  key={index}
                   style={[
-                    styles.actionIcon,
-                    { backgroundColor: item.color + "20" },
+                    styles.actionItem,
+                    index !== actionItems.length - 1 && styles.actionItemBorder,
                   ]}
+                  onPress={item.onPress}
                 >
-                  <Ionicons name={item.icon} size={22} color={item.color} />
-                </View>
-                <Text style={[styles.actionText, { color: item.color }]}>
-                  {item.title}
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={20}
-                  color={healthColors.text.secondary}
-                />
-              </TouchableOpacity>
-            ))}
+                  <View
+                    style={[
+                      styles.actionIcon,
+                      { backgroundColor: item.color + "20" },
+                    ]}
+                  >
+                    <ActionIcon size={22} color={item.color} />
+                  </View>
+                  <Text style={[styles.actionText, { color: item.color }]}> 
+                    {item.title}
+                  </Text>
+                  <ChevronRight size={20} color={healthColors.text.secondary} />
+                </TouchableOpacity>
+              );
+            })}
           </Card>
         </View>
       </ScrollView>

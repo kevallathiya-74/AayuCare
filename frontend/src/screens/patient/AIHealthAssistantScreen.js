@@ -20,7 +20,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Mic, Send, BarChart2, PhoneCall } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
@@ -235,8 +235,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
             size={24}
             color={healthColors.text.primary}
           />
@@ -247,7 +246,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
           activeOpacity={0.7}
         >
-          <Ionicons name="mic" size={24} color={healthColors.primary.main} />
+          <Mic size={24} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>
 
@@ -319,8 +318,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           {messages.length <= 1 && healthInsights && (
             <View style={styles.insightsSection}>
               <View style={styles.insightsHeader}>
-                <Ionicons
-                  name="bar-chart"
+                <BarChart2
                   size={20}
                   color={healthColors.primary.main}
                 />
@@ -355,7 +353,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                 onPress={() => navigation.navigate("AppointmentBooking")}
                 activeOpacity={0.8}
               >
-                <Ionicons name="call" size={20} color={theme.colors.white} />
+                <PhoneCall size={20} color={theme.colors.white} />
                 <Text style={styles.doctorButtonText}>Talk to Real Doctor</Text>
               </TouchableOpacity>
             </View>
@@ -379,8 +377,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
               onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name="mic-outline"
+              <Mic
                 size={24}
                 color={healthColors.text.secondary}
               />
@@ -394,7 +391,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
             onPress={handleSend}
             disabled={!message.trim()}
           >
-            <Ionicons name="send" size={20} color={theme.colors.white} />
+            <Send size={20} color={theme.colors.white} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

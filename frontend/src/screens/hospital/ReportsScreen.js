@@ -3,7 +3,7 @@
  * View and manage medical reports for admin users
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -18,27 +18,60 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronRight, ArrowLeft, Filter } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { medicalRecordService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
-import { EmptyState, SkeletonCardRow } from "../../components/common";
+import {
+  EmptyState,
+  SkeletonCardRow,
+  ModalSheet,
+  Button,
+  FilterHeaderRow,
+  FilterSectionTitle,
+  FilterChipGroup,
+} from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const ReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
   const [selectedRecordType, setSelectedRecordType] = useState("all");
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [draftRecordType, setDraftRecordType] = useState("all");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
 
-  const availableRecordTypes = Array.from(
-    new Set(
-      reports
-        .map((report) => report.recordType || report.type)
-        .filter((recordType) => !!recordType)
-    )
+  const formatRecordTypeLabel = useCallback((value) => {
+    const normalized = String(value || "other")
+      .replace(/[_-]+/g, " ")
+      .trim()
+      .toLowerCase();
+
+    return normalized
+      .split(" ")
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" ");
+  }, []);
+
+  const availableRecordTypes = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          reports
+            .map((report) => report.recordType)
+            .filter((recordType) => !!recordType)
+        )
+      ),
+    [reports]
+  );
+
+  const filterTypeOptions = useMemo(
+    () => ["all", ...availableRecordTypes],
+    [availableRecordTypes]
   );
 
   const filteredReports =
@@ -46,16 +79,49 @@ const ReportsScreen = ({ navigation }) => {
       ? reports
       : reports.filter(
           (report) =>
-            (report.recordType || report.type || "").toLowerCase() ===
+            (report.recordType || "").toLowerCase() ===
             selectedRecordType.toLowerCase()
         );
+
+  const draftFilteredCount =
+    draftRecordType === "all"
+      ? reports.length
+      : reports.filter(
+          (report) =>
+            (report.recordType || "").toLowerCase() === draftRecordType.toLowerCase()
+        ).length;
 
   const fetchReports = useCallback(async () => {
     try {
       setError(null);
       const response = await medicalRecordService.getAllRecords();
-      // Backend returns { status, data: { medicalRecords: [], pagination: {} } or data: [...] }
-      setReports(response?.data?.medicalRecords || response?.data || []);
+
+      const responseData = response?.data;
+      const rawReports =
+        (Array.isArray(responseData?.medicalRecords) && responseData.medicalRecords) ||
+        (Array.isArray(responseData?.records) && responseData.records) ||
+        (Array.isArray(responseData?.items) && responseData.items) ||
+        (Array.isArray(responseData) && responseData) ||
+        [];
+
+      const normalizedReports = rawReports.map((report, index) => {
+        const recordType = String(report?.recordType || report?.type || "other").toLowerCase();
+        return {
+          ...report,
+          id: report?._id || report?.id || `record-${index}`,
+          recordType,
+          recordTypeLabel: formatRecordTypeLabel(recordType),
+          patientName:
+            report?.patientName ||
+            report?.patient?.name ||
+            report?.patient_id ||
+            report?.patientId ||
+            "Unknown",
+          createdAt: report?.createdAt || report?.date || report?.updatedAt,
+        };
+      });
+
+      setReports(normalizedReports);
     } catch (err) {
       logError(err, { context: "ReportsScreen.fetchReports" });
       setError("Failed to load reports");
@@ -89,23 +155,24 @@ const ReportsScreen = ({ navigation }) => {
   const handleReportPress = (report) => {
     Alert.alert(
       "Report Details",
-      `Type: ${report.recordType || report.type || "N/A"}\nPatient: ${report.patientName || "N/A"}\nDate: ${formatDate(report.createdAt)}`,
+      `Type: ${report.recordTypeLabel || "N/A"}\nPatient: ${report.patientName || "N/A"}\nDate: ${formatDate(report.createdAt)}`,
       [{ text: "OK" }]
     );
   };
 
-  const handleFilterPress = useCallback(() => {
-    const filterOptions = ["all", ...availableRecordTypes];
-    if (!filterOptions.length) {
-      return;
-    }
+  const openFilterSheet = useCallback(() => {
+    setDraftRecordType(selectedRecordType);
+    setIsFilterSheetOpen(true);
+  }, [selectedRecordType]);
 
-    const currentIndex = filterOptions.findIndex(
-      (option) => option.toLowerCase() === selectedRecordType.toLowerCase()
-    );
-    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % filterOptions.length : 0;
-    setSelectedRecordType(filterOptions[nextIndex]);
-  }, [availableRecordTypes, selectedRecordType]);
+  const applyFilter = useCallback(() => {
+    setSelectedRecordType(draftRecordType);
+    setIsFilterSheetOpen(false);
+  }, [draftRecordType]);
+
+  const clearFilter = useCallback(() => {
+    setDraftRecordType("all");
+  }, []);
 
   const renderReport = useCallback(
     ({ item }) => (
@@ -117,7 +184,7 @@ const ReportsScreen = ({ navigation }) => {
       >
         <View style={styles.reportHeader}>
           <View style={styles.iconContainer}>
-            <Ionicons
+            <DynamicIcon
               name={getRecordTypeIcon(item.recordType || item.type)}
               size={24}
               color={healthColors.primary.main}
@@ -125,15 +192,14 @@ const ReportsScreen = ({ navigation }) => {
           </View>
           <View style={styles.reportInfo}>
             <Text style={styles.reportType}>
-              {item.recordType || item.type || "Medical Record"}
+              {item.recordTypeLabel || "Medical Record"}
             </Text>
             <Text style={styles.patientName}>
               Patient: {item.patientName || "Unknown"}
             </Text>
             <Text style={styles.reportDate}>{formatDate(item.createdAt)}</Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
+          <ChevronRight
             size={20}
             color={healthColors.text.tertiary}
           />
@@ -179,8 +245,8 @@ const ReportsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -188,12 +254,19 @@ const ReportsScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Reports & Records</Text>
         <TouchableOpacity
           style={styles.filterButton}
-          onPress={handleFilterPress}
+          onPress={openFilterSheet}
           accessibilityRole="button"
           accessibilityLabel="Filter reports"
         >
-          <Ionicons name="filter" size={24} color={healthColors.text.primary} />
+          <Filter  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.selectedFilterRow}>
+        <Text style={styles.selectedFilterLabel}>Selected:</Text>
+        <Text style={styles.selectedFilterValue}>
+          {selectedRecordType === "all" ? "All Types" : formatRecordTypeLabel(selectedRecordType)}
+        </Text>
       </View>
 
       {loading ? (
@@ -219,6 +292,34 @@ const ReportsScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <ModalSheet
+        visible={isFilterSheetOpen}
+        onClose={() => setIsFilterSheetOpen(false)}
+        title="Filter Reports"
+        maxHeight={0.48}
+      >
+        <FilterHeaderRow onClear={clearFilter} />
+        <FilterSectionTitle title="Record type" />
+        <FilterChipGroup
+          options={filterTypeOptions}
+          selectedKey={draftRecordType}
+          onSelect={(type) => setDraftRecordType(type)}
+          getKey={(type) => type}
+          getLabel={(type) => (type === "all" ? "All Types" : formatRecordTypeLabel(type))}
+          getCount={(type) =>
+            type === "all"
+              ? reports.length
+              : reports.filter((report) => report.recordType === type).length
+          }
+        />
+        <Button
+          variant="primary"
+          title={`Show Results (${draftFilteredCount})`}
+          onPress={applyFilter}
+          style={styles.applyFilterButton}
+        />
+      </ModalSheet>
     </SafeAreaView>
   );
 };
@@ -258,6 +359,24 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
+  },
+  selectedFilterRow: {
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  selectedFilterLabel: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.tertiary,
+    fontWeight: "600",
+  },
+  selectedFilterValue: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.primary.main,
+    fontWeight: "700",
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,
@@ -320,6 +439,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
     marginTop: theme.spacing.md,
+  },
+  applyFilterButton: {
+    marginTop: 16,
   },
 });
 

@@ -13,31 +13,84 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { AlertTriangle, Cross, FileText, Calendar, Clock, X, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import { SkeletonCardRow, EmptyState } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
-const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
+const PATIENT_DETAILS_MODAL_CACHE_TTL_MS = 60 * 1000;
+const patientDetailsModalCache = new Map();
+
+const getCachedPatientDetails = (patientId) => {
+  if (!patientId) return null;
+  const cacheEntry = patientDetailsModalCache.get(String(patientId));
+  if (!cacheEntry) return null;
+  if (Date.now() - cacheEntry.timestamp > PATIENT_DETAILS_MODAL_CACHE_TTL_MS) {
+    patientDetailsModalCache.delete(String(patientId));
+    return null;
+  }
+  return cacheEntry.value;
+};
+
+const setCachedPatientDetails = (patientId, value) => {
+  if (!patientId || !value) return;
+  patientDetailsModalCache.set(String(patientId), {
+    value,
+    timestamp: Date.now(),
+  });
+};
+
+const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initialPatient }) => {
   const [loading, setLoading] = useState(true);
   const [patientData, setPatientData] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    if (visible && patientId) {
-      fetchPatientDetails();
-    }
-  }, [visible, patientId]);
+    if (!visible || !patientId) return;
 
-  const fetchPatientDetails = async () => {
-    try {
-      setLoading(true);
+    const cached = getCachedPatientDetails(patientId);
+    if (cached) {
+      setPatientData(cached);
+      setLoading(false);
       setError(null);
+      fetchPatientDetails(true);
+      return;
+    }
 
-      const response = await doctorService.getPatientDetails(patientId);
+    if (initialPatient) {
+      // Render instantly with list payload while full details load.
+      setPatientData({
+        patient: initialPatient,
+        stats: null,
+        appointments: [],
+        medicalRecords: [],
+        prescriptions: [],
+      });
+      setLoading(false);
+      setError(null);
+      fetchPatientDetails(true);
+      return;
+    }
+
+    fetchPatientDetails(false);
+  }, [visible, patientId, initialPatient]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchPatientDetails = async (isBackgroundRefresh = false) => {
+    try {
+      if (!isBackgroundRefresh && !patientData) {
+        setLoading(true);
+      }
+      if (!isBackgroundRefresh) {
+        setError(null);
+      }
+
+      const response = await doctorService.getPatientDetails(patientId, {
+        forceRefresh: isBackgroundRefresh,
+      });
 
       const responseData = response?.data || response;
       const normalizedData = responseData?.patient
@@ -48,17 +101,31 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 
       if ((response?.success || responseData?.success !== false) && normalizedData) {
         setPatientData(normalizedData);
+        setCachedPatientDetails(patientId, normalizedData);
+
+        // Once data is on-screen, refresh quietly in background to keep it fresh.
+        if (!isBackgroundRefresh) {
+          setTimeout(() => {
+            fetchPatientDetails(true);
+          }, 50);
+        }
       } else {
-        setError("Failed to load patient details");
+        if (!patientData) {
+          setError("Failed to load patient details");
+        }
       }
     } catch (err) {
       logError(err, {
         context: "PatientDetailsModal.fetchPatientDetails",
         patientId,
       });
-      setError(err.response?.data?.message || "Failed to load patient details");
+      if (!patientData) {
+        setError(err.response?.data?.message || "Failed to load patient details");
+      }
     } finally {
-      setLoading(false);
+      if (!isBackgroundRefresh && !patientData) {
+        setLoading(false);
+      }
     }
   };
 
@@ -164,16 +231,16 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
           {patient.allergies && patient.allergies.length > 0 && (
             <View style={styles.medicalItem}>
               <View style={styles.medicalItemHeader}>
-                <Ionicons
-                  name="warning"
+                <AlertTriangle
+                  
                   size={18}
                   color={healthColors.warning.main}
                 />
                 <Text style={styles.medicalItemTitle}>Allergies</Text>
               </View>
               <View style={styles.chipContainer}>
-                {patient.allergies.map((allergy, index) => (
-                  <View key={index} style={[styles.chip, styles.allergyChip]}>
+                {patient.allergies.map((allergy) => (
+                  <View key={allergy} style={[styles.chip, styles.allergyChip]}>
                     <Text style={styles.chipText}>{allergy}</Text>
                   </View>
                 ))}
@@ -185,8 +252,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
             patient.currentMedications.length > 0 && (
               <View style={styles.medicalItem}>
                 <View style={styles.medicalItemHeader}>
-                  <Ionicons
-                    name="medical"
+                  <Cross
+                    
                     size={18}
                     color={healthColors.primary.main}
                   />
@@ -195,9 +262,9 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
                   </Text>
                 </View>
                 <View style={styles.chipContainer}>
-                  {patient.currentMedications.map((medication, index) => (
+                  {patient.currentMedications.map((medication) => (
                     <View
-                      key={index}
+                      key={medication}
                       style={[styles.chip, styles.medicationChip]}
                     >
                       <Text style={styles.chipText}>{medication}</Text>
@@ -210,15 +277,15 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
           {patient.medicalHistory && patient.medicalHistory.length > 0 && (
             <View style={styles.medicalItem}>
               <View style={styles.medicalItemHeader}>
-                <Ionicons
-                  name="document-text"
+                <FileText
+                  
                   size={18}
                   color={healthColors.info.main}
                 />
                 <Text style={styles.medicalItemTitle}>Medical History</Text>
               </View>
-              {patient.medicalHistory.map((history, index) => (
-                <View key={index} style={styles.historyCard}>
+              {patient.medicalHistory.map((history) => (
+                <View key={history.condition} style={styles.historyCard}>
                   <Text style={styles.historyCondition}>
                     {history.condition}
                   </Text>
@@ -293,8 +360,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
           >
             <View style={styles.appointmentHeader}>
               <View style={styles.appointmentDateContainer}>
-                <Ionicons
-                  name="calendar"
+                <Calendar
+                  
                   size={16}
                   color={healthColors.primary.main}
                 />
@@ -321,8 +388,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
             </Text>
             <View style={styles.appointmentFooter}>
               <View style={styles.appointmentInfo}>
-                <Ionicons
-                  name="time"
+                <Clock
+                  
                   size={14}
                   color={healthColors.text.tertiary}
                 />
@@ -331,8 +398,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
                 </Text>
               </View>
               <View style={styles.appointmentInfo}>
-                <Ionicons
-                  name="medical"
+                <Cross
+                  
                   size={14}
                   color={healthColors.text.tertiary}
                 />
@@ -374,7 +441,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
           return (
           <View key={record._id || record.id || index} style={styles.recordCard}>
             <View style={styles.recordHeader}>
-              <Ionicons
+              <DynamicIcon
                 name={getRecordIcon(recordType)}
                 size={20}
                 color={healthColors.primary.main}
@@ -453,8 +520,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
             {Array.isArray(prescription.medicines) && prescription.medicines.length > 0 && (
               <View style={styles.medicinesContainer}>
                 <Text style={styles.medicinesTitle}>Medicines:</Text>
-                {prescription.medicines.map((medicine, idx) => (
-                  <View key={idx} style={styles.medicineItem}>
+                {prescription.medicines.map((medicine) => (
+                  <View key={medicine.name} style={styles.medicineItem}>
                     <Text style={styles.medicineName}>• {medicine.name}</Text>
                     <Text style={styles.medicineDetails}>
                       {medicine.dosage} - {medicine.frequency} -{" "}
@@ -525,8 +592,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
           {/* Header */}
           <View style={styles.modalHeader}>
             <View style={styles.headerLeft}>
-              <Ionicons
-                name="person-circle"
+              <DynamicIcon
+                name="person-circle-outline"
                 size={32}
                 color={healthColors.primary.main}
               />
@@ -540,8 +607,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons
-                name="close"
+              <X
+                
                 size={28}
                 color={healthColors.text.primary}
               />
@@ -583,8 +650,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
             </View>
           ) : error ? (
             <View style={styles.errorContainer}>
-              <Ionicons
-                name="alert-circle"
+              <AlertCircle
+                
                 size={60}
                 color={healthColors.error.main}
               />
@@ -618,7 +685,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName }) => {
 const InfoItem = ({ icon, label, value, valueColor, fullWidth }) => (
   <View style={[styles.infoItem, fullWidth && styles.infoItemFull]}>
     <View style={styles.infoItemHeader}>
-      <Ionicons name={icon} size={16} color={healthColors.text.tertiary} />
+      <DynamicIcon name={icon} size={16} color={healthColors.text.tertiary} />
       <Text style={styles.infoLabel}>{label}</Text>
     </View>
     <Text style={[styles.infoValue, valueColor && { color: valueColor }]}>
@@ -629,7 +696,7 @@ const InfoItem = ({ icon, label, value, valueColor, fullWidth }) => (
 
 const StatCard = ({ icon, label, value, color }) => (
   <View style={styles.statCard}>
-    <Ionicons name={icon} size={24} color={color} />
+    <DynamicIcon name={icon} size={24} color={color} />
     <Text style={styles.statValue}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
   </View>
@@ -642,7 +709,7 @@ const TabButton = ({ icon, label, active, onPress }) => (
     accessibilityRole="button"
     accessibilityLabel={label}
   >
-    <Ionicons
+    <DynamicIcon
       name={icon}
       size={20}
       color={active ? healthColors.primary.main : healthColors.text.tertiary}

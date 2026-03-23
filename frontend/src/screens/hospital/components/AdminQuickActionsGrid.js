@@ -5,8 +5,8 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../../theme";
+import { DynamicIcon } from "../../../components/common";
 
 const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
   <View style={styles.wrapper}>
@@ -14,13 +14,13 @@ const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
     <View style={styles.grid}>
       {actions.map((action, i) => (
         <TouchableOpacity
-          key={i}
+          key={action.title || String(i)}
           style={styles.card}
           onPress={action.onPress}
           activeOpacity={0.8}
         >
           <View style={[styles.iconWrap, { backgroundColor: action.color + "15" }]}>
-            <Ionicons name={action.icon} size={24} color={action.color} />
+            <DynamicIcon name={action.icon} size={24} color={action.color} />
             {action.badge ? (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{action.badge}</Text>
@@ -39,18 +39,26 @@ const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
 const styles = StyleSheet.create({
   wrapper: { marginHorizontal: 16, marginTop: 24 },
   sectionTitle: {
-    fontSize: 15, fontWeight: "700", color: healthColors.text.primary,
+    fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary,
     marginBottom: 12,
   },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
   card: {
-    width: "30%",
+    width: "31.5%",
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
-    padding: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    minHeight: 96,
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: healthColors.border.light,
+    marginBottom: 10,
     ...theme.shadows.sm,
   },
   iconWrap: {
@@ -66,8 +74,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderWidth: 1.5, borderColor: "#fff",
   },
-  badgeText: { color: "#fff", fontSize: 9, fontWeight: "700" },
-  label: { fontSize: 11, fontWeight: "600", color: healthColors.text.primary, textAlign: "center" },
+  badgeText: { color: "#fff", fontSize: theme.typography.sizes.overline, fontWeight: "700" },
+  label: {
+    fontSize: theme.typography.sizes.bodySmall,
+    fontWeight: "700",
+    color: healthColors.text.primary,
+    textAlign: "center",
+    lineHeight: 16,
+    minHeight: 32,
+  },
 });
 
 export default AdminQuickActionsGrid;

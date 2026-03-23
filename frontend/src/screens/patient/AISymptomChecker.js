@@ -16,7 +16,22 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  ArrowLeft,
+  Info,
+  Sparkles,
+  Thermometer,
+  Skull,
+  Stethoscope,
+  BatteryLow,
+  Activity,
+  MicOff,
+  Droplets,
+  Frown,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 import {
@@ -47,14 +62,14 @@ const AISymptomChecker = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
   const commonSymptoms = [
-    { id: 1, name: "Fever", icon: "thermometer" },
-    { id: 2, name: "Headache", icon: "skull-outline" },
-    { id: 3, name: "Cough", icon: "medical" },
-    { id: 4, name: "Fatigue", icon: "battery-dead" },
-    { id: 5, name: "Body ache", icon: "fitness-outline" },
-    { id: 6, name: "Sore throat", icon: "mic-off" },
-    { id: 7, name: "Runny nose", icon: "water" },
-    { id: 8, name: "Nausea", icon: "sad" },
+    { id: 1, name: "Fever", icon: Thermometer },
+    { id: 2, name: "Headache", icon: Skull },
+    { id: 3, name: "Cough", icon: Stethoscope },
+    { id: 4, name: "Fatigue", icon: BatteryLow },
+    { id: 5, name: "Body ache", icon: Activity },
+    { id: 6, name: "Sore throat", icon: MicOff },
+    { id: 7, name: "Runny nose", icon: Droplets },
+    { id: 8, name: "Nausea", icon: Frown },
   ];
 
   const severityLevels = [
@@ -185,8 +200,8 @@ const AISymptomChecker = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Recommendations</Text>
           {(analysis.recommendations || []).map((rec, index) => (
             <View key={index} style={styles.recommendationItem}>
-              <Ionicons
-                name="checkmark-circle"
+              <CheckCircle
+                
                 size={20}
                 color={healthColors.primary.main}
               />
@@ -198,7 +213,7 @@ const AISymptomChecker = ({ navigation }) => {
         {/* When to Seek Help */}
         <View style={styles.warningSection}>
           <View style={styles.warningHeader}>
-            <Ionicons name="warning" size={20} color={theme.colors.error.main} />
+            <AlertTriangle  size={20} color={theme.colors.error.main} />
             <Text style={styles.warningTitle}>Seek Immediate Help If:</Text>
           </View>
           {(analysis.whenToSeekHelp || []).map((item, index) => (
@@ -210,8 +225,8 @@ const AISymptomChecker = ({ navigation }) => {
 
         {/* Estimated Recovery */}
         <View style={styles.recoveryCard}>
-          <Ionicons
-            name="time-outline"
+          <Clock
+            
             size={24}
             color={healthColors.primary.main}
           />
@@ -291,7 +306,7 @@ const AISymptomChecker = ({ navigation }) => {
           end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+            <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <AIIcon size={32} />
@@ -314,6 +329,7 @@ const AISymptomChecker = ({ navigation }) => {
                   const isSelected = selectedSymptoms.find(
                     (s) => s.id === symptom.id
                   );
+                  const SymptomIcon = symptom.icon;
                   return (
                     <TouchableOpacity
                       key={symptom.id}
@@ -323,8 +339,7 @@ const AISymptomChecker = ({ navigation }) => {
                       ]}
                       onPress={() => toggleSymptom(symptom)}
                     >
-                      <Ionicons
-                        name={symptom.icon}
+                      <SymptomIcon
                         size={18}
                         color={
                           isSelected
@@ -413,7 +428,7 @@ const AISymptomChecker = ({ navigation }) => {
                   <ActivityIndicator color={theme.colors.white} />
                 ) : (
                   <>
-                    <Ionicons name="sparkles" size={20} color={theme.colors.white} />
+                    <Sparkles size={20} color={theme.colors.white} />
                     <Text style={styles.analyzeButtonText}>
                       Analyze with AI
                     </Text>
@@ -424,8 +439,8 @@ const AISymptomChecker = ({ navigation }) => {
 
             {/* Disclaimer */}
             <View style={styles.disclaimer}>
-              <Ionicons
-                name="information-circle-outline"
+              <Info
+                
                 size={16}
                 color={healthColors.text.tertiary}
               />

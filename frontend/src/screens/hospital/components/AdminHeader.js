@@ -5,9 +5,10 @@
 
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Menu, Bell } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
 import LanguageSelector from "../../../components/common/LanguageSelector";
+import { DynamicIcon } from "../../../components/common";
 
 const AdminHeader = ({
   notificationCount = 0,
@@ -22,8 +23,9 @@ const AdminHeader = ({
       onPress={onMenuOpen}
       accessibilityRole="button"
       accessibilityLabel="Open menu"
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <Ionicons name="menu" size={28} color={healthColors.text.primary} />
+      <Menu  size={28} color={healthColors.text.primary} />
     </TouchableOpacity>
 
     <Text style={styles.title}>Admin Dashboard</Text>
@@ -36,9 +38,10 @@ const AdminHeader = ({
         onPress={onNotificationPress}
         accessibilityRole="button"
         accessibilityLabel="Notifications"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <Ionicons
-          name="notifications-outline"
+        <Bell
+          
           size={24}
           color={healthColors.text.primary}
         />
@@ -56,9 +59,10 @@ const AdminHeader = ({
         onPress={onProfileToggle}
         accessibilityRole="button"
         accessibilityLabel="Profile"
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <Ionicons
-          name={showProfile ? "close-circle-outline" : "person-circle-outline"}
+        <DynamicIcon
+          name={showProfile ? "XCircle" : "UserCircle"}
           size={24}
           color={showProfile ? healthColors.primary.main : healthColors.text.primary}
         />
@@ -79,8 +83,8 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
     marginLeft: 8,
   },
@@ -106,9 +110,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "700",
+    color: theme.colors.text.white,
+    fontSize: theme.typography.sizes.overline,
+    fontWeight: theme.typography.weights.bold,
   },
 });
 

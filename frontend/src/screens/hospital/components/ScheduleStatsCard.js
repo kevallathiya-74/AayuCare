@@ -5,8 +5,9 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Calendar, UserCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
+import { DynamicIcon } from "../../../components/common";
 
 const ScheduleStatsCard = ({ schedule }) => {
   const { totalAppointments = 0, completed = 0, pending = 0, nextPatient = "—", nextTime = "--:--" } = schedule || {};
@@ -16,7 +17,7 @@ const ScheduleStatsCard = ({ schedule }) => {
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <Ionicons name="calendar-outline" size={20} color={healthColors.primary.main} />
+        <Calendar  size={20} color={healthColors.primary.main} />
         <Text style={styles.title}>TODAY'S SCHEDULE</Text>
       </View>
       <View style={styles.divider} />
@@ -59,7 +60,7 @@ const ScheduleStatsCard = ({ schedule }) => {
 
       {/* Next patient */}
       <View style={styles.nextPatientRow}>
-        <Ionicons name="person-circle-outline" size={18} color={healthColors.primary.main} />
+        <UserCircle  size={18} color={healthColors.primary.main} />
         <Text style={styles.nextPatientLabel}>Next: </Text>
         <Text style={styles.nextPatientName} numberOfLines={1}>{nextPatient}</Text>
       </View>
@@ -70,7 +71,7 @@ const ScheduleStatsCard = ({ schedule }) => {
 const StatItem = ({ icon, iconColor, value, label }) => (
   <View style={styles.statItem}>
     <View style={[styles.statIconCircle, { backgroundColor: iconColor + "15" }]}>
-      <Ionicons name={icon} size={22} color={iconColor} />
+      <DynamicIcon name={icon} size={22} color={iconColor} />
     </View>
     <Text style={styles.statValue}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     fontWeight: "700",
     color: healthColors.text.secondary,
     textTransform: "uppercase",
@@ -115,8 +116,8 @@ const styles = StyleSheet.create({
     justifyContent: "center", alignItems: "center",
     marginBottom: 4,
   },
-  statValue: { fontSize: 15, fontWeight: "700", color: healthColors.text.primary },
-  statLabel: { fontSize: 10, color: healthColors.text.tertiary, fontWeight: "600", textTransform: "uppercase" },
+  statValue: { fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary },
+  statLabel: { fontSize: theme.typography.sizes.overline, color: healthColors.text.tertiary, fontWeight: "600", textTransform: "uppercase" },
 
   // progress
   progressSection: { marginBottom: 14 },
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.success.main,
     borderRadius: 3,
   },
-  progressLabel: { fontSize: 11, color: healthColors.text.tertiary, textAlign: "right" },
+  progressLabel: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, textAlign: "right" },
 
   // next patient
   nextPatientRow: {
@@ -144,8 +145,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 4,
   },
-  nextPatientLabel: { fontSize: 12, color: healthColors.text.secondary, fontWeight: "600" },
-  nextPatientName: { fontSize: 13, color: healthColors.text.primary, fontWeight: "700", flex: 1 },
+  nextPatientLabel: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, fontWeight: "600" },
+  nextPatientName: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.text.primary, fontWeight: "700", flex: 1 },
 });
 
 export default ScheduleStatsCard;

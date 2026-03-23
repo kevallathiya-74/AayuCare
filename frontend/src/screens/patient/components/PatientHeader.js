@@ -6,11 +6,12 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Menu, Bell, User, CreditCard } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../../theme";
 import LanguageSelector from "../../../components/common/LanguageSelector";
 import { calculateAge } from "../../../utils/dateHelpers";
+import { DynamicIcon } from "../../../components/common";
 
 const PatientHeader = ({
   user,
@@ -42,7 +43,7 @@ const PatientHeader = ({
           accessibilityLabel="Open menu"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="menu" size={24} color={theme.colors.text.white} />
+          <Menu  size={24} color={theme.colors.text.white} />
         </TouchableOpacity>
 
         <Text style={styles.appTitle}>AayuCare</Text>
@@ -55,8 +56,9 @@ const PatientHeader = ({
             onPress={onNotificationPress}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="notifications" size={24} color={theme.colors.text.white} />
+            <Bell  size={24} color={theme.colors.text.white} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -71,8 +73,9 @@ const PatientHeader = ({
             onPress={onProfilePress}
             accessibilityRole="button"
             accessibilityLabel="Profile"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="person" size={24} color={theme.colors.text.white} />
+            <User  size={24} color={theme.colors.text.white} />
           </TouchableOpacity>
         </View>
       </View>
@@ -87,7 +90,7 @@ const PatientHeader = ({
         ) : (
           <>
             <View style={styles.greetingRow}>
-              <Ionicons
+              <DynamicIcon
                 name={greetingIcon}
                 size={26}
                 color={theme.colors.text.white}
@@ -101,11 +104,11 @@ const PatientHeader = ({
 
             <View style={styles.infoCard}>
               <View style={styles.infoRow}>
-                <Ionicons name="card-outline" size={16} color={theme.colors.text.white} />
+                <DynamicIcon name="fingerprint" size={16} color={theme.colors.text.white} />
                 <Text style={styles.infoText}>ID: {user?.userId || "N/A"}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Ionicons name="person-outline" size={16} color={theme.colors.text.white} />
+                <User  size={16} color={theme.colors.text.white} />
                 <Text style={styles.infoText}>
                   Age: {user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : "N/A")}
                   {" "}· Blood: {user?.bloodGroup || "N/A"}
@@ -153,8 +156,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   appTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
     letterSpacing: 0.5,
   },
@@ -184,8 +187,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   badgeText: {
-    fontSize: 9,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.overline,
+    fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },
 
@@ -199,7 +202,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: theme.colors.text.white,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     opacity: 0.8,
   },
   greetingRow: {
@@ -209,13 +212,13 @@ const styles = StyleSheet.create({
   },
   greetingIcon: { marginRight: 10 },
   greetingLabel: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.withOpacity(theme.colors.text.white, 0.85),
     marginBottom: 2,
   },
   userName: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
     letterSpacing: 0.3,
   },
@@ -232,7 +235,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   infoText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.text.white,
     fontWeight: "500",
   },

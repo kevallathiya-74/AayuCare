@@ -6,10 +6,10 @@
 
 import React, { useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
+import { CalendarDays, ChartColumnIncreasing, Circle, LayoutDashboard, Settings } from "lucide-react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme";
+import { healthColors, theme } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
@@ -19,13 +19,16 @@ import {
 } from "../context/AdminAppointmentContext";
 
 // Admin Screens
-import AdminHomeScreen from "../screens/hospital/AdminHomeScreen";
-import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
-import ReportsScreen from "../screens/hospital/ReportsScreen";
-import PharmacyManagementScreen from "../screens/hospital/PharmacyManagementScreen";
-import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
+import { AdminHomeScreen, AppointmentsScreen, ReportsScreen, PharmacyManagementScreen, AdminSettingsScreen } from "../screens/hospital";
 
 const Tab = createBottomTabNavigator();
+
+const ROUTE_ICON_MAP = {
+  Dashboard: LayoutDashboard,
+  Appointments: CalendarDays,
+  Reports: ChartColumnIncreasing,
+  Settings,
+};
 
 /**
  * Inner navigator that uses the appointment context
@@ -48,19 +51,8 @@ const AdminTabsInner = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === "Dashboard") {
-            iconName = focused ? "grid" : "grid-outline";
-          } else if (route.name === "Appointments") {
-            iconName = focused ? "calendar" : "calendar-outline";
-          } else if (route.name === "Reports") {
-            iconName = focused ? "document-text" : "document-text-outline";
-          } else if (route.name === "Settings") {
-            iconName = focused ? "settings" : "settings-outline";
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          const Icon = ROUTE_ICON_MAP[route.name] || Circle;
+          return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
         },
         tabBarActiveTintColor: healthColors.primary.main,
         tabBarInactiveTintColor: healthColors.text.tertiary,
@@ -78,7 +70,7 @@ const AdminTabsInner = () => {
           shadowRadius: 4,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: theme.typography.sizes.bodySmall,
           fontWeight: "600",
         },
         tabBarHideOnKeyboard: true,
@@ -101,7 +93,7 @@ const AdminTabsInner = () => {
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: healthColors.primary.main,
-            fontSize: 10,
+            fontSize: theme.typography.sizes.overline,
             fontWeight: "700",
             minWidth: 18,
             height: 18,
@@ -140,6 +132,3 @@ const AdminTabNavigator = () => {
 };
 
 export default AdminTabNavigator;
-
-
-

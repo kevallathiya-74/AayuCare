@@ -49,6 +49,21 @@ exports.createPayment = async (req, res, next) => {
 
     const paymentId = crypto.randomUUID();
 
+    const isGatewayEnabled = process.env.PAYMENT_GATEWAY_ENABLED === "true";
+
+    if (!isGatewayEnabled) {
+      return res.status(200).json({
+        status: "unavailable",
+        message: "Online payment is not active. Please pay at the clinic counter.",
+        data: {
+          paymentMode: "offline",
+          instructions: "Show your appointment ID at the billing counter.",
+          appointmentId: req.body?.appointmentId || null,
+          prescriptionId: req.body?.prescriptionId || null,
+        },
+      });
+    }
+
     const paymentData = {
       paymentId,
       patientId,
@@ -60,19 +75,25 @@ exports.createPayment = async (req, res, next) => {
       ...(purchaseType && { purchaseType }),
     };
 
-    // For non-cash methods, mark as completed immediately
-    // In production, integrate with Razorpay/Stripe here
     const payment = await paymentRepository.create(paymentData);
 
     if (!paymentData.status || paymentData.status === "pending") {
       // Cash payment — mark as pending
     } else {
-      // Card/UPI — mark as completed
-      await paymentRepository.update(payment.id, {
-        status: "completed",
-        paid_at: new Date().toISOString(),
-        transaction_id: `TXN_${Date.now()}`,
-      });
+      // Card/UPI
+      if (isGatewayEnabled) {
+        // Future integration with Razorpay/Stripe
+        // E.g. creating a payment intent and returning client_secret
+        logger.info("Payment gateway is enabled - initializing real payment intent");
+      } else {
+        // Development stub: auto-complete the payment
+        await paymentRepository.update(payment.id, {
+          status: "completed",
+          paid_at: new Date().toISOString(),
+          transaction_id: `MOCK_TXN_${Date.now()}`,
+          payment_gateway: "stub"
+        });
+      }
     }
 
     // Re-fetch with updated status

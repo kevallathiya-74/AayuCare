@@ -23,7 +23,7 @@ import {
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { Ionicons } from "@expo/vector-icons";
+import { User, Mail, Phone, Edit, Trash2, ArrowLeft, Plus, Search, XCircle, X } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
 import { logError } from "../../utils/errorHandler";
@@ -34,7 +34,9 @@ import EditDoctorModal from "./EditDoctorModal";
 
 const ManageDoctorsScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
-  const canManageUsers = ["admin", "super_admin"].includes(user?.role);
+  const normalizedUserRole = String(user?.role || "").toLowerCase();
+  const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
+  const isSuperAdmin = normalizedUserRole === "super_admin";
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,15 +49,33 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const doctorIdFromRoute = route?.params?.doctorId;
-  const fetchDoctors = useCallback(async (searchTerm = "") => {
+  const doctorPayloadFromRoute = route?.params?.doctorPayload;
+  const fetchDoctors = useCallback(async (searchTerm = "", options = {}) => {
     try {
       setError(null);
       if (searchTerm) {
         setSearchLoading(true);
       }
-      const response = await doctorService.getAllDoctors(searchTerm ? { search: searchTerm, ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) } : { ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) });
+      const response = await doctorService.getAllDoctors(
+        searchTerm
+          ? { search: searchTerm, ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) }
+          : { ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) },
+        options
+      );
       // Backend returns { doctors: [], pagination: {} } after service unwraps it
-      const doctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
+      const rawDoctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
+      const doctorsList = (Array.isArray(rawDoctorsList) ? rawDoctorsList : []).map((doctor) => ({
+        ...doctor,
+        _id: doctor?._id || doctor?.id || doctor?.user_uuid || doctor?.doctorId,
+        id: doctor?.id || doctor?._id || doctor?.user_uuid || doctor?.doctorId,
+        userId: doctor?.userId || doctor?.user_id || doctor?.custom_user_id,
+        isActive:
+          typeof doctor?.isActive === "boolean"
+            ? doctor.isActive
+            : typeof doctor?.is_active === "boolean"
+              ? doctor.is_active
+              : !!doctor?.is_active,
+      }));
       logger.debug("ManageDoctorsScreen", `Loaded ${doctorsList.length} doctors`);
       setDoctors(doctorsList);
     } catch (err) {
@@ -66,7 +86,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       setRefreshing(false);
       setSearchLoading(false);
     }
-  }, []);
+  }, [user?.hospitalId]);
 
   useEffect(() => {
     fetchDoctors();
@@ -94,7 +114,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchDoctors(searchQuery.trim());
+    fetchDoctors(searchQuery.trim(), { forceFresh: true });
   }, [fetchDoctors, searchQuery]);
 
   const handleToggleStatus = useCallback(async (doctor) => {
@@ -119,7 +139,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         {
           text: "Confirm",
           onPress: async () => {
-            setUpdatingId(doctor._id);
+            setUpdatingId(doctor._id || doctor.id || doctor.userId);
             try {
               const response = await adminService.updateUserStatus(doctor.userId, newStatus);
               logger.debug("ManageDoctorsScreen", "Status update response", {
@@ -131,8 +151,16 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               if (response.success && response.data) {
                 setDoctors((prev) =>
                   prev.map((d) => {
-                    if (d._id === doctor._id) {
-                      return { ...d, isActive: response.data.isActive };
+                    const ids = [d?._id, d?.id, d?.userId].filter(Boolean);
+                    const targetIds = [doctor?._id, doctor?.id, doctor?.userId].filter(Boolean);
+                    if (ids.some((id) => targetIds.includes(id))) {
+                      return {
+                        ...d,
+                        isActive:
+                          typeof response?.data?.isActive === "boolean"
+                            ? response.data.isActive
+                            : newStatus,
+                      };
                     }
                     return d;
                   })
@@ -141,7 +169,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               
               // Also refetch to ensure consistency
               setTimeout(() => {
-                fetchDoctors(searchQuery.trim());
+                fetchDoctors(searchQuery.trim(), { forceFresh: true });
               }, 500);
               
               Alert.alert(
@@ -177,9 +205,51 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     fetchDoctors(searchQuery.trim());
   }, [fetchDoctors, searchQuery]);
 
+  const handleSoftDeleteDoctor = useCallback(async (doctor) => {
+    setUpdatingId(doctor._id || doctor.id || doctor.userId);
+    try {
+      await adminService.deleteUser(doctor.userId);
+      setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
+      Alert.alert(
+        "Doctor Deactivated",
+        `Dr. ${doctor.name} has been deactivated. Doctor data is retained for compliance and can be reactivated later.`
+      );
+    } catch (err) {
+      logError(err, {
+        context: "ManageDoctorsScreen.handleSoftDeleteDoctor",
+      });
+
+      let errorMessage = "Failed to deactivate doctor";
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setUpdatingId(null);
+    }
+  }, []);
+
   const handleDeleteDoctor = useCallback(async (doctor) => {
     if (!canManageUsers) {
       Alert.alert("Access Denied", "Only admins can delete doctors.");
+      return;
+    }
+
+    if (!isSuperAdmin) {
+      Alert.alert(
+        "Deactivate Doctor",
+        `Delete permanently is restricted to super admin.\n\nDeactivate Dr. ${doctor.name} instead?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Deactivate",
+            style: "destructive",
+            onPress: () => handleSoftDeleteDoctor(doctor),
+          },
+        ]
+      );
       return;
     }
 
@@ -195,9 +265,14 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [canManageUsers]);
+  }, [canManageUsers, isSuperAdmin, handleSoftDeleteDoctor]);
 
   const handlePermanentDeleteDoctor = useCallback(async (doctor) => {
+    if (!isSuperAdmin) {
+      Alert.alert("Access Denied", "Permanent deletion is restricted to super admin.");
+      return;
+    }
+
     Alert.alert(
       "⚠️ PERMANENT DELETE WARNING",
       `This will PERMANENTLY DELETE all data for Dr. ${doctor.name}:\n\n` +
@@ -244,7 +319,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, []);
+  }, [isSuperAdmin]);
 
   const handleDoctorPress = (doctor) => {
     setSelectedDoctor(doctor);
@@ -252,21 +327,32 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    if (!doctorIdFromRoute || loading || doctors.length === 0) {
+    if (!doctorIdFromRoute && !doctorPayloadFromRoute) {
+      return;
+    }
+
+    // Clear route params immediately so this deep-link style action only runs once.
+    navigation.setParams({ doctorId: undefined, doctorName: undefined, doctorPayload: undefined });
+
+    if (doctorPayloadFromRoute) {
+      handleDoctorPress(doctorPayloadFromRoute);
       return;
     }
 
     const matchedDoctor = doctors.find((doctor) => {
-      const ids = [doctor?._id, doctor?.id, doctor?.userId].filter(Boolean);
+      const ids = [doctor?._id, doctor?.id, doctor?.userId, doctor?.user_id, doctor?.doctorId].filter(Boolean);
       return ids.includes(doctorIdFromRoute);
     });
 
-    if (matchedDoctor) {
-      handleDoctorPress(matchedDoctor);
-    }
-
-    navigation.setParams({ doctorId: undefined, doctorName: undefined });
-  }, [doctorIdFromRoute, doctors, loading, navigation]);
+    handleDoctorPress(
+      matchedDoctor || {
+        _id: doctorIdFromRoute,
+        id: doctorIdFromRoute,
+        userId: doctorIdFromRoute,
+        name: route?.params?.doctorName || "",
+      }
+    );
+  }, [doctorIdFromRoute, doctorPayloadFromRoute, doctors, navigation]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderDoctor = useCallback(
     ({ item }) => (
@@ -283,8 +369,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               !item.isActive && styles.avatarInactive,
             ]}
           >
-            <Ionicons
-              name="person"
+            <User
+              
               size={28}
               color={
                 item.isActive
@@ -341,16 +427,16 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         </View>
         <View style={styles.doctorDetails}>
           <View style={styles.detailItem}>
-            <Ionicons
-              name="mail"
+            <Mail
+              
               size={14}
               color={healthColors.text.tertiary}
             />
             <Text style={styles.detailText}>{item.email || "N/A"}</Text>
           </View>
           <View style={styles.detailItem}>
-            <Ionicons
-              name="call"
+            <Phone
+              
               size={14}
               color={healthColors.text.tertiary}
             />
@@ -370,8 +456,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               accessibilityRole="button"
               accessibilityLabel={`Edit ${item.name}`}
             >
-              <Ionicons
-                name="create-outline"
+              <Edit
+                
                 size={18}
                 color={healthColors.primary.main}
               />
@@ -386,8 +472,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               accessibilityRole="button"
               accessibilityLabel={`Delete ${item.name}`}
             >
-              <Ionicons
-                name="trash-outline"
+              <Trash2
+                
                 size={18}
                 color={healthColors.error.main}
               />
@@ -428,8 +514,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -443,7 +529,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
             accessibilityRole="button"
             accessibilityLabel="Add new doctor"
           >
-            <Ionicons name="add" size={24} color={healthColors.primary.main} />
+            <Plus  size={24} color={healthColors.primary.main} />
           </TouchableOpacity>
         ) : (
           <View style={styles.addButtonPlaceholder} />
@@ -453,8 +539,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       {/* Search Section */}
       <View style={styles.searchSection}>
         <View style={styles.searchInputWrapper}>
-          <Ionicons
-            name="search"
+          <Search
+            
             size={20}
             color={healthColors.text.secondary}
           />
@@ -479,8 +565,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               accessibilityRole="button"
               accessibilityLabel="Clear search"
             >
-              <Ionicons
-                name="close-circle"
+              <XCircle
+                
                 size={20}
                 color={healthColors.text.disabled}
               />
@@ -554,8 +640,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Close doctor details"
               >
-                <Ionicons
-                  name="close"
+                <X
+                  
                   size={22}
                   color={healthColors.text.primary}
                 />
@@ -564,8 +650,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
             <View style={styles.detailsBody}>
               <View style={styles.detailsAvatarWrap}>
-                <Ionicons
-                  name="person"
+                <User
+                  
                   size={36}
                   color={healthColors.primary.main}
                 />

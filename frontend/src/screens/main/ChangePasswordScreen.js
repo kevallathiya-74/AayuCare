@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft } from "lucide-react-native";
 import { useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import authService from "../../services/auth.service";
@@ -110,7 +110,7 @@ const ChangePasswordScreen = ({ navigation }) => {
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+          <ArrowLeft  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>
         <View style={styles.backButton} />

@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 const activityService = {
     /**
@@ -15,7 +16,7 @@ const activityService = {
     async getActivityData(patientId) {
         try {
             const response = await api.get(`/patients/${patientId}/activity`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'activityService.getActivityData', patientId });
             throw error;
@@ -31,7 +32,7 @@ const activityService = {
     async updateActivity(patientId, activityData) {
         try {
             const response = await api.post(`/patients/${patientId}/activity`, activityData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'activityService.updateActivity', patientId });
             throw error;
@@ -50,7 +51,7 @@ const activityService = {
                 type: 'water',
                 value: glasses,
             });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'activityService.addWater', patientId });
             throw error;
@@ -69,7 +70,7 @@ const activityService = {
                 type: 'steps',
                 value: steps,
             });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'activityService.updateSteps', patientId });
             throw error;
@@ -88,7 +89,7 @@ const activityService = {
                 type: 'sleep',
                 value: sleepData,
             });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'activityService.logSleep', patientId });
             throw error;

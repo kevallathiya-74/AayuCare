@@ -239,19 +239,22 @@ exports.getCompleteHistory = async (req, res, next) => {
  */
 exports.getPatientProfile = async (req, res, next) => {
   try {
-    // Derive patientId from secure sources only (request body or authenticated user), not from URL params
     let rawPatientId = null;
-    if (req.body && typeof req.body.patientId !== "undefined" && req.body.patientId !== null) {
+    if (req.params && typeof req.params.patientId !== "undefined" && req.params.patientId !== null) {
+      rawPatientId = req.params.patientId;
+    } else if (req.query && typeof req.query.patientId !== "undefined" && req.query.patientId !== null) {
+      rawPatientId = req.query.patientId;
+    } else if (req.body && typeof req.body.patientId !== "undefined" && req.body.patientId !== null) {
       rawPatientId = req.body.patientId;
     } else if (req.user && req.user.role === "patient") {
-      // Allow patients to access their own profile without exposing the ID in the URL
+      // Allow patients to access their own profile when patientId is omitted.
       rawPatientId = req.user.id || req.user.userId || req.user.user_id || null;
     }
 
     if (!rawPatientId) {
       return res.status(400).json({
         success: false,
-        message: "patientId is required in the request body for this operation",
+        message: "patientId is required",
       });
     }
 

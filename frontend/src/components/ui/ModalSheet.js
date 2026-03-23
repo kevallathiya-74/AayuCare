@@ -33,7 +33,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../theme";
 
@@ -138,7 +138,7 @@ const ModalSheet = ({
                 onPress={onClose}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="close" size={22} color={healthColors.text.secondary} />
+                <X  size={22} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
           ) : null}

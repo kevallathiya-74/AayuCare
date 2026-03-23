@@ -6,9 +6,9 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../../theme";
 import { SkeletonLoader } from "../../../components/common";
+import { DynamicIcon } from "../../../components/common";
 
 const STATUS_CONFIG = {
   HEALTHY: {
@@ -65,7 +65,7 @@ const HealthStatusCard = ({
       {/* Status row */}
       <View style={styles.statusRow}>
         <View style={[styles.statusBadge, { backgroundColor: cfg.bg }]}>
-          <Ionicons name={cfg.icon} size={18} color={cfg.color} />
+          <DynamicIcon name={cfg.icon} size={18} color={cfg.color} />
           <Text style={[styles.statusText, { color: cfg.color }]}>{status}</Text>
         </View>
         <View style={styles.scoreChip}>
@@ -87,7 +87,7 @@ const HealthStatusCard = ({
 
       {/* Last update */}
       <View style={styles.updateRow}>
-        <Ionicons name="time-outline" size={12} color={healthColors.text.tertiary} />
+        <DynamicIcon name="time-outline" size={12} color={healthColors.text.tertiary} />
         <Text style={styles.updateText}>Updated: {lastUpdated}</Text>
       </View>
     </TouchableOpacity>
@@ -96,7 +96,7 @@ const HealthStatusCard = ({
 
 const VitalItem = ({ icon, label, value, color }) => (
   <View style={styles.vitalItem}>
-    <Ionicons name={icon} size={16} color={color} style={styles.vitalIcon} />
+    <DynamicIcon name={icon} size={16} color={color} style={styles.vitalIcon} />
     <Text style={styles.vitalLabel}>{label}</Text>
     <Text style={[styles.vitalValue, { color }]}>{value}</Text>
   </View>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   statusText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "700",
     letterSpacing: 0.3,
   },
@@ -140,14 +140,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   scoreLabel: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   scoreValue: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "700",
   },
 
@@ -168,14 +168,14 @@ const styles = StyleSheet.create({
   },
   vitalIcon: { marginBottom: 2 },
   vitalLabel: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
   vitalValue: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "700",
   },
   vitalDivider: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   updateText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
 });

@@ -19,7 +19,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Languages, Mic, Bell, Eye, ShieldCheck, HelpCircle, Phone, Mail } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
@@ -27,6 +27,7 @@ import {
 } from "../../utils/responsive";
 import { getItem, setItem } from "../../utils/appStorage";
 import { logError } from "../../utils/errorHandler";
+import { DynamicIcon } from "../../components/common";
 
 const ACCESSIBILITY_SETTINGS_KEY = "aayucare_accessibility_settings";
 const FONT_SIZE_KEY = "aayucare_font_size";
@@ -124,7 +125,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
   const SettingRow = ({ icon, label, value, onToggle, iconColor }) => (
     <View style={styles.settingRow}>
       <View style={styles.settingLeft}>
-        <Ionicons
+        <ChevronRight
           name={icon}
           size={20}
           color={iconColor || healthColors.text.secondary}
@@ -153,7 +154,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
       activeOpacity={0.7}
     >
       <View style={styles.settingLeft}>
-        <Ionicons
+        <DynamicIcon
           name={icon}
           size={20}
           color={iconColor || healthColors.text.secondary}
@@ -161,7 +162,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         <Text style={styles.settingLabel}>{label}</Text>
       </View>
       {showArrow && (
-        <Ionicons
+        <DynamicIcon
           name="chevron-forward"
           size={20}
           color={healthColors.text.disabled}
@@ -183,11 +184,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={styles.placeholder} />
@@ -205,8 +202,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Language Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="language"
+            <Languages
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -217,8 +214,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               <Text style={styles.languageLabel}>Current: English</Text>
               <TouchableOpacity style={styles.changeButton}>
                 <Text style={styles.changeButtonText}>Change</Text>
-                <Ionicons
-                  name="chevron-forward"
+                <ChevronRight
+                  
                   size={16}
                   color={healthColors.primary.main}
                 />
@@ -241,7 +238,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Voice Accessibility Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="mic" size={20} color={healthColors.primary.main} />
+            <Mic  size={20} color={healthColors.primary.main} />
             <Text style={styles.sectionTitle}>VOICE ACCESSIBILITY:</Text>
           </View>
           <View style={styles.card}>
@@ -269,8 +266,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Notifications Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="notifications"
+            <Bell
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -318,7 +315,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Display Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="eye" size={20} color={healthColors.primary.main} />
+            <Eye  size={20} color={healthColors.primary.main} />
             <Text style={styles.sectionTitle}>DISPLAY:</Text>
           </View>
           <View style={styles.card}>
@@ -345,8 +342,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Privacy Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="shield-checkmark"
+            <ShieldCheck
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -381,8 +378,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Help & Support Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Ionicons
-              name="help-circle"
+            <HelpCircle
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -390,16 +387,16 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
           </View>
           <View style={styles.card}>
             <TouchableOpacity style={styles.supportItem} activeOpacity={0.7} onPress={() => openURL("tel:18001234567")}>
-              <Ionicons
-                name="call"
+              <Phone
+                
                 size={18}
                 color={healthColors.primary.main}
               />
               <Text style={styles.supportText}>• Call: 1800-123-4567</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.supportItem} activeOpacity={0.7} onPress={() => openURL("mailto:support@aayucare.com")}>
-              <Ionicons
-                name="mail"
+              <Mail
+                
                 size={18}
                 color={healthColors.primary.main}
               />

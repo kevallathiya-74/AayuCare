@@ -1,6 +1,27 @@
 const Redis = require("ioredis");
 const logger = require("../utils/logger");
 
+const extractRedisUrl = (raw) => {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+
+  // Handle mistakenly pasted CLI command, e.g.
+  // "redis-cli --tls -u redis://..."
+  const token = trimmed
+    .split(/\s+/)
+    .find((part) => part.startsWith("redis://") || part.startsWith("rediss://"));
+
+  return token || (trimmed.startsWith("redis://") || trimmed.startsWith("rediss://") ? trimmed : null);
+};
+
+const redisUrl = extractRedisUrl(process.env.REDIS_URL);
+
+// In development, prefer local Redis unless explicitly disabled.
+// Set REDIS_USE_LOCAL=false to force REDIS_URL in dev.
+const shouldUseLocalRedis =
+  process.env.REDIS_USE_LOCAL === "true" ||
+  (process.env.NODE_ENV !== "production" && process.env.REDIS_USE_LOCAL !== "false");
+
 // Redis client configuration
 // Supports REDIS_URL (Upstash/cloud) or individual REDIS_HOST/PORT/PASSWORD (local)
 const buildRedisConfig = () => {
@@ -13,8 +34,8 @@ const buildRedisConfig = () => {
     enableReadyCheck: true,
     lazyConnect: false,
   };
-  if (process.env.REDIS_URL) {
-    return { ...base, url: process.env.REDIS_URL, tls: {} };
+  if (!shouldUseLocalRedis && redisUrl) {
+    return { ...base, url: redisUrl, tls: {} };
   }
   return {
     ...base,
@@ -28,9 +49,15 @@ const buildRedisConfig = () => {
 const redisConfig = buildRedisConfig();
 
 // Create Redis client — ioredis accepts a URL string or config object
-const redisClient = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL)
+const redisClient = !shouldUseLocalRedis && redisUrl
+  ? new Redis(redisUrl)
   : new Redis(redisConfig);
+
+if (shouldUseLocalRedis) {
+  logger.info(`🧩 Redis mode: local (${redisConfig.host}:${redisConfig.port}, db ${redisConfig.db})`);
+} else {
+  logger.info("🧩 Redis mode: url");
+}
 
 // Connection event handlers
 redisClient.on("connect", () => {
@@ -43,7 +70,7 @@ redisClient.on("ready", () => {
 });
 
 redisClient.on("error", (err) => {
-  logger.error("❌ Redis client error:", err.message);
+  logger.error(`❌ Redis client error: ${err.message}`);
 });
 
 redisClient.on("close", () => {
@@ -63,7 +90,7 @@ const connectRedis = async () => {
     logger.info("✅ Redis Connected Successfully");
     return redisClient;
   } catch (error) {
-    logger.error("❌ Redis connection failed:", error.message);
+    logger.error(`❌ Redis connection failed: ${error.message}`);
     logger.warn("⚠️  Application will continue without Redis caching");
     // Don't throw - allow app to run without Redis
     return null;

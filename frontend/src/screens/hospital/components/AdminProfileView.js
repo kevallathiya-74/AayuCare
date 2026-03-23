@@ -6,14 +6,15 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { User, ShieldCheck, LogOut } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../../theme";
+import { DynamicIcon } from "../../../components/common";
 
 const InfoRow = ({ icon, label, value, last }) => (
   <>
     <View style={styles.infoRow}>
-      <Ionicons name={icon} size={20} color={healthColors.primary.main} />
+      <DynamicIcon name={icon} size={20} color={healthColors.primary.main} />
       <View style={styles.infoContent}>
         <Text style={styles.infoLabel}>{label}</Text>
         <Text style={styles.infoValue}>{value}</Text>
@@ -26,9 +27,9 @@ const InfoRow = ({ icon, label, value, last }) => (
 const ActionRow = ({ icon, label, onPress, last }) => (
   <>
     <TouchableOpacity style={styles.actionRow} onPress={onPress}>
-      <Ionicons name={icon} size={22} color={healthColors.text.primary} />
+      <DynamicIcon name={icon} size={22} color={healthColors.text.primary} />
       <Text style={styles.actionLabel}>{label}</Text>
-      <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+      <DynamicIcon name="chevron-forward" size={20} color={healthColors.text.tertiary} />
     </TouchableOpacity>
     {!last && <View style={styles.divider} />}
   </>
@@ -52,13 +53,13 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
       >
         <View style={styles.avatarWrap}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={56} color="#fff" />
+            <User  size={56} color={theme.colors.text.white} />
           </View>
         </View>
         <Text style={styles.heroName}>{user?.name || "Admin User"}</Text>
         <Text style={styles.heroEmail}>{user?.email || "admin@aayucare.com"}</Text>
         <View style={styles.rolePill}>
-          <Ionicons name="shield-checkmark" size={14} color="#fff" />
+          <ShieldCheck  size={14} color={theme.colors.text.white} />
           <Text style={styles.roleText}>{user?.role?.toUpperCase() || "ADMIN"}</Text>
         </View>
       </LinearGradient>
@@ -95,7 +96,7 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
       {/* Logout */}
       <View style={styles.section}>
         <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
-          <Ionicons name="log-out-outline" size={22} color={healthColors.error.main} />
+          <LogOut  size={22} color={healthColors.error.main} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -113,20 +114,20 @@ const styles = StyleSheet.create({
   avatarWrap: { marginBottom: 12 },
   avatar: {
     width: 96, height: 96, borderRadius: 48,
-    backgroundColor: "rgba(255,255,255,0.22)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.22),
     justifyContent: "center", alignItems: "center",
   },
-  heroName: { fontSize: 22, fontWeight: "800", color: "#fff" },
-  heroEmail: { fontSize: 13, color: "rgba(255,255,255,0.75)" },
+  heroName: { fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
+  heroEmail: { fontSize: theme.typography.sizes.bodyMedium, color: theme.withOpacity(theme.colors.text.white, 0.75) },
   rolePill: {
     marginTop: 8, flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     borderRadius: 14, paddingHorizontal: 12, paddingVertical: 5,
   },
-  roleText: { fontSize: 12, fontWeight: "700", color: "#fff" },
+  roleText: { fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
 
   section: { marginHorizontal: 16, marginTop: 24 },
-  sectionTitle: { fontSize: 13, fontWeight: "700", color: healthColors.text.secondary, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
+  sectionTitle: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "700", color: healthColors.text.secondary, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
@@ -137,10 +138,10 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: healthColors.border.light, marginLeft: 48 },
   infoRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: 11, color: healthColors.text.tertiary, fontWeight: "500" },
-  infoValue: { fontSize: 14, color: healthColors.text.primary, fontWeight: "600", marginTop: 2 },
+  infoLabel: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, fontWeight: "500" },
+  infoValue: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.text.primary, fontWeight: "600", marginTop: 2 },
   actionRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
-  actionLabel: { flex: 1, fontSize: 14, color: healthColors.text.primary, fontWeight: "500" },
+  actionLabel: { flex: 1, fontSize: theme.typography.sizes.bodyMedium, color: healthColors.text.primary, fontWeight: "500" },
   logoutBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
     backgroundColor: healthColors.error.background,
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1, borderColor: healthColors.error.main + "30",
   },
-  logoutText: { fontSize: 15, fontWeight: "700", color: healthColors.error.main },
+  logoutText: { fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.error.main },
 });
 
 export default AdminProfileView;

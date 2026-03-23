@@ -22,20 +22,26 @@ import {
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { Ionicons } from "@expo/vector-icons";
+import { User, Droplet, Mail, Phone, FileText, Edit, Trash2, ArrowLeft, Plus, Search, XCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { patientService, adminService, doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import logger from "../../utils/logger";
 import { EmptyState, SkeletonCardRow } from "../../components/common";
+import { EmptyStateConfig } from "../../utils/constants";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
 
+const UUID_V4_LIKE_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const ManagePatientsScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
-  const canManageUsers = ["admin", "super_admin"].includes(user?.role);
+  const normalizedUserRole = String(user?.role || "").toLowerCase();
+  const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
+  const isSuperAdmin = normalizedUserRole === "super_admin";
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,13 +51,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const selectedPatientId = selectedPatient?._id || selectedPatient?.id || selectedPatient?.userId;
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const patientIdFromRoute = route?.params?.patientId;
+  const patientPayloadFromRoute = route?.params?.patientPayload;
  
-  const normalizedUserRole = String(user?.role || "").toLowerCase();
-
-  const fetchPatients = useCallback(async (searchTerm = "") => {
+  const fetchPatients = useCallback(async (searchTerm = "", options = {}) => {
     try {
       if (searchTerm) {
         setSearchLoading(true);
@@ -63,7 +69,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       const isDoctorUser = normalizedUserRole === "doctor";
       const response = isDoctorUser
         ? await doctorService.searchMyPatients(searchTerm)
-        : await patientService.getAllPatients(searchTerm ? { q: searchTerm } : {});
+        : await patientService.getAllPatients(searchTerm ? { q: searchTerm } : {}, options);
 
       // Handle response as array directly or extract from nested structure
       let patientsList = Array.isArray(response)
@@ -74,6 +80,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         ...patient,
         _id: patient?._id || patient?.id || patient?.userId,
         id: patient?.id || patient?._id || patient?.userId,
+        userId: patient?.userId || patient?.user_id,
+        isActive:
+          typeof patient?.isActive === "boolean"
+            ? patient.isActive
+            : typeof patient?.is_active === "boolean"
+              ? patient.is_active
+              : !!patient?.is_active,
       }));
 
       setPatients(patientsList);
@@ -117,9 +130,30 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     return () => clearTimeout(delaySearch);
   }, [searchQuery]);
 
+  // Warm details cache for top visible items to improve first-click performance.
+  useEffect(() => {
+    if (!Array.isArray(patients) || patients.length === 0) {
+      return;
+    }
+
+    const idsToPrefetch = patients
+      .slice(0, 8)
+      .map((patient) => patient?._id || patient?.id || patient?.userId)
+      .filter((id) => UUID_V4_LIKE_REGEX.test(String(id || "")));
+
+    if (normalizedUserRole === "doctor") {
+      doctorService.prefetchPatientDetails(idsToPrefetch).catch(() => {});
+      return;
+    }
+
+    Promise.allSettled(
+      idsToPrefetch.map((id) => patientService.getPatientById(id, { useCache: true, cacheTTL: 45000 }))
+    ).catch(() => {});
+  }, [patients, normalizedUserRole]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPatients(searchQuery.trim());
+    fetchPatients(searchQuery.trim(), { forceFresh: true });
   }, [fetchPatients, searchQuery]);
 
   const handleToggleStatus = useCallback(async (patient) => {
@@ -144,7 +178,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         {
           text: "Confirm",
           onPress: async () => {
-            setUpdatingId(patient._id);
+            setUpdatingId(patient._id || patient.id || patient.userId);
             try {
               const response = await adminService.updateUserStatus(
                 patient.userId,
@@ -160,8 +194,16 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               if (response.success && response.data) {
                 setPatients((prev) =>
                   prev.map((p) => {
-                    if (p._id === patient._id) {
-                      return { ...p, isActive: response.data.isActive };
+                    const ids = [p?._id, p?.id, p?.userId].filter(Boolean);
+                    const targetIds = [patient?._id, patient?.id, patient?.userId].filter(Boolean);
+                    if (ids.some((id) => targetIds.includes(id))) {
+                      return {
+                        ...p,
+                        isActive:
+                          typeof response?.data?.isActive === "boolean"
+                            ? response.data.isActive
+                            : newStatus,
+                      };
                     }
                     return p;
                   })
@@ -170,7 +212,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
               // Also refetch to ensure consistency
               setTimeout(() => {
-                fetchPatients(searchQuery.trim());
+                fetchPatients(searchQuery.trim(), { forceFresh: true });
               }, 500);
 
               Alert.alert(
@@ -198,17 +240,59 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
   const handleEditSuccess = useCallback(() => {
     // Refetch with current search query to maintain search context
-    fetchPatients(searchQuery.trim());
+    fetchPatients(searchQuery.trim(), { forceFresh: true });
   }, [fetchPatients, searchQuery]);
 
   const handleAddSuccess = useCallback(() => {
     // After adding, refetch with current search query
-    fetchPatients(searchQuery.trim());
+    fetchPatients(searchQuery.trim(), { forceFresh: true });
   }, [fetchPatients, searchQuery]);
+
+  const handleSoftDeletePatient = useCallback(async (patient) => {
+    setUpdatingId(patient._id || patient.id || patient.userId);
+    try {
+      await adminService.deleteUser(patient.userId);
+      setPatients((prev) => prev.filter((p) => p._id !== patient._id));
+      Alert.alert(
+        "Patient Deactivated",
+        `${patient.name} has been deactivated. Patient data is retained for compliance and can be reactivated later.`
+      );
+    } catch (err) {
+      logError(err, {
+        context: "ManagePatientsScreen.handleSoftDeletePatient",
+      });
+
+      let errorMessage = "Failed to deactivate patient";
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setUpdatingId(null);
+    }
+  }, []);
 
   const handleDeletePatient = useCallback(async (patient) => {
     if (!canManageUsers) {
       Alert.alert("Access Denied", "Only admins can delete patients.");
+      return;
+    }
+
+    if (!isSuperAdmin) {
+      Alert.alert(
+        "Deactivate Patient",
+        `Delete permanently is restricted to super admin.\n\nDeactivate ${patient.name} instead?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Deactivate",
+            style: "destructive",
+            onPress: () => handleSoftDeletePatient(patient),
+          },
+        ]
+      );
       return;
     }
 
@@ -224,9 +308,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [canManageUsers]);
+  }, [canManageUsers, isSuperAdmin, handleSoftDeletePatient]);
 
   const handlePermanentDeletePatient = useCallback(async (patient) => {
+    if (!isSuperAdmin) {
+      Alert.alert("Access Denied", "Permanent deletion is restricted to super admin.");
+      return;
+    }
+
     Alert.alert(
       "⚠️ PERMANENT DELETE WARNING",
       `This will PERMANENTLY DELETE all data for ${patient.name}:\n\n` +
@@ -274,7 +363,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, []);
+  }, [isSuperAdmin]);
 
   const handlePatientPress = (patient) => {
     setSelectedPatient(patient);
@@ -298,10 +387,15 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   );
 
   useEffect(() => {
-    if (!patientIdFromRoute) return;
+    if (!patientIdFromRoute && !patientPayloadFromRoute) return;
 
     // Clear route param immediately to prevent re-trigger on re-renders.
-    navigation.setParams({ patientId: undefined, patientName: undefined });
+    navigation.setParams({ patientId: undefined, patientName: undefined, patientPayload: undefined });
+
+    if (patientPayloadFromRoute) {
+      handlePatientPress(patientPayloadFromRoute);
+      return;
+    }
 
     // Try to find patient in already-loaded list for richer data;
     // fall back to a minimal stub — PatientDetailsModal fetches its own data.
@@ -316,7 +410,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       userId: patientIdFromRoute,
       name: route?.params?.patientName || "",
     });
-  }, [patientIdFromRoute]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [patientIdFromRoute, patientPayloadFromRoute]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderPatient = useCallback(
     ({ item }) => {
@@ -337,8 +431,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 !item.isActive && styles.avatarInactive,
               ]}
             >
-              <Ionicons
-                name="person"
+              <User
+                
                 size={28}
                 color={
                   item.isActive
@@ -397,24 +491,24 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.patientDetails}>
             <View style={styles.detailItem}>
-              <Ionicons
-                name="water"
+              <Droplet
+                
                 size={14}
                 color={healthColors.text.tertiary}
               />
               <Text style={styles.detailText}>{item.bloodGroup || "N/A"}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons
-                name="mail"
+              <Mail
+                
                 size={14}
                 color={healthColors.text.tertiary}
               />
               <Text style={styles.detailText}>{item.email || "N/A"}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons
-                name="call"
+              <Phone
+                
                 size={14}
                 color={healthColors.text.tertiary}
               />
@@ -433,12 +527,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               accessibilityRole="button"
               accessibilityLabel={`Create prescription for ${item.name}`}
             >
-              <Ionicons
-                name="document-text-outline"
+              <FileText
+                
                 size={18}
                 color={healthColors.accent.coral}
               />
-              <Text style={styles.prescriptionButtonText}>Prescription</Text>
+              <Text style={styles.prescriptionButtonText} numberOfLines={1}>
+                Prescription
+              </Text>
             </TouchableOpacity>
 
             {canManageUsers && (
@@ -452,12 +548,12 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Edit ${item.name}`}
               >
-                <Ionicons
-                  name="create-outline"
+                <Edit
+                  
                   size={18}
                   color={healthColors.primary.main}
                 />
-                <Text style={styles.editButtonText}>Edit</Text>
+                <Text style={styles.editButtonText} numberOfLines={1}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionButton, styles.deleteButton]}
@@ -468,12 +564,12 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${item.name}`}
               >
-                <Ionicons
-                  name="trash-outline"
+                <Trash2
+                  
                   size={18}
                   color={healthColors.error.main}
                 />
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText} numberOfLines={1}>Delete</Text>
               </TouchableOpacity>
               </>
             )}
@@ -493,9 +589,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
   const renderEmptyState = () => (
     <EmptyState
-      icon="people-outline"
-      title="No Patients Yet"
-      message={error || "Patient management data will appear here."}
+      icon={EmptyStateConfig.PATIENTS.icon}
+      title={EmptyStateConfig.PATIENTS.title}
+      message={error || EmptyStateConfig.PATIENTS.message}
       actionLabel={error ? "Retry" : undefined}
       onActionPress={error ? () => fetchPatients(searchQuery.trim()) : undefined}
     />
@@ -516,8 +612,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -531,7 +627,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             accessibilityRole="button"
             accessibilityLabel="Add new patient"
           >
-            <Ionicons name="add" size={24} color={theme.colors.white} />
+            <Plus  size={24} color={theme.colors.white} />
           </TouchableOpacity>
         ) : (
           <View style={styles.addButtonPlaceholder} />
@@ -541,8 +637,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       {/* Search Section */}
       <View style={styles.searchSection}>
         <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
+          <Search
+            
             size={20}
             color={healthColors.text.tertiary}
             style={styles.searchIcon}
@@ -562,8 +658,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               accessibilityRole="button"
               accessibilityLabel="Clear search"
             >
-              <Ionicons
-                name="close-circle"
+              <XCircle
+                
                 size={20}
                 color={healthColors.text.disabled}
               />
@@ -630,8 +726,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           setShowDetailsModal(false);
           setSelectedPatient(null);
         }}
-        patientId={selectedPatient?._id || selectedPatient?.id || selectedPatient?.userId}
+        patientId={selectedPatientId}
         patientName={selectedPatient?.name}
+        initialPatient={selectedPatient}
       />
     </SafeAreaView>
   );
@@ -792,6 +889,7 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    flexWrap: "wrap",
     marginTop: theme.spacing.md,
     paddingTop: theme.spacing.md,
     borderTopWidth: 1,
@@ -801,10 +899,13 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
     gap: theme.spacing.xs,
+    minWidth: 96,
+    flexShrink: 1,
   },
   editButton: {
     backgroundColor: healthColors.primary.main + "15",
@@ -813,7 +914,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: healthColors.primary.main,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.semibold,
   },
   prescriptionButton: {
@@ -823,7 +924,7 @@ const styles = StyleSheet.create({
   },
   prescriptionButtonText: {
     color: healthColors.accent.coral,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.semibold,
   },
   deleteButton: {
@@ -833,7 +934,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: healthColors.error.main,
-    fontSize: theme.typography.sizes.sm,
+    fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.semibold,
   },
 });

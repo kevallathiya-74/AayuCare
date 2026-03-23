@@ -39,11 +39,16 @@ const passwordChangeLimiter = rateLimit({
 // Strictly public: email-by-userid is rate-limited; used only for auth flow
 router.post("/email-by-userid", sensitiveAuthLimiter, authController.getEmailByUserId);
 
+// Post-login profile hydration for mobile flow (kept public + rate-limited)
+router.post("/profile-by-email", sensitiveAuthLimiter, authController.getProfileByEmail);
+
+// Mobile bearer token exchange (credential-verified + rate-limited)
+router.post("/session-token", sensitiveAuthLimiter, authController.getSessionTokenByCredentials);
+
 // Protected routes — must be authenticated
 router.use(protect);
 
 // These require authentication as they return sensitive user/session data
-router.post("/profile-by-email", sensitiveAuthLimiter, authController.getProfileByEmail);
 router.post("/current-session", sensitiveAuthLimiter, authController.getCurrentSession);
 
 router.get("/me", authController.getMe);
@@ -58,7 +63,8 @@ router.put(
   passwordChangeLimiter,
   validateBody(changePasswordSchema),
   authController.changePassword
-  // Cache invalidation now handled inside controller
 );
+
+router.put("/push-token", authController.updatePushToken);
 
 module.exports = router;

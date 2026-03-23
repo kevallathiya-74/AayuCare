@@ -1,0 +1,781 @@
+/**
+ * Admin Service
+ * All business logic for admin operations.
+ * Calls adminRepository and other repositories — no direct DB access.
+ */
+
+const adminRepository = require('../repositories/adminRepository');
+const prescriptionRepository = require('../repositories/prescriptionRepository');
+const userRepository = require('../repositories/userRepository');
+const doctorRepository = require('../repositories/doctorRepository');
+const patientRepository = require('../repositories/patientRepository');
+const medicalRecordRepository = require('../repositories/medicalRecordRepository');
+const notificationRepository = require('../repositories/notificationRepository');
+const appointmentRepository = require('../repositories/appointmentRepository');
+const { AppError } = require('../middleware/errorHandler');
+const { deleteCacheByPattern } = require('../config/redis');
+const { writeAuditLog, AUDIT_ACTIONS } = require('../utils/audit');
+const mongoose = require('mongoose');
+const logger = require('../utils/logger');
+const bcrypt = require('bcryptjs');
+
+const CACHE_KEYS = {
+  USER: 'v1:cache:*user*',
+  DOCTORS: 'v1:cache:*doctors*',
+  DOCTOR: 'v1:cache:*doctor*',
+  PATIENT: 'v1:cache:*patient*',
+  PATIENTS: 'v1:cache:*patients*',
+  DASHBOARD: 'v1:cache:*dashboard*',
+  SESSION: 'v1:cache:*session*',
+  ADMIN_USERS: 'v1:cache:*admin/users*',
+};
+
+/**
+ * @typedef {Object} ScopeContext
+ * @property {string|null} hospitalId
+ * @property {string} role
+ */
+
+/** @param {ScopeContext} ctx */
+const getScopedHospitalId = (ctx = {}) =>
+  ctx.hospitalId && ctx.role !== 'super_admin' ? ctx.hospitalId : null;
+
+const invalidateCaches = async (...patterns) => {
+  await Promise.all(
+    patterns.map(p =>
+      deleteCacheByPattern(p).catch(err => logger.warn('Cache invalidation failed:', err.message))
+    )
+  );
+};
+
+const calculateTrend = (current, previous) => {
+  if (!previous) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
+};
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+/**
+ * Get dashboard stats
+ * @param {ScopeContext} ctx
+ */
+const getDashboardStats = async (ctx) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const previousMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const baseQuery = scopedHospitalId ? { hospitalId: scopedHospitalId } : {};
+  const mongoConnected = mongoose.connection?.readyState === 1;
+  const degradedSources = new Set();
+
+  const safePrescriptionCount = async (query, source) => {
+    if (!mongoConnected) {
+      degradedSources.add('mongodb_disconnected');
+      return 0;
+    }
+
+    try {
+      // Bound Mongo wait-time so dashboard remains responsive under DB degradation.
+      return await Promise.race([
+        prescriptionRepository.count(query),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('prescription_count_timeout')), 300)
+        ),
+      ]);
+    } catch (error) {
+      degradedSources.add(source || 'prescription_count_failed');
+      logger.warn('Prescription count fallback triggered:', error.message);
+      return 0;
+    }
+  };
+
+  const [
+    appointmentStats,
+    doctorStats,
+    patientStats,
+    totalPrescriptions,
+    prescriptionsToday,
+    prescriptionsYesterday,
+    revenueStats,
+  ] = await Promise.all([
+    adminRepository.getAppointmentStats({ today, tomorrow, yesterday, currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
+    adminRepository.getDoctorStats({ currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
+    adminRepository.getPatientStats({ currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
+    safePrescriptionCount(baseQuery, 'prescriptions_total'),
+    safePrescriptionCount({ ...baseQuery, createdAt: { $gte: today, $lt: tomorrow } }, 'prescriptions_today'),
+    safePrescriptionCount({ ...baseQuery, createdAt: { $gte: yesterday, $lt: today } }, 'prescriptions_yesterday'),
+    adminRepository.getRevenueStats({ today, tomorrow, yesterday, hospitalId: scopedHospitalId }),
+  ]);
+
+  const totalAppointments = parseInt(appointmentStats.total, 10);
+  const appointmentsToday = parseInt(appointmentStats.today, 10);
+  const pendingAppointments = parseInt(appointmentStats.pending, 10);
+  const completedAppointments = parseInt(appointmentStats.completed, 10);
+  const totalDoctors = parseInt(doctorStats.total, 10);
+  const activeDoctors = parseInt(doctorStats.active, 10);
+  const totalPatients = parseInt(patientStats.total, 10);
+  const newPatientsThisMonth = parseInt(patientStats.new_this_month, 10);
+  const totalPrescriptionsCount = parseInt(totalPrescriptions, 10);
+  const prescriptionsTodayCount = parseInt(prescriptionsToday, 10);
+  const prescriptionsYesterdayCount = parseInt(prescriptionsYesterday, 10);
+  const appointmentsThisMonth = parseInt(appointmentStats.this_month, 10);
+  const appointmentsPreviousMonth = parseInt(appointmentStats.previous_month, 10);
+  const doctorsNewThisMonth = parseInt(doctorStats.new_this_month, 10);
+  const doctorsNewPreviousMonth = parseInt(doctorStats.new_previous_month, 10);
+  const patientsNewPreviousMonth = parseInt(patientStats.new_previous_month, 10);
+  const totalRevenue = parseFloat(revenueStats.total || 0);
+  const revenueToday = parseFloat(revenueStats.today || 0);
+  const revenueYesterday = parseFloat(revenueStats.yesterday || 0);
+
+  return {
+    appointments: {
+      total: totalAppointments,
+      today: appointmentsToday,
+      pending: pendingAppointments,
+      completed: completedAppointments,
+      trend: calculateTrend(appointmentsThisMonth, appointmentsPreviousMonth),
+    },
+    doctors: {
+      total: totalDoctors,
+      active: activeDoctors,
+      onDuty: activeDoctors,
+      trend: calculateTrend(doctorsNewThisMonth, doctorsNewPreviousMonth),
+    },
+    patients: {
+      total: totalPatients,
+      new: newPatientsThisMonth,
+      returning: totalPatients - newPatientsThisMonth,
+      trend: calculateTrend(newPatientsThisMonth, patientsNewPreviousMonth),
+    },
+    prescriptions: {
+      total: totalPrescriptionsCount,
+      today: prescriptionsTodayCount,
+      trend: calculateTrend(prescriptionsTodayCount, prescriptionsYesterdayCount),
+    },
+    revenue: {
+      total: totalRevenue,
+      today: revenueToday,
+      trend: calculateTrend(revenueToday, revenueYesterday),
+    },
+    meta: {
+      degraded: degradedSources.size > 0,
+      degradedSources: Array.from(degradedSources),
+    },
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Recent Activities
+// ---------------------------------------------------------------------------
+
+const getTimeAgo = (date) => {
+  const now = new Date();
+  const diffMs = now - new Date(date);
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
+const getRecentActivities = async (limit, ctx) => {
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const baseQuery = scopedHospitalId ? { hospitalId: scopedHospitalId } : {};
+
+  const [recentAppointmentRows, recentPrescriptions] = await Promise.all([
+    adminRepository.getRecentAppointments({ limit, hospitalId: scopedHospitalId }),
+    prescriptionRepository.findByHospital(scopedHospitalId, { limit, skip: 0 }),
+  ]);
+
+  const recentAppointments = recentAppointmentRows.map(row => ({
+    _id: row.id,
+    createdAt: row.created_at,
+    patientId: { name: row.patient_name, userId: row.patient_user_id },
+    doctorId: { name: row.doctor_name, userId: row.doctor_user_id },
+  }));
+
+  const activities = [
+    ...recentAppointments.map(apt => ({
+      id: apt._id,
+      text: `${apt.doctorId?.name || 'Doctor'} scheduled appointment with ${apt.patientId?.name || 'patient'}`,
+      icon: 'calendar',
+      time: apt.createdAt,
+      type: 'appointment',
+    })),
+    ...recentPrescriptions.map(presc => ({
+      id: presc._id,
+      text: `${presc.doctorId?.name || 'Doctor'} added prescription for patient`,
+      icon: 'document-text',
+      time: presc.createdAt,
+      type: 'prescription',
+    })),
+  ]
+    .sort((a, b) => new Date(b.time) - new Date(a.time))
+    .slice(0, limit)
+    .map(activity => ({ ...activity, time: getTimeAgo(activity.time) }));
+
+  return activities;
+};
+
+// ---------------------------------------------------------------------------
+// Users
+// ---------------------------------------------------------------------------
+
+const getUsers = async ({ role, search, includeInactive, limit, page, ctx }) => {
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const skip = (page - 1) * limit;
+
+  if (search && search.length > 100) {
+    throw new AppError('Search query too long (max 100 characters)', 400);
+  }
+
+  const { rows, total } = await adminRepository.getUsers({
+    role,
+    search,
+    hospitalId: scopedHospitalId,
+    includeInactive,
+    limit,
+    skip,
+  });
+
+  const users = rows.map(row => ({
+    _id: row.id,
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    role: row.role,
+    hospitalId: row.hospital_id,
+    hospitalName: row.hospital_name,
+    isActive: row.is_active,
+    emailVerified: row.email_verified,
+    phoneVerified: row.phone_verified,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    specialization: row.specialization,
+    qualification: row.qualification,
+    experience: row.experience,
+    department: row.department,
+    consultationFee: row.consultation_fee,
+    bio: row.bio,
+    dateOfBirth: row.date_of_birth,
+    gender: row.gender,
+    bloodGroup: row.blood_group,
+    address: row.address,
+    emergencyContactName: row.emergency_contact_name,
+    emergencyContactPhone: row.emergency_contact_phone,
+    emergencyContactRelation: row.emergency_contact_relation,
+  }));
+
+  return { users, total, page, limit };
+};
+
+const updateUserStatus = async ({ userId, isActive, adminUser, hospitalId }) => {
+  if (typeof isActive !== 'boolean') {
+    throw new AppError('isActive must be a boolean value', 400);
+  }
+
+  const user = await userRepository.findByUserId(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  if (hospitalId && adminUser.role !== 'super_admin' && user.hospital_id !== hospitalId) {
+    throw new AppError('Access denied — user belongs to a different hospital', 403);
+  }
+
+  const updatedUser = await userRepository.update(user.id, { isActive });
+
+  await invalidateCaches(
+    CACHE_KEYS.USER, CACHE_KEYS.DOCTORS, CACHE_KEYS.DOCTOR,
+    CACHE_KEYS.PATIENT, CACHE_KEYS.PATIENTS, CACHE_KEYS.ADMIN_USERS, CACHE_KEYS.DASHBOARD
+  );
+
+  await writeAuditLog({
+    userId: adminUser.id,
+    action: AUDIT_ACTIONS.USER_STATUS_CHANGE,
+    entityType: 'user',
+    entityId: user.id,
+    oldValues: { isActive: user.is_active },
+    newValues: { isActive },
+  });
+
+  return updatedUser;
+};
+
+const updateUserRole = async ({ userId, role, adminUser, hospitalId }) => {
+  const validRoles = ['patient', 'doctor', 'admin'];
+  if (!validRoles.includes(role)) {
+    throw new AppError(`Invalid role. Must be one of: ${validRoles.join(', ')}`, 400);
+  }
+
+  const user = await userRepository.findByUserId(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  if (hospitalId && adminUser.role !== 'super_admin' && user.hospital_id !== hospitalId) {
+    throw new AppError('Access denied — user belongs to a different hospital', 403);
+  }
+
+  if (user.role === 'admin' && role !== 'admin') {
+    const adminCount = await adminRepository.countActiveAdmins();
+    if (adminCount <= 1) {
+      throw new AppError('Cannot demote the last admin. Promote another user first.', 400);
+    }
+  }
+
+  await adminRepository.updateUserRole(user.id, role);
+  const updatedUser = await userRepository.findById(user.id);
+
+  await invalidateCaches(
+    CACHE_KEYS.USER, CACHE_KEYS.DOCTORS, CACHE_KEYS.DOCTOR, CACHE_KEYS.PATIENT, CACHE_KEYS.DASHBOARD
+  );
+
+  await writeAuditLog({
+    userId: adminUser.id,
+    action: AUDIT_ACTIONS.ROLE_CHANGE,
+    entityType: 'user',
+    entityId: user.id,
+    oldValues: { role: user.role },
+    newValues: { role },
+  });
+
+  return updatedUser;
+};
+
+const bulkUpdateUsers = async ({ operations, adminUser, hospitalId }) => {
+  if (!Array.isArray(operations) || operations.length === 0) {
+    throw new AppError('Operations must be a non-empty array', 400);
+  }
+  if (operations.length > 100) {
+    throw new AppError('Maximum 100 operations allowed per batch', 400);
+  }
+
+  const isSuperAdmin = adminUser.role === 'super_admin';
+  const scopedHospitalId = hospitalId && !isSuperAdmin ? hospitalId : null;
+
+  const results = await adminRepository.bulkUpdateUsers(operations, scopedHospitalId, isSuperAdmin);
+
+  await invalidateCaches(
+    CACHE_KEYS.USER, CACHE_KEYS.DOCTORS, CACHE_KEYS.PATIENT, CACHE_KEYS.DASHBOARD
+  );
+
+  return results;
+};
+
+// ---------------------------------------------------------------------------
+// Security
+// ---------------------------------------------------------------------------
+
+const getSecuritySettings = async (userId, ctx) => {
+  const user = await userRepository.findByUserId(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const scopedHospitalId = getScopedHospitalId(ctx);
+
+  const [{ stats, totalActiveSessions }, myActiveSessions] = await Promise.all([
+    adminRepository.getSecurityStats({ sevenDaysAgo, today, hospitalId: scopedHospitalId }),
+    adminRepository.getUserActiveSessions(user.id),
+  ]);
+
+  const totalUsers = parseInt(stats.total_users, 10);
+  const verifiedUsers = parseInt(stats.verified_users, 10);
+
+  return {
+    user: {
+      lastLogin: user.last_login,
+      isVerified: user.email_verified,
+      accountCreated: user.created_at,
+      lastPasswordChange: user.updated_at,
+      myActiveSessions,
+    },
+    statistics: {
+      activeSessions: totalActiveSessions,
+      activeUsers7d: parseInt(stats.active_users_7d, 10),
+      recentLogins: parseInt(stats.recent_logins, 10),
+      totalUsers,
+      verifiedUsers,
+      unverifiedUsers: totalUsers - verifiedUsers,
+    },
+    lastActivity: user.last_login ? getTimeAgo(user.last_login) : 'Never',
+  };
+};
+
+const changePassword = async ({ userId, currentPassword, newPassword }) => {
+  if (!currentPassword || !newPassword) {
+    throw new AppError('Current password and new password are required', 400);
+  }
+  if (newPassword.length < 8) {
+    throw new AppError('New password must be at least 8 characters', 400);
+  }
+  if (currentPassword === newPassword) {
+    throw new AppError('New password must be different from current password', 400);
+  }
+
+  const user = await userRepository.findByUserId(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  const passwordHash = await adminRepository.getPasswordHash(user.id);
+  if (!passwordHash) throw new AppError('User not found', 404);
+
+  const isMatch = await bcrypt.compare(currentPassword, passwordHash);
+  if (!isMatch) throw new AppError('Current password is incorrect', 401);
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  await adminRepository.updatePasswordHash(user.id, newPasswordHash);
+  const loggedOutSessions = await adminRepository.deleteAllUserSessions(user.id);
+
+  await invalidateCaches(CACHE_KEYS.SESSION);
+
+  return { loggedOutSessions };
+};
+
+const logoutAllDevices = async (userId) => {
+  const user = await userRepository.findByUserId(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  const loggedOutSessions = await adminRepository.deleteAllUserSessions(user.id);
+  await adminRepository.touchUser(user.id);
+
+  await invalidateCaches(CACHE_KEYS.SESSION);
+
+  return { loggedOutSessions };
+};
+
+// ---------------------------------------------------------------------------
+// System
+// ---------------------------------------------------------------------------
+
+const getSystemMetrics = async (ctx) => {
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const [userGrowth, appointmentTrends, activeUsers, totalUsers, dbStats] = await Promise.all([
+    adminRepository.getUserGrowth(scopedHospitalId),
+    adminRepository.getAppointmentTrends(scopedHospitalId),
+    adminRepository.getActiveUsersCount(weekAgo, scopedHospitalId),
+    adminRepository.getTotalUsersCount(scopedHospitalId),
+    mongoose.connection.db.stats().catch(() => ({})),
+  ]);
+
+  return {
+    userGrowth,
+    appointmentTrends,
+    activeUsers,
+    totalUsers,
+    database: {
+      collections: dbStats.collections,
+      dataSize: dbStats.dataSize,
+      indexSize: dbStats.indexSize,
+      storageSize: dbStats.storageSize,
+    },
+    timestamp: new Date(),
+  };
+};
+
+const getMedicalRecordsOverview = async ({ patientId, limit, skip, ctx }) => {
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const mongoFilter = {};
+
+  if (scopedHospitalId) mongoFilter.hospitalId = scopedHospitalId;
+  if (patientId) mongoFilter.patientId = patientId;
+
+  const [records, total] = await Promise.all([
+    medicalRecordRepository.findWithFilters(mongoFilter, {
+      select: 'recordType title patientId doctorId createdAt updatedAt hospitalId',
+      sort: { createdAt: -1 },
+      offset: skip,
+      limit,
+      lean: true,
+    }),
+    medicalRecordRepository.count(mongoFilter),
+  ]);
+
+  const typeStats = await medicalRecordRepository.aggregate([
+    { $match: mongoFilter },
+    { $group: { _id: '$recordType', count: { $sum: 1 } } },
+  ]);
+
+  return { records, stats: typeStats, total };
+};
+
+const getNotificationsManagement = async ({ type, status, limit, skip, ctx }) => {
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const mongoFilter = {};
+
+  if (scopedHospitalId) mongoFilter.hospitalId = scopedHospitalId;
+  if (type) mongoFilter.type = type;
+  if (status) mongoFilter.read = status === 'read';
+
+  const [notifications, total, unreadCount, typeStats] = await Promise.all([
+    notificationRepository.findWithFilters(mongoFilter, { limit, offset: skip }),
+    notificationRepository.count(mongoFilter),
+    notificationRepository.count({ ...mongoFilter, read: false }),
+    notificationRepository.aggregate([
+      { $match: mongoFilter },
+      { $group: { _id: '$type', count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  return { notifications, total, unreadCount, typeDistribution: typeStats };
+};
+
+const getAuditLogs = async ({ userId: targetUserId, action, entityType, limit, page, ctx }) => {
+  const scopedHospitalId = getScopedHospitalId(ctx);
+  const offset = (page - 1) * limit;
+
+  const { rows, total } = await adminRepository.getAuditLogs({
+    hospitalId: scopedHospitalId,
+    userId: targetUserId,
+    action,
+    entityType,
+    limit,
+    offset,
+  });
+
+  return { rows, total, page, limit };
+};
+
+const { withTransaction } = require('../utils/transaction');
+
+const getSystemHealth = async () => {
+    const services = { mongodb: { connected: false }, postgres: { connected: false }, redis: { connected: false } };
+    try {
+      const mongoPing = await mongoose.connection.db.admin().ping();
+      services.mongodb.connected = mongoPing?.ok === 1;
+    } catch (e) { logger.warn("MongoDB health check failed:", e.message); }
+
+    try {
+      await adminRepository.pingPostgres();
+      services.postgres.connected = true;
+    } catch (e) { logger.warn("Postgres health check failed:", e.message); }
+
+    try {
+      const { redisClient } = require("../config/redis");
+      const redisPing = await redisClient.ping();
+      services.redis.connected = redisPing === "PONG";
+    } catch (e) { logger.warn("Redis health check failed:", e.message); }
+
+    const issues = Object.values(services).filter(s => !s.connected).length;
+    return {
+      success: true,
+      data: {
+        status: issues === 0 ? "good" : issues === 1 ? "warning" : "critical",
+        issues,
+        database: { connected: services.mongodb.connected },
+        services,
+        memory: process.memoryUsage(),
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+      }
+    };
+};
+
+const createUser = async (req) => {
+    const { name, email, phone, password, role, specialization, qualification, experience, department, consultationFee, licenseNumber, license_number, bio, availability, dateOfBirth, gender, bloodGroup, address, emergencyContactName, emergencyContactPhone, emergencyContactRelation, allergies, chronicConditions } = req.body;
+
+    if (!name || !email || !phone || !password || !role) throw new AppError("Name, email, phone, password, and role are required", 400);
+    if (!["doctor", "patient"].includes(role)) throw new AppError("Role must be either doctor or patient", 400);
+    if (role === "doctor" && (!specialization || !qualification)) throw new AppError("Specialization and qualification are required for doctors", 400);
+
+    if (await userRepository.emailExists(email.toLowerCase())) throw new AppError("Email already exists", 400);
+    if (await userRepository.phoneExists(phone)) throw new AppError("Phone number already exists", 400);
+
+    const userId = await userRepository.getNextUserId(role);
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const userData = {
+      userId, name: name.trim(), email: email.toLowerCase().trim(), phone: phone.trim(),
+      passwordHash, role, hospitalId: req.hospitalId || req.user.hospitalId, hospitalName: req.user.hospitalName,
+    };
+    const user = await userRepository.create(userData);
+
+    if (role === "doctor") {
+      const normalizedAvailability = typeof availability === "string" ? (() => { try { return JSON.parse(availability); } catch { return {}; } })() : availability || {};
+      const normalizedLicenseNumber = licenseNumber || license_number || null;
+      await adminRepository.createDoctorProfile(user.id, specialization, qualification, experience || 0, department || specialization, consultationFee ?? 500, normalizedLicenseNumber, bio || null, JSON.stringify(normalizedAvailability));
+    } else if (role === "patient") {
+      const patientFields = ['user_id']; const patientValues = [user.id]; let paramIndex = 2;
+      if (dateOfBirth) { patientFields.push('date_of_birth'); patientValues.push(dateOfBirth); paramIndex++; }
+      if (gender) { patientFields.push('gender'); patientValues.push(gender); paramIndex++; }
+      if (bloodGroup) { patientFields.push('blood_group'); patientValues.push(bloodGroup); paramIndex++; }
+      if (address) { patientFields.push('address'); patientValues.push(address); paramIndex++; }
+      if (emergencyContactName) { patientFields.push('emergency_contact_name'); patientValues.push(emergencyContactName); paramIndex++; }
+      if (emergencyContactPhone) { patientFields.push('emergency_contact_phone'); patientValues.push(emergencyContactPhone); paramIndex++; }
+      if (emergencyContactRelation) { patientFields.push('emergency_contact_relation'); patientValues.push(emergencyContactRelation); paramIndex++; }
+      if (Array.isArray(allergies) && allergies.length > 0) { patientFields.push('allergies'); patientValues.push(allergies); paramIndex++; }
+      if (Array.isArray(chronicConditions) && chronicConditions.length > 0) { patientFields.push('chronic_conditions'); patientValues.push(chronicConditions); paramIndex++; }
+
+      const placeholders = patientValues.map((_, idx) => `$${idx + 1}`).join(', ');
+      await adminRepository.createPatientProfile(`INSERT INTO patients (${patientFields.join(', ')}) VALUES (${placeholders})`, patientValues);
+    }
+
+    let userResponse = user;
+    if (role === "doctor") {
+      const doc = await doctorRepository.findByUserId(user.id);
+      if (doc) userResponse = { ...userResponse, ...doc };
+    } else if (role === "patient") {
+      const pat = await patientRepository.findByUserId(user.id);
+      if (pat) userResponse = { ...userResponse, ...pat };
+    }
+
+    await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:/api/admin/users*", "v1:cache:dashboard:*");
+    await writeAuditLog({ userId: req.user.id, action: AUDIT_ACTIONS.USER_REGISTER, entityType: "user", entityId: user.id, newValues: { userId: user.userId, role, email: user.email }, req });
+
+    return { user: userResponse };
+};
+
+const updateUserProfile = async (req) => {
+    const { userId } = req.params;
+    const { name, email, phone, specialization, qualification, experience, department, consultationFee, licenseNumber, license_number, bio, availability, dateOfBirth, gender, bloodGroup, address, emergencyContactName, emergencyContactPhone, emergencyContactRelation, allergies, chronicConditions } = req.body;
+
+    const user = await userRepository.findByUserId(userId);
+    if (!user) throw new AppError("User not found or access denied", 404);
+    if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) throw new AppError("Access denied", 403);
+
+    if (email && email.toLowerCase() !== user.email) {
+      if (await adminRepository.checkDuplicateEmail(email.toLowerCase(), user.id)) throw new AppError("Email already exists", 400);
+    }
+    if (phone && phone !== user.phone) {
+      if (await adminRepository.checkDuplicatePhone(phone, user.id)) throw new AppError("Phone number already exists", 400);
+    }
+
+    const updates = {};
+    if (name) updates.name = name.trim();
+    if (email) updates.email = email.toLowerCase().trim();
+    if (phone) updates.phone = phone.trim();
+    if (Object.keys(updates).length > 0) await userRepository.update(user.id, updates);
+
+    if (user.role === "doctor") {
+      if (!(await adminRepository.checkDoctorExists(user.id))) throw new AppError("Doctor profile not found.", 404);
+      const doctorUpdates = []; const doctorValues = []; let paramIndex = 1;
+      if (specialization) { doctorUpdates.push(`specialization = ${paramIndex++}`); doctorValues.push(specialization); }
+      if (qualification) { doctorUpdates.push(`qualification = ${paramIndex++}`); doctorValues.push(qualification); }
+      if (experience !== undefined) { doctorUpdates.push(`experience = ${paramIndex++}`); doctorValues.push(experience); }
+      if (department) { doctorUpdates.push(`department = ${paramIndex++}`); doctorValues.push(department); }
+      if (consultationFee !== undefined) { doctorUpdates.push(`consultation_fee = ${paramIndex++}`); doctorValues.push(consultationFee); }
+      const normalizedLicenseNumber = licenseNumber ?? license_number;
+      if (normalizedLicenseNumber !== undefined) { doctorUpdates.push(`license_number = ${paramIndex++}`); doctorValues.push(normalizedLicenseNumber || null); }
+      if (bio !== undefined) { doctorUpdates.push(`bio = ${paramIndex++}`); doctorValues.push(bio || null); }
+      if (availability !== undefined) { doctorUpdates.push(`availability = ${paramIndex++}`); doctorValues.push(JSON.stringify(availability || {})); }
+      
+      if (doctorUpdates.length > 0) {
+        doctorValues.push(user.id);
+        const res = await adminRepository.updateDoctorProfile(`UPDATE doctors SET ${doctorUpdates.join(', ')}, updated_at = NOW() WHERE user_id = ${paramIndex}`, doctorValues);
+        if (res === 0) throw new AppError("Failed to update doctor profile.", 500);
+      }
+    } else if (user.role === "patient") {
+      if (!(await adminRepository.checkPatientExists(user.id))) throw new AppError("Patient profile not found.", 404);
+      const patientUpdates = []; const patientValues = []; let paramIndex = 1;
+      if (dateOfBirth) { patientUpdates.push(`date_of_birth = ${paramIndex++}`); patientValues.push(dateOfBirth); }
+      if (gender) { patientUpdates.push(`gender = ${paramIndex++}`); patientValues.push(gender); }
+      if (bloodGroup) { patientUpdates.push(`blood_group = ${paramIndex++}`); patientValues.push(bloodGroup); }
+      if (address) { patientUpdates.push(`address = ${paramIndex++}`); patientValues.push(address); }
+      if (emergencyContactName) { patientUpdates.push(`emergency_contact_name = ${paramIndex++}`); patientValues.push(emergencyContactName); }
+      if (emergencyContactPhone) { patientUpdates.push(`emergency_contact_phone = ${paramIndex++}`); patientValues.push(emergencyContactPhone); }
+      if (emergencyContactRelation) { patientUpdates.push(`emergency_contact_relation = ${paramIndex++}`); patientValues.push(emergencyContactRelation); }
+      if (Array.isArray(allergies)) { patientUpdates.push(`allergies = ${paramIndex++}`); patientValues.push(allergies); }
+      if (Array.isArray(chronicConditions)) { patientUpdates.push(`chronic_conditions = ${paramIndex++}`); patientValues.push(chronicConditions); }
+      
+      if (patientUpdates.length > 0) {
+        patientValues.push(user.id);
+        const res = await adminRepository.updatePatientProfile(`UPDATE patients SET ${patientUpdates.join(', ')}, updated_at = NOW() WHERE user_id = ${paramIndex}`, patientValues);
+        if (res === 0) throw new AppError("Failed to update patient profile.", 500);
+      }
+    }
+
+    let userResponse = await userRepository.findById(user.id);
+    if (user.role === "doctor") { const doc = await doctorRepository.findByUserId(user.id); if (doc) userResponse = { ...userResponse, ...doc }; }
+    else if (user.role === "patient") { const pat = await patientRepository.findByUserId(user.id); if (pat) userResponse = { ...userResponse, ...pat }; }
+
+    await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:dashboard:*");
+    return { user: userResponse };
+};
+
+const deleteUser = async (req) => {
+    const { userId } = req.params;
+    const user = await userRepository.findByUserId(userId);
+    if (!user) throw new AppError("User not found or access denied", 404);
+    if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) throw new AppError("Access denied", 403);
+    if (["admin", "super_admin"].includes(user.role)) throw new AppError("Cannot delete admin users", 403);
+
+    if (user.role === "doctor") {
+      const activeAppointments = await adminRepository.countActiveAppointments(user.id, new Date());
+      if (activeAppointments > 0) throw new AppError(`Cannot delete doctor with ${activeAppointments} active appointments.`, 400);
+    }
+
+    await userRepository.update(user.id, { isActive: false });
+    await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:/api/admin/users*", "v1:cache:dashboard:*");
+    
+    return { userId: user.user_id, deletedAt: new Date() };
+};
+
+const permanentDeleteUser = async (req) => {
+    const { userId } = req.params;
+    const user = await userRepository.findByUserId(userId);
+    if (!user) throw new AppError("User not found", 404);
+    if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) throw new AppError("Access denied", 403);
+    if (["admin", "super_admin"].includes(user.role)) throw new AppError("Cannot permanently delete admin users", 403);
+
+    if (user.role === "doctor") {
+      const activeAppointments = await adminRepository.countActiveAppointments(user.id, new Date());
+      if (activeAppointments > 0) throw new AppError(`Cannot delete doctor with ${activeAppointments} active appointments.`, 400);
+    }
+
+    await withTransaction(async (client) => {
+      if (user.role === "doctor") await adminRepository.deleteDoctorProfile(client, user.id);
+      else if (user.role === "patient") await adminRepository.deletePatientProfile(client, user.id);
+      await adminRepository.deleteUser(client, user.id);
+    });
+
+    try {
+      const mongoCleanupTasks = [];
+      if (user.role === "patient") {
+        mongoCleanupTasks.push(prescriptionRepository.deleteMany({ patientId: user.user_id }));
+        mongoCleanupTasks.push(medicalRecordRepository.deleteMany({ patientId: user.user_id }));
+      }
+      mongoCleanupTasks.push(notificationRepository.deleteAllForUser(user.user_id));
+      await Promise.allSettled(mongoCleanupTasks);
+    } catch {}
+
+    await writeAuditLog({ userId: req.user.id, action: AUDIT_ACTIONS.USER_DELETE, entityType: "user", entityId: user.id, oldValues: { userId: user.user_id, role: user.role, email: user.email }, req });
+    await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:/api/admin/users*", "v1:cache:dashboard:*");
+
+    return { userId: user.user_id, deletedAt: new Date(), deletedBy: req.user.userId };
+};
+
+module.exports = {
+  permanentDeleteUser,
+  deleteUser,
+  updateUserProfile,
+  createUser,
+  getSystemHealth,
+  getDashboardStats,
+  getRecentActivities,
+  getUsers,
+  updateUserStatus,
+  updateUserRole,
+  bulkUpdateUsers,
+  getSecuritySettings,
+  changePassword,
+  logoutAllDevices,
+  getSystemMetrics,
+  getMedicalRecordsOverview,
+  getNotificationsManagement,
+  getAuditLogs,
+};

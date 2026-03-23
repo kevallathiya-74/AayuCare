@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 const logger = require("../utils/logger");
+const {
+  resolveMongoUriWithFallback,
+  applyDnsServersFromEnv,
+} = require("../utils/mongoUriResolver");
 
 /**
  * MongoDB Atlas Connection Module
@@ -14,6 +18,8 @@ const logger = require("../utils/logger");
 
 const connectDB = async () => {
   try {
+    applyDnsServersFromEnv();
+
     // =============================================================================
     // STEP 1: Validate Environment Variable
     // =============================================================================
@@ -23,7 +29,18 @@ const connectDB = async () => {
       );
     }
 
-    const mongoURI = process.env.MONGODB_URI;
+    const defaultDbName = process.env.MONGODB_DB || "aayucare_db";
+    let mongoURI = process.env.MONGODB_URI;
+
+    // If URI has no database segment, append one so connection behavior is explicit.
+    const uriHasDbName = /\/[^/?]+(?:\?|$)/.test(mongoURI);
+    if (!uriHasDbName) {
+      const hasQuery = mongoURI.includes("?");
+      mongoURI = hasQuery
+        ? mongoURI.replace("?", `/${defaultDbName}?`)
+        : `${mongoURI}/${defaultDbName}`;
+      logger.info(`ℹ️  MongoDB database not provided in URI; using default "${defaultDbName}"`);
+    }
 
     // Extract and validate database name from URI (supports both local and Atlas)
     const dbNameMatch = mongoURI.match(/\/([^/?]+)(?:\?|$)/);
@@ -69,7 +86,28 @@ const connectDB = async () => {
     // STEP 4: Establish Connection
     // =============================================================================
     const startTime = Date.now();
-    const conn = await mongoose.connect(mongoURI, options);
+    let conn;
+    try {
+      conn = await mongoose.connect(mongoURI, options);
+    } catch (primaryError) {
+      if (
+        mongoURI.startsWith("mongodb+srv://") &&
+        (primaryError.message.includes("querySrv") ||
+          primaryError.message.includes("ECONNREFUSED") ||
+          primaryError.message.includes("ENOTFOUND"))
+      ) {
+        logger.warn("Mongo SRV DNS failed, attempting DoH fallback URI resolution...");
+        const fallback = await resolveMongoUriWithFallback(mongoURI, defaultDbName);
+        conn = await mongoose.connect(fallback.uri, options);
+        if (fallback.usedFallback) {
+          logger.info(
+            `Mongo connected via fallback hosts: ${(fallback.hosts || []).join(", ")}`
+          );
+        }
+      } else {
+        throw primaryError;
+      }
+    }
     const connectionTime = Date.now() - startTime;
 
     // =============================================================================

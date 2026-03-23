@@ -18,11 +18,12 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, AlertCircle, Info, Clock, Coffee, Edit, X, Trash2, PlusCircle } from "lucide-react-native";
 import doctorService from "../../services/doctor.service";
 import { theme, healthColors } from "../../theme";
 import { convertTo12Hour } from "../../utils/helpers";
 import { SkeletonCardRow, Input } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -193,8 +194,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons
-              name="arrow-back"
+            <ArrowLeft
+              
               size={24}
               color={healthColors.text.primary}
             />
@@ -217,8 +218,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons
-              name="arrow-back"
+            <ArrowLeft
+              
               size={24}
               color={healthColors.text.primary}
             />
@@ -227,7 +228,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={healthColors.error.main} />
+          <AlertCircle  size={48} color={healthColors.error.main} />
           <Text style={styles.errorTitle}>Failed to load schedule</Text>
           <Text style={styles.errorMessage}>
             {error?.response?.data?.message || error?.message || "Something went wrong. Please try again."}
@@ -248,8 +249,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -264,8 +265,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       >
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Ionicons
-            name="information-circle"
+          <Info
+            
             size={24}
             color={healthColors.primary.main}
           />
@@ -287,7 +288,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 {/* Day Header */}
                 <View style={styles.dayHeader}>
                   <View style={styles.dayInfo}>
-                    <Ionicons
+                    <Clock
                       name={day.icon}
                       size={20}
                       color={
@@ -325,7 +326,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   <View style={styles.timeSlotsContainer}>
                     {timeSlots.map((slot, index) => (
                       <View key={index} style={styles.timeSlotChip}>
-                        <Ionicons
+                        <DynamicIcon
                           name="time-outline"
                           size={14}
                           color={healthColors.primary.main}
@@ -341,8 +342,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 {/* Break Time */}
                 {isAvailable && schedule?.breakTime && (
                   <View style={styles.breakTimeContainer}>
-                    <Ionicons
-                      name="cafe-outline"
+                    <Coffee
+                      
                       size={14}
                       color={healthColors.warning.main}
                     />
@@ -358,8 +359,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   style={styles.editButton}
                   onPress={() => openEditModal(day)}
                 >
-                  <Ionicons
-                    name="create-outline"
+                  <Edit
+                    
                     size={18}
                     color={healthColors.primary.main}
                   />
@@ -382,8 +383,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Ionicons
-                name="close"
+              <X
+                
                 size={24}
                 color={healthColors.text.primary}
               />
@@ -435,8 +436,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => removeTimeSlot(index)}>
-                    <Ionicons
-                      name="trash-outline"
+                    <Trash2
+                      
                       size={20}
                       color={healthColors.error.main}
                     />
@@ -444,8 +445,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 </View>
               ))}
               <TouchableOpacity style={styles.addButton} onPress={addTimeSlot}>
-                <Ionicons
-                  name="add-circle-outline"
+                <PlusCircle
+                  
                   size={20}
                   color={healthColors.primary.main}
                 />

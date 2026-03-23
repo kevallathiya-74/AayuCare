@@ -17,7 +17,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { User, Calendar, Clock, Cross, MessageSquare, AlertCircle, XCircle, ArrowLeft } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../theme";
@@ -27,6 +27,7 @@ import { useNetworkStatus } from "../../utils/offlineHandler";
 import { verticalScale } from "../../utils/responsive";
 import { usePatientAppointmentsInfinite } from "../../hooks/useAppointments";
 import { appointmentService } from "../../services";
+import { EmptyStateConfig } from "../../utils/constants";
 
 const MyAppointmentsScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
@@ -117,8 +118,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
       <View style={styles.cardHeader}>
         <View style={styles.doctorInfo}>
           <View style={styles.doctorAvatar}>
-            <Ionicons
-              name="person"
+            <User
+              
               size={24}
               color={healthColors.primary.main}
             />
@@ -139,16 +140,16 @@ const MyAppointmentsScreen = ({ navigation }) => {
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
-          <Ionicons
-            name="calendar-outline"
+          <Calendar
+            
             size={16}
             color={healthColors.text.secondary}
           />
           <Text style={styles.infoText}>{item.date}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Ionicons
-            name="time-outline"
+          <Clock
+            
             size={16}
             color={healthColors.text.secondary}
           />
@@ -156,7 +157,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
         </View>
         {!!item.type && (
           <View style={styles.infoRow}>
-            <Ionicons name="medical-outline" size={16} color={healthColors.text.secondary} />
+            <Cross  size={16} color={healthColors.text.secondary} />
             <Text style={styles.infoText}>
               {item.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </Text>
@@ -164,13 +165,13 @@ const MyAppointmentsScreen = ({ navigation }) => {
         )}
         {!!item.chiefComplaint && (
           <View style={styles.infoRow}>
-            <Ionicons name="chatbox-ellipses-outline" size={16} color={healthColors.text.secondary} />
+            <MessageSquare  size={16} color={healthColors.text.secondary} />
             <Text style={styles.infoText} numberOfLines={2}>{item.chiefComplaint}</Text>
           </View>
         )}
         {!!item.cancellationReason && item.status === "cancelled" && (
           <View style={styles.infoRow}>
-            <Ionicons name="alert-circle-outline" size={16} color={healthColors.error.main} />
+            <AlertCircle  size={16} color={healthColors.error.main} />
             <Text style={[styles.infoText, { color: healthColors.error.main }]}>
               Reason: {item.cancellationReason}
             </Text>
@@ -186,7 +187,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             onPress={() => handleRescheduleAppointment(item)}
           >
-            <Ionicons name="calendar-outline" size={18} color={healthColors.primary.main} />
+            <Calendar  size={18} color={healthColors.primary.main} />
             <Text style={styles.actionText}>Reschedule</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -194,7 +195,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             onPress={() => handleCancelAppointment(item)}
           >
-            <Ionicons name="close-circle-outline" size={18} color={healthColors.error.main} />
+            <XCircle  size={18} color={healthColors.error.main} />
             <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
           </TouchableOpacity>
         </View>
@@ -217,8 +218,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -307,11 +308,11 @@ const MyAppointmentsScreen = ({ navigation }) => {
           }
           ListEmptyComponent={
             <EmptyState
-              icon={selectedTab === "upcoming" ? "calendar-outline" : "time-outline"}
-              title={selectedTab === "upcoming" ? "No Upcoming Appointments" : "No Past Appointments"}
+              icon={EmptyStateConfig.APPOINTMENTS.icon}
+              title={selectedTab === "upcoming" ? EmptyStateConfig.APPOINTMENTS.title : "No Past Appointments"}
               message={
                 selectedTab === "upcoming"
-                  ? "You have no appointments scheduled. Book one to get started."
+                  ? EmptyStateConfig.APPOINTMENTS.message
                   : "Your completed and cancelled appointments will appear here."
               }
               actionLabel={selectedTab === "upcoming" ? "Book Appointment" : undefined}

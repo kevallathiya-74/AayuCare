@@ -7,12 +7,12 @@
 
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { getListItemHeight } from '../../utils/responsive';
 import Avatar from './Avatar';
+import DynamicIcon from './DynamicIcon';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -79,7 +79,7 @@ const ListItem = ({
                 {leftIcon && (
                     <View style={styles.leftSection}>
                         <View style={styles.iconContainer}>
-                            <Ionicons
+                            <DynamicIcon
                                 name={leftIcon.name}
                                 size={leftIcon.size || 24}
                                 color={leftIcon.color || healthColors.primary.main}
@@ -114,8 +114,8 @@ const ListItem = ({
 
                 {rightIcon && (
                     <View style={styles.rightSection}>
-                        <Ionicons
-                            name={rightIcon.name || 'chevron-forward'}
+                        <DynamicIcon
+                            name={rightIcon.name || 'ChevronRight'}
                             size={rightIcon.size || 20}
                             color={rightIcon.color || healthColors.text.tertiary}
                         />

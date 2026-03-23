@@ -12,7 +12,7 @@
  * padding: theme.spacing.md
  */
 
-import { healthColors } from "./healthColors";
+import { healthColors, withOpacity } from "./healthColors";
 import {
   fontFamilies,
   fontWeights,
@@ -144,8 +144,8 @@ export const theme = {
       oxygen: healthColors.health.oxygen,
       weight: healthColors.health.weight,
       steps: healthColors.health.steps,
-      teal: healthColors.hospital.teal,
-      navy: healthColors.hospital.navy,
+      teal: healthColors.accent.aqua || healthColors.accent.cyan,
+      navy: healthColors.primary.dark,
       purple: healthColors.accent.purple,
       pink: healthColors.accent.pink,
       cyan: healthColors.accent.cyan,
@@ -166,7 +166,8 @@ export const theme = {
   // =================================================================
   typography: {
     // Font Families
-    fontFamily: fontFamilies,
+    fontFamilies: fontFamilies,
+    fontFamily: fontFamilies, // Keep for backward compatibility
 
     // Font Sizes (from typography.js)
     sizes: typographySizes,
@@ -364,6 +365,7 @@ export const theme = {
 
 export default theme;
 export { 
+  withOpacity,
   healthColors,
   fontFamilies,
   fontWeights,

@@ -4,15 +4,17 @@
 require("dotenv").config();
 
 // =============================================================================
-// DNS FIX: Resolve MongoDB SRV connection issues on Windows
+// DNS FIX: Resolve MongoDB SRV connection issues on Windows (dev only)
 // =============================================================================
 const dns = require("dns");
 const logger = require("./src/utils/logger");
 
-// CRITICAL: Override localhost DNS with public DNS servers (Google DNS)
-// This fixes the 127.0.0.1 DNS issue that prevents SRV resolution
-dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
-dns.setDefaultResultOrder("ipv4first");
+// Only apply DNS override in non-production environments.
+// In production (Render), the hosting provider's internal DNS must not be overridden.
+if (process.env.NODE_ENV !== "production") {
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 // =============================================================================
 // Validate Critical Environment Variables
@@ -43,12 +45,16 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
-const mongoSanitize = require("express-mongo-sanitize");
+// const mongoSanitize = require("express-mongo-sanitize");
 
 const connectDB = require("./src/config/database");
 const { connectPostgres, closePool } = require("./src/config/postgres");
 const { connectRedis, closeRedis } = require("./src/config/redis");
 const { errorHandler } = require("./src/middleware/errorHandler");
+const { requestIdMiddleware } = require("./src/middleware/requestId");
+const { cacheHeadersMiddleware } = require("./src/middleware/cacheHeaders");
+const { tieredRateLimit } = require("./src/middleware/rateLimit");
+const { sendSuccess, sendError } = require("./src/utils/apiResponse");
 const { initAuth, getAuth } = require("./src/lib/auth");
 const { toNodeHandler } = require("better-auth/node");
 
@@ -64,11 +70,13 @@ const adminRoutes = require("./src/routes/adminRoutes");
 const eventRoutes = require("./src/routes/eventRoutes");
 const notificationRoutes = require("./src/routes/notificationRoutes");
 const paymentRoutes = require("./src/routes/paymentRoutes");
+const scheduleRoutes = require("./src/routes/scheduleRoutes");
 
 const app = express();
 
 // Must be set BEFORE rate limiter to correctly identify client IPs
 app.set("trust proxy", 1);
+app.disable("x-powered-by");
 
 // Connect to databases
 const initializeDatabases = async () => {
@@ -110,26 +118,33 @@ initializeDatabases()
 // Security Middleware
 app.use(helmet());
 
-// CORS - Whitelist specific origins
-const allowedOrigins = [
-  "exp://192.168.137.1:8081", // Expo Go (update with your IP)
-  "http://localhost:19006", // Expo web
-  "http://localhost:3000", // Development frontend
-  process.env.FRONTEND_URL, // Production frontend
-].filter(Boolean);
+// CORS - explicit allowlist for production, permissive in development
+const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set([
+    "http://localhost:19006", // Expo web
+    "http://localhost:3000", // Local frontend
+    process.env.FRONTEND_URL,
+    ...configuredCorsOrigins,
+  ].filter(Boolean))
+);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // In production with mobile apps, allow requests with no origin
+      // Mobile native apps and server-to-server calls may send no Origin header.
       if (!origin) {
         return callback(null, true);
       }
-      // Allow all origins in development
+
       if (process.env.NODE_ENV === "development") {
         return callback(null, true);
       }
-      // In production, check whitelist
+
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -141,38 +156,16 @@ app.use(
   })
 );
 
-// Rate limiting - General API
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === "development" ? 500 : 100, // Higher limit in dev
-  message: "Too many requests from this IP, please try again later",
-  skip: (req) => {
-    // Skip rate limiting for authenticated admin users in development
-    if (process.env.NODE_ENV === "development") {
-      return (
-        req.path.startsWith("/api/admin") ||
-        req.path.startsWith("/api/notifications")
-      );
-    }
-    return false;
-  },
-});
-app.use("/api/", limiter);
-
-// Strict rate limiting for auth endpoints (prevent brute force)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Only 5 login attempts per 15 minutes
-  message: "Too many login attempts, please try again after 15 minutes",
-  skipSuccessfulRequests: true, // Don't count successful logins
-});
-app.use("/api/auth/sign-in", authLimiter);
-app.use("/api/auth/sign-up", authLimiter);
+// Tiered Redis-backed rate limiting (auth/read/write/ai)
+app.use(tieredRateLimit);
 
 // Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+
+// Request correlation ID for all requests
+app.use(requestIdMiddleware);
 
 // Better Auth Handler - MUST come BEFORE custom routes
 app.all("/api/auth/*", (req, res, next) => {
@@ -190,16 +183,31 @@ app.all("/api/auth/*", (req, res, next) => {
 // Body parser - MUST come AFTER Better Auth but BEFORE custom routes
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cacheHeadersMiddleware);
 
 // Sanitize request data to prevent MongoDB operator injection ($gt, $where, etc.)
 // Strips keys that begin with '$' or contain '.' from req.body, req.params, and req.query
-app.use(mongoSanitize({ replaceWith: '_' }));
+// app.use(mongoSanitize({ replaceWith: '_' }));
 
 // Disable ETags to prevent 304 Not Modified responses (causes frontend cache issues)
 app.set('etag', false);
 
 // API Routes (custom routes that extend Better Auth)
 // Mount custom auth endpoints on /api/user to avoid conflict with Better Auth's /api/auth/*
+app.use("/api/v1/user", authRoutes);
+app.use("/api/v1/medical-records", medicalRecordRoutes);
+app.use("/api/v1/appointments", appointmentRoutes);
+app.use("/api/v1/doctors", doctorRoutes);
+app.use("/api/v1/ai", aiRoutes);
+app.use("/api/v1/patients", patientRoutes);
+app.use("/api/v1/prescriptions", prescriptionRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/events", eventRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/payments", paymentRoutes);
+app.use("/api/v1/schedules", scheduleRoutes);
+
+// Backward compatibility during migration
 app.use("/api/user", authRoutes);
 app.use("/api/medical-records", medicalRecordRoutes);
 app.use("/api/appointments", appointmentRoutes);
@@ -211,21 +219,25 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/schedules", scheduleRoutes);
 
 // API Root route
 app.get("/api", (req, res) => {
-  res.json({
-    status: "success",
-    message: "Welcome to AayuCare API",
-    version: "1.0.0",
-    endpoints: {
-      health: "/api/health",
-      auth: "/api/auth",
-      appointments: "/api/appointments",
-      doctors: "/api/doctors",
-      medicalRecords: "/api/medical-records",
+  return sendSuccess(
+    res,
+    req,
+    {
+      version: "1.0.0",
+      endpoints: {
+        health: "/api/health",
+        auth: "/api/auth",
+        appointments: "/api/v1/appointments",
+        doctors: "/api/v1/doctors",
+        medicalRecords: "/api/v1/medical-records",
+      },
     },
-  });
+    "Welcome to AayuCare API"
+  );
 });
 
 // Health check
@@ -265,35 +277,87 @@ app.get("/api/health", async (req, res) => {
     logger.error('Better Auth health check failed:', error.message);
   }
 
-  res.json({
-    status: "success",
-    message: "AayuCare Backend Server is running",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    databases: {
-      mongodb: mongoStatus,
-      postgresql: postgresStatus,
-      redis: redisStatus,
+  const criticalDependenciesHealthy =
+    postgresStatus === "connected" && redisStatus === "connected";
+  const overallStatus = criticalDependenciesHealthy ? "healthy" : "degraded";
+
+  return sendSuccess(
+    res,
+    req,
+    {
+      status: overallStatus,
+      environment: process.env.NODE_ENV,
+      databases: {
+        mongodb: mongoStatus,
+        postgresql: postgresStatus,
+        redis: redisStatus,
+      },
+      betterAuth: betterAuthStatus,
     },
-    betterAuth: betterAuthStatus,
-  });
+    "AayuCare Backend Server health status",
+    criticalDependenciesHealthy ? 200 : 503
+  );
+});
+
+// Liveness probe - process is up
+app.get("/api/livez", (req, res) => {
+  return sendSuccess(res, req, { status: "alive" }, "Process is alive", 200);
+});
+
+// Readiness probe - critical dependencies are up
+app.get("/api/readyz", async (req, res) => {
+  let postgresStatus = "disconnected";
+  let redisStatus = "disconnected";
+
+  try {
+    const { query } = require("./src/config/postgres");
+    await query("SELECT 1");
+    postgresStatus = "connected";
+  } catch (error) {
+    logger.error("Readiness PostgreSQL check failed:", error.message);
+  }
+
+  try {
+    const { redisClient } = require("./src/config/redis");
+    await redisClient.ping();
+    redisStatus = "connected";
+  } catch (error) {
+    logger.error("Readiness Redis check failed:", error.message);
+  }
+
+  const ready = postgresStatus === "connected" && redisStatus === "connected";
+
+  return sendSuccess(
+    res,
+    req,
+    {
+      status: ready ? "ready" : "not_ready",
+      dependencies: {
+        postgresql: postgresStatus,
+        redis: redisStatus,
+      },
+    },
+    ready ? "Service is ready" : "Service is not ready",
+    ready ? 200 : 503
+  );
 });
 
 // Root route
 app.get("/", (req, res) => {
-  res.json({
-    message: "Welcome to AayuCare API",
-    version: "1.0.0",
-    documentation: "/api/docs",
-  });
+  return sendSuccess(
+    res,
+    req,
+    {
+      version: "1.0.0",
+      documentation: "/api/docs",
+    },
+    "Welcome to AayuCare API"
+  );
 });
 
 // 404 handler
 app.all("*", (req, res) => {
-  res.status(404).json({
-    status: "fail",
-    message: `Can't find ${req.originalUrl} on this server!`,
-  });
+  return sendError(res, req, `Can't find ${req.originalUrl} on this server!`, 404, "NOT_FOUND");
 });
 
 // Global error handler

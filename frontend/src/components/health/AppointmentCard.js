@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Calendar, Clock, MapPin, XCircle } from "lucide-react-native";
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
@@ -78,18 +78,18 @@ const AppointmentCard = ({
 
             <View style={styles.details}>
                 <View style={styles.detailRow}>
-                    <Ionicons name="calendar" size={18} color={healthColors.text.secondary} />
+                    <Calendar  size={18} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{date}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
-                    <Ionicons name="time" size={18} color={healthColors.text.secondary} />
+                    <Clock  size={18} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{time}</Text>
                 </View>
 
                 {location && (
                     <View style={styles.detailRow}>
-                        <Ionicons name="location" size={18} color={healthColors.text.secondary} />
+                        <MapPin  size={18} color={healthColors.text.secondary} />
                         <Text style={styles.detailText} numberOfLines={1}>
                             {location}
                         </Text>
@@ -106,8 +106,8 @@ const AppointmentCard = ({
                                 onPress={onReschedule}
                                 style={styles.actionButton}
                             >
-                                <Ionicons
-                                    name="calendar-outline"
+                                <Calendar
+                                    
                                     size={18}
                                     color={healthColors.primary.main}
                                 />
@@ -120,8 +120,8 @@ const AppointmentCard = ({
                                 onPress={onCancel}
                                 style={styles.actionButton}
                             >
-                                <Ionicons
-                                    name="close-circle-outline"
+                                <XCircle
+                                    
                                     size={18}
                                     color={healthColors.error.main}
                                 />

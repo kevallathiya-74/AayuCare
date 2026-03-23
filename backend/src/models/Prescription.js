@@ -1,14 +1,24 @@
 const mongoose = require('mongoose');
 
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 const prescriptionSchema = new mongoose.Schema({
     patientId: {
         type: String,
         required: true,
         index: true,
+        validate: {
+            validator: (v) => UUID_REGEX.test(v),
+            message: 'patientId must be a valid PostgreSQL UUID (e.g. 550e8400-e29b-41d4-a716-446655440000)',
+        },
     },
     doctorId: {
         type: String,
         required: true,
+        validate: {
+            validator: (v) => UUID_REGEX.test(v),
+            message: 'doctorId must be a valid PostgreSQL UUID',
+        },
     },
     appointmentId: {
         type: String,
@@ -52,7 +62,7 @@ const prescriptionSchema = new mongoose.Schema({
     followUpDate: Date,
     pharmacyStatus: {
         type: String,
-        enum: ['pending', 'sent_to_pharmacy', 'preparing', 'ready', 'dispensed'],
+        enum: ['pending', 'preparing', 'ready', 'dispensed', 'cancelled'],
         default: 'pending',
     },
     pharmacyId: String,

@@ -4,7 +4,7 @@
  * Redesigned to match app UI/UX with end-to-end data connectivity
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,20 +15,22 @@ import {
   RefreshControl,
   Alert,
   StatusBar,
+  ScrollView,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Calendar, Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 
 import { showError, logError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { eventService } from "../../services";
-import { convertTo12Hour } from "../../utils/helpers";
-import { SkeletonCardRow, EmptyState } from "../../components/common";
+import { convertTo12Hour, getStatusColor } from "../../utils/helpers";
+import { SkeletonCardRow } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const HospitalEventsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -161,8 +163,8 @@ const HospitalEventsScreen = ({ navigation }) => {
       "blood-donation": "water",
       screening: "fitness",
       vaccination: "medical",
-      workshop: "school",
-      camp: "business",
+      workshop: "book-open",
+      camp: "tent-2",
       "health-checkup": "heart",
     };
     return icons[type] || "calendar";
@@ -180,20 +182,59 @@ const HospitalEventsScreen = ({ navigation }) => {
     return colors[type] || healthColors.primary.main;
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      upcoming: healthColors.info.main,
-      ongoing: healthColors.success.main,
-      completed: healthColors.text.disabled,
-      cancelled: healthColors.error.main,
-    };
-    return colors[status] || healthColors.primary.main;
-  };
+  const normalizeEventStatus = useCallback((event) => {
+    const rawStatus = String(event?.status || event?.eventStatus || "").toLowerCase();
 
-  const filteredEvents = events.filter((event) => {
+    if (["upcoming", "scheduled", "planned", "open", "published"].includes(rawStatus)) {
+      return "upcoming";
+    }
+    if (["ongoing", "in_progress", "live", "running", "active"].includes(rawStatus)) {
+      return "ongoing";
+    }
+    if (["completed", "closed", "cancelled", "canceled", "ended"].includes(rawStatus)) {
+      return "completed";
+    }
+
+    const eventDate = event?.date ? new Date(event.date) : null;
+    if (eventDate && !Number.isNaN(eventDate.getTime())) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const normalizedEventDate = new Date(eventDate);
+      normalizedEventDate.setHours(0, 0, 0, 0);
+
+      if (normalizedEventDate.getTime() > today.getTime()) return "upcoming";
+      if (normalizedEventDate.getTime() < today.getTime()) return "completed";
+      return "ongoing";
+    }
+
+    return "upcoming";
+  }, []);
+
+  const normalizedEvents = useMemo(
+    () =>
+      (Array.isArray(events) ? events : []).map((event) => ({
+        ...event,
+        _uiStatus: normalizeEventStatus(event),
+      })),
+    [events, normalizeEventStatus]
+  );
+
+  const filteredEvents = normalizedEvents.filter((event) => {
     if (filter === "all") return true;
-    return event.status === filter;
+    return event._uiStatus === filter;
   });
+
+  const filterOptions = useMemo(() => {
+    const upcomingCount = normalizedEvents.filter((event) => event._uiStatus === "upcoming").length;
+    const ongoingCount = normalizedEvents.filter((event) => event._uiStatus === "ongoing").length;
+
+    return [
+      { key: "all", label: "All", count: normalizedEvents.length },
+      { key: "upcoming", label: "Upcoming", count: upcomingCount },
+      { key: "ongoing", label: "Ongoing", count: ongoingCount },
+    ];
+  }, [normalizedEvents]);
 
   const renderEventCard = ({ item: event }) => {
     const eventDate = new Date(event.date);
@@ -204,7 +245,7 @@ const HospitalEventsScreen = ({ navigation }) => {
     });
     const spotsRemaining = event.availableSpots - (event.registeredCount || 0);
     const eventColor = getEventColor(event.type);
-    const statusColor = getStatusColor(event.status);
+    const statusColor = getStatusColor(event._uiStatus);
 
     return (
       <View style={styles.eventCard}>
@@ -213,7 +254,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}
         >
           <Text style={[styles.statusText, { color: statusColor }]}>
-            {event.status?.toUpperCase() || "UPCOMING"}
+            {event._uiStatus?.toUpperCase() || "UPCOMING"}
           </Text>
         </View>
 
@@ -225,17 +266,13 @@ const HospitalEventsScreen = ({ navigation }) => {
               { backgroundColor: eventColor + "20" },
             ]}
           >
-            <Ionicons
-              name={getEventIcon(event.type)}
-              size={32}
-              color={eventColor}
-            />
+            <DynamicIcon name={getEventIcon(event.type)} size={32} color={eventColor} />
           </View>
           <View style={styles.eventHeaderText}>
             <Text style={styles.eventTitle}>{event.title}</Text>
             <View style={styles.eventMetaRow}>
-              <Ionicons
-                name="calendar"
+              <DynamicIcon
+                name="calendar-outline"
                 size={14}
                 color={healthColors.text.tertiary}
               />
@@ -247,17 +284,17 @@ const HospitalEventsScreen = ({ navigation }) => {
         {/* Event Details */}
         <View style={styles.eventDetails}>
           <View style={styles.eventDetailRow}>
-            <Ionicons name="time-outline" size={18} color={eventColor} />
+            <Clock  size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>
               {convertTo12Hour(event.startTime)} - {convertTo12Hour(event.endTime)}
             </Text>
           </View>
           <View style={styles.eventDetailRow}>
-            <Ionicons name="location-outline" size={18} color={eventColor} />
+            <MapPin  size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>{event.venue}</Text>
           </View>
           <View style={styles.eventDetailRow}>
-            <Ionicons name="people-outline" size={18} color={eventColor} />
+            <Users  size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>
               {spotsRemaining > 0
                 ? `${spotsRemaining} spots available`
@@ -284,8 +321,8 @@ const HospitalEventsScreen = ({ navigation }) => {
               )
             }
           >
-            <Ionicons
-              name="information-circle-outline"
+            <Info
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -332,7 +369,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                   {spotsRemaining > 0 ? "Register" : "Full"}
                 </Text>
                 {spotsRemaining > 0 && (
-                  <Ionicons name="arrow-forward" size={16} color={theme.colors.white} />
+                  <ArrowRight  size={16} color={theme.colors.white} />
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -344,30 +381,29 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   const renderHeader = () => (
     <View>
-      {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        {["all", "upcoming", "ongoing"].map((filterOption) => (
-          <TouchableOpacity
-            key={filterOption}
-            style={[
-              styles.filterTab,
-              filter === filterOption && styles.filterTabActive,
-            ]}
-            onPress={() => setFilter(filterOption)}
-          >
-            <Text
-              style={[
-                styles.filterTabText,
-                filter === filterOption && styles.filterTabTextActive,
-              ]}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        style={styles.filterScroll}
+      >
+        {filterOptions.map((option) => {
+          const active = filter === option.key;
+          return (
+            <TouchableOpacity
+              key={option.key}
+              onPress={() => setFilter(option.key)}
+              style={[styles.filterChip, active && styles.filterChipActive]}
+              activeOpacity={0.75}
             >
-              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                {option.label} ({option.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
-      {/* Event Count */}
       <View style={styles.countContainer}>
         <Text style={styles.countText}>{filteredEvents.length} Events</Text>
       </View>
@@ -375,17 +411,28 @@ const HospitalEventsScreen = ({ navigation }) => {
   );
 
   const renderEmpty = () => (
-    <EmptyState
-      icon="calendar-outline"
-      title={filter === "all" ? "No Events Found" : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Events`}
-      message={
-        filter === "all"
-          ? "No events are available at the moment. Check back soon."
-          : `No ${filter} events at the moment. Try viewing all events.`
-      }
-      actionLabel={filter !== "all" ? "Show All Events" : undefined}
-      onActionPress={filter !== "all" ? () => setFilter("all") : undefined}
-    />
+    <View style={styles.emptyStateWrap}>
+      <View style={styles.emptyIconShell}>
+        <Calendar size={30} color={healthColors.text.tertiary} />
+      </View>
+      <Text style={styles.emptyTitle}>
+        {filter === "all"
+          ? "No Events Found"
+          : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Events`}
+      </Text>
+      <Text style={styles.emptyMessage}>
+        {filter === "all"
+          ? "No events are available at the moment."
+          : `No ${filter} events right now. You can switch to All events.`}
+      </Text>
+      <View style={styles.emptyActionRow}>
+        {filter !== "all" ? (
+          <TouchableOpacity style={styles.emptySecondaryBtn} onPress={() => setFilter("all")}> 
+            <Text style={styles.emptySecondaryBtnText}>Show All</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </View>
   );
 
   return (
@@ -402,8 +449,8 @@ const HospitalEventsScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -421,8 +468,8 @@ const HospitalEventsScreen = ({ navigation }) => {
           {refreshing ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <Ionicons
-              name="refresh"
+            <RefreshCw
+              
               size={24}
               color={healthColors.primary.main}
             />
@@ -437,8 +484,8 @@ const HospitalEventsScreen = ({ navigation }) => {
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Ionicons
-            name="alert-circle-outline"
+          <AlertCircle
+            
             size={64}
             color={healthColors.error.main}
           />
@@ -525,6 +572,35 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.lg,
     gap: theme.spacing.sm,
   },
+  filterScroll: {
+    marginTop: theme.spacing.sm,
+  },
+  filterRow: {
+    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.sm,
+    alignItems: "center",
+    paddingBottom: theme.spacing.xs,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    backgroundColor: healthColors.background.card,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  filterChipActive: {
+    backgroundColor: healthColors.primary.main,
+    borderColor: healthColors.primary.main,
+  },
+  filterChipText: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  filterChipTextActive: {
+    color: theme.colors.white,
+  },
   filterTab: {
     flex: 1,
     paddingVertical: theme.spacing.sm,
@@ -549,15 +625,82 @@ const styles = StyleSheet.create({
   },
   countContainer: {
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingTop: theme.spacing.xs,
+    paddingBottom: theme.spacing.sm,
   },
   countText: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.secondary,
+    color: healthColors.text.primary,
   },
   listContent: {
     paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xs,
+  },
+  emptyStateWrap: {
+    flex: 1,
+    minHeight: 320,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: 56,
+    paddingBottom: 24,
+  },
+  emptyIconShell: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: healthColors.background.tertiary,
+    marginBottom: 14,
+  },
+  emptyTitle: {
+    fontSize: theme.typography.sizes.h5,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  emptyMessage: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 18,
+  },
+  emptyActionRow: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyPrimaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: healthColors.primary.main,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  emptyPrimaryBtnText: {
+    color: theme.colors.white,
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  emptySecondaryBtn: {
+    borderWidth: 1,
+    borderColor: healthColors.border.medium,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: healthColors.background.card,
+  },
+  emptySecondaryBtnText: {
+    color: healthColors.text.secondary,
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: theme.typography.weights.semibold,
   },
   eventCard: {
     backgroundColor: healthColors.background.card,

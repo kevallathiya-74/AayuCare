@@ -12,8 +12,9 @@ import {
   View,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronDown, X, Check } from "lucide-react-native";
 import { theme, healthColors } from "../theme";
+import { DynamicIcon } from "../components/common";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -298,7 +299,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputWrapper, errors[key] && styles.inputError, multiline && styles.inputWrapperMultiline]}>
-        <Ionicons
+        <ChevronDown
           name={icon}
           size={18}
           color={healthColors.text.secondary}
@@ -329,7 +330,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         onPress={() => setShowSpecializationPicker(true)}
         activeOpacity={0.8}
       >
-        <Ionicons
+        <DynamicIcon
           name={icon}
           size={18}
           color={healthColors.text.secondary}
@@ -338,7 +339,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         <Text style={[styles.pickerText, !formData[key] && styles.placeholderText]}>
           {formData[key] || "Select specialization"}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={healthColors.text.secondary} />
+        <DynamicIcon  size={18} color={healthColors.text.secondary} />
       </TouchableOpacity>
 
       <Modal
@@ -352,7 +353,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
             <View style={styles.dropdownHeader}>
               <Text style={styles.dropdownTitle}>Select Specialization</Text>
               <TouchableOpacity onPress={() => setShowSpecializationPicker(false)}>
-                <Ionicons name="close" size={22} color={healthColors.text.primary} />
+                <X  size={22} color={healthColors.text.primary} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -377,8 +378,8 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
                       {item}
                     </Text>
                     {selected ? (
-                      <Ionicons
-                        name="checkmark"
+                      <Check
+                        
                         size={18}
                         color={healthColors.primary.main}
                       />
@@ -515,7 +516,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main + "20",
   },
   slotChipText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.primary.main,
   },
   slotChipTextActive: {

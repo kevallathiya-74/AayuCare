@@ -13,6 +13,14 @@ import { queryKeys, invalidateRelatedQueries } from '../config/reactQueryConfig'
 import appointmentService from '../services/appointment.service';
 import { logError } from '../utils/errorHandler';
 
+const ensureSuccess = (response, fallbackMessage) => {
+  if (!response?.success) {
+    throw new Error(response?.message || fallbackMessage);
+  }
+};
+
+const extractAppointment = (response) => response?.data?.appointment || response?.data;
+
 /**
  * Hook: Fetch appointments with infinite scroll (cursor-based pagination)
  * Backend handles role-based filtering automatically:
@@ -38,9 +46,7 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
           limit: filters.limit || 20,
         });
 
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to fetch appointments');
-        }
+        ensureSuccess(response, 'Failed to fetch appointments');
 
         return response.data;
       } catch (error) {
@@ -81,9 +87,7 @@ export function usePatientAppointmentsInfinite(patientId, filters = {}, options 
           limit: filters.limit || 20,
         });
 
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to fetch appointments');
-        }
+        ensureSuccess(response, 'Failed to fetch appointments');
 
         return response.data;
       } catch (error) {
@@ -125,10 +129,7 @@ export function useDoctorAppointmentsInfinite(doctorId, filters = {}, options = 
           limit: filters.limit || 20,
         });
 
-        // Backend returns { status: "success", data: {...} }
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to fetch appointments');
-        }
+        ensureSuccess(response, 'Failed to fetch appointments');
 
         return response.data;
       } catch (error) {
@@ -161,13 +162,10 @@ export function useAppointment(appointmentId, options = {}) {
     queryFn: async () => {
       try {
         const response = await appointmentService.getAppointment(appointmentId);
-        
-        // Backend returns { status: "success", data: {...} }
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to fetch appointment');
-        }
 
-        return response.data.appointment;
+        ensureSuccess(response, 'Failed to fetch appointment');
+
+        return extractAppointment(response);
       } catch (error) {
         logError(error, { context: 'useAppointment.queryFn', appointmentId });
         throw error;
@@ -190,13 +188,10 @@ export function useCreateAppointment() {
     mutationFn: async (appointmentData) => {
       try {
         const response = await appointmentService.createAppointment(appointmentData);
-        
-        // Backend returns { status: "success", data: {...} }
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to create appointment');
-        }
 
-        return response.data.appointment;
+        ensureSuccess(response, 'Failed to create appointment');
+
+        return extractAppointment(response);
       } catch (error) {
         logError(error, { context: 'useCreateAppointment.mutationFn', appointmentData });
         throw error;
@@ -220,13 +215,10 @@ export function useUpdateAppointmentStatus() {
     mutationFn: async ({ appointmentId, status }) => {
       try {
         const response = await appointmentService.updateAppointmentStatus(appointmentId, status);
-        
-        // Backend returns { status: "success", data: {...} }
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to update appointment status');
-        }
 
-        return response.data.appointment;
+        ensureSuccess(response, 'Failed to update appointment status');
+
+        return extractAppointment(response);
       } catch (error) {
         logError(error, { context: 'useUpdateAppointmentStatus.mutationFn', appointmentId, status });
         throw error;
@@ -256,13 +248,10 @@ export function useCancelAppointment() {
     mutationFn: async ({ appointmentId, reason }) => {
       try {
         const response = await appointmentService.cancelAppointment(appointmentId, reason);
-        
-        // Backend returns { status: "success", data: {...} }
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to cancel appointment');
-        }
 
-        return response.data.appointment;
+        ensureSuccess(response, 'Failed to cancel appointment');
+
+        return extractAppointment(response);
       } catch (error) {
         logError(error, { context: 'useCancelAppointment.mutationFn', appointmentId, reason });
         throw error;
@@ -288,11 +277,8 @@ export function useAppointmentsRealTime(filters = {}, interval = 30000) {
     queryFn: async () => {
       try {
         const response = await appointmentService.getAppointments(filters);
-        
-        // Backend returns { status: "success", data: {...} }
-        if (response.status !== 'success') {
-          throw new Error(response.message || 'Failed to fetch appointments');
-        }
+
+        ensureSuccess(response, 'Failed to fetch appointments');
 
         return response.data;
       } catch (error) {

@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 class AppointmentService {
     /**
@@ -13,7 +14,7 @@ class AppointmentService {
     async createAppointment(appointmentData) {
         try {
             const response = await api.post('/appointments', appointmentData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.createAppointment' });
             throw error;
@@ -31,7 +32,7 @@ class AppointmentService {
             );
             const params = new URLSearchParams(cleanFilters).toString();
             const response = await api.get(`/appointments/cursor?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAppointmentsCursor' });
             throw error;
@@ -49,7 +50,7 @@ class AppointmentService {
             );
             const params = new URLSearchParams(cleanFilters).toString();
             const response = await api.get(`/appointments/cursor?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getPatientAppointmentsCursor', patientId });
             throw error;
@@ -67,7 +68,7 @@ class AppointmentService {
             );
             const params = new URLSearchParams(cleanFilters).toString();
             const response = await api.get(`/appointments/cursor?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getDoctorAppointmentsCursor', doctorId });
             throw error;
@@ -83,7 +84,7 @@ class AppointmentService {
             const params = new URLSearchParams(filters).toString();
             // Use main endpoint - backend handles admin access automatically
             const response = await api.get(`/appointments?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAllAppointments' });
             throw error;
@@ -97,7 +98,7 @@ class AppointmentService {
         try {
             const params = new URLSearchParams(filters).toString();
             const response = await api.get(`/appointments?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAppointments' });
             throw error;
@@ -110,7 +111,7 @@ class AppointmentService {
     async getPatientAppointments(patientId) {
         try {
             const response = await api.get(`/appointments/patient/${patientId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getPatientAppointments', patientId });
             throw error;
@@ -123,7 +124,7 @@ class AppointmentService {
     async getAppointment(appointmentId) {
         try {
             const response = await api.get(`/appointments/${appointmentId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAppointment', appointmentId });
             throw error;
@@ -136,7 +137,7 @@ class AppointmentService {
     async updateAppointment(appointmentId, updateData) {
         try {
             const response = await api.put(`/appointments/${appointmentId}`, updateData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.updateAppointment', appointmentId });
             throw error;
@@ -149,7 +150,7 @@ class AppointmentService {
     async updateAppointmentStatus(appointmentId, status) {
         try {
             const response = await api.patch(`/appointments/${appointmentId}/status`, { status });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.updateAppointmentStatus', appointmentId });
             throw error;
@@ -162,7 +163,7 @@ class AppointmentService {
     async cancelAppointment(appointmentId, cancelReason) {
         try {
             const response = await api.post(`/appointments/${appointmentId}/cancel`, { cancelReason });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.cancelAppointment', appointmentId });
             throw error;
@@ -177,7 +178,7 @@ class AppointmentService {
             const response = await api.get(`/appointments/slots/${doctorId}`, {
                 params: { date }
             });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAvailableSlots', doctorId });
             throw error;
@@ -190,7 +191,7 @@ class AppointmentService {
     async getAppointmentStats() {
         try {
             const response = await api.get('/appointments/stats');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'AppointmentService.getAppointmentStats' });
             throw error;

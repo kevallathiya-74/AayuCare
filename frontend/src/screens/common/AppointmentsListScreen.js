@@ -29,12 +29,13 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Calendar, ArrowLeft } from "lucide-react-native";
 import { useSelector } from 'react-redux';
-import { healthColors } from '../theme';
+import { theme, healthColors } from '../theme';
 import { useAppointmentsInfinite } from '../hooks/useAppointments';
 import { logError } from '../utils/errorHandler';
-import { SkeletonCardRow, EmptyState, ErrorRecovery } from '../components/common';
+import { getStatusColor } from '../utils/helpers';
+import { SkeletonCardRow, EmptyState, ErrorRecovery } from '../../components/common';
 
 /**
  * Appointments List Screen with Infinite Scroll
@@ -92,7 +93,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
       >
         <View style={styles.cardHeader}>
           <View style={styles.iconContainer}>
-            <Ionicons name="calendar" size={20} color={healthColors.primary.main} />
+            <Calendar  size={20} color={healthColors.primary.main} />
           </View>
           <View style={styles.headerInfo}>
             <Text style={styles.patientName}>
@@ -122,19 +123,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
   }, [user.role, navigation]);
 
   // Get status badge color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'scheduled':
-      case 'confirmed':
-        return healthColors.primary.light;
-      case 'completed':
-        return healthColors.success.light;
-      case 'cancelled':
-        return healthColors.error.light;
-      default:
-        return healthColors.grays.gray200;
-    }
-  };
+  
 
   // Render footer - loading indicator when fetching next page
   const renderFooter = useCallback(() => {
@@ -199,7 +188,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Appointments</Text>
         <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back">
-          <Ionicons name="arrow-back" size={24} color={healthColors.primary.main} />
+          <ArrowLeft  size={24} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>
 

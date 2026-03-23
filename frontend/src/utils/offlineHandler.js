@@ -8,9 +8,10 @@
 import React from 'react';
 import NetInfo from '@react-native-community/netinfo';
 import appStorage from './appStorage';
+import { STORAGE_KEYS } from './constants';
 import { showError, showSuccess, logError } from './errorHandler';
 
-const QUEUE_STORAGE_KEY = '@aayucare_request_queue';
+const QUEUE_STORAGE_KEY = STORAGE_KEYS.REQUEST_QUEUE;
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY = 2000; // 2 seconds
 

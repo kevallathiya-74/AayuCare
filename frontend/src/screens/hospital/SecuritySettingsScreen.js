@@ -17,7 +17,7 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, RefreshCw, ShieldCheck, Clock, Calendar, Lock, Smartphone, ChevronRight, LogOut, X } from "lucide-react-native";
 import { useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import { showError, logError } from "../../utils/errorHandler";
@@ -25,6 +25,7 @@ import { formatDate } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import { logoutUser } from "../../store/slices/authSlice";
 import { SkeletonCardRow, Input } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -221,7 +222,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
       <View
         style={[styles.statIconContainer, { backgroundColor: color + "15" }]}
       >
-        <Ionicons name={icon} size={24} color={color} />
+        <DynamicIcon name={icon} size={24} color={color} />
       </View>
       <View style={styles.statContent}>
         <Text style={styles.statValue}>{value}</Text>
@@ -239,7 +240,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons
+            <DynamicIcon
               name="arrow-back"
               size={24}
               color={healthColors.text.primary}
@@ -265,8 +266,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -280,8 +281,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
           {refreshing ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <Ionicons
-              name="refresh"
+            <RefreshCw
+              
               size={24}
               color={healthColors.primary.main}
             />
@@ -311,8 +312,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   { backgroundColor: healthColors.success.main + "15" },
                 ]}
               >
-                <Ionicons
-                  name="shield-checkmark"
+                <ShieldCheck
+                  
                   size={32}
                   color={healthColors.success.main}
                 />
@@ -328,8 +329,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
             </View>
             <View style={styles.statusDetails}>
               <View style={styles.statusRow}>
-                <Ionicons
-                  name="time-outline"
+                <Clock
+                  
                   size={18}
                   color={healthColors.text.secondary}
                 />
@@ -339,8 +340,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Ionicons
-                  name="calendar-outline"
+                <Calendar
+                  
                   size={18}
                   color={healthColors.text.secondary}
                 />
@@ -350,8 +351,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Ionicons
-                  name="lock-closed-outline"
+                <Lock
+                  
                   size={18}
                   color={healthColors.text.secondary}
                 />
@@ -363,8 +364,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Ionicons
-                  name="phone-portrait-outline"
+                <Smartphone
+                  
                   size={18}
                   color={healthColors.text.secondary}
                 />
@@ -423,8 +424,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 { backgroundColor: healthColors.primary.main + "15" },
               ]}
             >
-              <Ionicons
-                name="lock-closed"
+              <Lock
+                
                 size={24}
                 color={healthColors.primary.main}
               />
@@ -435,8 +436,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 Update your account password
               </Text>
             </View>
-            <Ionicons
-              name="chevron-forward"
+            <ChevronRight
+              
               size={24}
               color={healthColors.text.tertiary}
             />
@@ -450,8 +451,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 { backgroundColor: healthColors.error.main + "15" },
               ]}
             >
-              <Ionicons
-                name="log-out"
+              <LogOut
+                
                 size={24}
                 color={healthColors.error.main}
               />
@@ -460,8 +461,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <Text style={styles.actionTitle}>Logout All Devices</Text>
               <Text style={styles.actionSubtitle}>End all active sessions</Text>
             </View>
-            <Ionicons
-              name="chevron-forward"
+            <ChevronRight
+              
               size={24}
               color={healthColors.text.tertiary}
             />
@@ -480,8 +481,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
                 <TouchableOpacity onPress={closePasswordModal}>
-                  <Ionicons
-                    name="close"
+                  <X
+                    
                     size={24}
                     color={healthColors.text.primary}
                   />

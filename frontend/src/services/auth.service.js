@@ -3,14 +3,56 @@
  * Production-grade JWT auth for React Native / Expo
  */
 
-import authClient from "./betterAuth.service";
+import { createAuthClient } from "better-auth/react";
+import { expoClient } from "@better-auth/expo/client";
 import { APP_CONFIG } from "../config/appConfig";
 import api from "./apiClient";
 import appStorage from '../utils/appStorage';
 import { STORAGE_KEYS } from '../utils/constants';
 
+// Better Auth expects base URL WITHOUT /api suffix
+const getAuthBaseURL = () => {
+  const baseURL = APP_CONFIG.api.baseURL;
+  return baseURL.replace(/\/api$/, "");
+};
+
+// Create and configure the auth client
+export const authClient = createAuthClient({
+  baseURL: getAuthBaseURL(),
+  plugins: [
+    expoClient({
+      scheme: "aayucare",
+      storagePrefix: "aayucare_auth",
+      storage: {
+        getItem: async (key) => {
+          try {
+            return await appStorage.getItem(key);
+          } catch (error) {
+            console.error('[Auth] Storage getItem error:', error);
+            return null;
+          }
+        },
+        setItem: async (key, value) => {
+          try {
+             await appStorage.setItem(key, value);
+          } catch (error) {
+             console.error('[Auth] Storage setItem error:', error);
+          }
+        },
+        removeItem: async (key) => {
+          try {
+             await appStorage.deleteItem(key);
+          } catch (error) {
+             console.error('[Auth] Storage removeItem error:', error);
+          }
+        },
+      },
+    }),
+  ],
+});
+
 // Re-export Better Auth methods
-export const { signIn, signUp, signOut, useSession } = authClient;
+export const { signIn, signUp, signOut, useSession, $fetch } = authClient;
 
 // Helper function to check if input is an email
 const isEmail = (input) => {
@@ -102,10 +144,10 @@ export const login = async (credentials) => {
     // If input is not an email, convert userId to email
     if (!isEmail(email)) {
       if (__DEV__) { console.log('[auth.service] Converting userId to email...'); }
-      if (__DEV__) { console.log('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/user/email-by-userid`); }
+      if (__DEV__) { console.log('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`); }
       
       const emailResponse = await fetchWithTimeout(
-        `${APP_CONFIG.api.baseURL}/user/email-by-userid`,
+        `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`,
         {
           method: 'POST',
           headers: {
@@ -158,7 +200,8 @@ export const login = async (credentials) => {
 
     const betterAuthUserId = result.data.user.id;
 
-    // Extract session token immediately from sign-in response (before any protected API calls)
+    // Better Auth sign-in payload token shape may differ from the DB session token
+    // used by backend Bearer protection. Use it only as temporary fallback.
     let sessionToken = result.data?.session?.token || result.data?.token || null;
     if (__DEV__) { console.log('[auth.service] Session token from sign-in:', sessionToken ? 'exists' : 'missing'); }
 
@@ -171,7 +214,7 @@ export const login = async (credentials) => {
     // Fetch full user profile with user-friendly data
     if (__DEV__) { console.log('[auth.service] Fetching full user profile...'); }
     const profileResponse = await fetchWithTimeout(
-      `${APP_CONFIG.api.baseURL}/user/profile-by-email`,
+      `${APP_CONFIG.api.baseURL}/v1/user/profile-by-email`,
       {
         method: 'POST',
         headers: authHeaders,
@@ -189,30 +232,34 @@ export const login = async (credentials) => {
     const normalizedUser = normalizeUserProfile(profileData.data || {});
     if (__DEV__) { console.log('[auth.service] Profile fetched for role:', normalizedUser.role); }
 
-    // If token was not in the sign-in response, fetch it from the backend now
-    if (!sessionToken) {
-      if (__DEV__) { console.log('[auth.service] Token not in sign-in response, fetching from backend...'); }
-      try {
-        const sessionResponse = await fetchWithTimeout(
-          `${APP_CONFIG.api.baseURL}/user/current-session`,
-          {
-            method: 'POST',
-            headers: authHeaders,
-            body: JSON.stringify({ userId: betterAuthUserId }),
+    // Always exchange credentials for authoritative session token used by protected API middleware
+    if (__DEV__) { console.log('[auth.service] Exchanging credentials for session token...'); }
+    try {
+      const sessionResponse = await fetchWithTimeout(
+        `${APP_CONFIG.api.baseURL}/v1/user/session-token`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          5000
-        );
+          body: JSON.stringify({
+            email,
+            password: credentials.password,
+            userId: betterAuthUserId,
+          }),
+        },
+        8000
+      );
 
-        if (sessionResponse.ok) {
-          const sessionData = await sessionResponse.json();
-          sessionToken = sessionData.token;
-          if (__DEV__) { console.log('[auth.service] Session token retrieved from backend:', sessionToken ? 'exists' : 'missing'); }
-        } else {
-          if (__DEV__) { console.warn('[auth.service] Backend session fetch failed:', sessionResponse.status); }
-        }
-      } catch (sessionError) {
-        if (__DEV__) { console.error('[auth.service] Error fetching session from backend:', sessionError); }
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+        sessionToken = sessionData.token || sessionToken;
+        if (__DEV__) { console.log('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
+      } else {
+        if (__DEV__) { console.warn('[auth.service] Session token exchange failed:', sessionResponse.status); }
       }
+    } catch (sessionError) {
+      if (__DEV__) { console.error('[auth.service] Error during session token exchange:', sessionError); }
     }
 
     // Store session token in appStorage for API interceptor
@@ -314,7 +361,7 @@ export const getSession = async () => {
     // Validate the token against the backend using the existing /user/me endpoint
     // (checks the token against the PostgreSQL session table for expiry)
     const validateResponse = await fetchWithTimeout(
-      `${APP_CONFIG.api.baseURL}/user/me`,
+      `${APP_CONFIG.api.baseURL}/v1/user/me`,
       {
         method: 'GET',
         headers: {

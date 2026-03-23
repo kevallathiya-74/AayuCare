@@ -99,6 +99,12 @@ export const parseError = (error) => {
 };
 
 /**
+ * Alias for parseError to fulfill requirements
+ */
+export const getHumanReadableError = parseError;
+
+
+/**
  * Show error alert to user
  * @param {Error|string} error - Error to display
  * @param {string} title - Alert title
@@ -201,8 +207,10 @@ const getSeverity = (error) => {
  * @param {string} context - Context where error occurred
  */
 export const logError = (error, context = '') => {
-    // Always log to console for debugging (both dev and production)
-    console.error(`[${context}] Error:`, error);
+    // Always log to console for debugging in development
+    if (__DEV__) {
+        console.error(`[${context}] Error:`, error);
+    }
     
     // Send to Sentry (handles both Expo Go and native builds)
     if (!__DEV__) {
@@ -289,6 +297,7 @@ export default {
     ERROR_TYPES,
     ERROR_MESSAGES,
     parseError,
+    getHumanReadableError,
     showError,
     showSuccess,
     showConfirmation,

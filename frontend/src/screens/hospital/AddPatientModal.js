@@ -18,12 +18,13 @@ import {
   FlatList,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronDown, X, Check, Calendar, UserPlus } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
 import { Button } from "../../components/common";
 import logger from "../../utils/logger";
+import { DynamicIcon } from "../../components/common";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -281,7 +282,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <Ionicons
+        <DynamicIcon
           name={icon}
           size={20}
           color={
@@ -330,7 +331,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         onPress={() => setShowPicker(true)}
         disabled={loading}
       >
-        <Ionicons
+        <DynamicIcon
           name={icon}
           size={20}
           color={
@@ -343,7 +344,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         >
           {formData[key] || `Select ${label.toLowerCase()}...`}
         </Text>
-        <Ionicons
+        <DynamicIcon
           name="chevron-down"
           size={20}
           color={healthColors.text.tertiary}
@@ -369,8 +370,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           <View style={styles.dropdownHeader}>
             <Text style={styles.dropdownTitle}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons
-                name="close"
+              <X
+                
                 size={24}
                 color={healthColors.text.primary}
               />
@@ -396,8 +397,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                   {item}
                 </Text>
                 {selectedValue === item && (
-                  <Ionicons
-                    name="checkmark"
+                  <Check
+                    
                     size={20}
                     color={healthColors.primary.main}
                   />
@@ -430,8 +431,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               style={styles.closeButton}
               disabled={loading}
             >
-              <Ionicons
-                name="close"
+              <X
                 size={24}
                 color={healthColors.text.primary}
               />
@@ -455,7 +455,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
             {renderInput(
               "phone",
               "Phone Number *",
-              "+911234567890",
+              "+91 1234567890",
               "call",
               "phone-pad"
             )}
@@ -478,8 +478,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                 onPress={() => setShowDatePicker(true)}
                 disabled={loading}
               >
-                <Ionicons
-                  name="calendar"
+                <Calendar
+                  
                   size={20}
                   color={
                     errors.dateOfBirth
@@ -498,8 +498,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                     ? formatDisplayDate(formData.dateOfBirth)
                     : "Select date of birth..."}
                 </Text>
-                <Ionicons
-                  name="chevron-down"
+                <ChevronDown
+                  
                   size={20}
                   color={healthColors.text.tertiary}
                 />
@@ -541,7 +541,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
             {renderInput(
               "emergencyContactPhone",
               "Emergency Contact Phone",
-              "+911234567890",
+              "+91 1234567890",
               "call",
               "phone-pad"
             )}
@@ -576,21 +576,28 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
           {/* Footer Actions */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+            <Button
+              variant="outline"
+              title="Cancel"
               onPress={handleClose}
               disabled={loading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              size="medium"
+              accessibilityLabel="Cancel patient registration"
+              style={styles.cancelButton}
+              textStyle={styles.cancelButtonText}
+            />
             <Button
               variant="primary"
+              title="Register Patient"
+              icon={<UserPlus size={18} color={theme.colors.white} />}
               loading={loading}
               onPress={handleSubmit}
+              size="large"
+              iconPosition="left"
+              accessibilityLabel="Submit and register patient"
               style={styles.submitButton}
-            >
-              Register Patient
-            </Button>
+              textStyle={styles.submitButtonText}
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -773,33 +780,29 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
-    padding: theme.spacing.lg,
+    alignItems: "center",
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
+    backgroundColor: healthColors.background.card,
     gap: theme.spacing.md,
   },
-  button: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   cancelButton: {
-    backgroundColor: healthColors.background.tertiary,
+    minWidth: 110,
+    flexShrink: 0,
   },
   cancelButtonText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.secondary,
   },
   submitButton: {
-    backgroundColor: healthColors.primary.main,
+    flex: 1,
+    minWidth: 170,
   },
   submitButtonText: {
-    fontSize: theme.typography.sizes.lg,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.white,
   },
 });
 

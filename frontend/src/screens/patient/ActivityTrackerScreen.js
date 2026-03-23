@@ -17,7 +17,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Activity, BarChart, CheckCircle, ChevronRight, Droplet, Plus, BarChart2 } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
@@ -28,6 +28,7 @@ import { ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../compone
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { activityService } from "../../services";
+import { DynamicIcon } from "../../components/common";
 
 const ActivityTrackerScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -167,10 +168,10 @@ const ActivityTrackerScreen = ({ navigation }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+          <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="fitness" size={32} color={theme.colors.white} />
+          <Activity  size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Activity Tracker</Text>
             <Text style={styles.headerSubtitle}>
@@ -179,7 +180,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
           </View>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate("MyReports")}>
-          <Ionicons name="bar-chart" size={24} color={theme.colors.white} />
+          <BarChart  size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -229,7 +230,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
               <Text style={styles.sleepLabel}>Last Night:</Text>
               <View style={styles.sleepValue}>
                 <Text style={styles.sleepDuration}>{sleepData.duration}</Text>
-                <Ionicons name="checkmark-circle" size={20} color={theme.colors.success.main} />
+                <CheckCircle  size={20} color={theme.colors.success.main} />
               </View>
             </View>
             <View style={styles.sleepRow}>
@@ -254,8 +255,8 @@ const ActivityTrackerScreen = ({ navigation }) => {
               activeOpacity={0.7}
             >
               <Text style={styles.reportButtonText}>View Weekly Report</Text>
-              <Ionicons
-                name="chevron-forward"
+              <ChevronRight
+                
                 size={16}
                 color={healthColors.primary.main}
               />
@@ -279,7 +280,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
                     { opacity: index < waterGlasses ? 1 : 0.3 },
                   ]}
                 >
-                  <Ionicons name="water" size={24} color={theme.colors.info.main} />
+                  <Droplet  size={24} color={theme.colors.info.main} />
                 </View>
               ))}
             </View>
@@ -294,7 +295,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Ionicons name="add" size={20} color={theme.colors.white} />
+                <Plus  size={20} color={theme.colors.white} />
                 <Text style={styles.addGlassText}>Add Glass</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -313,19 +314,15 @@ const ActivityTrackerScreen = ({ navigation }) => {
                 message="No exercise logged yet today. Try a short walk or a stretching session."
                 style={{ paddingVertical: 16 }}
               />
-            ) : stressActivities.map((activity, index) => (
-              <TouchableOpacity key={index} style={styles.activityItem}>
+            ) : stressActivities.map((activity) => (
+              <TouchableOpacity key={activity.name} style={styles.activityItem}>
                 <View
                   style={[
                     styles.activityIcon,
                     { backgroundColor: activity.color + "20" },
                   ]}
                 >
-                  <Ionicons
-                    name={activity.icon}
-                    size={24}
-                    color={activity.color}
-                  />
+                  <DynamicIcon name={activity.icon} size={24} color={activity.color} />
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityName}>{activity.name}</Text>
@@ -333,7 +330,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
                     ({activity.duration})
                   </Text>
                 </View>
-                <Ionicons name="play-circle" size={28} color={activity.color} />
+                <DynamicIcon name={activity.icon} size={28} color={activity.color} />
               </TouchableOpacity>
             ))}
           </View>
@@ -351,7 +348,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Ionicons name="stats-chart" size={24} color={theme.colors.white} />
+            <BarChart2  size={24} color={theme.colors.white} />
             <Text style={styles.progressButtonText}>View 30-Day Progress</Text>
           </LinearGradient>
         </TouchableOpacity>

@@ -1,71 +1,24 @@
 /**
- * SplashScreen — animated brand intro with auth-based navigation
- * Preserved: all auth logic, navigation, animations
- * Enhanced: pulsating ring, staggered wave dots, cleaner layout
+ * Splash Screen
+ *
+ * Small startup gate that waits for auth state and routes once.
  */
 
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing, Image } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Image } from "react-native";
 import { useSelector } from "react-redux";
-import { LinearGradient } from "expo-linear-gradient";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from "../../theme";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { healthColors, textStyles, spacing } from "../../theme";
 import logger from "../../utils/logger";
 
 const SplashScreen = ({ navigation }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.6)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const hasNavigated = useRef(false);
-  const insets = useSafeAreaInsets();
-
-  // 4 dot bounce animations with staggered phase
-  const dotAnims = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current;
-
-  const { isAuthenticated, isLoading, user } = useSelector((state) => state.auth || {});
+  const { isAuthenticated, user, isLoading } = useSelector((state) => state.auth || {});
+  const routed = useRef(false);
 
   logger.debug("SplashScreen", "Rendering");
 
   useEffect(() => {
-    try {
-      logger.debug("SplashScreen", "Starting animations");
-
-      // Logo entrance
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.spring(scaleAnim, { toValue: 1, friction: 5, tension: 45, useNativeDriver: true }),
-      ]).start();
-
-      // Pulsating ring around logo
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.18, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        ])
-      ).start();
-
-      // Staggered wave dots
-      dotAnims.forEach((anim, i) => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.delay(i * 160),
-            Animated.timing(anim, { toValue: -12, duration: 350, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-            Animated.timing(anim, { toValue: 0, duration: 350, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-            Animated.delay((3 - i) * 160 + 200),
-          ])
-        ).start();
-      });
-
-      logger.debug("SplashScreen", "Animations started");
-    } catch (error) {
-      logger.error("SplashScreen", "Animation error", error);
-    }
-  }, []);
-
-  // Navigation after auth check
-  useEffect(() => {
-    if (hasNavigated.current) {
-      logger.debug("SplashScreen", "Already navigated, skipping");
+    if (routed.current) {
       return;
     }
 
@@ -74,116 +27,83 @@ const SplashScreen = ({ navigation }) => {
       return;
     }
 
-    logger.debug("SplashScreen", "Auth check complete", { isAuthenticated, user: user?.id });
+    routed.current = true;
 
-    const timer = setTimeout(() => {
-      if (hasNavigated.current) return;
-      hasNavigated.current = true;
+    if (!isAuthenticated) {
+      logger.debug("SplashScreen", "Not authenticated — navigate to BoxSelection");
+      navigation.replace("BoxSelection");
+      return;
+    }
 
-      if (!navigation) { logger.error("SplashScreen", "Navigation prop missing"); return; }
+    const role = user?.role;
+    logger.debug("SplashScreen", "Auth check complete", {
+      isAuthenticated,
+      user: user?.id,
+      role,
+    });
 
-      if (isAuthenticated && user) {
-        logger.debug("SplashScreen", "Authenticated user role", user.role);
-        switch (user.role) {
-          case "admin":    navigation.replace("AdminTabs"); break;
-          case "doctor":   navigation.replace("DoctorTabs"); break;
-          case "patient":  navigation.replace("PatientTabs"); break;
-          default:
-            logger.warn("SplashScreen", "Unknown role", user.role);
-            navigation.replace("BoxSelection");
-        }
-      } else {
-        logger.debug("SplashScreen", "Not authenticated — navigate to BoxSelection");
-        navigation.replace("BoxSelection");
-      }
-    }, 1800);
+    if (role === "admin") {
+      navigation.replace("AdminTabs");
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [isLoading, isAuthenticated, user, navigation]);
+    if (role === "doctor") {
+      navigation.replace("DoctorTabs");
+      return;
+    }
+
+    if (role === "patient") {
+      navigation.replace("PatientTabs");
+      return;
+    }
+
+    navigation.replace("BoxSelection");
+  }, [isAuthenticated, user?.id, user?.role, isLoading, navigation]);
 
   return (
-    <LinearGradient
-      colors={[healthColors.primary.main, healthColors.primary.dark, "#1A237E"]}
-      style={styles.container}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
-      {/* Background decoration circles */}
-      <View style={styles.bgCircle1} />
-      <View style={styles.bgCircle2} />
-
-      <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-        {/* Pulsating ring + logo */}
-        <View style={styles.logoOuter}>
-          <Animated.View style={[styles.pulseRing, { transform: [{ scale: pulseAnim }] }]} />
-          <View style={styles.logoContainer}>
-            <Image
-              source={require("../../../assets/images/aayucare-logo.png")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
-
-        <Text style={styles.appName}>AayuCare</Text>
-        <Text style={styles.tagline}>Smart Healthcare Management</Text>
-
-        {/* Wave loading dots */}
-        <View style={styles.dotsRow}>
-          {dotAnims.map((anim, i) => (
-            <Animated.View
-              key={i}
-              style={[styles.dot, { transform: [{ translateY: anim }] }]}
-            />
-          ))}
-        </View>
-      </Animated.View>
-
-      {/* Footer */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <Text style={styles.footerText}>Your health, enhanced by intelligence</Text>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
+      <View style={styles.content}>
+        <Image
+          source={require("../../../assets/images/aayucare-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>AayuCare</Text>
+        <Text style={styles.subtitle}>Preparing your experience...</Text>
+        <ActivityIndicator size="large" color={healthColors.primary.main} style={styles.loader} />
       </View>
-    </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  bgCircle1: {
-    position: "absolute", width: 320, height: 320, borderRadius: 160,
-    backgroundColor: "rgba(255,255,255,0.05)", top: -60, right: -80,
+  container: {
+    flex: 1,
+    backgroundColor: healthColors.background.primary,
   },
-  bgCircle2: {
-    position: "absolute", width: 220, height: 220, borderRadius: 110,
-    backgroundColor: "rgba(255,255,255,0.05)", bottom: 80, left: -60,
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.xl,
   },
-  content: { alignItems: "center", gap: 8 },
-
-  logoOuter: { alignItems: "center", justifyContent: "center", marginBottom: 16 },
-  pulseRing: {
-    position: "absolute",
-    width: 168, height: 168, borderRadius: 84,
-    borderWidth: 2, borderColor: "rgba(255,255,255,0.35)",
+  logo: {
+    width: 84,
+    height: 84,
+    marginBottom: spacing.md,
   },
-  logoContainer: {
-    width: 128, height: 128, borderRadius: 64,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    justifyContent: "center", alignItems: "center",
-    padding: 16,
+  title: {
+    ...textStyles.h2,
+    color: healthColors.primary.main,
   },
-  logo: { width: "100%", height: "100%" },
-
-  appName: {
-    fontSize: 38, fontWeight: "800", color: "#fff",
-    letterSpacing: 1.5, marginTop: 8,
+  subtitle: {
+    ...textStyles.bodyMedium,
+    color: healthColors.text.secondary,
+    marginTop: spacing.xs,
   },
-  tagline: { fontSize: 15, color: "rgba(255,255,255,0.8)", fontWeight: "500" },
-
-  dotsRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 32 },
-  dot: { width: 11, height: 11, borderRadius: 5.5, backgroundColor: "rgba(255,255,255,0.9)" },
-
-  footer: { position: "absolute", bottom: 0, left: 0, right: 0, alignItems: "center", paddingHorizontal: 32 },
-  footerText: { fontSize: 13, color: "rgba(255,255,255,0.65)", textAlign: "center" },
+  loader: {
+    marginTop: spacing.lg,
+  },
 });
 
 export default SplashScreen;

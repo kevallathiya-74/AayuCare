@@ -6,7 +6,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Sparkles } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 const AITagline = ({
@@ -58,8 +58,8 @@ const AITagline = ({
           end={{ x: 1, y: 0 }}
           style={styles.gradientContainer}
         >
-          <Ionicons
-            name="sparkles"
+          <Sparkles
+            
             size={16}
             color={healthColors.neutral.white}
           />
@@ -83,7 +83,7 @@ const AITagline = ({
           },
         ]}
       >
-        <Ionicons name="sparkles" size={14} color={theme.colors.healthcare.purple} />
+        <Sparkles  size={14} color={theme.colors.healthcare.purple} />
         <Text style={styles.minimalText}>
           Your health, enhanced by intelligence.
         </Text>
@@ -104,7 +104,7 @@ const AITagline = ({
       ]}
     >
       <View style={styles.iconCircle}>
-        <Ionicons name="sparkles" size={16} color={theme.colors.healthcare.purple} />
+        <Sparkles  size={16} color={theme.colors.healthcare.purple} />
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.text}>Your health, enhanced by intelligence.</Text>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   text: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.medium,
     lineHeight: 18,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.success.main,
   },
   aiLabel: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.bold,
     letterSpacing: 0.5,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   gradientText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.neutral.white,
     fontWeight: theme.typography.weights.semibold,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   minimalText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.medium,
     fontStyle: "italic",

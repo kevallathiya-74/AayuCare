@@ -552,7 +552,7 @@ const scheduleUpdateSchema = Joi.object({
 // Prescription status update validation
 const updatePrescriptionStatusSchema = Joi.object({
   status: Joi.string()
-    .valid('pending', 'sent_to_pharmacy', 'preparing', 'ready', 'dispensed', 'cancelled')
+    .valid('pending', 'sent_to_pharmacy', 'processing', 'preparing', 'ready', 'dispensed', 'cancelled')
     .required()
     .messages({ 'any.only': 'Invalid prescription status' }),
   notes: Joi.string().max(500).optional().allow(''),
@@ -561,7 +561,7 @@ const updatePrescriptionStatusSchema = Joi.object({
 // Pharmacy status update validation
 const updatePrescriptionPharmacySchema = Joi.object({
   pharmacyStatus: Joi.string()
-    .valid('pending', 'processing', 'ready', 'dispensed', 'cancelled')
+    .valid('pending', 'processing', 'preparing', 'ready', 'dispensed', 'cancelled')
     .optional(),
   pharmacyId: Joi.string().max(100).optional(),
   dispensedAt: Joi.date().optional(),

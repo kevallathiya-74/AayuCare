@@ -7,13 +7,13 @@
 
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { healthColors } from '../../theme/healthColors';
 import { textStyles } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import Card from '../common/Card';
 import Avatar from '../common/Avatar';
 import Button from '../common/Button';
+import { DynamicIcon } from "../common";
 
 const DoctorCard = ({
     doctorId,
@@ -52,11 +52,15 @@ const DoctorCard = ({
         const stars = [];
         for (let i = 1; i <= 5; i++) {
             stars.push(
-                <Ionicons
+                <DynamicIcon
                     key={i}
-                    name={i <= rating ? 'star' : 'star-outline'}
+                    name="star"
                     size={14}
-                    color={healthColors.warning.main}
+                    color={
+                        i <= Math.round(rating)
+                            ? healthColors.warning.main
+                            : healthColors.neutral.gray300
+                    }
                     style={styles.star}
                 />
             );
@@ -90,8 +94,8 @@ const DoctorCard = ({
                     style={styles.favoriteButton}
                 >
                     <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-                        <Ionicons
-                            name={favorite ? 'heart' : 'heart-outline'}
+                        <DynamicIcon
+                            name="heart"
                             size={24}
                             color={favorite ? healthColors.accent.pink : healthColors.text.tertiary}
                         />
@@ -101,8 +105,8 @@ const DoctorCard = ({
 
             <View style={styles.footer}>
                 <View style={styles.experienceContainer}>
-                    <Ionicons
-                        name="briefcase-outline"
+                    <DynamicIcon
+                        name="briefcase-medical"
                         size={16}
                         color={healthColors.text.secondary}
                     />

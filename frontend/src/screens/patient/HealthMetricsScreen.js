@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Modal,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -21,14 +20,16 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Plus, X, ArrowLeft, PlusCircle, Clock, Heart, Droplets, Thermometer, Activity, Scale, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react-native";
 import { useSelector } from "react-redux";
-import { theme } from "../../theme";
+import { theme, healthColors, textStyles, spacing } from "../../theme";
 import { getScreenPadding, verticalScale } from "../../utils/responsive";
 import {
   ErrorRecovery,
   NetworkStatusIndicator,
   EmptyState,
+  ModalSheet,
+  Button,
 } from "../../components/common";
 import { showError, showSuccess, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
@@ -39,9 +40,9 @@ const METRIC_TYPES = [
   {
     key: "bp",
     label: "Blood Pressure",
-    icon: "heart",
+    icon: Heart,
     unit: "mmHg",
-    color: theme.colors.healthcare.bloodPressure || "#E53935",
+    color: healthColors.error.main,
     fields: [
       { key: "systolic", placeholder: "Systolic (e.g. 120)", keyboardType: "numeric" },
       { key: "diastolic", placeholder: "Diastolic (e.g. 80)", keyboardType: "numeric" },
@@ -55,9 +56,9 @@ const METRIC_TYPES = [
   {
     key: "sugar",
     label: "Blood Sugar",
-    icon: "water",
+    icon: Droplets,
     unit: "mg/dL",
-    color: theme.colors.healthcare.glucose || "#FB8C00",
+    color: healthColors.warning.main,
     fields: [
       { key: "value", placeholder: "Glucose level (e.g. 95)", keyboardType: "numeric" },
     ],
@@ -67,9 +68,9 @@ const METRIC_TYPES = [
   {
     key: "temperature",
     label: "Temperature",
-    icon: "thermometer",
+    icon: Thermometer,
     unit: "°F",
-    color: theme.colors.healthcare.temperature || "#8E24AA",
+    color: healthColors.info.main,
     fields: [
       { key: "value", placeholder: "Body temp (e.g. 98.6)", keyboardType: "decimal-pad" },
     ],
@@ -79,9 +80,9 @@ const METRIC_TYPES = [
   {
     key: "weight",
     label: "Weight",
-    icon: "barbell",
+    icon: Scale,
     unit: "kg",
-    color: theme.colors.healthcare.weight || "#00897B",
+    color: healthColors.success.main,
     fields: [
       { key: "value", placeholder: "Weight in kg (e.g. 70)", keyboardType: "decimal-pad" },
     ],
@@ -91,9 +92,9 @@ const METRIC_TYPES = [
   {
     key: "bmi",
     label: "BMI",
-    icon: "body",
+    icon: Activity,
     unit: "",
-    color: theme.colors.healthcare.oxygen || "#039BE5",
+    color: healthColors.primary.main,
     fields: [
       { key: "value", placeholder: "BMI value (e.g. 22.5)", keyboardType: "decimal-pad" },
     ],
@@ -104,31 +105,31 @@ const METRIC_TYPES = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const getStatusBadge = (metricKey, value) => {
-  if (!value) return { label: "No Data", color: "#9E9E9E" };
+  if (!value) return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
   if (metricKey === "bp") {
     const { systolic, diastolic } = value;
-    if (!systolic || !diastolic) return { label: "No Data", color: "#9E9E9E" };
-    if (systolic > 140 || diastolic > 90) return { label: "High", color: "#E53935" };
-    if (systolic < 90 || diastolic < 60) return { label: "Low", color: "#FB8C00" };
-    return { label: "Normal", color: "#43A047" };
+    if (!systolic || !diastolic) return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
+    if (systolic > 140 || diastolic > 90) return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
+    if (systolic < 90 || diastolic < 60) return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
+    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
   if (metricKey === "sugar") {
-    if (value > 140) return { label: "High", color: "#E53935" };
-    if (value < 70) return { label: "Low", color: "#FB8C00" };
-    return { label: "Normal", color: "#43A047" };
+    if (value > 140) return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
+    if (value < 70) return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
+    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
   if (metricKey === "temperature") {
-    if (value > 100.4) return { label: "Fever", color: "#E53935" };
-    if (value < 96.8) return { label: "Low", color: "#039BE5" };
-    return { label: "Normal", color: "#43A047" };
+    if (value > 100.4) return { label: "Fever", color: healthColors.error.main, icon: AlertTriangle };
+    if (value < 96.8) return { label: "Low", color: healthColors.info.main, icon: AlertTriangle };
+    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
   if (metricKey === "bmi") {
-    if (value < 18.5) return { label: "Underweight", color: "#FB8C00" };
-    if (value > 30) return { label: "Obese", color: "#E53935" };
-    if (value > 25) return { label: "Overweight", color: "#FDD835" };
-    return { label: "Normal", color: "#43A047" };
+    if (value < 18.5) return { label: "Underweight", color: healthColors.warning.main, icon: AlertTriangle };
+    if (value > 30) return { label: "Obese", color: healthColors.error.main, icon: AlertTriangle };
+    if (value > 25) return { label: "Overweight", color: healthColors.accent.yellow, icon: AlertTriangle };
+    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
-  return { label: "Logged", color: "#43A047" };
+  return { label: "Logged", color: healthColors.success.main, icon: CheckCircle2 };
 };
 
 const formatTimestamp = (ts) => {
@@ -136,12 +137,12 @@ const formatTimestamp = (ts) => {
   const d = new Date(ts);
   const isToday = d.toDateString() === new Date().toDateString();
   if (isToday)
-    return `Today ${d.toLocaleTimeString("en-US", {
+    return `Today ${d.toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     })}`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -250,14 +251,16 @@ const HealthMetricsScreen = ({ navigation }) => {
     const latest = getLatest(config.key);
     const badge = getStatusBadge(config.key, latest?.value);
     const displayValue = config.format(latest);
+    const IconComponent = config.icon;
+    const StatusIcon = badge.icon;
 
     return (
       <View key={config.key} style={styles.card}>
         <View style={[styles.cardAccent, { backgroundColor: config.color }]} />
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
-            <View style={[styles.iconCircle, { backgroundColor: config.color + "20" }]}>
-              <Ionicons name={config.icon} size={22} color={config.color} />
+            <View style={[styles.iconCircle, { backgroundColor: config.color + "15" }]}>
+              <IconComponent size={22} color={config.color} />
             </View>
             <View style={styles.cardTitleArea}>
               <Text style={styles.cardTitle}>{config.label}</Text>
@@ -266,18 +269,19 @@ const HealthMetricsScreen = ({ navigation }) => {
               ) : null}
             </View>
             <TouchableOpacity
-              style={[styles.addBtn, { borderColor: config.color }]}
+              style={[styles.addBtn, { backgroundColor: config.color + "10", borderColor: config.color + "30" }]}
               onPress={() => openAddModal(config)}
             >
-              <Ionicons name="add" size={18} color={config.color} />
+              <Plus size={20} color={config.color} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.cardValueRow}>
-            <Text style={[styles.cardValue, { color: config.color }]}>
+            <Text style={[styles.cardValue, { color: healthColors.text.primary }]}>
               {displayValue}
             </Text>
-            <View style={[styles.badge, { backgroundColor: badge.color + "20" }]}>
+            <View style={[styles.badge, { backgroundColor: badge.color + "15" }]}>
+              <StatusIcon size={14} color={badge.color} style={{ marginRight: 4 }} />
               <Text style={[styles.badgeText, { color: badge.color }]}>
                 {badge.label}
               </Text>
@@ -285,11 +289,17 @@ const HealthMetricsScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.cardFooter}>
-            <Text style={styles.normalRange}>Normal: {config.normalRange}</Text>
+            <View style={styles.rangeRow}>
+              <Text style={styles.rangeLabel}>Normal: </Text>
+              <Text style={styles.rangeValue}>{config.normalRange}</Text>
+            </View>
             {latest?.timestamp ? (
-              <Text style={styles.lastUpdated}>
-                {formatTimestamp(latest.timestamp)}
-              </Text>
+              <View style={styles.timeRow}>
+                <Clock size={12} color={healthColors.text.tertiary} />
+                <Text style={styles.lastUpdated}>
+                  {formatTimestamp(latest.timestamp)}
+                </Text>
+              </View>
             ) : null}
           </View>
         </View>
@@ -297,90 +307,19 @@ const HealthMetricsScreen = ({ navigation }) => {
     );
   };
 
-  const renderAddModal = () => {
-    if (!selectedType) return null;
-    return (
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalBox}>
-            <View style={styles.modalHeader}>
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: selectedType.color + "20" },
-                ]}
-              >
-                <Ionicons
-                  name={selectedType.icon}
-                  size={22}
-                  color={selectedType.color}
-                />
-              </View>
-              <Text style={styles.modalTitle}>
-                Log {selectedType.label}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="close" size={22} color={theme.colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            {selectedType.fields.map((field) => (
-              <TextInput
-                key={field.key}
-                style={styles.input}
-                placeholder={field.placeholder}
-                placeholderTextColor={theme.colors.text.disabled || "#BDBDBD"}
-                keyboardType={field.keyboardType}
-                value={inputValues[field.key] || ""}
-                onChangeText={(v) =>
-                  setInputValues((prev) => ({ ...prev, [field.key]: v }))
-                }
-              />
-            ))}
-
-            <TouchableOpacity
-              style={[
-                styles.saveBtn,
-                { backgroundColor: selectedType.color },
-                saving && styles.saveBtnDisabled,
-              ]}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              <Text style={styles.saveBtnText}>
-                {saving ? "Saving..." : "Save"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-  };
-
   // ── Render ──────────────────────────────────────────────────────────────────
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <LinearGradient
-          colors={[theme.colors.healthcare.teal, theme.colors.healthcare.navy || "#1A237E"]}
-          style={styles.header}
+          colors={healthColors.gradients.primary}
+          style={[styles.header, { paddingTop: insets.top + 8 }]}
         >
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
           >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <ArrowLeft size={24} color={theme.colors.text.white} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Health Metrics</Text>
           <View style={{ width: 40 }} />
@@ -388,31 +327,6 @@ const HealthMetricsScreen = ({ navigation }) => {
         <View style={styles.centered}>
           <Text style={styles.loadingText}>Loading metrics...</Text>
         </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (error && !refreshing) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient
-          colors={[theme.colors.healthcare.teal, theme.colors.healthcare.navy || "#1A237E"]}
-          style={styles.header}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Health Metrics</Text>
-          <View style={{ width: 40 }} />
-        </LinearGradient>
-        <ErrorRecovery
-          error={error}
-          onRetry={fetchMetrics}
-          context="Health Metrics"
-        />
       </SafeAreaView>
     );
   }
@@ -425,14 +339,14 @@ const HealthMetricsScreen = ({ navigation }) => {
 
       {/* Header */}
       <LinearGradient
-        colors={[theme.colors.healthcare.teal, theme.colors.healthcare.navy || "#1A237E"]}
+        colors={healthColors.gradients.primary}
         style={[styles.header, { paddingTop: insets.top + 8 }]}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <ArrowLeft size={24} color={theme.colors.text.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Health Metrics</Text>
         <View style={{ width: 40 }} />
@@ -445,20 +359,23 @@ const HealthMetricsScreen = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={theme.colors.healthcare.teal}
+            tintColor={healthColors.primary.main}
           />
         }
       >
-        <Text style={styles.sectionHint}>
-          Tap <Ionicons name="add-circle-outline" size={13} color={theme.colors.text.secondary} /> on any card to log a new reading.
-        </Text>
+        <View style={styles.hintBox}>
+          <PlusCircle size={16} color={healthColors.primary.main} />
+          <Text style={styles.sectionHint}>
+            Tap the plus button on any card to log a new reading.
+          </Text>
+        </View>
 
         {METRIC_TYPES.map(renderMetricCard)}
 
         {/* History link */}
         {metrics.length > 0 && (
           <View style={styles.historyNote}>
-            <Ionicons name="time-outline" size={15} color={theme.colors.text.secondary} />
+            <Clock size={15} color={healthColors.text.tertiary} />
             <Text style={styles.historyNoteText}>
               {metrics.length} total readings recorded
             </Text>
@@ -476,7 +393,43 @@ const HealthMetricsScreen = ({ navigation }) => {
         <View style={{ height: verticalScale(24) }} />
       </ScrollView>
 
-      {renderAddModal()}
+      {/* Add Record ModalSheet */}
+      <ModalSheet
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={selectedType ? `Log ${selectedType.label}` : "Log Metric"}
+        maxHeight={0.6}
+      >
+        <View style={styles.modalContent}>
+          {selectedType && (
+            <View style={styles.inputContainer}>
+              {selectedType.fields.map((field) => (
+                <View key={field.key} style={styles.inputWrapper}>
+                  <Text style={styles.inputLabel}>{field.placeholder.split(' (')[0]}</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={field.placeholder}
+                    placeholderTextColor={healthColors.text.tertiary}
+                    keyboardType={field.keyboardType}
+                    value={inputValues[field.key] || ""}
+                    onChangeText={(v) =>
+                      setInputValues((prev) => ({ ...prev, [field.key]: v }))
+                    }
+                  />
+                </View>
+              ))}
+              
+              <Button
+                variant="primary"
+                title={saving ? "Saving..." : "Save Record"}
+                onPress={handleSave}
+                loading={saving}
+                style={{ marginTop: spacing.md }}
+              />
+            </View>
+          )}
+        </View>
+      </ModalSheet>
     </SafeAreaView>
   );
 };
@@ -485,15 +438,14 @@ const HealthMetricsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background?.primary || "#F5F7FA",
+    backgroundColor: healthColors.background.secondary,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 16,
+    paddingBottom: 20,
   },
   backBtn: {
     width: 40,
@@ -504,10 +456,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    ...textStyles.h4,
     color: "#fff",
-    letterSpacing: 0.3,
   },
   centered: {
     flex: 1,
@@ -515,107 +465,130 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadingText: {
-    color: theme.colors.text.secondary || "#757575",
-    fontSize: 15,
+    ...textStyles.bodyLarge,
+    color: healthColors.text.secondary,
   },
   scrollContent: {
     paddingTop: 16,
     paddingBottom: 24,
   },
+  hintBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: healthColors.primary.lightest,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 8,
+  },
   sectionHint: {
-    fontSize: 12,
-    color: theme.colors.text.secondary || "#757575",
-    marginBottom: 14,
-    textAlign: "center",
+    ...textStyles.bodySmall,
+    color: healthColors.primary.main,
+    fontWeight: "500",
   },
 
   // Cards
   card: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    borderRadius: 14,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    borderRadius: 16,
+    marginBottom: 16,
+    ...theme.shadows.sm,
     overflow: "hidden",
   },
   cardAccent: {
-    width: 5,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
+    width: 4,
   },
   cardContent: {
     flex: 1,
-    padding: 14,
+    padding: 16,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   cardTitleArea: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   cardTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: theme.colors.text.primary || "#212121",
+    ...textStyles.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.text.primary,
   },
   cardUnit: {
-    fontSize: 12,
-    color: theme.colors.text.secondary || "#757575",
+    ...textStyles.caption,
+    color: healthColors.text.tertiary,
     marginTop: 2,
   },
   addBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1.5,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   cardValueRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
   cardValue: {
-    fontSize: 26,
-    fontWeight: "700",
+    ...textStyles.h2,
+    fontWeight: "800",
   },
   badge: {
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 20,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: "600",
+    ...textStyles.caption,
+    fontWeight: "700",
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: healthColors.neutral.gray100,
   },
-  normalRange: {
-    fontSize: 11,
-    color: theme.colors.text.secondary || "#757575",
+  rangeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  rangeLabel: {
+    ...textStyles.caption,
+    color: healthColors.text.tertiary,
+  },
+  rangeValue: {
+    ...textStyles.caption,
+    fontWeight: "600",
+    color: healthColors.text.secondary,
+  },
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   lastUpdated: {
-    fontSize: 11,
-    color: theme.colors.text.disabled || "#BDBDBD",
+    ...textStyles.caption,
+    color: healthColors.text.tertiary,
   },
 
   // History
@@ -624,63 +597,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 8,
   },
   historyNoteText: {
-    fontSize: 12,
-    color: theme.colors.text.secondary || "#757575",
+    ...textStyles.bodySmall,
+    color: healthColors.text.tertiary,
   },
 
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "flex-end",
+  // Modal Content
+  modalContent: {
+    paddingBottom: spacing.lg,
   },
-  modalBox: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: Platform.OS === "ios" ? 36 : 24,
+  inputContainer: {
+    gap: spacing.md,
   },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    gap: 10,
+  inputWrapper: {
+    gap: 6,
   },
-  modalTitle: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: "700",
-    color: theme.colors.text.primary || "#212121",
+  inputLabel: {
+    ...textStyles.bodySmall,
+    fontWeight: "600",
+    color: healthColors.text.secondary,
+    marginLeft: 4,
   },
   input: {
+    backgroundColor: healthColors.neutral.gray50,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: theme.colors.text.primary || "#212121",
-    marginBottom: 12,
-    backgroundColor: "#FAFAFA",
-  },
-  saveBtn: {
-    marginTop: 6,
+    borderColor: healthColors.neutral.gray200,
     borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  saveBtnDisabled: {
-    opacity: 0.6,
-  },
-  saveBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...textStyles.bodyLarge,
+    color: healthColors.text.primary,
   },
 });
 

@@ -13,33 +13,17 @@ import { Platform } from 'react-native';
 
 // Font families
 export const fontFamilies = {
-  // Headings - System font fallback (replace with Poppins when added)
-  heading: Platform.select({
-    ios: 'System',
-    android: 'Roboto',
-    default: 'System',
-  }),
+  // Headings - Poppins
+  heading: 'Poppins-SemiBold',
   
-  // Body - System font fallback (replace with Inter when added)
-  body: Platform.select({
-    ios: 'System',
-    android: 'Roboto',
-    default: 'System',
-  }),
+  // Body - Inter
+  body: 'Inter-Regular',
   
-  // Numbers - System font fallback (replace with Inter when added)
-  numbers: Platform.select({
-    ios: 'System',
-    android: 'Roboto',
-    default: 'System',
-  }),
+  // Numbers - Inter
+  numbers: 'Inter-Regular',
   
-  // Alternative - System font fallback
-  bodyAlt: Platform.select({
-    ios: 'System',
-    android: 'Roboto',
-    default: 'System',
-  }),
+  // Alternative - Inter
+  bodyAlt: 'Inter-Medium',
   
   // Monospace (for codes, IDs)
   mono: Platform.select({

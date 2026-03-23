@@ -19,7 +19,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { FileText, Eye, UserPlus, Search, XCircle } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
 import { getScreenPadding, verticalScale } from "../../utils/responsive";
@@ -144,8 +144,8 @@ const DoctorPatientsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             accessibilityLabel={`Write prescription for ${item.name}`}
           >
-            <Ionicons
-              name="document-text"
+            <FileText
+              
               size={14}
               color={healthColors.primary.contrastText || "#fff"}
             />
@@ -158,8 +158,8 @@ const DoctorPatientsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             accessibilityLabel={`View details for ${item.name}`}
           >
-            <Ionicons
-              name="eye-outline"
+            <Eye
+              
               size={18}
               color={healthColors.primary.main}
             />
@@ -186,14 +186,14 @@ const DoctorPatientsScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("WalkInPatient")}
           activeOpacity={0.7}
         >
-          <Ionicons name="person-add-outline" size={20} color={healthColors.primary.main} />
+          <UserPlus  size={20} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Ionicons
-          name="search-outline"
+        <Search
+          
           size={18}
           color={healthColors.text.secondary}
           style={styles.searchIcon}
@@ -209,7 +209,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={18} color={healthColors.text.disabled} />
+            <XCircle  size={18} color={healthColors.text.disabled} />
           </TouchableOpacity>
         )}
       </View>
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   rxButtonText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     fontWeight: "600",
     color: healthColors.primary.contrastText || "#fff",
   },

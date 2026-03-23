@@ -27,13 +27,14 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { User, Clock, Calendar, CheckCircle, XCircle, Phone, Cross, FileText, UserCircle, ArrowLeft, RefreshCw, Search } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { getStatusColor } from "../../utils/helpers";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
-import { EmptyState, SkeletonCardRow } from "../../components/common";
+import { EmptyState, SkeletonCardRow, DynamicIcon } from "../../components/common";
 
 const STATUS_FILTERS_BY_TAB = {
   today: [
@@ -297,16 +298,6 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     [navigation, refreshCount, updatingAppointmentId]
   );
 
-  const getStatusColor = useCallback((status) => {
-    const s = normalizeStatus(status);
-    switch (s) {
-      case "confirmed": return healthColors.success.main;
-      case "completed": return healthColors.info.main;
-      case "cancelled": return healthColors.error.main;
-      case "in_progress": return healthColors.primary.main;
-      default: return healthColors.warning.main;
-    }
-  }, [normalizeStatus]);
 
   const getStatusLabel = useCallback((status) => {
     const s = normalizeStatus(status);
@@ -361,7 +352,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       >
         <View style={styles.cardLeft}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={24} color={healthColors.primary.main} />
+            <User  size={24} color={healthColors.primary.main} />
           </View>
           <View style={styles.patientInfo}>
             <Text style={styles.patientName} numberOfLines={1}>
@@ -371,16 +362,16 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               {item.reasonForVisit || item.reason || "Consultation"}
             </Text>
             <View style={styles.timeContainer}>
-              <Ionicons
-                name="time-outline"
+              <Clock
+                
                 size={14}
                 color={healthColors.text.secondary}
               />
               <Text style={styles.time}>{item.timeSlot || item.time || "N/A"}</Text>
               {item.appointmentDate && selectedFilter === "upcoming" && (
                 <>
-                  <Ionicons
-                    name="calendar-outline"
+                  <Calendar
+                    
                     size={14}
                     color={healthColors.text.secondary}
                     style={{ marginLeft: 8 }}
@@ -423,8 +414,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                         <ActivityIndicator size="small" color={healthColors.text.white} />
                       ) : (
                         <>
-                          <Ionicons
-                            name="checkmark-circle-outline"
+                          <CheckCircle
+                            
                             size={16}
                             color={healthColors.text.white}
                           />
@@ -463,8 +454,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                         <ActivityIndicator size="small" color={healthColors.text.white} />
                       ) : (
                         <>
-                          <Ionicons
-                            name="close-circle-outline"
+                          <XCircle
+                            
                             size={16}
                             color={healthColors.text.white}
                           />
@@ -498,7 +489,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Call patient"
           >
-            <Ionicons name="call-outline" size={20} color={healthColors.primary.main} />
+            <Phone  size={20} color={healthColors.primary.main} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -522,7 +513,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Start consultation"
           >
-            <Ionicons name="medical-outline" size={20} color={healthColors.success.main} />
+            <Cross  size={20} color={healthColors.success.main} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
@@ -531,8 +522,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Create prescription"
           >
-            <Ionicons
-              name="document-text-outline"
+            <FileText
+              
               size={20}
               color={healthColors.accent?.coral || "#FF6B6B"}
             />
@@ -548,9 +539,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             }
             accessibilityRole="button"
             accessibilityLabel={`View history for ${item.patientName}`}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons
-              name="person-circle-outline"
+            <UserCircle
+              
               size={20}
               color={healthColors.info?.main || healthColors.primary.main}
             />
@@ -572,7 +564,6 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     ),
     [
       selectedFilter,
-      getStatusColor,
       getStatusLabel,
       handleStartConsultation,
       handleCreatePrescription,
@@ -641,7 +632,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={24} color={healthColors.text.primary} />
+          <ArrowLeft  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Appointments</Text>
         <View style={styles.headerActions}>
@@ -651,9 +642,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={showSearch ? "Close search" : "Search appointments"}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons
-              name={showSearch ? "close" : "search"}
+            <DynamicIcon
+              name={showSearch ? "X" : "Search"}
               size={22}
               color={showSearch ? healthColors.primary.main : healthColors.text.primary}
             />
@@ -664,8 +656,9 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Refresh"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="refresh-outline" size={22} color={healthColors.text.primary} />
+            <DynamicIcon name="refresh-cw" size={22} color={healthColors.text.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -673,7 +666,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       {/* Animated Search Bar */}
       <Animated.View style={[styles.searchBarWrapper, { height: searchBarHeight, overflow: "hidden" }]}>
         <View style={styles.searchBarContainer}>
-          <Ionicons name="search-outline" size={18} color={healthColors.text.secondary} />
+          <Search  size={18} color={healthColors.text.secondary} />
           <TextInput
             ref={searchInputRef}
             style={styles.searchInput}
@@ -687,7 +680,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={18} color={healthColors.text.secondary} />
+              <XCircle  size={18} color={healthColors.text.secondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -1046,7 +1039,7 @@ const styles = StyleSheet.create({
   },
   statusActionButtonText: {
     fontSize: theme.typography.sizes.sm,
-    fontWeight: theme.typography.weights.semibold,
+    fontWeight: theme.typography.weights.bold,
     color: healthColors.text.white,
   },
   cardRight: {
@@ -1073,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: theme.typography.sizes.xs,
-    fontWeight: theme.typography.weights.semibold,
+    fontWeight: theme.typography.weights.bold,
   },
 });
 

@@ -114,6 +114,86 @@ exports.getCurrentSession = async (req, res, next) => {
 };
 
 /**
+ * @desc    Get current session token after login (mobile bearer token exchange)
+ * @route   POST /api/user/session-token
+ * @access  Public (rate-limited, credential-verified)
+ */
+exports.getSessionTokenByCredentials = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email and password are required",
+      });
+    }
+
+    const user = await userRepository.findByEmail(String(email).trim().toLowerCase(), true);
+    if (!user || !user.password_hash || !user.is_active) {
+      return res.status(401).json({
+        status: "error",
+        message: "Invalid credentials",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        status: "error",
+        message: "Invalid credentials",
+      });
+    }
+
+    const { query } = require("../config/postgres");
+
+    // Better Auth can persist session rows asynchronously right after sign-in.
+    // Retry briefly to avoid race conditions in mobile login flow.
+    let session = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const result = await query(
+        `SELECT token, expires_at as "expiresAt"
+         FROM session
+         WHERE user_id = $1
+           AND expires_at > NOW()
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [user.id]
+      );
+
+      if (result.rows.length > 0) {
+        session = result.rows[0];
+        break;
+      }
+
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+    }
+
+    if (!session) {
+      return res.status(404).json({
+        status: "error",
+        message: "No active session found",
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      token: session.token,
+      expiresAt: session.expiresAt,
+    });
+  } catch (error) {
+    logger.error("Error in getSessionTokenByCredentials", {
+      error: error.message,
+      stack: error.stack,
+      email: req.body?.email,
+    });
+    next(error);
+  }
+};
+
+/**
  * @desc    Get user profile by email (for post-login data fetch)
  * @route   POST /api/user/profile-by-email
  * @access  Public (called after Better Auth login)
@@ -384,6 +464,38 @@ exports.changePassword = async (req, res, next) => {
       message: "Password changed successfully",
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update Expo push token
+ * @route   PUT /api/user/push-token
+ * @access  Private
+ */
+exports.updatePushToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        status: "error",
+        message: "Push token is required",
+      });
+    }
+
+    // Update user in PostgreSQL (we added expo_push_token to the schema)
+    await userRepository.update(req.user.id, { expo_push_token: token });
+
+    res.status(200).json({
+      status: "success",
+      message: "Push token updated successfully",
+    });
+  } catch (error) {
+    logger.error("Error updating push token", {
+      error: error.message,
+      userId: req.user.id
+    });
     next(error);
   }
 };

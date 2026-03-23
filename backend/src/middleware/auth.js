@@ -7,6 +7,7 @@ const { getAuth } = require("../lib/auth");
 const { AppError } = require("./errorHandler");
 const { query } = require("../config/postgres");
 const logger = require("../utils/logger");
+const crypto = require("crypto");
 
 /**
  * Protect routes - requires valid Better Auth session
@@ -32,17 +33,18 @@ exports.protect = async (req, res, next) => {
 
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.substring(7); // Remove "Bearer " prefix
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
         // Query session from PostgreSQL (Better Auth stores sessions in PostgreSQL)
         try {
           const sessionResult = await query(
             `SELECT token, user_id as "userId", expires_at as "expiresAt"
              FROM session
-             WHERE token = $1
+             WHERE (token = $1 OR token = $2)
                AND expires_at > NOW()
              ORDER BY created_at DESC
              LIMIT 1`,
-            [token]
+            [token, hashedToken]
           );
 
           if (sessionResult.rows.length > 0) {
@@ -187,13 +189,14 @@ exports.optionalAuth = async (req, res, next) => {
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
         try {
           const sessionResult = await query(
             `SELECT token, user_id as "userId", expires_at as "expiresAt"
              FROM session
-             WHERE token = $1 AND expires_at > NOW()
+               WHERE (token = $1 OR token = $2) AND expires_at > NOW()
              LIMIT 1`,
-            [token]
+              [token, hashedToken]
           );
           if (sessionResult.rows.length > 0) {
             const userResult = await query(

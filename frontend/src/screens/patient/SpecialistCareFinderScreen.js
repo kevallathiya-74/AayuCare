@@ -20,7 +20,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { User, Star, Banknote, Clock, Building, Video, CheckCircle, ArrowLeft, Search, BriefcaseMedical, Cross, ChevronDown, Calendar } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
@@ -31,6 +31,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
 import { doctorService } from "../../services";
+import { DynamicIcon } from "../../components/common";
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -117,7 +118,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     <View key={doctor._id || doctor.id} style={styles.doctorCard}>
       <View style={styles.doctorHeader}>
         <View style={styles.doctorAvatar}>
-          <Ionicons name="person" size={32} color={healthColors.primary.main} />
+          <User  size={32} color={healthColors.primary.main} />
         </View>
         <View style={styles.doctorInfo}>
           <Text style={styles.doctorName}>{doctor.name}</Text>
@@ -126,15 +127,15 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             {doctor.experience || "N/A"}
           </Text>
           <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={16} color={theme.colors.warning.main} />
+            <Star  size={16} color={theme.colors.warning.main} />
             <Text style={styles.ratingText}>
               {doctor.rating || "N/A"} ({doctor.reviews || 0} reviews)
             </Text>
           </View>
           <View style={styles.doctorDetails}>
             <View style={styles.detailItem}>
-              <Ionicons
-                name="cash-outline"
+              <Banknote
+                
                 size={14}
                 color={healthColors.success.main}
               />
@@ -143,8 +144,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons
-                name="time-outline"
+              <Clock
+                
                 size={14}
                 color={healthColors.primary.main}
               />
@@ -164,8 +165,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               styles.consultationTypeActive,
           ]}
         >
-          <Ionicons
-            name="business"
+          <Building
+            
             size={18}
             color={
               doctor.availability || doctor.schedule || doctor.hasClinic
@@ -190,8 +191,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               styles.consultationTypeActive,
           ]}
         >
-          <Ionicons
-            name="videocam"
+          <Video
+            
             size={18}
             color={
               doctor.telemedicine || doctor.hasTelemedicine
@@ -209,8 +210,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             TELEMEDICINE
           </Text>
           {(doctor.telemedicine || doctor.hasTelemedicine) && (
-            <Ionicons
-              name="checkmark-circle"
+            <CheckCircle
+              
               size={16}
               color={healthColors.success.main}
             />
@@ -278,15 +279,15 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Specialist</Text>
         <TouchableOpacity style={styles.searchButton}>
-          <Ionicons name="search" size={24} color={healthColors.text.primary} />
+          <Search  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
@@ -304,8 +305,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       >
         {/* Title */}
         <View style={styles.titleSection}>
-          <Ionicons
-            name="medkit-outline"
+          <BriefcaseMedical
+            
             size={20}
             color={healthColors.primary.main}
           />
@@ -317,8 +318,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           <View style={styles.filterCard}>
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
-                <Ionicons
-                  name="medical-outline"
+                <Cross
+                  
                   size={18}
                   color={healthColors.primary.main}
                 />
@@ -326,8 +327,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               </View>
               <TouchableOpacity style={styles.filterDropdown}>
                 <Text style={styles.filterValue}>{selectedSpecialty}</Text>
-                <Ionicons
-                  name="chevron-down"
+                <ChevronDown
+                  
                   size={20}
                   color={healthColors.text.secondary}
                 />
@@ -335,8 +336,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             </View>
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
-                <Ionicons
-                  name="calendar-outline"
+                <Calendar
+                  
                   size={18}
                   color={healthColors.primary.main}
                 />
@@ -344,8 +345,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               </View>
               <TouchableOpacity style={styles.filterDropdown}>
                 <Text style={styles.filterValue}>{selectedAvailability}</Text>
-                <Ionicons
-                  name="chevron-down"
+                <ChevronDown
+                  
                   size={20}
                   color={healthColors.text.secondary}
                 />
@@ -353,8 +354,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             </View>
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
-                <Ionicons
-                  name="cash-outline"
+                <Banknote
+                  
                   size={18}
                   color={healthColors.primary.main}
                 />
@@ -381,7 +382,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 style={styles.specialtyChip}
                 activeOpacity={0.7}
               >
-                <Ionicons
+                <DynamicIcon
                   name={specialty.icon}
                   size={20}
                   color={healthColors.primary.main}

@@ -5,10 +5,11 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Menu, Bell, User, Cross, Building } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../../theme";
 import LanguageSelector from "../../../components/common/LanguageSelector";
+import { DynamicIcon } from "../../../components/common";
 
 const DoctorHeader = ({
   user,
@@ -37,7 +38,7 @@ const DoctorHeader = ({
         accessibilityLabel="Open menu"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Ionicons name="menu" size={24} color={theme.colors.text.white} />
+        <Menu  size={24} color={theme.colors.text.white} />
       </TouchableOpacity>
 
       <View style={styles.rightIcons}>
@@ -46,8 +47,9 @@ const DoctorHeader = ({
           onPress={onNotificationPress}
           accessibilityRole="button"
           accessibilityLabel={notificationCount > 0 ? `${notificationCount} pending` : "Notifications"}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="notifications" size={24} color={theme.colors.text.white} />
+          <Bell  size={24} color={theme.colors.text.white} />
           {notificationCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{String(notificationCount)}</Text>
@@ -60,8 +62,9 @@ const DoctorHeader = ({
           onPress={onProfilePress}
           accessibilityRole="button"
           accessibilityLabel="Profile"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person" size={24} color={theme.colors.text.white} />
+          <User  size={24} color={theme.colors.text.white} />
         </TouchableOpacity>
       </View>
     </View>
@@ -69,7 +72,7 @@ const DoctorHeader = ({
     {/* ── Greeting ── */}
     <View style={styles.greetingSection}>
       <View style={styles.greetingRow}>
-        <Ionicons
+        <DynamicIcon
           name={greetingIcon}
           size={26}
           color={theme.colors.text.white}
@@ -82,13 +85,13 @@ const DoctorHeader = ({
       </View>
       <View style={styles.infoCard}>
         <View style={styles.infoRow}>
-          <Ionicons name="medical" size={15} color={theme.colors.text.white} />
+          <DynamicIcon name="stethoscope" size={15} color={theme.colors.text.white} />
           <Text style={styles.infoText}>
             {user?.specialization || "General Physician"}
           </Text>
         </View>
         <View style={styles.infoRow}>
-          <Ionicons name="business" size={15} color={theme.colors.text.white} />
+          <Building  size={15} color={theme.colors.text.white} />
           <Text style={styles.infoText}>{user?.department || "OPD"}</Text>
         </View>
       </View>
@@ -131,21 +134,21 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.accent.coral,
     justifyContent: "center", alignItems: "center", paddingHorizontal: 3,
   },
-  badgeText: { fontSize: 9, fontWeight: "700", color: theme.colors.text.white },
+  badgeText: { fontSize: theme.typography.sizes.overline, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
 
   greetingSection: { paddingTop: 4 },
   greetingRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
   greetingIcon: { marginRight: 10 },
   greetingLabel: {
-    fontSize: 13, color: theme.withOpacity(theme.colors.text.white, 0.85), marginBottom: 2,
+    fontSize: theme.typography.sizes.bodyMedium, color: theme.withOpacity(theme.colors.text.white, 0.85), marginBottom: 2,
   },
-  userName: { fontSize: 22, fontWeight: "700", color: theme.colors.text.white, letterSpacing: 0.3 },
+  userName: { fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white, letterSpacing: 0.3 },
   infoCard: {
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.12),
     borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, gap: 6,
   },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  infoText: { fontSize: 13, color: theme.colors.text.white, fontWeight: "500" },
+  infoText: { fontSize: theme.typography.sizes.bodyMedium, color: theme.colors.text.white, fontWeight: "500" },
 });
 
 export default DoctorHeader;

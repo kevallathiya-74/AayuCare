@@ -15,13 +15,13 @@ import {
   Platform,
   Animated,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../theme";
+import { DynamicIcon } from "../components/common";
 
 // Full route → icon map covering all three tab navigators
 const ICON_MAP = {
-  Dashboard: { focused: "home", unfocused: "home-outline" },
+  Dashboard: { focused: "layout-dashboard", unfocused: "layout-dashboard-outline" },
   Appointments: { focused: "calendar", unfocused: "calendar-outline" },
   TodaysAppointments: { focused: "calendar", unfocused: "calendar-outline" },
   Reports: { focused: "document-text", unfocused: "document-text-outline" },
@@ -62,7 +62,7 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
     });
   } else {
     iconEl = (
-      <Ionicons
+      <DynamicIcon
         name={isFocused ? icons.focused : icons.unfocused}
         size={22}
         color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
@@ -214,12 +214,12 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: healthColors.white,
-    fontSize: 9,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: "700",
     lineHeight: 12,
   },
   label: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: "600",
     marginTop: 3,
     letterSpacing: 0.2,

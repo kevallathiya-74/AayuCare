@@ -6,6 +6,7 @@
 
 import api from "./apiClient";
 import { logError } from "../utils/errorHandler";
+import { normalizeServiceResponse } from "./responseNormalizer";
 
 class AIService {
   /**
@@ -19,7 +20,7 @@ class AIService {
         throw new Error("Please provide at least one symptom");
       }
       const response = await api.post("/ai/analyze-symptoms", data);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "AIService.analyzeSymptoms" });
       throw error;
@@ -37,7 +38,7 @@ class AIService {
         throw new Error("Patient ID is required");
       }
       const response = await api.get(`/ai/health-insights/${patientId}`);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "AIService.getHealthInsights", patientId });
       throw error;
@@ -52,7 +53,7 @@ class AIService {
   async calculateRiskScore(data) {
     try {
       const response = await api.post("/ai/risk-score", data);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "AIService.calculateRiskScore" });
       throw error;
@@ -67,7 +68,7 @@ class AIService {
   async getDietRecommendations(data) {
     try {
       const response = await api.post("/ai/diet-recommendations", data);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "AIService.getDietRecommendations" });
       throw error;
@@ -82,7 +83,7 @@ class AIService {
   async getExerciseRecommendations(data) {
     try {
       const response = await api.post("/ai/exercise-recommendations", data);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "AIService.getExerciseRecommendations" });
       throw error;
@@ -100,7 +101,7 @@ class AIService {
         throw new Error("Medical record ID is required");
       }
       const response = await api.post(`/ai/analyze-medical-record/${recordId}`);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "AIService.analyzeMedicalRecord", recordId });
       throw error;

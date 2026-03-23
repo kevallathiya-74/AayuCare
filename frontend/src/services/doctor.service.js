@@ -5,21 +5,32 @@
 
 import api from "./apiClient";
 import { logError } from "../utils/errorHandler";
+import { normalizeServiceResponse } from "./responseNormalizer";
+
+const PATIENT_DETAILS_TTL_MS = 60000;
+const patientDetailsCache = new Map();
+const patientDetailsInFlight = new Map();
+const UUID_V4_LIKE_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 class DoctorService {
-  async getAllDoctors(filters = {}) {
-    return this.getDoctors(filters);
+  async getAllDoctors(filters = {}, options = {}) {
+    return this.getDoctors(filters, options);
   }
 
   /**
    * Get all doctors with filters
    */
-  async getDoctors(filters = {}) {
+  async getDoctors(filters = {}, options = {}) {
     try {
       const params = new URLSearchParams(filters).toString();
       const url = params ? `/doctors?${params}` : "/doctors";
-      const response = await api.get(url);
-      return response.data?.data || response.data;
+      const response = await api.get(url, {
+        useCache: options?.forceFresh !== true,
+        skipCache: options?.forceFresh === true,
+        cacheTTL: options?.cacheTTL ?? 15000,
+      });
+      return normalizeServiceResponse(response.data, { fallbackData: [] });
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctors" });
       throw error;
@@ -32,7 +43,7 @@ class DoctorService {
   async getDoctor(doctorId) {
     try {
       const response = await api.get(`/doctors/${doctorId}`);
-      return response.data?.data || response.data;
+      return normalizeServiceResponse(response.data, { fallbackData: null });
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctor", doctorId });
       throw error;
@@ -45,7 +56,7 @@ class DoctorService {
   async getDoctorStats(doctorId) {
     try {
       const response = await api.get(`/doctors/${doctorId}/stats`);
-      return response.data?.data || response.data;
+      return normalizeServiceResponse(response.data, { fallbackData: null });
     } catch (error) {
       logError(error, { context: "DoctorService.getDoctorStats", doctorId });
       throw error;
@@ -58,7 +69,7 @@ class DoctorService {
   async getDashboard() {
     try {
       const response = await api.get("/doctors/me/dashboard");
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.getDashboard" });
       throw error;
@@ -74,7 +85,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/appointments/today?filter=${filter}`
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, {
         context: "DoctorService.getTodaysAppointments",
@@ -92,7 +103,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/appointments/upcoming?page=${page}&limit=${limit}`
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.getUpcomingAppointments" });
       throw error;
@@ -107,7 +118,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/patients/search?q=${encodeURIComponent(query)}`
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.searchMyPatients", query });
       throw error;
@@ -117,17 +128,118 @@ class DoctorService {
   /**
    * Get detailed patient information
    */
-  async getPatientDetails(patientId) {
-    try {
-      const response = await api.get(`/doctors/me/patients/${patientId}`);
-      return response.data;
-    } catch (error) {
-      logError(error, {
-        context: "DoctorService.getPatientDetails",
-        patientId,
-      });
-      throw error;
+  async getPatientDetails(patientId, options = {}) {
+    const cacheKey = String(patientId || "");
+    const forceRefresh = options?.forceRefresh === true;
+
+    if (!cacheKey) {
+      throw new Error("Patient ID is required");
     }
+
+    const cachedEntry = patientDetailsCache.get(cacheKey);
+    if (
+      !forceRefresh &&
+      cachedEntry &&
+      Date.now() - cachedEntry.timestamp < PATIENT_DETAILS_TTL_MS
+    ) {
+      return cachedEntry.value;
+    }
+
+    if (!forceRefresh && patientDetailsInFlight.has(cacheKey)) {
+      return patientDetailsInFlight.get(cacheKey);
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await api.get(`/doctors/me/patients/${patientId}`);
+        const normalized = normalizeServiceResponse(response.data);
+        patientDetailsCache.set(cacheKey, {
+          value: normalized,
+          timestamp: Date.now(),
+        });
+        return normalized;
+      } catch (error) {
+        const status = error?.response?.status;
+        const shouldFallbackToPatientProfile = status === 404 || status === 403;
+
+        if (!shouldFallbackToPatientProfile) {
+          logError(error, {
+            context: "DoctorService.getPatientDetails",
+            patientId,
+          });
+          throw error;
+        }
+
+        try {
+          const profileResponse = await api.get(`/patients/${patientId}/profile`);
+          const profileNormalized = normalizeServiceResponse(profileResponse.data, {
+            fallbackData: null,
+          });
+
+          const rawPatient = profileNormalized?.data?.patient || profileNormalized?.data || null;
+          const normalized = {
+            success: profileNormalized?.success !== false,
+            message: profileNormalized?.message || "Request successful",
+            data: {
+              patient: rawPatient,
+              stats: null,
+              appointments: [],
+              medicalRecords: [],
+              prescriptions: [],
+            },
+            pagination: profileNormalized?.pagination || null,
+            meta: profileNormalized?.meta || null,
+          };
+
+          patientDetailsCache.set(cacheKey, {
+            value: normalized,
+            timestamp: Date.now(),
+          });
+
+          return normalized;
+        } catch (fallbackError) {
+          logError(fallbackError, {
+            context: "DoctorService.getPatientDetails.fallbackPatientProfile",
+            patientId,
+          });
+          throw fallbackError;
+        }
+      } finally {
+        patientDetailsInFlight.delete(cacheKey);
+      }
+    })();
+
+    patientDetailsInFlight.set(cacheKey, fetchPromise);
+
+    return fetchPromise;
+  }
+
+  /**
+   * Warm patient-details cache for likely next clicks.
+   */
+  async prefetchPatientDetails(patientIds = []) {
+    const uniqueIds = Array.from(
+      new Set(
+        (patientIds || []).filter((id) =>
+          UUID_V4_LIKE_REGEX.test(String(id || ""))
+        )
+      )
+    );
+    if (uniqueIds.length === 0) return;
+
+    await Promise.allSettled(
+      uniqueIds.map((id) => this.getPatientDetails(id))
+    );
+  }
+
+  clearPatientDetailsCache(patientId) {
+    if (patientId) {
+      patientDetailsCache.delete(String(patientId));
+      patientDetailsInFlight.delete(String(patientId));
+      return;
+    }
+    patientDetailsCache.clear();
+    patientDetailsInFlight.clear();
   }
 
   /**
@@ -139,7 +251,7 @@ class DoctorService {
         `/doctors/me/appointments/${appointmentId}/status`,
         { status, notes }
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, {
         context: "DoctorService.updateAppointmentStatus",
@@ -156,7 +268,7 @@ class DoctorService {
   async getProfileStats() {
     try {
       const response = await api.get("/doctors/me/profile/stats");
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.getProfileStats" });
       throw error;
@@ -171,7 +283,7 @@ class DoctorService {
       const response = await api.get("/doctors", {
         params: { search: searchQuery },
       });
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.searchDoctors", searchQuery });
       throw error;
@@ -186,7 +298,7 @@ class DoctorService {
       const response = await api.get("/doctors", {
         params: { specialization },
       });
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, {
         context: "DoctorService.getDoctorsBySpecialization",
@@ -205,7 +317,7 @@ class DoctorService {
         "/doctors/me/walk-in-patient",
         patientData
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.registerWalkInPatient" });
       throw error;
@@ -218,7 +330,7 @@ class DoctorService {
   async updateProfile(profileData) {
     try {
       const response = await api.put("/doctors/me/profile", profileData);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.updateProfile" });
       throw error;
@@ -245,7 +357,7 @@ class DoctorService {
       const response = await api.get(
         `/doctors/me/consultation-history${params ? `?${params}` : ""}`
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.getConsultationHistory" });
       throw error;
@@ -258,7 +370,7 @@ class DoctorService {
   async getSchedule() {
     try {
       const response = await api.get("/doctors/me/schedule");
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.getSchedule" });
       throw error;
@@ -274,7 +386,7 @@ class DoctorService {
         `/doctors/me/schedule/${dayOfWeek}`,
         scheduleData
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "DoctorService.updateSchedule", dayOfWeek });
       throw error;
@@ -289,7 +401,7 @@ class DoctorService {
       const response = await api.patch(
         `/doctors/me/schedule/${dayOfWeek}/toggle`
       );
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, {
         context: "DoctorService.toggleDayAvailability",

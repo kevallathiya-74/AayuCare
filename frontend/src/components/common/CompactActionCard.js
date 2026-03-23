@@ -6,12 +6,12 @@
 
 import React, { memo } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
+
 const CompactActionCard = memo(
   ({
     title,
-    icon,
+    icon: Icon,
     iconColor = healthColors.primary.main,
     onPress,
     badge,
@@ -33,7 +33,7 @@ const CompactActionCard = memo(
         <View
           style={[styles.iconContainer, { backgroundColor: iconColor + "15" }]}
         >
-          <Ionicons name={icon} size={28} color={iconColor} />
+          {Icon ? <Icon size={28} color={iconColor} /> : null}
         </View>
 
         <Text style={styles.title} numberOfLines={2}>
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textAlign: "center",
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text.white,
   },

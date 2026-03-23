@@ -13,7 +13,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { ArrowLeft, Key, Mail, CheckCircle, ShieldCheck, Shield } from "lucide-react-native";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import { theme, healthColors } from "../../theme";
@@ -111,7 +111,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
           >
             {/* Back Button */}
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Feather name="arrow-left" size={24} color={iconColor} />
+              <ArrowLeft size={24} color={iconColor} />
             </TouchableOpacity>
 
             {/* Header Section */}
@@ -123,8 +123,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                   end={{ x: 1, y: 1 }}
                   style={styles.iconGradient}
                 >
-                  <Feather
-                    name="key"
+                  <Key
                     size={36}
                     color={theme.colors.text.white}
                   />
@@ -158,7 +157,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                     }}
                     error={errors.email}
                     leftIcon={
-                      <Feather name="mail" size={20} color={iconColor} />
+                      <Mail size={20} color={iconColor} />
                     }
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -197,7 +196,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
             ) : (
               <View style={styles.successContainer}>
                 <View style={styles.successIcon}>
-                  <Feather name="check-circle" size={64} color={iconColor} />
+                  <CheckCircle size={64} color={iconColor} />
                 </View>
                 <Text style={styles.successText}>Email Sent Successfully!</Text>
                 <Text style={styles.successSubtext}>
@@ -209,14 +208,12 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
             {/* Footer Info */}
             <View style={styles.footer}>
               {isHospital ? (
-                <MaterialCommunityIcons
-                  name="shield-check"
+                <ShieldCheck
                   size={20}
                   color={theme.colors.success.dark}
                 />
               ) : (
-                <Feather
-                  name="shield"
+                <Shield
                   size={16}
                   color={healthColors.text.secondary}
                 />

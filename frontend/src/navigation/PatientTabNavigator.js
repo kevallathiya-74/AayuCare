@@ -5,9 +5,9 @@
 
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
+import { Circle, HeartPulse, Home, LibraryBig, MoreHorizontal } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme";
+import { healthColors, theme } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
@@ -20,6 +20,13 @@ import SettingsScreen from "../screens/main/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
 
+const ROUTE_ICON_MAP = {
+  Dashboard: Home,
+  Health: HeartPulse,
+  Info: LibraryBig,
+  More: MoreHorizontal,
+};
+
 const PatientTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom, 8);
@@ -30,19 +37,8 @@ const PatientTabNavigator = () => {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
-
-            if (route.name === "Dashboard") {
-              iconName = focused ? "home" : "home-outline";
-            } else if (route.name === "Health") {
-              iconName = focused ? "fitness" : "fitness-outline";
-            } else if (route.name === "Info") {
-              iconName = focused ? "library" : "library-outline";
-            } else if (route.name === "More") {
-              iconName = focused ? "apps" : "apps-outline";
-            }
-
-            return <Ionicons name={iconName} size={size} color={color} />;
+            const Icon = ROUTE_ICON_MAP[route.name] || Circle;
+            return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
           },
           tabBarActiveTintColor: healthColors.primary.main,
           tabBarInactiveTintColor: healthColors.text.tertiary,
@@ -60,7 +56,7 @@ const PatientTabNavigator = () => {
             shadowRadius: 4,
           },
           tabBarLabelStyle: {
-            fontSize: 12,
+            fontSize: theme.typography.sizes.bodySmall,
             fontWeight: "600",
           },
           tabBarHideOnKeyboard: true,
@@ -101,6 +97,3 @@ const PatientTabNavigator = () => {
 };
 
 export default PatientTabNavigator;
-
-
-

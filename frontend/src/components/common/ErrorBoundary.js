@@ -93,18 +93,18 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   emoji: {
-    fontSize: 64,
+    fontSize: theme.typography.sizes.displayLarge,
     marginBottom: theme.spacing.lg,
   },
   title: {
-    fontSize: 24,
+    fontSize: theme.typography.sizes.h3,
     fontWeight: "bold",
     color: healthColors.text.primary,
     marginBottom: theme.spacing.md,
     textAlign: "center",
   },
   message: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.secondary,
     textAlign: "center",
     marginBottom: theme.spacing.xl,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   errorText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.error.main,
     fontFamily: "monospace",
   },
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: healthColors.text.white,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "600",
     textAlign: "center",
   },

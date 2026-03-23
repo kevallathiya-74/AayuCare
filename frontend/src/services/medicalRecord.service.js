@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { extractResponseData, normalizeServiceResponse } from './responseNormalizer';
 
 /**
  * Get patient medical records by patient ID
@@ -21,7 +22,7 @@ export const getPatientMedicalRecords = async (patientId, filters = {}) => {
         params.append('limit', limit);
 
         const response = await api.get(`/medical-records/patient/${patientId}?${params}`);
-        return response.data.data;
+        return extractResponseData(response.data, []);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.getPatientMedicalRecords', patientId });
         throw error;
@@ -42,7 +43,7 @@ export const getPatientRecords = getPatientMedicalRecords;
 export const getPatientHistory = async (patientId) => {
     try {
         const response = await api.get(`/medical-records/history/${patientId}`);
-        return response.data;
+        return normalizeServiceResponse(response.data);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.getPatientHistory', patientId });
         throw error;
@@ -55,7 +56,7 @@ export const getPatientHistory = async (patientId) => {
 export const getAllRecords = async () => {
     try {
         const response = await api.get('/medical-records');
-        return response.data;
+        return normalizeServiceResponse(response.data);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.getAllRecords' });
         throw error;
@@ -68,7 +69,7 @@ export const getAllRecords = async () => {
 export const createMedicalRecord = async (recordData) => {
     try {
         const response = await api.post('/medical-records', recordData);
-        return response.data;
+        return normalizeServiceResponse(response.data);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.createMedicalRecord' });
         throw error;
@@ -81,7 +82,7 @@ export const createMedicalRecord = async (recordData) => {
 export const updateMedicalRecord = async (recordId, updates) => {
     try {
         const response = await api.put(`/medical-records/${recordId}`, updates);
-        return response.data;
+        return normalizeServiceResponse(response.data);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.updateMedicalRecord', recordId });
         throw error;
@@ -94,7 +95,7 @@ export const updateMedicalRecord = async (recordId, updates) => {
 export const deleteMedicalRecord = async (recordId) => {
     try {
         const response = await api.delete(`/medical-records/${recordId}`);
-        return response.data;
+        return normalizeServiceResponse(response.data);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.deleteMedicalRecord', recordId });
         throw error;

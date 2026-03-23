@@ -19,6 +19,7 @@ const {
   validateGetAppointments,
   validateGetAvailableSlots,
 } = require("../validators/appointmentValidator");
+const { idempotencyMiddleware } = require("../middleware/idempotency");
 
 // All routes require authentication
 router.use(protect);
@@ -75,6 +76,7 @@ router.get("/", validateGetAppointments, appointmentController.getAppointments);
 router.post(
   "/",
   authorize("patient", "admin"),
+  idempotencyMiddleware,
   validateBody(createAppointmentSchema),
   validateCreateAppointment,
   appointmentController.createAppointment

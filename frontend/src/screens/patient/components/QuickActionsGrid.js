@@ -10,9 +10,9 @@ import CompactActionCard from "../../../components/common/CompactActionCard";
 /** @param {{ actionCards: Array<{title,icon,iconColor,onPress,badge?}> }} */
 const QuickActionsGrid = ({ actionCards = [] }) => (
   <View style={styles.grid}>
-    {actionCards.map((card, index) => (
+    {actionCards.map((card) => (
       <CompactActionCard
-        key={index}
+        key={card.title}
         title={card.title}
         icon={card.icon}
         iconColor={card.iconColor}

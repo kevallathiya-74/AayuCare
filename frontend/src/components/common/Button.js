@@ -21,6 +21,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const Button = ({
   children,
+  title,
   onPress,
   variant = 'primary', // primary, secondary, outline, text
   size = 'medium', // small, medium, large
@@ -35,6 +36,7 @@ const Button = ({
   ...props
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const labelContent = children ?? title;
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -111,7 +113,9 @@ const Button = ({
       ) : (
         <>
           {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{icon}</View>}
-          <Text style={[getTextStyle(), textStyle]}>{children}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={[getTextStyle(), textStyle]}>
+            {labelContent}
+          </Text>
           {icon && iconPosition === 'right' && <View style={styles.iconRight}>{icon}</View>}
         </>
       )}
@@ -128,7 +132,7 @@ const Button = ({
         style={[{ transform: [{ scale: scaleAnim }] }, getButtonStyle(), style]}
         accessibilityRole="button"
         accessibilityState={{ disabled: disabled || loading, busy: loading }}
-        accessibilityLabel={typeof children === 'string' ? children : undefined}
+        accessibilityLabel={typeof labelContent === 'string' ? labelContent : undefined}
         {...props}
       >
         <LinearGradient
@@ -152,7 +156,7 @@ const Button = ({
       style={[{ transform: [{ scale: scaleAnim }] }, getButtonStyle(), style]}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      accessibilityLabel={typeof children === 'string' ? children : undefined}
+      accessibilityLabel={typeof labelContent === 'string' ? labelContent : undefined}
       {...props}
     >
       {renderContent()}
@@ -211,13 +215,13 @@ const styles = StyleSheet.create({
     ...textStyles.button,
   },
   smallText: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
   },
   mediumText: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
   },
   largeText: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
   },
   
   primaryText: {

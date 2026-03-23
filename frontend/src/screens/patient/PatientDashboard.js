@@ -19,8 +19,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import { logoutUser } from "../../store/slices/authSlice";
 import { getSafeAreaEdges, getScreenPadding } from "../../utils/responsive";
-import { healthMetricsService, notificationService } from "../../services";
+import { notificationService } from "../../services";
+import { fetchHealthMetrics } from "../../store/slices/healthSlice";
 import { logError } from "../../utils/errorHandler";
+import { Calendar, FolderOpen, Stethoscope, Activity, MessageCircle, HeartPulse, Info, Users, Flower, ShoppingCart, Footprints, Home, Sun, CloudSun, Moon, User, Settings } from "lucide-react-native";
 import { SectionHeader } from "../../components/common";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
@@ -36,9 +38,8 @@ const { width } = Dimensions.get("window");
 
 const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { user, isLoading } = useSelector((state) => state.auth);
-  const [healthMetrics, setHealthMetrics] = useState([]);
-  const [loadingMetrics, setLoadingMetrics] = useState(true);
+  const { user, isLoading: authLoading } = useSelector((state) => state.auth);
+  const { vitals: healthMetrics, isLoading: loadingMetrics } = useSelector((state) => state.health);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
@@ -55,32 +56,21 @@ const PatientDashboard = ({ navigation }) => {
     }
   }, []);
 
-  const fetchHealthMetrics = useCallback(async () => {
-    if (!user?.id) return;
-    try {
-      setLoadingMetrics(true);
-      const response = await healthMetricsService.getMetrics(user.id);
-      setHealthMetrics(response.data || []);
-    } catch (error) {
-      logError(error, { context: "PatientDashboard.fetchHealthMetrics" });
-      setHealthMetrics([]);
-    } finally {
-      setLoadingMetrics(false);
-    }
-  }, [user?.id]);
-
   useEffect(() => {
     if (user?.id) {
-      fetchHealthMetrics();
+      dispatch(fetchHealthMetrics(user.id));
       fetchUnreadNotifications();
     }
-  }, [user?.id, fetchHealthMetrics, fetchUnreadNotifications]);
+  }, [user?.id, dispatch, fetchUnreadNotifications]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchHealthMetrics(), fetchUnreadNotifications()]);
+    await Promise.all([
+      dispatch(fetchHealthMetrics(user?.id)),
+      fetchUnreadNotifications()
+    ]);
     setRefreshing(false);
-  }, [fetchHealthMetrics, fetchUnreadNotifications]);
+  }, [dispatch, fetchUnreadNotifications, user?.id]);
 
   // ── Metric helpers ──
   const getLatestMetric = (type) => {
@@ -158,62 +148,62 @@ const PatientDashboard = ({ navigation }) => {
   // ── Action cards ──
   const actionCards = useMemo(
     () => [
-      { title: "Book Appointment", icon: "calendar-outline", iconColor: healthColors.primary.main, onPress: () => navigation.navigate("AppointmentBooking") },
-      { title: "Medical Records", icon: "folder-open", iconColor: healthColors.accent.aqua, onPress: () => navigation.navigate("MedicalRecords") },
-      { title: "Prescriptions", icon: "medical", iconColor: healthColors.success.main, onPress: () => navigation.navigate("MyPrescriptions") },
-      { title: "Health Metrics", icon: "stats-chart", iconColor: theme.colors.healthcare.teal, onPress: () => navigation.navigate("HealthMetrics") },
-      { title: "AI Health Assistant", icon: "chatbubbles", iconColor: healthColors.secondary.main, onPress: () => navigation.navigate("AIHealthAssistant") },
-      { title: "AI Symptom Checker", icon: "fitness-outline", iconColor: theme.colors.error.main, onPress: () => navigation.navigate("AISymptomChecker") },
-      { title: "Disease Info", icon: "information-circle", iconColor: theme.colors.healthcare.purple, onPress: () => navigation.navigate("DiseaseInfo") },
-      { title: "Specialist Finder", icon: "people", iconColor: theme.colors.info.main, onPress: () => navigation.navigate("SpecialistCareFinder") },
-      { title: "Women's Health", icon: "flower", iconColor: theme.colors.healthcare.pink, onPress: () => navigation.navigate("WomensHealth") },
-      { title: "Hospital Events", icon: "calendar-outline", iconColor: theme.colors.warning.main, onPress: () => navigation.navigate("HospitalEvents") },
-      { title: "Pharmacy & Billing", icon: "cart", iconColor: theme.colors.success.main, onPress: () => navigation.navigate("PharmacyBilling") },
-      { title: "Activity Tracker", icon: "walk", iconColor: theme.colors.healthcare.cyan, onPress: () => navigation.navigate("ActivityTracker") },
+      { title: "Book Appointment", icon: Calendar, iconColor: healthColors.primary.main, onPress: () => navigation.navigate("AppointmentBooking") },
+      { title: "Medical Records", icon: FolderOpen, iconColor: healthColors.accent.aqua, onPress: () => navigation.navigate("MedicalRecords") },
+      { title: "Prescriptions", icon: Stethoscope, iconColor: healthColors.success.main, onPress: () => navigation.navigate("MyPrescriptions") },
+      { title: "Health Metrics", icon: Activity, iconColor: healthColors.primary.main, onPress: () => navigation.navigate("HealthMetrics") },
+      { title: "AI Health Assistant", icon: MessageCircle, iconColor: healthColors.secondary.main, onPress: () => navigation.navigate("AIHealthAssistant") },
+      { title: "AI Symptom Checker", icon: HeartPulse, iconColor: healthColors.error.main, onPress: () => navigation.navigate("AISymptomChecker") },
+      { title: "Disease Info", icon: Info, iconColor: healthColors.accent.purple, onPress: () => navigation.navigate("DiseaseInfo") },
+      { title: "Specialist Finder", icon: Users, iconColor: healthColors.info.main, onPress: () => navigation.navigate("SpecialistCareFinder") },
+      { title: "Women's Health", icon: Flower, iconColor: healthColors.accent.pink, onPress: () => navigation.navigate("WomensHealth") },
+      { title: "Hospital Events", icon: Calendar, iconColor: healthColors.warning.main, onPress: () => navigation.navigate("HospitalEvents") },
+      { title: "Pharmacy & Billing", icon: ShoppingCart, iconColor: healthColors.success.main, onPress: () => navigation.navigate("PharmacyBilling") },
+      { title: "Activity Tracker", icon: Footprints, iconColor: healthColors.accent.cyan, onPress: () => navigation.navigate("ActivityTracker") },
     ],
     [navigation]
   );
 
   // ── Drawer menu sections ──
-  const nav = (screen, params) => () => {
+  const nav = useCallback((screen, params) => () => {
     closeMenu();
     setTimeout(() => navigation.navigate(screen, params), 100);
-  };
+  }, [navigation, closeMenu]);
 
   const menuSections = useMemo(() => [
     {
       title: "QUICK ACCESS",
       items: [
-        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("PatientTabs", { screen: "Dashboard" }) },
-        { icon: "calendar", iconColor: healthColors.primary.main, label: "Book Appointment", onPress: nav("AppointmentBooking") },
-        { icon: "folder-open", iconColor: healthColors.accent.aqua, label: "Medical Records", onPress: nav("MedicalRecords") },
-        { icon: "medical", iconColor: healthColors.success.main, label: "My Prescriptions", onPress: nav("MyPrescriptions") },
+        { icon: Home, iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("PatientTabs", { screen: "Dashboard" }) },
+        { icon: Calendar, iconColor: healthColors.primary.main, label: "Book Appointment", onPress: nav("AppointmentBooking") },
+        { icon: FolderOpen, iconColor: healthColors.accent.aqua, label: "Medical Records", onPress: nav("MedicalRecords") },
+        { icon: Stethoscope, iconColor: healthColors.success.main, label: "My Prescriptions", onPress: nav("MyPrescriptions") },
       ],
     },
     {
       title: "HEALTH & WELLNESS",
       items: [
-        { icon: "stats-chart", iconColor: theme.colors.healthcare.teal, label: "Health Metrics", onPress: nav("HealthMetrics") },
-        { icon: "walk", iconColor: theme.colors.healthcare.cyan, label: "Activity Tracker", onPress: nav("ActivityTracker") },
-        { icon: "information-circle", iconColor: healthColors.info.main, label: "Disease Information", onPress: nav("DiseaseInfo") },
+        { icon: Activity, iconColor: theme.colors.healthcare.teal, label: "Health Metrics", onPress: nav("HealthMetrics") },
+        { icon: Footprints, iconColor: theme.colors.healthcare.cyan, label: "Activity Tracker", onPress: nav("ActivityTracker") },
+        { icon: Info, iconColor: healthColors.info.main, label: "Disease Information", onPress: nav("DiseaseInfo") },
       ],
     },
     {
       title: "AI SERVICES",
       items: [
-        { icon: "chatbubbles", iconColor: healthColors.secondary.main, label: "AI Health Assistant", onPress: nav("AIHealthAssistant") },
-        { icon: "fitness-outline", iconColor: theme.colors.error.main, label: "AI Symptom Checker", onPress: nav("AISymptomChecker") },
-        { icon: "search", iconColor: healthColors.accent.purple || healthColors.secondary.main, label: "Find Specialist", onPress: nav("SpecialistCareFinder") },
+        { icon: MessageCircle, iconColor: healthColors.secondary.main, label: "AI Health Assistant", onPress: nav("AIHealthAssistant") },
+        { icon: HeartPulse, iconColor: theme.colors.error.main, label: "AI Symptom Checker", onPress: nav("AISymptomChecker") },
+        { icon: Users, iconColor: healthColors.accent.purple || healthColors.secondary.main, label: "Find Specialist", onPress: nav("SpecialistCareFinder") },
       ],
     },
     {
       title: "ACCOUNT",
       items: [
-        { icon: "person", iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("Profile") },
-        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("PatientTabs", { screen: "More" }) },
+        { icon: User, iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("Profile") },
+        { icon: Settings, iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("PatientTabs", { screen: "More" }) },
       ],
     },
-  ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [navigation, closeMenu]);
 
   const healthStatus = getHealthStatus();
 
@@ -238,7 +228,7 @@ const PatientDashboard = ({ navigation }) => {
         {/* ── Hero Header ── */}
         <PatientHeader
           user={user}
-          isLoading={isLoading}
+          isLoading={authLoading}
           unreadNotifications={unreadNotifications}
           greeting={getTimeBasedGreeting()}
           greetingIcon={getGreetingIcon()}

@@ -21,7 +21,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Flower, Calendar, BarChart2, Lightbulb, Heart, Activity, List, CheckCircle, BriefcaseMedical, Cross, HeartPulse, Phone, XCircle, ChevronRight, Music } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
@@ -163,9 +163,9 @@ const WomensHealthScreen = ({ navigation }) => {
   };
 
   const mentalWellnessActivities = [
-    { icon: "fitness", name: "Breathing Exercises", duration: "5 min", color: theme.colors.success.main },
-    { icon: "musical-notes", name: "Guided Meditation", duration: "10 min", color: theme.colors.healthcare.purple },
-    { icon: "call", name: "Counseling Support", action: "Call Now", color: theme.colors.error.main },
+    { icon: Activity, name: "Breathing Exercises", duration: "5 min", color: theme.colors.success.main },
+    { icon: Music, name: "Guided Meditation", duration: "10 min", color: theme.colors.healthcare.purple },
+    { icon: Phone, name: "Counseling Support", action: "Call Now", color: theme.colors.error.main },
   ];
 
   const handleRetry = () => {
@@ -196,10 +196,10 @@ const WomensHealthScreen = ({ navigation }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+          <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="rose-outline" size={32} color={theme.colors.white} />
+          <Flower  size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Women's Health</Text>
             <Text style={styles.headerSubtitle}>
@@ -208,7 +208,7 @@ const WomensHealthScreen = ({ navigation }) => {
           </View>
         </View>
         <TouchableOpacity onPress={openCycleModal}>
-          <Ionicons name="calendar" size={24} color={theme.colors.white} />
+          <Calendar  size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -221,8 +221,8 @@ const WomensHealthScreen = ({ navigation }) => {
         {/* Menstrual Tracker */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="calendar-outline"
+            <Calendar
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -255,13 +255,13 @@ const WomensHealthScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity style={styles.calendarButton} onPress={openCycleModal}>
-              <Ionicons name="stats-chart-outline" size={18} color={theme.colors.healthcare.pink} />
+              <BarChart2  size={18} color={theme.colors.healthcare.pink} />
               <Text style={styles.calendarButtonText}>View Full Calendar</Text>
-              <Ionicons name="chevron-forward" size={16} color={theme.colors.healthcare.pink} />
+              <ChevronRight  size={16} color={theme.colors.healthcare.pink} />
             </TouchableOpacity>
 
             <View style={styles.insightBox}>
-              <Ionicons name="bulb-outline" size={20} color={theme.colors.warning.light} />
+              <Lightbulb  size={20} color={theme.colors.warning.light} />
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>Today's Insight:</Text>
                 <Text style={styles.insightText}>{menstrualData.insight}</Text>
@@ -273,8 +273,8 @@ const WomensHealthScreen = ({ navigation }) => {
         {/* Pregnancy Care */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="heart-outline"
+            <Heart
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -286,8 +286,8 @@ const WomensHealthScreen = ({ navigation }) => {
                 Week {pregnancyData.week} of {pregnancyData.totalWeeks}
               </Text>
               <View style={styles.babySizeContainer}>
-                <Ionicons
-                  name="fitness-outline"
+                <Activity
+                  
                   size={18}
                   color={healthColors.text.secondary}
                 />
@@ -297,8 +297,8 @@ const WomensHealthScreen = ({ navigation }) => {
 
             <View style={styles.tipsSection}>
               <View style={styles.tipsHeader}>
-                <Ionicons
-                  name="list-outline"
+                <List
+                  
                   size={18}
                   color={healthColors.text.primary}
                 />
@@ -306,8 +306,8 @@ const WomensHealthScreen = ({ navigation }) => {
               </View>
               {pregnancyData.tips.map((tip, index) => (
                 <View key={index} style={styles.tipItem}>
-                  <Ionicons
-                    name="checkmark-circle"
+                  <CheckCircle
+                    
                     size={16}
                     color={healthColors.success.main}
                   />
@@ -318,7 +318,7 @@ const WomensHealthScreen = ({ navigation }) => {
 
             <View style={styles.checkupInfo}>
               <View style={styles.checkupRow}>
-                <Ionicons name="medkit-outline" size={20} color={theme.colors.healthcare.pink} />
+                <BriefcaseMedical  size={20} color={theme.colors.healthcare.pink} />
                 <Text style={styles.checkupText}>
                   Next Checkup: {pregnancyData.nextCheckup}
                 </Text>
@@ -332,11 +332,11 @@ const WomensHealthScreen = ({ navigation }) => {
                   )
                 }
               >
-                <Ionicons name="medical-outline" size={18} color={theme.colors.healthcare.pink} />
+                <Cross  size={18} color={theme.colors.healthcare.pink} />
                 <Text style={styles.scheduleButtonText}>
                   Immunization Schedule
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color={theme.colors.healthcare.pink} />
+                <ChevronRight  size={16} color={theme.colors.healthcare.pink} />
               </TouchableOpacity>
             </View>
           </View>
@@ -345,17 +345,19 @@ const WomensHealthScreen = ({ navigation }) => {
         {/* Mental Wellness */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="heart-circle-outline"
+            <HeartPulse
+              
               size={20}
               color={healthColors.primary.main}
             />
             <Text style={styles.sectionTitle}>MENTAL WELLNESS</Text>
           </View>
           <View style={styles.card}>
-            {mentalWellnessActivities.map((activity, index) => (
+            {mentalWellnessActivities.map((activity) => {
+              const WellnessIcon = activity.icon;
+              return (
               <TouchableOpacity
-                key={index}
+                key={activity.name}
                 style={styles.activityItem}
                 onPress={() => handleWellnessActivity(activity)}
               >
@@ -365,11 +367,7 @@ const WomensHealthScreen = ({ navigation }) => {
                     { backgroundColor: activity.color + "20" },
                   ]}
                 >
-                  <Ionicons
-                    name={activity.icon}
-                    size={24}
-                    color={activity.color}
-                  />
+                  <WellnessIcon size={24} color={activity.color} />
                 </View>
                 <View style={styles.activityInfo}>
                   <Text style={styles.activityName}>{activity.name}</Text>
@@ -387,14 +385,10 @@ const WomensHealthScreen = ({ navigation }) => {
                     </Text>
                   </LinearGradient>
                 ) : (
-                  <Ionicons
-                    name="play-circle"
-                    size={28}
-                    color={activity.color}
-                  />
+                  <ChevronRight size={28} color={activity.color} />
                 )}
               </TouchableOpacity>
-            ))}
+            )})}
           </View>
         </View>
 
@@ -413,7 +407,7 @@ const WomensHealthScreen = ({ navigation }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Ionicons name="call" size={24} color={theme.colors.white} />
+            <Phone  size={24} color={theme.colors.white} />
             <Text style={styles.emergencyText}>Women's Helpline: 1091</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -431,7 +425,7 @@ const WomensHealthScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Menstrual Cycle Settings</Text>
               <TouchableOpacity onPress={() => setCycleModalVisible(false)}>
-                <Ionicons name="close-circle" size={28} color="#888" />
+                <XCircle  size={28} color="#888" />
               </TouchableOpacity>
             </View>
 

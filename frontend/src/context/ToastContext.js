@@ -25,8 +25,9 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { X } from "lucide-react-native";
 import { theme, healthColors } from "../theme";
+import { DynamicIcon } from "../components/common";
 
 const ToastContext = createContext(null);
 
@@ -124,7 +125,7 @@ export const ToastProvider = ({ children }) => {
           ]}
           pointerEvents="box-none"
         >
-          <Ionicons
+          <DynamicIcon
             name={config.icon}
             size={20}
             color={config.text}
@@ -138,7 +139,7 @@ export const ToastProvider = ({ children }) => {
             style={styles.closeButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close" size={16} color={config.text + "CC"} />
+            <DynamicIcon name="X" size={16} color={config.text + "CC"} />
           </TouchableOpacity>
         </Animated.View>
       ) : null}

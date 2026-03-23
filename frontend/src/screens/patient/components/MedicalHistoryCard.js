@@ -6,9 +6,10 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
 import { formatMedicalHistoryDuration } from "../../../utils/dateHelpers";
+import { DynamicIcon } from "../../../components/common";
 
 const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedications = [] }) => {
   const hasData =
@@ -52,7 +53,7 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
           <View style={styles.chipsRow}>
             {allergies.map((allergy, index) => (
               <View key={index} style={styles.allergyChip}>
-                <Ionicons name="alert-circle" size={11} color={healthColors.warning.main} />
+                <AlertCircle  size={11} color={healthColors.warning.main} />
                 <Text style={styles.allergyText}>{allergy}</Text>
               </View>
             ))}
@@ -77,7 +78,7 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
 const Group = ({ icon, iconColor, title, children }) => (
   <View style={styles.group}>
     <View style={styles.groupHeader}>
-      <Ionicons name={icon} size={17} color={iconColor} />
+      <DynamicIcon name={icon} size={17} color={iconColor} />
       <Text style={styles.groupTitle}>{title}</Text>
     </View>
     {children}
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   groupTitle: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "700",
     color: healthColors.text.primary,
     textTransform: "uppercase",
@@ -122,13 +123,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   conditionText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: "500",
     flex: 1,
   },
   conditionDuration: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
   statusBadge: {
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
   status_chronic: { backgroundColor: healthColors.warning.background || "#FFF8E1" },
   status_resolved: { backgroundColor: healthColors.success.background || "#E8F5E9" },
   statusText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: "600",
     color: healthColors.text.secondary,
   },
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.warning.main + "30",
   },
   allergyText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.text.primary,
     fontWeight: "500",
   },
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main,
   },
   medicationText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     flex: 1,
   },

@@ -23,6 +23,9 @@ import { formatCurrency } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import notificationService from "../../services/notification.service";
 import eventService from "../../services/event.service";
+import doctorService from "../../services/doctor.service";
+import patientService from "../../services/patient.service";
+import { Calendar, Stethoscope, Users, Pill, FileText, CalendarDays, Home, BarChart2, User, Settings } from "lucide-react-native";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
@@ -35,6 +38,35 @@ import {
   AdminRecentActivity,
   AdminProfileView,
 } from "./components";
+
+const extractUsers = (response) => {
+  const payload = response?.data;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.users)) return payload.users;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
+};
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isUuid = (value) => typeof value === "string" && UUID_REGEX.test(value);
+
+const resolveEntityId = (entity) => {
+  if (!entity || typeof entity !== "object") return null;
+
+  return (
+    entity.id ||
+    entity._id ||
+    entity.userId ||
+    entity.user_id ||
+    entity.doctorId ||
+    entity.doctor_id ||
+    entity.patientId ||
+    entity.patient_id ||
+    null
+  );
+};
 
 const AdminHomeScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -93,8 +125,8 @@ const AdminHomeScreen = ({ navigation }) => {
       if (activitiesRes?.success) setRecentActivities(activitiesRes.data);
       if (notifRes?.success) setNotificationCount(notifRes.data?.count || 0);
       if (eventsRes?.success) setUpcomingEventsCount(eventsRes.data?.length || 0);
-      if (doctorsRes?.success) setDoctorsList(doctorsRes.data || []);
-      if (patientsRes?.success) setPatientsList(patientsRes.data || []);
+      if (doctorsRes?.success) setDoctorsList(extractUsers(doctorsRes));
+      if (patientsRes?.success) setPatientsList(extractUsers(patientsRes));
       if (metricsRes?.success) setSystemMetrics(metricsRes.data || null);
 
       // Non-critical system health
@@ -137,19 +169,19 @@ const AdminHomeScreen = ({ navigation }) => {
   const statCards = useMemo(() => [
     { title: "Appointments", value: stats.appointments.total,
       subtitle: `${stats.appointments.today} today • ${stats.appointments.pending} pending`,
-      icon: "calendar", gradient: [healthColors.primary.main, healthColors.primary.dark],
+      icon: Calendar, gradient: [healthColors.primary.main, healthColors.primary.dark],
       trend: stats.appointments.trend, screen: "Appointments", isTabScreen: true },
     { title: "Total Doctors", value: stats.doctors.total,
       subtitle: `${stats.doctors.active} active • ${stats.doctors.onDuty} on duty`,
-      icon: "medical", gradient: [healthColors.secondary.main, healthColors.secondary.dark],
+      icon: Stethoscope, gradient: [healthColors.secondary.main, healthColors.secondary.dark],
       trend: stats.doctors.trend, screen: "ManageDoctors", isTabScreen: false },
     { title: "Total Patients", value: stats.patients.total.toLocaleString(),
       subtitle: `${stats.patients.new} new • ${stats.patients.returning} returning`,
-      icon: "people", gradient: [healthColors.accent.coral, "#E57399"],
+      icon: Users, gradient: [healthColors.accent.coral, "#E57399"],
       trend: stats.patients.trend, screen: "PatientManagement", isTabScreen: false },
     { title: "Prescriptions", value: stats.prescriptions.total,
       subtitle: `${stats.prescriptions.today} issued today`,
-      icon: "medkit", gradient: [healthColors.info.main, healthColors.info.dark],
+      icon: Pill, gradient: [healthColors.info.main, healthColors.info.dark],
       trend: stats.prescriptions.trend, screen: "Reports", isTabScreen: true },
   ], [stats]);
 
@@ -160,16 +192,89 @@ const AdminHomeScreen = ({ navigation }) => {
   };
 
   const quickActions = useMemo(() => [
-    { title: "Patients", icon: "people", color: healthColors.primary.main, onPress: nav("PatientManagement") },
-    { title: "Doctors", icon: "medical", color: healthColors.secondary.main, onPress: nav("ManageDoctors") },
-    { title: "Appointments", icon: "calendar", color: healthColors.accent.coral,
+    { title: "Patients", icon: Users, color: healthColors.primary.main, onPress: nav("PatientManagement") },
+    { title: "Doctors", icon: Stethoscope, color: healthColors.secondary.main, onPress: nav("ManageDoctors") },
+    { title: "Appointments", icon: Calendar, color: healthColors.accent.coral,
       badge: stats.appointments.pending || null, onPress: nav("Appointments", {}, true) },
-    { title: "Reports", icon: "document-text", color: healthColors.info.main, onPress: nav("Reports", {}, true) },
-    { title: "Pharmacy", icon: "medkit", color: healthColors.accent.purple,
+    { title: "Reports", icon: FileText, color: healthColors.info.main, onPress: nav("Reports", {}, true) },
+    { title: "Pharmacy", icon: Pill, color: healthColors.accent.purple,
       badge: stats.prescriptions.today > 0 ? stats.prescriptions.today : null, onPress: nav("PharmacyManagement") },
-    { title: "Events", icon: "calendar-outline", color: healthColors.accent.green,
+    { title: "Events", icon: CalendarDays, color: healthColors.accent.green,
       badge: upcomingEventsCount > 0 ? upcomingEventsCount : null, onPress: nav("HospitalEventsScreen") },
   ], [stats, upcomingEventsCount, navigation]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const warmManageDoctors = useCallback(() => {
+    const hospitalFilters = user?.hospitalId ? { hospitalId: user.hospitalId } : {};
+    doctorService.getAllDoctors(hospitalFilters).catch(() => {});
+  }, [user?.hospitalId]);
+
+  const warmManagePatients = useCallback(() => {
+    patientService.getAllPatients({}, { forceFresh: false }).catch(() => {});
+  }, []);
+
+  const handleDoctorPress = useCallback(
+    (doctor) => {
+      const id = resolveEntityId(doctor);
+      warmManageDoctors();
+      if (isUuid(id)) {
+        doctorService.getDoctor(id).catch(() => {});
+      }
+
+      try {
+        if (typeof navigation.preload === "function") {
+          navigation.preload(
+            "ManageDoctors",
+            id ? { doctorId: id, doctorName: doctor?.name, doctorPayload: doctor } : undefined
+          );
+        }
+      } catch (_) {
+        // Ignore preload failures and continue with normal navigation.
+      }
+
+      navigation.navigate(
+        "ManageDoctors",
+        id ? { doctorId: id, doctorName: doctor?.name, doctorPayload: doctor } : undefined
+      );
+    },
+    [navigation, warmManageDoctors]
+  );
+
+  const handlePatientPress = useCallback(
+    (patient) => {
+      const id = resolveEntityId(patient);
+      warmManagePatients();
+      if (isUuid(id)) {
+        patientService.getPatientById(id).catch(() => {});
+      }
+
+      try {
+        if (typeof navigation.preload === "function") {
+          navigation.preload(
+            "PatientManagement",
+            id ? { patientId: id, patientName: patient?.name, patientPayload: patient } : undefined
+          );
+        }
+      } catch (_) {
+        // Ignore preload failures and continue with normal navigation.
+      }
+
+      navigation.navigate(
+        "PatientManagement",
+        id ? { patientId: id, patientName: patient?.name, patientPayload: patient } : undefined
+      );
+    },
+    [navigation, warmManagePatients]
+  );
+
+  const handleDoctorsSectionPress = useCallback(() => {
+    warmManageDoctors();
+    navigation.navigate("ManageDoctors");
+  }, [navigation, warmManageDoctors]);
+
+  const handlePatientsSectionPress = useCallback(() => {
+    warmManagePatients();
+    navigation.navigate("PatientManagement");
+  }, [navigation, warmManagePatients]);
 
   // ── Drawer menu ──
   const navFromDrawer = (screen, isTab = false) => () => {
@@ -184,19 +289,19 @@ const AdminHomeScreen = ({ navigation }) => {
     {
       title: "SYSTEM MANAGEMENT",
       items: [
-        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: navFromDrawer("Dashboard", true) },
-        { icon: "medical", iconColor: healthColors.secondary.main, label: "Manage Doctors", onPress: navFromDrawer("ManageDoctors") },
-        { icon: "people", iconColor: healthColors.accent.aqua, label: "Manage Patients", onPress: navFromDrawer("PatientManagement") },
-        { icon: "calendar", iconColor: healthColors.accent.coral, label: "Appointments", onPress: navFromDrawer("Appointments", true) },
-        { icon: "bar-chart", iconColor: healthColors.info.main, label: "Reports & Records", onPress: navFromDrawer("Reports", true) },
+        { icon: Home, iconColor: healthColors.primary.main, label: "Dashboard", onPress: navFromDrawer("Dashboard", true) },
+        { icon: Stethoscope, iconColor: healthColors.secondary.main, label: "Manage Doctors", onPress: navFromDrawer("ManageDoctors") },
+        { icon: Users, iconColor: healthColors.accent.aqua, label: "Manage Patients", onPress: navFromDrawer("PatientManagement") },
+        { icon: Calendar, iconColor: healthColors.accent.coral, label: "Appointments", onPress: navFromDrawer("Appointments", true) },
+        { icon: BarChart2, iconColor: healthColors.info.main, label: "Reports & Records", onPress: navFromDrawer("Reports", true) },
       ],
     },
     {
       title: "ACCOUNT",
       items: [
-        { icon: "person", iconColor: healthColors.text.secondary, label: "Profile",
+        { icon: User, iconColor: healthColors.text.secondary, label: "Profile",
           onPress: () => { closeMenu(); setTimeout(() => setShowProfile(true), 100); } },
-        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: navFromDrawer("Settings", true) },
+        { icon: Settings, iconColor: healthColors.text.secondary, label: "Settings", onPress: navFromDrawer("Settings", true) },
       ],
     },
   ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -250,27 +355,23 @@ const AdminHomeScreen = ({ navigation }) => {
           {/* Doctors list */}
           <AdminUsersList
             title="Total Doctors"
-            titleIcon="medical"
+            titleIcon={Stethoscope}
             iconColor={healthColors.secondary.main}
             users={doctorsList}
-            onViewAll={() => navigation.navigate("ManageDoctors")}
-            onUserPress={(doctor) => {
-              const id = doctor?.userId || doctor?._id || doctor?.id;
-              navigation.navigate("ManageDoctors", id ? { doctorId: id, doctorName: doctor?.name } : undefined);
-            }}
+            onSectionPress={handleDoctorsSectionPress}
+            onViewAll={handleDoctorsSectionPress}
+            onUserPress={handleDoctorPress}
           />
 
           {/* Patients list */}
           <AdminUsersList
             title="Recent Patients"
-            titleIcon="people"
+            titleIcon={Users}
             iconColor={healthColors.accent.coral}
             users={patientsList}
-            onViewAll={() => navigation.navigate("PatientManagement")}
-            onUserPress={(patient) => {
-              const id = patient?.userId || patient?._id || patient?.id;
-              navigation.navigate("PatientManagement", id ? { patientId: id, patientName: patient?.name } : undefined);
-            }}
+            onSectionPress={handlePatientsSectionPress}
+            onViewAll={handlePatientsSectionPress}
+            onUserPress={handlePatientPress}
           />
 
           {/* Recent Activity */}

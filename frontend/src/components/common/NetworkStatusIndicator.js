@@ -12,7 +12,7 @@ import {
   Animated,
   TouchableOpacity,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Cloud, CloudOff, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../../theme";
 import { useNetworkStatus, useRequestQueue } from "../../utils/offlineHandler";
@@ -51,7 +51,9 @@ const NetworkStatusIndicator = ({ onPress }) => {
     ? healthColors.success.main
     : healthColors.warning.main;
 
-  const icon = isOnline ? "cloud-done" : "cloud-offline";
+  const IconComponent = isOnline
+    ? queueSize > 0 ? RefreshCw : Cloud
+    : CloudOff;
 
   const message = isOnline
     ? queueSize > 0
@@ -76,7 +78,7 @@ const NetworkStatusIndicator = ({ onPress }) => {
         activeOpacity={0.8}
         disabled={!onPress}
       >
-        <Ionicons name={icon} size={20} color={healthColors.white} />
+        <IconComponent size={20} color="#FFFFFF" />
         <Text style={styles.message}>{message}</Text>
         {queueSize > 0 && (
           <View style={styles.badge}>
@@ -107,10 +109,10 @@ const styles = StyleSheet.create({
   message: {
     fontSize: theme.typography.sizes.sm,
     fontWeight: "600",
-    color: healthColors.white,
+    color: "#FFFFFF",
   },
   badge: {
-    backgroundColor: healthColors.white,
+    backgroundColor: "#FFFFFF",
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: "700",
     color: healthColors.warning.main,
   },
