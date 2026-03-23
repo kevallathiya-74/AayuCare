@@ -557,18 +557,14 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Allergies",
               "e.g. Penicillin, Pollen",
               "warning",
-              "default",
-              false,
-              true
+              "default"
             )}
             {renderInput(
               "chronicConditions",
               "Chronic Conditions",
               "e.g. Diabetes, Hypertension",
               "medkit",
-              "default",
-              false,
-              true
+              "default"
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>
