@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 const eventService = {
     /**
@@ -16,7 +17,7 @@ const eventService = {
         try {
             const params = new URLSearchParams(filters).toString();
             const response = await api.get(`/events${params ? `?${params}` : ''}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.getUpcomingEvents', filters });
             throw error;
@@ -31,7 +32,7 @@ const eventService = {
     async getEventById(eventId) {
         try {
             const response = await api.get(`/events/${eventId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.getEventById', eventId });
             throw error;
@@ -46,7 +47,7 @@ const eventService = {
     async registerForEvent(eventId) {
         try {
             const response = await api.post(`/events/${eventId}/register`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.registerForEvent', eventId });
             throw error;
@@ -61,7 +62,7 @@ const eventService = {
     async cancelRegistration(eventId) {
         try {
             const response = await api.delete(`/events/${eventId}/register`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.cancelRegistration', eventId });
             throw error;
@@ -78,7 +79,7 @@ const eventService = {
     async createEvent(eventData) {
         try {
             const response = await api.post('/events', eventData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.createEvent' });
             throw error;
@@ -94,7 +95,7 @@ const eventService = {
     async updateEvent(eventId, eventData) {
         try {
             const response = await api.put(`/events/${eventId}`, eventData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.updateEvent', eventId });
             throw error;
@@ -109,7 +110,7 @@ const eventService = {
     async deleteEvent(eventId) {
         try {
             const response = await api.delete(`/events/${eventId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'eventService.deleteEvent', eventId });
             throw error;

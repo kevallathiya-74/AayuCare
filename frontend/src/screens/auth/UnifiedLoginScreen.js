@@ -20,7 +20,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Cross, Users, User, Lock, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 import { useDispatch, useSelector } from "react-redux";
@@ -31,7 +31,7 @@ import {
   getKeyboardConfig,
   isTablet,
 } from "../../utils/responsive";
-import { Input, Button } from "../../components/common";
+import { Input, Button, DynamicIcon } from "../../components/common";
 
 // Development auto-fill credentials (only available in __DEV__ mode)
 // Simple test credentials for easy development
@@ -164,8 +164,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
             <View style={styles.logoContainer}>
               <View style={styles.logo}>
-                <Ionicons
-                  name="medical"
+                <Cross
+                  
                   size={48}
                   color={healthColors.neutral.white}
                 />
@@ -184,8 +184,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
             {/* Role pill */}
             <View style={styles.roleIndicator}>
-              <Ionicons
-                name="people"
+              <Users
+                
                 size={14}
                 color={healthColors.primary.main}
               />
@@ -205,8 +205,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
               }}
               placeholder="Enter your email or user ID"
               leftIcon={
-                <Ionicons
-                  name="person-outline"
+                <User
+                  
                   size={18}
                   color={healthColors.text.tertiary}
                 />
@@ -234,8 +234,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
               }}
               placeholder="Enter your password"
               leftIcon={
-                <Ionicons
-                  name="lock-closed-outline"
+                <Lock
+                  
                   size={18}
                   color={healthColors.text.tertiary}
                 />
@@ -252,8 +252,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
             {/* Form-level error */}
             {!!formError && (
               <View style={styles.formErrorContainer}>
-                <Ionicons
-                  name="alert-circle-outline"
+                <AlertCircle
+                  
                   size={16}
                   color={healthColors.error.main}
                 />
@@ -278,7 +278,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   onPress={() => setShowDevHelper(!showDevHelper)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons
+                  <ArrowRight
                     name={showDevHelper ? "chevron-up" : "chevron-down"}
                     size={14}
                     color={healthColors.info.main}
@@ -301,7 +301,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                         onPress={() => handleAutoFill(role)}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name={icon} size={14} color={color} />
+                        <DynamicIcon name={icon} size={14} color={color} />
                         <Text style={styles.devButtonText}>
                           {role.charAt(0).toUpperCase() + role.slice(1)}
                         </Text>
@@ -324,7 +324,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                 size="large"
                 icon={
                   !isLoading ? (
-                    <Ionicons
+                    <DynamicIcon
                       name="arrow-forward"
                       size={20}
                       color={healthColors.neutral.white}
@@ -357,8 +357,8 @@ const UnifiedLoginScreen = ({ navigation }) => {
 
           {/* ── Footer ── */}
           <View style={styles.footer}>
-            <Ionicons
-              name="shield-checkmark-outline"
+            <ShieldCheck
+              
               size={14}
               color={healthColors.text.tertiary}
             />
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   appName: {
-    fontSize: 30,
+    fontSize: theme.typography.sizes.h1,
     fontWeight: "800",
     color: healthColors.neutral.white,
     letterSpacing: 0.8,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   roleText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semibold,
     letterSpacing: 0.3,
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   devToggleText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.info.main,
     fontWeight: theme.typography.weights.semibold,
   },
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.card,
   },
   devButtonText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
   },
   demoTitle: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.secondary,
     marginBottom: 8,
@@ -583,12 +583,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   demoLabel: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     fontWeight: theme.typography.weights.medium,
   },
   demoValue: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.medium,
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   footerText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
 });

@@ -20,7 +20,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Cross, ChevronRight, ArrowLeft, X } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
@@ -85,8 +85,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     >
       <View style={styles.prescriptionHeader}>
         <View style={styles.prescriptionIcon}>
-          <Ionicons
-            name="medical"
+          <Cross
+            
             size={24}
             color={healthColors.primary.main}
           />
@@ -99,8 +99,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             {formatDate(item.prescriptionDate || item.createdAt || item.date)}
           </Text>
         </View>
-        <Ionicons
-          name="chevron-forward"
+        <ChevronRight
+          
           size={20}
           color={healthColors.text.tertiary}
         />
@@ -122,8 +122,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           <View style={styles.medicationsContainer}>
             {meds.slice(0, 3).map((med, idx) => (
               <View key={idx} style={styles.medicationChip}>
-                <Ionicons
-                  name="medical-outline"
+                <Cross
+                  
                   size={12}
                   color={healthColors.primary.main}
                 />
@@ -183,8 +183,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -208,7 +208,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
                 <View style={styles.modalIcon}>
-                  <Ionicons name="medical" size={22} color={healthColors.primary.main} />
+                  <Cross  size={22} color={healthColors.primary.main} />
                 </View>
                 <View>
                   <Text style={styles.modalTitle}>Prescription Details</Text>
@@ -221,7 +221,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                 onPress={() => setSelectedPrescription(null)}
                 style={styles.modalClose}
               >
-                <Ionicons name="close" size={22} color={healthColors.text.secondary} />
+                <X  size={22} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
 
@@ -251,7 +251,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                   (selectedPrescription?.medications || selectedPrescription?.medicines || []).map((med, idx) => (
                     <View key={idx} style={styles.medRow}>
                       <View style={styles.medBullet}>
-                        <Ionicons name="medical-outline" size={14} color={healthColors.primary.main} />
+                        <Cross  size={14} color={healthColors.primary.main} />
                       </View>
                       <View style={styles.medInfo}>
                         <Text style={styles.medName}>

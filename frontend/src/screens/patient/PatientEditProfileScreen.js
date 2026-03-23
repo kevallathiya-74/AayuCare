@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Calendar, ChevronDown } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors, spacing, textStyles } from "../../theme";
 import { getSafeAreaEdges } from "../../utils/responsive";
@@ -169,7 +169,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
       >
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={22} color={healthColors.text.primary} />
+            <ArrowLeft  size={22} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Edit Profile</Text>
           <View style={styles.iconButton} />
@@ -231,11 +231,11 @@ const PatientEditProfileScreen = ({ navigation }) => {
           <View style={styles.pickerGroup}>
             <Text style={styles.pickerLabel}>Date of Birth</Text>
             <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowDobPicker(true)}>
-              <Ionicons name="calendar-outline" size={18} color={healthColors.text.secondary} />
+              <Calendar  size={18} color={healthColors.text.secondary} />
               <Text style={[styles.datePickerText, !form.dateOfBirth && styles.datePickerPlaceholder]}>
                 {form.dateOfBirth || "Select date of birth"}
               </Text>
-              <Ionicons name="chevron-down" size={16} color={healthColors.text.tertiary} />
+              <ChevronDown  size={16} color={healthColors.text.tertiary} />
             </TouchableOpacity>
           </View>
           <Field

@@ -197,6 +197,65 @@ export const getHeartRateCategory = (heartRate) => {
   return 'High';
 };
 
+/**
+ * Get color associated with a status string
+ * @param {string} status - The status string
+ * @param {string} context - The context (appointment, payment, etc.)
+ * @returns {string} Hex color code
+ */
+export const getStatusColor = (status, context = 'appointment') => {
+  if (!status) return theme.colors.grey[500];
+  
+  const s = status.toLowerCase();
+  
+  // Generic success/active states
+  if (['completed', 'confirmed', 'ready', 'dispensed', 'paid', 'active', 'success'].includes(s)) {
+    return theme.colors.success;
+  }
+  
+  // Generic warning/pending states
+  if (['pending', 'processing', 'scheduled', 'preparing', 'ongoing'].includes(s)) {
+    return theme.colors.warning;
+  }
+  
+  // Generic error/cancelled states
+  if (['cancelled', 'failed', 'refunded', 'no_show', 'inactive', 'critical'].includes(s)) {
+    return theme.colors.error;
+  }
+  
+  // Default fallback
+  return theme.colors.primary;
+};
+
+/**
+ * Get full style object (text & background colors) for a status badge
+ * @param {string} status - The status string
+ * @returns {Object} { color, backgroundColor } style object
+ */
+export const getStatusStyle = (status) => {
+  if (!status) return { color: theme.colors.text.secondary, backgroundColor: theme.colors.grays.gray200 };
+  
+  const s = status.toLowerCase();
+  
+  if (['completed', 'confirmed', 'ready', 'dispensed', 'paid', 'active', 'success'].includes(s)) {
+    return { color: theme.colors.success.dark, backgroundColor: theme.colors.success.background };
+  }
+  
+  if (['pending', 'processing', 'scheduled', 'preparing', 'ongoing'].includes(s)) {
+    return { color: theme.colors.warning.dark, backgroundColor: theme.colors.warning.background };
+  }
+  
+  if (['cancelled', 'failed', 'refunded', 'no_show', 'inactive', 'critical'].includes(s)) {
+    return { color: theme.colors.error.dark, backgroundColor: theme.colors.error.background };
+  }
+  
+  if (['in_progress', 'started', 'arrived'].includes(s)) {
+    return { color: theme.colors.info.dark, backgroundColor: theme.colors.info.background };
+  }
+  
+  return { color: theme.colors.primaryDark, backgroundColor: theme.colors.primaryLight + "30" };
+};
+
 // String utilities
 
 /**
@@ -348,5 +407,7 @@ export default {
   throttle,
   groupBy,
   sortBy,
+  getStatusColor,
+  getStatusStyle,
 };
 

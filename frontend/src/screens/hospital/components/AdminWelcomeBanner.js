@@ -6,7 +6,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { healthColors } from "../../../theme";
+import { theme, healthColors } from "../../../theme";
 
 const AdminWelcomeBanner = ({ greeting, user }) => (
   <LinearGradient
@@ -42,22 +42,22 @@ const styles = StyleSheet.create({
   circle: {
     position: "absolute",
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.08),
   },
   circle1: { width: 120, height: 120, top: -30, right: -20 },
   circle2: { width: 80, height: 80, bottom: -20, right: 60 },
   content: { gap: 4 },
-  greetingText: { fontSize: 14, color: "rgba(255,255,255,0.8)" },
-  nameText: { fontSize: 22, fontWeight: "800", color: "#fff" },
+  greetingText: { fontSize: theme.typography.sizes.bodyMedium, color: theme.withOpacity(theme.colors.text.white, 0.8) },
+  nameText: { fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
   rolePill: {
     marginTop: 8,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
-  roleText: { fontSize: 12, fontWeight: "700", color: "#fff" },
+  roleText: { fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
 });
 
 export default AdminWelcomeBanner;

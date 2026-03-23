@@ -8,6 +8,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initializeSentry } from "./src/config/sentry";
 import queryClient from "./src/config/reactQueryConfig";
+import { healthColors } from "./src/theme";
 
 // Global error handler to catch unhandled errors
 if (__DEV__) {
@@ -75,29 +76,35 @@ try {
     },
     fonts: {
       regular: {
-        fontFamily: theme.typography.fontFamily.body,
+        fontFamily: theme.typography.fontFamilies.body,
       },
       medium: {
-        fontFamily: theme.typography.fontFamily.body,
+        fontFamily: theme.typography.fontFamilies.body,
         fontWeight: '500',
       },
       light: {
-        fontFamily: theme.typography.fontFamily.body,
+        fontFamily: theme.typography.fontFamilies.body,
         fontWeight: '300',
       },
       thin: {
-        fontFamily: theme.typography.fontFamily.body,
+        fontFamily: theme.typography.fontFamilies.body,
         fontWeight: '100',
       },
     },
   };
+
+  // Fix 2.4 — Runtime validation
+  if (!paperTheme.colors.primary) {
+    if (__DEV__) console.warn("[App] theme.colors.primary is undefined, applying fallback");
+    paperTheme.colors.primary = "#00ACC1"; // Primary teal fallback
+  }
 } catch (e) {
   if (__DEV__) {
     console.error("[App] Theme loading failed:", e.message);
   }
   // Use a minimal fallback theme
   paperTheme = {
-    colors: {},
+    colors: { primary: "#00ACC1" },
     fonts: {},
   };
 }
@@ -116,7 +123,10 @@ export default function App() {
     }
   }, []);
 
-  if (!fontsLoaded) return null;
+  // Fix 2.3 — Prevent white flash
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: paperTheme.colors.primary }} />;
+  }
 
   return (
     <ErrorBoundary>
@@ -141,6 +151,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFB", // theme.colors.backgroundSecondary
+    backgroundColor: healthColors.background.secondary,
   },
 });

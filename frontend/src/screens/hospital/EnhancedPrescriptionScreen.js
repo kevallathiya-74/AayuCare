@@ -20,7 +20,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { CheckCircle, ArrowLeft, Save, XCircle, PlusCircle, Calendar, ChevronRight } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
@@ -32,6 +32,7 @@ import { prescriptionService, patientService, doctorService } from "../../servic
 import { logError } from "../../utils/errorHandler";
 import { formatCurrency } from "../../utils/helpers";
 import { SkeletonCardRow, Input, EmptyState } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -386,7 +387,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <Text style={styles.patientListSubtext}>{item.userId || "N/A"}</Text>
               </View>
               {isSelected ? (
-                <Ionicons name="checkmark-circle" size={20} color={healthColors.primary.main} />
+                <CheckCircle  size={20} color={healthColors.primary.main} />
               ) : null}
             </TouchableOpacity>
           );
@@ -420,8 +421,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -437,7 +438,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           {saving ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <Ionicons name="save" size={24} color={healthColors.primary.main} />
+            <Save  size={24} color={healthColors.primary.main} />
           )}
         </TouchableOpacity>
       </View>
@@ -537,8 +538,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                         style={styles.removeButton}
                         onPress={() => handleRemoveMedicine(med.id)}
                       >
-                        <Ionicons
-                          name="close-circle"
+                        <XCircle
+                          
                           size={24}
                           color={healthColors.error.main}
                         />
@@ -552,8 +553,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 style={styles.addMedicineButton}
                 onPress={handleAddMedicine}
               >
-                <Ionicons
-                  name="add-circle"
+                <PlusCircle
+                  
                   size={20}
                   color={healthColors.primary.main}
                 />
@@ -593,8 +594,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Pick next visit date"
               >
-                <Ionicons
-                  name="calendar"
+                <Calendar
+                  
                   size={20}
                   color={healthColors.primary.main}
                 />
@@ -614,15 +615,15 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     }}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons
-                      name="close-circle"
+                    <XCircle
+                      
                       size={18}
                       color={healthColors.text.secondary}
                     />
                   </TouchableOpacity>
                 ) : (
-                  <Ionicons
-                    name="chevron-forward"
+                  <ChevronRight
+                    
                     size={18}
                     color={healthColors.text.secondary}
                   />
@@ -674,8 +675,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             {/* Send Options */}
             <View style={styles.section}>
               <View style={styles.sendOptionsHeader}>
-                <Ionicons
-                  name="checkmark-circle"
+                <CheckCircle
+                  
                   size={20}
                   color={healthColors.success.main}
                 />
@@ -686,7 +687,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   style={styles.checkboxRow}
                   onPress={() => toggleSendOption("patientApp")}
                 >
-                  <Ionicons
+                  <DynamicIcon
                     name={
                       sendOptions.patientApp ? "checkbox" : "square-outline"
                     }
@@ -705,7 +706,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   style={styles.checkboxRow}
                   onPress={() => toggleSendOption("hospitalPharmacy")}
                 >
-                  <Ionicons
+                  <DynamicIcon
                     name={
                       sendOptions.hospitalPharmacy
                         ? "checkbox"
@@ -724,7 +725,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   style={styles.checkboxRow}
                   onPress={() => toggleSendOption("externalPharmacy")}
                 >
-                  <Ionicons
+                  <DynamicIcon
                     name={
                       sendOptions.externalPharmacy
                         ? "checkbox"

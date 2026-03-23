@@ -13,7 +13,7 @@ import {
   Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Globe, CheckCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { theme, healthColors } from "../../theme";
 import { changeLanguage } from "../../i18n";
@@ -55,7 +55,7 @@ const LanguageSelector = ({
           accessibilityRole="button"
           accessibilityLabel={`Current language: ${currentLang.fullName}. Tap to change language`}
         >
-          <Ionicons name="globe-outline" size={20} color={iconColor} />
+          <Globe  size={20} color={iconColor} />
           <Text style={[styles.compactLabel, { color: iconColor }]}>
             {currentLang.label}
           </Text>
@@ -77,8 +77,8 @@ const LanguageSelector = ({
                 onPress={(e) => e.stopPropagation()}
               >
                 <View style={styles.modalHeader}>
-                  <Ionicons
-                    name="globe"
+                  <Globe
+                    
                     size={24}
                     color={healthColors.primary.main}
                   />
@@ -104,8 +104,8 @@ const LanguageSelector = ({
                       </Text>
                     </View>
                     {currentLanguage === language.code && (
-                      <Ionicons
-                        name="checkmark-circle"
+                      <CheckCircle
+                        
                         size={24}
                         color={healthColors.primary.main}
                       />
@@ -123,8 +123,8 @@ const LanguageSelector = ({
   // Default mode: Inline language buttons
   return (
     <View style={[styles.container, style]}>
-      <Ionicons
-        name="globe-outline"
+      <Globe
+        
         size={16}
         color={iconColor}
         style={styles.icon}
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   languageText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     fontWeight: "600",
   },
   languageTextActive: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   compactLabel: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
   },
   modalOverlay: {
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: "700",
     color: healthColors.text.primary,
     flex: 1,
@@ -248,13 +248,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   languageLabel: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     fontWeight: "600",
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   languageName: {
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
 });

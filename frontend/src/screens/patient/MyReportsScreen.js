@@ -23,13 +23,23 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Calendar, Download, Share2, Filter, XCircle, Folder, User } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from "../../components/common";
+import {
+  ErrorRecovery,
+  NetworkStatusIndicator,
+  SkeletonCardRow,
+  EmptyState,
+  ModalSheet,
+  FilterHeaderRow,
+  FilterSectionTitle,
+  FilterChipGroup,
+} from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { medicalRecordService } from "../../services";
+import { DynamicIcon } from "../../components/common";
 
 const MyReportsScreen = ({ navigation }) => {
   const [reports, setReports] = useState([]);
@@ -142,8 +152,8 @@ const MyReportsScreen = ({ navigation }) => {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <Ionicons
-              name="arrow-back"
+            <ArrowLeft
+              
               size={24}
               color={healthColors.text.primary}
             />
@@ -167,17 +177,13 @@ const MyReportsScreen = ({ navigation }) => {
       {/* Removed navigation to non-existent ReportViewer screen */}
       <View style={styles.reportLeft}>
         <View style={[styles.fileIcon, styles[`fileType_${item.fileType}`]]}>
-          <Ionicons
-            name={getFileIcon(item.fileType)}
-            size={24}
-            color={healthColors.text.white}
-          />
+          <DynamicIcon name={getFileIcon(item.fileType)} size={24} color={healthColors.text.white} />
         </View>
         <View style={styles.reportInfo}>
           <Text style={styles.reportTitle}>{item.title}</Text>
           <Text style={styles.reportType}>{item.type}</Text>
           <View style={styles.reportMeta}>
-            <Ionicons
+            <DynamicIcon
               name="calendar-outline"
               size={12}
               color={healthColors.text.tertiary}
@@ -203,8 +209,8 @@ const MyReportsScreen = ({ navigation }) => {
             }
           }}
         >
-          <Ionicons
-            name="download-outline"
+          <Download
+            
             size={20}
             color={healthColors.primary.main}
           />
@@ -219,8 +225,8 @@ const MyReportsScreen = ({ navigation }) => {
             }).catch(() => {});
           }}
         >
-          <Ionicons
-            name="share-outline"
+          <Share2
+            
             size={20}
             color={healthColors.text.secondary}
           />
@@ -243,15 +249,15 @@ const MyReportsScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Reports</Text>
         <TouchableOpacity style={styles.filterButton} activeOpacity={0.7} onPress={() => setFilterModalVisible(true)}>
-          <Ionicons name="filter" size={24} color={healthColors.text.primary} />
+          <Filter  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
@@ -295,22 +301,22 @@ const MyReportsScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle} numberOfLines={2}>{selectedReport?.title}</Text>
               <TouchableOpacity onPress={() => setSelectedReport(null)}>
-                <Ionicons name="close-circle" size={28} color={healthColors.text.tertiary} />
+                <XCircle  size={28} color={healthColors.text.tertiary} />
               </TouchableOpacity>
             </View>
             <ScrollView>
               {selectedReport && (
                 <>
                   <View style={styles.detailRow}>
-                    <Ionicons name="calendar-outline" size={15} color={healthColors.text.secondary} />
+                    <Calendar  size={15} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{selectedReport.date}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Ionicons name="folder-outline" size={15} color={healthColors.text.secondary} />
+                    <Folder  size={15} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{selectedReport.type}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Ionicons name="person-outline" size={15} color={healthColors.text.secondary} />
+                    <User  size={15} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>Dr. {selectedReport.doctor}</Text>
                   </View>
                   {selectedReport.recordData?.description && (
@@ -341,7 +347,7 @@ const MyReportsScreen = ({ navigation }) => {
                           : Alert.alert("Not Available", "No file attached.");
                       }}
                     >
-                      <Ionicons name="download-outline" size={18} color={healthColors.primary.main} />
+                      <Download  size={18} color={healthColors.primary.main} />
                       <Text style={styles.modalActionText}>Download</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -353,7 +359,7 @@ const MyReportsScreen = ({ navigation }) => {
                         }).catch(() => {})
                       }
                     >
-                      <Ionicons name="share-outline" size={18} color={healthColors.text.secondary} />
+                      <Share2  size={18} color={healthColors.text.secondary} />
                       <Text style={styles.modalActionText}>Share</Text>
                     </TouchableOpacity>
                   </View>
@@ -364,41 +370,35 @@ const MyReportsScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-      {/* Filter Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <ModalSheet
         visible={filterModalVisible}
-        onRequestClose={() => setFilterModalVisible(false)}
+        onClose={() => setFilterModalVisible(false)}
+        title="Filter Reports"
+        maxHeight={0.55}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: "60%" }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter by Type</Text>
-              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                <Ionicons name="close-circle" size={28} color={healthColors.text.tertiary} />
-              </TouchableOpacity>
-            </View>
-            {FILTER_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt}
-                style={[styles.filterOption, filterType === (opt === "All" ? null : opt) && styles.filterOptionActive]}
-                onPress={() => {
-                  setFilterType(opt === "All" ? null : opt);
-                  setFilterModalVisible(false);
-                }}
-              >
-                <Text style={[styles.filterOptionText, filterType === (opt === "All" ? null : opt) && styles.filterOptionTextActive]}>
-                  {opt}
-                </Text>
-                {filterType === (opt === "All" ? null : opt) && (
-                  <Ionicons name="checkmark" size={18} color={healthColors.primary.main} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Modal>
+        <FilterHeaderRow
+          clearLabel="Clear"
+          onClear={() => {
+            setFilterType(null);
+            setFilterModalVisible(false);
+          }}
+        />
+        <FilterSectionTitle title="Report type" />
+        <FilterChipGroup
+          options={FILTER_OPTIONS}
+          selectedKey={filterType || "All"}
+          onSelect={(opt) => {
+            setFilterType(opt === "All" ? null : opt);
+            setFilterModalVisible(false);
+          }}
+          getKey={(opt) => opt}
+          getLabel={(opt) => opt}
+          getCount={(opt) => {
+            if (opt === "All") return reports.length;
+            return reports.filter((report) => report.type === opt).length;
+          }}
+        />
+      </ModalSheet>
     </SafeAreaView>
   );
 };

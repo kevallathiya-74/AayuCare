@@ -5,7 +5,7 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Clock, Video } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
 
 const STATUS_COLOR = {
@@ -40,7 +40,7 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
       {/* Header row */}
       <View style={styles.headerRow}>
         <View style={styles.timeChip}>
-          <Ionicons name="time-outline" size={14} color={healthColors.primary.main} />
+          <Clock  size={14} color={healthColors.primary.main} />
           <Text style={styles.timeText}>{appointment.time || "--:--"}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: color + "1A" }]}>
@@ -48,7 +48,7 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
         </View>
         {appointment.type === "telemedicine" && (
           <View style={styles.typeBadge}>
-            <Ionicons name="videocam" size={13} color={healthColors.info.main} />
+            <Video  size={13} color={healthColors.info.main} />
           </View>
         )}
       </View>
@@ -111,25 +111,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
   },
-  timeText: { fontSize: 12, fontWeight: "700", color: healthColors.primary.main },
+  timeText: { fontSize: theme.typography.sizes.bodySmall, fontWeight: "700", color: healthColors.primary.main },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  statusText: { fontSize: 11, fontWeight: "600" },
+  statusText: { fontSize: theme.typography.sizes.caption, fontWeight: "600" },
   typeBadge: {
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: healthColors.info.main + "14",
     justifyContent: "center", alignItems: "center",
   },
   patientName: {
-    fontSize: 15, fontWeight: "700", color: healthColors.text.primary, marginBottom: 4,
+    fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary, marginBottom: 4,
   },
-  patientMeta: { fontSize: 12, color: healthColors.text.secondary, marginBottom: 12 },
+  patientMeta: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, marginBottom: 12 },
   actions: { flexDirection: "row", gap: 10 },
   secondaryBtn: {
     flex: 1, paddingVertical: 9, borderRadius: 10,
     borderWidth: 1.5, borderColor: healthColors.primary.main,
     alignItems: "center",
   },
-  secondaryBtnText: { fontSize: 13, fontWeight: "600", color: healthColors.primary.main },
+  secondaryBtnText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "600", color: healthColors.primary.main },
   primaryBtn: {
     flex: 1, paddingVertical: 9, borderRadius: 10,
     backgroundColor: healthColors.primary.main,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   primaryBtnDisabled: { opacity: 0.4 },
-  primaryBtnText: { fontSize: 13, fontWeight: "700", color: theme.colors.text.white },
+  primaryBtnText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "700", color: theme.colors.text.white },
 });
 
 export default TodayAppointmentCard;

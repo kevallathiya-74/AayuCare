@@ -15,7 +15,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { X } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { Button } from "../../components/common";
 
@@ -67,8 +67,8 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               style={styles.closeButton}
               disabled={loading}
             >
-              <Ionicons
-                name="close"
+              <X
+                
                 size={24}
                 color={healthColors.text.primary}
               />

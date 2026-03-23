@@ -7,12 +7,13 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import appStorage from '../utils/appStorage';
 import * as Localization from 'expo-localization';
+import { STORAGE_KEYS } from '../utils/constants';
 
 import en from '../locales/en.json';
 import hi from '../locales/hi.json';
 import gu from '../locales/gu.json';
 
-const LANGUAGE_STORAGE_KEY = '@aayucare_language';
+const LANGUAGE_STORAGE_KEY = STORAGE_KEYS.LANGUAGE;
 
 // Initialize i18n immediately without async detection
 i18n

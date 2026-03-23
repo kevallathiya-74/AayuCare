@@ -21,7 +21,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Library, Search, XCircle, Video, ChevronRight, FileText, Newspaper, ArrowRight, PlayCircle, Image, ShieldCheck, Utensils, Activity, Sun, Apple, Coffee, Moon, Footprints, Bike, Hand, Heart, Maximize } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
@@ -29,8 +29,10 @@ import {
 } from "../../utils/responsive";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
+import EmptyState from "../../components/common/EmptyState";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { DynamicIcon } from "../../components/common";
 
 // Static data defined outside component to avoid re-creation on every render
 // and to ensure they are initialized before any hook (useMemo) references them.
@@ -51,7 +53,7 @@ const categories = [
   { icon: "pulse", name: "Lung", color: healthColors.info.main },
   { icon: "bulb-outline", name: "Brain", color: theme.colors.healthcare.purple },
   { icon: "water", name: "Diabetes", color: healthColors.warning.main },
-  { icon: "bandage-outline", name: "Bone", color: healthColors.text.secondary },
+  { icon: "medkit", name: "Bone", color: healthColors.text.secondary },
   { icon: "eye", name: "Eye", color: theme.colors.healthcare.teal },
 ];
 
@@ -187,7 +189,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
     },
     Bone: {
       name: "Musculoskeletal Disorders",
-      icon: "bandage-outline",
+      icon: "medkit",
       color: healthColors.text.secondary,
       description:
         "Conditions affecting bones, muscles, and joints, including arthritis, osteoporosis, and back pain.",
@@ -302,23 +304,23 @@ const DiseaseInfoScreen = ({ navigation }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+          <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="library" size={32} color={theme.colors.white} />
+          <Library  size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Disease Info Center</Text>
             <Text style={styles.headerSubtitle}>Health Library</Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => setSearchVisible((v) => !v)}>
-          <Ionicons name="search" size={24} color={theme.colors.white} />
+          <Search  size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
       {searchVisible && (
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={healthColors.text.tertiary} />
+          <Search  size={18} color={healthColors.text.tertiary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search diseases..."
@@ -329,7 +331,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={18} color={healthColors.text.tertiary} />
+              <XCircle  size={18} color={healthColors.text.tertiary} />
             </TouchableOpacity>
           )}
         </View>
@@ -342,34 +344,42 @@ const DiseaseInfoScreen = ({ navigation }) => {
       >
         {/* Categories Grid */}
         <View style={styles.categoriesGrid}>
-          {filteredCategories.map((category, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.categoryCard}
-              onPress={() => handleCategoryPress(category)}
-            >
-              <LinearGradient
-                colors={[category.color, category.color + "DD"]}
-                style={styles.categoryGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+          {filteredCategories.length === 0 ? (
+            <EmptyState
+              icon="search-outline"
+              title="No Categories Found"
+              message={`We couldn't find any health categories matching "${searchQuery}".`}
+            />
+          ) : (
+            filteredCategories.map((category) => (
+              <TouchableOpacity
+                key={category.name}
+                style={styles.categoryCard}
+                onPress={() => handleCategoryPress(category)}
               >
-                <Ionicons
-                  name={category.icon}
-                  size={48}
-                  color={theme.colors.white}
-                  style={styles.categoryIcon}
-                />
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
+                <LinearGradient
+                  colors={[category.color, category.color + "DD"]}
+                  style={styles.categoryGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <DynamicIcon
+                    name={category.icon}
+                    size={48}
+                    color={theme.colors.text.white}
+                    style={styles.categoryIcon}
+                  />
+                  <Text style={styles.categoryName}>{category.name}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         {/* Quick Access */}
         <View style={styles.section}>
           <View style={styles.sectionTitleRow}>
-            <Ionicons
+            <DynamicIcon
               name="search"
               size={20}
               color={healthColors.primary.main}
@@ -381,25 +391,25 @@ const DiseaseInfoScreen = ({ navigation }) => {
               style={styles.quickAccessItem}
               onPress={() => openURL(quickAccessLinks["Video Library"])}
             >
-              <Ionicons name="videocam" size={24} color={healthColors.error.main} />
+              <Video  size={24} color={healthColors.error.main} />
               <Text style={styles.quickAccessText}>Video Library</Text>
-              <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+              <ChevronRight  size={20} color={healthColors.text.tertiary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickAccessItem}
               onPress={() => openURL(quickAccessLinks["Articles"])}
             >
-              <Ionicons name="document-text" size={24} color={healthColors.info.main} />
+              <FileText  size={24} color={healthColors.info.main} />
               <Text style={styles.quickAccessText}>Articles</Text>
-              <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+              <ChevronRight  size={20} color={healthColors.text.tertiary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickAccessItem}
               onPress={() => openURL(quickAccessLinks["Latest News"])}
             >
-              <Ionicons name="newspaper" size={24} color={healthColors.warning.main} />
+              <Newspaper  size={24} color={healthColors.warning.main} />
               <Text style={styles.quickAccessText}>Latest News</Text>
-              <Ionicons name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+              <ChevronRight  size={20} color={healthColors.text.tertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -412,15 +422,15 @@ const DiseaseInfoScreen = ({ navigation }) => {
               "COVID-19 Updates",
               "Mental Health Awareness",
               "Nutrition Guide",
-            ].map((topic, index) => (
+            ].map((topic) => (
               <TouchableOpacity
-                key={index}
+                key={topic}
                 style={styles.topicItem}
                 onPress={() => openURL(featuredTopicLinks[topic])}
               >
                 <View style={styles.topicDot} />
                 <Text style={styles.topicText}>{topic}</Text>
-                <Ionicons name="arrow-forward" size={18} color={theme.colors.healthcare.purple} />
+                <ArrowRight  size={18} color={theme.colors.healthcare.purple} />
               </TouchableOpacity>
             ))}
           </View>
@@ -448,7 +458,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                           { backgroundColor: selectedDisease.color + "20" },
                         ]}
                       >
-                        <Ionicons
+                        <DynamicIcon
                           name={selectedDisease.icon}
                           size={32}
                           color={selectedDisease.color}
@@ -460,7 +470,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                         </Text>
                       </View>
                       <TouchableOpacity onPress={() => setModalVisible(false)}>
-                        <Ionicons
+                        <DynamicIcon
                           name="close-circle"
                           size={32}
                           color={healthColors.text.tertiary}
@@ -480,7 +490,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                       colors={[healthColors.warning.main, healthColors.warning.dark]}
                       style={styles.videoGradient}
                     >
-                      <Ionicons name="play-circle" size={64} color={theme.colors.white} />
+                      <PlayCircle  size={64} color={theme.colors.white} />
                       <Text style={styles.videoText}>
                         Watch Educational Video
                       </Text>
@@ -498,7 +508,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                       colors={[healthColors.info.main, healthColors.info.dark]}
                       style={styles.videoGradient}
                     >
-                      <Ionicons name="images" size={48} color={theme.colors.white} />
+                      <Image  size={48} color={theme.colors.white} />
                       <Text style={styles.videoText}>View Images</Text>
                     </LinearGradient>
                   </TouchableOpacity>
@@ -522,8 +532,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   {/* Symptoms */}
                   <View style={styles.detailSection}>
                     <Text style={styles.detailTitle}>SYMPTOMS:</Text>
-                    {selectedDisease.symptoms.map((symptom, index) => (
-                      <View key={index} style={styles.listItem}>
+                    {selectedDisease.symptoms.map((symptom) => (
+                      <View key={symptom} style={styles.listItem}>
                         <Text style={styles.listBullet}>•</Text>
                         <Text style={styles.listText}>{symptom}</Text>
                       </View>
@@ -533,15 +543,15 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   {/* Prevention */}
                   <View style={styles.detailSection}>
                     <View style={styles.detailTitleContainer}>
-                      <Ionicons
-                        name="shield-checkmark-outline"
+                      <ShieldCheck
+                        
                         size={18}
                         color={healthColors.primary.main}
                       />
                       <Text style={styles.detailTitle}>PREVENTION:</Text>
                     </View>
-                    {selectedDisease.prevention.map((item, index) => (
-                      <View key={index} style={styles.listItem}>
+                    {selectedDisease.prevention.map((item) => (
+                      <View key={item} style={styles.listItem}>
                         <Text style={styles.listBullet}>•</Text>
                         <Text style={styles.listText}>{item}</Text>
                       </View>
@@ -558,8 +568,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
                         colors={[healthColors.success.main, healthColors.success.dark]}
                         style={styles.actionGradient}
                       >
-                        <Ionicons
-                          name="restaurant-outline"
+                        <Utensils
+                          
                           size={18}
                           color={theme.colors.white}
                         />
@@ -574,8 +584,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
                         colors={[healthColors.info.main, healthColors.info.dark]}
                         style={styles.actionGradient}
                       >
-                        <Ionicons
-                          name="fitness-outline"
+                        <Activity
+                          
                           size={18}
                           color={theme.colors.white}
                         />
@@ -604,8 +614,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Diet Chart for {selectedDisease?.name || "Diabetes"}</Text>
               <TouchableOpacity onPress={() => setDietChartVisible(false)}>
-                <Ionicons
-                  name="close-circle"
+                <XCircle
+                  
                   size={32}
                   color={healthColors.text.tertiary}
                 />
@@ -615,7 +625,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Breakfast */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons name="sunny-outline" size={18} color={healthColors.warning.main} />
+                  <Sun  size={18} color={healthColors.warning.main} />
                   <Text style={styles.dietMealTitle}>
                     BREAKFAST (7:00 - 8:00 AM)
                   </Text>
@@ -641,8 +651,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Mid-Morning Snack */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons
-                    name="nutrition-outline"
+                  <Apple
+                    
                     size={18}
                     color={healthColors.success.main}
                   />
@@ -665,8 +675,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Lunch */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons
-                    name="restaurant-outline"
+                  <Utensils
+                    
                     size={18}
                     color={healthColors.error.main}
                   />
@@ -701,7 +711,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Evening Snack */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons name="cafe-outline" size={18} color={healthColors.text.secondary} />
+                  <Coffee  size={18} color={healthColors.text.secondary} />
                   <Text style={styles.dietMealTitle}>EVENING (4:00 PM)</Text>
                 </View>
                 <View style={styles.dietItem}>
@@ -715,7 +725,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               {/* Dinner */}
               <View style={styles.dietSection}>
                 <View style={styles.dietMealTitleContainer}>
-                  <Ionicons name="moon-outline" size={18} color={healthColors.info.dark} />
+                  <Moon  size={18} color={healthColors.info.dark} />
                   <Text style={styles.dietMealTitle}>
                     DINNER (7:00 - 8:00 PM)
                   </Text>
@@ -769,8 +779,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Exercise Plan for {selectedDisease?.name || "Diabetes"}</Text>
               <TouchableOpacity onPress={() => setExercisePlanVisible(false)}>
-                <Ionicons
-                  name="close-circle"
+                <XCircle
+                  
                   size={32}
                   color={healthColors.text.tertiary}
                 />
@@ -784,13 +794,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 </Text>
                 <Text style={styles.exerciseCategory}>Cardio (30 minutes)</Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="walk" size={20} color={healthColors.success.main} />
+                  <Footprints  size={20} color={healthColors.success.main} />
                   <Text style={styles.exerciseText}>
                     Brisk Walking - 15 min
                   </Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="bicycle" size={20} color={healthColors.success.main} />
+                  <Bike  size={20} color={healthColors.success.main} />
                   <Text style={styles.exerciseText}>Cycling - 15 min</Text>
                 </View>
               </View>
@@ -803,17 +813,17 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   Strength Training (30 minutes)
                 </Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="fitness" size={20} color={healthColors.info.main} />
+                  <Activity  size={20} color={healthColors.info.main} />
                   <Text style={styles.exerciseText}>
                     Push-ups - 3 sets of 10
                   </Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="fitness" size={20} color={healthColors.info.main} />
+                  <Activity  size={20} color={healthColors.info.main} />
                   <Text style={styles.exerciseText}>Squats - 3 sets of 15</Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="fitness" size={20} color={healthColors.info.main} />
+                  <Activity  size={20} color={healthColors.info.main} />
                   <Text style={styles.exerciseText}>
                     Planks - 3 sets of 30 sec
                   </Text>
@@ -828,15 +838,15 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   Flexibility & Breathing
                 </Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons
-                    name="hand-left-outline"
+                  <Hand
+                    
                     size={20}
                     color={theme.colors.healthcare.purple}
                   />
                   <Text style={styles.exerciseText}>Yoga - 15 min</Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="heart" size={20} color={theme.colors.healthcare.purple} />
+                  <Heart  size={20} color={theme.colors.healthcare.purple} />
                   <Text style={styles.exerciseText}>Pranayama - 10 min</Text>
                 </View>
               </View>
@@ -845,13 +855,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 <Text style={styles.exerciseDayTitle}>SUNDAY</Text>
                 <Text style={styles.exerciseCategory}>Active Rest</Text>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="walk" size={20} color={healthColors.warning.main} />
+                  <Footprints  size={20} color={healthColors.warning.main} />
                   <Text style={styles.exerciseText}>
                     Light walking - 20 min
                   </Text>
                 </View>
                 <View style={styles.exerciseItem}>
-                  <Ionicons name="resize-outline" size={20} color={healthColors.warning.main} />
+                  <Maximize  size={20} color={healthColors.warning.main} />
                   <Text style={styles.exerciseText}>Stretching - 10 min</Text>
                 </View>
               </View>

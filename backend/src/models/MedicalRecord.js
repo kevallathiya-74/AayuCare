@@ -1,14 +1,24 @@
 const mongoose = require('mongoose');
 
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 const medicalRecordSchema = new mongoose.Schema({
     patientId: {
         type: String,
         required: true,
         index: true,
+        validate: {
+            validator: (v) => UUID_REGEX.test(v),
+            message: 'patientId must be a valid PostgreSQL UUID',
+        },
     },
     doctorId: {
         type: String,
         required: true,
+        validate: {
+            validator: (v) => UUID_REGEX.test(v),
+            message: 'doctorId must be a valid PostgreSQL UUID',
+        },
     },
     hospitalId: {
         type: String,

@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Eye, EyeOff, CheckCircle2 } from 'lucide-react-native';
 import { theme, healthColors } from '../../theme';
 import { textStyles, fontFamilies } from '../../theme/typography';
 import { spacing, componentSpacing, layout } from '../../theme/spacing';
@@ -29,6 +29,7 @@ const Input = ({
   onChangeText,
   placeholder,
   error,
+  success,
   helperText,
   leftIcon,
   rightIcon,
@@ -46,6 +47,7 @@ const Input = ({
 
   const handleFocus = () => {
     setIsFocused(true);
+
     Animated.timing(labelAnim, {
       toValue: 1,
       duration: 200,
@@ -77,6 +79,8 @@ const Input = ({
     }),
     color: error
       ? healthColors.error.main
+      : success
+      ? healthColors.success.main
       : isFocused
       ? healthColors.primary.main
       : healthColors.text.tertiary,
@@ -90,6 +94,7 @@ const Input = ({
     styles.container,
     isFocused && styles.containerFocused,
     error && styles.containerError,
+    success && !error && styles.containerSuccess,
     disabled && styles.containerDisabled,
   ];
 
@@ -133,12 +138,18 @@ const Input = ({
             style={styles.rightIcon}
             onPress={() => setShowPassword(!showPassword)}
           >
-            <Feather
-              name={showPassword ? 'eye-off' : 'eye'}
-              size={20}
-              color={healthColors.text.tertiary}
-            />
+            {showPassword ? (
+              <EyeOff size={20} color={healthColors.text.tertiary} />
+            ) : (
+              <Eye size={20} color={healthColors.text.tertiary} />
+            )}
           </TouchableOpacity>
+        )}
+
+        {success && !error && !rightIcon && !secureTextEntry && (
+          <View style={styles.rightIcon}>
+            <CheckCircle2 size={20} color={healthColors.success.main} />
+          </View>
         )}
 
         {rightIcon && !secureTextEntry && (
@@ -179,6 +190,10 @@ const styles = StyleSheet.create({
     borderColor: healthColors.input.borderError,
     borderWidth: 1.5,
   },
+  containerSuccess: {
+    borderColor: healthColors.success.main || '#10B981',
+    borderWidth: 1.5,
+  },
   containerDisabled: {
     backgroundColor: healthColors.neutral.gray100,
     opacity: 0.6,
@@ -186,7 +201,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: fontFamilies.body,
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     color: healthColors.text.primary,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,

@@ -1,12 +1,30 @@
 const { Pool } = require("pg");
 const logger = require("../utils/logger");
 
+const normalizeDatabaseUrl = (rawUrl) => {
+  if (!rawUrl) return rawUrl;
+  try {
+    const parsed = new URL(rawUrl);
+    const sslmode = (parsed.searchParams.get("sslmode") || "").toLowerCase();
+    const hasCompat = parsed.searchParams.has("uselibpqcompat");
+
+    if (sslmode && ["prefer", "require", "verify-ca"].includes(sslmode) && !hasCompat) {
+      parsed.searchParams.set("uselibpqcompat", "true");
+    }
+
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
+};
+
 // PostgreSQL connection pool configuration
 // Supports both DATABASE_URL (Neon/cloud) and individual env vars (local)
 const buildPoolConfig = () => {
   if (process.env.DATABASE_URL) {
+    const connectionString = normalizeDatabaseUrl(process.env.DATABASE_URL);
     return {
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       max: parseInt(process.env.POSTGRES_MAX_POOL, 10) || 20,
       min: parseInt(process.env.POSTGRES_MIN_POOL, 10) || 5,
       idleTimeoutMillis: 30000,

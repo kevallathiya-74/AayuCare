@@ -137,6 +137,7 @@ const invalidateCache = (pattern) => {
 };
 
 module.exports = {
+  cache: cacheMiddleware,
   cacheMiddleware,
   cacheDoctorAvailability,
   cacheDoctorList,

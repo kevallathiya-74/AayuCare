@@ -6,9 +6,11 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { theme } from "../../theme";
 import { healthColors } from "../../theme/healthColors";
 import { textStyles } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
+import { getStatusStyle } from "../../utils/helpers";
 
 const Badge = ({
   children,
@@ -24,38 +26,14 @@ const Badge = ({
       return { color, backgroundColor };
     }
 
-    switch (status) {
-      case "pending":
-        return {
-          color: healthColors.status.pending,
-          backgroundColor: healthColors.warning.light,
-        };
-      case "confirmed":
-        return {
-          color: healthColors.status.confirmed,
-          backgroundColor: healthColors.success.light,
-        };
-      case "cancelled":
-        return {
-          color: healthColors.status.cancelled,
-          backgroundColor: healthColors.error.light,
-        };
-      case "completed":
-        return {
-          color: healthColors.status.completed,
-          backgroundColor: healthColors.neutral.gray200,
-        };
-      case "in-progress":
-        return {
-          color: healthColors.status.inProgress,
-          backgroundColor: healthColors.info.light,
-        };
-      default:
-        return {
-          color: color || healthColors.text.primary,
-          backgroundColor: backgroundColor || healthColors.background.secondary,
-        };
+    if (status) {
+      return getStatusStyle(status);
     }
+
+    return {
+      color: color || healthColors.text.primary,
+      backgroundColor: backgroundColor || healthColors.background.secondary,
+    };
   };
 
   const getSizeStyle = () => {
@@ -141,10 +119,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   smallText: {
-    fontSize: 9,
+    fontSize: theme.typography.sizes.overline,
   },
   largeText: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
   },
   dot: {
     width: 8,

@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 class PatientService {
     /**
@@ -12,20 +13,15 @@ class PatientService {
      * @param {Object} params - Query parameters { search: string }
      * @returns {Promise<Array>} - List of all patients
      */
-    async getAllPatients(params = {}) {
+    async getAllPatients(params = {}, options = {}) {
         try {
-            // Add cache-busting timestamp to force fresh data
             const queryParams = new URLSearchParams(params);
-            queryParams.set('_t', Date.now().toString());
-            
             const response = await api.get(`/patients/search?${queryParams.toString()}`, {
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
+                useCache: options?.forceFresh !== true,
+                skipCache: options?.forceFresh === true,
+                cacheTTL: options?.cacheTTL ?? 20000,
             });
-            return response.data?.data || response.data;
+            return normalizeServiceResponse(response.data, { fallbackData: [] });
         } catch (error) {
             logError(error, { context: 'PatientService.getAllPatients' });
             throw this.handleError(error);
@@ -40,7 +36,7 @@ class PatientService {
     async searchPatients(query) {
         try {
             const response = await api.get(`/patients/search?q=${encodeURIComponent(query)}`);
-            return response.data?.data || response.data;
+            return normalizeServiceResponse(response.data, { fallbackData: [] });
         } catch (error) {
             logError(error, { context: 'PatientService.searchPatients', query });
             throw this.handleError(error);
@@ -52,10 +48,14 @@ class PatientService {
      * @param {String} patientId - Patient ID
      * @returns {Promise<Object>} - Patient data
      */
-    async getPatientById(patientId) {
+    async getPatientById(patientId, options = {}) {
         try {
-            const response = await api.get(`/patients/${patientId}/profile`);
-            return response.data?.data || response.data;
+            const response = await api.get(`/patients/${patientId}/profile`, {
+                useCache: options?.useCache === true,
+                skipCache: options?.forceFresh === true,
+                cacheTTL: options?.cacheTTL ?? 30000,
+            });
+            return normalizeServiceResponse(response.data, { fallbackData: null });
         } catch (error) {
             logError(error, { context: 'PatientService.getPatientById', patientId });
             throw this.handleError(error);
@@ -70,7 +70,7 @@ class PatientService {
     async getCompleteHistory(patientId) {
         try {
             const response = await api.get(`/patients/${patientId}/complete-history`);
-            return response.data?.data || response.data;
+            return normalizeServiceResponse(response.data, { fallbackData: null });
         } catch (error) {
             logError(error, { context: 'PatientService.getCompleteHistory', patientId });
             throw this.handleError(error);
@@ -95,7 +95,7 @@ class PatientService {
     async updatePatientProfile(patientId, updates) {
         try {
             const response = await api.patch(`/patients/${patientId}/profile`, updates);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'PatientService.updatePatientProfile', patientId });
             throw this.handleError(error);

@@ -16,7 +16,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, UserPlus, User, Calendar, Phone, Droplet, MapPin, Cross, Info } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
@@ -26,6 +26,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { validateAge, validateBloodGroup } from "../../utils/formValidators";
 import { doctorService } from "../../services";
 import { Input, Button } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -169,8 +170,8 @@ const WalkInPatientScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -180,8 +181,8 @@ const WalkInPatientScreen = ({ navigation }) => {
           <Text style={styles.headerSubtitle}>Quick Registration</Text>
         </View>
         <View style={styles.headerIconContainer}>
-          <Ionicons
-            name="person-add"
+          <UserPlus
+            
             size={24}
             color={healthColors.primary.main}
           />
@@ -199,8 +200,8 @@ const WalkInPatientScreen = ({ navigation }) => {
         <View style={styles.formSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconContainer}>
-              <Ionicons
-                name="person-outline"
+              <User
+                
                 size={20}
                 color={healthColors.primary.main}
               />
@@ -214,7 +215,7 @@ const WalkInPatientScreen = ({ navigation }) => {
             placeholder="Enter full name"
             value={formData.name}
             onChangeText={(value) => handleInputChange("name", value)}
-            leftIcon={<Ionicons name="person" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<User  size={18} color={healthColors.text.disabled} />}
           />
 
           {/* Age & Gender */}
@@ -229,7 +230,7 @@ const WalkInPatientScreen = ({ navigation }) => {
                 }
                 keyboardType="numeric"
                 maxLength={3}
-                leftIcon={<Ionicons name="calendar-outline" size={18} color={healthColors.text.disabled} />}
+                leftIcon={<Calendar  size={18} color={healthColors.text.disabled} />}
               />
             </View>
 
@@ -248,7 +249,7 @@ const WalkInPatientScreen = ({ navigation }) => {
                     onPress={() => handleInputChange("gender", option)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons
+                    <Phone
                       name={
                         option === "male"
                           ? "male"
@@ -287,7 +288,7 @@ const WalkInPatientScreen = ({ navigation }) => {
             }
             keyboardType="phone-pad"
             maxLength={10}
-            leftIcon={<Ionicons name="call-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<DynamicIcon  size={18} color={healthColors.text.disabled} />}
           />
 
           {/* Blood Group */}
@@ -305,8 +306,8 @@ const WalkInPatientScreen = ({ navigation }) => {
                   onPress={() => handleInputChange("bloodGroup", group)}
                   activeOpacity={0.7}
                 >
-                  <Ionicons
-                    name="water"
+                  <Droplet
+                    
                     size={14}
                     color={
                       formData.bloodGroup === group
@@ -334,7 +335,7 @@ const WalkInPatientScreen = ({ navigation }) => {
             placeholder="Patient's home address"
             value={formData.address}
             onChangeText={(value) => handleInputChange("address", value)}
-            leftIcon={<Ionicons name="location-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<MapPin  size={18} color={healthColors.text.disabled} />}
           />
         </View>
 
@@ -342,8 +343,8 @@ const WalkInPatientScreen = ({ navigation }) => {
         <View style={styles.formSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconContainer}>
-              <Ionicons
-                name="medical-outline"
+              <Cross
+                
                 size={20}
                 color={healthColors.primary.main}
               />
@@ -363,8 +364,8 @@ const WalkInPatientScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.noteContainer}>
-          <Ionicons
-            name="information-circle-outline"
+          <Info
+            
             size={14}
             color={healthColors.text.disabled}
           />

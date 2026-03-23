@@ -5,17 +5,19 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Clock } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
 import { EmptyState } from "../../../components/common";
+import { DynamicIcon } from "../../../components/common";
 
 const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => (
   <View style={styles.section}>
     <View style={styles.headerRow}>
-      <Ionicons name="time-outline" size={20} color={healthColors.primary.main} />
+      <Clock  size={20} color={healthColors.primary.main} />
       <Text style={styles.title}>Recent Activities</Text>
-      <TouchableOpacity onPress={onToggle}>
+      <TouchableOpacity style={styles.viewAll} onPress={onToggle}>
         <Text style={styles.toggleText}>{showAll ? "Show Less" : "View All"}</Text>
+        <DynamicIcon name="chevron-forward" size={15} color={healthColors.primary.main} />
       </TouchableOpacity>
     </View>
 
@@ -31,8 +33,8 @@ const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => 
         activities.map((activity, i) => (
           <View key={activity.id || activity._id || i} style={styles.row}>
             <View style={styles.iconWrap}>
-              <Ionicons
-                name={activity.icon || "checkmark-circle"}
+              <DynamicIcon
+                name={activity.icon || "CheckCircle"}
                 size={18}
                 color={healthColors.primary.main}
               />
@@ -53,8 +55,9 @@ const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => 
 const styles = StyleSheet.create({
   section: { marginHorizontal: 16, marginTop: 24 },
   headerRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  title: { flex: 1, fontSize: 15, fontWeight: "700", color: healthColors.text.primary },
-  toggleText: { fontSize: 13, color: healthColors.primary.main, fontWeight: "600" },
+  title: { flex: 1, fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary },
+  viewAll: { flexDirection: "row", alignItems: "center", gap: 2 },
+  toggleText: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.primary.main, fontWeight: "600" },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
@@ -71,8 +74,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   content: { flex: 1 },
-  activityText: { fontSize: 13, fontWeight: "500", color: healthColors.text.primary, lineHeight: 18 },
-  timeText: { fontSize: 11, color: healthColors.text.tertiary, marginTop: 3 },
+  activityText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "500", color: healthColors.text.primary, lineHeight: 18 },
+  timeText: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, marginTop: 3 },
   compactEmpty: { flex: 0, paddingVertical: 24, paddingHorizontal: 16 },
 });
 

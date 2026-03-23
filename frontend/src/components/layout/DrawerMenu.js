@@ -26,7 +26,7 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { User, X, ChevronRight, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 
@@ -92,7 +92,7 @@ const DrawerMenu = ({
             <View style={styles.headerContent}>
               <View style={styles.profileRow}>
                 <View style={styles.avatarCircle}>
-                  <Ionicons name="person" size={28} color={healthColors.white} />
+                  <User  size={28} color={healthColors.white} />
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={styles.userName} numberOfLines={1}>
@@ -111,7 +111,7 @@ const DrawerMenu = ({
                 accessibilityRole="button"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="close" size={26} color={healthColors.white} />
+                <X  size={26} color={healthColors.white} />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -144,15 +144,15 @@ const DrawerMenu = ({
                         },
                       ]}
                     >
-                      <Ionicons
-                        name={item.icon}
-                        size={20}
-                        color={item.iconColor || healthColors.primary.main}
-                      />
+                      {item.icon ? (
+                        <item.icon
+                          size={20}
+                          color={item.iconColor || healthColors.primary.main}
+                        />
+                      ) : null}
                     </View>
                     <Text style={styles.menuLabel}>{item.label}</Text>
-                    <Ionicons
-                      name="chevron-forward"
+                    <ChevronRight
                       size={16}
                       color={healthColors.text.tertiary}
                     />
@@ -175,8 +175,8 @@ const DrawerMenu = ({
                       { backgroundColor: healthColors.error.background },
                     ]}
                   >
-                    <Ionicons
-                      name="log-out-outline"
+                    <LogOut
+                      
                       size={20}
                       color={healthColors.error.main}
                     />

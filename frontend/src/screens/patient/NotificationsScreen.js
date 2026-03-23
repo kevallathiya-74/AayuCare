@@ -18,7 +18,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Trash2, ArrowLeft, CheckCheck } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
@@ -26,6 +26,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { adminService, notificationService } from "../../services";
 import logger from "../../utils/logger";
+import { DynamicIcon } from "../../components/common";
 
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -297,7 +298,7 @@ const NotificationsScreen = ({ navigation }) => {
             { backgroundColor: getNotificationColor(item.priority) + "20" },
           ]}
         >
-          <Ionicons
+          <DynamicIcon
             name={getNotificationIcon(item.type)}
             size={24}
             color={getNotificationColor(item.priority)}
@@ -324,8 +325,8 @@ const NotificationsScreen = ({ navigation }) => {
           onPress={() => handleDeleteNotification(item._id, isRead)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons
-            name="trash-outline"
+          <DynamicIcon
+            name="trash-2"
             size={20}
             color={healthColors.text.tertiary}
           />
@@ -367,11 +368,7 @@ const NotificationsScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -389,11 +386,7 @@ const NotificationsScreen = ({ navigation }) => {
             onPress={handleClearAll}
             activeOpacity={0.7}
           >
-            <Ionicons
-              name="trash-outline"
-              size={20}
-              color={healthColors.error.main}
-            />
+            <Trash2 size={20} color={healthColors.error.main} />
           </TouchableOpacity>
         )}
       </View>
@@ -405,11 +398,7 @@ const NotificationsScreen = ({ navigation }) => {
           onPress={handleMarkAllAsRead}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="checkmark-done"
-            size={18}
-            color={healthColors.primary.main}
-          />
+          <CheckCheck size={18} color={healthColors.primary.main} />
           <Text style={styles.markAllText}>Mark all as read</Text>
         </TouchableOpacity>
       )}

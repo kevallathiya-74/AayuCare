@@ -36,8 +36,16 @@ export const DoctorAppointmentProvider = ({ children }) => {
       const response = await doctorService.getTodaysAppointments("all");
 
       if (isMounted.current && response?.success) {
-        // Use count from response or fallback to data length
-        const count = response.count ?? response.data?.length ?? 0;
+        // Use count from normalized data object, fallback to appointment list length.
+        const appointmentsData = response?.data || {};
+        const count =
+          appointmentsData?.count ??
+          appointmentsData?.total ??
+          (Array.isArray(appointmentsData?.appointments)
+            ? appointmentsData.appointments.length
+            : Array.isArray(appointmentsData)
+            ? appointmentsData.length
+            : 0);
         setTodayCount(count);
       }
     } catch (error) {

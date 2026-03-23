@@ -47,28 +47,49 @@ const getApiBaseUrl = () => {
     return envUrl;
   }
 
-  // For development: Try to detect if local backend is running
-  // Expo Go users: Use your computer's local IP
-  const isExpoGo = Constants.appOwnership === 'expo';
-  
-  if (__DEV__ && isExpoGo) {
-    // Get the manifest URL to extract the local IP
+  // Development mode auto-detection
+  if (__DEV__) {
+    const isExpoGo = Constants.appOwnership === 'expo';
     const manifestUrl = Constants.expoConfig?.hostUri;
-    
-    if (manifestUrl) {
-      const localIp = manifestUrl.split(':')[0]; // Extract IP from exp://192.168.x.x:8081
-      const localBackendUrl = `http://${localIp}:5000/api`;
-      if (__DEV__) {
-        console.log('[APP_CONFIG] Development mode - using local backend:', localBackendUrl);
+
+    // 1. Web Localhost
+    if (Platform.OS === 'web') {
+      const webUrl = 'http://localhost:5000/api';
+      console.log('[APP_CONFIG] Web Development - using local backend:', webUrl);
+      return webUrl;
+    }
+
+    // 2. Expo Go / LAN (works for emulator + physical device)
+    // hostUri is usually like: 10.130.73.190:8081
+    if (isExpoGo && manifestUrl) {
+      const localIp = manifestUrl.split(':')[0];
+      if (localIp) {
+        const localBackendUrl = `http://${localIp}:5000/api`;
+        console.log('[APP_CONFIG] Expo Go Development - using hostUri backend:', localBackendUrl);
+        return localBackendUrl;
       }
-      return localBackendUrl;
+    }
+    
+    // 3. Android Emulator mapping fallback
+    // Android emulator maps 10.0.2.2 to host machine's localhost
+    if (Platform.OS === 'android' && !Constants.isDevice) {
+      const androidEmulatorUrl = 'http://10.0.2.2:5000/api';
+      console.log('[APP_CONFIG] Android Emulator Fallback - using host backend:', androidEmulatorUrl);
+      return androidEmulatorUrl;
+    }
+
+    // 4. iOS Simulator mapping
+    if (Platform.OS === 'ios' && !Constants.isDevice) {
+      const iosDevUrl = 'http://localhost:5000/api';
+      console.log('[APP_CONFIG] iOS Simulator - using local backend:', iosDevUrl);
+      return iosDevUrl;
     }
   }
 
   // Fallback to production backend (Render)
   const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
   if (__DEV__) {
-    console.log('[APP_CONFIG] Using production backend:', prodUrl);
+    console.log('[APP_CONFIG] Fallback to production backend:', prodUrl);
   }
   return prodUrl;
 };

@@ -54,7 +54,15 @@ router.use(authorize("admin", "super_admin"));
 router.use(attachHospitalId);
 
 // Dashboard routes
-router.get("/dashboard/stats", cacheMiddleware(30), getDashboardStats);
+router.get(
+  "/dashboard/stats",
+  cacheMiddleware(60, (req) => {
+    const hospitalId = req.hospitalId || "all";
+    const role = req.user?.role || "admin";
+    return `cache:admin:dashboard:${hospitalId}:${role}`;
+  }),
+  getDashboardStats
+);
 router.get("/activities", cacheMiddleware(15), getRecentActivities);
 
 // User management routes

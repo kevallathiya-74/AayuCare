@@ -307,6 +307,61 @@ class PrescriptionRepository {
       paidAmount: 0,
     };
   }
+
+  /**
+   * Get pharmacy dashboard status counts
+   * @param {Object} filters - Filter options
+   * @returns {Promise<Object>} Status counts
+   */
+  async getPharmacyStatusCounts(filters = {}) {
+    const { hospitalId, startDate, endDate } = filters;
+
+    const matchStage = {};
+    if (hospitalId) {
+      matchStage.hospitalId = hospitalId;
+    }
+
+    if (startDate || endDate) {
+      matchStage.prescriptionDate = {};
+      if (startDate) matchStage.prescriptionDate.$gte = new Date(startDate);
+      if (endDate) matchStage.prescriptionDate.$lte = new Date(endDate);
+    }
+
+    const rows = await Prescription.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: "$pharmacyStatus",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const counts = {
+      pending: 0,
+      preparing: 0,
+      ready: 0,
+      dispensed: 0,
+      cancelled: 0,
+      total: 0,
+    };
+
+    for (const row of rows) {
+      const key = String(row._id || "").toLowerCase();
+      if (Object.prototype.hasOwnProperty.call(counts, key)) {
+        counts[key] += row.count;
+      }
+    }
+
+    counts.total =
+      counts.pending +
+      counts.preparing +
+      counts.ready +
+      counts.dispensed +
+      counts.cancelled;
+
+    return counts;
+  }
 }
 
 module.exports = new PrescriptionRepository();

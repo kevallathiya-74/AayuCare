@@ -1,6 +1,27 @@
 const Redis = require("ioredis");
 const logger = require("../utils/logger");
 
+const extractRedisUrl = (raw) => {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+
+  // Handle mistakenly pasted CLI command, e.g.
+  // "redis-cli --tls -u redis://..."
+  const token = trimmed
+    .split(/\s+/)
+    .find((part) => part.startsWith("redis://") || part.startsWith("rediss://"));
+
+  return token || (trimmed.startsWith("redis://") || trimmed.startsWith("rediss://") ? trimmed : null);
+};
+
+const redisUrl = extractRedisUrl(process.env.REDIS_URL);
+
+// In development, prefer local Redis unless explicitly disabled.
+// Set REDIS_USE_LOCAL=false to force REDIS_URL in dev.
+const shouldUseLocalRedis =
+  process.env.REDIS_USE_LOCAL === "true" ||
+  (process.env.NODE_ENV !== "production" && process.env.REDIS_USE_LOCAL !== "false");
+
 // Shared retry strategy — stops after 5 attempts so the app doesn't spam logs
 const retryStrategy = (times) => {
   if (times > 5) {
@@ -20,8 +41,8 @@ const sharedOptions = {
 // Create Redis client
 // Supports REDIS_URL (Upstash/cloud) or individual REDIS_HOST/PORT/PASSWORD (local)
 const buildClient = () => {
-  if (process.env.REDIS_URL) {
-    const url = process.env.REDIS_URL.trim();
+  if (!shouldUseLocalRedis && redisUrl) {
+    const url = redisUrl;
     // Upstash and other TLS Redis use rediss:// scheme
     const useTls = url.startsWith("rediss://");
     return new Redis(url, {
@@ -39,6 +60,12 @@ const buildClient = () => {
 };
 
 const redisClient = buildClient();
+
+if (shouldUseLocalRedis) {
+  logger.info(`🧩 Redis mode: local (${process.env.REDIS_HOST || "localhost"}:${parseInt(process.env.REDIS_PORT, 10) || 6379}, db ${parseInt(process.env.REDIS_DB, 10) || 0})`);
+} else {
+  logger.info("🧩 Redis mode: url");
+}
 
 // Connection event handlers
 redisClient.on("connect", () => {

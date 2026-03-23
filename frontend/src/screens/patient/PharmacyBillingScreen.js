@@ -18,7 +18,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Cross, Receipt, FileText, BriefcaseMedical, Building, Calculator, CreditCard, Info } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
@@ -30,6 +30,7 @@ import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
 import { prescriptionService, paymentService } from "../../services";
+import { DynamicIcon } from "../../components/common";
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
   const [paymentResult, setPaymentResult] = useState(null);
@@ -199,10 +200,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+            <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Ionicons name="medical-outline" size={32} color={theme.colors.white} />
+            <Cross  size={32} color={theme.colors.white} />
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
               <Text style={styles.headerSubtitle}>
@@ -234,10 +235,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.white} />
+          <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Ionicons name="medical-outline" size={32} color={theme.colors.white} />
+          <Cross  size={32} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
             <Text style={styles.headerSubtitle}>
@@ -255,7 +256,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               : Alert.alert("No Receipt", "Complete a payment to view the receipt.")
           }
         >
-          <Ionicons name="receipt" size={24} color={theme.colors.white} />
+          <Receipt  size={24} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -268,8 +269,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Prescription Info */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="document-text-outline"
+            <FileText
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -296,21 +297,17 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Medicines List */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="medkit-outline"
-              size={20}
-              color={healthColors.primary.main}
-            />
+            <BriefcaseMedical size={20} color={healthColors.primary.main} />
             <Text style={styles.sectionTitle}>
               MEDICINES ({prescription.medicines.length})
             </Text>
           </View>
           <View style={styles.card}>
-            {prescription.medicines.map((medicine, index) => (
-              <View key={index} style={styles.medicineItem}>
+            {prescription.medicines.map((medicine) => (
+              <View key={medicine.name} style={styles.medicineItem}>
                 <View style={styles.medicineIcon}>
-                  <Ionicons
-                    name="medical"
+                  <DynamicIcon
+                    name="hospital"
                     size={24}
                     color={healthColors.primary.main}
                   />
@@ -335,8 +332,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Purchase Options */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="business-outline"
+            <Building
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -352,11 +349,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               onPress={() => setSelectedPurchase("hospital")}
             >
               <View style={styles.purchaseOptionContent}>
-                <Ionicons
+                <DynamicIcon
                   name={
                     selectedPurchase === "hospital"
-                      ? "radio-button-on"
-                      : "radio-button-off"
+                      ? "checkmark-circle"
+                      : "circle"
                   }
                   size={24}
                   color={
@@ -390,11 +387,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               onPress={() => setSelectedPurchase("external")}
             >
               <View style={styles.purchaseOptionContent}>
-                <Ionicons
+                <DynamicIcon
                   name={
                     selectedPurchase === "external"
-                      ? "radio-button-on"
-                      : "radio-button-off"
+                      ? "checkmark-circle"
+                      : "circle"
                   }
                   size={24}
                   color={
@@ -419,7 +416,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Billing Summary */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
+            <DynamicIcon
               name="calculator-outline"
               size={20}
               color={healthColors.primary.main}
@@ -460,8 +457,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Payment Methods */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <Ionicons
-              name="card-outline"
+            <CreditCard
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -483,14 +480,14 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                     { backgroundColor: method.color + "20" },
                   ]}
                 >
-                  <Ionicons name={method.icon} size={24} color={method.color} />
+                  <DynamicIcon name={method.icon} size={24} color={method.color} />
                 </View>
                 <Text style={styles.paymentName}>{method.name}</Text>
-                <Ionicons
+                <DynamicIcon
                   name={
                     selectedPayment === method.id
                       ? "checkmark-circle"
-                      : "ellipse-outline"
+                      : "circle"
                   }
                   size={24}
                   color={
@@ -520,7 +517,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
               <>
-                <Ionicons name="card" size={24} color={theme.colors.white} />
+                <DynamicIcon name="card" size={24} color={theme.colors.white} />
                 <Text style={styles.payButtonText}>
                   Pay {formatCurrency(total)}
                 </Text>
@@ -531,7 +528,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={theme.colors.info.main} />
+          <Info  size={20} color={theme.colors.info.main} />
           <Text style={styles.infoText}>
             Medicine will be dispensed after successful payment verification
           </Text>
@@ -583,7 +580,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: "rgba(255, 255, 255, 0.9)",
+    color: theme.withOpacity(theme.colors.text.white, 0.9),
   },
   content: {
     padding: getScreenPadding(),

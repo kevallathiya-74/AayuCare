@@ -1,17 +1,27 @@
 /**
  * AayuCare - Custom Font Loader
  *
- * Loads Poppins (headings) and Inter (body) via expo-font.
- * Gracefully falls back to system fonts if assets are unavailable.
+ * Loads Poppins (headings) and Inter (body) via @expo-google-fonts.
  *
  * To activate custom fonts:
- *  1. Place TTF files in frontend/assets/fonts/
- *  2. Uncomment the font map below
+ *  1. Package installation: expo-font @expo-google-fonts/poppins @expo-google-fonts/inter
  */
 
-import { useCallback, useEffect, useState } from "react";
-import * as Font from "expo-font";
+import { useCallback } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import {
+  useFonts as useExpoFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from "@expo-google-fonts/poppins";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 
 // Keep the native splash visible while fonts load
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -19,45 +29,22 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 export const useFonts = () => {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
-
-  useEffect(() => {
-    const loadFonts = async () => {
-      try {
-        /**
-         * Uncomment and add font files under assets/fonts/ to enable:
-         *
-         * await Font.loadAsync({
-         *   "Poppins-Regular":    require("../../assets/fonts/Poppins-Regular.ttf"),
-         *   "Poppins-Medium":     require("../../assets/fonts/Poppins-Medium.ttf"),
-         *   "Poppins-SemiBold":   require("../../assets/fonts/Poppins-SemiBold.ttf"),
-         *   "Poppins-Bold":       require("../../assets/fonts/Poppins-Bold.ttf"),
-         *   "Inter-Regular":      require("../../assets/fonts/Inter-Regular.ttf"),
-         *   "Inter-Medium":       require("../../assets/fonts/Inter-Medium.ttf"),
-         *   "Inter-SemiBold":     require("../../assets/fonts/Inter-SemiBold.ttf"),
-         *   "Inter-Bold":         require("../../assets/fonts/Inter-Bold.ttf"),
-         * });
-         */
-
-        // When only system fonts are in use, mark as loaded immediately
-        setFontsLoaded(true);
-      } catch (error) {
-        if (__DEV__) {
-          console.warn("[useFonts] Font loading error — using system fonts:", error.message);
-        }
-        // Fall back to system fonts; never block the UI
-        setFontsLoaded(true);
-      }
-    };
-
-    loadFonts();
-  }, []);
+  const [fontsLoaded, fontError] = useExpoFonts({
+    "Poppins-Regular": Poppins_400Regular,
+    "Poppins-Medium": Poppins_500Medium,
+    "Poppins-SemiBold": Poppins_600SemiBold,
+    "Poppins-Bold": Poppins_700Bold,
+    "Inter-Regular": Inter_400Regular,
+    "Inter-Medium": Inter_500Medium,
+    "Inter-SemiBold": Inter_600SemiBold,
+    "Inter-Bold": Inter_700Bold,
+  });
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       await SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
   return { fontsLoaded, onLayoutRootView };
 };

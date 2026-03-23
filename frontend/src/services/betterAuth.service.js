@@ -5,9 +5,9 @@
 
 import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
-import * as SecureStore from "expo-secure-store";
 import { APP_CONFIG } from "../config/appConfig";
 import { STORAGE_KEYS } from "../utils/constants";
+import appStorage from "../utils/appStorage";
 
 // Better Auth expects base URL WITHOUT /api suffix
 // Backend Better Auth is mounted at: /api/auth/*
@@ -27,7 +27,7 @@ const authClient = createAuthClient({
       storage: {
         getItem: async (key) => {
           try {
-            return await SecureStore.getItemAsync(key);
+            return await appStorage.getItem(key);
           } catch (error) {
             console.error('[Auth] Storage getItem error:', error);
             return null;
@@ -35,14 +35,14 @@ const authClient = createAuthClient({
         },
         setItem: async (key, value) => {
           try {
-            await SecureStore.setItemAsync(key, value);
+            await appStorage.setItem(key, value);
           } catch (error) {
             console.error('[Auth] Storage setItem error:', error);
           }
         },
         removeItem: async (key) => {
           try {
-            await SecureStore.deleteItemAsync(key);
+            await appStorage.deleteItem(key);
           } catch (error) {
             console.error('[Auth] Storage removeItem error:', error);
           }

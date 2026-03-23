@@ -6,10 +6,10 @@
 
 import React, { useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
+import { CalendarDays, Circle, Home, SquareUserRound, UsersRound } from "lucide-react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors } from "../theme";
+import { healthColors, theme } from "../theme";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import {
@@ -24,6 +24,13 @@ import DoctorPatientsScreen from "../screens/hospital/DoctorPatientsScreen";
 import DoctorProfileScreen from "../screens/hospital/DoctorProfileScreen";
 
 const Tab = createBottomTabNavigator();
+
+const ROUTE_ICON_MAP = {
+  Dashboard: Home,
+  TodaysAppointments: CalendarDays,
+  Patients: UsersRound,
+  Profile: SquareUserRound,
+};
 
 /**
  * Inner navigator that uses the appointment context
@@ -46,19 +53,8 @@ const DoctorTabsInner = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === "Dashboard") {
-            iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "TodaysAppointments") {
-            iconName = focused ? "calendar" : "calendar-outline";
-          } else if (route.name === "Patients") {
-            iconName = focused ? "people" : "people-outline";
-          } else if (route.name === "Profile") {
-            iconName = focused ? "person" : "person-outline";
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          const Icon = ROUTE_ICON_MAP[route.name] || Circle;
+          return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
         },
         tabBarActiveTintColor: healthColors.primary.main,
         tabBarInactiveTintColor: healthColors.text.tertiary,
@@ -76,7 +72,7 @@ const DoctorTabsInner = () => {
           shadowRadius: 4,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: theme.typography.sizes.bodySmall,
           fontWeight: "600",
         },
         tabBarHideOnKeyboard: true,
@@ -99,7 +95,7 @@ const DoctorTabsInner = () => {
           tabBarBadge: todayCount > 0 ? todayCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: healthColors.primary.main,
-            fontSize: 10,
+            fontSize: theme.typography.sizes.overline,
             fontWeight: "700",
             minWidth: 18,
             height: 18,
@@ -138,4 +134,3 @@ const DoctorTabNavigator = () => {
 };
 
 export default DoctorTabNavigator;
-

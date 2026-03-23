@@ -4,7 +4,21 @@
  * Manages health records and vitals state.
  */
 
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { healthMetricsService } from '../../services';
+
+// Thunks
+export const fetchHealthMetrics = createAsyncThunk(
+  'health/fetchMetrics',
+  async (patientId, { rejectWithValue }) => {
+    try {
+      const response = await healthMetricsService.getMetrics(patientId);
+      return Array.isArray(response?.data) ? response.data : [];
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch health metrics');
+    }
+  }
+);
 
 // Initial state
 const initialState = {
@@ -30,6 +44,21 @@ const healthSlice = createSlice({
     clearSelectedRecord: (state) => {
       state.selectedRecord = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchHealthMetrics.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchHealthMetrics.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.vitals = action.payload; // Storing metrics here
+      })
+      .addCase(fetchHealthMetrics.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
   },
 });
 

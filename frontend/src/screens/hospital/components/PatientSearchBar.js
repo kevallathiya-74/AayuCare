@@ -5,7 +5,7 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Search, XCircle, User, ChevronRight } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
 
 const PatientSearchBar = ({
@@ -19,7 +19,7 @@ const PatientSearchBar = ({
   <View>
     {/* Search input */}
     <View style={styles.inputRow}>
-      <Ionicons name="search" size={18} color={healthColors.text.secondary} style={styles.searchIcon} />
+      <Search  size={18} color={healthColors.text.secondary} style={styles.searchIcon} />
       <TextInput
         style={styles.input}
         placeholder="Search by patient name…"
@@ -32,7 +32,7 @@ const PatientSearchBar = ({
       {searching && <ActivityIndicator size="small" color={healthColors.primary.main} />}
       {!searching && value.length > 0 && (
         <TouchableOpacity onPress={onClear} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="close-circle" size={18} color={healthColors.text.tertiary} />
+          <XCircle  size={18} color={healthColors.text.tertiary} />
         </TouchableOpacity>
       )}
     </View>
@@ -48,7 +48,7 @@ const PatientSearchBar = ({
             activeOpacity={0.7}
           >
             <View style={styles.resultAvatar}>
-              <Ionicons name="person" size={16} color={healthColors.primary.main} />
+              <User  size={16} color={healthColors.primary.main} />
             </View>
             <View style={styles.resultInfo}>
               <Text style={styles.resultName}>{patient.name || "Unknown"}</Text>
@@ -56,7 +56,7 @@ const PatientSearchBar = ({
                 {patient.age ? `Age ${patient.age} · ` : ""}ID: {patient.userId || "N/A"}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={healthColors.text.tertiary} />
+            <ChevronRight  size={16} color={healthColors.text.tertiary} />
           </TouchableOpacity>
         ))}
       </View>
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   searchIcon: { marginRight: 2 },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     paddingVertical: 0,
   },
@@ -108,8 +108,8 @@ const styles = StyleSheet.create({
     justifyContent: "center", alignItems: "center",
   },
   resultInfo: { flex: 1 },
-  resultName: { fontSize: 14, fontWeight: "600", color: healthColors.text.primary },
-  resultMeta: { fontSize: 11, color: healthColors.text.tertiary, marginTop: 2 },
+  resultName: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "600", color: healthColors.text.primary },
+  resultMeta: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, marginTop: 2 },
 });
 
 export default PatientSearchBar;

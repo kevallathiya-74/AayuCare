@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 const adminService = {
     /**
@@ -14,7 +15,7 @@ const adminService = {
     async getDashboardStats() {
         try {
             const response = await api.get('/admin/dashboard/stats');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getDashboardStats' });
             throw error;
@@ -29,7 +30,7 @@ const adminService = {
     async getRecentActivities(limit = 10) {
         try {
             const response = await api.get(`/admin/activities?limit=${limit}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getRecentActivities' });
             throw error;
@@ -51,7 +52,7 @@ const adminService = {
                 ...(search && { search }),
             });
             const response = await api.get(`/admin/users?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getUsers', options });
             throw error;
@@ -67,7 +68,7 @@ const adminService = {
     async updateUserStatus(userId, isActive) {
         try {
             const response = await api.patch(`/admin/users/${userId}/status`, { isActive });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.updateUserStatus', userId, isActive });
             throw error;
@@ -84,7 +85,7 @@ const adminService = {
     async updateUserRole(userId, role, version) {
         try {
             const response = await api.patch(`/admin/users/${userId}/role`, { role, version });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.updateUserRole', userId, role });
             throw error;
@@ -99,7 +100,7 @@ const adminService = {
     async bulkUpdateUsers(operations) {
         try {
             const response = await api.post('/admin/users/bulk', { operations });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.bulkUpdateUsers', operationsCount: operations.length });
             throw error;
@@ -113,7 +114,7 @@ const adminService = {
     async getSystemHealth() {
         try {
             const response = await api.get('/admin/system/health');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getSystemHealth' });
             throw error;
@@ -137,7 +138,7 @@ const adminService = {
                 ...(userId && { userId }),
             });
             const response = await api.get(`/admin/audit-logs?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getAuditLogs', options });
             throw error;
@@ -151,7 +152,7 @@ const adminService = {
     async getSecuritySettings() {
         try {
             const response = await api.get('/admin/security');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getSecuritySettings' });
             throw error;
@@ -170,7 +171,7 @@ const adminService = {
                 currentPassword,
                 newPassword,
             });
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.changePassword' });
             throw error;
@@ -184,7 +185,7 @@ const adminService = {
     async logoutAllDevices() {
         try {
             const response = await api.post('/admin/security/logout-all');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.logoutAllDevices' });
             throw error;
@@ -205,7 +206,7 @@ const adminService = {
                 ...(patientId && { patientId }),
             });
             const response = await api.get(`/admin/medical-records?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getMedicalRecordsOverview', options });
             throw error;
@@ -219,7 +220,7 @@ const adminService = {
     async getSystemMetrics() {
         try {
             const response = await api.get('/admin/system/metrics');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getSystemMetrics' });
             throw error;
@@ -241,7 +242,7 @@ const adminService = {
                 ...(status && { status }),
             });
             const response = await api.get(`/admin/notifications/manage?${params}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.getNotificationsManagement', options });
             throw error;
@@ -256,7 +257,7 @@ const adminService = {
     async createUser(userData) {
         try {
             const response = await api.post('/admin/users', userData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.createUser', role: userData.role });
             throw error;
@@ -272,7 +273,7 @@ const adminService = {
     async updateUserProfile(userId, profileData) {
         try {
             const response = await api.put(`/admin/users/${userId}`, profileData);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.updateUserProfile', userId });
             throw error;
@@ -287,7 +288,7 @@ const adminService = {
     async deleteUser(userId) {
         try {
             const response = await api.delete(`/admin/users/${userId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.deleteUser', userId });
             throw error;
@@ -303,7 +304,7 @@ const adminService = {
     async permanentDeleteUser(userId) {
         try {
             const response = await api.delete(`/admin/users/${userId}/permanent`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'adminService.permanentDeleteUser', userId });
             throw error;

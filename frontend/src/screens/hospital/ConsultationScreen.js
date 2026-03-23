@@ -28,8 +28,8 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { healthColors } from "../../theme";
+import { ChevronLeft, Clock, User, Calendar, Cross, FileText, UserCircle, Activity, Clipboard, Edit } from "lucide-react-native";
+import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
   verticalScale,
@@ -199,8 +199,8 @@ const ConsultationScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons
-            name="chevron-back"
+          <ChevronLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -210,7 +210,7 @@ const ConsultationScreen = ({ navigation, route }) => {
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Active Consultation</Text>
           <View style={styles.timerBadge}>
-            <Ionicons name="time-outline" size={12} color={healthColors.warning.dark} />
+            <Clock  size={12} color={healthColors.warning.dark} />
             <Text style={styles.timerText}>{formatElapsed(elapsed)}</Text>
           </View>
         </View>
@@ -320,7 +320,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             <View style={styles.statusDot} />
             <Text style={styles.statusBannerText}>In Progress</Text>
             <View style={styles.flex} />
-            <Ionicons name="time-outline" size={14} color={healthColors.warning.dark} />
+            <Clock  size={14} color={healthColors.warning.dark} />
             <Text style={styles.bannerTimer}>{formatElapsed(elapsed)}</Text>
           </View>
 
@@ -328,8 +328,8 @@ const ConsultationScreen = ({ navigation, route }) => {
           <View style={styles.patientCard}>
             <View style={styles.patientCardHeader}>
               <View style={styles.avatarCircle}>
-                <Ionicons
-                  name="person"
+                <User
+                  
                   size={28}
                   color={healthColors.primary.main}
                 />
@@ -349,8 +349,8 @@ const ConsultationScreen = ({ navigation, route }) => {
             <View style={styles.apptInfoRow}>
               {appointmentDate ? (
                 <View style={styles.apptInfoItem}>
-                  <Ionicons
-                    name="calendar-outline"
+                  <Calendar
+                    
                     size={14}
                     color={healthColors.text.secondary}
                   />
@@ -359,8 +359,8 @@ const ConsultationScreen = ({ navigation, route }) => {
               ) : null}
               {appointmentTime ? (
                 <View style={styles.apptInfoItem}>
-                  <Ionicons
-                    name="time-outline"
+                  <Clock
+                    
                     size={14}
                     color={healthColors.text.secondary}
                   />
@@ -372,8 +372,8 @@ const ConsultationScreen = ({ navigation, route }) => {
             {/* Reason / chief complaint */}
             {reason ? (
               <View style={styles.reasonRow}>
-                <Ionicons
-                  name="medical-outline"
+                <Cross
+                  
                   size={14}
                   color={healthColors.primary.main}
                 />
@@ -389,8 +389,8 @@ const ConsultationScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Create prescription"
               >
-                <Ionicons
-                  name="document-text-outline"
+                <FileText
+                  
                   size={16}
                   color={healthColors.accent.coral}
                 />
@@ -405,8 +405,8 @@ const ConsultationScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="View patient history"
               >
-                <Ionicons
-                  name="person-circle-outline"
+                <UserCircle
+                  
                   size={16}
                   color={healthColors.primary.main}
                 />
@@ -420,8 +420,8 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── Vitals section ── */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Ionicons
-                name="pulse-outline"
+              <Activity
+                
                 size={18}
                 color={healthColors.primary.main}
               />
@@ -496,8 +496,8 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── Diagnosis section ── */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Ionicons
-                name="clipboard-outline"
+              <Clipboard
+                
                 size={18}
                 color={healthColors.primary.main}
               />
@@ -518,8 +518,8 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── Consultation notes section ── */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Ionicons
-                name="create-outline"
+              <Edit
+                
                 size={18}
                 color={healthColors.primary.main}
               />
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "600",
     color: healthColors.text.primary,
   },
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timerText: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.warning.dark,
     fontWeight: "600",
   },
@@ -621,12 +621,12 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.warning.dark,
   },
   statusBannerText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "600",
     color: healthColors.warning.dark,
   },
   bannerTimer: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "700",
     color: healthColors.warning.dark,
     marginLeft: 4,
@@ -660,13 +660,13 @@ const styles = StyleSheet.create({
   },
   patientMeta: { flex: 1 },
   patientName: {
-    fontSize: 16,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "700",
     color: healthColors.text.primary,
     marginBottom: 2,
   },
   patientSub: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
 
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   apptInfoText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
 
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   reasonText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     lineHeight: 18,
   },
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   quickActionText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "500",
   },
   quickActionDivider: {
@@ -747,19 +747,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "600",
     color: healthColors.text.primary,
   },
   sectionOptional: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.text.tertiary,
     marginLeft: 4,
   },
 
   // ── Form fields ──
   fieldLabel: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: "500",
     color: healthColors.text.secondary,
     marginBottom: 6,
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     minHeight: 44,
   },
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   charCount: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
     textAlign: "right",
     marginTop: 4,
@@ -806,16 +806,16 @@ const styles = StyleSheet.create({
   },
   bpInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
     paddingVertical: 10,
   },
   bpUnit: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
   bpSlash: {
-    fontSize: 20,
+    fontSize: theme.typography.sizes.h4,
     color: healthColors.text.secondary,
     fontWeight: "300",
   },
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   completeButtonText: {
-    fontSize: 15,
+    fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: "700",
     color: "#fff",
     letterSpacing: 0.3,

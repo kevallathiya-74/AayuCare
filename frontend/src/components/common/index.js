@@ -11,6 +11,14 @@ export { default as Card } from "./Card";
 export { default as Input } from "./Input";
 export { default as Tabs } from "./Tabs";
 export { default as ListItem } from "./ListItem";
+export { default as DynamicIcon } from "./DynamicIcon";
+export {
+	FilterHeaderRow,
+	FilterSectionTitle,
+	FilterSelectField,
+	FilterDropdownList,
+	FilterChipGroup,
+} from "./FilterComponents";
 export { default as EmptyState } from "./EmptyState";
 export { default as LoadingOverlay } from "./LoadingOverlay";
 export { default as ProgressBar } from "./ProgressBar";
@@ -23,7 +31,8 @@ export { default as CompactActionCard } from "./CompactActionCard";
 export * from "./CustomIcons";
 
 // ui/ sub-folder — new atomic components
-export { default as SkeletonLoader, SkeletonCardRow, SkeletonStatGrid } from "../ui/SkeletonLoader";
+export { default as SkeletonLoader } from "../ui/SkeletonLoader";
+export { SkeletonCardRow, SkeletonStatGrid } from "../ui/SkeletonLoader";
 export { default as SectionHeader } from "../ui/SectionHeader";
 export { default as ModalSheet } from "../ui/ModalSheet";
 

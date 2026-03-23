@@ -16,23 +16,17 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, RefreshCcw, Search } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import prescriptionService from "../../services/prescription.service";
 import { formatDate } from "../../utils/helpers";
 import { logError } from "../../utils/errorHandler";
 import { SkeletonCardRow, EmptyState } from "../../components/common";
+import { EmptyStateConfig } from "../../utils/constants";
 
 const FILTERS = ["all", "pending", "preparing", "ready", "dispensed"];
 
-const normalizeStatus = (status) => {
-  if (status === "sent_to_pharmacy") return "preparing";
-  if (status === "pending") return "pending";
-  if (status === "preparing") return "preparing";
-  if (status === "ready") return "ready";
-  if (status === "dispensed") return "dispensed";
-  return "pending";
-};
+
 
 const STATUS_CONFIG = {
   all: {
@@ -114,7 +108,7 @@ const StatusChip = ({ label, count, isActive, onPress }) => {
 };
 
 const OrderCard = ({ order }) => {
-  const status = normalizeStatus(order.pharmacyStatus);
+  const status = order.pharmacyStatus || "pending";
   const statusLabel = STATUS_CONFIG[status]?.label || "Pending";
 
   return (
@@ -192,7 +186,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
     };
 
     prescriptions.forEach((item) => {
-      const status = normalizeStatus(item.pharmacyStatus);
+      const status = item.pharmacyStatus || "pending";
       if (base[status] !== undefined) {
         base[status] += 1;
       }
@@ -205,7 +199,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
     const query = searchQuery.trim().toLowerCase();
 
     return prescriptions.filter((item) => {
-      const normalized = normalizeStatus(item.pharmacyStatus);
+      const normalized = item.pharmacyStatus || "pending";
       const statusMatch = selectedFilter === "all" || normalized === selectedFilter;
       const searchMatch = !query || getSearchableText(item).includes(query);
 
@@ -227,7 +221,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
         <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={theme.iconSizes.md} color={healthColors.text.primary} />
+            <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pharmacy Management</Text>
           <View style={styles.headerIconBtn} />
@@ -250,7 +244,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={theme.iconSizes.md} color={healthColors.text.primary} />
+          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Pharmacy Management</Text>
@@ -261,8 +255,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Refresh orders"
         >
-          <Ionicons
-            name="refresh"
+          <RefreshCcw
             size={theme.iconSizes.md}
             color={refreshing ? healthColors.text.tertiary : healthColors.text.primary}
           />
@@ -286,7 +279,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
         ListHeaderComponent={
           <View>
             <View style={styles.searchWrap}>
-              <Ionicons name="search" size={theme.iconSizes.sm} color={healthColors.text.tertiary} />
+              <Search size={theme.iconSizes.sm} color={healthColors.text.tertiary} />
               <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -333,11 +326,11 @@ const PharmacyManagementScreen = ({ navigation }) => {
         }
         ListEmptyComponent={
           <EmptyState
-            icon="medkit-outline"
-            title={selectedFilter === "all" ? "No Orders Found" : `No ${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Orders`}
+            icon={EmptyStateConfig.PHARMACY.icon}
+            title={selectedFilter === "all" ? EmptyStateConfig.PHARMACY.title : `No ${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Orders`}
             message={
               selectedFilter === "all"
-                ? "Prescriptions will appear here once created by doctors."
+                ? EmptyStateConfig.PHARMACY.message
                 : "No orders match this filter. Try viewing all orders."
             }
             actionLabel={selectedFilter !== "all" ? "View All Orders" : undefined}

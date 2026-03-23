@@ -6,9 +6,10 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { RefreshCw, ArrowLeft, Headphones } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { verticalScale } from "../../utils/responsive";
+import DynamicIcon from "./DynamicIcon";
 
 const ErrorRecovery = ({
   error,
@@ -122,7 +123,7 @@ const ErrorRecovery = ({
           { backgroundColor: errorInfo.iconColor + "15" },
         ]}
       >
-        <Ionicons name={errorInfo.icon} size={36} color={errorInfo.iconColor} />
+        <DynamicIcon name={errorInfo.icon} size={36} color={errorInfo.iconColor} />
       </View>
 
       <Text style={styles.title}>{errorInfo.title}</Text>
@@ -132,7 +133,7 @@ const ErrorRecovery = ({
         <Text style={styles.suggestionsTitle}>What you can do:</Text>
         {errorInfo.suggestions.map((suggestion, index) => (
           <View key={index} style={styles.suggestionItem}>
-            <Ionicons
+            <DynamicIcon
               name="checkmark-circle"
               size={16}
               color={healthColors.success.main}
@@ -150,7 +151,7 @@ const ErrorRecovery = ({
             onPress={onRetry}
             activeOpacity={0.8}
           >
-            <Ionicons name="refresh" size={20} color={healthColors.white} />
+            <RefreshCw  size={20} color={healthColors.white} />
             <Text style={styles.primaryButtonText}>Try Again</Text>
           </TouchableOpacity>
         )}
@@ -161,8 +162,8 @@ const ErrorRecovery = ({
             onPress={onGoBack}
             activeOpacity={0.8}
           >
-            <Ionicons
-              name="arrow-back"
+            <ArrowLeft
+              
               size={20}
               color={healthColors.primary.main}
             />
@@ -176,8 +177,8 @@ const ErrorRecovery = ({
             onPress={onContactSupport}
             activeOpacity={0.8}
           >
-            <Ionicons
-              name="headset"
+            <Headphones
+              
               size={20}
               color={healthColors.text.secondary}
             />

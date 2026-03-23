@@ -24,8 +24,8 @@ import {
   Animated,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { theme, healthColors } from "../../theme";
+import DynamicIcon from "../common/DynamicIcon";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -91,7 +91,7 @@ const StatCard = ({
       <View
         style={[styles.iconWrap, { backgroundColor: color + "18" }]}
       >
-        <Ionicons name={icon} size={22} color={color} />
+        <DynamicIcon name={icon} size={22} color={color} />
       </View>
 
       {/* Value */}
@@ -108,7 +108,7 @@ const StatCard = ({
       {displayTrend ? (
         <View style={styles.trendRow}>
           {trendIcon ? (
-            <Ionicons name={trendIcon} size={11} color={trendColor} />
+            <DynamicIcon name={trendIcon} size={11} color={trendColor} />
           ) : null}
           <Text style={[styles.trendText, { color: trendColor }]}>
             {" "}{displayTrend}

@@ -5,6 +5,7 @@
 
 import api from "./apiClient";
 import { logError } from "../utils/errorHandler";
+import { normalizeServiceResponse } from "./responseNormalizer";
 
 class PaymentService {
   /**
@@ -20,7 +21,7 @@ class PaymentService {
   async createPayment(paymentData) {
     try {
       const response = await api.post("/payments", paymentData);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.createPayment" });
       throw this.handleError(error);
@@ -38,7 +39,7 @@ class PaymentService {
       const response = await api.get(`/payments/patient/${patientId}`, {
         params,
       });
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.getPatientPayments" });
       throw this.handleError(error);
@@ -53,7 +54,7 @@ class PaymentService {
   async getPaymentById(paymentId) {
     try {
       const response = await api.get(`/payments/${paymentId}`);
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.getPaymentById" });
       throw this.handleError(error);
@@ -68,7 +69,7 @@ class PaymentService {
   async getPaymentStats(params = {}) {
     try {
       const response = await api.get("/payments/stats", { params });
-      return response.data;
+      return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.getPaymentStats" });
       throw this.handleError(error);

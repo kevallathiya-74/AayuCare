@@ -21,7 +21,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Calendar, Cross, ChevronDown, X, CheckCircle, User, Star, Banknote, Building, Video, Clock, Check } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
@@ -62,6 +62,15 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
 
+  const generateAllSlots = () => {
+    const slots = [];
+    for (let i = 9; i <= 17; i++) {
+      slots.push(`${i < 10 ? '0' + i : i}:00`);
+      if (i !== 17) slots.push(`${i < 10 ? '0' + i : i}:30`);
+    }
+    return slots;
+  };
+
   // Fetch doctors by specialty
   const fetchDoctors = useCallback(
     async (specialty) => {
@@ -78,8 +87,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
         };
         const response = await doctorService.getDoctors(filters);
-        // doctorService already unwraps response.data.data — check .doctors directly
-        const doctorsList = response?.doctors || response?.data?.doctors;
+        const doctorsPayload = response?.data;
+        const doctorsList = Array.isArray(doctorsPayload)
+          ? doctorsPayload
+          : doctorsPayload?.doctors || [];
         if (doctorsList) {
           const fetchedDoctors = doctorsList;
           setDoctors(fetchedDoctors);
@@ -128,7 +139,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         doctorId,
         appointmentDate
       );
-      const apiSlots = response?.data?.availableSlots || response?.data?.slots;
+      const slotsPayload = response?.data;
+      const apiSlots = Array.isArray(slotsPayload)
+        ? slotsPayload
+        : slotsPayload?.availableSlots || slotsPayload?.slots;
       if (Array.isArray(apiSlots)) {
         setTimeSlots(apiSlots);
       } else {
@@ -292,8 +306,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -304,8 +318,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           onPress={() => navigation.navigate("MyAppointments")}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="calendar"
+          <Calendar
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -324,6 +338,38 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           }}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Step Indicator */}
+          <View style={styles.stepIndicatorContainer}>
+            {[1, 2, 3, 4, 5].map((step, index) => {
+              let currentStep = 1;
+              if (selectedSpecialty) currentStep = 2;
+              if (selectedDoctor) currentStep = 4;
+              if (selectedTime) currentStep = 5;
+              
+              const isActive = step === currentStep;
+              const isCompleted = step < currentStep;
+              
+              return (
+                <React.Fragment key={step}>
+                  <View style={[
+                    styles.indicatorCircle,
+                    isActive && styles.indicatorCircleActive,
+                    isCompleted && styles.indicatorCircleCompleted
+                  ]}>
+                    {isCompleted ? (
+                       <Check size={12} color={theme.colors.white} />
+                    ) : (
+                       <Text style={[styles.indicatorText, isActive && styles.indicatorTextActive]}>{step}</Text>
+                    )}
+                  </View>
+                  {index < 4 && (
+                    <View style={[styles.indicatorLine, isCompleted && styles.indicatorLineCompleted]} />
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </View>
+
           {/* Step 1: Select Specialty */}
           <View style={styles.section}>
             <View style={styles.stepHeader}>
@@ -337,16 +383,16 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               onPress={() => setShowSpecialtyModal(true)}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name="medical-outline"
+              <Cross
+                
                 size={22}
                 color={healthColors.primary.main}
               />
               <Text style={styles.specialtyText}>
                 {selectedSpecialty || "Select Specialty"}
               </Text>
-              <Ionicons
-                name="chevron-down"
+              <ChevronDown
+                
                 size={20}
                 color={healthColors.text.secondary}
               />
@@ -366,8 +412,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     <TouchableOpacity
                       onPress={() => setShowSpecialtyModal(false)}
                     >
-                      <Ionicons
-                        name="close"
+                      <X
+                        
                         size={24}
                         color={healthColors.text.primary}
                       />
@@ -406,8 +452,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                             {specialty}
                           </Text>
                           {selectedSpecialty === specialty && (
-                            <Ionicons
-                              name="checkmark-circle"
+                            <CheckCircle
+                              
                               size={22}
                               color={healthColors.primary.main}
                             />
@@ -455,8 +501,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                   activeOpacity={0.7}
                 >
                   <View style={styles.doctorAvatar}>
-                    <Ionicons
-                      name="person"
+                    <User
+                      
                       size={24}
                       color={healthColors.primary.main}
                     />
@@ -469,14 +515,14 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     </Text>
                     <View style={styles.doctorStats}>
                       <View style={styles.ratingContainer}>
-                        <Ionicons name="star" size={14} color={theme.colors.warning.main} />
+                        <Star  size={14} color={theme.colors.warning.main} />
                         <Text style={styles.ratingText}>
                           {doctor.rating ? `${doctor.rating} ★` : "N/A"}
                         </Text>
                       </View>
                       <View style={styles.feeContainer}>
-                        <Ionicons
-                          name="cash-outline"
+                        <Banknote
+                          
                           size={14}
                           color={healthColors.success.main}
                         />
@@ -487,8 +533,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     </View>
                   </View>
                   {selectedDoctor?._id === doctor._id && (
-                    <Ionicons
-                      name="checkmark-circle"
+                    <CheckCircle
+                      
                       size={24}
                       color={healthColors.success.main}
                     />
@@ -522,8 +568,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       styles.typeIconBoxSelected,
                   ]}
                 >
-                  <Ionicons
-                    name="business-outline"
+                  <Building
+                    
                     size={32}
                     color={
                       appointmentType === "in-person"
@@ -557,8 +603,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       styles.typeIconBoxSelected,
                   ]}
                 >
-                  <Ionicons
-                    name="videocam-outline"
+                  <Video
+                    
                     size={32}
                     color={
                       appointmentType === "telemedicine"
@@ -594,91 +640,84 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               onPress={() => setShowDatePicker(true)}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name="calendar-outline"
+              <Calendar
+                
                 size={22}
                 color={healthColors.primary.main}
               />
               <Text style={styles.dateText}>{selectedDate}</Text>
-              <Ionicons
-                name="chevron-down"
+              <ChevronDown
+                
                 size={20}
                 color={healthColors.text.secondary}
               />
             </TouchableOpacity>
 
-            {/* Date Picker */}
-            {Platform.OS === "ios" ? (
-              <Modal
-                visible={showDatePicker}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowDatePicker(false)}
-              >
-                <View style={styles.datePickerModal}>
-                  <View style={styles.datePickerContainer}>
-                    <View style={styles.datePickerHeader}>
-                      <Text style={styles.datePickerTitle}>Select Date</Text>
-                      <TouchableOpacity
-                        onPress={() => setShowDatePicker(false)}
-                      >
-                        <Text style={styles.datePickerDone}>Done</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <DateTimePicker
-                      value={date}
-                      mode="date"
-                      display="spinner"
-                      onChange={handleDateChange}
-                      minimumDate={new Date()}
-                      textColor={healthColors.text.primary}
-                    />
+            {/* Date Picker Modal for Both Platforms */}
+            <Modal
+              visible={showDatePicker}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowDatePicker(false)}
+            >
+              <View style={styles.datePickerModal}>
+                <View style={styles.datePickerContainer}>
+                  <View style={styles.datePickerHeader}>
+                    <Text style={styles.datePickerTitle}>Select Date</Text>
+                    <TouchableOpacity
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.datePickerDone}>Done</Text>
+                    </TouchableOpacity>
                   </View>
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="spinner"
+                    onChange={handleDateChange}
+                    minimumDate={new Date()}
+                    textColor={healthColors.text.primary}
+                  />
                 </View>
-              </Modal>
-            ) : (
-              showDatePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                  minimumDate={new Date()}
-                />
-              )
-            )}
+              </View>
+            </Modal>
             <View style={styles.timeLabelRow}>
-              <Ionicons
-                name="time-outline"
+              <Clock
+                
                 size={18}
                 color={healthColors.text.primary}
               />
               <Text style={styles.timeLabel}>Available Slots:</Text>
             </View>
             <View style={styles.timeSlotsGrid}>
-              {timeSlots.map((slot) => (
+              {generateAllSlots().map((slot) => {
+                const isAvailable = timeSlots.includes(slot);
+                return (
                 <TouchableOpacity
                   key={slot}
                   style={[
                     styles.timeSlot,
                     selectedTime === slot && styles.timeSlotSelected,
+                    !isAvailable && styles.timeSlotDisabled
                   ]}
-                  onPress={() => setSelectedTime(slot)}
-                  activeOpacity={0.7}
+                  onPress={() => isAvailable && setSelectedTime(slot)}
+                  activeOpacity={isAvailable ? 0.7 : 1}
+                  disabled={!isAvailable}
                 >
                   <Text
                     style={[
                       styles.timeSlotText,
                       selectedTime === slot && styles.timeSlotTextSelected,
+                      !isAvailable && styles.timeSlotTextDisabled
                     ]}
                   >
                     {convertTo12Hour(slot)}
                   </Text>
                   {selectedTime === slot && (
-                    <Ionicons name="checkmark" size={16} color={theme.colors.white} />
+                    <Check  size={16} color={theme.colors.white} />
                   )}
                 </TouchableOpacity>
-              ))}
+              )})}
             </View>
           </View>
 
@@ -1086,6 +1125,55 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 80,
+  },
+  timeSlotDisabled: {
+    backgroundColor: healthColors.background.tertiary,
+    borderColor: healthColors.border.light,
+    opacity: 0.5,
+  },
+  timeSlotTextDisabled: {
+    color: healthColors.text.tertiary,
+    textDecorationLine: "line-through",
+  },
+  stepIndicatorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  indicatorCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: healthColors.background.tertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  indicatorCircleActive: {
+    backgroundColor: healthColors.primary.main,
+    borderWidth: 2,
+    borderColor: healthColors.primary.light,
+  },
+  indicatorCircleCompleted: {
+    backgroundColor: healthColors.success.main,
+  },
+  indicatorText: {
+    color: healthColors.text.secondary,
+    fontSize: theme.typography.sizes.caption,
+    fontWeight: "bold",
+  },
+  indicatorTextActive: {
+    color: theme.colors.white,
+  },
+  indicatorLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: healthColors.border.light,
+    marginHorizontal: 4,
+  },
+  indicatorLineCompleted: {
+    backgroundColor: healthColors.success.main,
   },
 });
 

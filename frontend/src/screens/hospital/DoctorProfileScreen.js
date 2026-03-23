@@ -19,7 +19,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { CreditCard, ChevronRight, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors, textStyles, spacing } from "../../theme";
@@ -31,6 +31,7 @@ import Avatar from "../../components/common/Avatar";
 import { logoutUser } from "../../store/slices/authSlice";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
+import { DynamicIcon } from "../../components/common";
 
 const DoctorProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -156,7 +157,7 @@ const DoctorProfileScreen = ({ navigation }) => {
             {user?.specialization || "Specialist"} · {user?.department || "OPD"}
           </Text>
           <View style={styles.idBadge}>
-            <Ionicons name="card-outline" size={13} color="rgba(255,255,255,0.85)" />
+            <CreditCard  size={13} color="rgba(255,255,255,0.85)" />
             <Text style={styles.idBadgeText}>ID: {user?.userId || "—"}</Text>
           </View>
 
@@ -198,15 +199,11 @@ const DoctorProfileScreen = ({ navigation }) => {
             >
               <View style={styles.optionLeft}>
                 <View style={styles.optionIconContainer}>
-                  <Ionicons
-                    name={option.icon}
-                    size={22}
-                    color={healthColors.primary.main}
-                  />
+                  <DynamicIcon name={option.icon} size={22} color={healthColors.primary.main} />
                 </View>
                 <Text style={styles.optionTitle}>{option.title}</Text>
               </View>
-              <Ionicons
+              <DynamicIcon
                 name="chevron-forward"
                 size={20}
                 color={healthColors.text.secondary}
@@ -224,8 +221,8 @@ const DoctorProfileScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Logout from the app"
           >
-            <Ionicons
-              name="log-out-outline"
+            <LogOut
+              
               size={22}
               color={healthColors.error.main}
             />

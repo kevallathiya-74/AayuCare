@@ -17,7 +17,7 @@ import {
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { AlertTriangle, Calendar, Users, FileText, UserPlus, Home, User, Settings, Sun, CloudSun, Moon } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
@@ -26,7 +26,7 @@ import { logoutUser } from "../../store/slices/authSlice";
 import { showConfirmation, logError } from "../../utils/errorHandler";
 import { doctorService } from "../../services";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
-import { EmptyState, SectionHeader } from "../../components/common";
+import { EmptyState, SectionHeader, ModalSheet, Button } from "../../components/common";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
 import {
@@ -37,10 +37,10 @@ import {
 } from "./components";
 
 const QUICK_ACTIONS = [
-  { icon: "calendar", color: healthColors.primary.main, label: "Today's\nAppointments", screen: "DoctorTabs", params: { screen: "TodaysAppointments" } },
-  { icon: "people", color: healthColors.secondary.main, label: "Patient\nManagement", screen: "PatientManagement" },
-  { icon: "document-text", color: healthColors.accent.coral, label: "Create\nPrescription", screen: "CreatePrescription" },
-  { icon: "person-add", color: healthColors.accent.green || "#43A047", label: "Walk-in\nPatient", screen: "WalkInPatient" },
+  { icon: Calendar, color: healthColors.primary.main, label: "Today's\nAppointments", screen: "DoctorTabs", params: { screen: "TodaysAppointments" } },
+  { icon: Users, color: healthColors.secondary.main, label: "Patient\nManagement", screen: "PatientManagement" },
+  { icon: FileText, color: healthColors.accent.coral, label: "Create\nPrescription", screen: "CreatePrescription" },
+  { icon: UserPlus, color: healthColors.accent.green || "#43A047", label: "Walk-in\nPatient", screen: "WalkInPatient" },
 ];
 
 const DoctorHomeScreen = ({ navigation }) => {
@@ -125,9 +125,24 @@ const DoctorHomeScreen = ({ navigation }) => {
   }, [searchQuery]);
 
   // ── Handlers ──
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleLogout = useCallback(() => {
-    showConfirmation("Are you sure you want to logout?", () => dispatch(logoutUser()), () => {}, "Logout");
-  }, [dispatch]);
+    setShowLogoutModal(true);
+  }, []);
+
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch (err) {
+      logError(err, { context: "DoctorHomeScreen.handleLogout" });
+    } finally {
+      setLoggingOut(false);
+      setShowLogoutModal(false);
+    }
+  };
 
   const handleStartConsultation = useCallback(async (appointment) => {
     try {
@@ -179,18 +194,18 @@ const DoctorHomeScreen = ({ navigation }) => {
     {
       title: "NAVIGATION",
       items: [
-        { icon: "home", iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("DoctorTabs", { screen: "Dashboard" }) },
-        { icon: "calendar", iconColor: healthColors.secondary.main, label: "My Appointments", onPress: nav("DoctorTabs", { screen: "TodaysAppointments" }) },
-        { icon: "people", iconColor: healthColors.accent.aqua, label: "Patient Management", onPress: nav("PatientManagement") },
-        { icon: "document-text", iconColor: healthColors.accent.coral, label: "Create Prescription", onPress: nav("CreatePrescription") },
-        { icon: "person-add", iconColor: healthColors.accent.green || "#43A047", label: "Walk-in Patient", onPress: nav("WalkInPatient") },
+        { icon: Home, iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("DoctorTabs", { screen: "Dashboard" }) },
+        { icon: Calendar, iconColor: healthColors.secondary.main, label: "My Appointments", onPress: nav("DoctorTabs", { screen: "TodaysAppointments" }) },
+        { icon: Users, iconColor: healthColors.accent.aqua, label: "Patient Management", onPress: nav("PatientManagement") },
+        { icon: FileText, iconColor: healthColors.accent.coral, label: "Create Prescription", onPress: nav("CreatePrescription") },
+        { icon: UserPlus, iconColor: healthColors.accent.green || "#43A047", label: "Walk-in Patient", onPress: nav("WalkInPatient") },
       ],
     },
     {
       title: "ACCOUNT",
       items: [
-        { icon: "person", iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("DoctorTabs", { screen: "Profile" }) },
-        { icon: "settings", iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("Settings") },
+        { icon: User, iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("DoctorTabs", { screen: "Profile" }) },
+        { icon: Settings, iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("Settings") },
       ],
     },
   ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -210,7 +225,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         {/* Error banner */}
         {error && (
           <View style={styles.errorBanner}>
-            <Ionicons name="warning" size={18} color={healthColors.error.main} />
+            <AlertTriangle  size={18} color={healthColors.error.main} />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity onPress={fetchDashboardData}>
               <Text style={styles.retryText}>Retry</Text>
@@ -252,7 +267,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           <SectionHeader title="Today's Appointments" style={styles.sectionHeader} />
           {visibleAppointments.length === 0 ? (
             <EmptyState
-              icon="calendar-outline"
+              icon={Calendar}
               title="No Appointments Today"
               message="You have no scheduled or confirmed appointments right now."
             />
@@ -270,7 +285,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           {/* ── Quick Actions ── */}
           <SectionHeader title="Quick Actions" style={styles.sectionHeader} />
           <View style={styles.quickGrid}>
-            {QUICK_ACTIONS.map(({ icon, color, label, screen, params }) => (
+            {QUICK_ACTIONS.map(({ icon: Icon, color, label, screen, params }) => (
               <TouchableOpacity
                 key={label}
                 style={styles.quickCard}
@@ -278,7 +293,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                 activeOpacity={0.75}
               >
                 <View style={[styles.quickIcon, { backgroundColor: color + "18" }]}>
-                  <Ionicons name={icon} size={26} color={color} />
+                  {Icon ? <Icon size={26} color={color} /> : null}
                 </View>
                 <Text style={styles.quickLabel}>{label}</Text>
               </TouchableOpacity>
@@ -298,6 +313,37 @@ const DoctorHomeScreen = ({ navigation }) => {
         menuSections={menuSections}
         onLogout={handleLogout}
       />
+
+      {/* ── Logout Modal ── */}
+      <ModalSheet
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Logout"
+        maxHeight={0.35}
+      >
+        <Text style={styles.modalText}>
+          Are you sure you want to log out of your account?
+        </Text>
+        <View style={styles.modalActions}>
+          <Button 
+            variant="outline" 
+            onPress={() => setShowLogoutModal(false)}
+            style={styles.modalButton}
+            disabled={loggingOut}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onPress={confirmLogout}
+            style={[styles.modalButton, { backgroundColor: healthColors.error.main, borderColor: healthColors.error.main }]}
+            textStyle={{ color: healthColors.neutral.white }}
+            loading={loggingOut}
+          >
+            Logout
+          </Button>
+        </View>
+      </ModalSheet>
     </SafeAreaView>
   );
 };
@@ -312,8 +358,8 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.error.background,
     paddingHorizontal: 16, paddingVertical: 10,
   },
-  errorText: { flex: 1, fontSize: 13, color: healthColors.error.main },
-  retryText: { fontSize: 13, color: healthColors.primary.main, fontWeight: "600" },
+  errorText: { flex: 1, fontSize: theme.typography.sizes.bodyMedium, color: healthColors.error.main },
+  retryText: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.primary.main, fontWeight: "600" },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   quickCard: {
@@ -331,8 +377,22 @@ const styles = StyleSheet.create({
     justifyContent: "center", alignItems: "center", marginBottom: 10,
   },
   quickLabel: {
-    fontSize: 12, fontWeight: "700", color: healthColors.text.primary,
+    fontSize: theme.typography.sizes.bodySmall, fontWeight: "700", color: healthColors.text.primary,
     textAlign: "center", lineHeight: 17,
+  },
+  modalText: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    color: healthColors.text.primary,
+    lineHeight: 24,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
   },
 });
 

@@ -11,7 +11,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { User, Calendar, Clock, FileText, Phone, ArrowLeft } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
@@ -19,8 +19,9 @@ import {
 } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
-import { convertTo12Hour } from "../../utils/helpers";
+import { convertTo12Hour, getStatusColor } from "../../utils/helpers";
 import { SkeletonCardRow, EmptyState } from "../../components/common";
+import { EmptyStateConfig } from "../../utils/constants";
 
 const ConsultationHistoryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -94,18 +95,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "completed":
-        return healthColors.success.main;
-      case "cancelled":
-        return healthColors.error.main;
-      case "no_show":
-        return healthColors.text.disabled;
-      default:
-        return healthColors.primary.main;
-    }
-  };
+  
 
   const getStatusText = (status) => {
     switch (status) {
@@ -136,8 +126,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       <View style={styles.consultationHeader}>
         <View style={styles.patientInfo}>
           <View style={styles.avatarContainer}>
-            <Ionicons
-              name="person"
+            <User
+              
               size={24}
               color={healthColors.primary.main}
             />
@@ -167,8 +157,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
 
       <View style={styles.consultationDetails}>
         <View style={styles.detailRow}>
-          <Ionicons
-            name="calendar-outline"
+          <Calendar
+            
             size={16}
             color={healthColors.text.secondary}
           />
@@ -178,8 +168,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         </View>
         {item.appointmentTime && (
           <View style={styles.detailRow}>
-            <Ionicons
-              name="time-outline"
+            <Clock
+              
               size={16}
               color={healthColors.text.secondary}
             />
@@ -188,8 +178,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         )}
         {item.reason && (
           <View style={styles.detailRow}>
-            <Ionicons
-              name="document-text-outline"
+            <FileText
+              
               size={16}
               color={healthColors.text.secondary}
             />
@@ -202,8 +192,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
 
       {item.patientPhone && (
         <View style={styles.contactRow}>
-          <Ionicons
-            name="call-outline"
+          <Phone
+            
             size={14}
             color={healthColors.text.disabled}
           />
@@ -243,8 +233,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -256,8 +246,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           </Text>
         </View>
         <View style={styles.headerIconContainer}>
-          <Ionicons
-            name="time-outline"
+          <Clock
+            
             size={24}
             color={healthColors.primary.main}
           />
@@ -288,7 +278,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           !loading && (
             error ? (
               <EmptyState
-                icon="alert-circle-outline"
+                icon={EmptyStateConfig.CONSULTATIONS.icon}
                 title="Error Loading Data"
                 message={error}
                 actionLabel="Try Again"
@@ -296,11 +286,11 @@ const ConsultationHistoryScreen = ({ navigation }) => {
               />
             ) : (
               <EmptyState
-                icon="file-tray-outline"
-                title={filter === "all" ? "No Consultations Yet" : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Consultations`}
+                icon={EmptyStateConfig.CONSULTATIONS.icon}
+                title={filter === "all" ? EmptyStateConfig.CONSULTATIONS.title : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Consultations`}
                 message={
                   filter === "all"
-                    ? "Your consultation history will appear here after your first appointment."
+                    ? EmptyStateConfig.CONSULTATIONS.message
                     : `No ${filter} consultations found. Try the All tab to see everything.`
                 }
               />

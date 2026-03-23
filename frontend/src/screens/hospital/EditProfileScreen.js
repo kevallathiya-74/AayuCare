@@ -11,7 +11,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ArrowLeft, Edit, User, Cross, Building, GraduationCap, CreditCard, Banknote, Phone, Mail, Clock, Info } from "lucide-react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
@@ -128,8 +128,8 @@ const EditProfileScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
+            
             size={24}
             color={healthColors.text.primary}
           />
@@ -139,8 +139,8 @@ const EditProfileScreen = ({ navigation }) => {
           <Text style={styles.headerSubtitle}>Update your information</Text>
         </View>
         <View style={styles.headerIconContainer}>
-          <Ionicons
-            name="create-outline"
+          <Edit
+            
             size={24}
             color={healthColors.primary.main}
           />
@@ -160,28 +160,28 @@ const EditProfileScreen = ({ navigation }) => {
             placeholder="Enter your name"
             value={formData.name}
             onChangeText={(v) => handleInputChange("name", v)}
-            leftIcon={<Ionicons name="person-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<User  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Specialization *"
             placeholder="e.g., Cardiologist"
             value={formData.specialization}
             onChangeText={(v) => handleInputChange("specialization", v)}
-            leftIcon={<Ionicons name="medical-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<Cross  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Department"
             placeholder="e.g., Cardiology"
             value={formData.department}
             onChangeText={(v) => handleInputChange("department", v)}
-            leftIcon={<Ionicons name="business-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<Building  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Qualification"
             placeholder="e.g., MBBS, MD"
             value={formData.qualification}
             onChangeText={(v) => handleInputChange("qualification", v)}
-            leftIcon={<Ionicons name="school-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<GraduationCap  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="License Number"
@@ -189,7 +189,7 @@ const EditProfileScreen = ({ navigation }) => {
             value={formData.licenseNumber}
             onChangeText={(v) => handleInputChange("licenseNumber", v)}
             autoCapitalize="characters"
-            leftIcon={<Ionicons name="card-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<CreditCard  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Consultation Fee (₹)"
@@ -197,7 +197,7 @@ const EditProfileScreen = ({ navigation }) => {
             value={formData.consultationFee}
             onChangeText={(v) => handleInputChange("consultationFee", v.replace(/[^0-9.]/g, ""))}
             keyboardType="decimal-pad"
-            leftIcon={<Ionicons name="cash-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<Banknote  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Phone Number *"
@@ -206,7 +206,7 @@ const EditProfileScreen = ({ navigation }) => {
             onChangeText={(v) => handleInputChange("phone", v.replace(/[^0-9]/g, ""))}
             keyboardType="phone-pad"
             maxLength={10}
-            leftIcon={<Ionicons name="call-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<Phone  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Email"
@@ -215,7 +215,7 @@ const EditProfileScreen = ({ navigation }) => {
             onChangeText={(v) => handleInputChange("email", v)}
             keyboardType="email-address"
             autoCapitalize="none"
-            leftIcon={<Ionicons name="mail-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<Mail  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Years of Experience"
@@ -224,7 +224,7 @@ const EditProfileScreen = ({ navigation }) => {
             onChangeText={(v) => handleInputChange("yearsOfExperience", v.replace(/[^0-9]/g, ""))}
             keyboardType="numeric"
             maxLength={2}
-            leftIcon={<Ionicons name="time-outline" size={18} color={healthColors.text.disabled} />}
+            leftIcon={<Clock  size={18} color={healthColors.text.disabled} />}
           />
           <Input
             label="Bio"
@@ -239,8 +239,8 @@ const EditProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.noteContainer}>
-          <Ionicons
-            name="information-circle-outline"
+          <Info
+            
             size={14}
             color={healthColors.text.disabled}
           />
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   charCount: {
-    fontSize: 11,
+    fontSize: theme.typography.sizes.caption,
     color: healthColors.text.disabled,
     textAlign: "right",
     marginTop: 4,

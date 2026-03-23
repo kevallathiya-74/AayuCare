@@ -691,30 +691,21 @@ exports.getPatientDetails = async (req, res, next) => {
 
     const appointmentFilters = {
       patientId: resolvedPatientId,
-      limit: 50,
+      limit: 10,
       offset: 0,
     };
     if (req.hospitalId && req.user.role !== "super_admin") {
       appointmentFilters.hospitalId = req.hospitalId;
     }
-    const patientAppointments = await appointmentRepository.findByPatient(
-      resolvedPatientId,
-      appointmentFilters
-    );
-
-    const appointments = patientAppointments.slice(0, 10);
 
     // Get medical records from MongoDB using repository
     const medicalRecordsFilters = {
-      patientId: { $in: [resolvedPatientId, resolvedPatientUserId].filter(Boolean) },
+      patientId: resolvedPatientId,
     };
-    
+
     if (req.hospitalId && req.user.role !== "super_admin") {
       medicalRecordsFilters.hospitalId = req.hospitalId;
     }
-
-    const dbMedicalRecords = await medicalRecordRepository.findWithFilters(medicalRecordsFilters, 1, 10);
-    const medicalRecords = dbMedicalRecords.data || [];
 
     const prescriptionFilters = {
       patientId: resolvedPatientId,
@@ -725,10 +716,19 @@ exports.getPatientDetails = async (req, res, next) => {
       prescriptionFilters.hospitalId = req.hospitalId;
     }
 
-    const dbPrescriptions = await prescriptionRepository.findByPatient(
-      resolvedPatientId,
-      prescriptionFilters
-    );
+    const [appointments, dbMedicalRecords, dbPrescriptions] = await Promise.all([
+      appointmentRepository.findByPatient(resolvedPatientId, appointmentFilters),
+      medicalRecordRepository.findWithFilters(medicalRecordsFilters, {
+        limit: 10,
+        offset: 0,
+        sort: { createdAt: -1 },
+      }),
+      prescriptionRepository.findByPatient(resolvedPatientId, prescriptionFilters),
+    ]);
+
+    const medicalRecords = Array.isArray(dbMedicalRecords)
+      ? dbMedicalRecords
+      : (Array.isArray(dbMedicalRecords?.data) ? dbMedicalRecords.data : []);
 
     // Map prescriptions to proper format
     const prescriptions = mapArray(dbPrescriptions, mapPrescriptionData);

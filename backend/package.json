@@ -8,7 +8,10 @@
     "dev": "nodemon server.js",
     "init:postgres": "node scripts/initPostgres.js",
     "cleanup:db": "node scripts/cleanupDatabase.js",
-    "seed:db": "node scripts/seedDatabase.js"
+    "seed:db": "node scripts/seedDatabase.js",
+    "smoke:status": "node scripts/smokeStatusCodes.js",
+    "smoke:methods": "node scripts/e2eMethodMatrix.js",
+    "test:api": "newman run tests/postman/AayuCare_API_Complete_E2E.json --environment tests/postman/AayuCare_Environments.json --reporters cli,json --reporter-json-export tests/postman/results/latest.json"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +21,6 @@
     "npm": ">=9.0.0"
   },
   "dependencies": {
-    "@better-auth/expo": "^1.4.16",
     "bcryptjs": "^3.0.3",
     "better-auth": "^1.4.16",
     "cors": "^2.8.5",
@@ -41,6 +43,7 @@
     "winston": "^3.18.3"
   },
   "devDependencies": {
+    "newman": "^6.1.3",
     "nodemon": "^3.0.1"
   },
   "overrides": {

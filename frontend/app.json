@@ -18,6 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aayucare.app",
+      "buildNumber": "1",
       "icon": "./assets/icons/ios-icon.png",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -33,28 +34,48 @@
         "backgroundColor": "#00ACC1"
       },
       "package": "com.aayucare.app",
+      "versionCode": 1,
       "permissions": [
         "INTERNET",
         "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "READ_MEDIA_IMAGES"
       ],
       "jsEngine": "hermes"
     },
     "updates": {
-      "enabled": false,
-      "checkAutomatically": "ON_ERROR_RECOVERY",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
     },
     "extra": {
-      "sentryDSN": {},
+      "sentryDSN": null,
       "PRODUCTION_API_URL": "https://aayucare-backend.onrender.com/api",
       "eas": {
         "projectId": "31972ca4-e87a-4c14-862f-330973332013"
       }
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icons/app-icon.png",
+          "color": "#00ACC1"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow AayuCare to access your camera to take medical record photos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow AayuCare to access your photos to upload medical documents."
+        }
+      ],
+      "expo-secure-store"
     ]
   }
 }

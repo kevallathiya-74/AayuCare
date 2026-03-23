@@ -5,6 +5,7 @@
 
 import api from './apiClient';
 import { logError, showError } from '../utils/errorHandler';
+import { normalizeServiceResponse } from './responseNormalizer';
 
 class NotificationService {
     /**
@@ -18,7 +19,7 @@ class NotificationService {
             }
             
             const response = await api.get(url);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'NotificationService.getNotifications' });
             throw error;
@@ -31,7 +32,7 @@ class NotificationService {
     async getUnreadCount() {
         try {
             const response = await api.get('/notifications/unread-count');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'NotificationService.getUnreadCount' });
             throw error;
@@ -44,7 +45,7 @@ class NotificationService {
     async markAsRead(notificationId) {
         try {
             const response = await api.put(`/notifications/${notificationId}/read`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'NotificationService.markAsRead' });
             throw error;
@@ -57,7 +58,7 @@ class NotificationService {
     async markAllAsRead() {
         try {
             const response = await api.put('/notifications/mark-all-read');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'NotificationService.markAllAsRead' });
             throw error;
@@ -70,7 +71,7 @@ class NotificationService {
     async deleteNotification(notificationId) {
         try {
             const response = await api.delete(`/notifications/${notificationId}`);
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'NotificationService.deleteNotification' });
             throw error;
@@ -83,7 +84,7 @@ class NotificationService {
     async clearAllNotifications() {
         try {
             const response = await api.delete('/notifications/clear-all');
-            return response.data;
+            return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'NotificationService.clearAllNotifications' });
             throw error;

@@ -18,11 +18,12 @@ import {
   FlatList,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronDown, X, Check, Calendar } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
 import { Button } from "../../components/common";
 import logger from "../../utils/logger";
+import { DynamicIcon } from "../../components/common";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -314,7 +315,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <Ionicons
+        <ChevronDown
           name={icon}
           size={20}
           color={
@@ -352,7 +353,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         onPress={() => setShowPicker(true)}
         disabled={loading}
       >
-        <Ionicons
+        <DynamicIcon
           name={icon}
           size={20}
           color={
@@ -365,7 +366,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         >
           {formData[key] || `Select ${label.toLowerCase()}...`}
         </Text>
-        <Ionicons
+        <DynamicIcon
           name="chevron-down"
           size={20}
           color={healthColors.text.tertiary}
@@ -398,8 +399,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           <View style={styles.dropdownHeader}>
             <Text style={styles.dropdownTitle}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons
-                name="close"
+              <X
+                
                 size={24}
                 color={healthColors.text.primary}
               />
@@ -425,8 +426,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                   {item}
                 </Text>
                 {selectedValue === item && (
-                  <Ionicons
-                    name="checkmark"
+                  <Check
+                    
                     size={20}
                     color={healthColors.primary.main}
                   />
@@ -459,8 +460,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               style={styles.closeButton}
               disabled={loading}
             >
-              <Ionicons
-                name="close"
+              <X
+                
                 size={24}
                 color={healthColors.text.primary}
               />
@@ -499,8 +500,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                 onPress={() => setShowDatePicker(true)}
                 disabled={loading}
               >
-                <Ionicons
-                  name="calendar"
+                <Calendar
+                  
                   size={20}
                   color={
                     errors.dateOfBirth
@@ -519,8 +520,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                     ? formatDisplayDate(formData.dateOfBirth)
                     : "Select date of birth..."}
                 </Text>
-                <Ionicons
-                  name="chevron-down"
+                <ChevronDown
+                  
                   size={20}
                   color={healthColors.text.tertiary}
                 />

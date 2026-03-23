@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Inbox } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import Button from "./Button";
+import DynamicIcon from "./DynamicIcon";
 
 const EmptyState = ({
-  icon = "file-tray-outline",
+  icon: Icon = Inbox,
   title = "No data available",
   message = "There is nothing to display at the moment.",
   actionLabel,
@@ -36,7 +37,15 @@ const EmptyState = ({
       style={[styles.container, { opacity, transform: [{ translateY }] }, style]}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name={icon} size={theme.iconSizes.lg} color={healthColors.text.tertiary} />
+        {typeof Icon === "string" ? (
+          <DynamicIcon
+            name={Icon}
+            size={theme.iconSizes.lg}
+            color={healthColors.text.tertiary}
+          />
+        ) : Icon ? (
+          <Icon size={theme.iconSizes.lg} color={healthColors.text.tertiary} />
+        ) : null}
       </View>
 
       <Text style={styles.title}>{title}</Text>

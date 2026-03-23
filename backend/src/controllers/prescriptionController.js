@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Prescription Controller
  * Handles prescription creation, retrieval, and management
  * Fully refactored to use repository pattern
@@ -9,6 +9,24 @@ const userRepository = require("../repositories/userRepository");
 const logger = require("../utils/logger");
 const { deleteCacheByPattern } = require("../config/redis");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+
+const PHARMACY_STATUS_ALIASES = {
+  sent_to_pharmacy: "preparing",
+  processing: "preparing",
+};
+
+const VALID_PHARMACY_STATUSES = [
+  "pending",
+  "preparing",
+  "ready",
+  "dispensed",
+  "cancelled",
+];
+
+const normalizePharmacyStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return PHARMACY_STATUS_ALIASES[normalized] || normalized;
+};
 
 const resolveUserByIdentifier = async (identifier) => {
   const value = String(identifier || "").trim();
@@ -152,7 +170,7 @@ exports.createPrescription = async (req, res, next) => {
       sentToPatientAt: sendOptions?.patientApp ? new Date() : null,
       pharmacyStatus:
         sendOptions?.hospitalPharmacy || sendOptions?.externalPharmacy
-          ? "sent_to_pharmacy"
+          ? "preparing"
           : "pending",
     });
 
@@ -341,20 +359,14 @@ exports.getPrescriptionById = async (req, res, next) => {
 exports.updatePrescriptionStatus = async (req, res, next) => {
   try {
     const { prescriptionId } = req.params;
-    const pharmacyStatus = req.body.pharmacyStatus || req.body.status;
+    const pharmacyStatus = normalizePharmacyStatus(
+      req.body.pharmacyStatus || req.body.status
+    );
 
-    const validStatuses = [
-      "pending",
-      "sent_to_pharmacy",
-      "preparing",
-      "ready",
-      "dispensed",
-    ];
-
-    if (!pharmacyStatus || !validStatuses.includes(pharmacyStatus)) {
+    if (!pharmacyStatus || !VALID_PHARMACY_STATUSES.includes(pharmacyStatus)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+        message: `Invalid status. Must be one of: ${VALID_PHARMACY_STATUSES.join(", ")}`,
       });
     }
 
@@ -404,20 +416,12 @@ exports.updatePrescriptionStatus = async (req, res, next) => {
 exports.updatePharmacyStatus = async (req, res, next) => {
   try {
     const { prescriptionId } = req.params;
-    const { pharmacyStatus } = req.body;
+    const pharmacyStatus = normalizePharmacyStatus(req.body.pharmacyStatus);
 
-    const validStatuses = [
-      "pending",
-      "sent_to_pharmacy",
-      "preparing",
-      "ready",
-      "dispensed",
-    ];
-
-    if (!pharmacyStatus || !validStatuses.includes(pharmacyStatus)) {
+    if (!pharmacyStatus || !VALID_PHARMACY_STATUSES.includes(pharmacyStatus)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid pharmacy status. Must be one of: ${validStatuses.join(", ")}`,
+        message: `Invalid pharmacy status. Must be one of: ${VALID_PHARMACY_STATUSES.join(", ")}`,
       });
     }
 
@@ -455,6 +459,36 @@ exports.updatePharmacyStatus = async (req, res, next) => {
       stack: error.stack,
       prescriptionId: req.params.prescriptionId,
       pharmacyStatus: req.body.pharmacyStatus,
+    });
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get pharmacy dashboard stats
+ * @route   GET /api/prescriptions/pharmacy/stats
+ * @access  Private (Admin)
+ */
+exports.getPharmacyStats = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const hospitalId = req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined;
+
+    const stats = await prescriptionRepository.getPharmacyStatusCounts({
+      hospitalId,
+      startDate,
+      endDate,
+    });
+
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    logger.error("Get pharmacy stats error:", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
     });
     next(error);
   }

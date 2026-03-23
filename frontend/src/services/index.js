@@ -16,5 +16,6 @@ export { default as eventService } from './event.service';
 export { default as activityService } from './activity.service';
 export { default as notificationService } from './notification.service';
 export { default as paymentService } from './payment.service';
+export { default as pharmacyService } from './pharmacy.service';
+export { default as scheduleService } from './schedule.service';
 export { default as api } from './apiClient';
-

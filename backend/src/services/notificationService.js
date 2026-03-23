@@ -199,12 +199,41 @@ class NotificationService {
     }
 
     /**
-     * Send push notification (placeholder for future implementation)
+     * Send push notification using Expo Push API
      */
     async sendPushNotification(notification) {
-        // TODO: Implement with Firebase Cloud Messaging or OneSignal
-        logger.info('[Notification] Push notification would be sent:', notification.title);
-        return true;
+        try {
+            const user = await userRepository.findByUserId(notification.userId);
+            if (!user || !user.expo_push_token) {
+                logger.info(`[Notification] Skipped push for ${notification.userId}: No Expo token`);
+                return false;
+            }
+
+            const message = {
+                to: user.expo_push_token,
+                sound: 'default',
+                title: notification.title,
+                body: notification.message,
+                data: notification.metadata || {},
+            };
+
+            const response = await fetch('https://exp.host/--/api/v2/push/send', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Accept-encoding': 'gzip, deflate',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(message),
+            });
+
+            const ticket = await response.json();
+            logger.info('[Notification] Push notification sent:', ticket);
+            return true;
+        } catch (error) {
+            logger.error('[Notification] Push notification error:', error.message);
+            return false;
+        }
     }
 
     /**

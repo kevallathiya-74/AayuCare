@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_active BOOLEAN DEFAULT TRUE,
     email_verified BOOLEAN DEFAULT FALSE,
     phone_verified BOOLEAN DEFAULT FALSE,
+    expo_push_token VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP
@@ -126,8 +127,14 @@ CREATE INDEX idx_appointments_date_time ON appointments(appointment_date, appoin
 -- Composite indexes for high-frequency queries (patient/doctor history lookups)
 CREATE INDEX IF NOT EXISTS idx_appointments_patient_date ON appointments(patient_id, appointment_date DESC);
 CREATE INDEX IF NOT EXISTS idx_appointments_doctor_date ON appointments(doctor_id, appointment_date DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_active_doctor ON appointments(doctor_id, status, appointment_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_active_patient ON appointments(patient_id, status, appointment_date);
+CREATE INDEX IF NOT EXISTS idx_appointments_hospital_status_date ON appointments(hospital_id, status, appointment_date DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_hospital_doctor_date ON appointments(hospital_id, doctor_id, appointment_date DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_hospital_patient_date ON appointments(hospital_id, patient_id, appointment_date DESC);
 CREATE INDEX IF NOT EXISTS idx_appointments_cancelled_by ON appointments(cancelled_by);
 CREATE INDEX IF NOT EXISTS idx_users_hospital_role ON users(hospital_id, role);
+CREATE INDEX IF NOT EXISTS idx_users_hospital_role_active_created ON users(hospital_id, role, is_active, created_at DESC);
 
 -- =====================================================
 -- PAYMENTS TABLE (Financial transactions)
@@ -182,6 +189,38 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
 
 -- =====================================================
+-- NOTIFICATION PREFERENCES TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS notification_preferences (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+    email_enabled BOOLEAN DEFAULT TRUE,
+    push_enabled BOOLEAN DEFAULT TRUE,
+    sms_enabled BOOLEAN DEFAULT FALSE,
+    appointment_reminders BOOLEAN DEFAULT TRUE,
+    health_alerts BOOLEAN DEFAULT TRUE,
+    promotions BOOLEAN DEFAULT FALSE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
+-- DOCTOR RATINGS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS doctor_ratings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    patient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id UUID REFERENCES appointments(id) ON DELETE SET NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(patient_id, doctor_id, appointment_id)
+);
+
+CREATE INDEX idx_doctor_ratings_doctor_id ON doctor_ratings(doctor_id);
+
+-- =====================================================
 -- TRIGGERS FOR UPDATED_AT
 -- =====================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -205,6 +244,12 @@ CREATE TRIGGER update_appointments_updated_at BEFORE UPDATE ON appointments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_notification_prefs_updated_at BEFORE UPDATE ON notification_preferences
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_doctor_ratings_updated_at BEFORE UPDATE ON doctor_ratings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================

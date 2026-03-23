@@ -18,11 +18,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronRight, ArrowLeft, User, LogOut } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import { logoutUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
+import { ModalSheet, Button } from "../../components/common";
+import { DynamicIcon } from "../../components/common";
 
 const AdminSettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -30,26 +32,24 @@ const AdminSettingsScreen = ({ navigation }) => {
   const [loggingOut, setLoggingOut] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const handleLogout = useCallback(async () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          setLoggingOut(true);
-          try {
-            await dispatch(logoutUser()).unwrap();
-          } catch (err) {
-            logError(err, { context: "AdminSettingsScreen.handleLogout" });
-            Alert.alert("Error", "Failed to logout. Please try again.");
-          } finally {
-            setLoggingOut(false);
-          }
-        },
-      },
-    ]);
-  }, [dispatch]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = useCallback(() => {
+    setShowLogoutModal(true);
+  }, []);
+
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch (err) {
+      logError(err, { context: "AdminSettingsScreen.handleLogout" });
+      Alert.alert("Error", "Failed to logout. Please try again.");
+    } finally {
+      setLoggingOut(false);
+      setShowLogoutModal(false);
+    }
+  };
 
   const settingsSections = useMemo(
     () => [
@@ -145,10 +145,10 @@ const AdminSettingsScreen = ({ navigation }) => {
         <View
           style={[styles.settingIcon, { backgroundColor: item.color + "15" }]}
         >
-          <Ionicons name={item.icon} size={22} color={item.color} />
+          <DynamicIcon name={item.icon} size={22} color={item.color} />
         </View>
         <Text style={styles.settingLabel}>{item.label}</Text>
-        <Ionicons
+        <DynamicIcon
           name="chevron-forward"
           size={20}
           color={healthColors.text.tertiary}
@@ -173,8 +173,7 @@ const AdminSettingsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons
-            name="arrow-back"
+          <ArrowLeft
             size={24}
             color={healthColors.text.primary}
           />
@@ -193,8 +192,8 @@ const AdminSettingsScreen = ({ navigation }) => {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <Ionicons
-              name="person"
+            <User
+              
               size={32}
               color={healthColors.primary.main}
             />
@@ -241,8 +240,8 @@ const AdminSettingsScreen = ({ navigation }) => {
             <ActivityIndicator size="small" color={healthColors.error.main} />
           ) : (
             <>
-              <Ionicons
-                name="log-out"
+              <LogOut
+                
                 size={22}
                 color={healthColors.error.main}
               />
@@ -253,6 +252,36 @@ const AdminSettingsScreen = ({ navigation }) => {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      <ModalSheet
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Logout"
+        maxHeight={0.35}
+      >
+        <Text style={styles.modalText}>
+          Are you sure you want to log out of your account?
+        </Text>
+        <View style={styles.modalActions}>
+          <Button 
+            variant="outline" 
+            onPress={() => setShowLogoutModal(false)}
+            style={styles.modalButton}
+            disabled={loggingOut}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onPress={confirmLogout}
+            style={[styles.modalButton, { backgroundColor: healthColors.error.main, borderColor: healthColors.error.main }]}
+            textStyle={{ color: healthColors.neutral.white }}
+            loading={loggingOut}
+          >
+            Logout
+          </Button>
+        </View>
+      </ModalSheet>
     </SafeAreaView>
   );
 };
@@ -384,6 +413,20 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  modalText: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    color: healthColors.text.primary,
+    lineHeight: 24,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
   },
 });
 

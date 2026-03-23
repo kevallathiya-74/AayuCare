@@ -11,6 +11,7 @@ const { attachHospitalId } = require("../middleware/hospitalMiddleware");
 const { validateBody } = require("../middleware/validation");
 const { createPrescriptionSchema, updatePrescriptionStatusSchema, updatePrescriptionPharmacySchema } = require("../validators/schemas");
 const { cacheMiddleware, invalidateCache } = require("../middleware/cache");
+const { idempotencyMiddleware } = require("../middleware/idempotency");
 
 // All routes require authentication
 router.use(protect);
@@ -32,6 +33,7 @@ router.get(
 router.post(
   "/",
   authorize("doctor", "admin"),
+  idempotencyMiddleware,
   validateBody(createPrescriptionSchema),
   prescriptionController.createPrescription
   // Cache invalidation now handled inside controller
@@ -57,6 +59,16 @@ router.get(
   prescriptionController.getDoctorPrescriptions
 );
 
+// @route   GET /api/prescriptions/pharmacy/stats
+// @desc    Get pharmacy dashboard stats
+// @access  Private (Admin only)
+router.get(
+  "/pharmacy/stats",
+  authorize("admin"),
+  cacheMiddleware(30),
+  prescriptionController.getPharmacyStats
+);
+
 // @route   GET /api/prescriptions/:prescriptionId
 // @desc    Get prescription by ID
 // @access  Private
@@ -77,8 +89,19 @@ router.patch(
   // Cache invalidation now handled inside controller
 );
 
-// @route   PATCH /api/prescriptions/:prescriptionId
+// @route   PATCH /api/prescriptions/:prescriptionId/pharmacy-status
 // @desc    Update pharmacy status
+// @access  Private (Admin only)
+router.patch(
+  "/:prescriptionId/pharmacy-status",
+  authorize("admin"),
+  validateBody(updatePrescriptionPharmacySchema),
+  prescriptionController.updatePharmacyStatus
+  // Cache invalidation now handled inside controller
+);
+
+// @route   PATCH /api/prescriptions/:prescriptionId
+// @desc    Legacy pharmacy status update route
 // @access  Private (Admin only)
 router.patch(
   "/:prescriptionId",
