@@ -375,6 +375,26 @@ function startServer() {
     logger.info(`📱 Expo Go will auto-detect your computer's IP address`);
     logger.info(`ℹ️  Make sure phone and computer are on the same WiFi network`);
   });
+
+  // Keep Render free instance alive by self-pinging every 14 minutes.
+  // Render spins down free services after ~15 minutes of inactivity.
+  if (process.env.NODE_ENV === "production" && process.env.BACKEND_URL) {
+    const PING_INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+    setInterval(async () => {
+      try {
+        const https = require("https");
+        const url = `${process.env.BACKEND_URL}/api/health`;
+        https.get(url, (res) => {
+          logger.info(`🏓 Keep-alive ping → ${url} [${res.statusCode}]`);
+        }).on("error", (err) => {
+          logger.warn(`⚠️  Keep-alive ping failed: ${err.message}`);
+        });
+      } catch (err) {
+        logger.warn(`⚠️  Keep-alive ping error: ${err.message}`);
+      }
+    }, PING_INTERVAL_MS);
+    logger.info("⏰ Keep-alive self-ping scheduled every 14 minutes");
+  }
 }
 
 // Handle unhandled promise rejections

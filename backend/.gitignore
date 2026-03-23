@@ -1,7 +1,10 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
 
 
 # Build outputs

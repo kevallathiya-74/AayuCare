@@ -64,7 +64,7 @@ const SplashScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.content}>
         <Image
-          source={require("../../../assets/images/aayucare-logo.png")}
+          source={require("../../../assets/icons/aayucare-logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />

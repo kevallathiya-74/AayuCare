@@ -4,11 +4,11 @@
     "slug": "aayucare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/aayucare-logo.png",
+    "icon": "./assets/icons/app-icon.png",
     "userInterfaceStyle": "light",
     "scheme": "aayucare",
     "splash": {
-      "image": "./assets/images/aayucare-logo.png",
+      "image": "./assets/icons/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#00ACC1"
     },
@@ -19,6 +19,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.aayucare.app",
       "buildNumber": "1",
+      "icon": "./assets/icons/ios-icon.png",
       "infoPlist": {
         "UIBackgroundModes": [
           "fetch",
@@ -29,7 +30,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/aayucare-logo.png",
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
         "backgroundColor": "#00ACC1"
       },
       "package": "com.aayucare.app",
@@ -58,7 +59,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/aayucare-logo.png",
+          "icon": "./assets/icons/app-icon.png",
           "color": "#00ACC1"
         }
       ],

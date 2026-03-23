@@ -46,6 +46,7 @@
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "expo-system-ui": "~4.0.9",
     "i18next": "^22.5.1",
     "lucide-react-native": "^0.577.0",
     "react": "19.1.0",
@@ -63,7 +64,9 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~19.1.10",
-    "react-native-svg-transformer": "^1.5.2"
+    "expo-module-scripts": "^5.0.8",
+    "react-native-svg-transformer": "^1.5.2",
+    "sharp": "^0.34.5"
   },
   "expo": {
     "install": {

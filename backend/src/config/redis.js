@@ -22,39 +22,47 @@ const shouldUseLocalRedis =
   process.env.REDIS_USE_LOCAL === "true" ||
   (process.env.NODE_ENV !== "production" && process.env.REDIS_USE_LOCAL !== "false");
 
-// Redis client configuration
-// Supports REDIS_URL (Upstash/cloud) or individual REDIS_HOST/PORT/PASSWORD (local)
-const buildRedisConfig = () => {
-  const base = {
-    retryStrategy: (times) => {
-      const delay = Math.min(times * 50, 2000);
-      return delay;
-    },
-    maxRetriesPerRequest: 3,
-    enableReadyCheck: true,
-    lazyConnect: false,
-  };
-  if (!shouldUseLocalRedis && redisUrl) {
-    return { ...base, url: redisUrl, tls: {} };
+// Shared retry strategy — stops after 5 attempts so the app doesn't spam logs
+const retryStrategy = (times) => {
+  if (times > 5) {
+    logger.error("❌ Redis: max reconnect attempts reached, giving up");
+    return null; // null = stop retrying
   }
-  return {
-    ...base,
+  return Math.min(times * 200, 2000);
+};
+
+const sharedOptions = {
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: true,
+  lazyConnect: false,
+  retryStrategy,
+};
+
+// Create Redis client
+// Supports REDIS_URL (Upstash/cloud) or individual REDIS_HOST/PORT/PASSWORD (local)
+const buildClient = () => {
+  if (!shouldUseLocalRedis && redisUrl) {
+    const url = redisUrl;
+    // Upstash and other TLS Redis use rediss:// scheme
+    const useTls = url.startsWith("rediss://");
+    return new Redis(url, {
+      ...sharedOptions,
+      ...(useTls && { tls: { rejectUnauthorized: false } }),
+    });
+  }
+  return new Redis({
+    ...sharedOptions,
     host: process.env.REDIS_HOST || "localhost",
     port: parseInt(process.env.REDIS_PORT, 10) || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
     db: parseInt(process.env.REDIS_DB, 10) || 0,
-  };
+  });
 };
 
-const redisConfig = buildRedisConfig();
-
-// Create Redis client — ioredis accepts a URL string or config object
-const redisClient = !shouldUseLocalRedis && redisUrl
-  ? new Redis(redisUrl)
-  : new Redis(redisConfig);
+const redisClient = buildClient();
 
 if (shouldUseLocalRedis) {
-  logger.info(`🧩 Redis mode: local (${redisConfig.host}:${redisConfig.port}, db ${redisConfig.db})`);
+  logger.info(`🧩 Redis mode: local (${process.env.REDIS_HOST || "localhost"}:${parseInt(process.env.REDIS_PORT, 10) || 6379}, db ${parseInt(process.env.REDIS_DB, 10) || 0})`);
 } else {
   logger.info("🧩 Redis mode: url");
 }
@@ -111,7 +119,7 @@ const getCache = async (key) => {
     const data = await redisClient.get(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    logger.error("Redis GET error:", error.message);
+    logger.error(`Redis GET error: ${error.message}`);
     return null;
   }
 };
@@ -129,7 +137,7 @@ const setCache = async (key, value, ttl = 3600) => {
     await redisClient.setex(key, ttl, serialized);
     return true;
   } catch (error) {
-    logger.error("Redis SET error:", error.message);
+    logger.error(`Redis SET error: ${error.message}`);
     return false;
   }
 };
@@ -144,7 +152,7 @@ const deleteCache = async (key) => {
     await redisClient.del(key);
     return true;
   } catch (error) {
-    logger.error("Redis DEL error:", error.message);
+    logger.error(`Redis DEL error: ${error.message}`);
     return false;
   }
 };
@@ -191,7 +199,7 @@ const deleteCacheByPattern = async (pattern) => {
     logger.debug(`Redis: deleted ${deleted} keys matching "${pattern}"`);
     return deleted;
   } catch (error) {
-    logger.error("Redis pattern delete error:", error.message);
+    logger.error(`Redis pattern delete error: ${error.message}`);
     return 0;
   }
 };
@@ -293,7 +301,7 @@ const checkRateLimit = async (
 
     return { allowed, remaining, current };
   } catch (error) {
-    logger.error("Rate limit check error:", error.message);
+    logger.error(`Rate limit check error: ${error.message}`);
     // Fail open - allow request if Redis fails
     return { allowed: true, remaining: maxRequests, current: 0 };
   }
@@ -332,7 +340,7 @@ const closeRedis = async () => {
     await redisClient.quit();
     logger.info("✅ Redis connection closed gracefully");
   } catch (error) {
-    logger.error("❌ Error closing Redis connection:", error.message);
+    logger.error(`❌ Error closing Redis connection: ${error.message}`);
   }
 };
 

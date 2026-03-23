@@ -1,9 +1,13 @@
 const mongoose = require("mongoose");
+const dns = require("dns");
 const logger = require("../utils/logger");
 const {
   resolveMongoUriWithFallback,
   applyDnsServersFromEnv,
 } = require("../utils/mongoUriResolver");
+
+// Use Google DNS to resolve SRV records (fixes networks where local DNS blocks SRV queries)
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 /**
  * MongoDB Atlas Connection Module
