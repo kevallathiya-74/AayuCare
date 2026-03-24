@@ -8,8 +8,6 @@ import { logError } from "../utils/errorHandler";
 import { normalizeServiceResponse } from "./responseNormalizer";
 
 const PATIENT_DETAILS_TTL_MS = 60000;
-const patientDetailsCache = new Map();
-const patientDetailsInFlight = new Map();
 const UUID_V4_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -129,89 +127,61 @@ class DoctorService {
    * Get detailed patient information
    */
   async getPatientDetails(patientId, options = {}) {
-    const cacheKey = String(patientId || "");
-    const forceRefresh = options?.forceRefresh === true;
-
-    if (!cacheKey) {
+    if (!patientId) {
       throw new Error("Patient ID is required");
     }
 
-    const cachedEntry = patientDetailsCache.get(cacheKey);
-    if (
-      !forceRefresh &&
-      cachedEntry &&
-      Date.now() - cachedEntry.timestamp < PATIENT_DETAILS_TTL_MS
-    ) {
-      return cachedEntry.value;
-    }
+    try {
+      const response = await api.get(`/doctors/me/patients/${patientId}`, {
+        useCache: options?.forceRefresh !== true,
+        skipCache: options?.forceRefresh === true,
+        cacheTTL: options?.cacheTTL ?? PATIENT_DETAILS_TTL_MS,
+      });
+      return normalizeServiceResponse(response.data);
+    } catch (error) {
+      const status = error?.response?.status;
+      const shouldFallbackToPatientProfile = status === 404 || status === 403;
 
-    if (!forceRefresh && patientDetailsInFlight.has(cacheKey)) {
-      return patientDetailsInFlight.get(cacheKey);
-    }
-
-    const fetchPromise = (async () => {
-      try {
-        const response = await api.get(`/doctors/me/patients/${patientId}`);
-        const normalized = normalizeServiceResponse(response.data);
-        patientDetailsCache.set(cacheKey, {
-          value: normalized,
-          timestamp: Date.now(),
+      if (!shouldFallbackToPatientProfile) {
+        logError(error, {
+          context: "DoctorService.getPatientDetails",
+          patientId,
         });
-        return normalized;
-      } catch (error) {
-        const status = error?.response?.status;
-        const shouldFallbackToPatientProfile = status === 404 || status === 403;
-
-        if (!shouldFallbackToPatientProfile) {
-          logError(error, {
-            context: "DoctorService.getPatientDetails",
-            patientId,
-          });
-          throw error;
-        }
-
-        try {
-          const profileResponse = await api.get(`/patients/${patientId}/profile`);
-          const profileNormalized = normalizeServiceResponse(profileResponse.data, {
-            fallbackData: null,
-          });
-
-          const rawPatient = profileNormalized?.data?.patient || profileNormalized?.data || null;
-          const normalized = {
-            success: profileNormalized?.success !== false,
-            message: profileNormalized?.message || "Request successful",
-            data: {
-              patient: rawPatient,
-              stats: null,
-              appointments: [],
-              medicalRecords: [],
-              prescriptions: [],
-            },
-            pagination: profileNormalized?.pagination || null,
-            meta: profileNormalized?.meta || null,
-          };
-
-          patientDetailsCache.set(cacheKey, {
-            value: normalized,
-            timestamp: Date.now(),
-          });
-
-          return normalized;
-        } catch (fallbackError) {
-          logError(fallbackError, {
-            context: "DoctorService.getPatientDetails.fallbackPatientProfile",
-            patientId,
-          });
-          throw fallbackError;
-        }
-      } finally {
-        patientDetailsInFlight.delete(cacheKey);
+        throw error;
       }
-    })();
 
-    patientDetailsInFlight.set(cacheKey, fetchPromise);
+      try {
+        const profileResponse = await api.get(`/patients/${patientId}/profile`, {
+          useCache: options?.forceRefresh !== true,
+          skipCache: options?.forceRefresh === true,
+          cacheTTL: options?.cacheTTL ?? PATIENT_DETAILS_TTL_MS,
+        });
+        const profileNormalized = normalizeServiceResponse(profileResponse.data, {
+          fallbackData: null,
+        });
 
-    return fetchPromise;
+        const rawPatient = profileNormalized?.data?.patient || profileNormalized?.data || null;
+        return {
+          success: profileNormalized?.success !== false,
+          message: profileNormalized?.message || "Request successful",
+          data: {
+            patient: rawPatient,
+            stats: null,
+            appointments: [],
+            medicalRecords: [],
+            prescriptions: [],
+          },
+          pagination: profileNormalized?.pagination || null,
+          meta: profileNormalized?.meta || null,
+        };
+      } catch (fallbackError) {
+        logError(fallbackError, {
+          context: "DoctorService.getPatientDetails.fallbackPatientProfile",
+          patientId,
+        });
+        throw fallbackError;
+      }
+    }
   }
 
   /**
@@ -232,14 +202,8 @@ class DoctorService {
     );
   }
 
-  clearPatientDetailsCache(patientId) {
-    if (patientId) {
-      patientDetailsCache.delete(String(patientId));
-      patientDetailsInFlight.delete(String(patientId));
-      return;
-    }
-    patientDetailsCache.clear();
-    patientDetailsInFlight.clear();
+  clearPatientDetailsCache() {
+    // No-op as we now rely on global apiClient cache
   }
 
   /**

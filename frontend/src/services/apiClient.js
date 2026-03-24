@@ -7,6 +7,7 @@ import axios from 'axios';
 import appStorage from '../utils/appStorage';
 import { STORAGE_KEYS } from '../utils/constants';
 import { APP_CONFIG } from '../config/appConfig';
+import { queryClient } from '../config/reactQueryConfig';
 
 // Runtime guard: Ensure appStorage is properly wired
 if (!appStorage || typeof appStorage.getItem !== 'function') {
@@ -165,6 +166,16 @@ api.interceptors.response.use(
     if (isMutationMethod && response?.config?.skipCacheInvalidation !== true) {
       getResponseCache.clear();
       inFlightGetRequests.clear();
+      
+      // Global React Query invalidation to ensure UI reactivity
+      try {
+        if (queryClient && typeof queryClient.invalidateQueries === 'function') {
+          queryClient.invalidateQueries();
+          if (__DEV__) console.log('[API] Invalidated all React Query caches after successful mutation');
+        }
+      } catch (e) {
+        if (__DEV__) console.error('[API] Failed to invalidate React Query caches', e);
+      }
     }
 
     return response;

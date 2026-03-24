@@ -232,6 +232,12 @@ export const login = async (credentials) => {
     const normalizedUser = normalizeUserProfile(profileData.data || {});
     if (__DEV__) { console.log('[auth.service] Profile fetched for role:', normalizedUser.role); }
 
+    // BLocker: Do not allow deactivated users to login
+    if (normalizedUser.isActive === false) {
+      await signOut().catch(() => {});
+      throw new Error('Your account has been deactivated. Please contact support.');
+    }
+
     // Always exchange credentials for authoritative session token used by protected API middleware
     if (__DEV__) { console.log('[auth.service] Exchanging credentials for session token...'); }
     try {
@@ -257,9 +263,14 @@ export const login = async (credentials) => {
         if (__DEV__) { console.log('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
       } else {
         if (__DEV__) { console.warn('[auth.service] Session token exchange failed:', sessionResponse.status); }
+        await signOut().catch(() => {});
+        throw new Error('Login failed. Your credentials might be invalid or your account deactivated.');
       }
     } catch (sessionError) {
       if (__DEV__) { console.error('[auth.service] Error during session token exchange:', sessionError); }
+      if (sessionError.message.includes('Login failed')) {
+        throw sessionError;
+      }
     }
 
     // Store session token in appStorage for API interceptor

@@ -73,9 +73,11 @@ const PatientDashboard = ({ navigation }) => {
   }, [dispatch, fetchUnreadNotifications, user?.id]);
 
   // ── Metric helpers ──
+  const safeMetrics = Array.isArray(healthMetrics) ? healthMetrics : [];
+
   const getLatestMetric = (type) => {
-    if (!Array.isArray(healthMetrics)) return null;
-    const filtered = healthMetrics.filter((m) => m.type === type);
+    if (!safeMetrics.length) return null;
+    const filtered = safeMetrics.filter((m) => m.type === type);
     if (!filtered.length) return null;
     return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
   };
@@ -94,8 +96,8 @@ const PatientDashboard = ({ navigation }) => {
     return m?.value ? `${m.value}°F` : "N/A";
   };
 
-  const getHealthStatus = () => {
-    if (!healthMetrics.length) return { status: "UNKNOWN", riskScore: "N/A" };
+  const getHealthStatus = useCallback(() => {
+    if (!safeMetrics.length) return { status: "UNKNOWN", riskScore: "N/A" };
     const bp = getLatestMetric("bp");
     const sugar = getLatestMetric("sugar");
     let riskScore = 0;
@@ -111,11 +113,11 @@ const PatientDashboard = ({ navigation }) => {
     if (riskScore < 20) return { status: "HEALTHY", riskScore };
     if (riskScore < 40) return { status: "MONITOR", riskScore };
     return { status: "CONSULT DOCTOR", riskScore };
-  };
+  }, [safeMetrics]);
 
-  const getLastUpdateTime = () => {
-    if (!healthMetrics.length) return "No data";
-    const latest = [...healthMetrics].sort(
+  const getLastUpdateTime = useCallback(() => {
+    if (!safeMetrics.length) return "No data";
+    const latest = [...safeMetrics].sort(
       (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
     )[0];
     const date = new Date(latest.timestamp);
@@ -123,7 +125,7 @@ const PatientDashboard = ({ navigation }) => {
     if (isToday)
       return `Today ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`;
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+  }, [safeMetrics]);
 
   const getTimeBasedGreeting = useCallback(() => {
     const h = new Date().getHours();
@@ -205,7 +207,7 @@ const PatientDashboard = ({ navigation }) => {
     },
   ], [navigation, closeMenu]);
 
-  const healthStatus = getHealthStatus();
+  const healthStatus = useMemo(() => getHealthStatus(), [getHealthStatus]);
 
   // ── Render ──
   return (

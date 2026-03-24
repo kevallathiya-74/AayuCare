@@ -4,6 +4,8 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   View,
   Text,
@@ -42,10 +44,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
   const isSuperAdmin = normalizedUserRole === "super_admin";
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const [updatingId, setUpdatingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -53,30 +52,39 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const selectedPatientId = selectedPatient?._id || selectedPatient?.id || selectedPatient?.userId;
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
   const patientIdFromRoute = route?.params?.patientId;
   const patientPayloadFromRoute = route?.params?.patientPayload;
- 
-  const fetchPatients = useCallback(async (searchTerm = "", options = {}) => {
-    try {
-      if (searchTerm) {
-        setSearchLoading(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
 
+  // Debounced search
+  useEffect(() => {
+    const delaySearch = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 500);
+
+    return () => clearTimeout(delaySearch);
+  }, [searchQuery]);
+
+  const {
+    data: patients = [],
+    isLoading: loading,
+    isRefetching: searchLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.patients.list({ search: debouncedSearch, role: normalizedUserRole }),
+    queryFn: async () => {
       const isDoctorUser = normalizedUserRole === "doctor";
       const response = isDoctorUser
-        ? await doctorService.searchMyPatients(searchTerm)
-        : await patientService.getAllPatients(searchTerm ? { q: searchTerm } : {}, options);
+        ? await doctorService.searchMyPatients(debouncedSearch)
+        : await patientService.getAllPatients(debouncedSearch ? { q: debouncedSearch } : {});
 
-      // Handle response as array directly or extract from nested structure
       let patientsList = Array.isArray(response)
         ? response
         : (response?.patients || response?.data || []);
 
-      patientsList = (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
+      return (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
         ...patient,
         _id: patient?._id || patient?.id || patient?.userId,
         id: patient?.id || patient?._id || patient?.userId,
@@ -88,47 +96,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               ? patient.is_active
               : !!patient?.is_active,
       }));
-
-      setPatients(patientsList);
-      logger.debug("ManagePatientsScreen", `Loaded ${patientsList.length} patients`);
-    } catch (err) {
-      logError(err, { context: "ManagePatientsScreen.fetchPatients" });
-      setError("Failed to load patients");
-    } finally {
-      setLoading(false);
-      setSearchLoading(false);
-      setRefreshing(false);
-    }
-  }, [normalizedUserRole]);
-
-  // Ensure list refreshes once auth role is available/hydrated
-  useEffect(() => {
-    if (!normalizedUserRole) {
-      return;
-    }
-
-    fetchPatients(searchQuery.trim());
-  }, [normalizedUserRole, fetchPatients, searchQuery]);
-
-  // Refetch when screen comes into focus (after navigation)
-  useFocusEffect(
-    useCallback(() => {
-      fetchPatients(searchQuery.trim());
-    }, [fetchPatients, searchQuery])
-  );
-
-  // Debounced search
-  useEffect(() => {
-    const delaySearch = setTimeout(() => {
-      if (searchQuery.trim().length >= 1) {
-        fetchPatients(searchQuery.trim());
-      } else if (searchQuery.trim().length === 0) {
-        fetchPatients("");
-      }
-    }, 500);
-
-    return () => clearTimeout(delaySearch);
-  }, [searchQuery]);
+    },
+    enabled: !!normalizedUserRole,
+    refetchOnMount: true,
+  });
 
   // Warm details cache for top visible items to improve first-click performance.
   useEffect(() => {
@@ -151,10 +122,15 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     ).catch(() => {});
   }, [patients, normalizedUserRole]);
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchPatients(searchQuery.trim(), { forceFresh: true });
-  }, [fetchPatients, searchQuery]);
+    refetch({ cancelRefetch: false });
+  }, [refetch]);
 
   const handleToggleStatus = useCallback(async (patient) => {
     if (!canManageUsers) {
@@ -190,30 +166,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 updatedStatus: response.data?.isActive,
               });
 
-              // Update local state immediately with server response
-              if (response.success && response.data) {
-                setPatients((prev) =>
-                  prev.map((p) => {
-                    const ids = [p?._id, p?.id, p?.userId].filter(Boolean);
-                    const targetIds = [patient?._id, patient?.id, patient?.userId].filter(Boolean);
-                    if (ids.some((id) => targetIds.includes(id))) {
-                      return {
-                        ...p,
-                        isActive:
-                          typeof response?.data?.isActive === "boolean"
-                            ? response.data.isActive
-                            : newStatus,
-                      };
-                    }
-                    return p;
-                  })
-                );
-              }
-
-              // Also refetch to ensure consistency
-              setTimeout(() => {
-                fetchPatients(searchQuery.trim(), { forceFresh: true });
-              }, 500);
+              queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
 
               Alert.alert(
                 "Success",
@@ -231,7 +184,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [canManageUsers, fetchPatients, searchQuery]);
+  }, [canManageUsers, queryClient]);
 
   const handleEditPatient = useCallback((patient) => {
     setSelectedPatient(patient);
@@ -239,20 +192,18 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   }, []);
 
   const handleEditSuccess = useCallback(() => {
-    // Refetch with current search query to maintain search context
-    fetchPatients(searchQuery.trim(), { forceFresh: true });
-  }, [fetchPatients, searchQuery]);
+    queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+  }, [queryClient]);
 
   const handleAddSuccess = useCallback(() => {
-    // After adding, refetch with current search query
-    fetchPatients(searchQuery.trim(), { forceFresh: true });
-  }, [fetchPatients, searchQuery]);
+    queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+  }, [queryClient]);
 
   const handleSoftDeletePatient = useCallback(async (patient) => {
     setUpdatingId(patient._id || patient.id || patient.userId);
     try {
       await adminService.deleteUser(patient.userId);
-      setPatients((prev) => prev.filter((p) => p._id !== patient._id));
+      queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
       Alert.alert(
         "Patient Deactivated",
         `${patient.name} has been deactivated. Patient data is retained for compliance and can be reactivated later.`
@@ -336,8 +287,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             setUpdatingId(patient._id);
             try {
               await adminService.permanentDeleteUser(patient.userId);
-              // Remove from list
-              setPatients((prev) => prev.filter((p) => p._id !== patient._id));
+              queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
               Alert.alert(
                 "Permanently Deleted",
                 `${patient.name} has been permanently removed from the system. This action was logged for audit purposes.`
@@ -591,9 +541,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     <EmptyState
       icon={EmptyStateConfig.PATIENTS.icon}
       title={EmptyStateConfig.PATIENTS.title}
-      message={error || EmptyStateConfig.PATIENTS.message}
+      message={typeof error === "string" ? error : error?.message || EmptyStateConfig.PATIENTS.message}
       actionLabel={error ? "Retry" : undefined}
-      onActionPress={error ? () => fetchPatients(searchQuery.trim()) : undefined}
+      onActionPress={error ? () => refetch() : undefined}
     />
   );
 
@@ -666,7 +616,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             </TouchableOpacity>
           )}
         </View>
-        {searchLoading && (
+        {searchLoading && !loading && (
           <ActivityIndicator
             size="small"
             color={healthColors.primary.main}
@@ -686,7 +636,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={searchLoading && !loading}
               onRefresh={onRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}

@@ -143,6 +143,13 @@ const AppNavigator = () => {
         return;
       }
 
+      // Only auto-navigate to tabs if coming from an auth/onboarding screen
+      const authScreens = ["Login", "ForgotPassword", "SplashScreen", "BoxSelection"];
+      if (currentRoute && !authScreens.includes(currentRoute.name)) {
+        logger.debug("AppNavigator", "Already on protected screen, skipping auto-navigate", currentRoute.name);
+        return;
+      }
+
       // Don't navigate if already on correct tab screen
       const roleScreens = {
         admin: "AdminTabs",

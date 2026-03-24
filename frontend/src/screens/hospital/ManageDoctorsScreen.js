@@ -4,6 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   View,
   Text,
@@ -37,34 +39,42 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
   const isSuperAdmin = normalizedUserRole === "super_admin";
-  const [doctors, setDoctors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const [updatingId, setUpdatingId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
   const doctorIdFromRoute = route?.params?.doctorId;
   const doctorPayloadFromRoute = route?.params?.doctorPayload;
-  const fetchDoctors = useCallback(async (searchTerm = "", options = {}) => {
-    try {
-      setError(null);
-      if (searchTerm) {
-        setSearchLoading(true);
-      }
+
+  // Real-time search with debouncing
+  useEffect(() => {
+    const delaySearch = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 500);
+    return () => clearTimeout(delaySearch);
+  }, [searchQuery]);
+
+  const {
+    data: doctors = [],
+    isLoading: loading,
+    isRefetching: searchLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.doctors.list({ search: debouncedSearch, hospitalId: user?.hospitalId }),
+    queryFn: async () => {
       const response = await doctorService.getAllDoctors(
-        searchTerm
-          ? { search: searchTerm, ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) }
-          : { ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) },
-        options
+        debouncedSearch
+          ? { search: debouncedSearch, ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) }
+          : { ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) }
       );
-      // Backend returns { doctors: [], pagination: {} } after service unwraps it
       const rawDoctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
-      const doctorsList = (Array.isArray(rawDoctorsList) ? rawDoctorsList : []).map((doctor) => ({
+      return (Array.isArray(rawDoctorsList) ? rawDoctorsList : []).map((doctor) => ({
         ...doctor,
         _id: doctor?._id || doctor?.id || doctor?.user_uuid || doctor?.doctorId,
         id: doctor?.id || doctor?._id || doctor?.user_uuid || doctor?.doctorId,
@@ -76,46 +86,19 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               ? doctor.is_active
               : !!doctor?.is_active,
       }));
-      logger.debug("ManageDoctorsScreen", `Loaded ${doctorsList.length} doctors`);
-      setDoctors(doctorsList);
-    } catch (err) {
-      logError(err, { context: "ManageDoctorsScreen.fetchDoctors" });
-      setError("Failed to load doctors");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setSearchLoading(false);
-    }
-  }, [user?.hospitalId]);
+    },
+    refetchOnMount: true,
+  });
 
-  useEffect(() => {
-    fetchDoctors();
-  }, [fetchDoctors]);
-
-  // Refetch when screen comes into focus (after navigation)
   useFocusEffect(
     useCallback(() => {
-      fetchDoctors(searchQuery.trim());
-    }, [fetchDoctors, searchQuery])
+      refetch();
+    }, [refetch])
   );
 
-  // Real-time search with debouncing
-  useEffect(() => {
-    const delaySearch = setTimeout(() => {
-      if (searchQuery.trim().length >= 1) {
-        fetchDoctors(searchQuery.trim());
-      } else if (searchQuery.trim().length === 0) {
-        fetchDoctors("");
-      }
-    }, 500);
-
-    return () => clearTimeout(delaySearch);
-  }, [searchQuery]);
-
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchDoctors(searchQuery.trim(), { forceFresh: true });
-  }, [fetchDoctors, searchQuery]);
+    refetch({ cancelRefetch: false });
+  }, [refetch]);
 
   const handleToggleStatus = useCallback(async (doctor) => {
     if (!canManageUsers) {
@@ -147,30 +130,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
                 updatedStatus: response.data?.isActive,
               });
               
-              // Update local state immediately with server response
-              if (response.success && response.data) {
-                setDoctors((prev) =>
-                  prev.map((d) => {
-                    const ids = [d?._id, d?.id, d?.userId].filter(Boolean);
-                    const targetIds = [doctor?._id, doctor?.id, doctor?.userId].filter(Boolean);
-                    if (ids.some((id) => targetIds.includes(id))) {
-                      return {
-                        ...d,
-                        isActive:
-                          typeof response?.data?.isActive === "boolean"
-                            ? response.data.isActive
-                            : newStatus,
-                      };
-                    }
-                    return d;
-                  })
-                );
-              }
-              
-              // Also refetch to ensure consistency
-              setTimeout(() => {
-                fetchDoctors(searchQuery.trim(), { forceFresh: true });
-              }, 500);
+              // Invalidate cache global
+              queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
               
               Alert.alert(
                 "Success",
@@ -188,7 +149,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [canManageUsers, fetchDoctors, searchQuery]);
+  }, [canManageUsers, queryClient]);
 
   const handleEditDoctor = useCallback((doctor) => {
     setSelectedDoctor(doctor);
@@ -196,20 +157,18 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   }, []);
 
   const handleEditSuccess = useCallback(() => {
-    // Refetch with current search query to maintain search context
-    fetchDoctors(searchQuery.trim());
-  }, [fetchDoctors, searchQuery]);
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
+  }, [queryClient]);
 
   const handleAddSuccess = useCallback(() => {
-    // After adding, refetch with current search query
-    fetchDoctors(searchQuery.trim());
-  }, [fetchDoctors, searchQuery]);
+    queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
+  }, [queryClient]);
 
   const handleSoftDeleteDoctor = useCallback(async (doctor) => {
     setUpdatingId(doctor._id || doctor.id || doctor.userId);
     try {
       await adminService.deleteUser(doctor.userId);
-      setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
+      queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
       Alert.alert(
         "Doctor Deactivated",
         `Dr. ${doctor.name} has been deactivated. Doctor data is retained for compliance and can be reactivated later.`
@@ -293,8 +252,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
             setUpdatingId(doctor._id);
             try {
               await adminService.permanentDeleteUser(doctor.userId);
-              // Remove from list
-              setDoctors((prev) => prev.filter((d) => d._id !== doctor._id));
+              queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
               Alert.alert(
                 "Permanently Deleted",
                 `Dr. ${doctor.name} has been permanently removed from the system. This action was logged for audit purposes.`
@@ -490,9 +448,9 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     <EmptyState
       icon="people-outline"
       title="No Doctors Yet"
-      message={error || "Doctor management data will appear here."}
+      message={typeof error === "string" ? error : error?.message || "Doctor management data will appear here."}
       actionLabel={error ? "Retry" : undefined}
-      onActionPress={error ? () => fetchDoctors(searchQuery.trim()) : undefined}
+      onActionPress={error ? () => refetch() : undefined}
     />
   );
 
@@ -585,7 +543,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={searchLoading && !loading}
               onRefresh={onRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}

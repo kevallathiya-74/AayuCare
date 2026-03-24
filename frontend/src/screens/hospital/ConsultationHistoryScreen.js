@@ -264,7 +264,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       <FlatList
         data={consultations}
         renderItem={renderConsultation}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item, index) => item.id || item._id || `consultation-${index}`}
         contentContainerStyle={[
           styles.listContent,
           consultations.length === 0 && { flexGrow: 1 },
