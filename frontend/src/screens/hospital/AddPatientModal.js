@@ -19,19 +19,22 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ChevronDown, X, Check, Calendar, UserPlus } from "lucide-react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
 import { Button } from "../../components/common";
 import logger from "../../utils/logger";
 import { DynamicIcon } from "../../components/common";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { parseError } from "../../utils/errorHandler";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
 
 const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,6 +56,32 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  const createPatientMutation = useMutation({
+    mutationFn: (patientData) => adminService.createUser(patientData),
+    onSuccess: async (response) => {
+      if (response?.success === true) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() }),
+        ]);
+
+        if (onSuccess) {
+          onSuccess();
+        }
+
+        onClose();
+        resetForm();
+
+        setTimeout(() => {
+          Alert.alert("Success", "Patient registered successfully");
+        }, 300);
+        return;
+      }
+
+      throw new Error(response?.message || "Failed to register patient. Please try again.");
+    },
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -105,7 +134,6 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       return;
     }
 
-    setLoading(true);
     try {
       // Backend will generate auto-increment userId (PAT1, PAT2, PAT3...)
       // Prepare patient data without userId
@@ -151,38 +179,13 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           .filter(Boolean);
       }
 
-      // Call create API
-      const response = await adminService.createUser(patientData);
-
-      if (response.success === true) {
-        // Call onSuccess first to trigger parent refetch
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        // Then close modal and reset form
-        onClose();
-        resetForm();
-        
-        // Show success message after modal closes
-        setTimeout(() => {
-          Alert.alert("Success", "Patient registered successfully");
-        }, 300);
-      }
+      await createPatientMutation.mutateAsync(patientData);
     } catch (error) {
       logger.error("AddPatientModal", "Add patient error", error);
 
       // Better error handling
-      let errorMessage = "Failed to register patient. Please try again.";
+      let errorMessage = parseError(error);
       let fieldError = null;
-
-      if (typeof error === "string") {
-        errorMessage = error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
 
       // Specific handling for duplicate errors with field highlighting
       if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
@@ -211,8 +214,6 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           }
         ]
       );
-    } finally {
-      setLoading(false);
     }
   };
 

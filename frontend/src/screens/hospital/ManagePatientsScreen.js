@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
 import {
   View,
@@ -27,7 +27,7 @@ import { useSelector } from "react-redux";
 import { User, Droplet, Mail, Phone, FileText, Edit, Trash2, ArrowLeft, Plus, Search, XCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { patientService, adminService, doctorService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import logger from "../../utils/logger";
 import { EmptyState, SkeletonCardRow } from "../../components/common";
@@ -35,9 +35,11 @@ import { EmptyStateConfig } from "../../utils/constants";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
+import { handleSmartBack } from "../../utils/navigation";
 
 const UUID_V4_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const PAGE_SIZE = 20;
 
 const ManagePatientsScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -67,24 +69,31 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   }, [searchQuery]);
 
   const {
-    data: patients = [],
+    data,
     isLoading: loading,
     isRefetching: searchLoading,
     error,
     refetch,
-  } = useQuery({
-    queryKey: queryKeys.patients.list({ search: debouncedSearch, role: normalizedUserRole }),
-    queryFn: async () => {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.patients.infinite({ search: debouncedSearch, role: normalizedUserRole }),
+    queryFn: async ({ pageParam = 0 }) => {
       const isDoctorUser = normalizedUserRole === "doctor";
       const response = isDoctorUser
         ? await doctorService.searchMyPatients(debouncedSearch)
-        : await patientService.getAllPatients(debouncedSearch ? { q: debouncedSearch } : {});
+        : await patientService.getAllPatients(
+            debouncedSearch
+              ? { q: debouncedSearch, page: Math.floor(pageParam / PAGE_SIZE) + 1, limit: PAGE_SIZE }
+              : { page: Math.floor(pageParam / PAGE_SIZE) + 1, limit: PAGE_SIZE }
+          );
 
       let patientsList = Array.isArray(response)
         ? response
         : (response?.patients || response?.data || []);
 
-      return (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
+      const items = (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
         ...patient,
         _id: patient?._id || patient?.id || patient?.userId,
         id: patient?.id || patient?._id || patient?.userId,
@@ -96,10 +105,23 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               ? patient.is_active
               : !!patient?.is_active,
       }));
+
+      return { items, total: Number(response?.total || response?.data?.total || 0) };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      if (lastPage?.total > 0) {
+        return loaded < lastPage.total ? loaded : undefined;
+      }
+      return (lastPage?.items?.length || 0) >= PAGE_SIZE ? loaded : undefined;
     },
     enabled: !!normalizedUserRole,
+    initialPageParam: 0,
+    staleTime: 10 * 60 * 1000,
     refetchOnMount: true,
   });
+
+  const patients = (data?.pages || []).flatMap((page) => page?.items || []);
 
   // Warm details cache for top visible items to improve first-click performance.
   useEffect(() => {
@@ -129,8 +151,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   );
 
   const onRefresh = useCallback(() => {
-    refetch({ cancelRefetch: false });
+    refetch();
   }, [refetch]);
+
+  const onLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleToggleStatus = useCallback(async (patient) => {
     if (!canManageUsers) {
@@ -214,11 +242,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       });
 
       let errorMessage = "Failed to deactivate patient";
-      if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err?.message) {
-        errorMessage = err.message;
-      }
+      errorMessage = parseError(err);
       Alert.alert("Error", errorMessage);
     } finally {
       setUpdatingId(null);
@@ -299,11 +323,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
               // Better error handling
               let errorMessage = "Failed to permanently delete patient";
-              if (err.response?.data?.message) {
-                errorMessage = err.response.data.message;
-              } else if (err.message) {
-                errorMessage = err.message;
-              }
+              errorMessage = parseError(err);
 
               Alert.alert("Error", errorMessage);
             } finally {
@@ -541,7 +561,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     <EmptyState
       icon={EmptyStateConfig.PATIENTS.icon}
       title={EmptyStateConfig.PATIENTS.title}
-      message={typeof error === "string" ? error : error?.message || EmptyStateConfig.PATIENTS.message}
+      message={error ? parseError(error) : EmptyStateConfig.PATIENTS.message}
       actionLabel={error ? "Retry" : undefined}
       onActionPress={error ? () => refetch() : undefined}
     />
@@ -557,7 +577,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -634,6 +654,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           renderItem={renderPatient}
           keyExtractor={(item, index) => item._id || item.id || `patient-${index}`}
           contentContainerStyle={styles.listContent}
+          onEndReached={onLoadMore}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 180, offset: 180 * index, index })}
           refreshControl={
             <RefreshControl
               refreshing={searchLoading && !loading}
@@ -641,6 +668,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
             />
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+              </View>
+            ) : null
           }
           ListEmptyComponent={renderEmptyState}
           showsVerticalScrollIndicator={false}
@@ -751,6 +785,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.md,
     flexGrow: 1,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
   patientCard: {
     backgroundColor: healthColors.background.card,

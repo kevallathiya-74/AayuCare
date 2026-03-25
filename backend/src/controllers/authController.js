@@ -12,8 +12,12 @@ const patientRepository = require("../repositories/patientRepository");
 const { createUserWithProfile } = require("../utils/transaction");
 const logger = require("../utils/logger");
 const bcrypt = require("bcryptjs");
-const { deleteCacheByPattern } = require("../config/redis");
+const {
+  invalidateAfterAuthProfileMutation,
+  invalidateAfterPasswordMutation,
+} = require("../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+const { sendSuccess, sendError } = require("../utils/apiResponse");
 
 /**
  * @desc    Get user email by userId (for Better Auth login)
@@ -26,19 +30,13 @@ exports.getEmailByUserId = async (req, res, next) => {
     
     // Validate userId parameter
     if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-      return res.status(400).json({ 
-        status: 'error',
-        message: 'Valid userId is required' 
-      });
+      return sendError(res, req, 'Valid userId is required', 400, 'VALIDATION_ERROR');
     }
     
     // Sanitize userId (prevent injection)
     const sanitizedUserId = userId.trim();
     if (sanitizedUserId.length > 50) {
-      return res.status(400).json({ 
-        status: 'error',
-        message: 'Invalid userId format' 
-      });
+      return sendError(res, req, 'Invalid userId format', 400, 'VALIDATION_ERROR');
     }
 
     // Try PostgreSQL first
@@ -46,16 +44,12 @@ exports.getEmailByUserId = async (req, res, next) => {
     let user = await userRepository.findByUserId(userIdUppercase);
 
     if (!user) {
-      return res.status(404).json({
-        status: "error",
-        message: "User not found",
-      });
+      return sendError(res, req, 'User not found', 404, 'NOT_FOUND');
     }
 
-    res.status(200).json({
-      status: "success",
+    return sendSuccess(res, req, {
       email: user.email,
-    });
+    }, 'User email retrieved successfully');
   } catch (error) {
     logger.error("Error in getEmailByUserId", {
       error: error.message,
@@ -91,19 +85,15 @@ exports.getCurrentSession = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        status: "error",
-        message: "No active session found",
-      });
+      return sendError(res, req, 'No active session found', 404, 'NOT_FOUND');
     }
 
     const session = result.rows[0];
 
-    res.status(200).json({
-      status: "success",
+    return sendSuccess(res, req, {
       token: session.token,
       expiresAt: session.expiresAt,
-    });
+    }, 'Session token retrieved successfully');
   } catch (error) {
     logger.error("Error in getCurrentSession", {
       error: error.message,
@@ -123,26 +113,17 @@ exports.getSessionTokenByCredentials = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        status: "error",
-        message: "Email and password are required",
-      });
+      return sendError(res, req, 'Email and password are required', 400, 'VALIDATION_ERROR');
     }
 
     const user = await userRepository.findByEmail(String(email).trim().toLowerCase(), true);
     if (!user || !user.password_hash || !user.is_active) {
-      return res.status(401).json({
-        status: "error",
-        message: "Invalid credentials",
-      });
+      return sendError(res, req, 'Invalid credentials', 401, 'UNAUTHORIZED');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({
-        status: "error",
-        message: "Invalid credentials",
-      });
+      return sendError(res, req, 'Invalid credentials', 401, 'UNAUTHORIZED');
     }
 
     const { query } = require("../config/postgres");
@@ -172,17 +153,13 @@ exports.getSessionTokenByCredentials = async (req, res, next) => {
     }
 
     if (!session) {
-      return res.status(404).json({
-        status: "error",
-        message: "No active session found",
-      });
+      return sendError(res, req, 'No active session found', 404, 'NOT_FOUND');
     }
 
-    return res.status(200).json({
-      status: "success",
+    return sendSuccess(res, req, {
       token: session.token,
       expiresAt: session.expiresAt,
-    });
+    }, 'Session token retrieved successfully');
   } catch (error) {
     logger.error("Error in getSessionTokenByCredentials", {
       error: error.message,
@@ -203,20 +180,14 @@ exports.getProfileByEmail = async (req, res, next) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({
-        status: "error",
-        message: "Email is required",
-      });
+      return sendError(res, req, 'Email is required', 400, 'VALIDATION_ERROR');
     }
 
     // Query PostgreSQL users table
     const user = await userRepository.findByEmail(email);
 
     if (!user) {
-      return res.status(404).json({
-        status: "error",
-        message: "User not found",
-      });
+      return sendError(res, req, 'User not found', 404, 'NOT_FOUND');
     }
 
     // Return user-friendly data (no password hash)
@@ -268,10 +239,7 @@ exports.getProfileByEmail = async (req, res, next) => {
       }
     }
 
-    res.status(200).json({
-      status: "success",
-      data: userProfile,
-    });
+    return sendSuccess(res, req, userProfile, 'User profile retrieved successfully');
   } catch (error) {
     logger.error("Error in getProfileByEmail", {
       error: error.message,
@@ -289,13 +257,10 @@ exports.getProfileByEmail = async (req, res, next) => {
  */
 exports.getMe = async (req, res, next) => {
   try {
-    res.status(200).json({
-      status: "success",
-      data: {
-        user: req.user,
-        session: req.session,
-      },
-    });
+    return sendSuccess(res, req, {
+      user: req.user,
+      session: req.session,
+    }, 'Current user retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -372,12 +337,7 @@ exports.updateProfile = async (req, res, next) => {
 
     // Invalidate relevant caches after profile update
     try {
-      await deleteCacheByPattern("v1:cache:user:*");
-      await deleteCacheByPattern("v1:cache:doctors:*");
-      await deleteCacheByPattern("v1:cache:doctor:*");
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("v1:cache:*patients*");
-      await deleteCacheByPattern("cache:*");
+      await invalidateAfterAuthProfileMutation();
       logger.debug("Cache invalidated after profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -392,12 +352,7 @@ exports.updateProfile = async (req, res, next) => {
       req,
     });
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        user,
-      },
-    });
+    return sendSuccess(res, req, { user }, 'Profile updated successfully');
   } catch (error) {
     next(error);
   }
@@ -442,10 +397,7 @@ exports.changePassword = async (req, res, next) => {
 
     // Invalidate session-related caches after password change
     try {
-      await deleteCacheByPattern("v1:cache:session:*");
-      await deleteCacheByPattern("cache:session:*");
-      await deleteCacheByPattern(`v1:cache:user:${req.user.id}:*`);
-      await deleteCacheByPattern(`cache:user:${req.user.id}:*`);
+      await invalidateAfterPasswordMutation(req.user.id);
       logger.debug("Cache invalidated after password change");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -459,10 +411,7 @@ exports.changePassword = async (req, res, next) => {
       req,
     });
 
-    res.status(200).json({
-      status: "success",
-      message: "Password changed successfully",
-    });
+    return sendSuccess(res, req, {}, 'Password changed successfully');
   } catch (error) {
     next(error);
   }
@@ -478,19 +427,13 @@ exports.updatePushToken = async (req, res, next) => {
     const { token } = req.body;
 
     if (!token) {
-      return res.status(400).json({
-        status: "error",
-        message: "Push token is required",
-      });
+      return sendError(res, req, 'Push token is required', 400, 'VALIDATION_ERROR');
     }
 
     // Update user in PostgreSQL (we added expo_push_token to the schema)
     await userRepository.update(req.user.id, { expo_push_token: token });
 
-    res.status(200).json({
-      status: "success",
-      message: "Push token updated successfully",
-    });
+    return sendSuccess(res, req, {}, 'Push token updated successfully');
   } catch (error) {
     logger.error("Error updating push token", {
       error: error.message,

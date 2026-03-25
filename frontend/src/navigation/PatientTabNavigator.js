@@ -11,8 +11,6 @@ import { healthColors, theme } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
-
-// Patient Screens
 import PatientDashboard from "../screens/patient/PatientDashboard";
 import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
@@ -36,6 +34,7 @@ const PatientTabNavigator = () => {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
+          lazy: false,
           tabBarIcon: ({ focused, color, size }) => {
             const Icon = ROUTE_ICON_MAP[route.name] || Circle;
             return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;

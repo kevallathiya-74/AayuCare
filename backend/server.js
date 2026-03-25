@@ -159,10 +159,12 @@ app.use(
 // Tiered Redis-backed rate limiting (auth/read/write/ai)
 app.use(tieredRateLimit);
 
-// Logging
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+// Logging - always include status code and latency for production observability
+const morganFormat =
+  process.env.NODE_ENV === "development"
+    ? "dev"
+    : ":method :url :status :res[content-length] - :response-time ms";
+app.use(morgan(morganFormat));
 
 // Request correlation ID for all requests
 app.use(requestIdMiddleware);
@@ -174,9 +176,13 @@ app.all("/api/auth/*", (req, res, next) => {
     return toNodeHandler(auth)(req, res, next);
   } catch (error) {
     logger.error("Better Auth handler error:", error);
-    return res
-      .status(500)
-      .json({ error: "Authentication service unavailable" });
+    return sendError(
+      res,
+      req,
+      "Authentication service unavailable",
+      500,
+      "AUTH_SERVICE_UNAVAILABLE"
+    );
   }
 });
 

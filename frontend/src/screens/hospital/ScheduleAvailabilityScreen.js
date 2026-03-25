@@ -3,7 +3,7 @@
  * Manage doctor's weekly schedule and availability
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -19,16 +19,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, AlertCircle, Info, Clock, Coffee, Edit, X, Trash2, PlusCircle } from "lucide-react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import doctorService from "../../services/doctor.service";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { theme, healthColors } from "../../theme";
 import { convertTo12Hour } from "../../utils/helpers";
+import { parseError } from "../../utils/errorHandler";
 import { SkeletonCardRow, Input } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [schedules, setSchedules] = useState([]);
+  const queryClient = useQueryClient();
   const [selectedDay, setSelectedDay] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTimeSlots, setEditingTimeSlots] = useState([]);
@@ -46,39 +48,41 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
     { id: "sunday", label: "Sunday", icon: "calendar-outline" },
   ];
 
-  useEffect(() => {
-    fetchSchedule();
-  }, []);
-
-  const fetchSchedule = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const {
+    data: schedules = [],
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.schedules.doctor("me"),
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
       const response = await doctorService.getSchedule();
-      // Backend returns { success, data: [...] }
       const data = response.data?.schedules || response.data;
-      setSchedules(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const toggleAvailabilityMutation = useMutation({
+    mutationFn: (dayOfWeek) => doctorService.toggleDayAvailability(dayOfWeek),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.schedules.all });
+    },
+  });
+
+  const updateScheduleMutation = useMutation({
+    mutationFn: ({ dayId, scheduleData }) => doctorService.updateSchedule(dayId, scheduleData),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.schedules.all });
+    },
+  });
 
   const toggleDayAvailability = async (dayOfWeek) => {
     try {
-      const response = await doctorService.toggleDayAvailability(dayOfWeek);
-      // Upsert: update if exists, otherwise add the new schedule entry
-      setSchedules((prev) => {
-        const exists = prev.some((s) => s.dayOfWeek === dayOfWeek);
-        if (exists) {
-          return prev.map((s) =>
-            s.dayOfWeek === dayOfWeek ? { ...s, ...response.data } : s
-          );
-        }
-        return [...prev, response.data];
-      });
-      Alert.alert("Success", response.message || "Availability updated");
+      const response = await toggleAvailabilityMutation.mutateAsync(dayOfWeek);
+      await refetch();
+      Alert.alert("Success", response?.message || "Availability updated");
     } catch (error) {
       Alert.alert("Error", "Failed to toggle availability");
     }
@@ -158,21 +162,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         notes,
       };
 
-      const response = await doctorService.updateSchedule(
-        selectedDay.id,
-        scheduleData
-      );
-
-      setSchedules((prev) => {
-        const exists = prev.some((s) => s.dayOfWeek === selectedDay.id);
-        if (exists) {
-          return prev.map((s) =>
-            s.dayOfWeek === selectedDay.id ? { ...s, ...response.data } : s
-          );
-        }
-        return [...prev, response.data];
+      await updateScheduleMutation.mutateAsync({
+        dayId: selectedDay.id,
+        scheduleData,
       });
 
+      await refetch();
       setModalVisible(false);
       Alert.alert("Success", "Schedule updated successfully");
     } catch (error) {
@@ -191,7 +186,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => handleSmartBack(navigation, "DoctorTabs")}
             style={styles.backButton}
           >
             <ArrowLeft
@@ -210,12 +205,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => handleSmartBack(navigation, "DoctorTabs")}
             style={styles.backButton}
           >
             <ArrowLeft
@@ -231,9 +226,9 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <AlertCircle  size={48} color={healthColors.error.main} />
           <Text style={styles.errorTitle}>Failed to load schedule</Text>
           <Text style={styles.errorMessage}>
-            {error?.response?.data?.message || error?.message || "Something went wrong. Please try again."}
+            {parseError(error)}
           </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchSchedule}>
+          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -246,7 +241,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
         >
           <ArrowLeft

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Patient Controller
  * Handles patient management, search, and medical history
  */
@@ -10,8 +10,12 @@ const prescriptionRepository = require("../repositories/prescriptionRepository")
 const medicalRecordRepository = require("../repositories/medicalRecordRepository");
 const healthMetricRepository = require("../repositories/healthMetricRepository");
 const logger = require("../utils/logger");
-const { deleteCacheByPattern } = require("../config/redis");
+const {
+  invalidateAfterPatientProfileMutation,
+  invalidateAfterPatientHealthMutation,
+} = require("../utils/cacheInvalidation");
 const { AppError } = require("../middleware/errorHandler");
+const { sendSuccess, sendError } = require("../utils/apiResponse");
 
 /**
  * Helper to check if the requesting user is the same as the target patient
@@ -79,17 +83,21 @@ exports.searchPatients = async (req, res, next) => {
       searchTerm
     );
 
-    res.json({
-      status: "success",
-      message: "Patients retrieved successfully",
-      data: result.data, // Return the data array from repository
-      patients: result.data, // Also include as 'patients' for backward compatibility
-      count: result.data.length,
-      total: result.total,
-      page: result.page,
-      limit: result.limit,
-      pages: Math.ceil(result.total / result.limit)
-    });
+    return sendSuccess(
+      res,
+      req,
+      {
+        data: result.data,
+        patients: result.data,
+        count: result.data.length,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        pages: Math.ceil(result.total / result.limit),
+      },
+      "Patients retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Patient search error:", {
       error: error.message,
@@ -114,10 +122,7 @@ exports.getCompleteHistory = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this patient data",
-      });
+      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
     }
 
     // Get patient profile - try both id and userId
@@ -129,18 +134,12 @@ exports.getCompleteHistory = async (req, res, next) => {
     }
     
     if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Verify hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to access this patient"
-      });
+      return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
     }
 
     // Use patient id for querying related collections
@@ -219,10 +218,7 @@ exports.getCompleteHistory = async (req, res, next) => {
       },
     };
 
-    res.json({
-      success: true,
-      data: completeHistory,
-    });
+    return sendSuccess(res, req, completeHistory, "Patient history retrieved successfully", 200);
   } catch (error) {
     logger.error("Complete history error:", {
       error: error.message,
@@ -252,10 +248,7 @@ exports.getPatientProfile = async (req, res, next) => {
     }
 
     if (!rawPatientId) {
-      return res.status(400).json({
-        success: false,
-        message: "patientId is required",
-      });
+      return sendError(res, req, "patientId is required", 400, "VALIDATION_ERROR");
     }
 
     const patientId = String(rawPatientId);
@@ -266,10 +259,7 @@ exports.getPatientProfile = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this patient data",
-      });
+      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
     }
 
     // Get patient profile
@@ -281,18 +271,12 @@ exports.getPatientProfile = async (req, res, next) => {
     }
     
     if (!patient || patient.role !== "patient") {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Verify hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to access this patient"
-      });
+      return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
     }
 
     // Get quick stats using patient id
@@ -318,9 +302,10 @@ exports.getPatientProfile = async (req, res, next) => {
       emailVerified: patient.emailVerified ?? patient.email_verified ?? false,
     };
 
-    res.json({
-      success: true,
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         ...normalizedPatient,
         stats: {
           totalRecords: recordCount,
@@ -328,7 +313,9 @@ exports.getPatientProfile = async (req, res, next) => {
           totalPrescriptions: prescriptionCount,
         },
       },
-    });
+      "Patient profile retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Patient profile error:", {
       error: error.message,
@@ -349,10 +336,7 @@ exports.updatePatientProfile = async (req, res, next) => {
 
     // Check access rights - supports both _id and userId formats
     if (req.user.role !== "admin" && !isOwnPatientData(req.user, patientId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this patient data",
-      });
+      return sendError(res, req, "Not authorized to update this patient data", 403, "FORBIDDEN");
     }
 
     const allowedUserUpdates = ["name", "phone"];
@@ -385,10 +369,7 @@ exports.updatePatientProfile = async (req, res, next) => {
       Object.keys(userUpdates).length === 0 &&
       Object.keys(patientUpdates).length === 0
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "No valid profile fields provided",
-      });
+      return sendError(res, req, "No valid profile fields provided", 400, "VALIDATION_ERROR");
     }
 
     // Find patient by userId or id
@@ -400,10 +381,7 @@ exports.updatePatientProfile = async (req, res, next) => {
     }
 
     if (!patient || patient.role !== "patient") {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
     
     let updatedUser = patient;
@@ -445,20 +423,13 @@ exports.updatePatientProfile = async (req, res, next) => {
 
     // Invalidate relevant caches after patient profile update
     try {
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("cache:patient:*");
-      await deleteCacheByPattern("v1:cache:user:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPatientProfileMutation();
       logger.debug("Cache invalidated after patient profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.json({
-      success: true,
-      message: "Profile Updated Successfully",
-      data: updatedPatient,
-    });
+    return sendSuccess(res, req, updatedPatient, "Profile Updated Successfully", 200);
   } catch (error) {
     logger.error("Patient profile update error:", {
       error: error.message,
@@ -483,10 +454,7 @@ exports.getHealthMetrics = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this patient data",
-      });
+      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
     }
 
     // Fetch all metrics for the patient - handle both id and userId
@@ -498,10 +466,7 @@ exports.getHealthMetrics = async (req, res, next) => {
     }
 
     if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     const patientIdValue = patient.id;
@@ -516,11 +481,7 @@ exports.getHealthMetrics = async (req, res, next) => {
       lean: true
     });
 
-    res.json({
-      success: true,
-      count: metrics.length,
-      data: metrics,
-    });
+    return sendSuccess(res, req, { count: metrics.length, metrics }, "Health metrics retrieved successfully", 200);
   } catch (error) {
     logger.error("Get health metrics error:", {
       error: error.message,
@@ -546,19 +507,19 @@ exports.addHealthMetric = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to add metrics for this patient",
-      });
+      return sendError(res, req, "Not authorized to add metrics for this patient", 403, "FORBIDDEN");
     }
 
     // Validate metric type against HealthMetric model enum
     const validTypes = ['bp','sugar','weight','bmi','temperature','steps','sleep','water','exercise','stress','heart-rate','oxygen'];
     if (!type || !validTypes.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid metric type. Must be one of: ${validTypes.join(', ')}`,
-      });
+      return sendError(
+        res,
+        req,
+        `Invalid metric type. Must be one of: ${validTypes.join(', ')}`,
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
@@ -585,21 +546,13 @@ exports.addHealthMetric = async (req, res, next) => {
 
     // Invalidate patient-related caches after adding health metric
     try {
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("cache:patient:*");
-      await deleteCacheByPattern("v1:cache:health:*");
-      await deleteCacheByPattern("cache:health:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPatientHealthMutation();
       logger.debug("Cache invalidated after health metric addition");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(201).json({
-      success: true,
-      message: "Health metric added successfully",
-      data: metric,
-    });
+    return sendSuccess(res, req, metric, "Health metric added successfully", 201);
   } catch (error) {
     logger.error("Add health metric error:", {
       error: error.message,
@@ -624,10 +577,7 @@ exports.getActivityData = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this patient data",
-      });
+      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
     }
 
     // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
@@ -641,10 +591,7 @@ exports.getActivityData = async (req, res, next) => {
 
     // Must resolve to a real patient — never fall back to raw URL param as DB key
     if (!activityPatient || activityPatient.role !== 'patient') {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found',
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
     const patientObjectId = activityPatient.id;
     const activityTypes = ["steps", "sleep", "water", "exercise", "stress"];
@@ -670,13 +617,16 @@ exports.getActivityData = async (req, res, next) => {
     
     const todayMetrics = await healthMetricRepository.findWithFilters(todayMetricsQuery, { lean: true });
 
-    res.json({
-      success: true,
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         latest: latestMetrics,
         today: todayMetrics,
       },
-    });
+      "Activity data retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Get activity data error:", {
       error: error.message,
@@ -698,19 +648,13 @@ exports.updateActivityData = async (req, res, next) => {
 
     // Check access rights - supports both _id and userId formats
     if (!isOwnPatientData(req.user, patientId) && req.user.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update activity for this patient",
-      });
+      return sendError(res, req, "Not authorized to update activity for this patient", 403, "FORBIDDEN");
     }
 
     // Validate activity type
     const validTypes = ["steps", "sleep", "water", "exercise", "stress"];
     if (!validTypes.includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid activity type",
-      });
+      return sendError(res, req, "Invalid activity type", 400, "VALIDATION_ERROR");
     }
 
     // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
@@ -735,21 +679,13 @@ exports.updateActivityData = async (req, res, next) => {
 
     // Invalidate patient-related caches after activity update
     try {
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("cache:patient:*");
-      await deleteCacheByPattern("v1:cache:health:*");
-      await deleteCacheByPattern("cache:health:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPatientHealthMutation();
       logger.debug("Cache invalidated after activity data update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(201).json({
-      success: true,
-      message: "Activity data updated successfully",
-      data: metric,
-    });
+    return sendSuccess(res, req, metric, "Activity data updated successfully", 201);
   } catch (error) {
     logger.error("Update activity data error:", {
       error: error.message,
@@ -774,10 +710,7 @@ exports.getLatestHealthMetric = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this patient data",
-      });
+      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
     }
 
     // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
@@ -791,10 +724,7 @@ exports.getLatestHealthMetric = async (req, res, next) => {
 
     // Must resolve to a real patient — never fall back to raw URL param as DB key
     if (!latestPatient || latestPatient.role !== 'patient') {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found',
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
     const latestPatientId = latestPatient.id;
     // Explicit String cast on type prevents MongoDB operator injection
@@ -811,16 +741,10 @@ exports.getLatestHealthMetric = async (req, res, next) => {
     const latestMetric = latestMetricResult.length > 0 ? latestMetricResult[0] : null;
 
     if (!latestMetric) {
-      return res.status(404).json({
-        success: false,
-        message: `No ${type} metrics found for this patient`,
-      });
+      return sendError(res, req, `No ${type} metrics found for this patient`, 404, "NOT_FOUND");
     }
 
-    res.json({
-      success: true,
-      data: latestMetric,
-    });
+    return sendSuccess(res, req, latestMetric, "Latest health metric retrieved successfully", 200);
   } catch (error) {
     logger.error("Get latest health metric error:", {
       error: error.message,
@@ -845,10 +769,7 @@ exports.updateHealthMetric = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update metrics for this patient",
-      });
+      return sendError(res, req, "Not authorized to update metrics for this patient", 403, "FORBIDDEN");
     }
 
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -865,7 +786,7 @@ exports.updateHealthMetric = async (req, res, next) => {
       { limit: 1 }
     );
     if (existing.length === 0) {
-      return res.status(404).json({ success: false, message: "Metric not found" });
+      return sendError(res, req, "Metric not found", 404, "NOT_FOUND");
     }
 
     const updates = {};
@@ -876,21 +797,13 @@ exports.updateHealthMetric = async (req, res, next) => {
     const updated = await healthMetricRepository.update(metricId, updates);
 
     try {
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("cache:patient:*");
-      await deleteCacheByPattern("v1:cache:health:*");
-      await deleteCacheByPattern("cache:health:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPatientHealthMutation();
       logger.debug("Cache invalidated after health metric update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.json({
-      success: true,
-      message: "Health metric updated successfully",
-      data: updated,
-    });
+    return sendSuccess(res, req, updated, "Health metric updated successfully", 200);
   } catch (error) {
     logger.error("Update health metric error:", {
       error: error.message,
@@ -910,10 +823,7 @@ exports.deleteHealthMetric = async (req, res, next) => {
       req.user.role !== "admin" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to delete metrics for this patient",
-      });
+      return sendError(res, req, "Not authorized to delete metrics for this patient", 403, "FORBIDDEN");
     }
 
     // Resolve patient using PostgreSQL repository (users are NOT in MongoDB)
@@ -934,10 +844,7 @@ exports.deleteHealthMetric = async (req, res, next) => {
     }, { limit: 1 });
     
     if (existingMetric.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Metric not found",
-      });
+      return sendError(res, req, "Metric not found", 404, "NOT_FOUND");
     }
     
     const metric = existingMetric[0];
@@ -945,21 +852,13 @@ exports.deleteHealthMetric = async (req, res, next) => {
 
     // Invalidate patient-related caches after metric deletion
     try {
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("cache:patient:*");
-      await deleteCacheByPattern("v1:cache:health:*");
-      await deleteCacheByPattern("cache:health:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPatientHealthMutation();
       logger.debug("Cache invalidated after health metric deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.json({
-      success: true,
-      message: "Health metric deleted successfully",
-      data: metric,
-    });
+    return sendSuccess(res, req, metric, "Health metric deleted successfully", 200);
   } catch (error) {
     logger.error("Delete health metric error:", {
       error: error.message,
@@ -969,3 +868,5 @@ exports.deleteHealthMetric = async (req, res, next) => {
     next(error);
   }
 };
+
+

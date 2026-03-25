@@ -9,53 +9,49 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { AppState } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
+import { useQueryClient } from "@tanstack/react-query";
 import { loadUser } from "../store/slices/authSlice";
+import { initializeNotificationPermissions } from "../store/slices/permissionSlice";
 import { healthColors } from "../theme";
+import { queryKeys } from "../config/reactQueryConfig";
+import adminService from "../services/admin.service";
+import {
+  appointmentService,
+  medicalRecordService,
+  notificationService,
+  prescriptionService,
+} from "../services";
 import logger from "../utils/logger";
-
-// Splash & Selection
-import BoxSelectionScreen from "../screens/splash/BoxSelectionScreen";
 import SplashScreen from "../screens/splash/SplashScreen";
-
-// Auth Screens
+import BoxSelectionScreen from "../screens/splash/BoxSelectionScreen";
 import UnifiedLoginScreen from "../screens/auth/UnifiedLoginScreen";
 import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 
-// Tab Navigators (Role-based)
 import AdminTabNavigator from "./AdminTabNavigator";
 import DoctorTabNavigator from "./DoctorTabNavigator";
 import PatientTabNavigator from "./PatientTabNavigator";
 
-// Additional Screens (not in tabs)
-import {
-  ManageDoctorsScreen,
-  ManagePatientsScreen,
-  EnhancedPrescriptionScreen,
-  WalkInPatientScreen,
-  ReportsScreen,
-  PharmacyManagementScreen,
-  AppointmentsScreen,
-  AdminSettingsScreen,
-} from "../screens/hospital";
-
+import ManageDoctorsScreen from "../screens/hospital/ManageDoctorsScreen";
+import ManagePatientsScreen from "../screens/hospital/ManagePatientsScreen";
+import EnhancedPrescriptionScreen from "../screens/hospital/EnhancedPrescriptionScreen";
+import WalkInPatientScreen from "../screens/hospital/WalkInPatientScreen";
+import ReportsScreen from "../screens/hospital/ReportsScreen";
+import PharmacyManagementScreen from "../screens/hospital/PharmacyManagementScreen";
+import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
+import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
 import SecuritySettingsScreen from "../screens/hospital/SecuritySettingsScreen";
-
-// Doctor Profile Screens
 import EditProfileScreen from "../screens/hospital/EditProfileScreen";
 import ConsultationHistoryScreen from "../screens/hospital/ConsultationHistoryScreen";
 import ConsultationScreen from "../screens/hospital/ConsultationScreen";
 import ScheduleAvailabilityScreen from "../screens/hospital/ScheduleAvailabilityScreen";
 
-import {
-  MyPrescriptionsScreen,
-  PatientEditProfileScreen,
-  ProfileScreen,
-} from "../screens/patient";
-
-// New Patient Screens
+import ProfileScreen from "../screens/patient/ProfileScreen";
+import PatientEditProfileScreen from "../screens/patient/PatientEditProfileScreen";
+import MyPrescriptionsScreen from "../screens/patient/MyPrescriptionsScreen";
 import NotificationsScreen from "../screens/patient/NotificationsScreen";
 import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
 import HealthMetricsScreen from "../screens/patient/HealthMetricsScreen";
@@ -72,19 +68,25 @@ import EmergencyServices from "../screens/patient/EmergencyServices";
 import MyAppointmentsScreen from "../screens/patient/MyAppointmentsScreen";
 import MyReportsScreen from "../screens/patient/MyReportsScreen";
 
-// User Main App
-import { SettingsScreen, SettingsAccessibilityScreen } from "../screens/main";
+import SettingsScreen from "../screens/main/SettingsScreen";
+import SettingsAccessibilityScreen from "../screens/main/SettingsAccessibilityScreen";
 import ChangePasswordScreen from "../screens/main/ChangePasswordScreen";
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
+  const queryClient = useQueryClient();
   const { isAuthenticated, user, isLoading } = useSelector(
     (state) => state.auth || {}
   );
+  const notificationPermission = useSelector(
+    (state) => state.permissions?.notification || {}
+  );
   const navigationRef = useRef(null);
   const authInitialized = useRef(false); // Prevent multiple auth checks
+  const permissionsInitialized = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
 
   logger.debug("AppNavigator", "Rendering auth state", {
     isAuthenticated,
@@ -120,6 +122,51 @@ const AppNavigator = () => {
 
     initAuth();
   }, []); // Empty deps - run ONCE on mount
+
+  useEffect(() => {
+    if (permissionsInitialized.current) {
+      return;
+    }
+
+    permissionsInitialized.current = true;
+
+    const initPermissions = async () => {
+      try {
+        await dispatch(initializeNotificationPermissions()).unwrap();
+      } catch (error) {
+        logger.warn("AppNavigator", "Notification permission bootstrap failed", {
+          error: error?.message || String(error),
+        });
+      }
+    };
+
+    initPermissions();
+  }, [dispatch]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", async (nextState) => {
+      const becameActive =
+        appStateRef.current.match(/inactive|background/) && nextState === "active";
+
+      appStateRef.current = nextState;
+
+      if (!becameActive) {
+        return;
+      }
+
+      try {
+        await dispatch(initializeNotificationPermissions()).unwrap();
+      } catch (error) {
+        logger.warn("AppNavigator", "Notification permission refresh on foreground failed", {
+          error: error?.message || String(error),
+        });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [dispatch]);
 
   // Auto-navigate after successful login
   useEffect(() => {
@@ -207,6 +254,131 @@ const AppNavigator = () => {
       }
     }
   }, [isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.role || !navigationRef.current?.isReady?.()) {
+      return;
+    }
+
+    const rolePreloadMap = {
+      admin: [
+        "AdminTabs",
+        "ManageDoctors",
+        "PatientManagement",
+        "Appointments",
+        "Reports",
+        "PharmacyManagement",
+      ],
+      doctor: [
+        "DoctorTabs",
+        "ConsultationHistory",
+        "ScheduleAvailability",
+        "WalkInPatient",
+        "Consultation",
+      ],
+      patient: [
+        "PatientTabs",
+        "Profile",
+        "PatientEditProfile",
+        "HospitalEvents",
+        "MyAppointments",
+        "MyPrescriptions",
+        "Notifications",
+        "AppointmentBooking",
+        "SpecialistCareFinder",
+        "MedicalRecords",
+        "AIHealthAssistant",
+        "AISymptomChecker",
+        "Emergency",
+        "PharmacyBilling",
+        "MyReports",
+        "DiseaseInfo",
+        "WomensHealth",
+        "HealthMetrics",
+      ],
+    };
+
+    const preload = navigationRef.current?.preload;
+    if (typeof preload !== "function") {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const screens = rolePreloadMap[user.role] || [];
+      screens.forEach((screenName) => {
+        try {
+          preload(screenName);
+        } catch (error) {
+          logger.warn("AppNavigator", "Screen preload skipped", {
+            screenName,
+            error: error?.message,
+          });
+        }
+      });
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, user?.role]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+
+    const role = user.role;
+    const canUseNotifications =
+      notificationPermission.granted && notificationPermission.notificationsEnabled;
+
+    if (role === "patient") {
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.dashboardStats.patient(user.id),
+        queryFn: () => adminService.getDashboardStats(),
+        staleTime: 60 * 1000,
+      });
+
+      if (canUseNotifications) {
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.notifications.unreadCount(),
+          queryFn: () => notificationService.getUnreadCount(),
+          staleTime: 30 * 1000,
+        });
+      }
+
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.appointments.patient(user.id),
+        queryFn: () => appointmentService.getPatientAppointments(user.id),
+        staleTime: 2 * 60 * 1000,
+      });
+
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.prescriptions.patient(user.id),
+        queryFn: () => prescriptionService.getPatientPrescriptions(user.id),
+        staleTime: 2 * 60 * 1000,
+      });
+
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.medicalRecords.patient(user.id),
+        queryFn: () => medicalRecordService.getPatientRecords(user.id, {
+          page: 1,
+          limit: 10,
+        }),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+
+    if (role === "admin" || role === "doctor") {
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.dashboardStats.admin(),
+        queryFn: () => adminService.getDashboardStats(),
+        staleTime: 60 * 1000,
+      });
+    }
+  }, [
+    isAuthenticated,
+    user?.id,
+    user?.role,
+    queryClient,
+    notificationPermission.granted,
+    notificationPermission.notificationsEnabled,
+  ]);
 
   // Determine user role
   const userRole = user?.role;

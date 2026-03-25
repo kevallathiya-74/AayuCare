@@ -40,16 +40,16 @@ import {
 import { EmergencyIcon } from "../../components/common/CustomIcons";
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useSelector } from "react-redux";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { handleSmartBack } from "../../utils/navigation";
 
 const EmergencyServices = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
   const { user } = useSelector((state) => state.auth);
-
   // Build hospitals list: user's own hospital first, then generic placeholders
   const nearbyHospitals = [
     ...(user?.hospitalName
@@ -120,7 +120,7 @@ const EmergencyServices = ({ navigation }) => {
         context: "EmergencyServices.handleEmergencyCall",
         number,
       });
-      setError(err.message || "Failed to initiate emergency call");
+      setError(parseError(err));
     }
   };
 
@@ -158,7 +158,7 @@ const EmergencyServices = ({ navigation }) => {
       );
     } catch (err) {
       logError(err, { context: "EmergencyServices.handleAmbulanceCall" });
-      setError(err.message || "Failed to initiate ambulance call");
+      setError(parseError(err));
     }
   };
 
@@ -189,7 +189,7 @@ const EmergencyServices = ({ navigation }) => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
           <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>

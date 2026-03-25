@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { sendError } = require('../utils/apiResponse');
 
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -33,11 +34,14 @@ const updatePaymentStatusSchema = Joi.object({
 exports.validateCreatePayment = (req, res, next) => {
   const { error } = createPaymentSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Validation failed',
-      errors: error.details.map(d => d.message),
-    });
+    return sendError(
+      res,
+      req,
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      error.details.map((d) => d.message)
+    );
   }
   next();
 };
@@ -45,11 +49,14 @@ exports.validateCreatePayment = (req, res, next) => {
 exports.validateUpdatePaymentStatus = (req, res, next) => {
   const { error } = updatePaymentStatusSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Validation failed',
-      errors: error.details.map(d => d.message),
-    });
+    return sendError(
+      res,
+      req,
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      error.details.map((d) => d.message)
+    );
   }
   next();
 };

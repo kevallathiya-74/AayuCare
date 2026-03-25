@@ -1,4 +1,4 @@
-﻿const doctorService = require("../services/doctorService");
+const doctorService = require("../services/doctorService");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
@@ -8,8 +8,15 @@ const patientRepository = require("../repositories/patientRepository");
 const medicalRecordRepository = require("../repositories/medicalRecordRepository");
 const bcrypt = require("bcryptjs");
 const logger = require("../utils/logger");
-const { deleteCacheByPattern } = require("../config/redis");
+const {
+  invalidateAfterDoctorAppointmentStatusMutation,
+  invalidateAfterDoctorWalkInRegistrationMutation,
+  invalidateAfterDoctorProfileMutation,
+  invalidateAfterDoctorScheduleMutation,
+  invalidateAfterDoctorScheduleBootstrapMutation,
+} = require("../utils/cacheInvalidation");
 const { AppError } = require("../middleware/errorHandler");
+const { sendSuccess, sendError } = require("../utils/apiResponse");
 
 /**
  * Calculate age from date of birth
@@ -102,10 +109,7 @@ exports.getDoctors = async (req, res, next) => {
 
     const result = await doctorService.getDoctors(filters);
 
-    res.status(200).json({
-      status: "success",
-      data: result,
-    });
+    return sendSuccess(res, req, result, "Doctors retrieved successfully", 200);
   } catch (error) {
     next(error);
   }
@@ -120,10 +124,7 @@ exports.getDoctor = async (req, res, next) => {
   try {
     const doctor = await doctorService.getDoctorById(req.params.id);
 
-    res.status(200).json({
-      status: "success",
-      data: { doctor },
-    });
+    return sendSuccess(res, req, { doctor }, "Doctor retrieved successfully", 200);
   } catch (error) {
     next(error);
   }
@@ -138,10 +139,7 @@ exports.getDoctorStats = async (req, res, next) => {
   try {
     const stats = await doctorService.getDoctorStats(req.params.id);
 
-    res.status(200).json({
-      status: "success",
-      data: { stats },
-    });
+    return sendSuccess(res, req, { stats }, "Doctor stats retrieved successfully", 200);
   } catch (error) {
     next(error);
   }
@@ -310,9 +308,10 @@ exports.getDoctorDashboard = async (req, res, next) => {
       }));
     })();
 
-    res.json({
-      success: true,
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         schedule,
         todaysAppointments: formattedAppointments,
         stats: {
@@ -329,7 +328,9 @@ exports.getDoctorDashboard = async (req, res, next) => {
           medicationsCount: p.medicines?.length || 0,
         })),
       },
-    });
+      "Doctor dashboard retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Doctor dashboard error:", {
       error: error.message,
@@ -354,10 +355,13 @@ exports.getTodaysAppointments = async (req, res, next) => {
     // Validate filter early - before any other work
     const allowedFilters = new Set(["all", "pending", "completed"]);
     if (!allowedFilters.has(normalizedFilter)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid filter. Allowed values: all, pending, completed",
-      });
+      return sendError(
+        res,
+        req,
+        "Invalid filter. Allowed values: all, pending, completed",
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     const today = new Date();
@@ -437,31 +441,36 @@ exports.getTodaysAppointments = async (req, res, next) => {
             return appointmentDateTime > new Date();
           });
 
-    res.json({
-      success: true,
-      count: visibleAppointments.length,
-      data: visibleAppointments.map((apt) => {
-        const formattedTime = formatAppointmentTime(apt);
-        return {
-          _id: apt.id,
-          id: apt.id,
-          time: formattedTime,
-          timeSlot: formattedTime,
-          appointmentDate: apt.appointmentDate || apt.appointment_date,
-          patientName: apt.patientName || apt.patient_name || "Unknown",
-          patientId: apt.patientUserId || apt.patientId || apt.patient_id,
-          patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
-          patientPhoto: null,
-          age: apt.dateOfBirth ? calculateAge(apt.dateOfBirth) : (apt.patientAge || "N/A"),
-          gender: apt.gender || "N/A",
-          phone: apt.patientPhone || "N/A",
-          reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
-          reason: apt.reason || apt.chiefComplaint || "Consultation",
-          status: apt.status || "scheduled",
-          type: apt.type || "in-person",
-        };
-      }),
-    });
+    return sendSuccess(
+      res,
+      req,
+      {
+        count: visibleAppointments.length,
+        appointments: visibleAppointments.map((apt) => {
+          const formattedTime = formatAppointmentTime(apt);
+          return {
+            _id: apt.id,
+            id: apt.id,
+            time: formattedTime,
+            timeSlot: formattedTime,
+            appointmentDate: apt.appointmentDate || apt.appointment_date,
+            patientName: apt.patientName || apt.patient_name || "Unknown",
+            patientId: apt.patientUserId || apt.patientId || apt.patient_id,
+            patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
+            patientPhoto: null,
+            age: apt.dateOfBirth ? calculateAge(apt.dateOfBirth) : (apt.patientAge || "N/A"),
+            gender: apt.gender || "N/A",
+            phone: apt.patientPhone || "N/A",
+            reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
+            reason: apt.reason || apt.chiefComplaint || "Consultation",
+            status: apt.status || "scheduled",
+            type: apt.type || "in-person",
+          };
+        }),
+      },
+      "Today's appointments retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Today appointments error:", {
       error: error.message,
@@ -507,34 +516,39 @@ exports.getUpcomingAppointments = async (req, res, next) => {
     });
     const total = counts.total || 0;
 
-    res.json({
-      success: true,
-      data: appointments.map((apt) => {
-        const formattedTime = formatAppointmentTime(apt);
-        return {
-          _id: apt.id,
-          id: apt.id,
-          date: apt.appointmentDate || apt.appointment_date,
-          time: formattedTime,
-          timeSlot: formattedTime,
-          appointmentDate: apt.appointmentDate || apt.appointment_date,
-          patientName: apt.patientName || apt.patient_name || "Unknown",
-          patientId: apt.patientUserId || apt.patientId || apt.patient_id,
-          patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
-          phone: apt.patientPhone || "N/A",
-          reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
-          reason: apt.reason || apt.chiefComplaint || "Consultation",
-          status: apt.status || "scheduled",
-          type: apt.type || "in-person",
-        };
-      }),
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / parseInt(limit)),
+    return sendSuccess(
+      res,
+      req,
+      {
+        appointments: appointments.map((apt) => {
+          const formattedTime = formatAppointmentTime(apt);
+          return {
+            _id: apt.id,
+            id: apt.id,
+            date: apt.appointmentDate || apt.appointment_date,
+            time: formattedTime,
+            timeSlot: formattedTime,
+            appointmentDate: apt.appointmentDate || apt.appointment_date,
+            patientName: apt.patientName || apt.patient_name || "Unknown",
+            patientId: apt.patientUserId || apt.patientId || apt.patient_id,
+            patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
+            phone: apt.patientPhone || "N/A",
+            reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
+            reason: apt.reason || apt.chiefComplaint || "Consultation",
+            status: apt.status || "scheduled",
+            type: apt.type || "in-person",
+          };
+        }),
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
       },
-    });
+      "Upcoming appointments retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Upcoming appointments error:", {
       error: error.message,
@@ -596,17 +610,22 @@ exports.searchPatients = async (req, res, next) => {
       hospitalId: effectiveHospitalId,
     });
 
-    res.json({
-      success: true,
-      data: paginatedPatients,
-      patients: paginatedPatients,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit) || 1,
+    return sendSuccess(
+      res,
+      req,
+      {
+        data: paginatedPatients,
+        patients: paginatedPatients,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit) || 1,
+        },
       },
-    });
+      "Patients retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Patient search error:", {
       error: error.message,
@@ -657,10 +676,7 @@ exports.getPatientDetails = async (req, res, next) => {
     }
 
     if (!patientUser) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     const resolvedPatientId = patientUser.id;
@@ -671,19 +687,13 @@ exports.getPatientDetails = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       patientUser.hospital_id !== req.hospitalId
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to access this patient",
-      });
+      return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
     }
 
     const dbPatient = await patientRepository.findByUserId(resolvedPatientId);
 
     if (!dbPatient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Map patient data to camelCase format
@@ -741,9 +751,10 @@ exports.getPatientDetails = async (req, res, next) => {
       prescriptionsCount: prescriptions.length,
     });
 
-    res.json({
-      success: true,
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         patient,
         appointments,
         medicalRecords,
@@ -754,7 +765,9 @@ exports.getPatientDetails = async (req, res, next) => {
           totalPrescriptions: prescriptions.length,
         },
       },
-    });
+      "Patient details retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Get patient details error:", {
       error: error.message,
@@ -787,19 +800,19 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       "no_show",
     ];
     if (!validStatuses.includes(normalizedStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
-      });
+      return sendError(
+        res,
+        req,
+        `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     const appointment = await appointmentRepository.findById(id);
 
     if (!appointment || appointment.doctor_id !== doctorId) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found or unauthorized",
-      });
+      return sendError(res, req, "Appointment not found or unauthorized", 404, "NOT_FOUND");
     }
 
     const currentStatus = normalizeAppointmentStatus(
@@ -808,10 +821,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     const allowedTransitions = APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
 
     if (!allowedTransitions.includes(normalizedStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot change status from ${currentStatus} to ${normalizedStatus}`,
-      });
+      return sendError(
+        res,
+        req,
+        `Cannot change status from ${currentStatus} to ${normalizedStatus}`,
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     const updateData = { status: normalizedStatus };
@@ -823,9 +839,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
 
     // Invalidate appointment caches after status update
     try {
-      await deleteCacheByPattern("v1:cache:appointments:*");
-      await deleteCacheByPattern("cache:appointments:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterDoctorAppointmentStatusMutation();
       logger.debug("Cache invalidated after appointment status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -837,11 +851,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       newStatus: normalizedStatus,
     });
 
-    res.json({
-      success: true,
-      message: "Appointment status updated",
-      data: updatedAppointment,
-    });
+    return sendSuccess(res, req, updatedAppointment, "Appointment status updated", 200);
   } catch (error) {
     logger.error("Update appointment status error:", {
       error: error.message,
@@ -870,15 +880,18 @@ exports.getDoctorProfileStats = async (req, res, next) => {
       doctorRepository.findByUserId(doctorId),
     ]);
 
-    res.json({
-      success: true,
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         totalPatients,
         completedConsultations: completedCounts.completed || 0,
-        averageRating: null,  // No rating column in DB - rating system not yet implemented
+        averageRating: null,
         yearsExperience: doctor?.experience || 0,
       },
-    });
+      "Doctor profile stats retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Doctor profile stats error:", {
       error: error.message,
@@ -1000,16 +1013,20 @@ exports.registerWalkInPatient = async (req, res, next) => {
       }
 
       // Patient exists, return existing patient
-      return res.status(200).json({
-        success: true,
-        message: "Patient already registered",
-        data: {
-          ...patient,
-          userId: patient.user_id || patient.userId,
-          hospitalId: patient.hospital_id || patient.hospitalId,
+      return sendSuccess(
+        res,
+        req,
+        {
+          patient: {
+            ...patient,
+            userId: patient.user_id || patient.userId,
+            hospitalId: patient.hospital_id || patient.hospitalId,
+          },
+          isExisting: true,
         },
-        isExisting: true,
-      });
+        "Patient already registered",
+        200
+      );
     }
 
     const nextPatientUserId = await userRepository.getNextUserId("patient");
@@ -1083,32 +1100,31 @@ exports.registerWalkInPatient = async (req, res, next) => {
 
     // Invalidate relevant caches after walk-in patient registration
     try {
-      await deleteCacheByPattern("v1:cache:user:*");
-      await deleteCacheByPattern("v1:cache:patient:*");
-      await deleteCacheByPattern("cache:patient:*");
-      await deleteCacheByPattern("v1:cache:appointments:*");
-      await deleteCacheByPattern("cache:appointments:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterDoctorWalkInRegistrationMutation();
       logger.debug("Cache invalidated after walk-in patient registration");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(201).json({
-      success: true,
-      message: "Walk-in patient registered successfully",
-      data: {
-        ...patient,
-        userId: patient.user_id || patient.userId,
-        hospitalId: patient.hospital_id || patient.hospitalId,
+    return sendSuccess(
+      res,
+      req,
+      {
+        patient: {
+          ...patient,
+          userId: patient.user_id || patient.userId,
+          hospitalId: patient.hospital_id || patient.hospitalId,
+        },
+        credentials: {
+          email: generatedEmail,
+          password: defaultPassword,
+          userId: nextPatientUserId,
+        },
+        isExisting: false,
       },
-      credentials: {
-        email: generatedEmail,
-        password: defaultPassword,
-        userId: nextPatientUserId,
-      },
-      isExisting: false,
-    });
+      "Walk-in patient registered successfully",
+      201
+    );
   } catch (error) {
     logger.error("Register walk-in patient error:", {
       error: error.message,
@@ -1171,20 +1187,13 @@ exports.updateProfile = async (req, res, next) => {
 
     // Invalidate relevant caches after profile update
     try {
-      await deleteCacheByPattern("v1:cache:user:*");
-      await deleteCacheByPattern("v1:cache:doctors:*");
-      await deleteCacheByPattern("v1:cache:doctor:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterDoctorProfileMutation();
       logger.debug("Cache invalidated after doctor profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Profile Updated Successfully",
-      data: doctor,
-    });
+    return sendSuccess(res, req, doctor, "Profile Updated Successfully", 200);
   } catch (error) {
     logger.error("Update profile error:", {
       error: error.message,
@@ -1239,9 +1248,10 @@ exports.getConsultationHistory = async (req, res, next) => {
     );
     const total = consultationCounts.total || 0;
 
-    res.status(200).json({
-      success: true,
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         consultations: appointments,
         pagination: {
           currentPage: parseInt(page),
@@ -1250,7 +1260,9 @@ exports.getConsultationHistory = async (req, res, next) => {
           itemsPerPage: parseInt(limit),
         },
       },
-    });
+      "Consultation history retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Get consultation history error:", {
       error: error.message,
@@ -1305,23 +1317,16 @@ exports.getSchedule = async (req, res, next) => {
       
       // Invalidate relevant caches after default schedule creation
       try {
-        await deleteCacheByPattern("v1:cache:doctors:*");
-        await deleteCacheByPattern("v1:cache:doctor:*");
+        await invalidateAfterDoctorScheduleBootstrapMutation();
         logger.debug("Cache invalidated after default schedule creation");
       } catch (cacheError) {
         logger.warn("Failed to invalidate cache:", cacheError.message);
       }
       
-      return res.status(200).json({
-        success: true,
-        data: created,
-      });
+      return sendSuccess(res, req, created, "Schedule retrieved successfully", 200);
     }
 
-    res.status(200).json({
-      success: true,
-      data: schedules,
-    });
+    return sendSuccess(res, req, schedules, "Schedule retrieved successfully", 200);
   } catch (error) {
     logger.error("Get schedule error:", {
       error: error.message,
@@ -1353,10 +1358,7 @@ exports.updateSchedule = async (req, res, next) => {
       "sunday",
     ];
     if (!validDays.includes(dayOfWeek.toLowerCase())) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid day of week",
-      });
+      return sendError(res, req, "Invalid day of week", 400, "VALIDATION_ERROR");
     }
 
     // Find and update or create new schedule
@@ -1390,19 +1392,13 @@ exports.updateSchedule = async (req, res, next) => {
 
     // Invalidate relevant caches after schedule update
     try {
-      await deleteCacheByPattern("v1:cache:doctors:*");
-      await deleteCacheByPattern("v1:cache:doctor:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterDoctorScheduleMutation();
       logger.debug("Cache invalidated after schedule update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Schedule updated successfully",
-      data: schedule,
-    });
+    return sendSuccess(res, req, schedule, "Schedule updated successfully", 200);
   } catch (error) {
     logger.error("Update schedule error:", {
       error: error.message,
@@ -1453,19 +1449,13 @@ exports.toggleDayAvailability = async (req, res, next) => {
 
     // Invalidate relevant caches after availability toggle
     try {
-      await deleteCacheByPattern("v1:cache:doctors:*");
-      await deleteCacheByPattern("v1:cache:doctor:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterDoctorScheduleMutation();
       logger.debug("Cache invalidated after availability toggle");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(200).json({
-      success: true,
-      message: `${dayOfWeek} availability updated`,
-      data: updatedSchedule,
-    });
+    return sendSuccess(res, req, updatedSchedule, `${dayOfWeek} availability updated`, 200);
   } catch (error) {
     logger.error("Toggle availability error:", {
       error: error.message,
@@ -1474,5 +1464,7 @@ exports.toggleDayAvailability = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 

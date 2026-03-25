@@ -3,7 +3,7 @@
  * Profile management for doctors
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -22,7 +22,9 @@ import {
 import { CreditCard, ChevronRight, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors, textStyles, spacing } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   getScreenPadding,
   verticalScale,
@@ -37,40 +39,26 @@ const DoctorProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    rating: null,
-    yearsExperience: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchProfileStats = useCallback(async () => {
-    try {
+  const { data: stats = { totalPatients: 0, rating: null, yearsExperience: 0 }, isLoading: loading, isRefetching, refetch } = useQuery({
+    queryKey: queryKeys.doctors.detail(user?.id || "me"),
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
       const response = await doctorService.getProfileStats();
-      if (response?.success) {
-        setStats({
-          totalPatients: response.data.totalPatients || 0,
-          rating: response.data.averageRating ?? null,
-          yearsExperience: response.data.yearsExperience || 0,
-        });
+      if (!response?.success) {
+        return { totalPatients: 0, rating: null, yearsExperience: 0 };
       }
-    } catch (err) {
-      logError(err, "DoctorProfileScreen.fetchProfileStats");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProfileStats();
-  }, [fetchProfileStats]);
+      return {
+        totalPatients: response.data.totalPatients || 0,
+        rating: response.data.averageRating ?? null,
+        yearsExperience: response.data.yearsExperience || 0,
+      };
+    },
+  });
 
   const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchProfileStats();
-  }, [fetchProfileStats]);
+    refetch();
+  }, [refetch]);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -139,7 +127,7 @@ const DoctorProfileScreen = ({ navigation }) => {
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={handleRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}

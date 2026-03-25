@@ -17,9 +17,10 @@ import {
   AdminAppointmentProvider,
   useAdminAppointments,
 } from "../context/AdminAppointmentContext";
-
-// Admin Screens
-import { AdminHomeScreen, AppointmentsScreen, ReportsScreen, PharmacyManagementScreen, AdminSettingsScreen } from "../screens/hospital";
+import AdminHomeScreen from "../screens/hospital/AdminHomeScreen";
+import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
+import ReportsScreen from "../screens/hospital/ReportsScreen";
+import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -50,6 +51,7 @@ const AdminTabsInner = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        lazy: false,
         tabBarIcon: ({ focused, color, size }) => {
           const Icon = ROUTE_ICON_MAP[route.name] || Circle;
           return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
@@ -89,7 +91,6 @@ const AdminTabsInner = () => {
         component={AppointmentsScreen}
         options={{
           tabBarLabel: "Appointments",
-          // Real-time badge from API - only show if count > 0
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: healthColors.primary.main,

@@ -22,15 +22,18 @@ import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
 } from "../../utils/responsive";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showError, logError } from "../../utils/errorHandler";
 import { validateAge, validateBloodGroup } from "../../utils/formValidators";
 import { doctorService } from "../../services";
 import { Input, Button } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({
     name: "",
@@ -44,6 +47,65 @@ const WalkInPatientScreen = ({ navigation }) => {
 
   const genderOptions = ["male", "female", "other"];
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  const registerWalkInMutation = useMutation({
+    mutationFn: (patientData) => doctorService.registerWalkInPatient(patientData),
+    onSuccess: async (response) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      const { data, isExisting } = response || {};
+
+      Alert.alert(
+        "Registration Successful",
+        isExisting
+          ? `${data.name} (ID: ${data.userId}) is already registered. They have been added to today's appointment queue.`
+          : `${data.name} (ID: ${data.userId}) has been registered as a new walk-in patient and scheduled for consultation.`,
+        [
+          {
+            text: "View Queue",
+            style: "default",
+            onPress: () => {
+              navigation.navigate("DoctorTabs", { screen: "TodaysAppointments" });
+            },
+          },
+          {
+            text: "Register Another",
+            style: "default",
+            onPress: () => {
+              setFormData({
+                name: "",
+                age: "",
+                gender: "male",
+                phone: "",
+                bloodGroup: "",
+                chiefComplaint: "",
+                address: "",
+              });
+            },
+          },
+        ]
+      );
+    },
+    onError: (err) => {
+      logError(err, { context: "WalkInPatientScreen.handleRegister" });
+
+      let errorMessage = "Failed to register patient. Please try again.";
+
+      if (err.response?.status === 400) {
+        errorMessage = "Invalid patient data. Please check all fields and try again.";
+      } else if (err.response?.status === 401) {
+        errorMessage = "Authentication error. Please login again.";
+      } else if (err.response?.status === 403) {
+        errorMessage = "You don't have permission to register patients.";
+      } else if (err.response?.status >= 500) {
+        errorMessage = "Server error. Please try again in a moment.";
+      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+
+      showError(errorMessage);
+    },
+    retry: 1,
+  });
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -89,77 +151,18 @@ const WalkInPatientScreen = ({ navigation }) => {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
-    try {
-      setLoading(true);
+    const patientData = {
+      name: formData.name.trim(),
+      age: parseInt(formData.age),
+      gender: formData.gender,
+      phone: formData.phone.trim(),
+      bloodGroup: formData.bloodGroup || undefined,
+      symptoms: formData.chiefComplaint.trim(),
+      address: formData.address || undefined,
+      hospitalId: user?.hospitalId,
+    };
 
-      // Create patient data
-      const patientData = {
-        name: formData.name.trim(),
-        age: parseInt(formData.age),
-        gender: formData.gender,
-        phone: formData.phone.trim(),
-        bloodGroup: formData.bloodGroup || undefined,
-        symptoms: formData.chiefComplaint.trim(),
-        address: formData.address || undefined,
-        hospitalId: user?.hospitalId,
-      };
-
-      const response = await doctorService.registerWalkInPatient(patientData);
-
-      const { data, isExisting } = response;
-
-      Alert.alert(
-        "Registration Successful",
-        isExisting
-          ? `${data.name} (ID: ${data.userId}) is already registered. They have been added to today's appointment queue.`
-          : `${data.name} (ID: ${data.userId}) has been registered as a new walk-in patient and scheduled for consultation.`,
-        [
-          {
-            text: "View Queue",
-            style: "default",
-            onPress: () => {
-              navigation.navigate("DoctorTabs", { screen: "TodaysAppointments" });
-            },
-          },
-          {
-            text: "Register Another",
-            style: "default",
-            onPress: () => {
-              setFormData({
-                name: "",
-                age: "",
-                gender: "male",
-                phone: "",
-                bloodGroup: "",
-                chiefComplaint: "",
-                address: "",
-              });
-            },
-          },
-        ]
-      );
-    } catch (err) {
-      logError(err, { context: "WalkInPatientScreen.handleRegister" });
-      
-      // Provide specific error messages based on error type
-      let errorMessage = "Failed to register patient. Please try again.";
-      
-      if (err.response?.status === 400) {
-        errorMessage = "Invalid patient data. Please check all fields and try again.";
-      } else if (err.response?.status === 401) {
-        errorMessage = "Authentication error. Please login again.";
-      } else if (err.response?.status === 403) {
-        errorMessage = "You don't have permission to register patients.";
-      } else if (err.response?.status >= 500) {
-        errorMessage = "Server error. Please try again in a moment.";
-      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
-        errorMessage = "Network error. Please check your connection and try again.";
-      }
-      
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    await registerWalkInMutation.mutateAsync(patientData);
   };
 
   return (
@@ -167,7 +170,7 @@ const WalkInPatientScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
         >
           <ArrowLeft

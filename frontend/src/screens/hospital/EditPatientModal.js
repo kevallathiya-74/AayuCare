@@ -19,17 +19,19 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ChevronDown, X, Check, Calendar } from "lucide-react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
 import { Button } from "../../components/common";
 import logger from "../../utils/logger";
 import { DynamicIcon } from "../../components/common";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { parseError } from "../../utils/errorHandler";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
 
 const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
-  const [loading, setLoading] = useState(false);
   const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -50,6 +52,33 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const queryClient = useQueryClient();
+
+  const updatePatientMutation = useMutation({
+    mutationFn: ({ userId, updateData }) => adminService.updateUserProfile(userId, updateData),
+    onSuccess: async (response) => {
+      if (response?.success === true) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() }),
+        ]);
+
+        if (onSuccess) {
+          onSuccess();
+        }
+
+        onClose();
+        resetForm();
+
+        setTimeout(() => {
+          Alert.alert("Success", "Patient Profile Updated Successfully");
+        }, 300);
+        return;
+      }
+
+      throw new Error(response?.message || "Failed to update patient profile. Please try again.");
+    },
+  });
 
   // Pre-fill form when patient data is provided
   useEffect(() => {
@@ -142,7 +171,6 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       return;
     }
 
-    setLoading(true);
     try {
       // Prepare update data
       const updateData = {
@@ -186,41 +214,16 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           .filter(Boolean);
       }
 
-      // Call update API
-      const response = await adminService.updateUserProfile(
-        patient.userId,
-        updateData
-      );
-
-      if (response.success === true) {
-        // Call onSuccess first to trigger parent refetch
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        // Then close modal
-        onClose();
-        resetForm();
-        
-        // Show success message after modal closes
-        setTimeout(() => {
-          Alert.alert("Success", "Patient Profile Updated Successfully");
-        }, 300);
-      }
+      await updatePatientMutation.mutateAsync({
+        userId: patient.userId,
+        updateData,
+      });
     } catch (error) {
       logger.error("EditPatientModal", "Edit patient error", error);
 
       // Better error handling
-      let errorMessage = "Failed to update patient profile. Please try again.";
+      let errorMessage = parseError(error);
       let fieldError = null;
-
-      if (typeof error === "string") {
-        errorMessage = error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
 
       // Specific handling for duplicate errors with field highlighting
       if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
@@ -246,8 +249,6 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           }
         ]
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -336,7 +337,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           placeholderTextColor={healthColors.text.tertiary}
           keyboardType={keyboardType}
           autoCapitalize={key === "email" ? "none" : "sentences"}
-          editable={!loading}
+          editable={!updatePatientMutation.isPending}
           multiline={multiline}
           numberOfLines={multiline ? 3 : 1}
         />
@@ -351,7 +352,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       <TouchableOpacity
         style={[styles.inputWrapper, errors[key] && styles.inputError]}
         onPress={() => setShowPicker(true)}
-        disabled={loading}
+        disabled={updatePatientMutation.isPending}
       >
         <DynamicIcon
           name={icon}
@@ -458,7 +459,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
             <TouchableOpacity
               onPress={handleClose}
               style={styles.closeButton}
-              disabled={loading}
+              disabled={updatePatientMutation.isPending}
             >
               <X
                 
@@ -498,7 +499,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                   errors.dateOfBirth && styles.inputError,
                 ]}
                 onPress={() => setShowDatePicker(true)}
-                disabled={loading}
+                disabled={updatePatientMutation.isPending}
               >
                 <Calendar
                   
@@ -594,13 +595,13 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
               onPress={handleClose}
-              disabled={loading}
+              disabled={updatePatientMutation.isPending}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <Button
               variant="primary"
-              loading={loading}
+              loading={updatePatientMutation.isPending}
               onPress={handleSubmit}
               style={styles.submitButton}
             >

@@ -3,7 +3,7 @@
  * View and log vitals: Blood Pressure, Sugar, Temperature, Weight, BMI
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -30,10 +30,15 @@ import {
   EmptyState,
   ModalSheet,
   Button,
+  SkeletonCardRow,
+  SkeletonStatGrid,
 } from "../../components/common";
-import { showError, showSuccess, logError } from "../../utils/errorHandler";
+import { showError, showSuccess, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { healthMetricsService } from "../../services";
+import { handleSmartBack } from "../../utils/navigation";
 
 // ── Metric config ─────────────────────────────────────────────────────────────
 const METRIC_TYPES = [
@@ -150,45 +155,39 @@ const HealthMetricsScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
-
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const [metrics, setMetrics] = useState([]);
+  const queryClient = useQueryClient();
 
   // Add metric modal
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [inputValues, setInputValues] = useState({});
-  const [saving, setSaving] = useState(false);
-
-  // ── Data fetching ───────────────────────────────────────────────────────────
-  const fetchMetrics = useCallback(async () => {
-    try {
-      if (!isConnected) {
-        showError("No internet connection");
-        return;
-      }
-      setError(null);
+  const {
+    data: metrics = [],
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.healthMetrics.patient(user?.id),
+    enabled: !!user?.id && isConnected,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
       const response = await healthMetricsService.getMetrics(user.id);
-      setMetrics(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      logError(err, { context: "HealthMetricsScreen.fetchMetrics" });
-      setError(err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.id, isConnected]);
+      return Array.isArray(response?.data) ? response.data : [];
+    },
+  });
 
-  useEffect(() => {
-    if (user?.id) fetchMetrics();
-  }, [user?.id]);
+  const addMetricMutation = useMutation({
+    mutationFn: (payload) => healthMetricsService.addMetric(user.id, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.healthMetrics.patient(user?.id) });
+    },
+  });
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchMetrics();
-  }, [fetchMetrics]);
+    refetch();
+  }, [refetch]);
 
   // ── Latest per type ─────────────────────────────────────────────────────────
   const getLatest = useCallback(
@@ -212,7 +211,6 @@ const HealthMetricsScreen = ({ navigation }) => {
   const handleSave = async () => {
     if (!selectedType) return;
     try {
-      setSaving(true);
       let value;
       if (selectedType.key === "bp") {
         const sys = parseFloat(inputValues.systolic);
@@ -230,19 +228,17 @@ const HealthMetricsScreen = ({ navigation }) => {
         }
         value = v;
       }
-      await healthMetricsService.addMetric(user.id, {
+      await addMetricMutation.mutateAsync({
         type: selectedType.key,
         value,
         timestamp: new Date().toISOString(),
       });
       showSuccess(`${selectedType.label} logged successfully.`);
       setModalVisible(false);
-      fetchMetrics();
+      refetch();
     } catch (err) {
       logError(err, { context: "HealthMetricsScreen.handleSave" });
       showError("Failed to save metric. Please try again.");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -308,7 +304,7 @@ const HealthMetricsScreen = ({ navigation }) => {
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
-  if (loading && !refreshing) {
+  if (loading && !isRefetching) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <LinearGradient
@@ -316,7 +312,7 @@ const HealthMetricsScreen = ({ navigation }) => {
           style={[styles.header, { paddingTop: insets.top + 8 }]}
         >
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => handleSmartBack(navigation, "PatientTabs")}
             style={styles.backBtn}
           >
             <ArrowLeft size={24} color={theme.colors.text.white} />
@@ -325,7 +321,11 @@ const HealthMetricsScreen = ({ navigation }) => {
           <View style={{ width: 40 }} />
         </LinearGradient>
         <View style={styles.centered}>
-          <Text style={styles.loadingText}>Loading metrics...</Text>
+          <View style={{ width: "100%", paddingHorizontal: 16, gap: 12 }}>
+            <SkeletonStatGrid rows={2} />
+            <SkeletonCardRow />
+            <SkeletonCardRow />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -337,13 +337,21 @@ const HealthMetricsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       <NetworkStatusIndicator />
 
+      {isError ? (
+        <ErrorRecovery
+          error={parseError(error)}
+          onRetry={refetch}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
+        />
+      ) : null}
+
       {/* Header */}
       <LinearGradient
         colors={healthColors.gradients.primary}
         style={[styles.header, { paddingTop: insets.top + 8 }]}
       >
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backBtn}
         >
           <ArrowLeft size={24} color={theme.colors.text.white} />
@@ -357,7 +365,7 @@ const HealthMetricsScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             tintColor={healthColors.primary.main}
           />
@@ -421,9 +429,9 @@ const HealthMetricsScreen = ({ navigation }) => {
               
               <Button
                 variant="primary"
-                title={saving ? "Saving..." : "Save Record"}
+                title={addMetricMutation.isPending ? "Saving..." : "Save Record"}
                 onPress={handleSave}
-                loading={saving}
+                loading={addMetricMutation.isPending}
                 style={{ marginTop: spacing.md }}
               />
             </View>

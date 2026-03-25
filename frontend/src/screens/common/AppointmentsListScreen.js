@@ -10,7 +10,7 @@
  * - Error handling
  * - Real-time updates option
  * 
- * This component follows PROJECT_RULES.md strictly:
+ * This component follows ENGINEERING_PROJECT_STANDARDS.md strictly:
  * - No temporary fixes
  * - Proper error handling
  * - Safe session management
@@ -33,9 +33,10 @@ import { Calendar, ArrowLeft } from "lucide-react-native";
 import { useSelector } from 'react-redux';
 import { theme, healthColors } from '../theme';
 import { useAppointmentsInfinite } from '../hooks/useAppointments';
-import { logError } from '../utils/errorHandler';
+import { logError, parseError } from '../utils/errorHandler';
 import { getStatusColor } from '../utils/helpers';
 import { SkeletonCardRow, EmptyState, ErrorRecovery } from '../../components/common';
+import { handleSmartBack } from '../../utils/navigation';
 
 /**
  * Appointments List Screen with Infinite Scroll
@@ -158,14 +159,14 @@ const AppointmentsListScreen = ({ navigation, route }) => {
 
   // Render error state
   if (isError) {
-    const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load appointments';
+    const errorMessage = parseError(error);
     
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <ErrorRecovery
           error={errorMessage}
           onRetry={handleRefresh}
-          onGoBack={() => navigation.goBack()}
+          onGoBack={() => handleSmartBack(navigation, 'PatientTabs')}
         />
       </SafeAreaView>
     );
@@ -187,7 +188,7 @@ const AppointmentsListScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Appointments</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="Go back">
+        <TouchableOpacity onPress={() => handleSmartBack(navigation, 'PatientTabs')} accessibilityRole="button" accessibilityLabel="Go back">
           <ArrowLeft  size={24} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>

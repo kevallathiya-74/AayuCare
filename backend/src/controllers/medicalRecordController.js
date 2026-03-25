@@ -2,8 +2,9 @@ const medicalRecordRepository = require("../repositories/medicalRecordRepository
 const userRepository = require("../repositories/userRepository");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
-const { deleteCacheByPattern } = require("../config/redis");
+const { invalidateAfterMedicalRecordMutation } = require("../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+const { sendSuccess, sendError } = require("../utils/apiResponse");
 
 // Shared UUID regex — used to decide findById vs findByUserId
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -78,9 +79,10 @@ exports.getAllMedicalRecords = async (req, res, next) => {
 
     const total = await medicalRecordRepository.count(query);
 
-    res.status(200).json({
-      status: "success",
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         medicalRecords,
         pagination: {
           page: parseInt(page),
@@ -89,7 +91,8 @@ exports.getAllMedicalRecords = async (req, res, next) => {
           pages: Math.ceil(total / limit),
         },
       },
-    });
+      "Medical records retrieved successfully"
+    );
   } catch (error) {
     next(error);
   }
@@ -158,9 +161,7 @@ exports.createMedicalRecord = async (req, res, next) => {
 
     // Invalidate relevant caches after medical record creation
     try {
-      await deleteCacheByPattern("v1:cache:medicalrecord:*");
-      await deleteCacheByPattern("cache:medicalrecord:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterMedicalRecordMutation();
       logger.debug("Cache invalidated after medical record creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -175,13 +176,13 @@ exports.createMedicalRecord = async (req, res, next) => {
       req,
     });
 
-    res.status(201).json({
-      status: "success",
-      message: "Medical record created successfully",
-      data: {
-        medicalRecord,
-      },
-    });
+    return sendSuccess(
+      res,
+      req,
+      { medicalRecord },
+      "Medical record created successfully",
+      201
+    );
   } catch (error) {
     next(error);
   }
@@ -206,10 +207,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     // Check authorization - allow patient to view own data, doctors and admins can view any
     const isOwnData = req.user.id === patientId || req.user.userId === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && req.user.role !== "super_admin" && !isOwnData) {
-      return res.status(403).json({
-        status: "error",
-        message: "Not authorized to view these medical records",
-      });
+      return sendError(res, req, "Not authorized to view these medical records", 403, "FORBIDDEN");
     }
 
     // Find patient by UUID or custom userId (e.g. "PAT001")
@@ -226,10 +224,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       }
     }
     if (!patient) {
-      return res.status(404).json({
-        status: "error",
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Build query
@@ -263,9 +258,10 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
 
     const total = await medicalRecordRepository.count(query);
 
-    res.status(200).json({
-      status: "success",
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         medicalRecords,
         pagination: {
           page: parseInt(page),
@@ -274,7 +270,8 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
           pages: Math.ceil(total / limit),
         },
       },
-    });
+      "Patient medical records retrieved successfully"
+    );
   } catch (error) {
     next(error);
   }
@@ -306,12 +303,7 @@ exports.getMedicalRecord = async (req, res, next) => {
       }
     }
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        medicalRecord,
-      },
-    });
+    return sendSuccess(res, req, { medicalRecord }, "Medical record retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -349,20 +341,13 @@ exports.updateMedicalRecord = async (req, res, next) => {
 
     // Invalidate relevant caches after medical record update
     try {
-      await deleteCacheByPattern("v1:cache:medicalrecord:*");
-      await deleteCacheByPattern("cache:medicalrecord:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterMedicalRecordMutation();
       logger.debug("Cache invalidated after medical record update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        medicalRecord: updatedRecord,
-      },
-    });
+    return sendSuccess(res, req, { medicalRecord: updatedRecord }, "Medical record updated successfully");
   } catch (error) {
     next(error);
   }
@@ -397,18 +382,13 @@ exports.deleteMedicalRecord = async (req, res, next) => {
 
     // Invalidate relevant caches after medical record deletion
     try {
-      await deleteCacheByPattern("v1:cache:medicalrecord:*");
-      await deleteCacheByPattern("cache:medicalrecord:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterMedicalRecordMutation();
       logger.debug("Cache invalidated after medical record deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(200).json({
-      status: "success",
-      message: "Medical record deleted successfully",
-    });
+    return sendSuccess(res, req, {}, "Medical record deleted successfully");
   } catch (error) {
     next(error);
   }
@@ -477,10 +457,7 @@ exports.getPatientHistory = async (req, res, next) => {
       totalRecords: medicalRecords.length,
     };
 
-    res.status(200).json({
-      status: "success",
-      data: history,
-    });
+    return sendSuccess(res, req, history, "Patient history retrieved successfully");
   } catch (error) {
     next(error);
   }

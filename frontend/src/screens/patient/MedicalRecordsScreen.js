@@ -12,9 +12,7 @@
 
 import React, {
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -29,6 +27,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   FileText,
   FlaskConical,
@@ -44,8 +43,10 @@ import { EmptyState } from "../../components/common";
 import { SkeletonLoader, SkeletonCardRow } from "../../components/ui/SkeletonLoader";
 import { getSafeAreaEdges } from "../../utils/responsive";
 import { getPatientMedicalRecords } from "../../services/medicalRecord.service";
-import { logError } from "../../utils/errorHandler";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { logError, parseError } from "../../utils/errorHandler";
 import { format, parseISO } from "date-fns";
+import { handleSmartBack } from "../../utils/navigation";
 
 // ─────────────────────────────────────────────
 // Constants
@@ -223,74 +224,52 @@ const ErrorView = ({ message, onRetry }) => (
 
 const MedicalRecordsScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
-
-  const [records, setRecords] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const {
+    data,
+    isLoading,
+    isRefetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+    error,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.medicalRecords.infinite({
+      patientId: user?.id || user?.userId,
+      filter: activeFilter,
+    }),
+    enabled: !!(user?.id || user?.userId),
+    staleTime: 5 * 60 * 1000,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }) => {
+      const patientId = user?.id || user?.userId;
+      const params = {
+        page: Math.floor(pageParam / PAGE_SIZE) + 1,
+        limit: PAGE_SIZE,
+      };
+      if (activeFilter !== "all") params.recordType = activeFilter;
 
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  // ── Fetch ──────────────────────────────────
-
-  const fetchRecords = useCallback(
-    async ({ pageNum = 1, filter = "all", isRefresh = false } = {}) => {
-      if (!user?.id && !user?.userId) return;
-
-      if (pageNum === 1) {
-        isRefresh ? setIsRefreshing(true) : setIsLoading(true);
-      } else {
-        setIsFetchingMore(true);
-      }
-      setError(null);
-
-      try {
-        const patientId = user.id || user.userId;
-        const params = {
-          page: pageNum,
-          limit: PAGE_SIZE,
-        };
-        if (filter !== "all") params.recordType = filter;
-
-        const data = await getPatientMedicalRecords(patientId, params);
-
-        if (!isMounted.current) return;
-
-        const incoming = Array.isArray(data) ? data : data?.records || [];
-
-        setRecords((prev) =>
-          pageNum === 1 ? incoming : [...prev, ...incoming]
-        );
-        setHasMore(incoming.length >= PAGE_SIZE);
-        setPage(pageNum);
-      } catch (err) {
-        if (!isMounted.current) return;
-        logError(err, { context: "MedicalRecordsScreen.fetchRecords" });
-        setError(err?.message || "Failed to load medical records.");
-      } finally {
-        if (!isMounted.current) return;
-        setIsLoading(false);
-        setIsRefreshing(false);
-        setIsFetchingMore(false);
-      }
+      const res = await getPatientMedicalRecords(patientId, params);
+      const incoming = Array.isArray(res) ? res : res?.records || [];
+      return {
+        records: incoming,
+        total: Number(res?.total || res?.pagination?.total || 0),
+      };
     },
-    [user]
-  );
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.records?.length || 0), 0);
+      if (lastPage?.total > 0) {
+        return loaded < lastPage.total ? loaded : undefined;
+      }
+      return (lastPage?.records?.length || 0) >= PAGE_SIZE ? loaded : undefined;
+    },
+  });
 
-  useEffect(() => {
-    fetchRecords({ pageNum: 1, filter: activeFilter });
-  }, [activeFilter, fetchRecords]);
+  const records = useMemo(
+    () => (data?.pages || []).flatMap((page) => page?.records || []),
+    [data]
+  );
 
   // ── Handlers ───────────────────────────────
 
@@ -303,13 +282,13 @@ const MedicalRecordsScreen = ({ navigation }) => {
   );
 
   const handleRefresh = useCallback(() => {
-    fetchRecords({ pageNum: 1, filter: activeFilter, isRefresh: true });
-  }, [activeFilter, fetchRecords]);
+    refetch();
+  }, [refetch]);
 
   const handleLoadMore = useCallback(() => {
-    if (!hasMore || isFetchingMore || isLoading) return;
-    fetchRecords({ pageNum: page + 1, filter: activeFilter });
-  }, [hasMore, isFetchingMore, isLoading, page, activeFilter, fetchRecords]);
+    if (!hasNextPage || isFetchingNextPage || isLoading) return;
+    fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
   const handleRecordPress = useCallback(
     (record) => {
@@ -339,7 +318,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
     [activeFilter, handleFilterChange]
   );
 
-  const ListFooter = isFetchingMore ? (
+  const ListFooter = isFetchingNextPage ? (
     <View style={styles.footerLoader}>
       <RecordSkeleton />
     </View>
@@ -369,7 +348,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
       {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backBtn}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -387,7 +366,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
           <SkeletonList />
         </View>
       ) : error ? (
-        <ErrorView message={error} onRetry={() => fetchRecords({ pageNum: 1, filter: activeFilter })} />
+        <ErrorView message={parseError(error)} onRetry={refetch} />
       ) : (
         <FlatList
           data={records}
@@ -419,7 +398,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
           }
           refreshControl={
             <RefreshControl
-              refreshing={isRefreshing}
+              refreshing={isRefetching}
               onRefresh={handleRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}

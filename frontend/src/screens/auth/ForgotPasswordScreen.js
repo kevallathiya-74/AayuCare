@@ -23,6 +23,7 @@ import {
   validateEmail,
   validatePhone,
 } from "../../utils/errorHandler";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ForgotPasswordScreen = ({ navigation, route }) => {
   const userType = route?.params?.userType || "user";
@@ -71,12 +72,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   };
 
   const handleBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      const loginScreen = "Login"; // Unified login screen for all user types
-      navigation.navigate(loginScreen);
-    }
+    handleSmartBack(navigation, "Login");
   };
 
   const gradientColors = isHospital

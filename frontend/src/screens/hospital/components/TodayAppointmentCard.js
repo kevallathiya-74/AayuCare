@@ -85,6 +85,8 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
   );
 };
 
+const MemoizedTodayAppointmentCard = React.memo(TodayAppointmentCard);
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: healthColors.background.card,
@@ -140,4 +142,4 @@ const styles = StyleSheet.create({
   primaryBtnText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "700", color: theme.colors.text.white },
 });
 
-export default TodayAppointmentCard;
+export default MemoizedTodayAppointmentCard;

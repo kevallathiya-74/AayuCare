@@ -4,6 +4,40 @@
  */
 const { AppError } = require("./errorHandler");
 
+const humanizeField = (path = "field") => {
+  return String(path)
+    .replace(/["']/g, "")
+    .replace(/[_\.]/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+const formatJoiDetail = (detail = {}) => {
+  const field = humanizeField(detail?.path?.join(" ") || detail?.context?.key || "field");
+  const type = detail?.type || "";
+
+  if (type === "any.required") return `${field} is required`;
+  if (type === "string.empty") return `${field} is required`;
+  if (type === "string.email") return `Please enter a valid email address`;
+  if (type === "string.min") return `${field} is too short`;
+  if (type === "string.max") return `${field} is too long`;
+  if (type === "number.base") return `${field} must be a valid number`;
+  if (type === "date.base") return `${field} must be a valid date`;
+  if (type === "any.only") return `${field} contains an invalid value`;
+  if (type === "object.unknown") return `${field} is not allowed`;
+
+  return `${field} is invalid`;
+};
+
+const formatValidationError = (error) => {
+  const details = error?.details || [];
+  if (!Array.isArray(details) || details.length === 0) {
+    return "Request validation failed";
+  }
+
+  return details.map(formatJoiDetail).join(", ");
+};
+
 /**
  * Validate request body against schema
  * @param {Object} schema - Joi validation schema
@@ -17,9 +51,7 @@ const validateBody = (schema) => {
     });
 
     if (error) {
-      const errorMessage = error.details
-        .map((detail) => detail.message)
-        .join(", ");
+      const errorMessage = formatValidationError(error);
       return next(new AppError(errorMessage, 400));
     }
 
@@ -41,9 +73,7 @@ const validateParams = (schema) => {
     });
 
     if (error) {
-      const errorMessage = error.details
-        .map((detail) => detail.message)
-        .join(", ");
+      const errorMessage = formatValidationError(error);
       return next(new AppError(errorMessage, 400));
     }
 
@@ -65,9 +95,7 @@ const validateQuery = (schema) => {
     });
 
     if (error) {
-      const errorMessage = error.details
-        .map((detail) => detail.message)
-        .join(", ");
+      const errorMessage = formatValidationError(error);
       return next(new AppError(errorMessage, 400));
     }
 

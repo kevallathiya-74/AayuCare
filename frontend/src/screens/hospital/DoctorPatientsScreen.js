@@ -12,6 +12,7 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -21,27 +22,39 @@ import {
 } from "react-native-safe-area-context";
 import { FileText, Eye, UserPlus, Search, XCircle } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { getScreenPadding, verticalScale } from "../../utils/responsive";
 import { doctorService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { logError, parseError } from "../../utils/errorHandler";
 import { SkeletonCardRow, EmptyState, ErrorRecovery } from "../../components/common";
+
+const PAGE_SIZE = 20;
 
 const DoctorPatientsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchDebounce = useRef(null);
 
-  const fetchPatients = useCallback(async (query = "") => {
-    try {
-      setError(null);
-      const response = await doctorService.searchMyPatients(query);
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.patients.infinite({ doctor: true, search: debouncedSearch }),
+    initialPageParam: 0,
+    staleTime: 2 * 60 * 1000,
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await doctorService.searchMyPatients(debouncedSearch || "");
 
-      // Normalize response shape
       let list = [];
       if (Array.isArray(response)) {
         list = response;
@@ -51,42 +64,52 @@ const DoctorPatientsScreen = ({ navigation }) => {
         list = response.patients;
       }
 
-      setPatients(
-        list.map((p) => ({
-          ...p,
-          id: p.id || p._id || p.userId,
-          _id: p._id || p.id || p.userId,
-        }))
-      );
-    } catch (err) {
-      logError(err, { context: "DoctorPatientsScreen.fetchPatients" });
-      setError("Unable to load patients. Pull down to retry.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+      const normalized = list.map((p) => ({
+        ...p,
+        id: p.id || p._id || p.userId,
+        _id: p._id || p.id || p.userId,
+      }));
+
+      const start = pageParam;
+      const items = normalized.slice(start, start + PAGE_SIZE);
+      return {
+        items,
+        total: normalized.length,
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      return loaded < (lastPage?.total || 0) ? loaded : undefined;
+    },
+  });
+
+  const patients = (data?.pages || []).flatMap((page) => page?.items || []);
 
   // Initial load & focus refresh
   useFocusEffect(
     useCallback(() => {
-      fetchPatients(searchQuery.trim());
-    }, [fetchPatients])
+      refetch();
+    }, [refetch])
   );
 
   // Debounced search
   useEffect(() => {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     searchDebounce.current = setTimeout(() => {
-      fetchPatients(searchQuery.trim());
+      setDebouncedSearch(searchQuery.trim());
     }, 400);
     return () => clearTimeout(searchDebounce.current);
-  }, [searchQuery, fetchPatients]);
+  }, [searchQuery]);
 
   const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchPatients(searchQuery.trim());
-  }, [fetchPatients, searchQuery]);
+    refetch();
+  }, [refetch]);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleWriteRx = useCallback(
     (patient) => {
@@ -224,6 +247,13 @@ const DoctorPatientsScreen = ({ navigation }) => {
           data={patients}
           renderItem={renderPatientCard}
           keyExtractor={(item, index) => String(item.id || item._id || item.userId || item.patientId || `patient-${index}`)}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 82, offset: 82 * index, index })}
           contentContainerStyle={[
             styles.listContent,
             patients.length === 0 && { flexGrow: 1 },
@@ -231,17 +261,24 @@ const DoctorPatientsScreen = ({ navigation }) => {
           ]}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={handleRefresh}
               tintColor={healthColors.primary.main}
             />
           }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
-            error ? (
+            isError ? (
               <EmptyState
                 icon="alert-circle-outline"
                 title="Unable to Load Patients"
-                message={error}
+                message={parseError(error)}
                 actionLabel="Try Again"
                 onActionPress={handleRefresh}
               />
@@ -325,6 +362,10 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: getScreenPadding(),
     paddingTop: 4,
+  },
+  footerLoader: {
+    paddingVertical: 12,
+    alignItems: "center",
   },
   card: {
     flexDirection: "row",

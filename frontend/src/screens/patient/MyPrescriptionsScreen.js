@@ -3,7 +3,7 @@
  * View all prescriptions for the patient
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   StatusBar,
   RefreshControl,
+  ActivityIndicator,
   Alert,
   Modal,
   ScrollView,
@@ -22,60 +23,73 @@ import {
 } from "react-native-safe-area-context";
 import { Cross, ChevronRight, ArrowLeft, X } from "lucide-react-native";
 import { useSelector } from "react-redux";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatDate } from "../../utils/helpers";
 import { prescriptionService } from "../../services";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
+
+const PAGE_SIZE = 20;
 
 const MyPrescriptionsScreen = ({ navigation }) => {
-  const [prescriptions, setPrescriptions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
 
-  const fetchPrescriptions = useCallback(async () => {
-    if (!user?.id) {
-      setError("User not authenticated");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setError(null);
-      const response = await prescriptionService.getPatientPrescriptions(
-        user.id
-      );
-      if (response.success) {
-        setPrescriptions(response.data?.prescriptions || response.data || []);
-      } else {
-        throw new Error(response.message || "Failed to load prescriptions");
-      }
-    } catch (err) {
-      logError(err, {
-        context: "MyPrescriptionsScreen.fetchPrescriptions",
-        userId: user?.id,
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.prescriptions.infinite({ patientId: user?.id }),
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await prescriptionService.getPatientPrescriptions(user.id, {
+        page: Math.floor(pageParam / PAGE_SIZE) + 1,
+        limit: PAGE_SIZE,
       });
-      setError(err.message || "Failed to load prescriptions");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [user?.id]);
+      const items = response?.data?.prescriptions || response?.data || [];
+      return {
+        items: Array.isArray(items) ? items : [],
+        total: Number(response?.data?.total || 0),
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      if (lastPage?.total > 0) {
+        return loaded < lastPage.total ? loaded : undefined;
+      }
+      return (lastPage?.items?.length || 0) >= PAGE_SIZE ? loaded : undefined;
+    },
+  });
 
-  useEffect(() => {
-    fetchPrescriptions();
-  }, [fetchPrescriptions]);
+  const prescriptions = useMemo(
+    () => (data?.pages || []).flatMap((page) => page?.items || []),
+    [data]
+  );
 
   const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchPrescriptions();
-  }, [fetchPrescriptions]);
+    refetch();
+  }, [refetch]);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const renderPrescription = ({ item }) => (
     <TouchableOpacity
@@ -156,12 +170,12 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     />
   );
 
-  if (error && !prescriptions.length) {
+  if (isError && !prescriptions.length) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <ErrorRecovery
-          error={error}
-          onRetry={fetchPrescriptions}
+          error={parseError(error)}
+          onRetry={refetch}
           message="Unable to load prescriptions"
         />
       </SafeAreaView>
@@ -180,7 +194,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
         >
           <ArrowLeft
@@ -313,15 +327,29 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           data={prescriptions}
           renderItem={renderPrescription}
           keyExtractor={(item, index) => item._id || item.id || `prescription-${index}`}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 116, offset: 116 * index, index })}
           contentContainerStyle={[
             styles.content,
             prescriptions.length === 0 && styles.emptyContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           ListEmptyComponent={renderEmptyState}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+              </View>
+            ) : null
+          }
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={handleRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
@@ -483,6 +511,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: theme.spacing.lg,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
   emptyContent: {
     flexGrow: 1,

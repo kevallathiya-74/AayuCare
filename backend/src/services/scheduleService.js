@@ -7,16 +7,15 @@
 const scheduleRepository = require('../repositories/scheduleRepository');
 const userRepository = require('../repositories/userRepository');
 const { AppError } = require('../middleware/errorHandler');
-const { deleteCacheByPattern } = require('../config/redis');
-const logger = require('../utils/logger');
+const { invalidateByPatterns } = require('../utils/cacheInvalidation');
 
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 const invalidateScheduleCache = async (doctorId) => {
-  await deleteCacheByPattern(`aayucare:v1:schedule:doctor:${doctorId}:*`).catch(
-    err => logger.warn('Schedule cache invalidation failed:', err.message)
-  );
+  await invalidateByPatterns([
+    `aayucare:v1:schedule:doctor:${doctorId}:*`,
+  ]);
 };
 
 /**

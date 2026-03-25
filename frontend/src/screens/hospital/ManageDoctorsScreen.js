@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
 import {
   View,
@@ -28,11 +28,14 @@ import { useSelector } from "react-redux";
 import { User, Mail, Phone, Edit, Trash2, ArrowLeft, Plus, Search, XCircle, X } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { EmptyState, SkeletonCardRow } from "../../components/common";
 import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
+import { handleSmartBack } from "../../utils/navigation";
+
+const PAGE_SIZE = 20;
 
 const ManageDoctorsScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -60,21 +63,33 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   }, [searchQuery]);
 
   const {
-    data: doctors = [],
+    data,
     isLoading: loading,
     isRefetching: searchLoading,
     error,
     refetch,
-  } = useQuery({
-    queryKey: queryKeys.doctors.list({ search: debouncedSearch, hospitalId: user?.hospitalId }),
-    queryFn: async () => {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.doctors.infinite({ search: debouncedSearch, hospitalId: user?.hospitalId }),
+    queryFn: async ({ pageParam = 0 }) => {
       const response = await doctorService.getAllDoctors(
         debouncedSearch
-          ? { search: debouncedSearch, ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) }
-          : { ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}) }
+          ? {
+              search: debouncedSearch,
+              page: Math.floor(pageParam / PAGE_SIZE) + 1,
+              limit: PAGE_SIZE,
+              ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
+            }
+          : {
+              page: Math.floor(pageParam / PAGE_SIZE) + 1,
+              limit: PAGE_SIZE,
+              ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
+            }
       );
       const rawDoctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
-      return (Array.isArray(rawDoctorsList) ? rawDoctorsList : []).map((doctor) => ({
+      const items = (Array.isArray(rawDoctorsList) ? rawDoctorsList : []).map((doctor) => ({
         ...doctor,
         _id: doctor?._id || doctor?.id || doctor?.user_uuid || doctor?.doctorId,
         id: doctor?.id || doctor?._id || doctor?.user_uuid || doctor?.doctorId,
@@ -86,9 +101,22 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               ? doctor.is_active
               : !!doctor?.is_active,
       }));
+
+      return { items, total: Number(response?.total || response?.data?.total || 0) };
     },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      if (lastPage?.total > 0) {
+        return loaded < lastPage.total ? loaded : undefined;
+      }
+      return (lastPage?.items?.length || 0) >= PAGE_SIZE ? loaded : undefined;
+    },
+    initialPageParam: 0,
+    staleTime: 10 * 60 * 1000,
     refetchOnMount: true,
   });
+
+  const doctors = (data?.pages || []).flatMap((page) => page?.items || []);
 
   useFocusEffect(
     useCallback(() => {
@@ -97,8 +125,14 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   );
 
   const onRefresh = useCallback(() => {
-    refetch({ cancelRefetch: false });
+    refetch();
   }, [refetch]);
+
+  const onLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleToggleStatus = useCallback(async (doctor) => {
     if (!canManageUsers) {
@@ -179,11 +213,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       });
 
       let errorMessage = "Failed to deactivate doctor";
-      if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err?.message) {
-        errorMessage = err.message;
-      }
+      errorMessage = parseError(err);
       Alert.alert("Error", errorMessage);
     } finally {
       setUpdatingId(null);
@@ -264,11 +294,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
               // Better error handling
               let errorMessage = "Failed to permanently delete doctor";
-              if (err?.response?.data?.message) {
-                errorMessage = err.response.data.message;
-              } else if (err?.message) {
-                errorMessage = err.message;
-              }
+              errorMessage = parseError(err);
               Alert.alert("Error", errorMessage);
             } finally {
               setUpdatingId(null);
@@ -448,7 +474,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     <EmptyState
       icon="people-outline"
       title="No Doctors Yet"
-      message={typeof error === "string" ? error : error?.message || "Doctor management data will appear here."}
+      message={error ? parseError(error) : "Doctor management data will appear here."}
       actionLabel={error ? "Retry" : undefined}
       onActionPress={error ? () => refetch() : undefined}
     />
@@ -467,7 +493,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -541,6 +567,13 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
           renderItem={renderDoctor}
           keyExtractor={(item, index) => item._id || item.id || `doctor-${index}`}
           contentContainerStyle={styles.listContent}
+          onEndReached={onLoadMore}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 176, offset: 176 * index, index })}
           refreshControl={
             <RefreshControl
               refreshing={searchLoading && !loading}
@@ -548,6 +581,13 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
             />
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+              </View>
+            ) : null
           }
           ListEmptyComponent={renderEmptyState}
           showsVerticalScrollIndicator={false}
@@ -724,6 +764,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.md,
     flexGrow: 1,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
   doctorCard: {
     backgroundColor: healthColors.background.card,

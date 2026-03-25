@@ -3,7 +3,7 @@
  * AUTO-SYNC to patient app and pharmacy
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -23,7 +23,9 @@ import {
 import { CheckCircle, ArrowLeft, Save, XCircle, PlusCircle, Calendar, ChevronRight } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   verticalScale,
   getScreenPadding,
@@ -33,6 +35,7 @@ import { logError } from "../../utils/errorHandler";
 import { formatCurrency } from "../../utils/helpers";
 import { SkeletonCardRow, Input, EmptyState } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -40,10 +43,6 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
 
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || null);
-  const [patient, setPatient] = useState(null);
-  const [patientOptions, setPatientOptions] = useState([]);
-  const [loadingPatients, setLoadingPatients] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [date] = useState(
     new Date().toLocaleDateString("en-IN", {
@@ -91,35 +90,28 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     return "N/A";
   }, []);
 
-  const fetchPatientDetails = useCallback(async () => {
-    if (!selectedPatientId) {
-      setPatient(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
+  const {
+    data: patient,
+    isLoading: loading,
+  } = useQuery({
+    queryKey: queryKeys.patients.detail(selectedPatientId || "none"),
+    enabled: !!selectedPatientId,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
       const response = await patientService.getPatientById(selectedPatientId);
       const patientData = response?.data || response;
+      return patientData?.id || patientData?._id || patientData?.userId ? patientData : null;
+    },
+  });
 
-      if (patientData?.id || patientData?._id || patientData?.userId) {
-        setPatient(patientData);
-      } else {
-        setPatient(null);
-        Alert.alert("Error", "Unable to fetch patient details");
-      }
-    } catch (err) {
-      logError(err, { context: "EnhancedPrescriptionScreen.fetchPatientDetails" });
-      Alert.alert("Error", "Unable to fetch patient details");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedPatientId]);
-
-  const fetchPatientOptions = useCallback(async () => {
-    try {
-      setLoadingPatients(true);
+  const {
+    data: patientOptions = [],
+    isLoading: loadingPatients,
+    refetch: refetchPatientOptions,
+  } = useQuery({
+    queryKey: queryKeys.patients.list({ scope: "prescription-patient-options", doctorId: user?.id }),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
       const [doctorLinkedResult, allPatientsResult] = await Promise.allSettled([
         doctorService.searchMyPatients(""),
         patientService.getAllPatients({}),
@@ -145,22 +137,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         ).values()
       );
 
-      setPatientOptions(uniquePatients.filter((entry) => entry?.id || entry?._id || entry?.userId));
-    } catch (err) {
-      logError(err, { context: "EnhancedPrescriptionScreen.fetchPatientOptions" });
-      setPatientOptions([]);
-    } finally {
-      setLoadingPatients(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPatientDetails();
-  }, [fetchPatientDetails]);
-
-  useEffect(() => {
-    fetchPatientOptions();
-  }, [fetchPatientOptions]);
+      return uniquePatients.filter((entry) => entry?.id || entry?._id || entry?.userId);
+    },
+  });
 
   useEffect(() => {
     // Calculate estimated cost based on medications
@@ -275,7 +254,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         [
           {
             text: "Select Patient",
-            onPress: () => fetchPatientOptions(),
+              onPress: () => refetchPatientOptions(),
           },
           {
             text: "Cancel",
@@ -332,7 +311,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           [
             {
               text: "OK",
-              onPress: () => navigation.goBack(),
+              onPress: () => handleSmartBack(navigation, "DoctorTabs"),
             },
           ]
         );
@@ -416,7 +395,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"

@@ -49,13 +49,14 @@ import {
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
+import { useMutation } from "@tanstack/react-query";
+import { handleSmartBack } from "../../utils/navigation";
 
 const AISymptomChecker = ({ navigation }) => {
   const [symptoms, setSymptoms] = useState("");
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [duration, setDuration] = useState("");
   const [severity, setSeverity] = useState("moderate");
-  const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
@@ -78,6 +79,22 @@ const AISymptomChecker = ({ navigation }) => {
     { value: "severe", label: "Severe", color: theme.colors.error.main },
   ];
 
+  const analyzeSymptomsMutation = useMutation({
+    mutationFn: (payload) => aiService.analyzeSymptoms(payload),
+    onSuccess: (result) => {
+      setResults(result);
+    },
+    onError: (err) => {
+      logError(err, {
+        context: "AISymptomChecker.handleAnalyze",
+        symptomsCount: selectedSymptoms.length,
+      });
+      setError(err?.message || "Failed to analyze symptoms");
+      showError("Failed to analyze symptoms. Please try again.");
+    },
+    retry: 1,
+  });
+
   const toggleSymptom = (symptom) => {
     if (selectedSymptoms.find((s) => s.id === symptom.id)) {
       setSelectedSymptoms(selectedSymptoms.filter((s) => s.id !== symptom.id));
@@ -97,34 +114,21 @@ const AISymptomChecker = ({ navigation }) => {
       return;
     }
 
-    setLoading(true);
     setError(null);
-    try {
-      const allSymptoms = [
-        ...selectedSymptoms.map((s) => s.name),
-        ...symptoms
-          .split(",")
-          .map((s) => s.trim())
-          .filter((s) => s),
-      ];
 
-      const result = await aiService.analyzeSymptoms({
-        symptoms: allSymptoms,
-        duration,
-        severity,
-      });
+    const allSymptoms = [
+      ...selectedSymptoms.map((s) => s.name),
+      ...symptoms
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s),
+    ];
 
-      setResults(result);
-    } catch (err) {
-      logError(err, {
-        context: "AISymptomChecker.handleAnalyze",
-        symptomsCount: selectedSymptoms.length,
-      });
-      setError(err.message || "Failed to analyze symptoms");
-      showError("Failed to analyze symptoms. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await analyzeSymptomsMutation.mutateAsync({
+      symptoms: allSymptoms,
+      duration,
+      severity,
+    });
   };
 
   const renderResults = () => {
@@ -305,7 +309,7 @@ const AISymptomChecker = ({ navigation }) => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
             <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -416,7 +420,7 @@ const AISymptomChecker = ({ navigation }) => {
             <TouchableOpacity
               style={styles.analyzeButton}
               onPress={handleAnalyze}
-              disabled={loading}
+              disabled={analyzeSymptomsMutation.isPending}
             >
               <LinearGradient
                 colors={[theme.colors.info.main, theme.colors.healthcare.purple]}
@@ -424,7 +428,7 @@ const AISymptomChecker = ({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                {loading ? (
+                {analyzeSymptomsMutation.isPending ? (
                   <ActivityIndicator color={theme.colors.white} />
                 ) : (
                   <>
@@ -454,7 +458,7 @@ const AISymptomChecker = ({ navigation }) => {
           renderResults()
         )}
 
-        {loading && (
+        {analyzeSymptomsMutation.isPending && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={healthColors.primary.main} />
             <Text style={styles.loadingText}>Analyzing symptoms...</Text>

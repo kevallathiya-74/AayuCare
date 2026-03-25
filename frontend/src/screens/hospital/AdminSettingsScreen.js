@@ -25,6 +25,7 @@ import { logoutUser } from "../../store/slices/authSlice";
 import { logError } from "../../utils/errorHandler";
 import { ModalSheet, Button } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const AdminSettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -168,7 +169,7 @@ const AdminSettingsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"

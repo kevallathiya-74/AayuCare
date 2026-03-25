@@ -14,11 +14,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector, useDispatch } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
 import { getSafeAreaEdges } from "../../utils/responsive";
 import { logoutUser } from "../../store/slices/authSlice";
 import { showConfirmation, logError } from "../../utils/errorHandler";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { formatCurrency } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import notificationService from "../../services/notification.service";
@@ -30,6 +32,8 @@ import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
 import {
+  SkeletonCardRow,
+  SkeletonStatGrid,
   AdminHeader,
   AdminWelcomeBanner,
   AdminStatsCarousel,
@@ -70,6 +74,11 @@ const resolveEntityId = (entity) => {
 
 const AdminHomeScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
+  const notificationPermission = useSelector(
+    (state) => state.permissions?.notification || {}
+  );
+  const canUseNotifications =
+    !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
   const dispatch = useDispatch();
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
   const { refreshCount } = useAdminAppointments();
@@ -101,7 +110,9 @@ const AdminHomeScreen = ({ navigation }) => {
       ] = await Promise.all([
         adminService.getDashboardStats().catch(() => null),
         adminService.getRecentActivities(activitiesLimit).catch(() => null),
-        notificationService.getUnreadCount().catch(() => null),
+        canUseNotifications
+          ? notificationService.getUnreadCount().catch(() => null)
+          : Promise.resolve(null),
         eventService.getUpcomingEvents({ limit: 100 }).catch(() => null),
         adminService.getUsers({ role: "doctor", limit: 10 }).catch(() => null),
         adminService.getUsers({ role: "patient", limit: 5 }).catch(() => null),
@@ -124,6 +135,7 @@ const AdminHomeScreen = ({ navigation }) => {
       }
       if (activitiesRes?.success) setRecentActivities(activitiesRes.data);
       if (notifRes?.success) setNotificationCount(notifRes.data?.count || 0);
+      if (!canUseNotifications) setNotificationCount(0);
       if (eventsRes?.success) setUpcomingEventsCount(eventsRes.data?.length || 0);
       if (doctorsRes?.success) setDoctorsList(extractUsers(doctorsRes));
       if (patientsRes?.success) setPatientsList(extractUsers(patientsRes));
@@ -137,21 +149,31 @@ const AdminHomeScreen = ({ navigation }) => {
     } catch (err) {
       logError(err, { context: "AdminHomeScreen.fetchDashboardData" });
     }
-  }, [activitiesLimit]);
+  }, [activitiesLimit, canUseNotifications]);
+
+  const {
+    isLoading: dashboardLoading,
+    refetch: refetchDashboard,
+  } = useQuery({
+    queryKey: queryKeys.dashboardStats.admin(),
+    queryFn: fetchDashboardData,
+    staleTime: 60 * 1000,
+    enabled: !!user?.id,
+  });
 
   useFocusEffect(
     useCallback(() => {
-      fetchDashboardData();
+      refetchDashboard();
       refreshCount();
-    }, [fetchDashboardData, refreshCount])
+    }, [refetchDashboard, refreshCount])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    await refetchDashboard();
     refreshCount();
     setRefreshing(false);
-  }, [fetchDashboardData, refreshCount]);
+  }, [refetchDashboard, refreshCount]);
 
   const handleLogout = useCallback(() => {
     showConfirmation("Are you sure you want to logout?", () => dispatch(logoutUser()), () => {}, "Logout");
@@ -333,6 +355,15 @@ const AdminHomeScreen = ({ navigation }) => {
               colors={[healthColors.primary.main]} tintColor={healthColors.primary.main} />
           }
         >
+          {dashboardLoading ? (
+            <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 12 }}>
+              <SkeletonStatGrid rows={2} />
+              <SkeletonCardRow />
+              <SkeletonCardRow />
+              <SkeletonCardRow />
+            </View>
+          ) : (
+            <>
           {/* Welcome */}
           <View style={styles.bannerWrap}>
             <AdminWelcomeBanner greeting={greeting} user={user} />
@@ -382,6 +413,8 @@ const AdminHomeScreen = ({ navigation }) => {
           />
 
           <View style={styles.bottomPad} />
+            </>
+          )}
         </ScrollView>
       )}
 

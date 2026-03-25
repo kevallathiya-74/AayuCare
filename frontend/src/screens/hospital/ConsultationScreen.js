@@ -34,9 +34,12 @@ import {
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { Button } from "../../components/common";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,8 +123,28 @@ const ConsultationScreen = ({ navigation, route }) => {
   const [diagnosis, setDiagnosis] = useState("");
   const [notes, setNotes] = useState("");
 
-  // UI state
-  const [completing, setCompleting] = useState(false);
+  const queryClient = useQueryClient();
+
+  const completeConsultationMutation = useMutation({
+    mutationFn: async ({ apptId, formattedNotes }) => {
+      await doctorService.updateAppointmentStatus(apptId, "completed", formattedNotes);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      Alert.alert(
+        "Consultation Completed",
+        `${patientName}'s consultation has been marked as completed.`,
+        [{ text: "OK", onPress: () => handleSmartBack(navigation, "DoctorTabs") }]
+      );
+    },
+    onError: (err) => {
+      logError(err, { context: "ConsultationScreen.handleComplete" });
+      Alert.alert("Error", "Failed to complete consultation. Please try again.");
+    },
+  });
 
   // Derived dirty flag — any field has content
   const isDirty =
@@ -158,7 +181,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             {
               text: "Leave",
               style: "destructive",
-              onPress: () => navigation.goBack(),
+              onPress: () => handleSmartBack(navigation, "DoctorTabs"),
             },
           ]
         );
@@ -187,12 +210,12 @@ const ConsultationScreen = ({ navigation, route }) => {
                   {
                     text: "Leave",
                     style: "destructive",
-                    onPress: () => navigation.goBack(),
+                    onPress: () => handleSmartBack(navigation, "DoctorTabs"),
                   },
                 ]
               );
             } else {
-              navigation.goBack();
+              handleSmartBack(navigation, "DoctorTabs");
             }
           }}
           style={styles.headerBackButton}
@@ -237,30 +260,15 @@ const ConsultationScreen = ({ navigation, route }) => {
         {
           text: "Complete",
           onPress: async () => {
-            try {
-              setCompleting(true);
-              await doctorService.updateAppointmentStatus(
-                appointmentId,
-                "completed",
-                formattedNotes
-              );
-              if (timerRef.current) clearInterval(timerRef.current);
-              Alert.alert(
-                "Consultation Completed",
-                `${patientName}'s consultation has been marked as completed.`,
-                [{ text: "OK", onPress: () => navigation.goBack() }]
-              );
-            } catch (err) {
-              logError(err, { context: "ConsultationScreen.handleComplete" });
-              Alert.alert("Error", "Failed to complete consultation. Please try again.");
-            } finally {
-              setCompleting(false);
-            }
+            await completeConsultationMutation.mutateAsync({
+              apptId: appointmentId,
+              formattedNotes,
+            });
           },
         },
       ]
     );
-  }, [appointmentId, vitals, diagnosis, notes, patientName, navigation]);
+  }, [appointmentId, vitals, diagnosis, notes, completeConsultationMutation]);
 
   // ---------------------------------------------------------------------------
   // Navigate to prescription
@@ -303,8 +311,8 @@ const ConsultationScreen = ({ navigation, route }) => {
     >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={verticalScale(60)}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
         <ScrollView
           style={styles.flex}
@@ -546,9 +554,13 @@ const ConsultationScreen = ({ navigation, route }) => {
             size="large"
             fullWidth
             gradient
-            loading={completing}
+            loading={completeConsultationMutation.isPending}
+            disabled={completeConsultationMutation.isPending}
             onPress={handleComplete}
             style={styles.completeButton}
+            accessibilityRole="button"
+            accessibilityLabel="Complete consultation"
+            accessibilityHint="Marks this consultation as completed"
           >
             Complete Consultation
           </Button>

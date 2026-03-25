@@ -4,7 +4,7 @@
  * Categorized by type and date
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -25,7 +25,9 @@ import {
 } from "react-native-safe-area-context";
 import { ArrowLeft, Calendar, Download, Share2, Filter, XCircle, Folder, User } from "lucide-react-native";
 import { useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   ErrorRecovery,
   NetworkStatusIndicator,
@@ -36,16 +38,13 @@ import {
   FilterSectionTitle,
   FilterChipGroup,
 } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { medicalRecordService } from "../../services";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const MyReportsScreen = ({ navigation }) => {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
   const [filterType, setFilterType] = useState(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -53,65 +52,33 @@ const MyReportsScreen = ({ navigation }) => {
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
 
-  // Fetch reports from API
-  const fetchReports = useCallback(async () => {
-    if (!user?.id) {
-      setError("User not found");
-      setLoading(false);
-      return;
-    }
+  const { data: reports = [], isLoading: loading, isRefetching, isError, error, refetch } = useQuery({
+    queryKey: queryKeys.medicalRecords.list({ scope: "patient-reports", patientId: user?.id }),
+    enabled: !!user?.id && isConnected,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const response = await medicalRecordService.getPatientRecords(user.id);
+      const records = response?.data?.medicalRecords || response?.medicalRecords || [];
 
-    if (!isConnected) {
-      showError("No internet connection");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setError(null);
-      const response = await medicalRecordService.getPatientRecords(
-        user.id
-      );
-      const records =
-        response?.data?.medicalRecords || response?.medicalRecords || [];
-
-      // Format records as reports
-      const formattedReports = records.map((record) => ({
+      return records.map((record) => ({
         id: record._id,
         title: record.title || "Medical Report",
         type: formatRecordType(record.recordType || "general"),
-        date: new Date(record.createdAt || record.date).toLocaleDateString(
-          "en-IN",
-          {
-        day: "numeric",
-            month: "short",
-            year: "numeric",
-          }
-        ),
+        date: new Date(record.createdAt || record.date).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
         doctor: record.doctorName || "Unknown Doctor",
         fileType: determineFileType(record),
         recordData: record,
       }));
-
-      setReports(formattedReports);
-    } catch (err) {
-      logError(err, { context: "MyReportsScreen.fetchReports" });
-      setError("Failed to load reports");
-      showError("Failed to load reports. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, isConnected]);
-
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+    },
+  });
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchReports();
-    setRefreshing(false);
-  }, [fetchReports]);
+    await refetch();
+  }, [refetch]);
 
   const formatRecordType = (type) => {
     const typeMap = {
@@ -134,7 +101,10 @@ const MyReportsScreen = ({ navigation }) => {
 
   const FILTER_OPTIONS = ["All", "Lab Report", "Imaging", "Test Result", "Doctor Visit", "Prescription"];
 
-  const filteredReports = filterType ? reports.filter((r) => r.type === filterType) : reports;
+  const filteredReports = useMemo(
+    () => (filterType ? reports.filter((r) => r.type === filterType) : reports),
+    [filterType, reports]
+  );
 
   const getFileIcon = (fileType) => {
     return fileType === "PDF" ? "document-text" : "image";
@@ -149,7 +119,7 @@ const MyReportsScreen = ({ navigation }) => {
         />
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => handleSmartBack(navigation, "PatientTabs")}
             style={styles.backButton}
           >
             <ArrowLeft
@@ -246,7 +216,7 @@ const MyReportsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
         >
           <ArrowLeft
@@ -262,6 +232,13 @@ const MyReportsScreen = ({ navigation }) => {
       </View>
 
       {/* Reports List */}
+      {isError && !reports.length ? (
+        <ErrorRecovery
+          error={parseError(error)}
+          onRetry={refetch}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
+        />
+      ) : (
       <FlatList
         data={filteredReports}
         renderItem={renderReport}
@@ -274,12 +251,17 @@ const MyReportsScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}
           />
         }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        getItemLayout={(_, index) => ({ length: 108, offset: 108 * index, index })}
         ListEmptyComponent={
           <EmptyState
             icon="document-text-outline"
@@ -288,6 +270,7 @@ const MyReportsScreen = ({ navigation }) => {
           />
         }
       />
+      )}
 
       {/* Report Detail Modal */}
       <Modal
