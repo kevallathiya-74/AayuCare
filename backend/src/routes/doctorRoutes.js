@@ -7,6 +7,7 @@ const { validateBody, validateParams } = require("../middleware/validation");
 const { validateUpdateAppointmentStatus } = require("../validators/appointmentValidator");
 const { updateDoctorProfileSchema, walkInPatientSchema, scheduleUpdateSchema, scheduleParamsSchema } = require("../validators/schemas");
 const { cacheDoctorList, cacheDoctorAvailability, cacheDashboard, invalidateCache } = require("../middleware/cache");
+const { sendError } = require("../utils/apiResponse");
 
 /**
  * Protected routes (Doctor only) - Must come before public routes
@@ -124,7 +125,13 @@ router.get("/",
       if (req.user?.hospitalId) {
         req.query.hospitalId = req.user.hospitalId;
       } else {
-        return res.status(400).json({ status: "error", message: "hospitalId query parameter is required" });
+        return sendError(
+          res,
+          req,
+          "hospitalId query parameter is required",
+          400,
+          "VALIDATION_ERROR"
+        );
       }
     }
     next();

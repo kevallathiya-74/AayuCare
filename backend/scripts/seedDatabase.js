@@ -5,7 +5,7 @@
  * Purpose: Populate database with sample users (Patients, Doctors, Admins)
  * Usage: node scripts/seedDatabase.js
  * 
- * MANDATORY RULES (from PROJECT_RULES.md):
+ * MANDATORY RULES (from ENGINEERING_PROJECT_STANDARDS.md):
  * - Follow repository pattern
  * - Use transactions for atomic operations
  * - Proper validation and error handling

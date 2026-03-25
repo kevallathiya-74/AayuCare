@@ -24,57 +24,90 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Calendar, Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
 
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
 import { eventService } from "../../services";
 import { convertTo12Hour, getStatusColor } from "../../utils/helpers";
 import { SkeletonCardRow } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
+
+const PAGE_SIZE = 20;
 
 const HospitalEventsScreen = ({ navigation }) => {
-  const [loading, setLoading] = useState(true);
-  const [registeringId, setRegisteringId] = useState(null);
+  const queryClient = useQueryClient();
   const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const [events, setEvents] = useState([]);
+  const [registeringId, setRegisteringId] = useState(null);
   const [filter, setFilter] = useState("all");
   const insets = useSafeAreaInsets();
 
-  const fetchEvents = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await eventService.getUpcomingEvents({ limit: 50 });
-      logger.debug("HospitalEventsScreen", "Fetched upcoming events response");
-
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.events.infinite({ scope: "hospital-events" }),
+    staleTime: 2 * 60 * 1000,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await eventService.getUpcomingEvents({
+        limit: PAGE_SIZE,
+        page: Math.floor(pageParam / PAGE_SIZE) + 1,
+      });
       const eventData = response?.data || response || [];
       const eventsArray = Array.isArray(eventData) ? eventData : [];
-
       logger.debug("HospitalEventsScreen", "Events count", eventsArray.length);
-      setEvents(eventsArray);
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || "Failed to load events";
-      setError(errorMessage);
-      logError(err, { context: "HospitalEventsScreen.fetchEvents" });
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return {
+        items: eventsArray,
+        total: Number(response?.total || response?.pagination?.total || 0),
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      if (lastPage?.total > 0) {
+        return loaded < lastPage.total ? loaded : undefined;
+      }
+      return (lastPage?.items?.length || 0) >= PAGE_SIZE ? loaded : undefined;
+    },
+  });
 
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+  const registerMutation = useMutation({
+    mutationFn: (eventId) => eventService.registerForEvent(eventId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (eventId) => eventService.cancelRegistration(eventId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
+  });
+
+  const events = useMemo(
+    () => (data?.pages || []).flatMap((page) => page?.items || []),
+    [data]
+  );
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchEvents();
-    setRefreshing(false);
-  }, [fetchEvents]);
+    await refetch();
+  }, [refetch]);
+
+  const onLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleRegister = useCallback(
     async (event) => {
@@ -96,16 +129,15 @@ const HospitalEventsScreen = ({ navigation }) => {
             onPress: async () => {
               try {
                 setRegisteringId(event._id);
-                await eventService.registerForEvent(event._id);
+                await registerMutation.mutateAsync(event._id);
                 setRegisteredEventIds((prev) => new Set([...prev, event._id]));
                 Alert.alert(
                   "Success",
                   `Successfully registered for "${event.title}"!`
                 );
-                await fetchEvents();
+                await refetch();
               } catch (err) {
-                const errorMsg =
-                  err.response?.data?.message || "Failed to register for event";
+                const errorMsg = parseError(err);
                 logError(err, {
                   context: "HospitalEventsScreen.handleRegister",
                   eventId: event._id,
@@ -119,7 +151,7 @@ const HospitalEventsScreen = ({ navigation }) => {
         ]
       );
     },
-    [fetchEvents]
+    [registerMutation, refetch]
   );
 
   const handleCancelRegistration = useCallback(
@@ -135,16 +167,16 @@ const HospitalEventsScreen = ({ navigation }) => {
             onPress: async () => {
               try {
                 setRegisteringId(event._id);
-                await eventService.cancelRegistration(event._id);
+                await cancelMutation.mutateAsync(event._id);
                 setRegisteredEventIds((prev) => {
                   const next = new Set(prev);
                   next.delete(event._id);
                   return next;
                 });
                 Alert.alert("Done", `Registration cancelled for "${event.title}".`);
-                await fetchEvents();
+                await refetch();
               } catch (err) {
-                const msg = err.response?.data?.message || "Failed to cancel registration";
+                const msg = parseError(err);
                 logError(err, { context: "HospitalEventsScreen.handleCancelRegistration", eventId: event._id });
                 Alert.alert("Error", msg);
               } finally {
@@ -155,7 +187,7 @@ const HospitalEventsScreen = ({ navigation }) => {
         ]
       );
     },
-    [fetchEvents]
+    [cancelMutation, refetch]
   );
 
   const getEventIcon = (type) => {
@@ -446,7 +478,7 @@ const HospitalEventsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
         >
           <ArrowLeft
@@ -462,10 +494,10 @@ const HospitalEventsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.refreshButton}
           onPress={onRefresh}
-          disabled={refreshing}
+          disabled={isRefetching}
           activeOpacity={0.7}
         >
-          {refreshing ? (
+          {isRefetching ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
             <RefreshCw
@@ -478,11 +510,11 @@ const HospitalEventsScreen = ({ navigation }) => {
       </View>
 
       {/* Events List */}
-      {loading && !refreshing ? (
+      {loading && !isRefetching ? (
         <View style={{ padding: 16, gap: 12 }}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
-      ) : error ? (
+      ) : isError ? (
         <View style={styles.errorContainer}>
           <AlertCircle
             
@@ -490,8 +522,8 @@ const HospitalEventsScreen = ({ navigation }) => {
             color={healthColors.error.main}
           />
           <Text style={styles.errorTitle}>Failed to Load Events</Text>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchEvents}>
+          <Text style={styles.errorText}>{parseError(error)}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -500,6 +532,13 @@ const HospitalEventsScreen = ({ navigation }) => {
           data={filteredEvents}
           renderItem={renderEventCard}
           keyExtractor={(item) => item._id}
+          onEndReached={onLoadMore}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 220, offset: 220 * index, index })}
           ListHeaderComponent={renderHeader}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[
@@ -509,11 +548,18 @@ const HospitalEventsScreen = ({ navigation }) => {
           ]}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={onRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
             />
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+              </View>
+            ) : null
           }
           showsVerticalScrollIndicator={false}
         />
@@ -636,6 +682,10 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.xs,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
   emptyStateWrap: {
     flex: 1,

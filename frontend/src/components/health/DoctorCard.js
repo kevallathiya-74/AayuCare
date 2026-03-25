@@ -141,6 +141,8 @@ const DoctorCard = ({
     );
 };
 
+const MemoizedDoctorCard = React.memo(DoctorCard);
+
 const styles = StyleSheet.create({
     card: {
         marginBottom: spacing.md,
@@ -217,5 +219,5 @@ const styles = StyleSheet.create({
     },
 });
 
-export default DoctorCard;
+export default MemoizedDoctorCard;
 

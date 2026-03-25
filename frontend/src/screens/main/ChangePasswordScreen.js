@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,11 +12,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { useDispatch } from "react-redux";
+import { useMutation } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import authService from "../../services/auth.service";
 import { logoutUser } from "../../store/slices/authSlice";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import { Input, Button } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ChangePasswordScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -23,7 +27,12 @@ const ChangePasswordScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const changePasswordMutation = useMutation({
+    mutationFn: ({ currentPassword, newPassword }) =>
+      authService.changePassword(currentPassword, newPassword),
+    retry: 1,
+  });
 
   const rules = useMemo(
     () => ({
@@ -72,16 +81,13 @@ const ChangePasswordScreen = ({ navigation }) => {
     }
 
     try {
-      setIsSubmitting(true);
-      await authService.changePassword(currentPassword, newPassword);
+      await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
       await dispatch(logoutUser()).unwrap();
       navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     } catch (error) {
-      const message = error?.message || "Failed to change password";
+      const message = parseError(error);
       setSubmitError(message);
       logError(error, { context: "ChangePasswordScreen.handleSubmit" });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -100,7 +106,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       placeholder={placeholder}
       secureTextEntry={secure}
       error={error}
-      disabled={isSubmitting}
+      disabled={changePasswordMutation.isPending}
     />
   );
 
@@ -109,13 +115,18 @@ const ChangePasswordScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => handleSmartBack(navigation, "Settings")}>
           <ArrowLeft  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>
         <View style={styles.backButton} />
       </View>
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Update Your Password</Text>
@@ -188,7 +199,7 @@ const ChangePasswordScreen = ({ navigation }) => {
             size="large"
             fullWidth
             gradient
-            loading={isSubmitting}
+            loading={changePasswordMutation.isPending}
             onPress={handleSubmit}
             style={styles.submitButton}
           >
@@ -196,6 +207,7 @@ const ChangePasswordScreen = ({ navigation }) => {
           </Button>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

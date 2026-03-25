@@ -3,7 +3,7 @@
  * Track steps, sleep, water intake, and stress relief activities
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,139 +19,115 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft, Activity, BarChart, CheckCircle, ChevronRight, Droplet, Plus, BarChart2 } from "lucide-react-native";
 import { useSelector } from "react-redux";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
 import { ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { activityService } from "../../services";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ActivityTrackerScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
-  const [waterGlasses, setWaterGlasses] = useState(0);
-  const [stepsData, setStepsData] = useState({
-    current: 0,
-    target: 10000,
-    percentage: 0,
-  });
-  const [sleepData, setSleepData] = useState({
-    duration: "N/A",
-    quality: "N/A",
-    bedtime: "N/A",
-    wakeTime: "N/A",
-  });
-  const [stressActivities, setStressActivities] = useState([]);
+  const [waterOptimistic, setWaterOptimistic] = useState(null);
   const targetGlasses = 8;
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchActivityData();
-    }
-  }, [user?.id]);
-
-  const fetchActivityData = useCallback(async () => {
-    try {
-      if (!isConnected) {
-        showError("No internet connection");
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
+  const {
+    data: activityData,
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.activity.patient(user?.id),
+    enabled: !!user?.id && isConnected,
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
       const response = await activityService.getActivityData(user.id);
-      const { latest, today } = response.data;
+      return response?.data || { latest: {}, today: [] };
+    },
+  });
 
-      // Update steps
-      if (latest.steps) {
-        const current = latest.steps.value || 0;
-        const target = 10000;
-        setStepsData({
-          current,
-          target,
-          percentage: Math.min(Math.round((current / target) * 100), 100),
-        });
-      }
+  const updateWaterMutation = useMutation({
+    mutationFn: (count) => activityService.addWater(user.id, count),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.activity.patient(user?.id) });
+    },
+  });
 
-      // Update sleep
-      if (latest.sleep) {
-        setSleepData({
-          duration: latest.sleep.value.duration || "N/A",
-          quality: latest.sleep.value.quality || "N/A",
-          bedtime: latest.sleep.value.bedtime || "N/A",
-          wakeTime: latest.sleep.value.wakeTime || "N/A",
-        });
-      }
+  const stepsData = useMemo(() => {
+    const current = Number(activityData?.latest?.steps?.value || 0);
+    const target = 10000;
+    return {
+      current,
+      target,
+      percentage: Math.min(Math.round((current / target) * 100), 100),
+    };
+  }, [activityData]);
 
-      // Update water
-      if (latest.water) {
-        setWaterGlasses(latest.water.value || 0);
-      }
+  const sleepData = useMemo(() => ({
+    duration: activityData?.latest?.sleep?.value?.duration || "N/A",
+    quality: activityData?.latest?.sleep?.value?.quality || "N/A",
+    bedtime: activityData?.latest?.sleep?.value?.bedtime || "N/A",
+    wakeTime: activityData?.latest?.sleep?.value?.wakeTime || "N/A",
+  }), [activityData]);
 
-      // Update stress activities from today's data
-      const todayExercise = today.filter((m) => m.type === "exercise");
-      setStressActivities(
-        todayExercise.map((e) => ({
-          icon: e.metadata?.icon || "fitness",
-          name: e.value.name || "Activity",
-          duration: e.value.duration || "N/A",
-          color: e.metadata?.color || theme.colors.success.main,
-        }))
-      );
-    } catch (err) {
-      const errorMessage = "Failed to load activity data";
-      setError(errorMessage);
-      logError(err, { context: "ActivityTrackerScreen.fetchActivityData" });
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, isConnected]);
+  const stressActivities = useMemo(() => {
+    const today = Array.isArray(activityData?.today) ? activityData.today : [];
+    const todayExercise = today.filter((m) => m.type === "exercise");
+    return todayExercise.map((e) => ({
+      icon: e.metadata?.icon || "fitness",
+      name: e.value?.name || "Activity",
+      duration: e.value?.duration || "N/A",
+      color: e.metadata?.color || theme.colors.success.main,
+    }));
+  }, [activityData]);
+
+  const waterGlasses = waterOptimistic ?? Number(activityData?.latest?.water?.value || 0);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchActivityData();
-    setRefreshing(false);
-  }, [fetchActivityData]);
+    await refetch();
+  }, [refetch]);
 
   const handleRetry = () => {
-    setError(null);
-    fetchActivityData();
+    refetch();
   };
 
   const addWaterGlass = async () => {
     if (waterGlasses < targetGlasses) {
       const newCount = waterGlasses + 1;
-      setWaterGlasses(newCount);
+      setWaterOptimistic(newCount);
 
       try {
-        await activityService.addWater(user.id, newCount);
+        await updateWaterMutation.mutateAsync(newCount);
+        await refetch();
+        setWaterOptimistic(null);
       } catch (err) {
         logError(err, { context: "ActivityTrackerScreen.addWaterGlass" });
         showError("Failed to update water intake");
-        // Revert on error
-        setWaterGlasses(waterGlasses);
+        setWaterOptimistic(null);
       }
     }
   };
 
-  if (error) {
+  if (isError) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <ErrorRecovery
-          error={error}
+          error={parseError(error)}
           onRetry={handleRetry}
-          onGoBack={() => navigation.goBack()}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
       </SafeAreaView>
     );
@@ -167,7 +143,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
           <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -191,7 +167,7 @@ const ActivityTrackerScreen = ({ navigation }) => {
         ]}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}

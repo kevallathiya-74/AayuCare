@@ -7,6 +7,7 @@
 const scheduleService = require('../services/scheduleService');
 const { AppError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
+const { sendSuccess } = require('../utils/apiResponse');
 
 /**
  * @desc    Get a doctor's full weekly schedule
@@ -20,11 +21,7 @@ exports.getDoctorSchedule = async (req, res, next) => {
 
     const schedule = await scheduleService.getDoctorSchedule(doctorId, hospitalId);
 
-    res.json({
-      status: 'success',
-      message: 'Schedule retrieved successfully',
-      data: schedule,
-    });
+    return sendSuccess(res, req, schedule, 'Schedule retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -47,11 +44,7 @@ exports.getAvailableSlots = async (req, res, next) => {
 
     const slots = await scheduleService.getAvailableSlots(doctorId, day, hospitalId);
 
-    res.json({
-      status: 'success',
-      message: 'Available slots retrieved',
-      data: slots,
-    });
+    return sendSuccess(res, req, slots, 'Available slots retrieved');
   } catch (error) {
     next(error);
   }
@@ -75,11 +68,7 @@ exports.setWeeklySchedule = async (req, res, next) => {
 
     const result = await scheduleService.setWeeklySchedule(doctorId, schedules, hospitalId);
 
-    res.json({
-      status: 'success',
-      message: 'Weekly schedule updated successfully',
-      data: result,
-    });
+    return sendSuccess(res, req, result, 'Weekly schedule updated successfully');
   } catch (error) {
     next(error);
   }
@@ -102,11 +91,7 @@ exports.updateDaySchedule = async (req, res, next) => {
 
     const updated = await scheduleService.updateDaySchedule(doctorId, dayOfWeek, updates, hospitalId);
 
-    res.json({
-      status: 'success',
-      message: 'Day schedule updated successfully',
-      data: updated,
-    });
+    return sendSuccess(res, req, updated, 'Day schedule updated successfully');
   } catch (error) {
     next(error);
   }
@@ -134,11 +119,7 @@ exports.addTimeSlot = async (req, res, next) => {
       hospitalId
     );
 
-    res.status(201).json({
-      status: 'success',
-      message: 'Time slot added successfully',
-      data: updated,
-    });
+    return sendSuccess(res, req, updated, 'Time slot added successfully', 201);
   } catch (error) {
     next(error);
   }
@@ -160,11 +141,7 @@ exports.removeTimeSlot = async (req, res, next) => {
 
     const updated = await scheduleService.removeTimeSlot(doctorId, dayOfWeek, slotId, hospitalId);
 
-    res.json({
-      status: 'success',
-      message: 'Time slot removed successfully',
-      data: updated,
-    });
+    return sendSuccess(res, req, updated, 'Time slot removed successfully');
   } catch (error) {
     next(error);
   }
@@ -193,11 +170,7 @@ exports.toggleAvailability = async (req, res, next) => {
       hospitalId
     );
 
-    res.json({
-      status: 'success',
-      message: `Schedule availability set to ${isAvailable}`,
-      data: updated,
-    });
+    return sendSuccess(res, req, updated, `Schedule availability set to ${isAvailable}`);
   } catch (error) {
     next(error);
   }

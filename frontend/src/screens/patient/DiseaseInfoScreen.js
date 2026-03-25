@@ -30,12 +30,11 @@ import {
 import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
 import ErrorRecovery from "../../components/common/ErrorRecovery";
 import EmptyState from "../../components/common/EmptyState";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
-// Static data defined outside component to avoid re-creation on every render
-// and to ensure they are initialized before any hook (useMemo) references them.
 const quickAccessLinks = {
   "Video Library": "https://www.youtube.com/@WHO",
   "Articles": "https://www.who.int/news-room/fact-sheets",
@@ -264,7 +263,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         context: "DiseaseInfoScreen.handleCategoryPress",
         category: category.name,
       });
-      setError(err.message || "Failed to load disease information");
+      setError(parseError(err));
       showError("Failed to load disease information");
     } finally {
       setLoading(false);
@@ -303,7 +302,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
           <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>

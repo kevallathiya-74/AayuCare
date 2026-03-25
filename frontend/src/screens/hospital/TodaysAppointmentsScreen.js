@@ -7,7 +7,7 @@
  * Syncs badge count via DoctorAppointmentContext
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -29,12 +29,15 @@ import {
 } from "react-native-safe-area-context";
 import { User, Clock, Calendar, CheckCircle, XCircle, Phone, Cross, FileText, UserCircle, ArrowLeft, RefreshCw, Search } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { logError, parseError } from "../../utils/errorHandler";
 import { getStatusColor } from "../../utils/helpers";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
 import { EmptyState, SkeletonCardRow, DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const STATUS_FILTERS_BY_TAB = {
   today: [
@@ -57,12 +60,9 @@ const STATUS_FILTERS_BY_TAB = {
 };
 
 const TodaysAppointmentsScreen = ({ navigation }) => {
+  const queryClient = useQueryClient();
   const [selectedFilter, setSelectedFilter] = useState("today");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState(null);
@@ -113,42 +113,43 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     return [];
   }, []);
 
-  const fetchAppointments = useCallback(
-    async (filter = selectedFilter) => {
-      try {
-        setError(null);
-        let response;
+  const {
+    data: appointments = [],
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.appointments.list({ scope: "doctor-home-tabs", selectedFilter }),
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
+      let response;
 
-        if (filter === "today") {
-          response = await doctorService.getTodaysAppointments("pending");
-        } else if (filter === "upcoming") {
-          response = await doctorService.getUpcomingAppointments();
-        } else {
-          response = await doctorService.getTodaysAppointments("completed");
-        }
-
-        if (response?.success) {
-          const data = extractAppointments(response);
-          setAppointments(Array.isArray(data) ? data : []);
-        } else {
-          setError("Failed to load appointments");
-          setAppointments([]);
-        }
-      } catch (err) {
-        logError(err, "TodaysAppointmentsScreen.fetchAppointments");
-        setError("Unable to fetch appointments");
-        setAppointments([]);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+      if (selectedFilter === "today") {
+        response = await doctorService.getTodaysAppointments("pending");
+      } else if (selectedFilter === "upcoming") {
+        response = await doctorService.getUpcomingAppointments();
+      } else {
+        response = await doctorService.getTodaysAppointments("completed");
       }
-    },
-    [extractAppointments, selectedFilter]
-  );
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+      if (!response?.success) {
+        throw new Error("Failed to load appointments");
+      }
+
+      const data = extractAppointments(response);
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ appointmentId, nextStatus }) =>
+      doctorService.updateAppointmentStatus(appointmentId, nextStatus),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+    },
+  });
 
   // Animate search bar open/close
   const toggleSearch = useCallback(() => {
@@ -181,18 +182,15 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       setSelectedFilter(filterKey);
       setStatusFilter("all");
       setSearchQuery("");
-      setLoading(true);
-      fetchAppointments(filterKey);
     },
-    [selectedFilter, fetchAppointments]
+    [selectedFilter]
   );
 
   const handleRefresh = useCallback(() => {
-    setRefreshing(true);
     setSearchQuery("");
-    fetchAppointments();
+    refetch();
     refreshCount();
-  }, [fetchAppointments, refreshCount]);
+  }, [refetch, refreshCount]);
 
   const handleStatusFilterChange = useCallback((key) => {
     setStatusFilter(key);
@@ -227,8 +225,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
       try {
         setUpdatingAppointmentId(appointmentId);
-        await doctorService.updateAppointmentStatus(appointmentId, nextStatus);
-        await fetchAppointments(selectedFilter);
+        await updateStatusMutation.mutateAsync({ appointmentId, nextStatus });
+        await refetch();
         refreshCount();
       } catch (err) {
         logError(err, "TodaysAppointmentsScreen.handleStatusUpdate");
@@ -237,7 +235,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         setUpdatingAppointmentId(null);
       }
     },
-    [fetchAppointments, normalizeStatus, refreshCount, selectedFilter]
+    [updateStatusMutation, normalizeStatus, refetch, refreshCount]
   );
 
   // Derived filtered & searched appointments (local, instant)
@@ -268,9 +266,9 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchAppointments();
+      refetch();
       refreshCount();
-    }, [fetchAppointments, refreshCount])
+    }, [refetch, refreshCount])
   );
 
   const handleStartConsultation = useCallback(
@@ -627,7 +625,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerIconBtn}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -751,9 +749,9 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       )}
 
       {/* Error State */}
-      {error && (
+      {isError && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{parseError(error)}</Text>
           <TouchableOpacity onPress={handleRefresh}>
             <Text style={styles.retryText}>Tap to retry</Text>
           </TouchableOpacity>
@@ -773,12 +771,17 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         ListEmptyComponent={renderEmptyState}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={handleRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}
           />
         }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        getItemLayout={(_, index) => ({ length: 128, offset: 128 * index, index })}
       />
     </SafeAreaView>
   );

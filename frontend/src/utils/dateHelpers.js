@@ -1,7 +1,7 @@
 /**
  * Date Helper Functions
  * Centralized date formatting and calculations
- * Per PROJECT_RULES.md Section 3 - Single Source of Truth
+ * Per ENGINEERING_PROJECT_STANDARDS.md Section 2 - Single Source of Truth
  */
 
 /**

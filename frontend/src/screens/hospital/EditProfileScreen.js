@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   View,
   Text,
   StyleSheet,
@@ -17,16 +19,19 @@ import { theme, healthColors } from "../../theme";
 import {
   getScreenPadding,
 } from "../../utils/responsive";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
 import { setUser } from "../../store/slices/authSlice";
 import { Input, Button } from "../../components/common";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const EditProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: user?.name || "",
     specialization: user?.specialization || "",
@@ -88,8 +93,7 @@ const EditProfileScreen = ({ navigation }) => {
     if (!validateForm()) return;
 
     try {
-      setLoading(true);
-      const response = await doctorService.updateProfile({
+      const response = await updateProfileMutation.mutateAsync({
         name: formData.name.trim(),
         email: formData.email.trim() || undefined,
         phone: formData.phone.trim(),
@@ -106,26 +110,38 @@ const EditProfileScreen = ({ navigation }) => {
 
       if (response.success) {
         dispatch(setUser({ ...user, ...response.data }));
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.doctor(user?.id || "unknown") }),
+        ]);
         Alert.alert("Success", "Profile Updated Successfully", [
           {
             text: "OK",
-            onPress: () => navigation.goBack(),
+            onPress: () => handleSmartBack(navigation, "DoctorTabs"),
           },
         ]);
       }
     } catch (error) {
       logError(error, { context: "EditProfileScreen.handleSave" });
       Alert.alert("Error", "Failed to update profile. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
+  const updateProfileMutation = useMutation({
+    mutationFn: (payload) => doctorService.updateProfile(payload),
+    retry: 1,
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
         >
           <ArrowLeft
@@ -148,6 +164,7 @@ const EditProfileScreen = ({ navigation }) => {
       </View>
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.content,
           { paddingBottom: Math.max(insets.bottom, 20) },
@@ -255,13 +272,14 @@ const EditProfileScreen = ({ navigation }) => {
           size="large"
           fullWidth
           gradient
-          loading={loading}
+          loading={updateProfileMutation.isPending}
           onPress={handleSave}
           style={styles.saveButton}
         >
           Save Changes
         </Button>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

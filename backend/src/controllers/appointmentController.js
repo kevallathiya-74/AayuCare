@@ -3,8 +3,11 @@ const { AppError } = require("../middleware/errorHandler");
 const userRepository = require("../repositories/userRepository");
 const appointmentRepository = require("../repositories/appointmentRepository");
 const logger = require("../utils/logger");
-const { deleteCacheByPattern } = require("../config/redis");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+const { sendSuccess, sendError } = require("../utils/apiResponse");
+const {
+  invalidateAfterAppointmentMutation,
+} = require("../utils/cacheInvalidation");
 
 /**
  * @desc    Create new appointment
@@ -24,12 +27,9 @@ exports.createAppointment = async (req, res, next) => {
       appointmentData
     );
 
-    // Invalidate relevant caches after appointment creation
+    // Invalidate all appointment-related read caches after mutation
     try {
-      await deleteCacheByPattern("v1:cache:appointments:*");
-      await deleteCacheByPattern("cache:appointments:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
-      logger.debug("Cache invalidated after appointment creation");
+      await invalidateAfterAppointmentMutation();
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -43,11 +43,13 @@ exports.createAppointment = async (req, res, next) => {
       req,
     });
 
-    res.status(201).json({
-      status: "success",
-      message: "Appointment created successfully",
-      data: { appointment },
-    });
+    return sendSuccess(
+      res,
+      req,
+      { appointment },
+      "Appointment created successfully",
+      201
+    );
   } catch (error) {
     next(error);
   }
@@ -75,10 +77,7 @@ exports.getAllAppointmentsCursor = async (req, res, next) => {
     
     const result = await appointmentService.getAllAppointmentsCursor(filters);
 
-    res.status(200).json({
-      status: "success",
-      data: result,
-    });
+    return sendSuccess(res, req, result, "Appointments retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -143,10 +142,7 @@ exports.getAppointmentsCursor = async (req, res, next) => {
       return next(new AppError("Not authorized to view appointments", 403));
     }
 
-    res.status(200).json({
-      status: "success",
-      data: result,
-    });
+    return sendSuccess(res, req, result, "Appointments retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -174,10 +170,7 @@ exports.getAllAppointments = async (req, res, next) => {
     
     const result = await appointmentService.getAllAppointments(filters);
 
-    res.status(200).json({
-      status: "success",
-      data: result,
-    });
+    return sendSuccess(res, req, result, "Appointments retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -242,10 +235,7 @@ exports.getAppointments = async (req, res, next) => {
       return next(new AppError("Not authorized to view appointments", 403));
     }
 
-    res.status(200).json({
-      status: "success",
-      data: result,
-    });
+    return sendSuccess(res, req, result, "Appointments retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -277,10 +267,7 @@ exports.getAppointment = async (req, res, next) => {
       return next(new AppError("Not authorized to view this appointment", 403));
     }
 
-    res.status(200).json({
-      status: "success",
-      data: { appointment },
-    });
+    return sendSuccess(res, req, { appointment }, "Appointment retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -306,12 +293,9 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       req.user.role
     );
 
-    // Invalidate relevant caches after appointment status update
+    // Invalidate all appointment-related read caches after mutation
     try {
-      await deleteCacheByPattern("v1:cache:appointments:*");
-      await deleteCacheByPattern("cache:appointments:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
-      logger.debug("Cache invalidated after appointment status update");
+      await invalidateAfterAppointmentMutation();
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -325,11 +309,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       req,
     });
 
-    res.status(200).json({
-      status: "success",
-      message: "Appointment status updated successfully",
-      data: { appointment },
-    });
+    return sendSuccess(res, req, { appointment }, "Appointment status updated successfully");
   } catch (error) {
     next(error);
   }
@@ -355,12 +335,9 @@ exports.cancelAppointment = async (req, res, next) => {
       cancelReason
     );
 
-    // Invalidate appointment caches after cancellation
+    // Invalidate all appointment-related read caches after mutation
     try {
-      await deleteCacheByPattern("v1:cache:appointments:*");
-      await deleteCacheByPattern("cache:appointments:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
-      logger.debug("Cache invalidated after appointment cancellation");
+      await invalidateAfterAppointmentMutation();
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -374,11 +351,7 @@ exports.cancelAppointment = async (req, res, next) => {
       req,
     });
 
-    res.status(200).json({
-      status: "success",
-      message: "Appointment cancelled successfully",
-      data: { appointment },
-    });
+    return sendSuccess(res, req, { appointment }, "Appointment cancelled successfully");
   } catch (error) {
     next(error);
   }
@@ -402,21 +375,14 @@ exports.updateAppointment = async (req, res, next) => {
       req.user.role
     );
 
-    // Invalidate relevant caches after appointment update
+    // Invalidate all appointment-related read caches after mutation
     try {
-      await deleteCacheByPattern("v1:cache:appointments:*");
-      await deleteCacheByPattern("cache:appointments:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
-      logger.debug("Cache invalidated after appointment update");
+      await invalidateAfterAppointmentMutation();
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.status(200).json({
-      status: "success",
-      message: "Appointment updated successfully",
-      data: { appointment },
-    });
+    return sendSuccess(res, req, { appointment }, "Appointment updated successfully");
   } catch (error) {
     next(error);
   }
@@ -440,10 +406,7 @@ exports.getAvailableSlots = async (req, res, next) => {
       date
     );
 
-    res.status(200).json({
-      status: "success",
-      data: slots,
-    });
+    return sendSuccess(res, req, slots, "Available slots retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -461,13 +424,15 @@ exports.getAppointmentStats = async (req, res, next) => {
       req.user.role
     );
 
-    res.status(200).json({
-      status: "success",
-      data: {
+    return sendSuccess(
+      res,
+      req,
+      {
         stats: statsPayload.statusCounts,
         dateRanges: statsPayload.dateRanges,
       },
-    });
+      "Appointment stats retrieved successfully"
+    );
   } catch (error) {
     next(error);
   }
@@ -487,10 +452,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     const isOwnData =
       req.user.userId === patientId || req.user.id === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return res.status(403).json({
-        status: "error",
-        message: "Not authorized to view these appointments",
-      });
+      return sendError(res, req, "Not authorized to view these appointments", 403, "FORBIDDEN");
     }
 
     // Find patient by either userId or _id (UUID format)
@@ -503,10 +465,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     }
 
     if (!patient || patient.role !== "patient") {
-      return res.status(404).json({
-        status: "error",
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Build filters for appointments
@@ -523,10 +482,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     
     const appointments = await appointmentRepository.findByPatient(patient.id, filters);
 
-    res.status(200).json({
-      status: "success",
-      data: { appointments },
-    });
+    return sendSuccess(res, req, { appointments }, "Patient appointments retrieved successfully");
   } catch (error) {
     next(error);
   }

@@ -3,7 +3,7 @@
  * Shows comprehensive patient information when card is clicked
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,10 +16,12 @@ import {
 import { AlertTriangle, Cross, FileText, Calendar, Clock, X, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { doctorService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import { SkeletonCardRow, EmptyState } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
 
 const PATIENT_DETAILS_MODAL_CACHE_TTL_MS = 60 * 1000;
 const patientDetailsModalCache = new Map();
@@ -44,52 +46,37 @@ const setCachedPatientDetails = (patientId, value) => {
 };
 
 const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initialPatient }) => {
-  const [loading, setLoading] = useState(true);
-  const [patientData, setPatientData] = useState(null);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
-    if (!visible || !patientId) return;
-
+  const seededPatientData = useMemo(() => {
     const cached = getCachedPatientDetails(patientId);
     if (cached) {
-      setPatientData(cached);
-      setLoading(false);
-      setError(null);
-      fetchPatientDetails(true);
-      return;
+      return cached;
     }
 
     if (initialPatient) {
-      // Render instantly with list payload while full details load.
-      setPatientData({
+      return {
         patient: initialPatient,
         stats: null,
         appointments: [],
         medicalRecords: [],
         prescriptions: [],
-      });
-      setLoading(false);
-      setError(null);
-      fetchPatientDetails(true);
-      return;
+      };
     }
 
-    fetchPatientDetails(false);
-  }, [visible, patientId, initialPatient]); // eslint-disable-line react-hooks/exhaustive-deps
+    return null;
+  }, [patientId, initialPatient]);
 
-  const fetchPatientDetails = async (isBackgroundRefresh = false) => {
-    try {
-      if (!isBackgroundRefresh && !patientData) {
-        setLoading(true);
-      }
-      if (!isBackgroundRefresh) {
-        setError(null);
-      }
-
+  const {
+    data: patientData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.patients.detail(patientId || "unknown"),
+    queryFn: async () => {
       const response = await doctorService.getPatientDetails(patientId, {
-        forceRefresh: isBackgroundRefresh,
+        forceRefresh: true,
       });
 
       const responseData = response?.data || response;
@@ -100,34 +87,34 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           : null;
 
       if ((response?.success || responseData?.success !== false) && normalizedData) {
-        setPatientData(normalizedData);
-        setCachedPatientDetails(patientId, normalizedData);
-
-        // Once data is on-screen, refresh quietly in background to keep it fresh.
-        if (!isBackgroundRefresh) {
-          setTimeout(() => {
-            fetchPatientDetails(true);
-          }, 50);
-        }
-      } else {
-        if (!patientData) {
-          setError("Failed to load patient details");
-        }
+        return normalizedData;
       }
-    } catch (err) {
-      logError(err, {
+
+      throw new Error("Failed to load patient details");
+    },
+    enabled: visible && !!patientId,
+    staleTime: PATIENT_DETAILS_MODAL_CACHE_TTL_MS,
+    retry: 1,
+    initialData: seededPatientData,
+  });
+
+  useEffect(() => {
+    if (patientId && patientData) {
+      setCachedPatientDetails(patientId, patientData);
+    }
+  }, [patientId, patientData]);
+
+  useEffect(() => {
+    if (error) {
+      logError(error, {
         context: "PatientDetailsModal.fetchPatientDetails",
         patientId,
       });
-      if (!patientData) {
-        setError(err.response?.data?.message || "Failed to load patient details");
-      }
-    } finally {
-      if (!isBackgroundRefresh && !patientData) {
-        setLoading(false);
-      }
     }
-  };
+  }, [error, patientId]);
+
+  const loading = isLoading && !patientData;
+  const errorMessage = error ? parseError(error) : null;
 
   const renderOverviewTab = () => {
     if (!patientData?.patient) {
@@ -648,17 +635,17 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
             <View style={{ padding: 16, gap: 12 }}>
               {[1, 2, 3].map((i) => (<SkeletonCardRow key={i} />))}
             </View>
-          ) : error ? (
+          ) : errorMessage ? (
             <View style={styles.errorContainer}>
               <AlertCircle
                 
                 size={60}
                 color={healthColors.error.main}
               />
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={styles.errorText}>{errorMessage}</Text>
               <TouchableOpacity
                 style={styles.retryButton}
-                onPress={fetchPatientDetails}
+                onPress={() => refetch()}
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>

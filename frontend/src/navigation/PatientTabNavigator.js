@@ -11,8 +11,6 @@ import { healthColors, theme } from "../theme";
 import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
-
-// Patient Screens
 import PatientDashboard from "../screens/patient/PatientDashboard";
 import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";

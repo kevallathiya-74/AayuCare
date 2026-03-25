@@ -4,6 +4,7 @@
  */
 
 import api from './apiClient';
+import { parseError } from '../utils/errorHandler';
 import { normalizeServiceResponse } from './responseNormalizer';
 
 class PrescriptionService {
@@ -26,9 +27,10 @@ class PrescriptionService {
      * @param {String} patientId - Patient ID
      * @returns {Promise<Array>} - List of prescriptions
      */
-    async getPatientPrescriptions(patientId) {
+    async getPatientPrescriptions(patientId, params = {}) {
         try {
-            const response = await api.get(`/prescriptions/patient/${patientId}`);
+            const query = new URLSearchParams(params).toString();
+            const response = await api.get(`/prescriptions/patient/${patientId}${query ? `?${query}` : ''}`);
             return normalizeServiceResponse(response.data);
         } catch (error) {
             throw this.handleError(error);
@@ -124,12 +126,8 @@ class PrescriptionService {
     }
 
     handleError(error) {
-        const message = error.response?.data?.message
-            || error.message
-            || 'An unexpected error occurred';
-        return new Error(message);
+        return new Error(parseError(error));
     }
 }
 
 export default new PrescriptionService();
-

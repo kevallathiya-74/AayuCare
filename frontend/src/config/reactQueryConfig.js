@@ -41,8 +41,8 @@ export const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      // Stale time: How long data is considered fresh
-      staleTime: 5 * 60 * 1000, // 5 minutes default
+      // Keep default short; screens set per-query staleTime by data type.
+      staleTime: 60 * 1000,
 
       // gcTime: How long unused data stays in cache (React Query v5 — was cacheTime in v4)
       gcTime: 10 * 60 * 1000, // 10 minutes
@@ -165,6 +165,18 @@ export const queryKeys = {
     admin: () => ['dashboardStats', 'admin'],
     doctor: (doctorId) => ['dashboardStats', 'doctor', doctorId],
     patient: (patientId) => ['dashboardStats', 'patient', patientId],
+  },
+
+  // Doctor Schedules
+  schedules: {
+    all: ['schedules'],
+    doctor: (doctorId) => [...queryKeys.schedules.all, 'doctor', doctorId],
+  },
+
+  // Activity Tracker
+  activity: {
+    all: ['activity'],
+    patient: (patientId) => [...queryKeys.activity.all, 'patient', patientId],
   },
 };
 

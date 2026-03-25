@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import {
   SafeAreaView,
@@ -17,83 +18,71 @@ import {
   getScreenPadding,
   verticalScale,
 } from "../../utils/responsive";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { doctorService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import { convertTo12Hour, getStatusColor } from "../../utils/helpers";
 import { SkeletonCardRow, EmptyState } from "../../components/common";
 import { EmptyStateConfig } from "../../utils/constants";
+import { handleSmartBack } from "../../utils/navigation";
+
+const PAGE_SIZE = 20;
 
 const ConsultationHistoryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const [consultations, setConsultations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [error, setError] = useState(null);
-
-  const fetchConsultations = useCallback(
-    async (pageNum = 1, refresh = false) => {
-      try {
-        if (refresh) {
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
-        setError(null);
-
-        const filters = {
-          page: pageNum,
-          limit: 20,
-        };
-
-        // Only add status filter if not "all"
-        if (filter !== "all") {
-          filters.status = filter;
-        }
-
-        const response = await doctorService.getConsultationHistory(filters);
-
-        if (response.success) {
-          const newData = response.data.consultations || [];
-          if (refresh || pageNum === 1) {
-            setConsultations(newData);
-          } else {
-            setConsultations((prev) => [...prev, ...newData]);
-          }
-          setHasMore(pageNum < response.data.pagination.totalPages);
-        }
-      } catch (error) {
-        logError(error, {
-          context: "ConsultationHistoryScreen.fetchConsultations",
-        });
-        setError("Unable to load consultation history. Pull to refresh.");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+  const {
+    data,
+    isLoading: loading,
+    isRefetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+    isError,
+    error,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.appointments.infinite({ scope: "consultation-history", filter }),
+    initialPageParam: 1,
+    staleTime: 2 * 60 * 1000,
+    queryFn: async ({ pageParam = 1 }) => {
+      const filters = { page: pageParam, limit: PAGE_SIZE };
+      if (filter !== "all") {
+        filters.status = filter;
       }
+
+      const response = await doctorService.getConsultationHistory(filters);
+      const consultations = response?.data?.consultations || [];
+      const pagination = response?.data?.pagination || {};
+
+      return {
+        consultations,
+        currentPage: Number(pagination?.currentPage || pageParam),
+        totalPages: Number(pagination?.totalPages || 1),
+        total: Number(pagination?.total || consultations.length),
+      };
     },
-    [filter]
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.currentPage + 1;
+      return nextPage <= lastPage.totalPages ? nextPage : undefined;
+    },
+  });
+
+  const consultations = useMemo(
+    () => (data?.pages || []).flatMap((page) => page?.consultations || []),
+    [data]
   );
 
-  useEffect(() => {
-    setPage(1);
-    fetchConsultations(1, true);
-  }, [filter]);
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
-  const handleRefresh = () => {
-    setPage(1);
-    fetchConsultations(1, true);
-  };
-
-  const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchConsultations(nextPage);
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   
 
@@ -211,7 +200,6 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       ]}
       onPress={() => {
         setFilter(filterValue);
-        setPage(1);
       }}
       activeOpacity={0.7}
     >
@@ -230,7 +218,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
         >
           <ArrowLeft
@@ -270,17 +258,27 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           consultations.length === 0 && { flexGrow: 1 },
           { paddingBottom: Math.max(insets.bottom, 20) },
         ]}
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={handleRefresh}
+            tintColor={healthColors.primary.main}
+          />
+        }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.3}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        getItemLayout={(_, index) => ({ length: 182, offset: 182 * index, index })}
         ListEmptyComponent={
           !loading && (
-            error ? (
+            isError ? (
               <EmptyState
                 icon={EmptyStateConfig.CONSULTATIONS.icon}
                 title="Error Loading Data"
-                message={error}
+                message={parseError(error)}
                 actionLabel="Try Again"
                 onActionPress={handleRefresh}
               />
@@ -298,7 +296,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           )
         }
         ListFooterComponent={
-          loading &&
+          isFetchingNextPage &&
           consultations.length > 0 && (
             <ActivityIndicator
               size="small"

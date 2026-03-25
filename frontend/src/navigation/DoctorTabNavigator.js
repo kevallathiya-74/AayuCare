@@ -16,8 +16,6 @@ import {
   DoctorAppointmentProvider,
   useDoctorAppointments,
 } from "../context/DoctorAppointmentContext";
-
-// Doctor Screens
 import DoctorHomeScreen from "../screens/hospital/DoctorHomeScreen";
 import TodaysAppointmentsScreen from "../screens/hospital/TodaysAppointmentsScreen";
 import DoctorPatientsScreen from "../screens/hospital/DoctorPatientsScreen";
@@ -52,6 +50,7 @@ const DoctorTabsInner = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        lazy: false,
         tabBarIcon: ({ focused, color, size }) => {
           const Icon = ROUTE_ICON_MAP[route.name] || Circle;
           return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
@@ -91,7 +90,6 @@ const DoctorTabsInner = () => {
         component={TodaysAppointmentsScreen}
         options={{
           tabBarLabel: "Today",
-          // Real-time badge from API - only show if count > 0
           tabBarBadge: todayCount > 0 ? todayCount : undefined,
           tabBarBadgeStyle: {
             backgroundColor: healthColors.primary.main,

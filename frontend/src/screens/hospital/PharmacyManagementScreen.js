@@ -17,12 +17,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RefreshCcw, Search } from "lucide-react-native";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import prescriptionService from "../../services/prescription.service";
 import { formatDate } from "../../utils/helpers";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import { SkeletonCardRow, EmptyState } from "../../components/common";
 import { EmptyStateConfig } from "../../utils/constants";
+import { handleSmartBack } from "../../utils/navigation";
 
 const FILTERS = ["all", "pending", "preparing", "ready", "dispensed"];
 
@@ -144,37 +147,28 @@ const OrderCard = ({ order }) => {
 
 
 const PharmacyManagementScreen = ({ navigation }) => {
-  const [prescriptions, setPrescriptions] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchPrescriptions = useCallback(async () => {
-    try {
-      setError(null);
+  const {
+    data: prescriptions = [],
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.prescriptions.list({ scope: "pharmacy-management" }),
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
       const response = await prescriptionService.getAllPrescriptions();
       const data = response?.prescriptions || response?.data || response || [];
-      setPrescriptions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      logError(err, { context: "PharmacyManagementScreen.fetchPrescriptions" });
-      setError("Unable to load pharmacy orders. Please try again.");
-      setPrescriptions([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPrescriptions();
-  }, [fetchPrescriptions]);
+      return Array.isArray(data) ? data : [];
+    },
+  });
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchPrescriptions();
-  }, [fetchPrescriptions]);
+    refetch();
+  }, [refetch]);
 
   const counts = useMemo(() => {
     const base = {
@@ -220,7 +214,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => handleSmartBack(navigation, "AdminTabs")}>
             <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pharmacy Management</Text>
@@ -240,7 +234,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerIconBtn}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -257,7 +251,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
         >
           <RefreshCcw
             size={theme.iconSizes.md}
-            color={refreshing ? healthColors.text.tertiary : healthColors.text.primary}
+            color={isRefetching ? healthColors.text.tertiary : healthColors.text.primary}
           />
         </TouchableOpacity>
       </View>
@@ -270,7 +264,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
@@ -321,7 +315,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {isError ? <Text style={styles.errorText}>{parseError(error)}</Text> : null}
           </View>
         }
         ListEmptyComponent={

@@ -3,7 +3,7 @@
  * View all notifications with real-time updates
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   StatusBar,
   RefreshControl,
   Alert,
+  ActivityIndicator,
+  Linking,
 } from "react-native";
 import {
   SafeAreaView,
@@ -20,17 +22,27 @@ import {
 } from "react-native-safe-area-context";
 import { Trash2, ArrowLeft, CheckCheck } from "lucide-react-native";
 import { useSelector } from "react-redux";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { adminService, notificationService } from "../../services";
+import { queryKeys } from "../../config/reactQueryConfig";
 import logger from "../../utils/logger";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
+
+const PAGE_SIZE = 20;
 
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
+  const notificationPermission = useSelector(
+    (state) => state.permissions?.notification || {}
+  );
   const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
+  const canUseNotifications =
+    !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
 
   // Map actionUrl path strings to registered React Navigation route names
   const ACTION_ROUTE_MAP = {
@@ -42,72 +54,91 @@ const NotificationsScreen = ({ navigation }) => {
     '/emergency': 'Emergency',
   };
   const { isConnected } = useNetworkStatus();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
 
-  // Fetch notifications
-  const fetchNotifications = useCallback(async () => {
-    logger.debug("NotificationsScreen", "Fetching notifications");
-
-    if (!isConnected) {
-      logger.error("NotificationsScreen", "No internet connection");
-      showError("No internet connection");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setError(null);
-      logger.debug("NotificationsScreen", "Calling notification endpoint", {
-        mode: isAdminUser ? "admin" : "user",
-      });
-
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.notifications.infinite({ role: user?.role }),
+    enabled: !!user?.id && isConnected && canUseNotifications,
+    staleTime: 30 * 1000,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }) => {
+      const page = Math.floor(pageParam / PAGE_SIZE) + 1;
       const response = isAdminUser
-        ? await adminService.getNotificationsManagement({ page: 1, limit: 50 })
-        : await notificationService.getNotifications(1, 50);
-
-      logger.debug("NotificationsScreen", "Notification response received");
-
-      if (response?.success) {
-        const notificationData = isAdminUser
-          ? response.data?.notifications || []
-          : response.data || [];
-        logger.debug("NotificationsScreen", "Notifications count", notificationData.length);
-        setNotifications(notificationData);
-        setUnreadCount(
-          isAdminUser
-            ? response.data?.stats?.unreadCount || 0
-            : response.unreadCount || 0
-        );
-      } else {
-        logger.error("NotificationsScreen", "Response not successful", response);
-        setError("Failed to load notifications");
+        ? await adminService.getNotificationsManagement({ page, limit: PAGE_SIZE })
+        : await notificationService.getNotifications(page, PAGE_SIZE);
+      const items = isAdminUser
+        ? response?.data?.notifications || []
+        : response?.data || [];
+      const total = Number(response?.data?.total || response?.pagination?.total || 0);
+      const unread = isAdminUser
+        ? Number(response?.data?.stats?.unreadCount || 0)
+        : Number(response?.unreadCount || response?.data?.unreadCount || 0);
+      return { items: Array.isArray(items) ? items : [], total, unread };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      if (lastPage?.total > 0) {
+        return loaded < lastPage.total ? loaded : undefined;
       }
-    } catch (err) {
-      logger.error("NotificationsScreen", "Error fetching notifications", err);
-      logError(err, { context: "NotificationsScreen.fetchNotifications" });
-      setError("Unable to fetch notifications");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [isConnected, isAdminUser]);
+      return (lastPage?.items?.length || 0) >= PAGE_SIZE ? loaded : undefined;
+    },
+  });
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+  const notifications = useMemo(
+    () => (data?.pages || []).flatMap((page) => page?.items || []),
+    [data]
+  );
+
+  const { data: unreadCount = 0, refetch: refetchUnread } = useQuery({
+    queryKey: queryKeys.notifications.unreadCount(),
+    enabled: !!user?.id && !isAdminUser && canUseNotifications,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const res = await notificationService.getUnreadCount();
+      return Number(res?.data?.count || 0);
+    },
+  });
+
+  const adminUnreadCount = useMemo(
+    () => Number((data?.pages || [])[0]?.unread || 0),
+    [data]
+  );
+
+  const effectiveUnreadCount = isAdminUser ? adminUnreadCount : unreadCount;
 
   const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchNotifications();
-  }, [fetchNotifications]);
+    if (!canUseNotifications) {
+      return;
+    }
+    refetch();
+    refetchUnread();
+  }, [refetch, refetchUnread, canUseNotifications]);
+
+  const handleLoadMore = useCallback(() => {
+    if (!canUseNotifications) {
+      return;
+    }
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, canUseNotifications]);
 
   const handleNotificationPress = useCallback(
     async (notification) => {
+      if (!canUseNotifications) {
+        return;
+      }
       try {
         const isRead = notification.read ?? notification.isRead ?? false;
         // Mark as read if unread
@@ -115,12 +146,8 @@ const NotificationsScreen = ({ navigation }) => {
           await notificationService.markAsRead(notification._id);
 
           // Update local state
-          setNotifications((prev) =>
-            prev.map((n) =>
-              n._id === notification._id ? { ...n, read: true, isRead: true } : n
-            )
-          );
-          setUnreadCount((prev) => Math.max(0, prev - 1));
+          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+          refetchUnread();
         }
 
         // Navigate based on notification actionUrl
@@ -142,10 +169,13 @@ const NotificationsScreen = ({ navigation }) => {
         });
       }
     },
-    [navigation, isAdminUser]
+    [navigation, isAdminUser, canUseNotifications]
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
+    if (!canUseNotifications) {
+      return;
+    }
     if (isAdminUser) {
       showError("Mark all as read is only available for your own notifications");
       return;
@@ -153,18 +183,20 @@ const NotificationsScreen = ({ navigation }) => {
 
     try {
       await notificationService.markAllAsRead();
-
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true, isRead: true })));
-      setUnreadCount(0);
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      refetchUnread();
 
       Alert.alert("Success", "All notifications marked as read");
     } catch (err) {
       logError(err, { context: "NotificationsScreen.handleMarkAllAsRead" });
       showError("Failed to mark all as read");
     }
-  }, [isAdminUser]);
+  }, [isAdminUser, queryClient, refetchUnread, canUseNotifications]);
 
   const handleClearAll = useCallback(() => {
+    if (!canUseNotifications) {
+      return;
+    }
     if (isAdminUser) {
       showError("Clear all is only available for your own notifications");
       return;
@@ -181,8 +213,8 @@ const NotificationsScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               await notificationService.clearAllNotifications();
-              setNotifications([]);
-              setUnreadCount(0);
+              queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+              refetchUnread();
               Alert.alert("Success", "All notifications cleared");
             } catch (err) {
               logError(err, { context: "NotificationsScreen.handleClearAll" });
@@ -192,9 +224,12 @@ const NotificationsScreen = ({ navigation }) => {
         },
       ]
     );
-  }, [isAdminUser]);
+  }, [isAdminUser, queryClient, refetchUnread, canUseNotifications]);
 
   const handleDeleteNotification = useCallback((notificationId, isRead) => {
+    if (!canUseNotifications) {
+      return;
+    }
     if (isAdminUser) {
       showError("Delete is only available for your own notifications");
       return;
@@ -211,14 +246,8 @@ const NotificationsScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               await notificationService.deleteNotification(notificationId);
-
-              setNotifications((prev) =>
-                prev.filter((n) => n._id !== notificationId)
-              );
-
-              if (!isRead) {
-                setUnreadCount((prev) => Math.max(0, prev - 1));
-              }
+              queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+              if (!isRead) refetchUnread();
             } catch (err) {
               logError(err, {
                 context: "NotificationsScreen.handleDeleteNotification",
@@ -229,7 +258,7 @@ const NotificationsScreen = ({ navigation }) => {
         },
       ]
     );
-  }, [isAdminUser]);
+  }, [isAdminUser, queryClient, refetchUnread, canUseNotifications]);
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -336,7 +365,7 @@ const NotificationsScreen = ({ navigation }) => {
     );
   };
 
-  if (error) {
+  if (isError) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <StatusBar
@@ -345,9 +374,9 @@ const NotificationsScreen = ({ navigation }) => {
         />
         <NetworkStatusIndicator />
         <ErrorRecovery
-          error={error}
-          onRetry={fetchNotifications}
-          onGoBack={() => navigation.goBack()}
+          error={parseError(error)}
+          onRetry={refetch}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
       </SafeAreaView>
     );
@@ -365,7 +394,7 @@ const NotificationsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
@@ -373,9 +402,9 @@ const NotificationsScreen = ({ navigation }) => {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && (
+          {effectiveUnreadCount > 0 && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
+              <Text style={styles.badgeText}>{effectiveUnreadCount}</Text>
             </View>
           )}
         </View>
@@ -392,7 +421,7 @@ const NotificationsScreen = ({ navigation }) => {
       </View>
 
       {/* Mark All as Read Button */}
-      {unreadCount > 0 && !isAdminUser && (
+      {effectiveUnreadCount > 0 && !isAdminUser && (
         <TouchableOpacity
           style={styles.markAllButton}
           onPress={handleMarkAllAsRead}
@@ -404,7 +433,19 @@ const NotificationsScreen = ({ navigation }) => {
       )}
 
       {/* Notifications List */}
-      {loading ? (
+      {!canUseNotifications ? (
+        <EmptyState
+          icon="notifications-off-outline"
+          title="Notifications Disabled"
+          message="Enable notification permission from Settings to view and receive notifications."
+          actionLabel="Open Settings"
+          onActionPress={() => {
+            Linking.openSettings().catch(() => {
+              navigation.navigate("Settings");
+            });
+          }}
+        />
+      ) : loading ? (
         <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : notifications.length === 0 ? (
         <EmptyState
@@ -417,13 +458,27 @@ const NotificationsScreen = ({ navigation }) => {
           data={notifications}
           renderItem={renderNotification}
           keyExtractor={(item) => item._id}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 104, offset: 104 * index, index })}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+              </View>
+            ) : null
+          }
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={handleRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}
@@ -508,6 +563,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: theme.spacing.md,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: "center",
   },
   notificationCard: {
     backgroundColor: healthColors.background.card,

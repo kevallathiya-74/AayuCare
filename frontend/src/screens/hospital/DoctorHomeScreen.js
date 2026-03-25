@@ -19,14 +19,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AlertTriangle, Calendar, Users, FileText, UserPlus, Home, User, Settings, Sun, CloudSun, Moon } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from "../../theme";
 import { getScreenPadding, getSafeAreaEdges } from "../../utils/responsive";
 import { logoutUser } from "../../store/slices/authSlice";
-import { showConfirmation, logError } from "../../utils/errorHandler";
+import { showConfirmation, logError, parseError } from "../../utils/errorHandler";
 import { doctorService } from "../../services";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
-import { EmptyState, SectionHeader, ModalSheet, Button } from "../../components/common";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { EmptyState, SectionHeader, ModalSheet, Button, SkeletonCardRow, SkeletonStatGrid } from "../../components/common";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
 import {
@@ -49,57 +51,53 @@ const DoctorHomeScreen = ({ navigation }) => {
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [error, setError] = useState(null);
-  const [schedule, setSchedule] = useState({
-    totalAppointments: 0, completed: 0, pending: 0,
-    nextPatient: "Loading…", nextTime: "--:--",
-  });
-  const [todaysAppointments, setTodaysAppointments] = useState([]);
 
   const { refreshCount } = useDoctorAppointments();
 
-  // ── Data fetching ──
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      setError(null);
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    error,
+    refetch: refetchDashboard,
+  } = useQuery({
+    queryKey: queryKeys.dashboardStats.doctor(user?.id),
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
       const response = await doctorService.getDashboard();
-      if (response?.success) {
-        setSchedule({
-          totalAppointments: response.data.schedule?.totalAppointments || 0,
-          completed: response.data.schedule?.completed || 0,
-          pending: response.data.schedule?.pending || 0,
-          nextPatient: response.data.schedule?.nextPatient || "No upcoming patients",
-          nextTime: response.data.schedule?.nextTime || "--:--",
-        });
-        setTodaysAppointments(response.data.todaysAppointments || []);
-      }
-    } catch (err) {
-      logError(err, { context: "DoctorHomeScreen.fetchDashboardData" });
-      setError("Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return response?.data || {};
+    },
+  });
 
-  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
+  const schedule = useMemo(() => ({
+    totalAppointments: dashboardData?.schedule?.totalAppointments || 0,
+    completed: dashboardData?.schedule?.completed || 0,
+    pending: dashboardData?.schedule?.pending || 0,
+    nextPatient: dashboardData?.schedule?.nextPatient || "No upcoming patients",
+    nextTime: dashboardData?.schedule?.nextTime || "--:--",
+  }), [dashboardData]);
+
+  const todaysAppointments = useMemo(
+    () => dashboardData?.todaysAppointments || [],
+    [dashboardData]
+  );
 
   useFocusEffect(
     useCallback(() => {
-      fetchDashboardData();
+      refetchDashboard();
       refreshCount();
-    }, [fetchDashboardData, refreshCount])
+    }, [refetchDashboard, refreshCount])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    await refetchDashboard();
     refreshCount();
     setRefreshing(false);
-  }, [fetchDashboardData, refreshCount]);
+  }, [refetchDashboard, refreshCount]);
 
   // ── Patient search (debounced) ──
   const searchTimeout = useRef(null);
@@ -149,14 +147,14 @@ const DoctorHomeScreen = ({ navigation }) => {
       const id = appointment._id || appointment.id;
       if (!id) { Alert.alert("Error", "Invalid appointment ID"); return; }
       await doctorService.updateAppointmentStatus(id, "in_progress");
-      fetchDashboardData();
+      refetchDashboard();
       refreshCount();
       navigation.navigate("Consultation", { appointment });
     } catch (err) {
       logError(err, { context: "DoctorHomeScreen.startConsultation" });
       Alert.alert("Error", "Failed to start consultation. Please try again.");
     }
-  }, [fetchDashboardData, refreshCount, navigation]);
+  }, [refetchDashboard, refreshCount, navigation]);
 
   const handleViewHistory = useCallback((appointment) => {
     navigation.navigate("PatientManagement", {
@@ -226,8 +224,8 @@ const DoctorHomeScreen = ({ navigation }) => {
         {error && (
           <View style={styles.errorBanner}>
             <AlertTriangle  size={18} color={healthColors.error.main} />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={fetchDashboardData}>
+            <Text style={styles.errorText}>{parseError(error)}</Text>
+            <TouchableOpacity onPress={refetchDashboard}>
               <Text style={styles.retryText}>Retry</Text>
             </TouchableOpacity>
           </View>
@@ -245,6 +243,15 @@ const DoctorHomeScreen = ({ navigation }) => {
         />
 
         <View style={styles.body}>
+          {loading ? (
+            <View style={{ gap: 12 }}>
+              <SkeletonStatGrid rows={2} />
+              <SkeletonCardRow />
+              <SkeletonCardRow />
+              <SkeletonCardRow />
+            </View>
+          ) : (
+            <>
           {/* ── Schedule Stats ── */}
           <ScheduleStatsCard schedule={schedule} />
 
@@ -299,6 +306,8 @@ const DoctorHomeScreen = ({ navigation }) => {
               </TouchableOpacity>
             ))}
           </View>
+            </>
+          )}
         </View>
       </ScrollView>
 

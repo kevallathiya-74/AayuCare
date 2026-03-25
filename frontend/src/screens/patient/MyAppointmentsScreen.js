@@ -20,20 +20,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { User, Calendar, Clock, Cross, MessageSquare, AlertCircle, XCircle, ArrowLeft } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { verticalScale } from "../../utils/responsive";
 import { usePatientAppointmentsInfinite } from "../../hooks/useAppointments";
 import { appointmentService } from "../../services";
 import { EmptyStateConfig } from "../../utils/constants";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const MyAppointmentsScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   // Determine status filter based on selected tab
   const statusFilter = selectedTab === "upcoming" 
@@ -86,6 +90,21 @@ const MyAppointmentsScreen = ({ navigation }) => {
     });
   }, [navigation]);
 
+  const cancelAppointmentMutation = useMutation({
+    mutationFn: ({ appointmentId, reason }) =>
+      appointmentService.cancelAppointment(appointmentId, reason),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      refetch();
+      Alert.alert("Success", "Appointment cancelled successfully.");
+    },
+    onError: (err) => {
+      logError(err, { context: "MyAppointmentsScreen.handleCancelAppointment" });
+      Alert.alert("Error", "Failed to cancel appointment. Please try again.");
+    },
+    retry: 1,
+  });
+
   const handleCancelAppointment = useCallback((appointment) => {
     Alert.alert(
       "Cancel Appointment",
@@ -96,22 +115,15 @@ const MyAppointmentsScreen = ({ navigation }) => {
           text: "Cancel Appointment",
           style: "destructive",
           onPress: async () => {
-            try {
-              await appointmentService.cancelAppointment(
-                appointment._id || appointment.id,
-                "Cancelled by patient"
-              );
-              refetch();
-              Alert.alert("Success", "Appointment cancelled successfully.");
-            } catch (err) {
-              logError(err, { context: "MyAppointmentsScreen.handleCancelAppointment" });
-              Alert.alert("Error", "Failed to cancel appointment. Please try again.");
-            }
+            await cancelAppointmentMutation.mutateAsync({
+              appointmentId: appointment._id || appointment.id,
+              reason: "Cancelled by patient",
+            });
           },
         },
       ]
     );
-  }, [refetch]);
+  }, [cancelAppointmentMutation]);
 
   const renderAppointment = ({ item }) => (
     <View style={styles.appointmentCard}>
@@ -215,7 +227,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
         >
           <ArrowLeft
@@ -263,9 +275,9 @@ const MyAppointmentsScreen = ({ navigation }) => {
       {/* Appointments List */}
       {isError ? (
         <ErrorRecovery
-          error={error?.message || "Failed to load appointments"}
+          error={parseError(error)}
           onRetry={() => refetch()}
-          onGoBack={() => navigation.goBack()}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
           context="loading appointments"
         />
       ) : isLoading ? (
@@ -284,10 +296,12 @@ const MyAppointmentsScreen = ({ navigation }) => {
           ]}
           showsVerticalScrollIndicator={false}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 196, offset: 196 * index, index })}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}

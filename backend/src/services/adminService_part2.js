@@ -7,18 +7,14 @@ const medicalRecordRepository = require('../repositories/medicalRecordRepository
 const notificationRepository = require('../repositories/notificationRepository');
 const { AppError } = require('../middleware/errorHandler');
 const { writeAuditLog, AUDIT_ACTIONS } = require('../utils/audit');
-const { deleteCacheByPattern } = require('../config/redis');
+const { invalidateByPatterns } = require('../utils/cacheInvalidation');
 const { withTransaction } = require('../utils/transaction');
 const logger = require('../utils/logger');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 
 const invalidateCaches = async (...patterns) => {
-  await Promise.all(
-    patterns.map(p =>
-      deleteCacheByPattern(p).catch(err => logger.warn('Cache invalidation failed:', err.message))
-    )
-  );
+  await invalidateByPatterns(patterns);
 };
 
 const getSystemHealth = async () => {

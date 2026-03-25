@@ -8,17 +8,21 @@ import {
   Alert,
   Platform,
   Modal,
+  KeyboardAvoidingView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Calendar, ChevronDown } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors, spacing, textStyles } from "../../theme";
 import { getSafeAreaEdges } from "../../utils/responsive";
 import { Card, Button, Input } from "../../components/common";
 import { patientService } from "../../services";
 import { updateUser } from "../../store/slices/authSlice";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["male", "female", "other"];
@@ -27,8 +31,8 @@ const PatientEditProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const user = useSelector((state) => state.auth.user);
+  const queryClient = useQueryClient();
 
-  const [saving, setSaving] = useState(false);
   const [showDobPicker, setShowDobPicker] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || "",
@@ -103,8 +107,6 @@ const PatientEditProfileScreen = ({ navigation }) => {
     if (!validate()) return;
 
     try {
-      setSaving(true);
-
       const payload = {
         name: form.name.trim(),
         phone: form.phone.trim(),
@@ -117,7 +119,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
         emergencyContactRelation: form.emergencyContactRelation.trim() || undefined,
       };
 
-      const response = await patientService.updatePatientProfile(user.id, payload);
+      const response = await updateProfileMutation.mutateAsync({ userId: user.id, payload });
       const updatedProfile = response?.data || {};
 
       dispatch(
@@ -147,20 +149,33 @@ const PatientEditProfileScreen = ({ navigation }) => {
       );
 
       Alert.alert("Success", "Profile updated successfully", [
-        { text: "OK", onPress: () => navigation.goBack() },
+        { text: "OK", onPress: () => handleSmartBack(navigation, "PatientTabs") },
+      ]);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.detail(user.id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
       ]);
     } catch (error) {
       logError(error, { context: "PatientEditProfileScreen.handleSave" });
-      Alert.alert("Error", error?.message || "Failed to update profile");
-    } finally {
-      setSaving(false);
+      Alert.alert("Error", parseError(error));
     }
   };
 
+  const updateProfileMutation = useMutation({
+    mutationFn: ({ userId, payload }) => patientService.updatePatientProfile(userId, payload),
+    retry: 1,
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}> 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.lg,
@@ -168,7 +183,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
         }}
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.iconButton} onPress={() => handleSmartBack(navigation, "PatientTabs", { screen: "Profile" })}>
             <ArrowLeft  size={22} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Edit Profile</Text>
@@ -264,14 +279,15 @@ const PatientEditProfileScreen = ({ navigation }) => {
           size="large"
           fullWidth
           gradient
-          loading={saving}
-          disabled={!canSave || saving}
+          loading={updateProfileMutation.isPending}
+          disabled={!canSave || updateProfileMutation.isPending}
           onPress={handleSave}
           style={styles.saveButton}
         >
           Save Changes
         </Button>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Date of Birth Picker */}
       {Platform.OS === "ios" ? (

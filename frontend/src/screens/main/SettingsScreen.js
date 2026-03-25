@@ -14,11 +14,13 @@ import {
   Switch,
   Linking,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { ArrowLeft } from "lucide-react-native";
 import { theme, healthColors, textStyles, spacing } from "../../theme";
 import {
   Card,
@@ -29,13 +31,14 @@ import {
 } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getItem, setItem } from "../../utils/appStorage";
+import { handleSmartBack } from "../../utils/navigation";
+import { setNotificationsEnabled } from "../../store/slices/permissionSlice";
 
 const SETTINGS_STORAGE_KEY = "aayucare_notification_settings";
 
 const SettingsScreen = ({ navigation }) => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [appointmentReminders, setAppointmentReminders] = useState(true);
   const [medicationReminders, setMedicationReminders] = useState(true);
   const [healthTips, setHealthTips] = useState(false);
@@ -43,7 +46,13 @@ const SettingsScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
   const userRole = useSelector((state) => state.auth?.user?.role);
+  const notificationPermission = useSelector(
+    (state) => state.permissions?.notification || {}
+  );
+  const notificationsEnabled =
+    !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
 
   // Load persisted notification preferences on mount
   useEffect(() => {
@@ -52,7 +61,6 @@ const SettingsScreen = ({ navigation }) => {
         const stored = await getItem(SETTINGS_STORAGE_KEY);
         if (stored) {
           const prefs = JSON.parse(stored);
-          if (typeof prefs.notificationsEnabled === "boolean") setNotificationsEnabled(prefs.notificationsEnabled);
           if (typeof prefs.appointmentReminders === "boolean") setAppointmentReminders(prefs.appointmentReminders);
           if (typeof prefs.medicationReminders === "boolean") setMedicationReminders(prefs.medicationReminders);
           if (typeof prefs.healthTips === "boolean") setHealthTips(prefs.healthTips);
@@ -67,6 +75,12 @@ const SettingsScreen = ({ navigation }) => {
     if (userRole === "doctor") return "EditProfile";
     if (userRole === "admin") return "AdminSettings";
     return "PatientEditProfile";
+  };
+
+  const getSettingsBackFallback = () => {
+    if (userRole === "admin") return "AdminTabs";
+    if (userRole === "doctor") return "DoctorTabs";
+    return "PatientTabs";
   };
 
   const openURL = async (url) => {
@@ -84,7 +98,7 @@ const SettingsScreen = ({ navigation }) => {
       setter(value);
       // Persist all notification prefs as a single JSON object in appStorage
       const currentPrefs = {
-        notificationsEnabled: settingName === "pushNotifications" ? value : notificationsEnabled,
+        notificationsEnabled,
         appointmentReminders: settingName === "appointmentReminders" ? value : appointmentReminders,
         medicationReminders: settingName === "medicationReminders" ? value : medicationReminders,
         healthTips: settingName === "healthTips" ? value : healthTips,
@@ -94,6 +108,37 @@ const SettingsScreen = ({ navigation }) => {
       logError(err, `SettingsScreen.handleSettingChange.${settingName}`);
       showError("Failed to update setting");
       setter(!value); // Revert on error
+    }
+  };
+
+  const handleNotificationToggle = async (value) => {
+    try {
+      const result = await dispatch(setNotificationsEnabled(value)).unwrap();
+
+      if (
+        value &&
+        !result.notificationsEnabled &&
+        result.canAskAgain === false
+      ) {
+        Alert.alert(
+          "Permission Required",
+          "Notifications are blocked at the device level. Enable them from app settings.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                Linking.openSettings().catch(() => {
+                  showError("Unable to open device settings");
+                });
+              },
+            },
+          ]
+        );
+      }
+    } catch (err) {
+      logError(err, "SettingsScreen.handleNotificationToggle");
+      showError("Failed to update notification permission");
     }
   };
 
@@ -221,6 +266,19 @@ const SettingsScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
         >
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => handleSmartBack(navigation, getSettingsBackFallback())}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <ArrowLeft size={22} color={healthColors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Settings</Text>
+            <View style={styles.headerSpacer} />
+          </View>
+
           {/* Notifications */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notifications</Text>
@@ -229,14 +287,24 @@ const SettingsScreen = ({ navigation }) => {
                 <View style={styles.settingInfo}>
                   <Text style={styles.settingTitle}>Push Notifications</Text>
                   <Text style={styles.settingDescription}>
-                    Enable all notifications
+                    {notificationPermission.granted
+                      ? "Enable all notifications"
+                      : "OS permission is required to receive notifications"}
                   </Text>
                 </View>
-                {renderSwitch(
-                  notificationsEnabled,
-                  setNotificationsEnabled,
-                  "pushNotifications"
-                )}
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={handleNotificationToggle}
+                  trackColor={{
+                    false: healthColors.neutral.gray300,
+                    true: healthColors.primary.light,
+                  }}
+                  thumbColor={
+                    notificationsEnabled
+                      ? healthColors.primary.main
+                      : healthColors.neutral.white
+                  }
+                />
               </View>
 
               <View style={styles.divider} />
@@ -346,6 +414,29 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: healthColors.background.tertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    ...textStyles.h3,
+    color: healthColors.text.primary,
+  },
+  headerSpacer: {
+    width: 36,
+    height: 36,
   },
   section: {
     paddingHorizontal: spacing.md,

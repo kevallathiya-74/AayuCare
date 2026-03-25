@@ -37,6 +37,75 @@ export const ERROR_MESSAGES = {
     UNKNOWN: 'An unexpected error occurred. Please try again.',
 };
 
+const isTechnicalMessage = (message = '') => {
+    const text = String(message || '').toLowerCase();
+    return (
+        text.includes('sql') ||
+        text.includes('sequelize') ||
+        text.includes('mongodb') ||
+        text.includes('stack') ||
+        text.includes('exception') ||
+        text.includes('syntax error') ||
+        text.includes('trace') ||
+        text.includes('internal server error') ||
+        text.includes('validation failed') ||
+        text.includes('cannot read properties')
+    );
+};
+
+const sanitizeServerMessage = (message = '') => {
+    const trimmed = String(message || '').trim();
+    if (!trimmed) return '';
+    return isTechnicalMessage(trimmed) ? '' : trimmed;
+};
+
+const extractServerMessage = (data) => {
+    if (!data) return '';
+
+    const candidates = [
+        data.message,
+        data.error,
+        data.details,
+    ];
+
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+        const firstError = data.errors[0];
+        candidates.push(
+            typeof firstError === 'string' ? firstError : firstError?.message || firstError?.msg
+        );
+    }
+
+    for (const candidate of candidates) {
+        if (typeof candidate === 'string') {
+            const safe = sanitizeServerMessage(candidate);
+            if (safe) return safe;
+        }
+    }
+
+    return '';
+};
+
+const mapStatusToMessage = (status) => {
+    switch (status) {
+        case 400:
+            return ERROR_MESSAGES.VALIDATION;
+        case 401:
+            return ERROR_MESSAGES.AUTHENTICATION;
+        case 403:
+            return ERROR_MESSAGES.PERMISSION;
+        case 404:
+            return ERROR_MESSAGES.NOT_FOUND;
+        case 408:
+            return ERROR_MESSAGES.TIMEOUT;
+        case 500:
+        case 502:
+        case 503:
+            return ERROR_MESSAGES.SERVER;
+        default:
+            return ERROR_MESSAGES.UNKNOWN;
+    }
+};
+
 /**
  * Parse error object and extract user-friendly message
  * @param {Error|string|Object} error - Error to parse
@@ -45,7 +114,8 @@ export const ERROR_MESSAGES = {
 export const parseError = (error) => {
     // Handle string errors
     if (typeof error === 'string') {
-        return error;
+        const safe = sanitizeServerMessage(error);
+        return safe || ERROR_MESSAGES.UNKNOWN;
     }
 
     // Handle axios/fetch errors with response
@@ -53,30 +123,17 @@ export const parseError = (error) => {
         const status = error.response.status;
         const data = error.response.data;
 
-        // API error message
-        if (data?.message) {
-            return data.message;
+        const code = data?.code || data?.errorCode;
+        if (code === 'AUTH_EXPIRED' || code === 'UNAUTHORIZED') {
+            return ERROR_MESSAGES.AUTHENTICATION;
         }
 
-        // HTTP status codes
-        switch (status) {
-            case 400:
-                return ERROR_MESSAGES.VALIDATION;
-            case 401:
-                return ERROR_MESSAGES.AUTHENTICATION;
-            case 403:
-                return ERROR_MESSAGES.PERMISSION;
-            case 404:
-                return ERROR_MESSAGES.NOT_FOUND;
-            case 408:
-                return ERROR_MESSAGES.TIMEOUT;
-            case 500:
-            case 502:
-            case 503:
-                return ERROR_MESSAGES.SERVER;
-            default:
-                return ERROR_MESSAGES.UNKNOWN;
+        const serverMessage = extractServerMessage(data);
+        if (serverMessage) {
+            return serverMessage;
         }
+
+        return mapStatusToMessage(status);
     }
 
     // Handle network errors
@@ -91,7 +148,11 @@ export const parseError = (error) => {
         if (message.includes('unauthorized') || message.includes('unauthenticated')) {
             return ERROR_MESSAGES.AUTHENTICATION;
         }
-        return error.message;
+        if (isTechnicalMessage(error.message)) {
+            return ERROR_MESSAGES.UNKNOWN;
+        }
+        const safe = sanitizeServerMessage(error.message);
+        return safe || ERROR_MESSAGES.UNKNOWN;
     }
 
     // Fallback
@@ -290,6 +351,10 @@ export const handleAsync = async (asyncFn, setLoading, setError = null, errorCon
     }
 };
 
+export const toSafeError = (error) => {
+    return new Error(parseError(error));
+};
+
 /**
  * Default export with all error handler utilities
  */
@@ -306,5 +371,6 @@ export default {
     validateEmail,
     validatePhone,
     handleAsync,
+    toSafeError,
 };
 

@@ -7,8 +7,9 @@
 const prescriptionRepository = require("../repositories/prescriptionRepository");
 const userRepository = require("../repositories/userRepository");
 const logger = require("../utils/logger");
-const { deleteCacheByPattern } = require("../config/redis");
+const { invalidateAfterPrescriptionMutation } = require("../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+const { sendSuccess, sendError } = require("../utils/apiResponse");
 
 const PHARMACY_STATUS_ALIASES = {
   sent_to_pharmacy: "preparing",
@@ -90,11 +91,16 @@ exports.getAllPrescriptions = async (req, res, next) => {
     // Enrich with patient and doctor names via batch lookup
     const prescriptionsWithNames = await enrichPrescriptionUsers(prescriptions);
 
-    res.status(200).json({
-      success: true,
-      count: prescriptions.length,
-      prescriptions: prescriptionsWithNames,
-    });
+    return sendSuccess(
+      res,
+      req,
+      {
+        count: prescriptions.length,
+        prescriptions: prescriptionsWithNames,
+      },
+      "Prescriptions retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Error fetching all prescriptions:", error);
     next(error);
@@ -124,27 +130,24 @@ exports.createPrescription = async (req, res, next) => {
 
     // Guard: doctor session must be valid
     if (!doctorId) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid doctor session",
-      });
+      return sendError(res, req, "Invalid doctor session", 401, "UNAUTHORIZED");
     }
 
     // Validate required fields
     if (!patientId || !Array.isArray(meds) || meds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Patient ID and at least one medication are required",
-      });
+      return sendError(
+        res,
+        req,
+        "Patient ID and at least one medication are required",
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     // Verify patient exists using repository (uuid or custom userId)
     const patient = await resolveUserByIdentifier(patientId);
     if (!patient || patient.role !== "patient") {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     const normalizedMedicines = meds.map((medication) => ({
@@ -176,8 +179,7 @@ exports.createPrescription = async (req, res, next) => {
 
     // Invalidate relevant caches after prescription creation
     try {
-      await deleteCacheByPattern("v1:cache:prescription:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPrescriptionMutation();
       logger.debug("Cache invalidated after prescription creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -192,11 +194,13 @@ exports.createPrescription = async (req, res, next) => {
       req,
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Prescription created successfully. Patient will be notified.",
-      data: prescription,
-    });
+    return sendSuccess(
+      res,
+      req,
+      prescription,
+      "Prescription created successfully. Patient will be notified.",
+      201
+    );
   } catch (error) {
     logger.error("Create prescription error:", {
       error: error.message,
@@ -218,19 +222,13 @@ exports.getPatientPrescriptions = async (req, res, next) => {
 
     const patient = await resolveUserByIdentifier(patientId);
     if (!patient || patient.role !== "patient") {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
-      });
+      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Check access rights
     const isOwnData = req.user.id === patient.id || req.user.userId === patient.user_id;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view these prescriptions",
-      });
+      return sendError(res, req, "Not authorized to view these prescriptions", 403, "FORBIDDEN");
     }
 
     const prescriptions = await prescriptionRepository.findByPatient(patient.id, {
@@ -241,11 +239,16 @@ exports.getPatientPrescriptions = async (req, res, next) => {
 
     const enriched = await enrichPrescriptionUsers(prescriptions);
 
-    res.json({
-      success: true,
-      count: enriched.length,
-      data: enriched,
-    });
+    return sendSuccess(
+      res,
+      req,
+      {
+        count: enriched.length,
+        prescriptions: enriched,
+      },
+      "Patient prescriptions retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Get patient prescriptions error:", {
       error: error.message,
@@ -266,19 +269,13 @@ exports.getDoctorPrescriptions = async (req, res, next) => {
 
     const doctor = await resolveUserByIdentifier(doctorId);
     if (!doctor || doctor.role !== "doctor") {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      return sendError(res, req, "Doctor not found", 404, "NOT_FOUND");
     }
 
     // Check access rights
     const isOwnData = req.user.id === doctor.id || req.user.userId === doctor.user_id;
     if (req.user.role !== "admin" && !isOwnData) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view these prescriptions",
-      });
+      return sendError(res, req, "Not authorized to view these prescriptions", 403, "FORBIDDEN");
     }
 
     const prescriptions = await prescriptionRepository.findByDoctor(doctor.id, {
@@ -289,11 +286,16 @@ exports.getDoctorPrescriptions = async (req, res, next) => {
 
     const enriched = await enrichPrescriptionUsers(prescriptions);
 
-    res.json({
-      success: true,
-      count: enriched.length,
-      data: enriched,
-    });
+    return sendSuccess(
+      res,
+      req,
+      {
+        count: enriched.length,
+        prescriptions: enriched,
+      },
+      "Doctor prescriptions retrieved successfully",
+      200
+    );
   } catch (error) {
     logger.error("Get doctor prescriptions error:", {
       error: error.message,
@@ -315,10 +317,7 @@ exports.getPrescriptionById = async (req, res, next) => {
     const prescription = await prescriptionRepository.findById(prescriptionId);
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: "Prescription not found",
-      });
+      return sendError(res, req, "Prescription not found", 404, "NOT_FOUND");
     }
 
     // Check access rights â€” compare UUIDs only (patientId stored as UUID in Prescription)
@@ -330,18 +329,12 @@ exports.getPrescriptionById = async (req, res, next) => {
       req.user.id === prescription.doctorId;
 
     if (req.user.role !== "admin" && !isDoctorOwner && !isPatientOwner) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this prescription",
-      });
+      return sendError(res, req, "Not authorized to view this prescription", 403, "FORBIDDEN");
     }
 
     const enriched = (await enrichPrescriptionUsers([prescription]))[0] || prescription;
 
-    res.json({
-      success: true,
-      data: enriched,
-    });
+    return sendSuccess(res, req, enriched, "Prescription retrieved successfully", 200);
   } catch (error) {
     logger.error("Get prescription by ID error:", {
       error: error.message,
@@ -364,10 +357,13 @@ exports.updatePrescriptionStatus = async (req, res, next) => {
     );
 
     if (!pharmacyStatus || !VALID_PHARMACY_STATUSES.includes(pharmacyStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid status. Must be one of: ${VALID_PHARMACY_STATUSES.join(", ")}`,
-      });
+      return sendError(
+        res,
+        req,
+        `Invalid status. Must be one of: ${VALID_PHARMACY_STATUSES.join(", ")}`,
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     const prescription = await prescriptionRepository.updatePharmacyStatus(
@@ -376,27 +372,18 @@ exports.updatePrescriptionStatus = async (req, res, next) => {
     );
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: "Prescription not found",
-      });
+      return sendError(res, req, "Prescription not found", 404, "NOT_FOUND");
     }
 
     // Invalidate relevant caches after prescription status update
     try {
-      await deleteCacheByPattern("v1:cache:prescription:*");
-      await deleteCacheByPattern("cache:prescription:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPrescriptionMutation();
       logger.debug("Cache invalidated after prescription status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.json({
-      success: true,
-      message: "Prescription status updated successfully",
-      data: prescription,
-    });
+    return sendSuccess(res, req, prescription, "Prescription status updated successfully", 200);
   } catch (error) {
     logger.error("Update prescription status error:", {
       error: error.message,
@@ -419,10 +406,13 @@ exports.updatePharmacyStatus = async (req, res, next) => {
     const pharmacyStatus = normalizePharmacyStatus(req.body.pharmacyStatus);
 
     if (!pharmacyStatus || !VALID_PHARMACY_STATUSES.includes(pharmacyStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid pharmacy status. Must be one of: ${VALID_PHARMACY_STATUSES.join(", ")}`,
-      });
+      return sendError(
+        res,
+        req,
+        `Invalid pharmacy status. Must be one of: ${VALID_PHARMACY_STATUSES.join(", ")}`,
+        400,
+        "VALIDATION_ERROR"
+      );
     }
 
     // Update using repository
@@ -432,27 +422,18 @@ exports.updatePharmacyStatus = async (req, res, next) => {
     );
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: "Prescription not found",
-      });
+      return sendError(res, req, "Prescription not found", 404, "NOT_FOUND");
     }
 
     // Invalidate relevant caches
     try {
-      await deleteCacheByPattern("v1:cache:prescription:*");
-      await deleteCacheByPattern("cache:prescription:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPrescriptionMutation();
       logger.debug("Cache invalidated after pharmacy status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.json({
-      success: true,
-      message: "Pharmacy status updated successfully",
-      data: prescription,
-    });
+    return sendSuccess(res, req, prescription, "Pharmacy status updated successfully", 200);
   } catch (error) {
     logger.error("Update pharmacy status error:", {
       error: error.message,
@@ -480,10 +461,7 @@ exports.getPharmacyStats = async (req, res, next) => {
       endDate,
     });
 
-    res.json({
-      success: true,
-      data: stats,
-    });
+    return sendSuccess(res, req, stats, "Pharmacy stats retrieved successfully", 200);
   } catch (error) {
     logger.error("Get pharmacy stats error:", {
       error: error.message,
@@ -506,26 +484,18 @@ exports.deletePrescription = async (req, res, next) => {
     const prescription = await prescriptionRepository.delete(prescriptionId);
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
-        message: "Prescription not found",
-      });
+      return sendError(res, req, "Prescription not found", 404, "NOT_FOUND");
     }
 
     // Invalidate relevant caches after prescription deletion
     try {
-      await deleteCacheByPattern("v1:cache:prescription:*");
-      await deleteCacheByPattern("cache:prescription:*");
-      await deleteCacheByPattern("v1:cache:dashboard:*");
+      await invalidateAfterPrescriptionMutation();
       logger.debug("Cache invalidated after prescription deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    res.json({
-      success: true,
-      message: "Prescription deleted successfully",
-    });
+    return sendSuccess(res, req, null, "Prescription deleted successfully", 200);
   } catch (error) {
     logger.error("Delete prescription error:", {
       error: error.message,
@@ -535,4 +505,6 @@ exports.deletePrescription = async (req, res, next) => {
     next(error);
   }
 };
+
+
 

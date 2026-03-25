@@ -28,6 +28,7 @@ import {
 import { getItem, setItem } from "../../utils/appStorage";
 import { logError } from "../../utils/errorHandler";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ACCESSIBILITY_SETTINGS_KEY = "aayucare_accessibility_settings";
 const FONT_SIZE_KEY = "aayucare_font_size";
@@ -125,7 +126,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
   const SettingRow = ({ icon, label, value, onToggle, iconColor }) => (
     <View style={styles.settingRow}>
       <View style={styles.settingLeft}>
-        <ChevronRight
+        <DynamicIcon
           name={icon}
           size={20}
           color={iconColor || healthColors.text.secondary}
@@ -181,7 +182,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "Settings")}
           style={styles.backButton}
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
@@ -214,8 +215,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               <Text style={styles.languageLabel}>Current: English</Text>
               <TouchableOpacity style={styles.changeButton}>
                 <Text style={styles.changeButtonText}>Change</Text>
-                <ChevronRight
-                  
+                <DynamicIcon
+                  name="chevron-forward"
                   size={16}
                   color={healthColors.primary.main}
                 />

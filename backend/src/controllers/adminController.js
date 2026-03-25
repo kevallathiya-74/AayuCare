@@ -17,6 +17,7 @@ const { query } = require("../config/postgres");
 const { redisClient, deleteCacheByPattern } = require("../config/redis");
 const { withTransaction } = require("../utils/transaction");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../utils/audit");
+const { sendSuccess } = require("../utils/apiResponse");
 
 /**
  * @desc    Get dashboard statistics
@@ -31,7 +32,7 @@ exports.getDashboardStats = async (req, res, next) => {
       hospitalId: req.hospitalId,
       role: req.user.role,
     });
-    res.json({ success: true, data });
+    return sendSuccess(res, req, data, "Dashboard stats retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -49,7 +50,7 @@ exports.getRecentActivities = async (req, res, next) => {
       hospitalId: req.hospitalId,
       role: req.user.role,
     });
-    res.json({ success: true, data });
+    return sendSuccess(res, req, data, "Recent activities retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -75,7 +76,7 @@ exports.getUsers = async (req, res, next) => {
         role: req.user.role,
       },
     });
-    res.json({ success: true, data });
+    return sendSuccess(res, req, data, "Users retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -87,7 +88,7 @@ exports.getUsers = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.updateUserStatus = async (req, res, next) => {
-  try { const data = await adminService.updateUserStatus({ userId: req.params.userId, isActive: req.body.isActive, adminUser: req.user, hospitalId: req.hospitalId }); res.json({ success: true, message: `User ${req.body.isActive ? 'activated' : 'deactivated'} successfully`, data }); } catch(e) { next(e); }
+  try { const data = await adminService.updateUserStatus({ userId: req.params.userId, isActive: req.body.isActive, adminUser: req.user, hospitalId: req.hospitalId }); return sendSuccess(res, req, data, `User ${req.body.isActive ? 'activated' : 'deactivated'} successfully`); } catch(e) { next(e); }
 };
 
 /**
@@ -96,7 +97,7 @@ exports.updateUserStatus = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.updateUserRole = async (req, res, next) => {
-  try { const data = await adminService.updateUserRole({ userId: req.params.userId, role: req.body.role, adminUser: req.user, hospitalId: req.hospitalId }); res.json({ success: true, message: `User role updated to ${req.body.role} successfully`, data }); } catch(e) { next(e); }
+  try { const data = await adminService.updateUserRole({ userId: req.params.userId, role: req.body.role, adminUser: req.user, hospitalId: req.hospitalId }); return sendSuccess(res, req, data, `User role updated to ${req.body.role} successfully`); } catch(e) { next(e); }
 };
 
 /**
@@ -105,7 +106,7 @@ exports.updateUserRole = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.bulkUpdateUsers = async (req, res, next) => {
-  try { const data = await adminService.bulkUpdateUsers({ operations: req.body.operations, adminUser: req.user, hospitalId: req.hospitalId }); res.json({ success: true, message: `Successfully processed ${req.body.operations.length} operations`, data }); } catch(e) { next(e); }
+  try { const data = await adminService.bulkUpdateUsers({ operations: req.body.operations, adminUser: req.user, hospitalId: req.hospitalId }); return sendSuccess(res, req, data, `Successfully processed ${req.body.operations.length} operations`); } catch(e) { next(e); }
 };
 
 /**
@@ -114,7 +115,7 @@ exports.bulkUpdateUsers = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.getSystemHealth = async (req, res, next) => {
-  try { const data = await adminService.getSystemHealth(); res.json(data); } catch(e) { next(e); }
+  try { const data = await adminService.getSystemHealth(); return sendSuccess(res, req, data, "System health retrieved successfully"); } catch(e) { next(e); }
 };
 
 /**
@@ -128,7 +129,7 @@ exports.getSecuritySettings = async (req, res, next) => {
       hospitalId: req.hospitalId,
       role: req.user.role
     });
-    res.json({ success: true, data });
+    return sendSuccess(res, req, data, "Security settings retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -140,7 +141,7 @@ exports.getSecuritySettings = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.changePassword = async (req, res, next) => {
-  try { const data = await adminService.changePassword({ userId: req.user.userId, currentPassword: req.body.currentPassword, newPassword: req.body.newPassword }); res.json({ success: true, message: 'Password changed successfully', data }); } catch(e) { next(e); }
+  try { const data = await adminService.changePassword({ userId: req.user.userId, currentPassword: req.body.currentPassword, newPassword: req.body.newPassword }); return sendSuccess(res, req, data, 'Password changed successfully'); } catch(e) { next(e); }
 };
 
 /**
@@ -149,7 +150,7 @@ exports.changePassword = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.logoutAllDevices = async (req, res, next) => {
-  try { const data = await adminService.logoutAllDevices(req.user.userId); res.json({ success: true, message: 'Logged out from all devices successfully', data }); } catch(e) { next(e); }
+  try { const data = await adminService.logoutAllDevices(req.user.userId); return sendSuccess(res, req, data, 'Logged out from all devices successfully'); } catch(e) { next(e); }
 };
 
 /**
@@ -158,7 +159,7 @@ exports.logoutAllDevices = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.getMedicalRecordsOverview = async (req, res, next) => {
-  try { const { patientId } = req.query; const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 10; const skip = (page - 1) * limit; const data = await adminService.getMedicalRecordsOverview({ patientId, limit, skip, ctx: { hospitalId: req.hospitalId, role: req.user.role } }); res.json({ success: true, data }); } catch(e) { next(e); }
+  try { const { patientId } = req.query; const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 10; const skip = (page - 1) * limit; const data = await adminService.getMedicalRecordsOverview({ patientId, limit, skip, ctx: { hospitalId: req.hospitalId, role: req.user.role } }); return sendSuccess(res, req, data, "Medical records overview retrieved successfully"); } catch(e) { next(e); }
 };
 
 /**
@@ -167,7 +168,7 @@ exports.getMedicalRecordsOverview = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.getSystemMetrics = async (req, res, next) => {
-  try { const data = await adminService.getSystemMetrics({ hospitalId: req.hospitalId, role: req.user.role }); res.json({ success: true, data }); } catch(e) { next(e); }
+  try { const data = await adminService.getSystemMetrics({ hospitalId: req.hospitalId, role: req.user.role }); return sendSuccess(res, req, data, "System metrics retrieved successfully"); } catch(e) { next(e); }
 };
 
 /**
@@ -176,7 +177,7 @@ exports.getSystemMetrics = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.getNotificationsManagement = async (req, res, next) => {
-  try { const { type, status } = req.query; const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 10; const skip = (page - 1) * limit; const data = await adminService.getNotificationsManagement({ type, status, limit, skip, ctx: { hospitalId: req.hospitalId, role: req.user.role } }); res.json({ success: true, data }); } catch(e) { next(e); }
+  try { const { type, status } = req.query; const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 10; const skip = (page - 1) * limit; const data = await adminService.getNotificationsManagement({ type, status, limit, skip, ctx: { hospitalId: req.hospitalId, role: req.user.role } }); return sendSuccess(res, req, data, "Notifications retrieved successfully"); } catch(e) { next(e); }
 };
 
 /**
@@ -185,7 +186,7 @@ exports.getNotificationsManagement = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.createUser = async (req, res, next) => {
-  try { const data = await adminService.createUser(req); res.status(201).json({ success: true, message: 'User created successfully', data: data.user }); } catch(e) { next(e); }
+  try { const data = await adminService.createUser(req); return sendSuccess(res, req, data.user, 'User created successfully', 201); } catch(e) { next(e); }
 };
 
 /**
@@ -194,7 +195,7 @@ exports.createUser = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.updateUserProfile = async (req, res, next) => {
-  try { const data = await adminService.updateUserProfile(req); res.json({ success: true, message: 'User profile updated successfully', data: data.user }); } catch(e) { next(e); }
+  try { const data = await adminService.updateUserProfile(req); return sendSuccess(res, req, data.user, 'User profile updated successfully'); } catch(e) { next(e); }
 };
 
 /**
@@ -203,7 +204,7 @@ exports.updateUserProfile = async (req, res, next) => {
  * @access  Private (Admin only)
  */
 exports.deleteUser = async (req, res, next) => {
-  try { const data = await adminService.deleteUser(req); res.json({ success: true, message: 'User deleted successfully', data: data }); } catch(e) { next(e); }
+  try { const data = await adminService.deleteUser(req); return sendSuccess(res, req, data, 'User deleted successfully'); } catch(e) { next(e); }
 };
 
 /**
@@ -232,7 +233,7 @@ exports.deleteUser = async (req, res, next) => {
  * - Is logged for audit purposes
  */
 exports.permanentDeleteUser = async (req, res, next) => {
-  try { const data = await adminService.permanentDeleteUser(req); res.json({ success: true, message: 'User permanently deleted successfully', data: data }); } catch(e) { next(e); }
+  try { const data = await adminService.permanentDeleteUser(req); return sendSuccess(res, req, data, 'User permanently deleted successfully'); } catch(e) { next(e); }
 };
 
 /**
@@ -259,6 +260,6 @@ function getTimeAgo(date) {
  * @access  Private (Admin, super_admin)
  */
 exports.getAuditLogs = async (req, res, next) => {
-  try { const { userId, action, entityType } = req.query; const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 20; const data = await adminService.getAuditLogs({ userId, action, entityType, limit, page, ctx: { hospitalId: req.hospitalId, role: req.user.role } }); res.json({ success: true, data }); } catch(e) { next(e); }
+  try { const { userId, action, entityType } = req.query; const page = parseInt(req.query.page) || 1; const limit = parseInt(req.query.limit) || 20; const data = await adminService.getAuditLogs({ userId, action, entityType, limit, page, ctx: { hospitalId: req.hospitalId, role: req.user.role } }); return sendSuccess(res, req, data, "Audit logs retrieved successfully"); } catch(e) { next(e); }
 };
 

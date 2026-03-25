@@ -7,7 +7,7 @@ import axios from 'axios';
 import appStorage from '../utils/appStorage';
 import { STORAGE_KEYS } from '../utils/constants';
 import { APP_CONFIG } from '../config/appConfig';
-import { queryClient } from '../config/reactQueryConfig';
+import { parseError } from '../utils/errorHandler';
 
 // Runtime guard: Ensure appStorage is properly wired
 if (!appStorage || typeof appStorage.getItem !== 'function') {
@@ -162,20 +162,11 @@ api.interceptors.response.use(
     const method = String(response?.config?.method || '').toLowerCase();
     const isMutationMethod = ['post', 'put', 'patch', 'delete'].includes(method);
 
-    // Root-cause fix: clear cached GET snapshots after successful writes so lists reflect backend state.
+    // Clear in-memory GET caches after successful writes.
+    // React Query invalidation is handled by each screen/useMutation onSuccess.
     if (isMutationMethod && response?.config?.skipCacheInvalidation !== true) {
       getResponseCache.clear();
       inFlightGetRequests.clear();
-      
-      // Global React Query invalidation to ensure UI reactivity
-      try {
-        if (queryClient && typeof queryClient.invalidateQueries === 'function') {
-          queryClient.invalidateQueries();
-          if (__DEV__) console.log('[API] Invalidated all React Query caches after successful mutation');
-        }
-      } catch (e) {
-        if (__DEV__) console.error('[API] Failed to invalidate React Query caches', e);
-      }
     }
 
     return response;
@@ -237,17 +228,18 @@ api.interceptors.response.use(
       return Promise.reject(networkError);
     }
 
-    // Extract error message from response
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      'An error occurred';
+    const errorMessage = parseError(error);
     if (__DEV__) {
       console.error('[ERROR] API Error:', errorMessage);
+      if (error.response?.data?.message) {
+        console.error('[ERROR] Raw server message:', error.response.data.message);
+      }
     }
 
-    return Promise.reject(new Error(errorMessage));
+    const safeError = new Error(errorMessage);
+    safeError.code = error.response?.data?.code || error.code;
+    safeError.status = error.response?.status;
+    return Promise.reject(safeError);
   }
 );
 

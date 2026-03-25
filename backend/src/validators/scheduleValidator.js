@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { sendError } = require('../utils/apiResponse');
 
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -47,11 +48,14 @@ const weeklyScheduleSchema = Joi.object({
 exports.validateSchedule = (req, res, next) => {
   const { error } = weeklyScheduleSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Validation failed',
-      errors: error.details.map(d => d.message),
-    });
+    return sendError(
+      res,
+      req,
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      error.details.map((d) => d.message)
+    );
   }
   next();
 };
@@ -62,11 +66,14 @@ exports.validateSchedule = (req, res, next) => {
 exports.validateTimeSlot = (req, res, next) => {
   const { error } = timeSlotSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Validation failed',
-      errors: error.details.map(d => d.message),
-    });
+    return sendError(
+      res,
+      req,
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      error.details.map((d) => d.message)
+    );
   }
   next();
 };

@@ -3,7 +3,7 @@
  * Medicine purchase, billing summary, payment options
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -31,76 +31,66 @@ import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
 import { prescriptionService, paymentService } from "../../services";
 import { DynamicIcon } from "../../components/common";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
   const [paymentResult, setPaymentResult] = useState(null);
   const [selectedPurchase, setSelectedPurchase] = useState("hospital");
-  const [loading, setLoading] = useState(false);
-  const [fetchingPrescription, setFetchingPrescription] = useState(true);
+  const [selectedPayment, setSelectedPayment] = useState("card");
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
 
   // Get prescription from route params or fetch latest
-  const [prescription, setPrescription] = useState(
-    route?.params?.prescription || null
-  );
+  const routePrescription = route?.params?.prescription || null;
 
-  const fetchLatestPrescription = useCallback(async () => {
-    if (!user?.id) {
-      setFetchingPrescription(false);
-      return;
-    }
-
-    try {
-      const response = await prescriptionService.getPatientPrescriptions(
-        user.id
-      );
-      if (response.success && response.data?.length > 0) {
-        // Get the most recent prescription
-        const prescriptions = response.data.prescriptions || response.data;
-        if (prescriptions.length > 0) {
-          const latest = prescriptions[0];
-          // Format prescription for display
-          setPrescription({
-            id: latest._id,
-            date: new Date(
-              latest.prescriptionDate || latest.createdAt
-            ).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }),
-            doctor: latest.doctorName || "Doctor",
-            medicines: (latest.medicines || latest.medications || []).map(
-              (med) => ({
-                name: med.name || med.medicine || "Medication",
-                dosage: med.dosage || med.frequency || "As directed",
-                duration: med.duration || "7 days",
-                price: med.price || 50,
-                qty: med.quantity || 1,
-              })
-            ),
-          });
-        }
+  const {
+    data: fetchedPrescription,
+    isLoading: fetchingPrescription,
+    refetch: refetchPrescription,
+  } = useQuery({
+    queryKey: queryKeys.prescriptions.patient(user?.id || "unknown"),
+    queryFn: async () => {
+      const response = await prescriptionService.getPatientPrescriptions(user.id);
+      if (!response?.success) {
+        return null;
       }
-    } catch (err) {
-      logError(err, {
-        context: "PharmacyBillingScreen.fetchLatestPrescription",
-      });
-    } finally {
-      setFetchingPrescription(false);
-    }
-  }, [user?.id]);
 
-  useEffect(() => {
-    if (!route?.params?.prescription) {
-      fetchLatestPrescription();
-    } else {
-      setFetchingPrescription(false);
-    }
-  }, [route?.params?.prescription, fetchLatestPrescription]);
+      const prescriptions = response?.data?.prescriptions || response?.data || [];
+      if (!Array.isArray(prescriptions) || prescriptions.length === 0) {
+        return null;
+      }
+
+      const latest = prescriptions[0];
+      return {
+        id: latest._id,
+        date: new Date(latest.prescriptionDate || latest.createdAt).toLocaleDateString(
+          "en-IN",
+          {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }
+        ),
+        doctor: latest.doctorName || "Doctor",
+        medicines: (latest.medicines || latest.medications || []).map((med) => ({
+          name: med.name || med.medicine || "Medication",
+          dosage: med.dosage || med.frequency || "As directed",
+          duration: med.duration || "7 days",
+          price: med.price || 50,
+          qty: med.quantity || 1,
+        })),
+      };
+    },
+    enabled: !!user?.id && !routePrescription,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+
+  const prescription = routePrescription || fetchedPrescription || null;
 
   const subtotal =
     prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0), 0) ||
@@ -114,24 +104,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     { id: "cash", icon: "cash", name: "Cash", color: theme.colors.warning.main },
   ];
 
-  const handlePayment = async () => {
-    try {
-      if (!isConnected) {
-        showError("No internet connection. Please check your network.");
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      const response = await paymentService.createPayment({
-        amount: total,
-        paymentMethod: selectedPayment,
-        purchaseType: selectedPurchase,
-        prescriptionId: prescription?.id || null,
-        medicines: prescription?.medicines || [],
-      });
-
+  const paymentMutation = useMutation({
+    mutationFn: (payload) => paymentService.createPayment(payload),
+    onSuccess: (response) => {
       if (response?.success) {
         setPaymentResult(response.data);
         Alert.alert(
@@ -139,24 +114,43 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           `Payment of ${formatCurrency(total)} via ${selectedPayment.toUpperCase()} processed successfully!\nPayment ID: ${response.data?.payment_id || "N/A"}`,
           [{ text: "OK" }]
         );
-      } else {
-        throw new Error(response?.message || "Payment failed");
+        return;
       }
-    } catch (err) {
+
+      throw new Error(response?.message || "Payment failed");
+    },
+    onError: (err) => {
       logError(err, {
         context: "PharmacyBillingScreen.handlePayment",
         amount: total,
         method: selectedPayment,
       });
-      setError(err.message || "Payment failed");
+      setError(err?.message || "Payment failed");
       showError("Payment failed. Please try again.");
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const handlePayment = async () => {
+    if (!isConnected) {
+      showError("No internet connection. Please check your network.");
+      return;
     }
+
+    setError(null);
+    await paymentMutation.mutateAsync({
+      amount: total,
+      paymentMethod: selectedPayment,
+      purchaseType: selectedPurchase,
+      prescriptionId: prescription?.id || null,
+      medicines: prescription?.medicines || [],
+    });
   };
 
   const handleRetry = () => {
     setError(null);
+    if (!routePrescription) {
+      refetchPrescription();
+    }
   };
 
   if (error) {
@@ -199,7 +193,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
             <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -234,7 +228,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
           <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -505,7 +499,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.payButton}
           onPress={handlePayment}
-          disabled={loading}
+          disabled={paymentMutation.isPending}
         >
           <LinearGradient
             colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
@@ -513,7 +507,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            {loading ? (
+            {paymentMutation.isPending ? (
               <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
               <>

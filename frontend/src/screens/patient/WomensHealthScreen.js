@@ -32,6 +32,7 @@ import ErrorRecovery from "../../components/common/ErrorRecovery";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { getItem, setItem } from "../../utils/appStorage";
+import { handleSmartBack } from "../../utils/navigation";
 
 const BABY_SIZES = [
   "(too early)", "(too early)", "(too early)", "(too early)",
@@ -195,7 +196,7 @@ const WomensHealthScreen = ({ navigation }) => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
           <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>

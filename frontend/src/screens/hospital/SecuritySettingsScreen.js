@@ -3,7 +3,7 @@
  * Password management, session control, and security statistics
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,19 +19,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RefreshCw, ShieldCheck, Clock, Calendar, Lock, Smartphone, ChevronRight, LogOut, X } from "lucide-react-native";
 import { useDispatch } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
-import { showError, logError } from "../../utils/errorHandler";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import adminService from "../../services/admin.service";
 import { logoutUser } from "../../store/slices/authSlice";
 import { SkeletonCardRow, Input } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [securityData, setSecurityData] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -92,28 +93,23 @@ const SecuritySettingsScreen = ({ navigation }) => {
     }
   };
 
-  const fetchSecurityData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const {
+    data: securityData,
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.doctors.list({ scope: "security-settings" }),
+    staleTime: 60 * 1000,
+    queryFn: async () => {
       const response = await adminService.getSecuritySettings();
-      setSecurityData(response.data);
-    } catch (error) {
-      logError(error, { context: "SecuritySettingsScreen.fetchSecurityData" });
-      showError("Failed to load security settings");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSecurityData();
-  }, [fetchSecurityData]);
+      return response?.data || null;
+    },
+  });
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchSecurityData();
-    setRefreshing(false);
-  }, [fetchSecurityData]);
+    await refetch();
+  }, [refetch]);
 
   const handleChangePassword = async () => {
     const nextErrors = {};
@@ -166,7 +162,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
               );
               closePasswordModal();
             } catch (error) {
-              const errorMessage = error?.message || "Failed to change password";
+              const errorMessage = parseError(error);
               setPasswordSubmitError(errorMessage);
               logError(error, {
                 context: "SecuritySettingsScreen.handleChangePassword",
@@ -191,7 +187,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
           style: "destructive",
           onPress: async () => {
             try {
-              setLoading(true);
+              setActionLoading(true);
               await adminService.logoutAllDevices();
               Alert.alert(
                 "Success",
@@ -209,7 +205,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 context: "SecuritySettingsScreen.handleLogoutAll",
               });
             } finally {
-              setLoading(false);
+              setActionLoading(false);
             }
           },
         },
@@ -231,14 +227,14 @@ const SecuritySettingsScreen = ({ navigation }) => {
     </View>
   );
 
-  if (loading && !securityData) {
+  if (isLoading && !securityData) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => handleSmartBack(navigation, "AdminTabs")}
           >
             <DynamicIcon
               name="arrow-back"
@@ -264,7 +260,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
         >
           <ArrowLeft
             
@@ -276,9 +272,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={onRefresh}
-          disabled={refreshing}
+          disabled={isRefetching}
         >
-          {refreshing ? (
+          {isRefetching ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
             <RefreshCw
@@ -294,7 +290,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
         style={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}

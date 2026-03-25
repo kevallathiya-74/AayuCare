@@ -4,7 +4,7 @@
  */
 
 import api from './apiClient';
-import { logError } from '../utils/errorHandler';
+import { logError, parseError } from '../utils/errorHandler';
 import { normalizeServiceResponse } from './responseNormalizer';
 
 class PatientService {
@@ -103,15 +103,7 @@ class PatientService {
     }
 
     handleError(error) {
-        let message;
-        if (error.response) {
-            message = error.response.data?.message || 'An error occurred';
-        } else if (error.request) {
-            message = 'Network error. Please check your connection.';
-        } else {
-            message = error.message || 'An unexpected error occurred';
-        }
-        return new Error(message);
+        return new Error(parseError(error));
     }
 }
 

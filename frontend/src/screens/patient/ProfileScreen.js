@@ -4,7 +4,7 @@
  * Full user profile page with personal information and account settings
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -39,7 +39,9 @@ import {
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors, textStyles, spacing } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import {
   getSafeAreaEdges,
   verticalScale,
@@ -51,22 +53,13 @@ import {
   medicalRecordService,
   prescriptionService,
 } from "../../services";
-import { logError } from "../../utils/errorHandler";
 import { calculateAge, formatDate, formatMedicalHistoryDuration } from "../../utils/dateHelpers";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const insets = useSafeAreaInsets();
-
-  // Statistics states
-  const [stats, setStats] = useState({
-    appointments: 0,
-    records: 0,
-    prescriptions: 0,
-  });
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   const getCollectionCount = useCallback((payload, keys = []) => {
     if (!payload) return 0;
@@ -81,19 +74,23 @@ const ProfileScreen = ({ navigation }) => {
     return 0;
   }, []);
 
-  // Fetch user statistics
-  const fetchStats = useCallback(async () => {
-    if (!user?.id) return;
+  const {
+    data: stats = { appointments: 0, records: 0, prescriptions: 0 },
+    isLoading: loadingStats,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.dashboardStats.patient(user?.id),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const [appointmentsRes, recordsRes, prescriptionsRes] = await Promise.allSettled([
+        appointmentService.getPatientAppointments(user.id),
+        medicalRecordService.getPatientRecords(user.id),
+        prescriptionService.getPatientPrescriptions(user.id),
+      ]);
 
-    try {
-      const [appointmentsRes, recordsRes, prescriptionsRes] =
-        await Promise.allSettled([
-          appointmentService.getPatientAppointments(user.id),
-          medicalRecordService.getPatientRecords(user.id),
-          prescriptionService.getPatientPrescriptions(user.id),
-        ]);
-
-      setStats({
+      return {
         appointments:
           appointmentsRes.status === "fulfilled"
             ? getCollectionCount(appointmentsRes.value, ["appointments", "items", "rows"])
@@ -106,56 +103,65 @@ const ProfileScreen = ({ navigation }) => {
           prescriptionsRes.status === "fulfilled"
             ? getCollectionCount(prescriptionsRes.value, ["prescriptions", "items", "rows"])
             : 0,
-      });
-    } catch (err) {
-      logError(err, { context: "ProfileScreen.fetchStats" });
-    } finally {
-      setLoadingStats(false);
-    }
-  }, [user?.id, getCollectionCount]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+      };
+    },
+  });
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchStats();
-    setRefreshing(false);
-  }, [fetchStats]);
+    await refetch();
+  }, [refetch]);
 
   const handleLogout = () => {
-    dispatch(logoutUser());
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Login" }],
-    });
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => {
+          dispatch(logoutUser());
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          });
+        },
+      },
+    ]);
   };
 
-  // Calculate age from dateOfBirth
-  const calculatedAge = user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
-  
-  // Format medical history properly (array of objects)
-  const formatMedicalHistory = () => {
-    const history =
-      user?.medicalHistory?.length > 0
-        ? user.medicalHistory
-        : user?.chronicConditions || [];
+  const renderStatValue = (value) => {
+    if (!loadingStats) {
+      return <Text style={styles.statValue}>{value}</Text>;
+    }
 
-    if (!history || history.length === 0) return "None";
-    
-    return history
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        const condition = item.condition || "Unknown";
-        const duration = item.diagnosedDate 
-          ? ` (${formatMedicalHistoryDuration(item.diagnosedDate, item.status)})`
-          : "";
-        const status = item.status ? ` - ${item.status}` : "";
-        return `${condition}${duration}${status}`;
-      })
-      .join("; ");
+    return (
+      <View style={styles.statSkeletonPill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Text style={styles.statSkeletonText}>--</Text>
+      </View>
+    );
   };
+
+  const getActionHint = (title) => {
+    if (title === "Logout") return "Logs you out of this device";
+    if (title === "Edit Profile") return "Open profile edit form";
+    if (title === "Change Password") return "Open password change form";
+    if (title === "Privacy Settings") return "Open accessibility and privacy settings";
+    return "Opens support contact details";
+  };
+
+  const getValueLabel = (label, value) => {
+    const normalized = String(value || "Not available").trim();
+    return `${label}: ${normalized}`;
+  };
+
+  const profileSummaryA11y = [
+    `Name ${user?.name || "not available"}`,
+    `Patient ID ${user?.userId || "not available"}`,
+    `Role ${user?.role || "patient"}`,
+  ].join(", ");
+
+  const statsSummaryA11y = loadingStats
+    ? "Profile statistics are loading"
+    : `Appointments ${stats.appointments}, Records ${stats.records}, Prescriptions ${stats.prescriptions}`;
 
   const profileSections = [
     {
@@ -217,6 +223,31 @@ const ProfileScreen = ({ navigation }) => {
       ],
     },
   ];
+  // Calculate age from dateOfBirth
+  const calculatedAge = user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
+
+  // Format medical history properly (array of objects)
+  const formatMedicalHistory = () => {
+    const history =
+      user?.medicalHistory?.length > 0
+        ? user.medicalHistory
+        : user?.chronicConditions || [];
+
+    if (!history || history.length === 0) return "None";
+    
+    return history
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        const condition = item.condition || "Unknown";
+        const duration = item.diagnosedDate 
+          ? ` (${formatMedicalHistoryDuration(item.diagnosedDate, item.status)})`
+          : "";
+        const status = item.status ? ` - ${item.status}` : "";
+        return `${condition}${duration}${status}`;
+      })
+      .join("; ");
+  };
+
 
   const actionItems = [
     {
@@ -269,7 +300,7 @@ const ProfileScreen = ({ navigation }) => {
         ]}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}
@@ -280,10 +311,16 @@ const ProfileScreen = ({ navigation }) => {
         <LinearGradient
           colors={[healthColors.primary.main, healthColors.primary.dark]}
           style={styles.header}
+          accessible
+          accessibilityLabel={profileSummaryA11y}
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => handleSmartBack(navigation, "PatientTabs")}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            accessibilityHint="Returns to your dashboard tabs"
+            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
             <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
@@ -291,7 +328,6 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <User
-                
                 size={60}
                 color={healthColors.primary.main}
               />
@@ -300,7 +336,6 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.userRole}>{user?.role || "Patient"}</Text>
             <View style={styles.userIdBadge}>
               <CreditCard
-                
                 size={14}
                 color="rgba(255, 255, 255, 0.9)"
               />
@@ -313,37 +348,31 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
+          <View style={styles.statCard} accessible accessibilityRole="summary" accessibilityLabel={statsSummaryA11y}>
             <Calendar
               
               size={24}
               color={healthColors.primary.main}
             />
-            <Text style={styles.statValue}>
-              {loadingStats ? "--" : stats.appointments}
-            </Text>
+            {renderStatValue(stats.appointments)}
             <Text style={styles.statLabel}>Appointments</Text>
           </View>
-          <View style={styles.statCard}>
+          <View style={styles.statCard} accessible accessibilityRole="summary" accessibilityLabel={statsSummaryA11y}>
             <FileText
               
               size={24}
               color={healthColors.success.main}
             />
-            <Text style={styles.statValue}>
-              {loadingStats ? "--" : stats.records}
-            </Text>
+            {renderStatValue(stats.records)}
             <Text style={styles.statLabel}>Records</Text>
           </View>
-          <View style={styles.statCard}>
+          <View style={styles.statCard} accessible accessibilityRole="summary" accessibilityLabel={statsSummaryA11y}>
             <BriefcaseMedical
               
               size={24}
               color={healthColors.info.main}
             />
-            <Text style={styles.statValue}>
-              {loadingStats ? "--" : stats.prescriptions}
-            </Text>
+            {renderStatValue(stats.prescriptions)}
             <Text style={styles.statLabel}>Prescriptions</Text>
           </View>
         </View>
@@ -363,7 +392,12 @@ const ProfileScreen = ({ navigation }) => {
               {section.data.map((item, idx) => (
                 <View key={idx} style={styles.infoRow}>
                   <Text style={styles.infoLabel}>{item.label}</Text>
-                  <Text style={styles.infoValue} numberOfLines={2}>
+                  <Text
+                    style={styles.infoValue}
+                    numberOfLines={2}
+                    accessible
+                    accessibilityLabel={getValueLabel(item.label, item.value)}
+                  >
                     {item.value}
                   </Text>
                 </View>
@@ -391,6 +425,10 @@ const ProfileScreen = ({ navigation }) => {
                     index !== actionItems.length - 1 && styles.actionItemBorder,
                   ]}
                   onPress={item.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.title}
+                  accessibilityHint={getActionHint(item.title)}
+                  hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
                 >
                   <View
                     style={[

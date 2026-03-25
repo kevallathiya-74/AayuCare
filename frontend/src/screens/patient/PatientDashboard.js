@@ -16,10 +16,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { logoutUser } from "../../store/slices/authSlice";
 import { getSafeAreaEdges, getScreenPadding } from "../../utils/responsive";
 import { notificationService } from "../../services";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { fetchHealthMetrics } from "../../store/slices/healthSlice";
 import { logError } from "../../utils/errorHandler";
 import { Calendar, FolderOpen, Stethoscope, Activity, MessageCircle, HeartPulse, Info, Users, Flower, ShoppingCart, Footprints, Home, Sun, CloudSun, Moon, User, Settings } from "lucide-react-native";
@@ -27,6 +29,8 @@ import { SectionHeader } from "../../components/common";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
 import {
+  SkeletonCardRow,
+  SkeletonStatGrid,
   PatientHeader,
   HealthStatusCard,
   MedicalHistoryCard,
@@ -40,61 +44,74 @@ const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user, isLoading: authLoading } = useSelector((state) => state.auth);
   const { vitals: healthMetrics, isLoading: loadingMetrics } = useSelector((state) => state.health);
+  const notificationPermission = useSelector(
+    (state) => state.permissions?.notification || {}
+  );
   const [refreshing, setRefreshing] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const canUseNotifications =
+    !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
 
   // ── Shared drawer hook ──
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
 
-  // ── Data fetching ──
-  const fetchUnreadNotifications = useCallback(async () => {
-    try {
+  const {
+    data: unreadNotifications = 0,
+    refetch: refetchUnreadNotifications,
+  } = useQuery({
+    queryKey: queryKeys.notifications.unreadCount(),
+    queryFn: async () => {
       const response = await notificationService.getUnreadCount();
-      setUnreadNotifications(response?.data?.count || 0);
-    } catch (error) {
-      logError(error, { context: "PatientDashboard.fetchUnreadNotifications" });
-    }
-  }, []);
+      return Number(response?.data?.count || 0);
+    },
+    enabled: !!user?.id && canUseNotifications,
+    staleTime: 30 * 1000,
+    retry: 1,
+  });
 
   useEffect(() => {
     if (user?.id) {
       dispatch(fetchHealthMetrics(user.id));
-      fetchUnreadNotifications();
     }
-  }, [user?.id, dispatch, fetchUnreadNotifications]);
+  }, [user?.id, dispatch]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
       dispatch(fetchHealthMetrics(user?.id)),
-      fetchUnreadNotifications()
+      canUseNotifications ? refetchUnreadNotifications() : Promise.resolve(),
     ]);
     setRefreshing(false);
-  }, [dispatch, fetchUnreadNotifications, user?.id]);
+  }, [dispatch, refetchUnreadNotifications, user?.id, canUseNotifications]);
 
   // ── Metric helpers ──
-  const safeMetrics = Array.isArray(healthMetrics) ? healthMetrics : [];
+  const safeMetrics = useMemo(
+    () => (Array.isArray(healthMetrics) ? healthMetrics : []),
+    [healthMetrics]
+  );
 
-  const getLatestMetric = (type) => {
-    if (!safeMetrics.length) return null;
-    const filtered = safeMetrics.filter((m) => m.type === type);
-    if (!filtered.length) return null;
-    return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-  };
+  const getLatestMetric = useCallback(
+    (type) => {
+      if (!safeMetrics.length) return null;
+      const filtered = safeMetrics.filter((m) => m.type === type);
+      if (!filtered.length) return null;
+      return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+    },
+    [safeMetrics]
+  );
 
-  const formatBP = () => {
+  const formatBP = useCallback(() => {
     const m = getLatestMetric("bp");
     if (!m?.value) return "N/A";
     return `${m.value.systolic}/${m.value.diastolic}`;
-  };
-  const formatSugar = () => {
+  }, [getLatestMetric]);
+  const formatSugar = useCallback(() => {
     const m = getLatestMetric("sugar");
     return m?.value ? `${m.value}` : "N/A";
-  };
-  const formatTemp = () => {
+  }, [getLatestMetric]);
+  const formatTemp = useCallback(() => {
     const m = getLatestMetric("temperature");
     return m?.value ? `${m.value}°F` : "N/A";
-  };
+  }, [getLatestMetric]);
 
   const getHealthStatus = useCallback(() => {
     if (!safeMetrics.length) return { status: "UNKNOWN", riskScore: "N/A" };
@@ -208,6 +225,20 @@ const PatientDashboard = ({ navigation }) => {
   ], [navigation, closeMenu]);
 
   const healthStatus = useMemo(() => getHealthStatus(), [getHealthStatus]);
+
+  if (authLoading && !user) {
+    return (
+      <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+        <View style={{ paddingHorizontal: getScreenPadding(), paddingTop: 20, gap: 12 }}>
+          <SkeletonStatGrid rows={2} />
+          <SkeletonCardRow />
+          <SkeletonCardRow />
+          <SkeletonCardRow />
+          <SkeletonCardRow />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // ── Render ──
   return (

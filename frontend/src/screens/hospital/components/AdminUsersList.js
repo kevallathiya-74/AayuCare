@@ -9,6 +9,37 @@ import { ChevronRight, User } from "lucide-react-native";
 import { theme, healthColors } from "../../../theme";
 import { DynamicIcon } from "../../../components/common";
 
+const AdminUserRow = React.memo(
+  ({ user, iconColor, onUserPress, renderRight, showDivider }) => (
+    <>
+      {showDivider ? <View style={styles.divider} /> : null}
+      <TouchableOpacity
+        style={styles.row}
+        onPress={() => onUserPress && onUserPress(user)}
+        disabled={!onUserPress}
+        activeOpacity={0.7}
+        accessibilityRole={onUserPress ? "button" : undefined}
+        accessibilityLabel={onUserPress ? `Open details for ${user?.name || "user"}` : undefined}
+      >
+        <View style={[styles.avatar, { backgroundColor: iconColor + "18" }]}>
+          <User size={22} color={iconColor} />
+        </View>
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={1}>{user.name}</Text>
+          <Text style={styles.sub} numberOfLines={1}>
+            {user.specialization
+              ? user.specialization
+              : user.bloodGroup
+                ? `Blood Group: ${user.bloodGroup}`
+                : user.email || "Patient"}
+          </Text>
+        </View>
+        {renderRight ? renderRight(user) : <ChevronRight size={18} color={healthColors.text.tertiary} />}
+      </TouchableOpacity>
+    </>
+  )
+);
+
 const AdminUsersList = ({
   title,
   titleIcon,
@@ -50,36 +81,14 @@ const AdminUsersList = ({
       {/* Rows */}
       <View style={styles.card}>
         {safeUsers.map((user, i) => (
-          <React.Fragment key={user._id || user.id || user.userId || user.user_id || user.doctorId || user.patientId || i}>
-            {i > 0 && <View style={styles.divider} />}
-            <TouchableOpacity
-              style={styles.row}
-              onPress={() => onUserPress && onUserPress(user)}
-              disabled={!onUserPress}
-              activeOpacity={0.7}
-              accessibilityRole={onUserPress ? "button" : undefined}
-              accessibilityLabel={onUserPress ? `Open details for ${user?.name || "user"}` : undefined}
-            >
-              <View style={[styles.avatar, { backgroundColor: iconColor + "18" }]}>
-                <User  size={22} color={iconColor} />
-              </View>
-              <View style={styles.info}>
-                <Text style={styles.name} numberOfLines={1}>{user.name}</Text>
-                <Text style={styles.sub} numberOfLines={1}>
-                  {user.specialization
-                    ? user.specialization
-                    : user.bloodGroup
-                      ? `Blood Group: ${user.bloodGroup}`
-                      : user.email || "Patient"}
-                </Text>
-              </View>
-              {renderRight ? (
-                renderRight(user)
-              ) : (
-                <ChevronRight  size={18} color={healthColors.text.tertiary} />
-              )}
-            </TouchableOpacity>
-          </React.Fragment>
+          <AdminUserRow
+            key={user._id || user.id || user.userId || user.user_id || user.doctorId || user.patientId || i}
+            user={user}
+            iconColor={iconColor}
+            onUserPress={onUserPress}
+            renderRight={renderRight}
+            showDivider={i > 0}
+          />
         ))}
       </View>
     </View>

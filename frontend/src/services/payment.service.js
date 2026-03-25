@@ -4,7 +4,7 @@
  */
 
 import api from "./apiClient";
-import { logError } from "../utils/errorHandler";
+import { logError, parseError } from "../utils/errorHandler";
 import { normalizeServiceResponse } from "./responseNormalizer";
 
 class PaymentService {
@@ -77,14 +77,7 @@ class PaymentService {
   }
 
   handleError(error) {
-    if (error.response) {
-      const { status, data } = error.response;
-      return new Error(data?.message || `Request failed with status ${status}`);
-    }
-    if (error.request) {
-      return new Error("No response from server. Please check your connection.");
-    }
-    return error;
+    return new Error(parseError(error));
   }
 }
 

@@ -3,7 +3,7 @@
  * Multi-step appointment booking with specialist selection
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -32,10 +32,13 @@ import {
 import { useSelector } from "react-redux";
 import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from "../../components/common";
 import { Input, Button } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatDate, formatTime, formatCurrency, convertTo24Hour, convertTo12Hour } from "../../utils/helpers";
 import { doctorService, appointmentService } from "../../services";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
   // Get authenticated user for hospitalId
@@ -51,16 +54,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
 
-  // API integration states
-  const [doctors, setDoctors] = useState([]);
-  const [specialties, setSpecialties] = useState([]);
-  const [timeSlots, setTimeSlots] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingDoctors, setLoadingDoctors] = useState(false);
-  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const generateAllSlots = () => {
     const slots = [];
@@ -71,122 +68,131 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     return slots;
   };
 
-  // Fetch doctors by specialty
-  const fetchDoctors = useCallback(
-    async (specialty) => {
-      if (!isConnected) {
-        showError("No internet connection");
-        return;
-      }
+  const mapDoctorsResponse = (response) => {
+    const doctorsPayload = response?.data;
+    return Array.isArray(doctorsPayload)
+      ? doctorsPayload
+      : doctorsPayload?.doctors || [];
+  };
 
-      setLoadingDoctors(true);
-      setError(null);
-      try {
-        const filters = {
-          ...(specialty ? { specialization: specialty } : {}),
-          ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
-        };
-        const response = await doctorService.getDoctors(filters);
-        const doctorsPayload = response?.data;
-        const doctorsList = Array.isArray(doctorsPayload)
-          ? doctorsPayload
-          : doctorsPayload?.doctors || [];
-        if (doctorsList) {
-          const fetchedDoctors = doctorsList;
-          setDoctors(fetchedDoctors);
-
-          if (!specialty) {
-            const derivedSpecialties = [
-              ...new Set(
-                fetchedDoctors
-                  .map((doctor) => doctor?.specialization)
-                  .filter(Boolean)
-              ),
-            ];
-            setSpecialties(derivedSpecialties);
-            if (derivedSpecialties.length > 0) {
-              setSelectedSpecialty((prev) => prev || derivedSpecialties[0]);
-            }
-          }
-        } else {
-          setDoctors([]);
-          if (!specialty) {
-            setSpecialties([]);
-            setSelectedSpecialty("");
-          }
-        }
-      } catch (err) {
-        logError(err, {
-          context: "AppointmentBookingScreen.fetchDoctors",
-          specialty,
-        });
-        setError("Failed to load doctors");
-        showError("Failed to load doctors. Please try again.");
-      } finally {
-        setLoadingDoctors(false);
-      }
+  const { data: allDoctors = [], isLoading: loadingAllDoctors } = useQuery({
+    queryKey: queryKeys.doctors.list({
+      specialization: "all",
+      hospitalId: user?.hospitalId || "all",
+    }),
+    queryFn: async () => {
+      const response = await doctorService.getDoctors({
+        ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
+      });
+      return mapDoctorsResponse(response);
     },
-    [isConnected, user?.hospitalId]
+    enabled: isConnected,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const { data: filteredDoctors = [], isLoading: loadingFilteredDoctors } = useQuery({
+    queryKey: queryKeys.doctors.list({
+      specialization: selectedSpecialty || "all",
+      hospitalId: user?.hospitalId || "all",
+    }),
+    queryFn: async () => {
+      const response = await doctorService.getDoctors({
+        ...(selectedSpecialty ? { specialization: selectedSpecialty } : {}),
+        ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
+      });
+      return mapDoctorsResponse(response);
+    },
+    enabled: isConnected,
+    staleTime: 2 * 60 * 1000,
+    retry: 1,
+  });
+
+  const specialties = useMemo(
+    () => [...new Set(allDoctors.map((doctor) => doctor?.specialization).filter(Boolean))],
+    [allDoctors]
   );
+  const doctors = selectedSpecialty ? filteredDoctors : allDoctors;
+  const loadingDoctors = loadingAllDoctors || loadingFilteredDoctors;
 
-  // Fetch available time slots for selected doctor and date
-  const fetchTimeSlots = useCallback(async (doctorId, appointmentDate) => {
-    if (!doctorId || !appointmentDate) return;
+  useEffect(() => {
+    if (!selectedSpecialty && specialties.length > 0) {
+      setSelectedSpecialty(specialties[0]);
+    }
+  }, [specialties, selectedSpecialty]);
 
-    setLoadingTimeSlots(true);
-    try {
+  const selectedDoctorId = selectedDoctor?._id || selectedDoctor?.id;
+  const { data: timeSlots = [] } = useQuery({
+    queryKey: queryKeys.appointments.list({
+      scope: "available-slots",
+      doctorId: selectedDoctorId || "none",
+      date: date.toISOString(),
+    }),
+    queryFn: async () => {
       const response = await appointmentService.getAvailableSlots(
-        doctorId,
-        appointmentDate
+        selectedDoctorId,
+        date.toISOString()
       );
       const slotsPayload = response?.data;
       const apiSlots = Array.isArray(slotsPayload)
         ? slotsPayload
         : slotsPayload?.availableSlots || slotsPayload?.slots;
-      if (Array.isArray(apiSlots)) {
-        setTimeSlots(apiSlots);
-      } else {
-        setTimeSlots([]);
+      return Array.isArray(apiSlots) ? apiSlots : [];
+    },
+    enabled: !!selectedDoctorId && !!date && isConnected,
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
+
+  const createAppointmentMutation = useMutation({
+    mutationFn: async (appointmentData) => {
+      const response = await appointmentService.createAppointment(appointmentData);
+      if (!(response?.status === "success" || response?.success)) {
+        throw new Error(response?.message || "Failed to book appointment");
       }
-    } catch (err) {
-      logError(err, {
-        context: "AppointmentBookingScreen.fetchTimeSlots",
-        doctorId,
-        appointmentDate,
-      });
-      setTimeSlots([]);
-      showError("Failed to load available time slots");
-    } finally {
-      setLoadingTimeSlots(false);
-    }
-  }, []);
+      return response;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      Alert.alert(
+        "Appointment Booked!",
+        `Your appointment with ${selectedDoctor.name} has been scheduled for ${selectedDate} at ${selectedTime}`,
+        [
+          {
+            text: "OK",
+            onPress: () =>
+              navigation.navigate("PatientTabs", { screen: "Dashboard" }),
+          },
+        ]
+      );
+    },
+    onError: (err) => {
+      logError(err, { context: "AppointmentBookingScreen.handleConfirm" });
+      const errorMessage = parseError(err);
+      Alert.alert("Booking Failed", errorMessage);
+    },
+  });
 
-  // Initial load: fetch all doctors to derive specialty list dynamically
-  useEffect(() => {
-    fetchDoctors();
-  }, [fetchDoctors]);
+  const canConfirmBooking =
+    !!selectedSpecialty &&
+    !!selectedDoctorId &&
+    !!selectedDate &&
+    !!selectedTime &&
+    reason.trim().length >= 2 &&
+    isConnected &&
+    !createAppointmentMutation.isPending;
 
-  // Load doctors when specialty changes
-  useEffect(() => {
-    if (selectedSpecialty) {
-      fetchDoctors(selectedSpecialty);
-    }
-  }, [selectedSpecialty, fetchDoctors]);
-
-  // Load time slots when doctor or date changes
-  useEffect(() => {
-    if (selectedDoctor && date) {
-      fetchTimeSlots(selectedDoctor._id, date.toISOString());
-    }
-  }, [selectedDoctor, date, fetchTimeSlots]);
-
-  const handleDateChange = (event, selectedDate) => {
+  const handleDateChange = (event, selectedValue) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
+      if (event?.type === "dismissed") {
+        return;
+      }
     }
-    if (selectedDate) {
-      setDate(selectedDate);
-      setSelectedDate(formatDate(selectedDate));
+
+    if (selectedValue) {
+      setDate(selectedValue);
+      setSelectedDate(formatDate(selectedValue));
     }
   };
 
@@ -228,69 +234,38 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       return;
     }
 
-    try {
-      // Map appointment type to backend-accepted values
-      const appointmentTypeMap = {
-        "in-person": "clinic_visit",
-        "telemedicine": "telemedicine"
-      };
-      
-      // Convert time from 12-hour format (e.g., "10:30 AM") to 24-hour format (e.g., "10:30")
-      const time24Hour = convertTo24Hour(selectedTime);
+    // Map appointment type to backend-accepted values
+    const appointmentTypeMap = {
+      "in-person": "clinic_visit",
+      "telemedicine": "telemedicine"
+    };
 
-      const [slotHour, slotMinute] = time24Hour
-        .split(":")
-        .map((value) => Number(value));
-      const selectedDateTime = new Date(date);
-      selectedDateTime.setHours(slotHour, slotMinute, 0, 0);
-      if (selectedDateTime <= new Date()) {
-        Alert.alert(
-          "Invalid Selection",
-          "Please select a future date and time for your appointment."
-        );
-        return;
-      }
+    // Convert time from 12-hour format (e.g., "10:30 AM") to 24-hour format (e.g., "10:30")
+    const time24Hour = convertTo24Hour(selectedTime);
 
-      setLoading(true);
-      
-      // Prepare appointment data with correct field names and formats
-      const appointmentData = {
-        doctorId: selectedDoctor._id,
-        appointmentDate: date.toISOString(),
-        appointmentTime: time24Hour, // Send in 24-hour format (HH:MM)
-        type: appointmentTypeMap[appointmentType] || "clinic_visit", // Use 'type' field with valid values
-        chiefComplaint: reason.trim(), // Backend expects chiefComplaint, not reason
-        hospitalId: user?.hospitalId || "MAIN", // Required field for multi-tenancy
-      };
-
-      const response =
-        await appointmentService.createAppointment(appointmentData);
-
-      if (response?.status === "success" || response?.success) {
-        Alert.alert(
-          "Appointment Booked!",
-          `Your appointment with ${selectedDoctor.name} has been scheduled for ${selectedDate} at ${selectedTime}`,
-          [
-            {
-              text: "OK",
-              onPress: () =>
-                navigation.navigate("PatientTabs", { screen: "Dashboard" }),
-            },
-          ]
-        );
-      } else {
-        throw new Error(response?.message || "Failed to book appointment");
-      }
-    } catch (err) {
-      logError(err, { context: "AppointmentBookingScreen.handleConfirm" });
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to book appointment";
-      Alert.alert("Booking Failed", errorMessage);
-    } finally {
-      setLoading(false);
+    const [slotHour, slotMinute] = time24Hour
+      .split(":")
+      .map((value) => Number(value));
+    const selectedDateTime = new Date(date);
+    selectedDateTime.setHours(slotHour, slotMinute, 0, 0);
+    if (selectedDateTime <= new Date()) {
+      Alert.alert(
+        "Invalid Selection",
+        "Please select a future date and time for your appointment."
+      );
+      return;
     }
+
+    const appointmentData = {
+      doctorId: selectedDoctorId,
+      appointmentDate: date.toISOString(),
+      appointmentTime: time24Hour,
+      type: appointmentTypeMap[appointmentType] || "clinic_visit",
+      chiefComplaint: reason.trim(),
+      hospitalId: user?.hospitalId || "MAIN",
+    };
+
+    await createAppointmentMutation.mutateAsync(appointmentData);
   };
 
   return (
@@ -303,8 +278,12 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          accessibilityHint="Returns to your patient tabs"
+          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
         >
           <ArrowLeft
             
@@ -491,10 +470,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             ) : (
               doctors.map((doctor) => (
                 <TouchableOpacity
-                  key={doctor._id || doctor.id}
+                  key={doctor._id || doctor.id || doctor.userId || doctor.email}
                   style={[
                     styles.doctorCard,
-                    selectedDoctor?._id === doctor._id &&
+                    selectedDoctorId === (doctor._id || doctor.id) &&
                       styles.doctorCardSelected,
                   ]}
                   onPress={() => setSelectedDoctor(doctor)}
@@ -532,7 +511,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       </View>
                     </View>
                   </View>
-                  {selectedDoctor?._id === doctor._id && (
+                  {selectedDoctorId === (doctor._id || doctor.id) && (
                     <CheckCircle
                       
                       size={24}
@@ -653,34 +632,44 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               />
             </TouchableOpacity>
 
-            {/* Date Picker Modal for Both Platforms */}
-            <Modal
-              visible={showDatePicker}
-              transparent
-              animationType="slide"
-              onRequestClose={() => setShowDatePicker(false)}
-            >
-              <View style={styles.datePickerModal}>
-                <View style={styles.datePickerContainer}>
-                  <View style={styles.datePickerHeader}>
-                    <Text style={styles.datePickerTitle}>Select Date</Text>
-                    <TouchableOpacity
-                      onPress={() => setShowDatePicker(false)}
-                    >
-                      <Text style={styles.datePickerDone}>Done</Text>
-                    </TouchableOpacity>
+            {/* Date picker: native dialog on Android, sheet on iOS */}
+            {Platform.OS === "ios" ? (
+              <Modal
+                visible={showDatePicker}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.datePickerModal}>
+                  <View style={styles.datePickerContainer}>
+                    <View style={styles.datePickerHeader}>
+                      <Text style={styles.datePickerTitle}>Select Date</Text>
+                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <Text style={styles.datePickerDone}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={date}
+                      mode="date"
+                      display="spinner"
+                      onChange={handleDateChange}
+                      minimumDate={new Date()}
+                      textColor={healthColors.text.primary}
+                    />
                   </View>
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="spinner"
-                    onChange={handleDateChange}
-                    minimumDate={new Date()}
-                    textColor={healthColors.text.primary}
-                  />
                 </View>
-              </View>
-            </Modal>
+              </Modal>
+            ) : (
+              showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                />
+              )
+            )}
             <View style={styles.timeLabelRow}>
               <Clock
                 
@@ -746,8 +735,12 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               size="large"
               fullWidth
               gradient
-              loading={loading}
+              loading={createAppointmentMutation.isPending}
+              disabled={!canConfirmBooking}
               onPress={handleConfirm}
+              accessibilityRole="button"
+              accessibilityLabel="Confirm appointment"
+              accessibilityHint="Books your selected doctor, date and time"
             >
               Confirm Appointment
             </Button>

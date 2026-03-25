@@ -4,6 +4,7 @@
  */
 
 const Joi = require('joi');
+const { sendError } = require('../utils/apiResponse');
 
 const updateUserProfileSchema = Joi.object({
   name: Joi.string().trim().min(2).max(100).optional(),
@@ -44,11 +45,14 @@ const updateDoctorProfileSchema = Joi.object({
 exports.validateUpdateUserProfile = (req, res, next) => {
   const { error } = updateUserProfileSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Validation failed',
-      errors: error.details.map(d => d.message),
-    });
+    return sendError(
+      res,
+      req,
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      error.details.map((d) => d.message)
+    );
   }
   next();
 };
@@ -56,11 +60,14 @@ exports.validateUpdateUserProfile = (req, res, next) => {
 exports.validateUpdateDoctorProfile = (req, res, next) => {
   const { error } = updateDoctorProfileSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Validation failed',
-      errors: error.details.map(d => d.message),
-    });
+    return sendError(
+      res,
+      req,
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      error.details.map((d) => d.message)
+    );
   }
   next();
 };

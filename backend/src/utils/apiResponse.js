@@ -8,6 +8,7 @@ const buildMeta = (req, extraMeta = {}) => ({
 
 const sendSuccess = (res, req, data = {}, message = "Request successful", statusCode = 200, meta = {}) => {
   return res.status(statusCode).json({
+    success: true,
     status: "success",
     message,
     data,
@@ -25,6 +26,7 @@ const sendPaginated = (
   meta = {}
 ) => {
   return res.status(statusCode).json({
+    success: true,
     status: "success",
     message,
     data,
@@ -42,6 +44,7 @@ const sendError = (
   errors = []
 ) => {
   return res.status(statusCode).json({
+    success: false,
     status: "error",
     message,
     code,

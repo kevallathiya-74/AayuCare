@@ -3,7 +3,7 @@
  * Chat interface with AI health insights and suggestions
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Platform,
   StatusBar,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import {
   SafeAreaView,
@@ -31,9 +32,11 @@ import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { aiService, healthMetricsService } from "../../services";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { handleSmartBack } from "../../utils/navigation";
 
 const AIHealthAssistantScreen = ({ navigation }) => {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
@@ -48,67 +51,119 @@ const AIHealthAssistantScreen = ({ navigation }) => {
   ]);
   const scrollViewRef = useRef();
 
-  const [healthInsights, setHealthInsights] = useState(null);
+  const { data: metricsData = [] } = useQuery({
+    queryKey: queryKeys.healthMetrics.patient(user?.id || "unknown"),
+    queryFn: async () => {
+      const response = await healthMetricsService.getMetrics(user.id);
+      return response?.data || [];
+    },
+    enabled: !!user?.id && isConnected,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
-  // Fetch real health metrics to populate insights
-  useEffect(() => {
-    if (!user?.id) return;
-    (async () => {
-      try {
-        const response = await healthMetricsService.getMetrics(user.id);
-        const metrics = response?.data || [];
-        if (!Array.isArray(metrics) || metrics.length === 0) return;
+  const healthInsights = useMemo(() => {
+    if (!Array.isArray(metricsData) || metricsData.length === 0) {
+      return null;
+    }
 
-        const bpMetrics = metrics
-          .filter((m) => m.type === "bp")
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const latestBP = bpMetrics[0];
+    const bpMetrics = metricsData
+      .filter((m) => m.type === "bp")
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const latestBP = bpMetrics[0];
 
-        if (latestBP?.value) {
-          const bpValue = `${latestBP.value.systolic}/${latestBP.value.diastolic}`;
-          const sys = latestBP.value.systolic;
-          const dia = latestBP.value.diastolic;
+    if (!latestBP?.value) {
+      return null;
+    }
 
-          let riskLevel = "NORMAL (0/100)";
-          let recommendations = [
-            "DIET: Balanced nutrition and hydration",
-            "EXERCISE: 30 min walk daily",
-            "WATER: 8-10 glasses per day",
-            "SLEEP: 7-8 hours recommended",
-          ];
+    const bpValue = `${latestBP.value.systolic}/${latestBP.value.diastolic}`;
+    const sys = latestBP.value.systolic;
+    const dia = latestBP.value.diastolic;
 
-          if (sys > 140 || dia > 90) {
-            riskLevel = "HIGH (70/100)";
-            recommendations = [
-              "DIET: Low salt, more vegetables, avoid processed foods",
-              "EXERCISE: Light walking, avoid strenuous activity",
-              "MEDICATION: Follow prescribed BP medication",
-              "CONSULT: Visit doctor within 1 week",
-            ];
-          } else if (sys > 130 || dia > 85) {
-            riskLevel = "MODERATE (40/100)";
-            recommendations = [
-              "DIET: Reduce salt intake, increase potassium",
-              "EXERCISE: 30 min moderate walk daily",
-              "MONITOR: Check BP weekly",
-              "SLEEP: 7-8 hours, reduce stress",
-            ];
-          }
+    let riskLevel = "NORMAL (0/100)";
+    let recommendations = [
+      "DIET: Balanced nutrition and hydration",
+      "EXERCISE: 30 min walk daily",
+      "WATER: 8-10 glasses per day",
+      "SLEEP: 7-8 hours recommended",
+    ];
 
-          setHealthInsights({
-            bp: {
-              value: bpValue,
-              recommendations,
-              risk: riskLevel,
-              preventiveCare: sys > 130 ? "Monthly BP monitoring" : "Regular annual checkups",
-            },
-          });
+    if (sys > 140 || dia > 90) {
+      riskLevel = "HIGH (70/100)";
+      recommendations = [
+        "DIET: Low salt, more vegetables, avoid processed foods",
+        "EXERCISE: Light walking, avoid strenuous activity",
+        "MEDICATION: Follow prescribed BP medication",
+        "CONSULT: Visit doctor within 1 week",
+      ];
+    } else if (sys > 130 || dia > 85) {
+      riskLevel = "MODERATE (40/100)";
+      recommendations = [
+        "DIET: Reduce salt intake, increase potassium",
+        "EXERCISE: 30 min moderate walk daily",
+        "MONITOR: Check BP weekly",
+        "SLEEP: 7-8 hours, reduce stress",
+      ];
+    }
+
+    return {
+      bp: {
+        value: bpValue,
+        recommendations,
+        risk: riskLevel,
+        preventiveCare: sys > 130 ? "Monthly BP monitoring" : "Regular annual checkups",
+      },
+    };
+  }, [metricsData]);
+
+  const analyzeSymptomsMutation = useMutation({
+    mutationFn: (payload) => aiService.analyzeSymptoms(payload),
+    onSuccess: (response) => {
+      let aiText = "";
+      if (response?.success && response?.data) {
+        const {
+          analysis,
+          recommendations,
+          urgencyLevel,
+          possibleConditions,
+        } = response.data;
+
+        aiText = `🔍 **Analysis:** ${analysis || "Based on your symptoms..."}\n\n`;
+
+        if (possibleConditions?.length > 0) {
+          aiText += `📋 **Possible Conditions:**\n${possibleConditions.map((c) => `• ${c}`).join("\n")}\n\n`;
         }
-      } catch (_err) {
-        // Silently fail — AI screen works without pre-loaded insights
+
+        if (recommendations?.length > 0) {
+          aiText += `💡 **Recommendations:**\n${recommendations.map((r) => `• ${r}`).join("\n")}\n\n`;
+        }
+
+        if (urgencyLevel) {
+          aiText += `⚠️ **Urgency:** ${urgencyLevel}`;
+        }
+      } else {
+        aiText = "I've noted your concern. For accurate diagnosis, please consult with a doctor.";
       }
-    })();
-  }, [user?.id]);
+
+      const aiResponse = {
+        id: Date.now() + 1,
+        type: "ai",
+        text:
+          aiText ||
+          "Based on what you've shared, I recommend consulting with a healthcare professional for proper evaluation.",
+      };
+      setMessages((prev) => [...prev, aiResponse]);
+    },
+    onError: (err) => {
+      logError(err, { context: "AIHealthAssistantScreen.handleSend" });
+      const fallbackResponse = {
+        id: Date.now() + 1,
+        type: "ai",
+        text: "I'm having trouble connecting right now. In the meantime, here are general tips:\n\n• Stay hydrated\n• Get adequate rest\n• If symptoms persist or worsen, please consult a doctor\n\nPlease try again later for AI-powered analysis.",
+      };
+      setMessages((prev) => [...prev, fallbackResponse]);
+    },
+  });
 
   const quickSuggestions = [
     { id: 1, text: "I have a headache and fever", icon: "medical" },
@@ -116,84 +171,41 @@ const AIHealthAssistantScreen = ({ navigation }) => {
     { id: 3, text: "Feeling stressed and anxious", icon: "fitness" },
   ];
 
+  const formatAssistantText = (rawText = "") => {
+    // Strip markdown markers and normalize line breaks for cleaner mobile chat rendering.
+    return String(rawText)
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\r\n/g, "\n")
+      .trim();
+  };
+
   const handleSend = async () => {
-    if (message.trim()) {
-      const userMessage = message.trim();
-      const newMessage = {
-        id: Date.now(),
-        type: "user",
-        text: userMessage,
-      };
-      setMessages([...messages, newMessage]);
-      setMessage("");
+    const trimmed = message.trim();
+    if (!trimmed) return;
 
-      try {
-        setLoading(true);
-
-        // Extract symptoms from user message (simple parsing)
-        const symptoms = userMessage
-          .split(/,|\band\b/)
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0);
-
-        // Call real AI service
-        const response = await aiService.analyzeSymptoms({
-          symptoms: symptoms,
-          duration: "unknown",
-          severity: "moderate",
-        });
-
-        // Format AI response
-        let aiText = "";
-        if (response.success && response.data) {
-          const {
-            analysis,
-            recommendations,
-            urgencyLevel,
-            possibleConditions,
-          } = response.data;
-
-          aiText = `🔍 **Analysis:** ${analysis || "Based on your symptoms..."}\n\n`;
-
-          if (possibleConditions?.length > 0) {
-            aiText += `📋 **Possible Conditions:**\n${possibleConditions.map((c) => `• ${c}`).join("\n")}\n\n`;
-          }
-
-          if (recommendations?.length > 0) {
-            aiText += `💡 **Recommendations:**\n${recommendations.map((r) => `• ${r}`).join("\n")}\n\n`;
-          }
-
-          if (urgencyLevel) {
-            aiText += `⚠️ **Urgency:** ${urgencyLevel}`;
-          }
-        } else {
-          aiText =
-            response.data?.message ||
-            "I've noted your concern. For accurate diagnosis, please consult with a doctor.";
-        }
-
-        const aiResponse = {
-          id: Date.now() + 1,
-          type: "ai",
-          text:
-            aiText ||
-            "Based on what you've shared, I recommend consulting with a healthcare professional for proper evaluation.",
-        };
-        setMessages((prev) => [...prev, aiResponse]);
-        setLoading(false);
-      } catch (err) {
-        setLoading(false);
-        logError(err, { context: "AIHealthAssistantScreen.handleSend" });
-
-        // Provide helpful fallback response instead of error
-        const fallbackResponse = {
-          id: Date.now() + 1,
-          type: "ai",
-          text: "I'm having trouble connecting right now. In the meantime, here are general tips:\n\n• Stay hydrated\n• Get adequate rest\n• If symptoms persist or worsen, please consult a doctor\n\nPlease try again later for AI-powered analysis.",
-        };
-        setMessages((prev) => [...prev, fallbackResponse]);
-      }
+    if (!isConnected) {
+      showError("No internet connection. Please try again when online.");
+      return;
     }
+
+    const newMessage = {
+      id: Date.now(),
+      type: "user",
+      text: trimmed,
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    setMessage("");
+
+    const symptoms = trimmed
+      .split(/,|\band\b/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    await analyzeSymptomsMutation.mutateAsync({
+      symptoms,
+      duration: "unknown",
+      severity: "moderate",
+    });
   };
 
   const handleRetry = () => {
@@ -215,7 +227,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         <ErrorRecovery
           error={error}
           onRetry={handleRetry}
-          onBack={() => navigation.goBack()}
+          onBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
       </SafeAreaView>
     );
@@ -232,7 +244,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backButton}
         >
           <ArrowLeft
@@ -258,6 +270,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         <ScrollView
           ref={scrollViewRef}
           style={styles.messagesContainer}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             styles.messagesContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -308,11 +321,20 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                       : styles.aiMessageText,
                   ]}
                 >
-                  {msg.text}
+                  {msg.type === "ai" ? formatAssistantText(msg.text) : msg.text}
                 </Text>
               </View>
             </View>
           ))}
+
+          {analyzeSymptomsMutation.isPending && (
+            <View style={[styles.messageWrapper, styles.aiMessageWrapper]}>
+              <View style={[styles.messageBubble, styles.aiMessage, styles.typingBubble]}>
+                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                <Text style={styles.typingText}>Analyzing your symptoms...</Text>
+              </View>
+            </View>
+          )}
 
           {/* Health Insights */}
           {messages.length <= 1 && healthInsights && (
@@ -386,12 +408,17 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              !message.trim() && styles.sendButtonDisabled,
+              (!message.trim() || analyzeSymptomsMutation.isPending) &&
+                styles.sendButtonDisabled,
             ]}
             onPress={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() || analyzeSymptomsMutation.isPending}
           >
-            <Send size={20} color={theme.colors.white} />
+            {analyzeSymptomsMutation.isPending ? (
+              <ActivityIndicator size="small" color={theme.colors.white} />
+            ) : (
+              <Send size={20} color={theme.colors.white} />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -475,6 +502,15 @@ const styles = StyleSheet.create({
   aiMessage: {
     backgroundColor: healthColors.background.card,
     ...theme.shadows.sm,
+  },
+  typingBubble: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  typingText: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
   },
   messageText: {
     fontSize: theme.typography.sizes.bodyMedium,

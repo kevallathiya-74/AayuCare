@@ -137,6 +137,8 @@ const AppointmentCard = ({
     );
 };
 
+const MemoizedAppointmentCard = React.memo(AppointmentCard);
+
 const styles = StyleSheet.create({
     card: {
         marginBottom: spacing.md,
@@ -197,5 +199,5 @@ const styles = StyleSheet.create({
     },
 });
 
-export default AppointmentCard;
+export default MemoizedAppointmentCard;
 

@@ -3,7 +3,7 @@
  * View and manage medical reports for admin users
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -19,9 +19,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { ChevronRight, ArrowLeft, Filter } from "lucide-react-native";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { medicalRecordService } from "../../services";
-import { logError } from "../../utils/errorHandler";
+import { logError, parseError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import {
   EmptyState,
@@ -33,15 +35,12 @@ import {
   FilterChipGroup,
 } from "../../components/common";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const ReportsScreen = ({ navigation }) => {
-  const [reports, setReports] = useState([]);
   const [selectedRecordType, setSelectedRecordType] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [draftRecordType, setDraftRecordType] = useState("all");
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
 
   const formatRecordTypeLabel = useCallback((value) => {
@@ -56,6 +55,46 @@ const ReportsScreen = ({ navigation }) => {
       .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
       .join(" ");
   }, []);
+
+  const {
+    data: reports = [],
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.medicalRecords.list({ scope: "admin-reports" }),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const response = await medicalRecordService.getAllRecords();
+
+      const responseData = response?.data;
+      const rawReports =
+        (Array.isArray(responseData?.medicalRecords) && responseData.medicalRecords) ||
+        (Array.isArray(responseData?.records) && responseData.records) ||
+        (Array.isArray(responseData?.items) && responseData.items) ||
+        (Array.isArray(responseData) && responseData) ||
+        [];
+
+      return rawReports.map((report, index) => {
+        const recordType = String(report?.recordType || report?.type || "other").toLowerCase();
+        return {
+          ...report,
+          id: report?._id || report?.id || `record-${index}`,
+          recordType,
+          recordTypeLabel: formatRecordTypeLabel(recordType),
+          patientName:
+            report?.patientName ||
+            report?.patient?.name ||
+            report?.patient_id ||
+            report?.patientId ||
+            "Unknown",
+          createdAt: report?.createdAt || report?.date || report?.updatedAt,
+        };
+      });
+    },
+  });
 
   const availableRecordTypes = useMemo(
     () =>
@@ -91,54 +130,9 @@ const ReportsScreen = ({ navigation }) => {
             (report.recordType || "").toLowerCase() === draftRecordType.toLowerCase()
         ).length;
 
-  const fetchReports = useCallback(async () => {
-    try {
-      setError(null);
-      const response = await medicalRecordService.getAllRecords();
-
-      const responseData = response?.data;
-      const rawReports =
-        (Array.isArray(responseData?.medicalRecords) && responseData.medicalRecords) ||
-        (Array.isArray(responseData?.records) && responseData.records) ||
-        (Array.isArray(responseData?.items) && responseData.items) ||
-        (Array.isArray(responseData) && responseData) ||
-        [];
-
-      const normalizedReports = rawReports.map((report, index) => {
-        const recordType = String(report?.recordType || report?.type || "other").toLowerCase();
-        return {
-          ...report,
-          id: report?._id || report?.id || `record-${index}`,
-          recordType,
-          recordTypeLabel: formatRecordTypeLabel(recordType),
-          patientName:
-            report?.patientName ||
-            report?.patient?.name ||
-            report?.patient_id ||
-            report?.patientId ||
-            "Unknown",
-          createdAt: report?.createdAt || report?.date || report?.updatedAt,
-        };
-      });
-
-      setReports(normalizedReports);
-    } catch (err) {
-      logError(err, { context: "ReportsScreen.fetchReports" });
-      setError("Failed to load reports");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
-
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchReports();
-  }, [fetchReports]);
+    refetch();
+  }, [refetch]);
 
   const getRecordTypeIcon = (type) => {
     const icons = {
@@ -219,14 +213,14 @@ const ReportsScreen = ({ navigation }) => {
       icon="document-text-outline"
       title="No Reports"
       message={
-        error
-          ? error
+        isError
+          ? parseError(error)
           : selectedRecordType === "all"
             ? "Medical reports will appear here."
             : `No reports found for type: ${selectedRecordType}`
       }
-      actionLabel={error ? "Retry" : undefined}
-      onActionPress={error ? fetchReports : undefined}
+      actionLabel={isError ? "Retry" : undefined}
+      onActionPress={isError ? refetch : undefined}
     />
   );
 
@@ -240,7 +234,7 @@ const ReportsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -282,7 +276,7 @@ const ReportsScreen = ({ navigation }) => {
           ]}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={onRefresh}
               colors={[healthColors.primary.main]}
               tintColor={healthColors.primary.main}

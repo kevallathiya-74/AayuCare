@@ -13,7 +13,7 @@ const medicalRecordRepository = require('../repositories/medicalRecordRepository
 const notificationRepository = require('../repositories/notificationRepository');
 const appointmentRepository = require('../repositories/appointmentRepository');
 const { AppError } = require('../middleware/errorHandler');
-const { deleteCacheByPattern } = require('../config/redis');
+const { invalidateByPatterns } = require('../utils/cacheInvalidation');
 const { writeAuditLog, AUDIT_ACTIONS } = require('../utils/audit');
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
@@ -41,11 +41,7 @@ const getScopedHospitalId = (ctx = {}) =>
   ctx.hospitalId && ctx.role !== 'super_admin' ? ctx.hospitalId : null;
 
 const invalidateCaches = async (...patterns) => {
-  await Promise.all(
-    patterns.map(p =>
-      deleteCacheByPattern(p).catch(err => logger.warn('Cache invalidation failed:', err.message))
-    )
-  );
+  await invalidateByPatterns(patterns);
 };
 
 const calculateTrend = (current, previous) => {

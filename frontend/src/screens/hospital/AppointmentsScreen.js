@@ -24,8 +24,8 @@ import {
 } from "react-native-safe-area-context";
 import { Calendar, ArrowLeft, Filter, Search } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
-import { logError } from "../../utils/errorHandler";
 import { formatDate, getStatusColor } from "../../utils/helpers";
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useAppointmentsInfinite } from "../../hooks/useAppointments";
@@ -42,6 +42,9 @@ import {
 } from "../../components/common";
 import appointmentService from "../../services/appointment.service";
 import { EmptyStateConfig } from "../../utils/constants";
+import { queryKeys } from "../../config/reactQueryConfig";
+import { parseError } from "../../utils/errorHandler";
+import { handleSmartBack } from "../../utils/navigation";
 
 const AppointmentsScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -57,20 +60,6 @@ const AppointmentsScreen = ({ navigation }) => {
   const [draftFilters, setDraftFilters] = useState(appliedFilters);
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
-  const [statusCounts, setStatusCounts] = useState({
-    all: 0,
-    pending: 0,
-    in_progress: 0,
-    completed: 0,
-    no_show: 0,
-    cancelled: 0,
-  });
-  const [dateCounts, setDateCounts] = useState({
-    all: 0,
-    today: 0,
-    next_7_days: 0,
-  });
-
   const statusOptions = useMemo(
     () => [
       { key: "all", label: "All", status: undefined },
@@ -125,14 +114,32 @@ const AppointmentsScreen = ({ navigation }) => {
     return filters;
   }, [appliedFilters, statusOptions]);
 
-  const fetchStatusCounts = useCallback(async () => {
-    try {
+  const {
+    data: statsSnapshot,
+    refetch: refetchStats,
+  } = useQuery({
+    queryKey: queryKeys.appointments.list({ scope: "admin-stats" }),
+    queryFn: async () => {
       const response = await appointmentService.getAppointmentStats();
       const statsArray = response?.data?.stats;
       const dateRangeStats = response?.data?.dateRanges;
 
       if (!Array.isArray(statsArray)) {
-        return;
+        return {
+          statusCounts: {
+            all: 0,
+            pending: 0,
+            in_progress: 0,
+            completed: 0,
+            no_show: 0,
+            cancelled: 0,
+          },
+          dateCounts: {
+            all: 0,
+            today: 0,
+            next_7_days: 0,
+          },
+        };
       }
 
       const byStatus = statsArray.reduce((acc, item) => {
@@ -144,31 +151,46 @@ const AppointmentsScreen = ({ navigation }) => {
         return acc;
       }, {});
 
-      const pendingCount =
-        (byStatus.scheduled || 0) + (byStatus.confirmed || 0);
+      const pendingCount = (byStatus.scheduled || 0) + (byStatus.confirmed || 0);
       const allCount = Object.values(byStatus).reduce(
         (sum, value) => sum + Number(value || 0),
         0
       );
 
-      setStatusCounts({
-        all: allCount,
-        pending: pendingCount,
-        in_progress: byStatus.in_progress || 0,
-        completed: byStatus.completed || 0,
-        no_show: byStatus.no_show || 0,
-        cancelled: byStatus.cancelled || 0,
-      });
+      return {
+        statusCounts: {
+          all: allCount,
+          pending: pendingCount,
+          in_progress: byStatus.in_progress || 0,
+          completed: byStatus.completed || 0,
+          no_show: byStatus.no_show || 0,
+          cancelled: byStatus.cancelled || 0,
+        },
+        dateCounts: {
+          all: Number(dateRangeStats?.all || allCount),
+          today: Number(dateRangeStats?.today || 0),
+          next_7_days: Number(dateRangeStats?.next7Days || 0),
+        },
+      };
+    },
+    staleTime: 60 * 1000,
+    retry: 1,
+  });
 
-      setDateCounts({
-        all: Number(dateRangeStats?.all || allCount),
-        today: Number(dateRangeStats?.today || 0),
-        next_7_days: Number(dateRangeStats?.next7Days || 0),
-      });
-    } catch (statsError) {
-      logError(statsError, { context: "AppointmentsScreen.fetchStatusCounts" });
-    }
-  }, []);
+  const statusCounts = statsSnapshot?.statusCounts || {
+    all: 0,
+    pending: 0,
+    in_progress: 0,
+    completed: 0,
+    no_show: 0,
+    cancelled: 0,
+  };
+
+  const dateCounts = statsSnapshot?.dateCounts || {
+    all: 0,
+    today: 0,
+    next_7_days: 0,
+  };
 
   // Use infinite query hook for admin appointments with lazy loading
   const {
@@ -395,16 +417,16 @@ const AppointmentsScreen = ({ navigation }) => {
     useCallback(() => {
       refetch();
       refreshCount();
-      fetchStatusCounts();
-    }, [refetch, refreshCount, fetchStatusCounts])
+      refetchStats();
+    }, [refetch, refreshCount, refetchStats])
   );
 
   // Handle pull to refresh
   const onRefresh = useCallback(() => {
     refetch();
     refreshCount(); // Also refresh tab badge count
-    fetchStatusCounts();
-  }, [refetch, refreshCount, fetchStatusCounts]);
+    refetchStats();
+  }, [refetch, refreshCount, refetchStats]);
 
   // Handle load more for infinite scroll
   const handleLoadMore = useCallback(() => {
@@ -529,7 +551,7 @@ const AppointmentsScreen = ({ navigation }) => {
       <EmptyState
         icon={EmptyStateConfig.APPOINTMENTS.icon}
         title={EmptyStateConfig.APPOINTMENTS.title}
-        message={error?.message || EmptyStateConfig.APPOINTMENTS.message}
+        message={error ? parseError(error) : EmptyStateConfig.APPOINTMENTS.message}
         actionLabel={error ? "Retry" : undefined}
         onActionPress={error ? refetch : undefined}
       />
@@ -546,7 +568,7 @@ const AppointmentsScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "AdminTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -597,10 +619,12 @@ const AppointmentsScreen = ({ navigation }) => {
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
+          initialNumToRender={10}
+          getItemLayout={(_, index) => ({ length: 138, offset: 138 * index, index })}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}

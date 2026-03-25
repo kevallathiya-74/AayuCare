@@ -278,7 +278,7 @@ const UnifiedLoginScreen = ({ navigation }) => {
                   onPress={() => setShowDevHelper(!showDevHelper)}
                   activeOpacity={0.7}
                 >
-                  <ArrowRight
+                  <DynamicIcon
                     name={showDevHelper ? "chevron-up" : "chevron-down"}
                     size={14}
                     color={healthColors.info.main}

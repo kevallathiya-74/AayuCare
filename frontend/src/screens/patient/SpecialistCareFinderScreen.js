@@ -3,7 +3,7 @@
  * Find doctors by specialty with filters and booking
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -27,23 +28,21 @@ import {
   getScreenPadding,
 } from "../../utils/responsive";
 import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from "../../components/common";
-import { showError, logError } from "../../utils/errorHandler";
+import { showError, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
 import { doctorService } from "../../services";
+import { queryKeys } from "../../config/reactQueryConfig";
 import { DynamicIcon } from "../../components/common";
+import { handleSmartBack } from "../../utils/navigation";
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
   const [selectedSpecialty, setSelectedSpecialty] = useState("All");
   const [selectedAvailability, setSelectedAvailability] = useState("Today");
   const [feeRange, setFeeRange] = useState([0, 1000]);
-  const [doctors, setDoctors] = useState([]);
 
   const specialties = [
     { id: 1, name: "All", icon: "apps-outline" },
@@ -55,21 +54,23 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     { id: 7, name: "Orthopedics", icon: "body-outline" },
   ];
 
-  useEffect(() => {
-    fetchDoctors();
-  }, [fetchDoctors]);
-
-  const fetchDoctors = useCallback(async () => {
-    try {
-      if (!isConnected) {
-        showError("No internet connection");
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      // Fetch doctors with optional specialty filter
+  const {
+    data: doctors = [],
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.doctors.list({
+      scope: "specialist-finder",
+      selectedSpecialty,
+      feeRange,
+      hospitalId: user?.hospitalId,
+    }),
+    enabled: isConnected,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
       const filters = {};
       if (selectedSpecialty !== "All") {
         filters.specialization = selectedSpecialty;
@@ -79,39 +80,24 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       }
 
       const response = await doctorService.getDoctors(filters);
-
-      // Backend returns { status, data: { doctors: [], pagination: {} } }
       let filteredDoctors = response?.data?.doctors || [];
 
-      // Filter by fee range
       if (feeRange && feeRange.length === 2) {
         filteredDoctors = filteredDoctors.filter(
-          (doc) =>
-            doc.consultationFee >= feeRange[0] &&
-            doc.consultationFee <= feeRange[1]
+          (doc) => doc.consultationFee >= feeRange[0] && doc.consultationFee <= feeRange[1]
         );
       }
 
-      setDoctors(filteredDoctors);
-    } catch (err) {
-      const errorMessage = "Failed to load specialists";
-      setError(errorMessage);
-      logError(err, { context: "SpecialistCareFinderScreen.fetchDoctors" });
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedSpecialty, feeRange, isConnected, user?.hospitalId]);
+      return filteredDoctors;
+    },
+  });
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchDoctors();
-    setRefreshing(false);
-  }, [selectedSpecialty, feeRange]);
+    await refetch();
+  }, [refetch]);
 
   const handleRetry = () => {
-    setError(null);
-    fetchDoctors();
+    refetch();
   };
 
   const renderDoctorCard = (doctor) => (
@@ -248,7 +234,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     </View>
   );
 
-  if (error) {
+  if (isError) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <StatusBar
@@ -257,9 +243,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         />
         <NetworkStatusIndicator />
         <ErrorRecovery
-          error={error}
+          error={parseError(error)}
           onRetry={handleRetry}
-          onBack={() => navigation.goBack()}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
       </SafeAreaView>
     );
@@ -276,7 +262,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backButton}
         >
           <ArrowLeft
@@ -296,7 +282,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching}
             onRefresh={onRefresh}
             colors={[healthColors.primary.main]}
             tintColor={healthColors.primary.main}
