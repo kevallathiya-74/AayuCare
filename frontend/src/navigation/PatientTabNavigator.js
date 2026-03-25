@@ -34,7 +34,6 @@ const PatientTabNavigator = () => {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          lazy: false,
           tabBarIcon: ({ focused, color, size }) => {
             const Icon = ROUTE_ICON_MAP[route.name] || Circle;
             return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;

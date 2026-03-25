@@ -26,8 +26,7 @@ import { useSelector } from "react-redux";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
-import { showError, logError, parseError } from "../../utils/errorHandler";
-import { useNetworkStatus } from "../../utils/offlineHandler";
+import { parseError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
 import { prescriptionService } from "../../services";
 import { queryKeys } from "../../config/reactQueryConfig";
@@ -38,7 +37,6 @@ const PAGE_SIZE = 20;
 const MyPrescriptionsScreen = ({ navigation }) => {
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const { user } = useSelector((state) => state.auth);
-  const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
 
   const {

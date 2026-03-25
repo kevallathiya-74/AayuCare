@@ -245,7 +245,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         <ErrorRecovery
           error={parseError(error)}
           onRetry={handleRetry}
-          onBack={() => handleSmartBack(navigation, "PatientTabs")}
+          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
       </SafeAreaView>
     );
