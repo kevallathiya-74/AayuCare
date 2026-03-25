@@ -201,7 +201,7 @@ export const getSafeAreaEdges = (screen = "default") => {
 
 // KeyboardAvoidingView configuration
 export const getKeyboardConfig = () => ({
-  behavior: isIOS ? "padding" : undefined,
+  behavior: isIOS ? "padding" : "height",
   keyboardVerticalOffset: isIOS ? 64 : 0,
 });
 
