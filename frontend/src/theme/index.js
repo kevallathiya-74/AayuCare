@@ -1,5 +1,5 @@
 /**
- * AayuCare Unified Theme System
+ * AayuCare Theme System
  * Single Source of Truth for ALL UI/UX Values
  * Production-Grade Healthcare Application
  *
@@ -44,7 +44,7 @@ const typographyWeights = {
 };
 
 // ===================================================================
-// UNIFIED THEME OBJECT - Single Export for Entire App
+// THEME OBJECT - Single Export for Entire App
 // ===================================================================
 
 export const theme = {

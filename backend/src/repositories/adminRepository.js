@@ -7,6 +7,20 @@ const logger = require("../utils/logger");
  * Handles all raw SQL queries related to admin operations and system stats
  */
 class AdminRepository {
+  async hasPatientEmergencyContactRelationColumn() {
+    const result = await query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'patients'
+          AND column_name = 'emergency_contact_relation'
+      ) AS exists
+    `);
+
+    return result.rows[0]?.exists === true;
+  }
+
   async pingPostgres() {
     await query('SELECT 1');
     return true;
@@ -125,6 +139,11 @@ class AdminRepository {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+    const hasEmergencyRelationColumn = await this.hasPatientEmergencyContactRelationColumn();
+    const patientEmergencyRelationField = hasEmergencyRelationColumn
+      ? 'p.emergency_contact_relation'
+      : 'NULL::varchar';
+
     const doctorFields = `
       d.specialization, d.qualification, d.experience, d.department, d.consultation_fee, d.bio,
       NULL::date AS date_of_birth, NULL::varchar AS gender, NULL::varchar AS blood_group, NULL::text AS address,
@@ -134,12 +153,12 @@ class AdminRepository {
       NULL::varchar AS specialization, NULL::varchar AS qualification, NULL::int AS experience, NULL::varchar AS department,
       NULL::numeric AS consultation_fee, NULL::text AS bio,
       p.date_of_birth, p.gender, p.blood_group, p.address,
-      p.emergency_contact_name, p.emergency_contact_phone, p.emergency_contact_relation
+      p.emergency_contact_name, p.emergency_contact_phone, ${patientEmergencyRelationField} AS emergency_contact_relation
     `;
     const mixedFields = `
       d.specialization, d.qualification, d.experience, d.department, d.consultation_fee, d.bio,
       p.date_of_birth, p.gender, p.blood_group, p.address,
-      p.emergency_contact_name, p.emergency_contact_phone, p.emergency_contact_relation
+      p.emergency_contact_name, p.emergency_contact_phone, ${patientEmergencyRelationField} AS emergency_contact_relation
     `;
 
     let profileFields = mixedFields;

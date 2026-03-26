@@ -1,12 +1,30 @@
 import { Platform } from "react-native";
-import * as Notifications from "expo-notifications";
 import { getItem, setItem } from "../utils/appStorage";
+import { APP_CONFIG } from "../config/appConfig";
 
 const SETTINGS_STORAGE_KEY = "aayucare_notification_settings";
 const PERMISSION_META_KEY = "aayucare_notification_permission_meta";
 
 const DEFAULT_SETTINGS = {
   notificationsEnabled: false,
+};
+
+const isNotificationRuntimeSupported = () => {
+  if (Platform.OS === "web") return false;
+  if (APP_CONFIG?.env?.isExpoGo) return false;
+  return true;
+};
+
+const getNotificationsModule = async () => {
+  if (!isNotificationRuntimeSupported()) {
+    return null;
+  }
+
+  try {
+    return await import("expo-notifications");
+  } catch {
+    return null;
+  }
 };
 
 const mapPermissionState = (permissionResponse) => {
@@ -20,7 +38,8 @@ const mapPermissionState = (permissionResponse) => {
 
 class NotificationPermissionService {
   async getPermissionState() {
-    if (Platform.OS === "web") {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
       return {
         status: "unsupported",
         granted: false,
@@ -37,7 +56,8 @@ class NotificationPermissionService {
   }
 
   async requestPermission() {
-    if (Platform.OS === "web") {
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) {
       return {
         status: "unsupported",
         granted: false,

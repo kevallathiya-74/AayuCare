@@ -105,7 +105,7 @@ class UserRepository {
             SELECT id, user_id, name, email, phone, role, hospital_id, hospital_name, 
                    is_active, email_verified, phone_verified, created_at, updated_at
             FROM users
-            WHERE user_id = $1
+         WHERE user_id = $1
         `;
 
     const result = await query(sql, [userId]);

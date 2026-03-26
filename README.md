@@ -1,6 +1,7 @@
 # AayuCare
 
 Production-grade, SaaS-ready, full-stack healthcare platform with:
+
 - Node.js + Express backend
 - PostgreSQL + MongoDB + Redis data architecture
 - React Native + Expo mobile frontend
@@ -9,6 +10,7 @@ Production-grade, SaaS-ready, full-stack healthcare platform with:
 ## Product Vision
 
 AayuCare is built as a multi-role healthcare product for:
+
 - Patients: appointments, records, prescriptions, profile, wellness modules
 - Doctors: schedule and patient workflow management
 - Admin and hospital operations: users, reports, activities, monitoring
@@ -22,6 +24,7 @@ AayuCare is built as a multi-role healthcare product for:
 ## Tech Stack
 
 ### Backend
+
 - Node.js 18+
 - Express
 - Better Auth
@@ -31,6 +34,7 @@ AayuCare is built as a multi-role healthcare product for:
 - Validation and security: Joi, express-validator, helmet, express-rate-limit
 
 ### Frontend
+
 - React Native 0.81.x
 - Expo SDK 54
 - Redux Toolkit + React Query
@@ -40,11 +44,13 @@ AayuCare is built as a multi-role healthcare product for:
 ## Core Architecture
 
 ### Data Strategy
+
 - PostgreSQL: transactional source of truth for users, auth/session-linked relational data
 - MongoDB: document-oriented healthcare records and flexible domains
 - Redis: cache/session acceleration and hot-path optimization
 
 ### Security Strategy
+
 - Role-based authorization and hospital scope isolation
 - Environment-based secrets and production-safe defaults
 - Rate limiting and hardened middleware stack
@@ -52,6 +58,7 @@ AayuCare is built as a multi-role healthcare product for:
 ## Local Development Setup
 
 ## Prerequisites
+
 - Node.js 18 or newer
 - npm 9 or newer
 - PostgreSQL running locally or cloud endpoint
@@ -61,40 +68,44 @@ AayuCare is built as a multi-role healthcare product for:
 ## 1) Backend setup
 
 1. Install dependencies:
-    cd backend
-    npm install
+   cd backend
+   npm install
 
 2. Configure environment:
+
 - Copy [backend/.env.example](backend/.env.example) to backend/.env
 - Fill all required secrets and URLs
 
 3. Initialize and seed optional local data:
-    npm run init:postgres
-    npm run seed:db
+   npm run init:postgres
+   npm run seed:db
 
 4. Start backend:
-    npm run dev
+   npm run dev
 
 Backend health endpoints typically run on:
+
 - /api/readyz
-- /api/healthz (if enabled in server)
+- /api/health
+- /api/livez
 
 ## 2) Frontend setup
 
 1. Install dependencies:
-    cd frontend
-    npm install
+   cd frontend
+   npm install
 
 2. Start Expo:
-    npm run start
+   npm run start
 
 3. Run app:
-    npm run android
-    npm run ios
+   npm run android
+   npm run ios
 
 ## Production and SaaS Readiness
 
 ### Required production principles
+
 - Never commit backend/.env
 - Keep only placeholders in [backend/.env.example](backend/.env.example)
 - Use managed secrets in hosting provider environment settings
@@ -105,9 +116,11 @@ Backend health endpoints typically run on:
 ### Deployment baseline
 
 Backend deployment is preconfigured via:
+
 - [backend/render.yaml](backend/render.yaml)
 
 Recommended production services:
+
 - API hosting: Render web service (or equivalent)
 - PostgreSQL: managed cloud Postgres (Neon or equivalent)
 - MongoDB: Atlas cluster
@@ -116,20 +129,25 @@ Recommended production services:
 ## Build and Verification Commands
 
 ### Backend checks
+
 - Run smoke status checks:
-    cd backend
-    npm run smoke:status
+  cd backend
+  npm run smoke:status
 
 - Run method matrix checks:
-    npm run smoke:methods
+  npm run smoke:methods
+
+- Run modular route smoke checks:
+  npm run smoke:modules
 
 - Run API collection tests:
-    npm run test:api
+  npm run test:api
 
 ### Frontend checks
+
 - Production export:
-    cd frontend
-    npx expo export --platform android
+  cd frontend
+  npx expo export --platform android
 
 ## Security Checklist Before Go-Live
 

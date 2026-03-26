@@ -3,7 +3,7 @@ const appointmentRepository = require("../repositories/appointmentRepository");
 const paymentRepository = require("../repositories/paymentRepository");
 const doctorRepository = require("../repositories/doctorRepository");
 const patientRepository = require("../repositories/patientRepository");
-const { createAppointmentWithPayment } = require("../utils/transaction");
+const { createAppointmentWithPayment, cancelAppointmentWithRefund, completeAppointmentWithPayment } = require("../utils/transaction");
 const { AppError } = require("../middleware/errorHandler");
 const logger = require("../utils/logger");
 
@@ -399,6 +399,18 @@ class AppointmentService {
       );
     }
 
+    // Use transaction for "completed" status to atomically mark payment as completed
+    if (status === "completed") {
+      const { appointment: updatedAppointment } = await completeAppointmentWithPayment(
+        appointmentId,
+        null // notes can be updated separately
+      );
+      logger.info(
+        `Appointment ${appointmentId} marked as completed and payment processed by ${userRole}`
+      );
+      return updatedAppointment;
+    }
+
     const updates = { status };
 
     if (status === "cancelled") {
@@ -418,7 +430,7 @@ class AppointmentService {
   }
 
   /**
-   * Cancel appointment - Uses PostgreSQL
+   * Cancel appointment - Uses PostgreSQL with transaction for atomic refund
    */
   async cancelAppointment(appointmentId, userId, userRole, cancelReason) {
     const appointment = await appointmentRepository.findById(appointmentId);
@@ -453,19 +465,15 @@ class AppointmentService {
       );
     }
 
-    const updates = {
-      status: "cancelled",
-      cancellation_reason: cancelReason,
-      cancelled_by: userId,
-    };
-
-    const updatedAppointment = await appointmentRepository.update(
+    // Use transaction to atomically cancel appointment and refund payment
+    const { appointment: updatedAppointment } = await cancelAppointmentWithRefund(
       appointmentId,
-      updates
+      userId,
+      cancelReason
     );
 
     logger.info(
-      `Appointment ${appointmentId} cancelled by ${userRole}: ${userId}`
+      `Appointment ${appointmentId} cancelled by ${userRole}: ${userId} - refund processed`
     );
 
     return updatedAppointment;

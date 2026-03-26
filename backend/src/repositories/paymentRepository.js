@@ -191,9 +191,9 @@ class PaymentRepository {
     let sql = `
             SELECT 
                 COUNT(*) as total_payments,
-                SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as total_revenue,
-                SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending_amount,
-                AVG(CASE WHEN status = 'completed' THEN amount ELSE NULL END) as average_payment
+              SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END) as total_revenue,
+              SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END) as pending_amount,
+              AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as average_payment
             FROM payments p
             LEFT JOIN appointments a ON p.appointment_id = a.id
             WHERE 1=1

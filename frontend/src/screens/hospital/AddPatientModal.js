@@ -83,6 +83,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     },
   });
 
+  const loading = createPatientMutation.isPending;
+
   const validateForm = () => {
     const newErrors = {};
 

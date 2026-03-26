@@ -12,8 +12,11 @@ import { STORAGE_KEYS } from '../utils/constants';
 
 // Better Auth expects base URL WITHOUT /api suffix
 const getAuthBaseURL = () => {
-  const baseURL = APP_CONFIG.api.baseURL;
-  return baseURL.replace(/\/api$/, "");
+  const baseURL = String(APP_CONFIG?.api?.baseURL ?? "").trim();
+  if (!baseURL) {
+    return "http://localhost:5000";
+  }
+  return baseURL.replace(/\/api\/?$/, "");
 };
 
 // Create and configure the auth client
@@ -136,10 +139,9 @@ export const login = async (credentials) => {
     
     // Validate credentials
     if (!userInput || !credentials.password) {
-      throw new Error('Please enter both User ID/Email and Password');
+      throw new Error('Please enter User ID/Email and password exactly as provided.');
     }
-
-    let email = userInput.trim();
+    let email = userInput;
 
     // If input is not an email, convert userId to email
     if (!isEmail(email)) {
@@ -163,9 +165,8 @@ export const login = async (credentials) => {
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json().catch(() => ({}));
         if (__DEV__) { console.error('[auth.service] Email lookup failed:', errorData); }
-        
         if (emailResponse.status === 404) {
-          throw new Error('User ID not found.');
+          throw new Error('Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).');
         } else if (emailResponse.status === 503) {
           throw new Error('Service temporarily unavailable. Please try again.');
         }
@@ -193,9 +194,8 @@ export const login = async (credentials) => {
     });
 
     if (__DEV__) { console.log('[auth.service] Better Auth sign-in completed'); }
-
     if (!result.data?.user) {
-      throw new Error('Invalid email/password combination.');
+      throw new Error('Invalid credentials. Please enter the exact User ID and password.');
     }
 
     const betterAuthUserId = result.data.user.id;
@@ -263,8 +263,7 @@ export const login = async (credentials) => {
         if (__DEV__) { console.log('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
       } else {
         if (__DEV__) { console.warn('[auth.service] Session token exchange failed:', sessionResponse.status); }
-        await signOut().catch(() => {});
-        throw new Error('Login failed. Your credentials might be invalid or your account deactivated.');
+        throw new Error('Login failed. Please check your exact User ID and password.');
       }
     } catch (sessionError) {
       if (__DEV__) { console.error('[auth.service] Error during session token exchange:', sessionError); }

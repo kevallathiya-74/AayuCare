@@ -1,7 +1,8 @@
 const winston = require('winston');
+const { APP_ENV } = require('../config/env');
 
 const logger = winston.createLogger({
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    level: APP_ENV.logging.level,
     format: winston.format.combine(
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
         winston.format.errors({ stack: true }),
@@ -15,7 +16,7 @@ const logger = winston.createLogger({
     ],
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (!APP_ENV.isProduction) {
     logger.add(new winston.transports.Console({
         format: winston.format.combine(
             winston.format.colorize(),

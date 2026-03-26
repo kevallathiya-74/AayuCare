@@ -31,9 +31,8 @@ import { Calendar, Stethoscope, Users, Pill, FileText, CalendarDays, Home, BarCh
 import { useAdminAppointments } from "../../context/AdminAppointmentContext";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
+import { SkeletonCardRow, SkeletonStatGrid } from "../../components/common";
 import {
-  SkeletonCardRow,
-  SkeletonStatGrid,
   AdminHeader,
   AdminWelcomeBanner,
   AdminStatsCarousel,
@@ -146,8 +145,17 @@ const AdminHomeScreen = ({ navigation }) => {
         const healthRes = await adminService.getSystemHealth();
         setSystemHealth(healthRes?.success ? healthRes.data : null);
       } catch { setSystemHealth(null); }
+
+      return {
+        ok: true,
+        updatedAt: Date.now(),
+      };
     } catch (err) {
       logError(err, { context: "AdminHomeScreen.fetchDashboardData" });
+      return {
+        ok: false,
+        updatedAt: Date.now(),
+      };
     }
   }, [activitiesLimit, canUseNotifications]);
 

@@ -6,7 +6,6 @@
 const eventRepository = require('../repositories/eventRepository');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
-const { logError } = logger;
 const { invalidateAfterEventMutation } = require('../utils/cacheInvalidation');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
@@ -56,7 +55,10 @@ exports.getUpcomingEvents = async (req, res, next) => {
             'Upcoming events retrieved successfully'
         );
     } catch (error) {
-        logError(error, { context: 'eventController.getUpcomingEvents' });
+        logger.error('Error in eventController.getUpcomingEvents', {
+            error: error.message,
+            stack: error.stack,
+        });
         next(error);
     }
 };
@@ -79,7 +81,11 @@ exports.getEventById = async (req, res, next) => {
         
         return sendSuccess(res, req, event, 'Event retrieved successfully');
     } catch (error) {
-        logError(error, { context: 'eventController.getEventById', eventId: req.params.eventId });
+        logger.error('Error in eventController.getEventById', {
+            error: error.message,
+            stack: error.stack,
+            eventId: req.params.eventId,
+        });
         next(error);
     }
 };
@@ -108,7 +114,11 @@ exports.createEvent = async (req, res, next) => {
         
         return sendSuccess(res, req, event, 'Event created successfully', 201);
     } catch (error) {
-        logError(error, { context: 'eventController.createEvent', userId: req.user.id });
+        logger.error('Error in eventController.createEvent', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.id,
+        });
         next(error);
     }
 };
@@ -138,7 +148,7 @@ exports.registerForEvent = async (req, res, next) => {
         
         // Check if event is full
         if (event.availableSpots > 0 && event.registeredCount >= event.availableSpots) {
-            return sendError(res, req, 'Event is full', 400, 'CONFLICT');
+            return sendError(res, req, 'Event is full', 409, 'CONFLICT');
         }
         
         // Check if event date has passed
@@ -164,7 +174,11 @@ exports.registerForEvent = async (req, res, next) => {
         
         return sendSuccess(res, req, updatedEvent, 'Successfully registered for event');
     } catch (error) {
-        logError(error, { context: 'eventController.registerForEvent', eventId: req.params.eventId });
+        logger.error('Error in eventController.registerForEvent', {
+            error: error.message,
+            stack: error.stack,
+            eventId: req.params.eventId,
+        });
         next(error);
     }
 };
@@ -205,7 +219,11 @@ exports.cancelRegistration = async (req, res, next) => {
         
         return sendSuccess(res, req, {}, 'Registration cancelled successfully');
     } catch (error) {
-        logError(error, { context: 'eventController.cancelRegistration', eventId: req.params.eventId });
+        logger.error('Error in eventController.cancelRegistration', {
+            error: error.message,
+            stack: error.stack,
+            eventId: req.params.eventId,
+        });
         next(error);
     }
 };
@@ -235,7 +253,11 @@ exports.updateEvent = async (req, res, next) => {
         
         return sendSuccess(res, req, event, 'Event updated successfully');
     } catch (error) {
-        logError(error, { context: 'eventController.updateEvent', eventId: req.params.eventId });
+        logger.error('Error in eventController.updateEvent', {
+            error: error.message,
+            stack: error.stack,
+            eventId: req.params.eventId,
+        });
         next(error);
     }
 };
@@ -265,7 +287,11 @@ exports.deleteEvent = async (req, res, next) => {
         
         return sendSuccess(res, req, {}, 'Event deleted successfully');
     } catch (error) {
-        logError(error, { context: 'eventController.deleteEvent', eventId: req.params.eventId });
+        logger.error('Error in eventController.deleteEvent', {
+            error: error.message,
+            stack: error.stack,
+            eventId: req.params.eventId,
+        });
         next(error);
     }
 };

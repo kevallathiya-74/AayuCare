@@ -28,7 +28,7 @@ import {
 import logger from "../utils/logger";
 import SplashScreen from "../screens/splash/SplashScreen";
 import BoxSelectionScreen from "../screens/splash/BoxSelectionScreen";
-import UnifiedLoginScreen from "../screens/auth/UnifiedLoginScreen";
+import LoginScreen from "../screens/auth/LoginScreen";
 import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 
 import AdminTabNavigator from "./AdminTabNavigator";
@@ -330,7 +330,31 @@ const AppNavigator = () => {
     if (role === "patient") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboardStats.patient(user.id),
-        queryFn: () => adminService.getDashboardStats(),
+        queryFn: async () => {
+          const [appointmentsRes, recordsRes, prescriptionsRes] = await Promise.allSettled([
+            appointmentService.getPatientAppointments(user.id),
+            medicalRecordService.getPatientRecords(user.id, { page: 1, limit: 10 }),
+            prescriptionService.getPatientPrescriptions(user.id),
+          ]);
+
+          const getCount = (result, keys = []) => {
+            if (result.status !== "fulfilled") return 0;
+            const payload = result.value;
+            if (Array.isArray(payload)) return payload.length;
+            if (Array.isArray(payload?.data)) return payload.data.length;
+            for (const key of keys) {
+              const value = payload?.[key] || payload?.data?.[key];
+              if (Array.isArray(value)) return value.length;
+            }
+            return 0;
+          };
+
+          return {
+            appointments: getCount(appointmentsRes, ["appointments", "items", "rows"]),
+            records: getCount(recordsRes, ["medicalRecords", "records", "items", "rows"]),
+            prescriptions: getCount(prescriptionsRes, ["prescriptions", "items", "rows"]),
+          };
+        },
         staleTime: 60 * 1000,
       });
 
@@ -406,7 +430,7 @@ const AppNavigator = () => {
         />
 
         {/* Auth Screens - Always available */}
-        <Stack.Screen name="Login" component={UnifiedLoginScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
 
         {/* Role-based Tab Navigators - Only when authenticated */}

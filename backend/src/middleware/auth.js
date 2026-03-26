@@ -68,7 +68,7 @@ exports.protect = async (req, res, next) => {
               };
               
               if (process.env.NODE_ENV === 'development') {
-                logger.debug('[Auth] Token validated successfully for user:', userDoc.email);
+                logger.debug(`[Auth] Token validated successfully for user: ${userDoc.email}`);
               }
             }
           } else {

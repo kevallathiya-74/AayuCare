@@ -17,6 +17,19 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
+const normalizeEnv = (value) => {
+  const v = String(value || "").trim().toLowerCase();
+  return v === "production" || v === "development" || v === "test" ? v : null;
+};
+
+const normalizeUrl = (value) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  const trimmed = value.trim();
+  return trimmed.replace(/\/+$/, "");
+};
+
 /**
  * Get environment variable or fallback to expo config
  */
@@ -34,21 +47,42 @@ const getEnvVar = (key, fallback = null) => {
   return fallback;
 };
 
+const runtimeNodeEnv =
+  normalizeEnv(getEnvVar("EXPO_PUBLIC_NODE_ENV")) ||
+  normalizeEnv(getEnvVar("NODE_ENV")) ||
+  (__DEV__ ? "development" : "production");
+
+const isDevEnv = runtimeNodeEnv !== "production";
+
 /**
  * Get the backend API URL based on environment
  */
 const getApiBaseUrl = () => {
-  // Check for explicit environment variable first
-  const envUrl = getEnvVar("API_BASE_URL");
-  if (envUrl) {
+  const explicitUrl = normalizeUrl(
+    getEnvVar("EXPO_PUBLIC_API_BASE_URL") ||
+    getEnvVar("API_BASE_URL")
+  );
+  if (explicitUrl) {
     if (__DEV__) {
-      console.log('[APP_CONFIG] Using explicit API URL:', envUrl);
+      console.log('[APP_CONFIG] Using explicit API URL:', explicitUrl);
     }
-    return envUrl;
+    return explicitUrl;
+  }
+
+  if (!isDevEnv) {
+    const prodUrl = normalizeUrl(
+      getEnvVar("EXPO_PUBLIC_API_BASE_URL_PROD") ||
+      getEnvVar("PRODUCTION_API_URL") ||
+      getEnvVar("API_BASE_URL_PROD")
+    );
+
+    if (prodUrl) {
+      return prodUrl;
+    }
   }
 
   // Development mode auto-detection
-  if (__DEV__) {
+  if (isDevEnv) {
     const isExpoGo = Constants.appOwnership === 'expo';
     const manifestUrl = Constants.expoConfig?.hostUri;
 
@@ -86,8 +120,12 @@ const getApiBaseUrl = () => {
     }
   }
 
-  // Fallback to production backend (Render)
-  const prodUrl = getEnvVar("PRODUCTION_API_URL", "https://aayucare-backend.onrender.com/api");
+  // Production fallback from configured app extra/env only.
+  const prodUrl = normalizeUrl(
+    getEnvVar("EXPO_PUBLIC_API_BASE_URL_PROD") ||
+    getEnvVar("PRODUCTION_API_URL") ||
+    getEnvVar("API_BASE_URL_PROD")
+  );
   if (__DEV__) {
     console.log('[APP_CONFIG] Fallback to production backend:', prodUrl);
   }
@@ -125,14 +163,15 @@ export const APP_CONFIG = {
 
   // Feature Flags
   features: {
-    debugMode: __DEV__ || getEnvVar("DEBUG_MODE", "false") === "true",
+    debugMode: isDevEnv || getEnvVar("DEBUG_MODE", "false") === "true",
     verboseLogging: getEnvVar("VERBOSE_LOGGING", "false") === "true",
   },
 
   // Environment
   env: {
-    isDevelopment: __DEV__,
-    isProduction: !__DEV__,
+    nodeEnv: runtimeNodeEnv,
+    isDevelopment: isDevEnv,
+    isProduction: !isDevEnv,
     isExpoGo: Constants.appOwnership === "expo",
     platform: Platform.OS,
   },

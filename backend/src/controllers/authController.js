@@ -29,22 +29,36 @@ exports.getEmailByUserId = async (req, res, next) => {
     const { userId } = req.body;
     
     // Validate userId parameter
-    if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
-      return sendError(res, req, 'Valid userId is required', 400, 'VALIDATION_ERROR');
+    if (!userId || typeof userId !== 'string' || userId.length === 0) {
+      return sendError(res, req, 'User ID is required.', 400, 'VALIDATION_ERROR');
     }
     
-    // Sanitize userId (prevent injection)
-    const sanitizedUserId = userId.trim();
-    if (sanitizedUserId.length > 50) {
-      return sendError(res, req, 'Invalid userId format', 400, 'VALIDATION_ERROR');
+    // Exact-match policy: preserve input as-is and reject hidden whitespace differences.
+    if (userId !== userId.trim()) {
+      return sendError(
+        res,
+        req,
+        'User ID must match exactly. Remove leading or trailing spaces and use exact uppercase/lowercase.',
+        400,
+        'VALIDATION_ERROR'
+      );
     }
 
-    // Try PostgreSQL first
-    const userIdUppercase = sanitizedUserId.toUpperCase();
-    let user = await userRepository.findByUserId(userIdUppercase);
+    if (userId.length > 50) {
+      return sendError(res, req, 'User ID format is invalid.', 400, 'VALIDATION_ERROR');
+    }
+
+    // Strict case-sensitive lookup against stored user_id.
+    let user = await userRepository.findByUserId(userId);
 
     if (!user) {
-      return sendError(res, req, 'User not found', 404, 'NOT_FOUND');
+      return sendError(
+        res,
+        req,
+        'Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).',
+        404,
+        'NOT_FOUND'
+      );
     }
 
     return sendSuccess(res, req, {
@@ -113,17 +127,29 @@ exports.getSessionTokenByCredentials = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return sendError(res, req, 'Email and password are required', 400, 'VALIDATION_ERROR');
+      return sendError(res, req, 'Email/User ID and password are required exactly as provided.', 400, 'VALIDATION_ERROR');
     }
 
-    const user = await userRepository.findByEmail(String(email).trim().toLowerCase(), true);
+    const user = await userRepository.findByEmail(String(email), true);
     if (!user || !user.password_hash || !user.is_active) {
-      return sendError(res, req, 'Invalid credentials', 401, 'UNAUTHORIZED');
+      return sendError(
+        res,
+        req,
+        'Invalid credentials. Enter the exact User ID/email and password.',
+        401,
+        'UNAUTHORIZED'
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
-      return sendError(res, req, 'Invalid credentials', 401, 'UNAUTHORIZED');
+      return sendError(
+        res,
+        req,
+        'Invalid credentials. Enter the exact User ID/email and password.',
+        401,
+        'UNAUTHORIZED'
+      );
     }
 
     const { query } = require("../config/postgres");

@@ -13,8 +13,11 @@ import appStorage from "../utils/appStorage";
 // Backend Better Auth is mounted at: /api/auth/*
 // So we need: https://aayucare-backend.onrender.com (Better Auth will append /api/auth)
 const getAuthBaseURL = () => {
-  const baseURL = APP_CONFIG.api.baseURL; // https://aayucare-backend.onrender.com/api
-  return baseURL.replace(/\/api$/, ""); // Remove trailing /api -> https://aayucare-backend.onrender.com
+  const baseURL = String(APP_CONFIG?.api?.baseURL ?? "").trim(); // https://aayucare-backend.onrender.com/api
+  if (!baseURL) {
+    return "http://localhost:5000";
+  }
+  return baseURL.replace(/\/api\/?$/, ""); // Remove trailing /api -> https://aayucare-backend.onrender.com
 };
 
 // Create and configure the auth client

@@ -265,5 +265,7 @@ const createUserWithProfile = async (userData, roleData) => {
 module.exports = {
   withTransaction,
   createAppointmentWithPayment,
+  cancelAppointmentWithRefund,
+  completeAppointmentWithPayment,
   createUserWithProfile,
 };

@@ -18,10 +18,13 @@ if (!appStorage || typeof appStorage.getItem !== 'function') {
   throw new Error('appStorage module is not properly initialized');
 }
 
-// Create axios instance using centralized configuration
-const apiBaseV1 = APP_CONFIG.api.baseURL.endsWith('/v1')
-  ? APP_CONFIG.api.baseURL
-  : `${APP_CONFIG.api.baseURL}/v1`;
+// Create axios instance using centralized configuration.
+// Guard against malformed runtime config values to avoid startup crashes.
+const normalizedBaseUrl = String(APP_CONFIG?.api?.baseURL ?? '').trim().replace(/\/+$/, '');
+const safeBaseUrl = normalizedBaseUrl.length > 0 ? normalizedBaseUrl : 'http://localhost:5000/api';
+const apiBaseV1 = safeBaseUrl.endsWith('/v1')
+  ? safeBaseUrl
+  : `${safeBaseUrl}/v1`;
 
 const api = axios.create({
   baseURL: apiBaseV1,

@@ -58,10 +58,10 @@ import "./src/i18n";
 // Import theme safely with fallback
 let paperTheme;
 try {
-  // Import unified theme
+  // Import theme
   const { theme } = require("./src/theme");
   
-  // Create paperTheme adapter from unified theme
+  // Create paperTheme adapter from theme
   paperTheme = {
     colors: {
       primary: theme.colors.primary,

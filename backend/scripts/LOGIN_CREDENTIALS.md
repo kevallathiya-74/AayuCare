@@ -5,39 +5,27 @@
 
 ---
 
-## 👤 ADMIN USERS (2)
+## 👤 ADMIN USERS (1)
 
 | Name | Email | Phone | User ID |
 |------|-------|-------|---------|
-| Rajesh Kumar | rajesh.kumar@aayucare.com | 9876543210 | ADM1 |
-| Priya Sharma | priya.sharma@aayucare.com | 9876543211 | ADM2 |
+| Admin User | admin@gmail.com | 9000000001 | adm1 |
 
 ---
 
-## 👨‍⚕️ DOCTOR USERS (5)
+## 👨‍⚕️ DOCTOR USERS (1)
 
 | Name | Specialization | Email | Phone | Fee | User ID |
 |------|----------------|-------|-------|-----|---------|
-| Dr. Amit Patel | Cardiologist | amit.patel@aayucare.com | 9876543220 | ₹1000 | DOC1 |
-| Dr. Sneha Desai | Pediatrician | sneha.desai@aayucare.com | 9876543221 | ₹800 | DOC2 |
-| Dr. Vikram Singh | Orthopedic Surgeon | vikram.singh@aayucare.com | 9876543222 | ₹1200 | DOC3 |
-| Dr. Kavita Mehta | Dermatologist | kavita.mehta@aayucare.com | 9876543223 | ₹900 | DOC4 |
-| Dr. Arjun Reddy | General Physician | arjun.reddy@aayucare.com | 9876543224 | ₹700 | DOC5 |
+| Dr. Doctor User | General Physician | doctor@gmail.com | 9000000002 | ₹1000 | doc1 |
 
 ---
 
-## 🩺 PATIENT USERS (8)
+## 🩺 PATIENT USERS (1)
 
 | Name | Email | Phone | Blood Group | User ID |
 |------|-------|-------|-------------|---------|
-| Rahul Verma | rahul.verma@gmail.com | 9876543230 | O+ | PAT1 |
-| Anjali Gupta | anjali.gupta@gmail.com | 9876543232 | A+ | PAT2 |
-| Sanjay Joshi | sanjay.joshi@gmail.com | 9876543234 | B+ | PAT3 |
-| Meera Nair | meera.nair@gmail.com | 9876543236 | AB+ | PAT4 |
-| Karan Malhotra | karan.malhotra@gmail.com | 9876543238 | O- | PAT5 |
-| Pooja Iyer | pooja.iyer@gmail.com | 9876543240 | A- | PAT6 |
-| Arun Kumar | arun.kumar@gmail.com | 9876543242 | B- | PAT7 |
-| Divya Shah | divya.shah@gmail.com | 9876543244 | O+ | PAT8 |
+| Patient User | patient@gmail.com | 9000000003 | O+ | pat1 |
 
 ---
 
@@ -45,19 +33,19 @@
 
 ### Admin Login
 ```
-Email: rajesh.kumar@aayucare.com
+Email: admin@gmail.com
 Password: password123
 ```
 
 ### Doctor Login
 ```
-Email: amit.patel@aayucare.com
+Email: doctor@gmail.com
 Password: password123
 ```
 
 ### Patient Login
 ```
-Email: rahul.verma@gmail.com
+Email: patient@gmail.com
 Password: password123
 ```
 
@@ -65,17 +53,17 @@ Password: password123
 
 ## 📱 Testing Workflow
 
-1. **Login as Patient** (rahul.verma@gmail.com)
+1. **Login as Patient** (patient@gmail.com)
    - View available doctors
    - Book appointment with Dr. Amit Patel (Cardiologist)
    - View appointment details
 
-2. **Login as Doctor** (amit.patel@aayucare.com)
+2. **Login as Doctor** (doctor@gmail.com)
    - View patient appointments
    - Update appointment status
    - Add prescriptions
 
-3. **Login as Admin** (rajesh.kumar@aayucare.com)
+3. **Login as Admin** (admin@gmail.com)
    - View all users
    - Manage appointments
    - View system reports

@@ -4,12 +4,8 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start --lan",
-    "start:clear": "expo start --clear --lan",
-    "start:tunnel": "expo start --tunnel",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "build:android": "eas build --platform android",
-    "build:ios": "eas build --platform ios",
     "tunnel": "expo start --tunnel"
   },
   "dependencies": {
@@ -47,6 +43,7 @@
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-system-ui": "~4.0.9",
+    "expo-updates": "~29.0.16",
     "i18next": "^22.5.1",
     "lucide-react-native": "^0.577.0",
     "react": "19.1.0",

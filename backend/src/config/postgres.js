@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const path = require("path");
 const logger = require("../utils/logger");
 
 const normalizeDatabaseUrl = (rawUrl) => {
@@ -108,12 +109,99 @@ const connectPostgres = async () => {
     logger.info(`📊 Database: ${dbName}`);
     logger.info(`🕐 Server Time: ${result.rows[0].now}`);
 
+    // Run database migrations
+    await runMigrations();
+
     return pool;
   } catch (error) {
     logger.error("❌ PostgreSQL connection failed:", error.message);
     logger.error("Stack:", error.stack);
     throw error;
   }
+};
+
+/**
+ * Run pending database migrations
+ * Uses node-pg-migrate to manage schema versioning
+ */
+const runMigrations = async () => {
+  try {
+    const pgm = require("node-pg-migrate");
+    const migrationsPath = path.join(__dirname, "../../migrations");
+
+    logger.info("🔄 Running database migrations...");
+
+    // Call node-pg-migrate properly
+    const migrations = await pgm.default({
+      databaseUrl: process.env.DATABASE_URL || buildConnectionString(),
+      dir: migrationsPath,
+      direction: "up",
+      checkOrder: false,
+      verbose: process.env.NODE_ENV === "development",
+      migrationsTable: "pgmigrations",
+    });
+
+    if (migrations && migrations.length > 0) {
+      logger.info(`✅ Applied ${migrations.length} migration(s):`);
+      migrations.forEach((m) => logger.info(`   - ${m}`));
+    } else {
+      logger.info("✅ Database schema is up-to-date (no migrations needed)");
+    }
+  } catch (error) {
+    const message = error?.message || String(error);
+    const duplicateObjectDetected = /already exists|42P07|42P16/i.test(message);
+
+    if (duplicateObjectDetected) {
+      try {
+        const pgm = require("node-pg-migrate");
+        const migrationsPath = path.join(__dirname, "../../migrations");
+        logger.warn(
+          "⚠️ Existing schema detected while applying migrations. Marking pending migrations as applied (fake)."
+        );
+
+        const faked = await pgm.default({
+          databaseUrl: process.env.DATABASE_URL || buildConnectionString(),
+          dir: migrationsPath,
+          direction: "up",
+          fake: true,
+          checkOrder: false,
+          verbose: process.env.NODE_ENV === "development",
+          migrationsTable: "pgmigrations",
+        });
+
+        if (faked && faked.length > 0) {
+          logger.info(`✅ Faked ${faked.length} migration(s) on existing schema:`);
+          faked.forEach((m) => logger.info(`   - ${m}`));
+        } else {
+          logger.info("✅ Existing schema migration state already aligned");
+        }
+        return;
+      } catch (fakeError) {
+        logger.error(
+          "❌ Failed to fake migrations after detecting existing schema:",
+          fakeError?.message || String(fakeError)
+        );
+      }
+    }
+
+    logger.error("❌ Database migration failed:", message);
+    // In production, fail fast if migrations fail
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(`Migration failure: ${message}`);
+    }
+    // In development, log but continue (allows for manual fixes)
+    logger.warn("⚠️  Continuing despite migration error (development mode)");
+  }
+};
+
+/**
+ * Build connection string from environment variables
+ */
+const buildConnectionString = () => {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  return `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST || "localhost"}:${process.env.POSTGRES_PORT || 5432}/${process.env.POSTGRES_DB}`;
 };
 
 /**

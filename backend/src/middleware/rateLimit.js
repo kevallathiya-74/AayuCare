@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const { checkRateLimit } = require("../config/redis");
 const { sendError } = require("../utils/apiResponse");
+const logger = require("../utils/logger");
+const { APP_ENV } = require("../config/env");
 
 const buildIdentifier = (req) => {
   if (req.user?.id) {
@@ -22,48 +24,71 @@ const resolvePolicy = (req) => {
   const method = req.method;
 
   if (path.startsWith("/api/auth/sign-in") || path.startsWith("/api/auth/sign-up")) {
-    return { scope: "auth", max: 10, windowSeconds: 15 * 60 };
+    return {
+      scope: "auth",
+      max: APP_ENV.rateLimit.auth.max,
+      windowSeconds: APP_ENV.rateLimit.auth.windowSeconds,
+    };
   }
 
   if (path.startsWith("/api/v1/ai/")) {
-    return { scope: "ai", max: 20, windowSeconds: 60 * 60 };
+    return {
+      scope: "ai",
+      max: APP_ENV.rateLimit.ai.max,
+      windowSeconds: APP_ENV.rateLimit.ai.windowSeconds,
+    };
   }
 
   if (method === "GET") {
-    return { scope: "read", max: 200, windowSeconds: 15 * 60 };
+    return {
+      scope: "read",
+      max: APP_ENV.rateLimit.read.max,
+      windowSeconds: APP_ENV.rateLimit.read.windowSeconds,
+    };
   }
 
   if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-    return { scope: "write", max: 50, windowSeconds: 15 * 60 };
+    return {
+      scope: "write",
+      max: APP_ENV.rateLimit.write.max,
+      windowSeconds: APP_ENV.rateLimit.write.windowSeconds,
+    };
   }
 
   return null;
 };
 
 const tieredRateLimit = async (req, res, next) => {
-  const policy = resolvePolicy(req);
-  if (!policy) {
+  try {
+    const policy = resolvePolicy(req);
+    if (!policy) {
+      return next();
+    }
+
+    const identifier = buildIdentifier(req);
+    const key = `${policy.scope}:${identifier}`;
+    const result = await checkRateLimit(key, policy.max, policy.windowSeconds);
+
+    res.setHeader("X-RateLimit-Limit", String(policy.max));
+    res.setHeader("X-RateLimit-Remaining", String(result.remaining));
+    res.setHeader("X-RateLimit-Window", String(policy.windowSeconds));
+
+    if (!result.allowed) {
+      res.setHeader("Retry-After", String(policy.windowSeconds));
+      return sendError(
+        res,
+        req,
+        "Too many requests. Please wait before trying again.",
+        429,
+        "RATE_LIMIT_EXCEEDED"
+      );
+    }
+
+    return next();
+  } catch (error) {
+    logger.warn(`Rate limiter fallback (fail-open): ${error.message}`);
     return next();
   }
-
-  const identifier = buildIdentifier(req);
-  const key = `${policy.scope}:${identifier}`;
-  const result = await checkRateLimit(key, policy.max, policy.windowSeconds);
-
-  res.setHeader("X-RateLimit-Limit", String(policy.max));
-  res.setHeader("X-RateLimit-Remaining", String(result.remaining));
-
-  if (!result.allowed) {
-    return sendError(
-      res,
-      req,
-      "Too many requests. Please wait before trying again.",
-      429,
-      "RATE_LIMIT_EXCEEDED"
-    );
-  }
-
-  return next();
 };
 
 module.exports = { tieredRateLimit };

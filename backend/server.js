@@ -3,6 +3,9 @@
 // =============================================================================
 require("dotenv").config();
 
+const { APP_ENV } = require("./src/config/env");
+process.env.NODE_ENV = APP_ENV.nodeEnv;
+
 // =============================================================================
 // DNS FIX: Resolve MongoDB SRV connection issues on Windows (dev only)
 // =============================================================================
@@ -56,21 +59,10 @@ const { cacheHeadersMiddleware } = require("./src/middleware/cacheHeaders");
 const { tieredRateLimit } = require("./src/middleware/rateLimit");
 const { sendSuccess, sendError } = require("./src/utils/apiResponse");
 const { initAuth, getAuth } = require("./src/lib/auth");
+const { registerModules } = require("./src/modules");
 const { toNodeHandler } = require("better-auth/node");
 
 // Routes
-const authRoutes = require("./src/routes/authRoutes");
-const medicalRecordRoutes = require("./src/routes/medicalRecordRoutes");
-const appointmentRoutes = require("./src/routes/appointmentRoutes");
-const doctorRoutes = require("./src/routes/doctorRoutes");
-const aiRoutes = require("./src/routes/aiRoutes");
-const patientRoutes = require("./src/routes/patientRoutes");
-const prescriptionRoutes = require("./src/routes/prescriptionRoutes");
-const adminRoutes = require("./src/routes/adminRoutes");
-const eventRoutes = require("./src/routes/eventRoutes");
-const notificationRoutes = require("./src/routes/notificationRoutes");
-const paymentRoutes = require("./src/routes/paymentRoutes");
-const scheduleRoutes = require("./src/routes/scheduleRoutes");
 
 const app = express();
 
@@ -116,7 +108,7 @@ initializeDatabases()
   });
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet(APP_ENV.security.helmet));
 
 // CORS - explicit allowlist for production, permissive in development
 const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
@@ -161,9 +153,7 @@ app.use(tieredRateLimit);
 
 // Logging - always include status code and latency for production observability
 const morganFormat =
-  process.env.NODE_ENV === "development"
-    ? "dev"
-    : ":method :url :status :res[content-length] - :response-time ms";
+  APP_ENV.logging.morganFormat;
 app.use(morgan(morganFormat));
 
 // Request correlation ID for all requests
@@ -199,33 +189,8 @@ app.use(cacheHeadersMiddleware);
 app.set('etag', false);
 
 // API Routes (custom routes that extend Better Auth)
-// Mount custom auth endpoints on /api/user to avoid conflict with Better Auth's /api/auth/*
-app.use("/api/v1/user", authRoutes);
-app.use("/api/v1/medical-records", medicalRecordRoutes);
-app.use("/api/v1/appointments", appointmentRoutes);
-app.use("/api/v1/doctors", doctorRoutes);
-app.use("/api/v1/ai", aiRoutes);
-app.use("/api/v1/patients", patientRoutes);
-app.use("/api/v1/prescriptions", prescriptionRoutes);
-app.use("/api/v1/admin", adminRoutes);
-app.use("/api/v1/events", eventRoutes);
-app.use("/api/v1/notifications", notificationRoutes);
-app.use("/api/v1/payments", paymentRoutes);
-app.use("/api/v1/schedules", scheduleRoutes);
-
-// Backward compatibility during migration
-app.use("/api/user", authRoutes);
-app.use("/api/medical-records", medicalRecordRoutes);
-app.use("/api/appointments", appointmentRoutes);
-app.use("/api/doctors", doctorRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/patients", patientRoutes);
-app.use("/api/prescriptions", prescriptionRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/events", eventRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/schedules", scheduleRoutes);
+// Mount feature modules first (modular monolith entrypoint)
+registerModules(app);
 
 // API Root route
 app.get("/api", (req, res) => {
@@ -372,8 +337,58 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 let server;
 
+const closeConnections = async () => {
+  try {
+    await mongoose.connection.close();
+    logger.info("✅ MongoDB connection closed");
+  } catch (error) {
+    logger.warn(`⚠️ MongoDB close warning: ${error.message}`);
+  }
+
+  try {
+    await closePool();
+    logger.info("✅ PostgreSQL connection closed");
+  } catch (error) {
+    logger.warn(`⚠️ PostgreSQL close warning: ${error.message}`);
+  }
+
+  try {
+    await closeRedis();
+    logger.info("✅ Redis connection closed");
+  } catch (error) {
+    logger.warn(`⚠️ Redis close warning: ${error.message}`);
+  }
+};
+
 function startServer() {
-  server = app.listen(PORT, "0.0.0.0", () => {
+  const http = require("http");
+  server = http.createServer(app);
+
+  server.on("error", async (error) => {
+    if (error.code === "EADDRINUSE") {
+      try {
+        const response = await fetch(`http://localhost:${PORT}/api/health`, {
+          method: "GET",
+        });
+        if (response.ok) {
+          logger.warn(
+            `⚠️ Port ${PORT} is already in use by a healthy backend instance. Exiting duplicate process.`
+          );
+          await closeConnections();
+          process.exit(0);
+          return;
+        }
+      } catch (_) {
+        // Continue to fatal logging below.
+      }
+    }
+
+    logger.error(`❌ Server startup error: ${error.message}`);
+    await closeConnections();
+    process.exit(1);
+  });
+
+  server.listen(PORT, "0.0.0.0", () => {
     logger.info(
       `🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
     );
@@ -421,12 +436,7 @@ process.on("SIGINT", async () => {
   if (server) {
     server.close(async () => {
       try {
-        await mongoose.connection.close();
-        logger.info("✅ MongoDB connection closed");
-        await closePool();
-        logger.info("✅ PostgreSQL connection closed");
-        await closeRedis();
-        logger.info("✅ Redis connection closed");
+        await closeConnections();
         logger.info("✅ Process terminated!");
         process.exit(0);
       } catch (error) {
@@ -443,25 +453,23 @@ process.on("SIGINT", async () => {
 process.on("SIGTERM", async () => {
   logger.info("🛑 SIGTERM RECEIVED. Shutting down gracefully");
 
-  server.close(async () => {
+  const shutdown = async () => {
     try {
-      // Close database connections
-      await mongoose.connection.close();
-      logger.info("✅ MongoDB connection closed");
-
-      await closePool();
-      logger.info("✅ PostgreSQL connection closed");
-
-      await closeRedis();
-      logger.info("✅ Redis connection closed");
-
+      await closeConnections();
       logger.info("✅ Process terminated!");
       process.exit(0);
     } catch (error) {
       logger.error("❌ Error during graceful shutdown:", error);
       process.exit(1);
     }
-  });
+  };
+
+  if (server) {
+    server.close(shutdown);
+    return;
+  }
+
+  await shutdown();
 });
 
 module.exports = app;
