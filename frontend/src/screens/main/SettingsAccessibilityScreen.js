@@ -153,6 +153,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
       style={styles.actionRow}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={label}
     >
       <View style={styles.settingLeft}>
         <DynamicIcon
@@ -184,6 +186,8 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "Settings")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
@@ -213,7 +217,11 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
           <View style={styles.card}>
             <View style={styles.languageRow}>
               <Text style={styles.languageLabel}>Current: English</Text>
-              <TouchableOpacity style={styles.changeButton}>
+              <TouchableOpacity
+                style={styles.changeButton}
+                accessibilityRole="button"
+                accessibilityLabel="Change language"
+              >
                 <Text style={styles.changeButtonText}>Change</Text>
                 <DynamicIcon
                   name="chevron-forward"
@@ -223,13 +231,25 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             <View style={styles.languageOptions}>
-              <TouchableOpacity style={styles.languageChip}>
+              <TouchableOpacity
+                style={styles.languageChip}
+                accessibilityRole="button"
+                accessibilityLabel="Select English language"
+              >
                 <Text style={styles.languageChipText}>English</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.languageChip}>
+              <TouchableOpacity
+                style={styles.languageChip}
+                accessibilityRole="button"
+                accessibilityLabel="Select Hindi language"
+              >
                 <Text style={styles.languageChipText}>हिंदी</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.languageChip}>
+              <TouchableOpacity
+                style={styles.languageChip}
+                accessibilityRole="button"
+                accessibilityLabel="Select Gujarati language"
+              >
                 <Text style={styles.languageChipText}>ગુજરાતી</Text>
               </TouchableOpacity>
             </View>
@@ -387,7 +407,13 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>HELP & SUPPORT:</Text>
           </View>
           <View style={styles.card}>
-            <TouchableOpacity style={styles.supportItem} activeOpacity={0.7} onPress={() => openURL("tel:18001234567")}>
+            <TouchableOpacity
+              style={styles.supportItem}
+              activeOpacity={0.7}
+              onPress={() => openURL("tel:18001234567")}
+              accessibilityRole="button"
+              accessibilityLabel="Call support 1800 123 4567"
+            > 
               <Phone
                 
                 size={18}
@@ -395,7 +421,13 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               />
               <Text style={styles.supportText}>• Call: 1800-123-4567</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.supportItem} activeOpacity={0.7} onPress={() => openURL("mailto:support@aayucare.com")}>
+            <TouchableOpacity
+              style={styles.supportItem}
+              activeOpacity={0.7}
+              onPress={() => openURL("mailto:support@aayucare.com")}
+              accessibilityRole="button"
+              accessibilityLabel="Email support"
+            > 
               <Mail
                 
                 size={18}

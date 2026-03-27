@@ -360,6 +360,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               key={itemId || item.userId}
               style={[styles.patientListItem, isSelected && styles.patientListItemSelected]}
               onPress={() => setSelectedPatientId(itemId)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select patient ${item.name || "Unknown"}`}
+              accessibilityState={{ selected: isSelected }}
             >
               <View>
                 <Text style={styles.patientListName}>{item.name || "Unknown"}</Text>
@@ -516,6 +519,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                       <TouchableOpacity
                         style={styles.removeButton}
                         onPress={() => handleRemoveMedicine(med.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${med.name}`}
                       >
                         <XCircle
                           
@@ -531,6 +536,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.addMedicineButton}
                 onPress={handleAddMedicine}
+                accessibilityRole="button"
+                accessibilityLabel="Add medicine"
               >
                 <PlusCircle
                   
@@ -593,6 +600,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                       setNextVisit("");
                     }}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear next visit date"
                   >
                     <XCircle
                       
@@ -620,11 +629,19 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     <View style={styles.datePickerOverlay}>
                       <View style={styles.datePickerContainer}>
                         <View style={styles.datePickerHeader}>
-                          <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <TouchableOpacity
+                            onPress={() => setShowDatePicker(false)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Cancel date selection"
+                          >
                             <Text style={styles.datePickerCancel}>Cancel</Text>
                           </TouchableOpacity>
                           <Text style={styles.datePickerTitle}>Next Visit Date</Text>
-                          <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <TouchableOpacity
+                            onPress={() => setShowDatePicker(false)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Done selecting date"
+                          >
                             <Text style={styles.datePickerDone}>Done</Text>
                           </TouchableOpacity>
                         </View>
@@ -665,6 +682,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   onPress={() => toggleSendOption("patientApp")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Toggle send to patient mobile app"
+                  accessibilityState={{ selected: sendOptions.patientApp }}
                 >
                   <DynamicIcon
                     name={
@@ -684,6 +704,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   onPress={() => toggleSendOption("hospitalPharmacy")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Toggle send to hospital pharmacy"
+                  accessibilityState={{ selected: sendOptions.hospitalPharmacy }}
                 >
                   <DynamicIcon
                     name={
@@ -703,6 +726,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <TouchableOpacity
                   style={styles.checkboxRow}
                   onPress={() => toggleSendOption("externalPharmacy")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Toggle send to external pharmacy"
+                  accessibilityState={{ selected: sendOptions.externalPharmacy }}
                 >
                   <DynamicIcon
                     name={
@@ -750,6 +776,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.saveAndSendButton}
                 onPress={handleSavePrescription}
+                accessibilityRole="button"
+                accessibilityLabel="Save and send prescription"
               >
                 <Text style={styles.saveAndSendText}>
                   SAVE & SEND PRESCRIPTION
@@ -820,6 +848,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   key={key}
                   style={[styles.timingToggleChip, medicineForm[key] && styles.timingToggleChipActive]}
                   onPress={() => setMedicineForm((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Toggle ${label} timing`}
+                  accessibilityState={{ selected: !!medicineForm[key] }}
                 >
                   <Text style={[styles.timingToggleText, medicineForm[key] && styles.timingToggleTextActive]}>{label}</Text>
                 </TouchableOpacity>
@@ -830,12 +861,16 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               <TouchableOpacity
                 style={[styles.modalActionButton, styles.modalCancelButton]}
                 onPress={() => setShowAddMedicine(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel adding medicine"
               >
                 <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalActionButton, styles.modalSaveButton]}
                 onPress={handleSaveMedicine}
+                accessibilityRole="button"
+                accessibilityLabel="Add medicine to prescription"
               >
                 <Text style={styles.modalSaveText}>Add</Text>
               </TouchableOpacity>

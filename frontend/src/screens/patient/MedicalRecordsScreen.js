@@ -5,7 +5,7 @@
  *  - Fetches patient medical records from the API
  *  - Shows skeleton loaders while loading
  *  - Shows EmptyState when no records found
- *  - Filterable by record type (all / lab / prescription / visit / report)
+ *  - Filterable by backend-supported record types
  *  - Infinite scroll via pagination
  *  - Full error state with retry
  */
@@ -23,7 +23,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
-  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
@@ -40,7 +39,7 @@ import {
 } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { EmptyState } from "../../components/common";
-import { SkeletonLoader, SkeletonCardRow } from "../../components/ui/SkeletonLoader";
+import SkeletonLoader from "../../components/ui/SkeletonLoader";
 import { getSafeAreaEdges } from "../../utils/responsive";
 import { getPatientMedicalRecords } from "../../services/medicalRecord.service";
 import { queryKeys } from "../../config/reactQueryConfig";
@@ -54,16 +53,30 @@ import { handleSmartBack } from "../../utils/navigation";
 
 const PAGE_SIZE = 15;
 
+const RECORD_TYPE_ALIASES = {
+  lab: "lab_report",
+  visit: "doctor_visit",
+  report: "test_result",
+};
+
+const normalizeRecordType = (type = "") => {
+  const normalized = String(type || "").toLowerCase().trim();
+  return RECORD_TYPE_ALIASES[normalized] || normalized;
+};
+
 const RECORD_TYPE_FILTERS = [
   { key: "all", label: "All" },
-  { key: "lab", label: "Lab", icon: FlaskConical },
+  { key: "lab_report", label: "Lab", icon: FlaskConical },
   { key: "prescription", label: "Rx", icon: ClipboardList },
-  { key: "visit", label: "Visit", icon: Stethoscope },
-  { key: "report", label: "Report", icon: FileText },
+  { key: "doctor_visit", label: "Visit", icon: Stethoscope },
+  { key: "test_result", label: "Test", icon: Activity },
+  { key: "imaging", label: "Imaging", icon: FileText },
+  { key: "vaccination", label: "Vaccine", icon: ClipboardList },
+  { key: "other", label: "Other", icon: FileText },
 ];
 
 const TYPE_META = {
-  lab: {
+  lab_report: {
     label: "Lab Result",
     icon: FlaskConical,
     color: healthColors.accent.aqua,
@@ -75,17 +88,35 @@ const TYPE_META = {
     color: healthColors.success.main,
     bg: `${healthColors.success.main}18`,
   },
-  visit: {
+  doctor_visit: {
     label: "Doctor Visit",
     icon: Stethoscope,
     color: healthColors.primary.main,
     bg: `${healthColors.primary.main}18`,
   },
-  report: {
-    label: "Report",
+  test_result: {
+    label: "Test Result",
+    icon: Activity,
+    color: healthColors.info.main,
+    bg: `${healthColors.info.main}18`,
+  },
+  imaging: {
+    label: "Imaging",
     icon: FileText,
     color: healthColors.info.main,
     bg: `${healthColors.info.main}18`,
+  },
+  vaccination: {
+    label: "Vaccination",
+    icon: ClipboardList,
+    color: healthColors.success.main,
+    bg: `${healthColors.success.main}18`,
+  },
+  other: {
+    label: "Other",
+    icon: FileText,
+    color: healthColors.text.secondary,
+    bg: healthColors.background.secondary,
   },
   default: {
     label: "Record",
@@ -96,7 +127,7 @@ const TYPE_META = {
 };
 
 const getTypeMeta = (type = "") =>
-  TYPE_META[type.toLowerCase()] || TYPE_META.default;
+  TYPE_META[normalizeRecordType(type)] || TYPE_META.default;
 
 const formatDate = (dateStr) => {
   try {
@@ -211,7 +242,13 @@ const ErrorView = ({ message, onRetry }) => (
     <AlertCircle size={40} color={healthColors.error.main} />
     <Text style={styles.errorTitle}>Could not load records</Text>
     <Text style={styles.errorMsg}>{message || "An unexpected error occurred."}</Text>
-    <TouchableOpacity onPress={onRetry} style={styles.retryBtn} activeOpacity={0.8}>
+    <TouchableOpacity
+      onPress={onRetry}
+      style={styles.retryBtn}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel="Retry loading medical records"
+    >
       <RefreshCw size={15} color={healthColors.text.white} style={{ marginRight: 6 }} />
       <Text style={styles.retryText}>Try Again</Text>
     </TouchableOpacity>
@@ -248,7 +285,9 @@ const MedicalRecordsScreen = ({ navigation }) => {
         page: Math.floor(pageParam / PAGE_SIZE) + 1,
         limit: PAGE_SIZE,
       };
-      if (activeFilter !== "all") params.recordType = activeFilter;
+      if (activeFilter !== "all") {
+        params.recordType = normalizeRecordType(activeFilter);
+      }
 
       const res = await getPatientMedicalRecords(patientId, params);
       const incoming = Array.isArray(res) ? res : res?.records || [];

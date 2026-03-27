@@ -42,7 +42,7 @@ const QUICK_ACTIONS = [
   { icon: Calendar, color: healthColors.primary.main, label: "Today's\nAppointments", screen: "DoctorTabs", params: { screen: "TodaysAppointments" } },
   { icon: Users, color: healthColors.secondary.main, label: "Patient\nManagement", screen: "PatientManagement" },
   { icon: FileText, color: healthColors.accent.coral, label: "Create\nPrescription", screen: "CreatePrescription" },
-  { icon: UserPlus, color: healthColors.accent.green || "#43A047", label: "Walk-in\nPatient", screen: "WalkInPatient" },
+  { icon: UserPlus, color: healthColors.accent.green, label: "Walk-in\nPatient", screen: "WalkInPatient" },
 ];
 
 const DoctorHomeScreen = ({ navigation }) => {
@@ -196,7 +196,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         { icon: Calendar, iconColor: healthColors.secondary.main, label: "My Appointments", onPress: nav("DoctorTabs", { screen: "TodaysAppointments" }) },
         { icon: Users, iconColor: healthColors.accent.aqua, label: "Patient Management", onPress: nav("PatientManagement") },
         { icon: FileText, iconColor: healthColors.accent.coral, label: "Create Prescription", onPress: nav("CreatePrescription") },
-        { icon: UserPlus, iconColor: healthColors.accent.green || "#43A047", label: "Walk-in Patient", onPress: nav("WalkInPatient") },
+        { icon: UserPlus, iconColor: healthColors.accent.green, label: "Walk-in Patient", onPress: nav("WalkInPatient") },
       ],
     },
     {
@@ -225,7 +225,11 @@ const DoctorHomeScreen = ({ navigation }) => {
           <View style={styles.errorBanner}>
             <AlertTriangle  size={18} color={healthColors.error.main} />
             <Text style={styles.errorText}>{parseError(error)}</Text>
-            <TouchableOpacity onPress={refetchDashboard}>
+            <TouchableOpacity
+              onPress={refetchDashboard}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading dashboard"
+            >
               <Text style={styles.retryText}>Retry</Text>
             </TouchableOpacity>
           </View>
@@ -244,7 +248,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 
         <View style={styles.body}>
           {loading ? (
-            <View style={{ gap: 12 }}>
+            <View style={styles.loadingSkeletonWrap}>
               <SkeletonStatGrid rows={2} />
               <SkeletonCardRow />
               <SkeletonCardRow />
@@ -298,6 +302,8 @@ const DoctorHomeScreen = ({ navigation }) => {
                 style={styles.quickCard}
                 onPress={() => navigation.navigate(screen, params)}
                 activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={label.replace("\n", " ")}
               >
                 <View style={[styles.quickIcon, { backgroundColor: color + "18" }]}>
                   {Icon ? <Icon size={26} color={color} /> : null}
@@ -360,6 +366,7 @@ const DoctorHomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: healthColors.background.secondary },
   body: { paddingHorizontal: getScreenPadding(), paddingTop: 20, paddingBottom: 24 },
+  loadingSkeletonWrap: { gap: theme.spacing.sm + theme.spacing.xs },
   sectionHeader: { marginTop: 24, marginBottom: 12 },
 
   errorBanner: {

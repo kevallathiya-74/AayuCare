@@ -28,6 +28,8 @@ export { default as NetworkStatusIndicator } from "./NetworkStatusIndicator";
 export { default as AITagline } from "./AITagline";
 export { default as LanguageSelector } from "./LanguageSelector";
 export { default as CompactActionCard } from "./CompactActionCard";
+export { default as SearchField } from "./SearchField";
+export { default as ChatComposer } from "./ChatComposer";
 export * from "./CustomIcons";
 
 // ui/ sub-folder — new atomic components

@@ -26,7 +26,7 @@ const medicalRecordSchema = new mongoose.Schema({
     },
     recordType: {
         type: String,
-        enum: ['lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'other'],
+        enum: ['lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'vaccination', 'other'],
         required: true,
     },
     title: {

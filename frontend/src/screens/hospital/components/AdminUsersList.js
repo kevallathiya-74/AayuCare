@@ -71,7 +71,13 @@ const AdminUsersList = ({
           <Text style={styles.title}>{title}</Text>
         </TouchableOpacity>
         {onViewAll ? (
-          <TouchableOpacity style={styles.viewAll} onPress={onViewAll} activeOpacity={0.75}>
+          <TouchableOpacity
+            style={styles.viewAll}
+            onPress={onViewAll}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={`View all ${title}`}
+          >
             <Text style={styles.viewAllText}>View All</Text>
             <DynamicIcon name="chevron-forward" size={15} color={healthColors.primary.main} />
           </TouchableOpacity>

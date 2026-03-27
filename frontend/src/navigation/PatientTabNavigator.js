@@ -12,7 +12,7 @@ import { getTabBarHeight } from "../utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import PatientDashboard from "../screens/patient/PatientDashboard";
-import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
+import HealthMetricsScreen from "../screens/patient/HealthMetricsScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
 import SettingsScreen from "../screens/main/SettingsScreen";
 
@@ -70,7 +70,7 @@ const PatientTabNavigator = () => {
         />
         <Tab.Screen
           name="Health"
-          component={ActivityTrackerScreen}
+          component={HealthMetricsScreen}
           options={{
             tabBarLabel: "Health",
           }}

@@ -20,7 +20,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Cross, Users, User, Lock, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react-native";
+import { Cross, Users, User, Lock, AlertCircle, ShieldCheck } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "../../theme";
 import { useDispatch, useSelector } from "react-redux";
@@ -45,7 +45,7 @@ const DEV_CREDENTIALS = __DEV__
 
 const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { isLoading, error } = useSelector((state) => state.auth);
+  const { isLoading } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
 
   const [userId, setUserId] = useState("");
@@ -266,6 +266,9 @@ const LoginScreen = ({ navigation }) => {
               style={styles.forgotPassword}
               onPress={handleForgotPassword}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Forgot password"
+              accessibilityHint="Opens password reset screen"
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -277,6 +280,8 @@ const LoginScreen = ({ navigation }) => {
                   style={styles.devToggle}
                   onPress={() => setShowDevHelper(!showDevHelper)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={showDevHelper ? "Hide quick login" : "Show quick login"}
                 >
                   <DynamicIcon
                     name={showDevHelper ? "chevron-up" : "chevron-down"}
@@ -300,6 +305,8 @@ const LoginScreen = ({ navigation }) => {
                         style={[styles.devButton, { borderColor: color + "40" }]}
                         onPress={() => handleAutoFill(role)}
                         activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Use ${role} demo credentials`}
                       >
                         <DynamicIcon name={icon} size={14} color={color} />
                         <Text style={styles.devButtonText}>

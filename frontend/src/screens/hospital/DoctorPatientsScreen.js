@@ -11,7 +11,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
   Alert,
@@ -20,15 +19,15 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { FileText, Eye, UserPlus, Search, XCircle } from "lucide-react-native";
+import { FileText, Eye, UserPlus } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
-import { getScreenPadding, verticalScale } from "../../utils/responsive";
+import { getScreenPadding } from "../../utils/responsive";
 import { doctorService } from "../../services";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { logError, parseError } from "../../utils/errorHandler";
-import { SkeletonCardRow, EmptyState, ErrorRecovery } from "../../components/common";
+import { SkeletonCardRow, EmptyState, SearchField } from "../../components/common";
 
 const PAGE_SIZE = 20;
 
@@ -170,7 +169,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
             <FileText
               
               size={14}
-              color={healthColors.primary.contrastText || "#fff"}
+              color={healthColors.text.white}
             />
             <Text style={styles.rxButtonText}>Write Rx</Text>
           </TouchableOpacity>
@@ -208,6 +207,8 @@ const DoctorPatientsScreen = ({ navigation }) => {
           style={styles.walkInButton}
           onPress={() => navigation.navigate("WalkInPatient")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Register walk-in patient"
         >
           <UserPlus  size={20} color={healthColors.primary.main} />
         </TouchableOpacity>
@@ -215,31 +216,19 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
       {/* Search */}
       <View style={styles.searchContainer}>
-        <Search
-          
-          size={18}
-          color={healthColors.text.secondary}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name or phone…"
+        <SearchField
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor={healthColors.text.disabled}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
+          placeholder="Search by name or phone..."
+          loading={isRefetching}
+          onClear={() => setSearchQuery("")}
+          accessibilityLabel="Search patients"
         />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
-            <XCircle  size={18} color={healthColors.text.disabled} />
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* List */}
       {loading ? (
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingSkeletonWrap}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
@@ -336,28 +325,12 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.light + "20",
   },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.card,
     marginHorizontal: getScreenPadding(),
     marginVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    paddingHorizontal: 12,
-    height: 44,
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.body,
-    color: healthColors.text.primary,
-    paddingVertical: 0,
-  },
-  clearButton: {
-    padding: 4,
+  loadingSkeletonWrap: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   listContent: {
     paddingHorizontal: getScreenPadding(),
@@ -376,11 +349,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: healthColors.border.light,
-    shadowColor: healthColors.shadows?.small || "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
+    ...theme.shadows.sm,
   },
   cardLeft: {
     flex: 1,
@@ -436,7 +405,7 @@ const styles = StyleSheet.create({
   rxButtonText: {
     fontSize: theme.typography.sizes.bodySmall,
     fontWeight: "600",
-    color: healthColors.primary.contrastText || "#fff",
+    color: healthColors.text.white,
   },
   historyButton: {
     padding: 6,

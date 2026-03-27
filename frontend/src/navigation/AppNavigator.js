@@ -21,6 +21,7 @@ import { queryKeys } from "../config/reactQueryConfig";
 import adminService from "../services/admin.service";
 import {
   appointmentService,
+  doctorService,
   medicalRecordService,
   notificationService,
   prescriptionService,
@@ -53,14 +54,13 @@ import ProfileScreen from "../screens/patient/ProfileScreen";
 import PatientEditProfileScreen from "../screens/patient/PatientEditProfileScreen";
 import MyPrescriptionsScreen from "../screens/patient/MyPrescriptionsScreen";
 import NotificationsScreen from "../screens/patient/NotificationsScreen";
-import ActivityTrackerScreen from "../screens/patient/ActivityTrackerScreen";
 import HealthMetricsScreen from "../screens/patient/HealthMetricsScreen";
-import WomensHealthScreen from "../screens/patient/WomensHealthScreen";
 import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
 import HospitalEventsScreen from "../screens/patient/HospitalEventsScreen";
 import PharmacyBillingScreen from "../screens/patient/PharmacyBillingScreen";
 import AIHealthAssistantScreen from "../screens/patient/AIHealthAssistantScreen";
 import SpecialistCareFinderScreen from "../screens/patient/SpecialistCareFinderScreen";
+import DoctorProfileViewScreen from "../screens/patient/DoctorProfileViewScreen";
 import AppointmentBookingScreen from "../screens/patient/AppointmentBookingScreen";
 import MedicalRecordsScreen from "../screens/patient/MedicalRecordsScreen";
 import AISymptomChecker from "../screens/patient/AISymptomChecker";
@@ -293,7 +293,6 @@ const AppNavigator = () => {
         "PharmacyBilling",
         "MyReports",
         "DiseaseInfo",
-        "WomensHealth",
         "HealthMetrics",
       ],
     };
@@ -388,10 +387,18 @@ const AppNavigator = () => {
       });
     }
 
-    if (role === "admin" || role === "doctor") {
+    if (role === "admin") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboardStats.admin(),
         queryFn: () => adminService.getDashboardStats(),
+        staleTime: 60 * 1000,
+      });
+    }
+
+    if (role === "doctor") {
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.dashboardStats.doctor(user.id),
+        queryFn: () => doctorService.getDashboard(),
         staleTime: 60 * 1000,
       });
     }
@@ -566,14 +573,6 @@ const AppNavigator = () => {
                 />
 
                 <Stack.Screen
-                  name="ActivityTracker"
-                  component={ActivityTrackerScreen}
-                />
-                <Stack.Screen
-                  name="WomensHealth"
-                  component={WomensHealthScreen}
-                />
-                <Stack.Screen
                   name="DiseaseInfo"
                   component={DiseaseInfoScreen}
                 />
@@ -592,6 +591,10 @@ const AppNavigator = () => {
                 <Stack.Screen
                   name="SpecialistCareFinder"
                   component={SpecialistCareFinderScreen}
+                />
+                <Stack.Screen
+                  name="DoctorProfileView"
+                  component={DoctorProfileViewScreen}
                 />
                 <Stack.Screen
                   name="AppointmentBooking"

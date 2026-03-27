@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
 import {
   View,
@@ -17,7 +17,6 @@ import {
   RefreshControl,
   Alert,
   Switch,
-  TextInput,
   Modal,
 } from "react-native";
 import {
@@ -25,12 +24,12 @@ import {
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { User, Mail, Phone, Edit, Trash2, ArrowLeft, Plus, Search, XCircle, X } from "lucide-react-native";
+import { User, Mail, Phone, Edit, Trash2, ArrowLeft, Plus, X } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { doctorService, adminService } from "../../services";
 import { logError, parseError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
-import { EmptyState, SkeletonCardRow } from "../../components/common";
+import { EmptyState, SearchField, SkeletonCardRow } from "../../components/common";
 import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 import { handleSmartBack } from "../../utils/navigation";
@@ -522,45 +521,18 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
       {/* Search Section */}
       <View style={styles.searchSection}>
-        <View style={styles.searchInputWrapper}>
-          <Search
-            
-            size={20}
-            color={healthColors.text.secondary}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by name, specialization..."
-            placeholderTextColor={healthColors.text.disabled}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            accessibilityLabel="Search doctors"
-          />
-          {searchLoading && (
-            <ActivityIndicator
-              size="small"
-              color={healthColors.primary.main}
-            />
-          )}
-          {searchQuery.length > 0 && !searchLoading && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery("")}
-              accessibilityRole="button"
-              accessibilityLabel="Clear search"
-            >
-              <XCircle
-                
-                size={20}
-                color={healthColors.text.disabled}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchField
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search by name, specialization..."
+          loading={searchLoading && !loading}
+          onClear={() => setSearchQuery("")}
+          accessibilityLabel="Search doctors"
+        />
       </View>
 
       {loading ? (
-        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.loadingSkeletonWrap}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : (
         <FlatList
           data={doctors}
@@ -746,19 +718,9 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.sm + theme.spacing.xs,
     backgroundColor: healthColors.background.primary,
   },
-  searchInputWrapper: {
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.neutral.gray100,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
+  loadingSkeletonWrap: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,

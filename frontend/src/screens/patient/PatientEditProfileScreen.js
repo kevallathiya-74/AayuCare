@@ -183,7 +183,12 @@ const PatientEditProfileScreen = ({ navigation }) => {
         }}
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => handleSmartBack(navigation, "PatientTabs", { screen: "Profile" })}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => handleSmartBack(navigation, "PatientTabs", { screen: "Profile" })}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <ArrowLeft  size={22} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Edit Profile</Text>
@@ -219,6 +224,9 @@ const PatientEditProfileScreen = ({ navigation }) => {
                   key={bg}
                   style={[styles.chip, form.bloodGroup === bg && styles.chipActive]}
                   onPress={() => handleChange("bloodGroup", bg)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select blood group ${bg}`}
+                  accessibilityState={{ selected: form.bloodGroup === bg }}
                 >
                   <Text style={[styles.chipText, form.bloodGroup === bg && styles.chipTextActive]}>{bg}</Text>
                 </TouchableOpacity>
@@ -234,6 +242,9 @@ const PatientEditProfileScreen = ({ navigation }) => {
                   key={g}
                   style={[styles.chip, form.gender === g && styles.chipActive]}
                   onPress={() => handleChange("gender", g)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select gender ${g}`}
+                  accessibilityState={{ selected: form.gender === g }}
                 >
                   <Text style={[styles.chipText, form.gender === g && styles.chipTextActive]}>
                     {g.charAt(0).toUpperCase() + g.slice(1)}
@@ -245,7 +256,12 @@ const PatientEditProfileScreen = ({ navigation }) => {
           {/* Date of Birth Picker */}
           <View style={styles.pickerGroup}>
             <Text style={styles.pickerLabel}>Date of Birth</Text>
-            <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowDobPicker(true)}>
+            <TouchableOpacity
+              style={styles.datePickerButton}
+              onPress={() => setShowDobPicker(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Select date of birth"
+            >
               <Calendar  size={18} color={healthColors.text.secondary} />
               <Text style={[styles.datePickerText, !form.dateOfBirth && styles.datePickerPlaceholder]}>
                 {form.dateOfBirth || "Select date of birth"}
@@ -300,11 +316,19 @@ const PatientEditProfileScreen = ({ navigation }) => {
           <View style={styles.pickerModalOverlay}>
             <View style={styles.pickerModalContent}>
               <View style={styles.pickerModalHeader}>
-                <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                <TouchableOpacity
+                  onPress={() => setShowDobPicker(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel date selection"
+                >
                   <Text style={styles.pickerDone}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={styles.pickerTitle}>Date of Birth</Text>
-                <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                <TouchableOpacity
+                  onPress={() => setShowDobPicker(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Done selecting date"
+                >
                   <Text style={styles.pickerDone}>Done</Text>
                 </TouchableOpacity>
               </View>

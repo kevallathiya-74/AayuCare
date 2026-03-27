@@ -40,6 +40,44 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { handleSmartBack } from "../../utils/navigation";
 
+const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+const toDisplayText = (value, fallback = "N/A") => {
+  if (value == null) return fallback;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : fallback;
+  }
+  if (Array.isArray(value)) {
+    const items = value.map((item) => String(item || "").trim()).filter(Boolean);
+    return items.length ? items.join(", ") : fallback;
+  }
+  if (isPlainObject(value)) {
+    const values = Object.values(value)
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+    return values.length ? values.join(", ") : fallback;
+  }
+  return fallback;
+};
+
+const getDoctorSpecialtyText = (doctor) =>
+  toDisplayText(doctor?.specialization || doctor?.specialty, "General Medicine");
+
+const getDoctorExperienceText = (doctor) => {
+  const raw = doctor?.experience;
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return `${raw} years exp`;
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return raw.toLowerCase().includes("year") ? raw.trim() : `${raw.trim()} years exp`;
+  }
+  return "Experience unavailable";
+};
+
 const AppointmentBookingScreen = ({ navigation, route }) => {
   // Get authenticated user for hospitalId
   const { user } = useSelector((state) => state.auth);
@@ -296,6 +334,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           style={styles.calendarButton}
           onPress={() => navigation.navigate("MyAppointments")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Open my appointments"
         >
           <Calendar
             
@@ -361,6 +401,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               style={styles.specialtyCard}
               onPress={() => setShowSpecialtyModal(true)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Select specialty"
             >
               <Cross
                 
@@ -390,6 +432,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     <Text style={styles.modalTitle}>Select Specialty</Text>
                     <TouchableOpacity
                       onPress={() => setShowSpecialtyModal(false)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Close specialty list"
                     >
                       <X
                         
@@ -420,6 +464,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                             setShowSpecialtyModal(false);
                           }}
                           activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Select ${specialty}`}
+                          accessibilityState={{ selected: selectedSpecialty === specialty }}
                         >
                           <Text
                             style={[
@@ -478,6 +525,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                   ]}
                   onPress={() => setSelectedDoctor(doctor)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Choose doctor ${doctor.name}`}
+                  accessibilityState={{ selected: selectedDoctorId === (doctor._id || doctor.id) }}
                 >
                   <View style={styles.doctorAvatar}>
                     <User
@@ -489,8 +539,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                   <View style={styles.doctorInfo}>
                     <Text style={styles.doctorName}>{doctor.name}</Text>
                     <Text style={styles.doctorDetails}>
-                      {doctor.specialization || doctor.specialty} •{" "}
-                      {doctor.experience} years exp
+                      {getDoctorSpecialtyText(doctor)} • {getDoctorExperienceText(doctor)}
                     </Text>
                     <View style={styles.doctorStats}>
                       <View style={styles.ratingContainer}>
@@ -539,6 +588,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 ]}
                 onPress={() => setAppointmentType("in-person")}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Choose in-person appointment"
+                accessibilityState={{ selected: appointmentType === "in-person" }}
               >
                 <View
                   style={[
@@ -574,6 +626,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 ]}
                 onPress={() => setAppointmentType("telemedicine")}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Choose telemedicine appointment"
+                accessibilityState={{ selected: appointmentType === "telemedicine" }}
               >
                 <View
                   style={[
@@ -618,6 +673,8 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               style={styles.dateCard}
               onPress={() => setShowDatePicker(true)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Select appointment date"
             >
               <Calendar
                 
@@ -644,7 +701,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                   <View style={styles.datePickerContainer}>
                     <View style={styles.datePickerHeader}>
                       <Text style={styles.datePickerTitle}>Select Date</Text>
-                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(false)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Close date picker"
+                      >
                         <Text style={styles.datePickerDone}>Done</Text>
                       </TouchableOpacity>
                     </View>
@@ -692,6 +753,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                   onPress={() => isAvailable && setSelectedTime(slot)}
                   activeOpacity={isAvailable ? 0.7 : 1}
                   disabled={!isAvailable}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select time ${convertTo12Hour(slot)}`}
+                  accessibilityState={{ disabled: !isAvailable, selected: selectedTime === slot }}
                 >
                   <Text
                     style={[

@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -22,7 +21,7 @@ import { ChevronDown, X, Check, Calendar } from "lucide-react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
-import { Button } from "../../components/common";
+import { Button, Input } from "../../components/common";
 import logger from "../../utils/logger";
 import { DynamicIcon } from "../../components/common";
 import { queryKeys } from "../../config/reactQueryConfig";
@@ -314,35 +313,31 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     multiline = false
   ) => (
     <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <ChevronDown
-          name={icon}
-          size={20}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.tertiary
+      <Input
+        label={label}
+        value={formData[key]}
+        onChangeText={(value) => {
+          setFormData({ ...formData, [key]: value });
+          if (errors[key]) {
+            setErrors({ ...errors, [key]: null });
           }
-          style={styles.inputIcon}
-        />
-        <TextInput
-          style={[styles.input, multiline && styles.textArea]}
-          value={formData[key]}
-          onChangeText={(value) => {
-            setFormData({ ...formData, [key]: value });
-            if (errors[key]) {
-              setErrors({ ...errors, [key]: null });
-            }
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          keyboardType={keyboardType}
-          autoCapitalize={key === "email" ? "none" : "sentences"}
-          editable={!updatePatientMutation.isPending}
-          multiline={multiline}
-          numberOfLines={multiline ? 3 : 1}
-        />
-      </View>
-      {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
+        }}
+        placeholder={placeholder}
+        keyboardType={keyboardType}
+        autoCapitalize={key === "email" ? "none" : "sentences"}
+        disabled={updatePatientMutation.isPending}
+        multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        leftIcon={
+          <DynamicIcon
+            name={icon}
+            size={20}
+            color={errors[key] ? healthColors.error.main : healthColors.text.tertiary}
+          />
+        }
+        error={errors[key]}
+        style={styles.formInput}
+      />
     </View>
   );
 
@@ -353,6 +348,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         style={[styles.inputWrapper, errors[key] && styles.inputError]}
         onPress={() => setShowPicker(true)}
         disabled={updatePatientMutation.isPending}
+        accessibilityRole="button"
+        accessibilityLabel={`Select ${label}`}
       >
         <DynamicIcon
           name={icon}
@@ -399,7 +396,11 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         <View style={styles.dropdownContainer}>
           <View style={styles.dropdownHeader}>
             <Text style={styles.dropdownTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close selection"
+            >
               <X
                 
                 size={24}
@@ -417,6 +418,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                   selectedValue === item && styles.dropdownItemSelected,
                 ]}
                 onPress={() => onSelect(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${item}`}
               >
                 <Text
                   style={[
@@ -460,6 +463,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               onPress={handleClose}
               style={styles.closeButton}
               disabled={updatePatientMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Close patient profile editor"
             >
               <X
                 
@@ -500,6 +505,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                 ]}
                 onPress={() => setShowDatePicker(true)}
                 disabled={updatePatientMutation.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Select date of birth"
               >
                 <Calendar
                   
@@ -596,6 +603,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               style={[styles.button, styles.cancelButton]}
               onPress={handleClose}
               disabled={updatePatientMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel editing patient profile"
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -690,6 +699,9 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: theme.spacing.md,
+  },
+  formInput: {
+    marginBottom: 0,
   },
   label: {
     fontSize: theme.typography.sizes.lg,

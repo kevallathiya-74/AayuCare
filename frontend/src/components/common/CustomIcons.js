@@ -106,15 +106,6 @@ export const PharmacyIcon = (props) => (
   />
 );
 
-export const WomensHealthIcon = (props) => (
-  <IconWithBackground
-    name="heart"
-    gradient
-    gradientColors={[healthColors.hospital.pink, healthColors.error.main]}
-    {...props}
-  />
-);
-
 export const ActivityIcon = (props) => (
   <IconWithBackground
     name="walk"
@@ -177,7 +168,6 @@ export default {
   AppointmentIcon,
   HealthMetricsIcon,
   PharmacyIcon,
-  WomensHealthIcon,
   ActivityIcon,
   DiseaseLibraryIcon,
   VoiceIcon,

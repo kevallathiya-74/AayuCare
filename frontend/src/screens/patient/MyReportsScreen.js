@@ -121,6 +121,8 @@ const MyReportsScreen = ({ navigation }) => {
           <TouchableOpacity
             onPress={() => handleSmartBack(navigation, "PatientTabs")}
             style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
           >
             <ArrowLeft
               
@@ -143,6 +145,8 @@ const MyReportsScreen = ({ navigation }) => {
       style={styles.reportCard}
       onPress={() => setSelectedReport(item)}
       activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Open report ${item.title}`}
     >
       {/* Removed navigation to non-existent ReportViewer screen */}
       <View style={styles.reportLeft}>
@@ -178,6 +182,8 @@ const MyReportsScreen = ({ navigation }) => {
               Alert.alert("Not Available", "No downloadable file is attached to this report.");
             }
           }}
+          accessibilityRole="button"
+          accessibilityLabel={`Download report ${item.title}`}
         >
           <Download
             
@@ -194,6 +200,8 @@ const MyReportsScreen = ({ navigation }) => {
               message: `${item.title}\nType: ${item.type}\nDate: ${item.date}\nDoctor: ${item.doctor}`,
             }).catch(() => {});
           }}
+          accessibilityRole="button"
+          accessibilityLabel={`Share report ${item.title}`}
         >
           <Share2
             
@@ -218,6 +226,8 @@ const MyReportsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
@@ -226,7 +236,13 @@ const MyReportsScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Reports</Text>
-        <TouchableOpacity style={styles.filterButton} activeOpacity={0.7} onPress={() => setFilterModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.filterButton}
+          activeOpacity={0.7}
+          onPress={() => setFilterModalVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Open report filters"
+        >
           <Filter  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
@@ -283,7 +299,11 @@ const MyReportsScreen = ({ navigation }) => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle} numberOfLines={2}>{selectedReport?.title}</Text>
-              <TouchableOpacity onPress={() => setSelectedReport(null)}>
+              <TouchableOpacity
+                onPress={() => setSelectedReport(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Close report details"
+              >
                 <XCircle  size={28} color={healthColors.text.tertiary} />
               </TouchableOpacity>
             </View>
@@ -329,6 +349,8 @@ const MyReportsScreen = ({ navigation }) => {
                           ? Linking.openURL(url).catch(() => Alert.alert("Error", "Unable to open file."))
                           : Alert.alert("Not Available", "No file attached.");
                       }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Download selected report"
                     >
                       <Download  size={18} color={healthColors.primary.main} />
                       <Text style={styles.modalActionText}>Download</Text>
@@ -341,6 +363,8 @@ const MyReportsScreen = ({ navigation }) => {
                           message: `${selectedReport.title}\nType: ${selectedReport.type}\nDate: ${selectedReport.date}\nDoctor: ${selectedReport.doctor}`,
                         }).catch(() => {})
                       }
+                      accessibilityRole="button"
+                      accessibilityLabel="Share selected report"
                     >
                       <Share2  size={18} color={healthColors.text.secondary} />
                       <Text style={styles.modalActionText}>Share</Text>

@@ -11,18 +11,16 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ScrollView,
   StatusBar,
   ActivityIndicator,
   RefreshControl,
   Alert,
-  TextInput,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Calendar, ArrowLeft, Filter, Search } from "lucide-react-native";
+import { Calendar, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
@@ -34,6 +32,7 @@ import {
   SkeletonCardRow,
   ModalSheet,
   Button,
+  SearchField,
   FilterHeaderRow,
   FilterSectionTitle,
   FilterSelectField,
@@ -593,20 +592,17 @@ const AppointmentsScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.searchContainer}>
-        <Search size={18} color={healthColors.text.tertiary} />
-        <TextInput
+        <SearchField
           value={searchText}
           onChangeText={setSearchText}
           placeholder="Search doctor, patient, reason, status"
-          placeholderTextColor={healthColors.text.tertiary}
-          style={styles.searchInput}
-          returnKeyType="search"
+          onClear={() => setSearchText("")}
           accessibilityLabel="Search appointments"
         />
       </View>
 
       {isLoading ? (
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingSkeletonWrap}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
@@ -665,6 +661,9 @@ const AppointmentsScreen = ({ navigation }) => {
                 key={option.key}
                 style={[styles.radioOption, active && styles.radioOptionActive]}
                 onPress={() => setDraftFilters((prev) => ({ ...prev, sortBy: option.key }))}
+                accessibilityRole="button"
+                accessibilityLabel={`Sort by ${option.label}`}
+                accessibilityState={{ selected: active }}
               >
                 <View style={[styles.radioDot, active && styles.radioDotActive]} />
                 <Text style={styles.radioLabel}>{option.label}</Text>
@@ -781,21 +780,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginHorizontal: theme.spacing.md,
     marginBottom: 4,
-    minHeight: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    backgroundColor: healthColors.background.card,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
   },
-  searchInput: {
-    flex: 1,
-    color: healthColors.text.primary,
-    fontSize: theme.typography.sizes.bodyMedium,
-    paddingVertical: 10,
+  loadingSkeletonWrap: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,

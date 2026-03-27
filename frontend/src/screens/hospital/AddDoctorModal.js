@@ -66,6 +66,8 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               onPress={handleClose}
               style={styles.closeButton}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Close add doctor form"
             >
               <X
                 
@@ -154,6 +156,8 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               style={[styles.button, styles.cancelButton]}
               onPress={handleClose}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel adding doctor"
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>

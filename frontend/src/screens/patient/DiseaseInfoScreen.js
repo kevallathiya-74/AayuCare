@@ -1,891 +1,474 @@
 /**
  * Disease Info Center Screen
- * Health library with categories, disease details, symptoms, prevention
+ * Production-level, design-system aligned health library for patient education.
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
   ActivityIndicator,
-  TextInput,
   Linking,
-  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft, Library, Search, XCircle, Video, ChevronRight, FileText, Newspaper, ArrowRight, PlayCircle, Image, ShieldCheck, Utensils, Activity, Sun, Apple, Coffee, Moon, Footprints, Bike, Hand, Heart, Maximize } from "lucide-react-native";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Brain,
+  Eye,
+  Heart,
+  Info,
+  Leaf,
+  Library,
+  Search,
+  ShieldCheck,
+  Stethoscope,
+  Wind,
+  X,
+} from "lucide-react-native";
+
 import { theme, healthColors } from "../../theme";
 import {
-  getScreenPadding,
-  verticalScale,
-} from "../../utils/responsive";
-import NetworkStatusIndicator from "../../components/common/NetworkStatusIndicator";
-import ErrorRecovery from "../../components/common/ErrorRecovery";
-import EmptyState from "../../components/common/EmptyState";
-import { showError, logError, parseError } from "../../utils/errorHandler";
-import { useNetworkStatus } from "../../utils/offlineHandler";
-import { DynamicIcon } from "../../components/common";
+  Button,
+  Card,
+  EmptyState,
+  ErrorRecovery,
+  Input,
+  NetworkStatusIndicator,
+  SectionHeader,
+} from "../../components/common";
+import { getScreenPadding } from "../../utils/responsive";
 import { handleSmartBack } from "../../utils/navigation";
+import { logError, parseError, showError } from "../../utils/errorHandler";
+import { useNetworkStatus } from "../../utils/offlineHandler";
 
-const quickAccessLinks = {
-  "Video Library": "https://www.youtube.com/@WHO",
-  "Articles": "https://www.who.int/news-room/fact-sheets",
-  "Latest News": "https://www.healthline.com/health-news",
-};
-
-const featuredTopicLinks = {
-  "COVID-19 Updates": "https://www.who.int/emergencies/diseases/novel-coronavirus-2019",
-  "Mental Health Awareness": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
-  "Nutrition Guide": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
-};
-
-const categories = [
-  { icon: "heart", name: "Heart", color: healthColors.error.main },
-  { icon: "pulse", name: "Lung", color: healthColors.info.main },
-  { icon: "bulb-outline", name: "Brain", color: theme.colors.healthcare.purple },
-  { icon: "water", name: "Diabetes", color: healthColors.warning.main },
-  { icon: "medkit", name: "Bone", color: healthColors.text.secondary },
-  { icon: "eye", name: "Eye", color: theme.colors.healthcare.teal },
+const CATEGORIES = [
+  { key: "heart", name: "Heart", icon: Heart, color: healthColors.error.main },
+  { key: "lung", name: "Lung", icon: Wind, color: healthColors.info.main },
+  { key: "brain", name: "Brain", icon: Brain, color: healthColors.primary.main },
+  { key: "diabetes", name: "Diabetes", icon: Leaf, color: healthColors.warning.main },
+  { key: "eye", name: "Eye", icon: Eye, color: healthColors.success.main },
+  { key: "general", name: "General", icon: Stethoscope, color: healthColors.text.secondary },
 ];
 
+const RESOURCE_LINKS = [
+  {
+    key: "video",
+    title: "Video Library",
+    subtitle: "WHO education videos",
+    url: "https://www.youtube.com/@WHO",
+    color: healthColors.error.main,
+  },
+  {
+    key: "articles",
+    title: "Articles",
+    subtitle: "Clinical fact sheets",
+    url: "https://www.who.int/news-room/fact-sheets",
+    color: healthColors.info.main,
+  },
+  {
+    key: "news",
+    title: "Latest News",
+    subtitle: "Trusted health updates",
+    url: "https://www.healthline.com/health-news",
+    color: healthColors.warning.main,
+  },
+];
+
+const FEATURED_TOPICS = [
+  {
+    key: "covid",
+    title: "COVID-19 Updates",
+    url: "https://www.who.int/emergencies/diseases/novel-coronavirus-2019",
+  },
+  {
+    key: "mental",
+    title: "Mental Health Awareness",
+    url: "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
+  },
+  {
+    key: "nutrition",
+    title: "Nutrition Guide",
+    url: "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
+  },
+];
+
+const DISEASE_LIBRARY = {
+  Heart: {
+    title: "Cardiovascular Disease",
+    overview:
+      "A group of conditions affecting the heart and blood vessels, including coronary artery disease, rhythm disorders, and heart failure.",
+    symptoms: [
+      "Chest pain or pressure",
+      "Shortness of breath",
+      "Irregular heartbeat",
+      "Fatigue and dizziness",
+      "Swelling in legs",
+    ],
+    causes: [
+      "High blood pressure",
+      "High cholesterol",
+      "Smoking",
+      "Sedentary lifestyle",
+      "Family history",
+    ],
+    treatment: [
+      "Lifestyle modification",
+      "Blood pressure/cholesterol control",
+      "Structured exercise",
+      "Clinical follow-up",
+    ],
+  },
+  Lung: {
+    title: "Respiratory Disease",
+    overview:
+      "Lung diseases include asthma, COPD, infections, and inflammatory conditions that affect breathing capacity.",
+    symptoms: ["Persistent cough", "Wheezing", "Breathlessness", "Chest tightness", "Frequent infections"],
+    causes: ["Air pollution", "Smoking", "Allergens", "Occupational exposure", "Infections"],
+    treatment: ["Inhalers or medication", "Breathing exercises", "Smoking cessation", "Pulmonary review"],
+  },
+  Brain: {
+    title: "Neurological Disorders",
+    overview:
+      "Neurological disorders affect the brain, spinal cord, or nerves and can impact movement, memory, and cognition.",
+    symptoms: [
+      "Persistent headache",
+      "Weakness or numbness",
+      "Memory changes",
+      "Speech difficulty",
+      "Balance problems",
+    ],
+    causes: ["Vascular conditions", "Infections", "Degenerative changes", "Metabolic imbalance", "Trauma"],
+    treatment: ["Early diagnosis", "Medication", "Rehabilitation", "Lifestyle and risk control"],
+  },
+  Diabetes: {
+    title: "Diabetes Mellitus",
+    overview:
+      "A chronic metabolic condition where blood glucose remains elevated due to insulin deficiency or insulin resistance.",
+    symptoms: ["Frequent urination", "Increased thirst", "Unexplained weight change", "Fatigue", "Blurred vision"],
+    causes: ["Genetic predisposition", "Insulin resistance", "Obesity", "Inactive lifestyle", "Diet patterns"],
+    treatment: ["Glucose monitoring", "Diet planning", "Regular exercise", "Medication or insulin"],
+  },
+  Eye: {
+    title: "Ocular Conditions",
+    overview:
+      "Eye conditions can affect visual acuity, pressure, retina health, and optic nerve function.",
+    symptoms: ["Blurred vision", "Eye pain", "Light sensitivity", "Floaters", "Peripheral vision changes"],
+    causes: ["Aging", "Diabetes", "UV exposure", "Genetic risk", "Inflammation"],
+    treatment: ["Routine eye exams", "Medication", "Corrective lenses", "Procedure-based treatment"],
+  },
+  General: {
+    title: "General Health Conditions",
+    overview:
+      "General conditions may involve multi-system symptoms and require clinical correlation for diagnosis.",
+    symptoms: ["Fatigue", "Fever", "Body aches", "Poor appetite", "Sleep disturbance"],
+    causes: ["Infections", "Stress", "Nutritional issues", "Inflammation", "Lifestyle imbalance"],
+    treatment: ["Hydration and rest", "Symptom monitoring", "Healthy routine", "Doctor consultation"],
+  },
+};
+
+const DEFAULT_DISEASE_DETAILS = {
+  title: "Condition Overview",
+  overview: "This condition overview is educational. Consult a clinician for personalized diagnosis.",
+  symptoms: ["Symptoms vary by person and severity"],
+  causes: ["Multiple contributing factors may be present"],
+  treatment: ["Seek clinical guidance for a tailored treatment plan"],
+};
+
 const DiseaseInfoScreen = ({ navigation }) => {
-  const [selectedDisease, setSelectedDisease] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [dietChartVisible, setDietChartVisible] = useState(false);
-  const [exercisePlanVisible, setExercisePlanVisible] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { isConnected } = useNetworkStatus();
+
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [detailVisible, setDetailVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const { isConnected } = useNetworkStatus();
-  const insets = useSafeAreaInsets();
+  const [screenError, setScreenError] = useState(null);
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return categories;
-    return categories.filter((c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const keyword = searchQuery.trim().toLowerCase();
+    if (!keyword) return CATEGORIES;
+    return CATEGORIES.filter((item) => item.name.toLowerCase().includes(keyword));
   }, [searchQuery]);
 
-  const openURL = async (url) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert("Cannot Open", "Unable to open this link on your device.");
+  const selectedDetails = useMemo(() => {
+    if (!selectedCategory?.name) return DEFAULT_DISEASE_DETAILS;
+    return DISEASE_LIBRARY[selectedCategory.name] || DEFAULT_DISEASE_DETAILS;
+  }, [selectedCategory]);
+
+  const openExternalLink = useCallback(
+    async (url) => {
+      if (!isConnected) {
+        showError("No internet connection. Reconnect to open external resources.");
+        return;
       }
-    } catch (e) {
-      logError(e, { context: "DiseaseInfoScreen.openURL", url });
-      Alert.alert("Error", "Failed to open link.");
-    }
-  };
 
-  const diseaseDetails = {
-    Diabetes: {
-      name: "Diabetes Mellitus",
-      icon: "water",
-      color: healthColors.warning.main,
-      description:
-        "A metabolic disorder characterized by high blood sugar levels over prolonged periods.",
-      symptoms: [
-        "Frequent urination",
-        "Increased thirst",
-        "Unexplained weight loss",
-        "Fatigue and weakness",
-        "Blurred vision",
-        "Slow-healing wounds",
-      ],
-      prevention: [
-        "Maintain healthy weight",
-        "Exercise regularly (30 min/day)",
-        "Balanced diet with low sugar",
-        "Regular health checkups",
-        "Stress management",
-        "Adequate sleep",
-      ],
-      statistics: { prevalence: "8.7% of adults", riskAge: "45+ years" },
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (!canOpen) {
+          showError("This link cannot be opened on your device.");
+          return;
+        }
+        await Linking.openURL(url);
+      } catch (error) {
+        logError(error, { context: "DiseaseInfoScreen.openExternalLink", url });
+        showError("Unable to open this resource right now.");
+      }
     },
-    Heart: {
-      name: "Cardiovascular Disease",
-      icon: "heart",
-      color: healthColors.error.main,
-      description:
-        "A group of disorders affecting the heart and blood vessels, including coronary artery disease, heart failure, and arrhythmias.",
-      symptoms: [
-        "Chest pain or pressure",
-        "Shortness of breath",
-        "Irregular heartbeat",
-        "Fatigue and dizziness",
-        "Swelling in legs or ankles",
-        "Pain radiating to arm or jaw",
-      ],
-      prevention: [
-        "Quit smoking",
-        "Exercise 150 min/week",
-        "Control blood pressure",
-        "Maintain healthy cholesterol",
-        "Eat heart-healthy foods",
-        "Limit alcohol intake",
-      ],
-      statistics: { prevalence: "Leading cause of death", riskAge: "40+ years" },
-    },
-    Lung: {
-      name: "Respiratory Diseases",
-      icon: "pulse",
-      color: healthColors.info.main,
-      description:
-        "Conditions affecting the lungs and airways, including asthma, COPD, pneumonia, and lung cancer.",
-      symptoms: [
-        "Persistent cough",
-        "Shortness of breath",
-        "Wheezing",
-        "Chest tightness",
-        "Mucus production",
-        "Frequent respiratory infections",
-      ],
-      prevention: [
-        "Avoid smoking and second-hand smoke",
-        "Reduce air pollution exposure",
-        "Wear mask in dusty environments",
-        "Get annual flu vaccine",
-        "Maintain good indoor air quality",
-        "Regular lung function tests",
-      ],
-      statistics: { prevalence: "10% of population", riskAge: "All ages" },
-    },
-    Brain: {
-      name: "Neurological Disorders",
-      icon: "bulb-outline",
-      color: theme.colors.healthcare.purple,
-      description:
-        "Disorders affecting the brain, spinal cord, and nerves, including stroke, epilepsy, Parkinson's disease, and Alzheimer's.",
-      symptoms: [
-        "Sudden severe headache",
-        "Memory loss or confusion",
-        "Weakness or numbness",
-        "Vision disturbances",
-        "Difficulty speaking",
-        "Loss of balance or coordination",
-      ],
-      prevention: [
-        "Control blood pressure",
-        "Exercise regularly",
-        "Avoid head injuries (wear helmets)",
-        "Manage diabetes and cholesterol",
-        "Avoid smoking and excess alcohol",
-        "Stay mentally active",
-      ],
-      statistics: { prevalence: "1 in 6 people", riskAge: "55+ years" },
-    },
-    Bone: {
-      name: "Musculoskeletal Disorders",
-      icon: "medkit",
-      color: healthColors.text.secondary,
-      description:
-        "Conditions affecting bones, muscles, and joints, including arthritis, osteoporosis, and back pain.",
-      symptoms: [
-        "Joint pain and stiffness",
-        "Swelling around joints",
-        "Limited range of motion",
-        "Bone tenderness",
-        "Muscle weakness",
-        "Frequent fractures",
-      ],
-      prevention: [
-        "Calcium and Vitamin D intake",
-        "Weight-bearing exercises",
-        "Avoid smoking",
-        "Maintain healthy weight",
-        "Ergonomic posture",
-        "Regular bone density check",
-      ],
-      statistics: { prevalence: "30% of adults over 50", riskAge: "50+ years" },
-    },
-    Eye: {
-      name: "Ocular Diseases",
-      icon: "eye",
-      color: theme.colors.healthcare.teal,
-      description:
-        "Conditions affecting vision and eye health, including glaucoma, cataracts, diabetic retinopathy, and macular degeneration.",
-      symptoms: [
-        "Blurred or cloudy vision",
-        "Eye pain or redness",
-        "Flashes of light or floaters",
-        "Loss of peripheral vision",
-        "Sensitivity to light",
-        "Double vision",
-      ],
-      prevention: [
-        "Annual eye examinations",
-        "Wear UV-protective sunglasses",
-        "Control blood sugar (prevent diabetic retinopathy)",
-        "Eat leafy greens and fish",
-        "Limit screen time and take breaks",
-        "Avoid smoking",
-      ],
-      statistics: { prevalence: "2.2 billion people affected", riskAge: "40+ years" },
-    },
-  };
+    [isConnected]
+  );
 
-  const handleCategoryPress = async (category) => {
+  const handleOpenCategory = useCallback(async (category) => {
     try {
       setLoading(true);
-      setError(null);
-
-      const info = diseaseDetails[category.name];
-      if (info) {
-        setSelectedDisease(info);
-        setModalVisible(true);
-      } else {
-        // Fallback: generic placeholder for unmapped categories
-        setSelectedDisease({
-          name: `${category.name} Conditions`,
-          icon: category.icon,
-          color: category.color,
-          description: `Information about ${category.name} related conditions and disorders.`,
-          symptoms: ["Consult your doctor for specific symptoms"],
-          prevention: ["Regular checkups", "Healthy lifestyle"],
-          statistics: { prevalence: "Varies", riskAge: "All ages" },
-        });
-        setModalVisible(true);
-      }
-    } catch (err) {
-      logError(err, {
-        context: "DiseaseInfoScreen.handleCategoryPress",
-        category: category.name,
-      });
-      setError(parseError(err));
-      showError("Failed to load disease information");
+      setScreenError(null);
+      setSelectedCategory(category);
+      setDetailVisible(true);
+    } catch (error) {
+      const message = parseError(error) || "Failed to load disease details.";
+      setScreenError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleRetry = () => {
-    setError(null);
-  };
+  const closeDetailModal = useCallback(() => {
+    setDetailVisible(false);
+  }, []);
 
-  if (error) {
+  const handleRetry = useCallback(() => {
+    setScreenError(null);
+  }, []);
+
+  if (screenError) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <ErrorRecovery
-          error={error}
+          error={screenError}
           onRetry={handleRetry}
-          onDismiss={() => setError(null)}
+          onDismiss={() => setScreenError(null)}
         />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <NetworkStatusIndicator />
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={healthColors.primary.main} />
-        </View>
-      )}
-      {/* Header */}
+
       <LinearGradient
-        colors={[theme.colors.healthcare.purple, theme.colors.healthcare.purple]}
-        style={styles.header}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={healthColors.gradients.primary}
+        style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
       >
-        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
-          <ArrowLeft  size={24} color={theme.colors.white} />
+        <TouchableOpacity
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
+          style={styles.headerButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Library  size={32} color={theme.colors.white} />
-          <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Disease Info Center</Text>
-            <Text style={styles.headerSubtitle}>Health Library</Text>
-          </View>
+
+        <View style={styles.headerTitleWrap} pointerEvents="none">
+          <Text style={styles.headerTitle} numberOfLines={1}>Disease Info Center</Text>
         </View>
-        <TouchableOpacity onPress={() => setSearchVisible((v) => !v)}>
-          <Search  size={24} color={theme.colors.white} />
+
+        <TouchableOpacity
+          onPress={() => {
+            setSearchVisible((prev) => !prev);
+            if (searchVisible) setSearchQuery("");
+          }}
+          style={styles.headerButton}
+          accessibilityRole="button"
+          accessibilityLabel={searchVisible ? "Hide search" : "Show search"}
+        >
+          <Search size={theme.iconSizes.md} color={healthColors.text.white} />
         </TouchableOpacity>
       </LinearGradient>
 
-      {searchVisible && (
-        <View style={styles.searchBar}>
-          <Search  size={18} color={healthColors.text.tertiary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search diseases..."
-            placeholderTextColor={healthColors.text.tertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoFocus
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <XCircle  size={18} color={healthColors.text.tertiary} />
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
       <ScrollView
         contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 20) },
+          styles.scrollContent,
+          { paddingBottom: Math.max(insets.bottom + theme.spacing.md, theme.spacing.xl) },
         ]}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Categories Grid */}
-        <View style={styles.categoriesGrid}>
-          {filteredCategories.length === 0 ? (
-            <EmptyState
-              icon="search-outline"
-              title="No Categories Found"
-              message={`We couldn't find any health categories matching "${searchQuery}".`}
-            />
-          ) : (
-            filteredCategories.map((category) => (
-              <TouchableOpacity
-                key={category.name}
-                style={styles.categoryCard}
-                onPress={() => handleCategoryPress(category)}
-              >
-                <LinearGradient
-                  colors={[category.color, category.color + "DD"]}
-                  style={styles.categoryGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <DynamicIcon
-                    name={category.icon}
-                    size={48}
-                    color={theme.colors.text.white}
-                    style={styles.categoryIcon}
-                  />
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))
+        <View style={styles.contentColumn}>
+          {searchVisible && (
+            <Card>
+              <Input
+                label="Search"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search categories"
+                leftIcon={<Search size={theme.iconSizes.sm} color={healthColors.text.tertiary} />}
+              />
+            </Card>
           )}
-        </View>
 
-        {/* Quick Access */}
-        <View style={styles.section}>
-          <View style={styles.sectionTitleRow}>
-            <DynamicIcon
-              name="search"
-              size={20}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.sectionTitle}>QUICK ACCESS</Text>
-          </View>
-          <View style={styles.quickAccessCard}>
-            <TouchableOpacity
-              style={styles.quickAccessItem}
-              onPress={() => openURL(quickAccessLinks["Video Library"])}
-            >
-              <Video  size={24} color={healthColors.error.main} />
-              <Text style={styles.quickAccessText}>Video Library</Text>
-              <ChevronRight  size={20} color={healthColors.text.tertiary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAccessItem}
-              onPress={() => openURL(quickAccessLinks["Articles"])}
-            >
-              <FileText  size={24} color={healthColors.info.main} />
-              <Text style={styles.quickAccessText}>Articles</Text>
-              <ChevronRight  size={20} color={healthColors.text.tertiary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAccessItem}
-              onPress={() => openURL(quickAccessLinks["Latest News"])}
-            >
-              <Newspaper  size={24} color={healthColors.warning.main} />
-              <Text style={styles.quickAccessText}>Latest News</Text>
-              <ChevronRight  size={20} color={healthColors.text.tertiary} />
-            </TouchableOpacity>
-          </View>
-        </View>
+          <Card style={styles.sectionCard}>
+            <SectionHeader title="1. Disease Categories" />
 
-        {/* Featured Topics */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⭐ FEATURED TOPICS</Text>
-          <View style={styles.card}>
-            {[
-              "COVID-19 Updates",
-              "Mental Health Awareness",
-              "Nutrition Guide",
-            ].map((topic) => (
-              <TouchableOpacity
-                key={topic}
-                style={styles.topicItem}
-                onPress={() => openURL(featuredTopicLinks[topic])}
-              >
-                <View style={styles.topicDot} />
-                <Text style={styles.topicText}>{topic}</Text>
-                <ArrowRight  size={18} color={theme.colors.healthcare.purple} />
-              </TouchableOpacity>
-            ))}
-          </View>
+            {filteredCategories.length === 0 ? (
+              <EmptyState
+                icon={Info}
+                title="No matching categories"
+                message={`No results found for \"${searchQuery}\".`}
+              />
+            ) : (
+              <View style={styles.categoryGrid}>
+                {filteredCategories.map((category) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <TouchableOpacity
+                      key={category.key}
+                      style={[styles.categoryCard, { borderColor: `${category.color}33` }]}
+                      onPress={() => handleOpenCategory(category)}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open ${category.name} information`}
+                    >
+                      <View style={[styles.categoryIconWrap, { backgroundColor: `${category.color}14` }]}>
+                        <IconComponent size={theme.iconSizes.md} color={category.color} />
+                      </View>
+                      <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
+                      <ArrowUpRight size={theme.iconSizes.xs} color={healthColors.text.tertiary} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </Card>
+
+          <Card style={styles.sectionCard}>
+            <SectionHeader title="2. Learning Resources" />
+            <View style={styles.resourceList}>
+              {RESOURCE_LINKS.map((item) => (
+                <TouchableOpacity
+                  key={item.key}
+                  style={styles.resourceCard}
+                  onPress={() => openExternalLink(item.url)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${item.title}`}
+                >
+                  <View style={[styles.resourceDot, { backgroundColor: item.color }]} />
+                  <View style={styles.resourceTextWrap}>
+                    <Text style={styles.resourceTitle} numberOfLines={1}>{item.title}</Text>
+                    <Text style={styles.resourceSubtitle} numberOfLines={1}>{item.subtitle}</Text>
+                  </View>
+                  <ArrowUpRight size={theme.iconSizes.sm} color={healthColors.text.tertiary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Card>
+
+          <Card style={styles.sectionCard}>
+            <SectionHeader title="3. Featured Topics" />
+            <View style={styles.topicList}>
+              {FEATURED_TOPICS.map((topic) => (
+                <TouchableOpacity
+                  key={topic.key}
+                  style={styles.topicRow}
+                  onPress={() => openExternalLink(topic.url)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open topic ${topic.title}`}
+                >
+                  <View style={styles.topicBullet} />
+                  <Text style={styles.topicText} numberOfLines={2}>{topic.title}</Text>
+                  <ArrowUpRight size={theme.iconSizes.sm} color={healthColors.primary.main} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Card>
         </View>
       </ScrollView>
 
-      {/* Disease Detail Modal */}
       <Modal
+        visible={detailVisible}
         animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        transparent
+        onRequestClose={closeDetailModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ScrollView>
-              {selectedDisease && (
-                <>
-                  {/* Modal Header */}
-                  <View style={styles.modalHeader}>
-                    <View style={styles.modalTitleRow}>
-                      <View
-                        style={[
-                          styles.modalIconContainer,
-                          { backgroundColor: selectedDisease.color + "20" },
-                        ]}
-                      >
-                        <DynamicIcon
-                          name={selectedDisease.icon}
-                          size={32}
-                          color={selectedDisease.color}
-                        />
-                      </View>
-                      <View style={styles.modalTitleText}>
-                        <Text style={styles.modalTitle}>
-                          {selectedDisease.name}
-                        </Text>
-                      </View>
-                      <TouchableOpacity onPress={() => setModalVisible(false)}>
-                        <DynamicIcon
-                          name="close-circle"
-                          size={32}
-                          color={healthColors.text.tertiary}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.modalDescription}>
-                      {selectedDisease.description}
-                    </Text>
-                  </View>
-
-                  {/* Video Section */}
-                  <TouchableOpacity
-                    style={styles.videoSection}
-                    onPress={() => openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent((selectedDisease?.name || "") + " disease education")}`)}>
-                    <LinearGradient
-                      colors={[healthColors.warning.main, healthColors.warning.dark]}
-                      style={styles.videoGradient}
-                    >
-                      <PlayCircle  size={64} color={theme.colors.white} />
-                      <Text style={styles.videoText}>
-                        Watch Educational Video
-                      </Text>
-                      <Text style={styles.videoDuration}>
-                        Duration: 3:45 mins
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-
-                  {/* Image Gallery Button */}
-                  <TouchableOpacity
-                    style={[styles.videoSection, { marginTop: 0 }]}
-                    onPress={() => openURL(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent((selectedDisease?.name || "") + " anatomy diagram")}`)}>
-                    <LinearGradient
-                      colors={[healthColors.info.main, healthColors.info.dark]}
-                      style={styles.videoGradient}
-                    >
-                      <Image  size={48} color={theme.colors.white} />
-                      <Text style={styles.videoText}>View Images</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-
-                  {/* Statistics */}
-                  <View style={styles.statsRow}>
-                    <View style={styles.statCard}>
-                      <Text style={styles.statLabel}>Prevalence</Text>
-                      <Text style={styles.statValue}>
-                        {selectedDisease.statistics.prevalence}
-                      </Text>
-                    </View>
-                    <View style={styles.statCard}>
-                      <Text style={styles.statLabel}>Risk Age</Text>
-                      <Text style={styles.statValue}>
-                        {selectedDisease.statistics.riskAge}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Symptoms */}
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailTitle}>SYMPTOMS:</Text>
-                    {selectedDisease.symptoms.map((symptom) => (
-                      <View key={symptom} style={styles.listItem}>
-                        <Text style={styles.listBullet}>•</Text>
-                        <Text style={styles.listText}>{symptom}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Prevention */}
-                  <View style={styles.detailSection}>
-                    <View style={styles.detailTitleContainer}>
-                      <ShieldCheck
-                        
-                        size={18}
-                        color={healthColors.primary.main}
-                      />
-                      <Text style={styles.detailTitle}>PREVENTION:</Text>
-                    </View>
-                    {selectedDisease.prevention.map((item) => (
-                      <View key={item} style={styles.listItem}>
-                        <Text style={styles.listBullet}>•</Text>
-                        <Text style={styles.listText}>{item}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* Action Buttons */}
-                  <View style={styles.actionButtons}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => setDietChartVisible(true)}
-                    >
-                      <LinearGradient
-                        colors={[healthColors.success.main, healthColors.success.dark]}
-                        style={styles.actionGradient}
-                      >
-                        <Utensils
-                          
-                          size={18}
-                          color={theme.colors.white}
-                        />
-                        <Text style={styles.actionButtonText}>Diet Chart</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => setExercisePlanVisible(true)}
-                    >
-                      <LinearGradient
-                        colors={[healthColors.info.main, healthColors.info.dark]}
-                        style={styles.actionGradient}
-                      >
-                        <Activity
-                          
-                          size={18}
-                          color={theme.colors.white}
-                        />
-                        <Text style={styles.actionButtonText}>
-                          Exercise Plan
-                        </Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Diet Chart Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={dietChartVisible}
-        onRequestClose={() => setDietChartVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Diet Chart for {selectedDisease?.name || "Diabetes"}</Text>
-              <TouchableOpacity onPress={() => setDietChartVisible(false)}>
-                <XCircle
-                  
-                  size={32}
-                  color={healthColors.text.tertiary}
-                />
+              <View style={styles.modalHeaderLeft}>
+                <Library size={theme.iconSizes.md} color={healthColors.primary.main} />
+                <Text style={styles.modalTitle} numberOfLines={2}>{selectedDetails.title}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={closeDetailModal}
+                style={styles.closeButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close details"
+              >
+                <X size={theme.iconSizes.md} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
-            <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
-              {/* Breakfast */}
-              <View style={styles.dietSection}>
-                <View style={styles.dietMealTitleContainer}>
-                  <Sun  size={18} color={healthColors.warning.main} />
-                  <Text style={styles.dietMealTitle}>
-                    BREAKFAST (7:00 - 8:00 AM)
-                  </Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Oatmeal (1 cup) with berries
-                  </Text>
-                  <Text style={styles.dietCal}>150 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• 1 Boiled egg</Text>
-                  <Text style={styles.dietCal}>70 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Green tea (unsweetened)
-                  </Text>
-                  <Text style={styles.dietCal}>0 cal</Text>
-                </View>
+
+            <ScrollView contentContainerStyle={styles.modalContent}>
+              <View style={styles.detailCard}>
+                <Text style={styles.detailSectionTitle}>Overview</Text>
+                <Text style={styles.detailBody}>{selectedDetails.overview}</Text>
               </View>
 
-              {/* Mid-Morning Snack */}
-              <View style={styles.dietSection}>
-                <View style={styles.dietMealTitleContainer}>
-                  <Apple
-                    
-                    size={18}
-                    color={healthColors.success.main}
-                  />
-                  <Text style={styles.dietMealTitle}>
-                    MID-MORNING (10:00 AM)
-                  </Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• 1 Apple or orange</Text>
-                  <Text style={styles.dietCal}>60 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Handful of almonds (5-6)
-                  </Text>
-                  <Text style={styles.dietCal}>50 cal</Text>
-                </View>
+              <View style={styles.detailCard}>
+                <Text style={styles.detailSectionTitle}>Symptoms</Text>
+                {selectedDetails.symptoms.map((item) => (
+                  <View key={`symptom-${item}`} style={styles.listRow}>
+                    <Text style={styles.listBullet}>•</Text>
+                    <Text style={styles.listBody}>{item}</Text>
+                  </View>
+                ))}
               </View>
 
-              {/* Lunch */}
-              <View style={styles.dietSection}>
-                <View style={styles.dietMealTitleContainer}>
-                  <Utensils
-                    
-                    size={18}
-                    color={healthColors.error.main}
-                  />
-                  <Text style={styles.dietMealTitle}>
-                    LUNCH (12:30 - 1:30 PM)
-                  </Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• Brown rice (1 cup)</Text>
-                  <Text style={styles.dietCal}>200 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Grilled chicken/fish (100g)
-                  </Text>
-                  <Text style={styles.dietCal}>150 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Mixed vegetable salad
-                  </Text>
-                  <Text style={styles.dietCal}>50 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Buttermilk (1 glass)
-                  </Text>
-                  <Text style={styles.dietCal}>40 cal</Text>
-                </View>
+              <View style={styles.detailCard}>
+                <Text style={styles.detailSectionTitle}>Causes</Text>
+                {selectedDetails.causes.map((item) => (
+                  <View key={`cause-${item}`} style={styles.listRow}>
+                    <Text style={styles.listBullet}>•</Text>
+                    <Text style={styles.listBody}>{item}</Text>
+                  </View>
+                ))}
               </View>
 
-              {/* Evening Snack */}
-              <View style={styles.dietSection}>
-                <View style={styles.dietMealTitleContainer}>
-                  <Coffee  size={18} color={healthColors.text.secondary} />
-                  <Text style={styles.dietMealTitle}>EVENING (4:00 PM)</Text>
+              <View style={styles.detailCard}>
+                <View style={styles.treatmentTitleRow}>
+                  <ShieldCheck size={theme.iconSizes.sm} color={healthColors.success.main} />
+                  <Text style={styles.detailSectionTitle}>Treatment</Text>
                 </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>
-                    • Green tea with 2 whole wheat biscuits
-                  </Text>
-                  <Text style={styles.dietCal}>80 cal</Text>
-                </View>
+                {selectedDetails.treatment.map((item) => (
+                  <View key={`treat-${item}`} style={styles.listRow}>
+                    <Text style={styles.listBullet}>•</Text>
+                    <Text style={styles.listBody}>{item}</Text>
+                  </View>
+                ))}
               </View>
 
-              {/* Dinner */}
-              <View style={styles.dietSection}>
-                <View style={styles.dietMealTitleContainer}>
-                  <Moon  size={18} color={healthColors.info.dark} />
-                  <Text style={styles.dietMealTitle}>
-                    DINNER (7:00 - 8:00 PM)
-                  </Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• 2 Whole wheat rotis</Text>
-                  <Text style={styles.dietCal}>150 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• Dal (1 bowl)</Text>
-                  <Text style={styles.dietCal}>100 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• Vegetable curry</Text>
-                  <Text style={styles.dietCal}>80 cal</Text>
-                </View>
-                <View style={styles.dietItem}>
-                  <Text style={styles.dietItemText}>• Salad</Text>
-                  <Text style={styles.dietCal}>30 cal</Text>
-                </View>
-              </View>
-
-              {/* Important Notes */}
-              <View style={styles.notesBox}>
-                <Text style={styles.notesTitle}>IMPORTANT NOTES:</Text>
-                <Text style={styles.notesText}>
-                  • Drink 8-10 glasses of water daily
-                </Text>
-                <Text style={styles.notesText}>
-                  • Avoid sugary drinks and processed foods
-                </Text>
-                <Text style={styles.notesText}>• Eat at regular intervals</Text>
-                <Text style={styles.notesText}>
-                  • Monitor blood sugar regularly
-                </Text>
-              </View>
+              <Button
+                title="Open More Clinical Resources"
+                onPress={() => openExternalLink("https://www.who.int/news-room/fact-sheets")}
+                style={styles.modalAction}
+              />
             </ScrollView>
           </View>
         </View>
       </Modal>
 
-      {/* Exercise Plan Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={exercisePlanVisible}
-        onRequestClose={() => setExercisePlanVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Exercise Plan for {selectedDisease?.name || "Diabetes"}</Text>
-              <TouchableOpacity onPress={() => setExercisePlanVisible(false)}>
-                <XCircle
-                  
-                  size={32}
-                  color={healthColors.text.tertiary}
-                />
-              </TouchableOpacity>
-            </View>
-            <ScrollView contentContainerStyle={{ padding: theme.spacing.lg }}>
-              {/* Weekly Plan */}
-              <View style={styles.exerciseDay}>
-                <Text style={styles.exerciseDayTitle}>
-                  MONDAY - WEDNESDAY - FRIDAY
-                </Text>
-                <Text style={styles.exerciseCategory}>Cardio (30 minutes)</Text>
-                <View style={styles.exerciseItem}>
-                  <Footprints  size={20} color={healthColors.success.main} />
-                  <Text style={styles.exerciseText}>
-                    Brisk Walking - 15 min
-                  </Text>
-                </View>
-                <View style={styles.exerciseItem}>
-                  <Bike  size={20} color={healthColors.success.main} />
-                  <Text style={styles.exerciseText}>Cycling - 15 min</Text>
-                </View>
-              </View>
-
-              <View style={styles.exerciseDay}>
-                <Text style={styles.exerciseDayTitle}>
-                  TUESDAY - THURSDAY - SATURDAY
-                </Text>
-                <Text style={styles.exerciseCategory}>
-                  Strength Training (30 minutes)
-                </Text>
-                <View style={styles.exerciseItem}>
-                  <Activity  size={20} color={healthColors.info.main} />
-                  <Text style={styles.exerciseText}>
-                    Push-ups - 3 sets of 10
-                  </Text>
-                </View>
-                <View style={styles.exerciseItem}>
-                  <Activity  size={20} color={healthColors.info.main} />
-                  <Text style={styles.exerciseText}>Squats - 3 sets of 15</Text>
-                </View>
-                <View style={styles.exerciseItem}>
-                  <Activity  size={20} color={healthColors.info.main} />
-                  <Text style={styles.exerciseText}>
-                    Planks - 3 sets of 30 sec
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.exerciseDay}>
-                <Text style={styles.exerciseDayTitle}>
-                  DAILY (Morning & Evening)
-                </Text>
-                <Text style={styles.exerciseCategory}>
-                  Flexibility & Breathing
-                </Text>
-                <View style={styles.exerciseItem}>
-                  <Hand
-                    
-                    size={20}
-                    color={theme.colors.healthcare.purple}
-                  />
-                  <Text style={styles.exerciseText}>Yoga - 15 min</Text>
-                </View>
-                <View style={styles.exerciseItem}>
-                  <Heart  size={20} color={theme.colors.healthcare.purple} />
-                  <Text style={styles.exerciseText}>Pranayama - 10 min</Text>
-                </View>
-              </View>
-
-              <View style={styles.exerciseDay}>
-                <Text style={styles.exerciseDayTitle}>SUNDAY</Text>
-                <Text style={styles.exerciseCategory}>Active Rest</Text>
-                <View style={styles.exerciseItem}>
-                  <Footprints  size={20} color={healthColors.warning.main} />
-                  <Text style={styles.exerciseText}>
-                    Light walking - 20 min
-                  </Text>
-                </View>
-                <View style={styles.exerciseItem}>
-                  <Maximize  size={20} color={healthColors.warning.main} />
-                  <Text style={styles.exerciseText}>Stretching - 10 min</Text>
-                </View>
-              </View>
-
-              {/* Tips */}
-              <View style={styles.notesBox}>
-                <Text style={styles.notesTitle}>EXERCISE TIPS:</Text>
-                <Text style={styles.notesText}>
-                  • Start slowly and gradually increase intensity
-                </Text>
-                <Text style={styles.notesText}>
-                  • Check blood sugar before and after exercise
-                </Text>
-                <Text style={styles.notesText}>
-                  • Stay hydrated during workouts
-                </Text>
-                <Text style={styles.notesText}>• Wear proper footwear</Text>
-                <Text style={styles.notesText}>
-                  • Consult doctor before starting new exercises
-                </Text>
-              </View>
-            </ScrollView>
-          </View>
+      {loading && (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <ActivityIndicator size="large" color={healthColors.primary.main} />
         </View>
-      </Modal>
+      )}
     </SafeAreaView>
   );
 };
@@ -898,381 +481,222 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: getScreenPadding(),
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(30),
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: getScreenPadding(),
+    paddingBottom: theme.spacing.md,
+    minHeight: theme.spacing.xxxxl,
   },
-  headerContent: {
-    flexDirection: "row",
+  headerButton: {
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
     alignItems: "center",
-    flex: 1,
-    marginLeft: theme.spacing.md,
+    justifyContent: "center",
   },
-  headerText: {
+  headerTitleWrap: {
     flex: 1,
-    marginLeft: theme.spacing.sm,
-    marginRight: theme.spacing.md,
+    alignItems: "center",
+    paddingHorizontal: theme.spacing.sm,
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.h4,
+    fontSize: theme.typography.sizes.xl,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
+    color: healthColors.text.white,
+    textAlign: "center",
   },
   headerSubtitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.withOpacity(theme.colors.white, 0.9),
+    marginTop: theme.spacing.xs,
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.white,
+    opacity: 0.92,
+    textAlign: "center",
+    lineHeight: theme.typography.sizes.bodySmall + 4,
   },
-  content: {
-    padding: getScreenPadding(),
+  scrollContent: {
+    flexGrow: 1,
   },
-  categoriesGrid: {
+  contentColumn: {
+    width: "100%",
+    maxWidth: 960,
+    alignSelf: "center",
+    paddingHorizontal: getScreenPadding(),
+    paddingTop: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  sectionCard: {
+    borderRadius: theme.borderRadius.card,
+  },
+  categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: theme.spacing.xl,
+    gap: theme.spacing.sm,
   },
   categoryCard: {
     width: "48%",
-    marginBottom: theme.spacing.md,
-    borderRadius: 16,
-    overflow: "hidden",
-    ...theme.shadows.lg,
+    minHeight: 96,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    backgroundColor: healthColors.background.card,
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  categoryGradient: {
-    padding: theme.spacing.lg,
+  categoryIconWrap: {
+    width: theme.spacing.xxl,
+    height: theme.spacing.xxl,
+    borderRadius: theme.borderRadius.full,
     alignItems: "center",
-    minHeight: 140,
     justifyContent: "center",
   },
-  categoryIcon: {
-    marginBottom: theme.spacing.md,
-  },
   categoryName: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-  },
-  sectionTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: theme.spacing.md,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: theme.spacing.xs,
-  },
-  quickAccessCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 16,
-    padding: theme.spacing.sm,
-    ...theme.shadows.md,
-  },
-  quickAccessItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: theme.spacing.md,
-  },
-  quickAccessText: {
     flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.medium,
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginLeft: theme.spacing.md,
-    marginRight: theme.spacing.md,
   },
-  card: {
+  resourceList: {
+    gap: theme.spacing.sm,
+  },
+  resourceCard: {
+    minHeight: theme.touchTargets.md + 10,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     backgroundColor: healthColors.background.card,
-    borderRadius: 16,
-    padding: theme.spacing.lg,
-    ...theme.shadows.md,
-  },
-  topicItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
+    gap: theme.spacing.sm,
   },
-  topicDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: healthColors.primary.dark,
-    marginRight: theme.spacing.md,
+  resourceDot: {
+    width: theme.spacing.sm,
+    height: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+  },
+  resourceTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  resourceTitle: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  resourceSubtitle: {
+    marginTop: 2,
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.secondary,
+  },
+  topicList: {
+    gap: theme.spacing.xs,
+  },
+  topicRow: {
+    minHeight: theme.touchTargets.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+  },
+  topicBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: healthColors.primary.main,
   },
   topicText: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    marginRight: theme.spacing.md,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: theme.colors.background.overlay,
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
-  modalContent: {
-    backgroundColor: healthColors.background.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: "90%",
-    paddingBottom: verticalScale(20),
+  modalSheet: {
+    maxHeight: "88%",
+    backgroundColor: healthColors.background.primary,
+    borderTopLeftRadius: theme.borderRadius.xxl,
+    borderTopRightRadius: theme.borderRadius.xxl,
+    overflow: "hidden",
   },
   modalHeader: {
-    padding: theme.spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
-  },
-  modalTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: theme.spacing.sm,
-  },
-  modalIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: theme.spacing.md,
-  },
-  modalTitleText: {
-    flex: 1,
-    marginRight: theme.spacing.md,
-  },
-  modalTitle: {
-    fontSize: theme.typography.sizes.h4,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  modalDescription: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    lineHeight: 20,
-  },
-  videoSection: {
-    margin: theme.spacing.lg,
-    borderRadius: 16,
-    overflow: "hidden",
-    ...theme.shadows.lg,
-  },
-  videoGradient: {
-    padding: theme.spacing.xl,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  videoText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-    marginTop: theme.spacing.sm,
-  },
-  statsRow: {
-    flexDirection: "row",
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: healthColors.background.primary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: "center",
-    marginRight: theme.spacing.md,
-  },
-  statLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  detailSection: {
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  detailTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: theme.spacing.sm,
-  },
-  detailTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: 6,
-  },
-  listItem: {
-    flexDirection: "row",
-    marginBottom: theme.spacing.sm,
-    paddingLeft: theme.spacing.sm,
-  },
-  listBullet: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginRight: theme.spacing.sm,
-  },
-  listText: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    lineHeight: 20,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
-  },
-  actionButton: {
-    flex: 1,
-    borderRadius: theme.borderRadius.md,
-    overflow: "hidden",
-    ...theme.shadows.md,
-    marginRight: theme.spacing.md,
-  },
-  actionGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
   },
-  actionButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.white,
-    marginLeft: 8,
-  },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.withOpacity(theme.colors.grays.black, 0.3),
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  videoDuration: {
-    fontSize: theme.typography.sizes.caption,
-    color: theme.withOpacity(theme.colors.white, 0.9),
-    marginTop: 8,
-  },
-  searchBar: {
+  modalHeaderLeft: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.background.primary,
-    marginHorizontal: getScreenPadding(),
-    marginBottom: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
+    gap: theme.spacing.sm,
+    flex: 1,
+    minWidth: 0,
+  },
+  modalTitle: {
+    flex: 1,
+    fontSize: theme.typography.sizes.lg,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  closeButton: {
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalContent: {
+    padding: theme.spacing.md,
     gap: theme.spacing.sm,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    paddingVertical: 0,
-  },
-  dietSection: {
-    marginBottom: theme.spacing.lg,
-    backgroundColor: healthColors.background.primary,
-    padding: theme.spacing.md,
+  detailCard: {
     borderRadius: theme.borderRadius.md,
-  },
-  dietMealTitleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: theme.spacing.sm,
-  },
-  dietMealTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginLeft: 6,
-  },
-  dietItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  dietItemText: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
-  dietCal: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.success.main,
-  },
-  notesBox: {
-    backgroundColor: theme.withOpacity(healthColors.warning.main, 0.1),
+    backgroundColor: healthColors.background.secondary,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderLeftWidth: 4,
-    borderLeftColor: healthColors.warning.main,
-    marginTop: theme.spacing.lg,
+    gap: theme.spacing.xs,
   },
-  notesTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.warning.dark,
-    marginBottom: theme.spacing.sm,
-  },
-  notesText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.warning.dark,
-    marginBottom: 4,
-  },
-  exerciseDay: {
-    marginBottom: theme.spacing.lg,
-    backgroundColor: healthColors.background.primary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-  },
-  exerciseDayTitle: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.primary.main,
-    marginBottom: theme.spacing.xs,
-  },
-  exerciseCategory: {
+  detailSectionTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: theme.spacing.md,
   },
-  exerciseItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  exerciseText: {
+  detailBody: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
-    marginLeft: theme.spacing.sm,
+    lineHeight: theme.typography.sizes.bodyLarge + 4,
+  },
+  listRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: theme.spacing.xs,
+  },
+  listBullet: {
+    color: healthColors.text.secondary,
+    fontSize: theme.typography.sizes.bodyMedium,
+    lineHeight: theme.typography.sizes.bodyLarge + 4,
+  },
+  listBody: {
+    flex: 1,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
+    lineHeight: theme.typography.sizes.bodyLarge + 4,
+  },
+  treatmentTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+    marginBottom: 2,
+  },
+  modalAction: {
+    marginTop: theme.spacing.xs,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.45)",
   },
 });
 
 export default DiseaseInfoScreen;
-
-
-

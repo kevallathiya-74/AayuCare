@@ -31,6 +31,47 @@ import { appointmentService } from "../../services";
 import { EmptyStateConfig } from "../../utils/constants";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { handleSmartBack } from "../../utils/navigation";
+import { formatDate, convertTo12Hour } from "../../utils/helpers";
+
+const getAppointmentDateLabel = (appointment) => {
+  const rawDate = appointment?.date || appointment?.appointmentDate || appointment?.appointment_date;
+  if (!rawDate) return "Date TBD";
+  try {
+    return formatDate(rawDate);
+  } catch (_) {
+    return String(rawDate);
+  }
+};
+
+const getAppointmentTimeLabel = (appointment) => {
+  const rawTime = appointment?.time || appointment?.appointmentTime || appointment?.appointment_time || appointment?.timeSlot;
+  if (!rawTime) return "Time TBD";
+
+  const normalized = String(rawTime).trim();
+
+  if (/^\d{1,2}:\d{2}$/.test(normalized)) {
+    return convertTo12Hour(normalized);
+  }
+
+  return normalized;
+};
+
+const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
+  if (!currentData?.pages) return currentData;
+
+  return {
+    ...currentData,
+    pages: currentData.pages.map((page) => {
+      const records = Array.isArray(page?.appointments) ? page.appointments : [];
+      return {
+        ...page,
+        appointments: records.filter(
+          (appointment) => (appointment?._id || appointment?.id) !== appointmentId
+        ),
+      };
+    }),
+  };
+};
 
 const MyAppointmentsScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
@@ -93,10 +134,30 @@ const MyAppointmentsScreen = ({ navigation }) => {
   const cancelAppointmentMutation = useMutation({
     mutationFn: ({ appointmentId, reason }) =>
       appointmentService.cancelAppointment(appointmentId, reason),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
-      refetch();
-      Alert.alert("Success", "Appointment cancelled successfully.");
+    onSuccess: async (_response, variables) => {
+      const cancelledAppointmentId = variables?.appointmentId;
+
+      if (cancelledAppointmentId && user?.id) {
+        const patientAppointmentQueries = queryClient.getQueriesData({
+          queryKey: queryKeys.appointments.patient(user.id),
+        });
+
+        patientAppointmentQueries.forEach(([queryKey, currentData]) => {
+          queryClient.setQueryData(
+            queryKey,
+            removeAppointmentFromInfinitePages(currentData, cancelledAppointmentId)
+          );
+        });
+      }
+
+      Alert.alert("Success", "Appointment cancelled successfully.", [
+        {
+          text: "OK",
+          onPress: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+          },
+        },
+      ]);
     },
     onError: (err) => {
       logError(err, { context: "MyAppointmentsScreen.handleCancelAppointment" });
@@ -157,7 +218,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
             size={16}
             color={healthColors.text.secondary}
           />
-          <Text style={styles.infoText}>{item.date}</Text>
+          <Text style={styles.infoLabel}>Date:</Text>
+          <Text style={styles.infoText}>{getAppointmentDateLabel(item)}</Text>
         </View>
         <View style={styles.infoRow}>
           <Clock
@@ -165,7 +227,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
             size={16}
             color={healthColors.text.secondary}
           />
-          <Text style={styles.infoText}>{item.time}</Text>
+          <Text style={styles.infoLabel}>Time:</Text>
+          <Text style={styles.infoText}>{getAppointmentTimeLabel(item)}</Text>
         </View>
         {!!item.type && (
           <View style={styles.infoRow}>
@@ -198,6 +261,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
             style={styles.actionButton}
             activeOpacity={0.7}
             onPress={() => handleRescheduleAppointment(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`Reschedule appointment with ${item.doctorName}`}
           >
             <Calendar  size={18} color={healthColors.primary.main} />
             <Text style={styles.actionText}>Reschedule</Text>
@@ -206,6 +271,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
             style={[styles.actionButton, styles.cancelButton]}
             activeOpacity={0.7}
             onPress={() => handleCancelAppointment(item)}
+            accessibilityRole="button"
+            accessibilityLabel={`Cancel appointment with ${item.doctorName}`}
           >
             <XCircle  size={18} color={healthColors.error.main} />
             <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
@@ -229,6 +296,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
@@ -246,6 +315,9 @@ const MyAppointmentsScreen = ({ navigation }) => {
           style={[styles.tab, selectedTab === "upcoming" && styles.tabActive]}
           onPress={() => handleTabChange("upcoming")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Show upcoming appointments"
+          accessibilityState={{ selected: selectedTab === "upcoming" }}
         >
           <Text
             style={[
@@ -260,6 +332,9 @@ const MyAppointmentsScreen = ({ navigation }) => {
           style={[styles.tab, selectedTab === "past" && styles.tabActive]}
           onPress={() => handleTabChange("past")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Show past appointments"
+          accessibilityState={{ selected: selectedTab === "past" }}
         >
           <Text
             style={[
@@ -281,7 +356,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
           context="loading appointments"
         />
       ) : isLoading ? (
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
@@ -467,7 +542,13 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: theme.typography.sizes.sm,
+    color: healthColors.text.primary,
+    fontWeight: theme.typography.weights.medium,
+  },
+  infoLabel: {
+    fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
+    fontWeight: theme.typography.weights.semibold,
   },
   cardFooter: {
     flexDirection: "row",
@@ -503,6 +584,10 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: theme.typography.sizes.lg,
     color: healthColors.text.secondary,
+  },
+  loadingListWrapper: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   footerLoader: {
     paddingVertical: theme.spacing.md,

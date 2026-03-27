@@ -106,7 +106,12 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
             showsVerticalScrollIndicator={false}
           >
             {/* Back Button */}
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBack}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
               <ArrowLeft size={24} color={iconColor} />
             </TouchableOpacity>
 
@@ -177,7 +182,11 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                   <Text style={styles.backToLoginText}>
                     Remember your password?
                   </Text>
-                  <TouchableOpacity onPress={handleBack}>
+                  <TouchableOpacity
+                    onPress={handleBack}
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to login"
+                  >
                     <Text
                       style={[
                         styles.backToLoginLink,
@@ -240,31 +249,31 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 50,
-    paddingBottom: 40,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xxxl - theme.spacing.md,
+    paddingBottom: theme.spacing.xl + theme.spacing.sm,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
+    borderRadius: theme.borderRadius.full,
     backgroundColor: healthColors.background.primary,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
     ...theme.shadows.md,
   },
   header: {
     alignItems: "center",
-    marginBottom: 48,
+    marginBottom: theme.spacing.xxl,
   },
   iconWrapper: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   iconGradient: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: theme.borderRadius.full,
     justifyContent: "center",
     alignItems: "center",
     ...theme.shadows.lg,
@@ -273,7 +282,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.xxl,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm + theme.spacing[2],
     letterSpacing: 0.3,
   },
   hospitalText: {
@@ -285,17 +294,17 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     textAlign: "center",
     letterSpacing: 0.2,
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.md + theme.spacing[4],
     lineHeight: 22,
   },
   hospitalSubtext: {
     color: theme.colors.success.dark,
   },
   form: {
-    marginBottom: 36,
+    marginBottom: theme.spacing.xl + theme.spacing.xs,
   },
   sendButton: {
-    marginTop: 16,
+    marginTop: theme.spacing.md,
     height: 56,
   },
   hospitalButton: {
@@ -305,7 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 28,
+    marginBottom: theme.spacing.lg + theme.spacing[4],
   },
   backToLoginText: {
     fontSize: theme.typography.sizes.sm,
@@ -313,7 +322,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
   },
   backToLoginLink: {
-    marginLeft: 6,
+    marginLeft: theme.spacing.sm - theme.spacing[2],
     fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.primary.main,
@@ -323,36 +332,36 @@ const styles = StyleSheet.create({
   },
   successContainer: {
     alignItems: "center",
-    paddingVertical: 48,
+    paddingVertical: theme.spacing.xxl,
   },
   successIcon: {
-    marginBottom: 28,
+    marginBottom: theme.spacing.lg + theme.spacing[4],
   },
   successText: {
     fontSize: theme.typography.sizes.xl,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
-    marginBottom: 14,
+    marginBottom: theme.spacing.sm + theme.spacing[1],
   },
   successSubtext: {
     fontSize: theme.typography.sizes.base,
     fontWeight: theme.typography.weights.regular,
     color: healthColors.text.secondary,
     textAlign: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.md + theme.spacing[4],
     lineHeight: 22,
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 44,
-    paddingTop: 28,
+    marginTop: theme.spacing.xl + theme.spacing.sm + theme.spacing[4],
+    paddingTop: theme.spacing.lg + theme.spacing[4],
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
   footerText: {
-    marginLeft: 10,
+    marginLeft: theme.spacing.sm + theme.spacing[2],
     fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,

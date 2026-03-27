@@ -14,6 +14,12 @@ import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { logError } from '../utils/errorHandler';
 import { APP_CONFIG } from './appConfig';
 
+const extractStatus = (error) => error?.status ?? error?.response?.status;
+const isRoleDeniedError = (error) =>
+  error?.code === 'ROLE_ACCESS_DENIED' || extractStatus(error) === 403;
+const isAuthError = (error) =>
+  error?.code === 'AUTH_EXPIRED' || extractStatus(error) === 401;
+
 /**
  * Create and configure QueryClient
  * Settings optimized for healthcare app requirements:
@@ -25,6 +31,12 @@ import { APP_CONFIG } from './appConfig';
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
+      if (isRoleDeniedError(error)) {
+        if (__DEV__) {
+          console.warn('[React Query] Blocked role-mismatched query:', error?.message);
+        }
+        return;
+      }
       if (__DEV__) {
         console.error('[React Query] Query error:', error);
       }
@@ -33,6 +45,12 @@ export const queryClient = new QueryClient({
   }),
   mutationCache: new MutationCache({
     onError: (error) => {
+      if (isRoleDeniedError(error)) {
+        if (__DEV__) {
+          console.warn('[React Query] Blocked role-mismatched mutation:', error?.message);
+        }
+        return;
+      }
       if (__DEV__) {
         console.error('[React Query] Mutation error:', error);
       }
@@ -49,14 +67,18 @@ export const queryClient = new QueryClient({
 
       // Retry failed requests (except auth errors)
       retry: (failureCount, error) => {
+        const status = extractStatus(error);
+
         // Don't retry auth errors
-        if (error?.response?.status === 401 || error?.response?.status === 403) {
+        if (isAuthError(error) || isRoleDeniedError(error)) {
           return false;
         }
+
         // Don't retry 4xx errors
-        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+        if (status >= 400 && status < 500) {
           return false;
         }
+
         // Retry up to 3 times for network/server errors
         return failureCount < 3;
       },
@@ -74,8 +96,17 @@ export const queryClient = new QueryClient({
       refetchOnMount: true,
     },
     mutations: {
-      // Retry mutations only once
-      retry: 1,
+      // Retry mutations only once for transient server/network failures.
+      retry: (failureCount, error) => {
+        const status = extractStatus(error);
+        if (isAuthError(error) || isRoleDeniedError(error)) {
+          return false;
+        }
+        if (status >= 400 && status < 500) {
+          return false;
+        }
+        return failureCount < 1;
+      },
     },
   },
 });
@@ -171,12 +202,6 @@ export const queryKeys = {
   schedules: {
     all: ['schedules'],
     doctor: (doctorId) => [...queryKeys.schedules.all, 'doctor', doctorId],
-  },
-
-  // Activity Tracker
-  activity: {
-    all: ['activity'],
-    patient: (patientId) => [...queryKeys.activity.all, 'patient', patientId],
   },
 };
 

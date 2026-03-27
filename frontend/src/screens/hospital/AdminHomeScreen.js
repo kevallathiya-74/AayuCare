@@ -207,7 +207,7 @@ const AdminHomeScreen = ({ navigation }) => {
       trend: stats.doctors.trend, screen: "ManageDoctors", isTabScreen: false },
     { title: "Total Patients", value: stats.patients.total.toLocaleString(),
       subtitle: `${stats.patients.new} new • ${stats.patients.returning} returning`,
-      icon: Users, gradient: [healthColors.accent.coral, "#E57399"],
+      icon: Users, gradient: [healthColors.accent.coral, healthColors.accent.pink],
       trend: stats.patients.trend, screen: "PatientManagement", isTabScreen: false },
     { title: "Prescriptions", value: stats.prescriptions.total,
       subtitle: `${stats.prescriptions.today} issued today`,
@@ -364,7 +364,7 @@ const AdminHomeScreen = ({ navigation }) => {
           }
         >
           {dashboardLoading ? (
-            <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 12 }}>
+            <View style={styles.loadingSkeletonWrap}>
               <SkeletonStatGrid rows={2} />
               <SkeletonCardRow />
               <SkeletonCardRow />
@@ -443,6 +443,11 @@ const AdminHomeScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: healthColors.background.secondary },
+  loadingSkeletonWrap: {
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
+  },
   bannerWrap: { paddingBottom: 8 },
   sectionWrap: { paddingVertical: 8 },
   bottomPad: { height: 24 },

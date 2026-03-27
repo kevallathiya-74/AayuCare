@@ -15,7 +15,12 @@ const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => 
     <View style={styles.headerRow}>
       <Clock  size={20} color={healthColors.primary.main} />
       <Text style={styles.title}>Recent Activities</Text>
-      <TouchableOpacity style={styles.viewAll} onPress={onToggle}>
+      <TouchableOpacity
+        style={styles.viewAll}
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityLabel={showAll ? "Show less recent activities" : "View all recent activities"}
+      >
         <Text style={styles.toggleText}>{showAll ? "Show Less" : "View All"}</Text>
         <DynamicIcon name="chevron-forward" size={15} color={healthColors.primary.main} />
       </TouchableOpacity>

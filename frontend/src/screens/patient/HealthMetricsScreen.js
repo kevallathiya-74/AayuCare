@@ -1,169 +1,253 @@
 /**
  * Health Metrics Screen
- * View and log vitals: Blood Pressure, Sugar, Temperature, Weight, BMI
+ * Patient vitals tracking with design-system compliant UI and synchronized data updates.
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
+  FlatList,
   RefreshControl,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useDispatch, useSelector } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
-import { Plus, X, ArrowLeft, PlusCircle, Clock, Heart, Droplets, Thermometer, Activity, Scale, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react-native";
-import { useSelector } from "react-redux";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Droplets,
+  Heart,
+  Plus,
+  PlusCircle,
+  Scale,
+  Thermometer,
+} from "lucide-react-native";
 import { theme, healthColors, textStyles, spacing } from "../../theme";
 import { getScreenPadding, verticalScale } from "../../utils/responsive";
 import {
-  ErrorRecovery,
-  NetworkStatusIndicator,
-  EmptyState,
-  ModalSheet,
   Button,
+  Card,
+  EmptyState,
+  ErrorRecovery,
+  Input,
+  ModalSheet,
+  NetworkStatusIndicator,
+  SectionHeader,
   SkeletonCardRow,
   SkeletonStatGrid,
 } from "../../components/common";
 import { showError, showSuccess, logError, parseError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { healthMetricsService } from "../../services";
 import { handleSmartBack } from "../../utils/navigation";
+import { fetchHealthMetrics } from "../../store/slices/healthSlice";
 
-// ── Metric config ─────────────────────────────────────────────────────────────
 const METRIC_TYPES = [
   {
     key: "bp",
     label: "Blood Pressure",
     icon: Heart,
     unit: "mmHg",
-    color: healthColors.error.main,
     fields: [
-      { key: "systolic", placeholder: "Systolic (e.g. 120)", keyboardType: "numeric" },
-      { key: "diastolic", placeholder: "Diastolic (e.g. 80)", keyboardType: "numeric" },
+      { key: "systolic", label: "Systolic", placeholder: "120", keyboardType: "numeric" },
+      { key: "diastolic", label: "Diastolic", placeholder: "80", keyboardType: "numeric" },
     ],
-    format: (m) =>
-      m?.value?.systolic && m?.value?.diastolic
-        ? `${m.value.systolic}/${m.value.diastolic}`
-        : "N/A",
-    normalRange: "90/60 – 120/80",
+    format: (metric) =>
+      metric?.value?.systolic && metric?.value?.diastolic
+        ? `${metric.value.systolic}/${metric.value.diastolic}`
+        : "No data available",
+    normalRange: "90/60 - 120/80",
   },
   {
     key: "sugar",
     label: "Blood Sugar",
     icon: Droplets,
     unit: "mg/dL",
-    color: healthColors.warning.main,
-    fields: [
-      { key: "value", placeholder: "Glucose level (e.g. 95)", keyboardType: "numeric" },
-    ],
-    format: (m) => (m?.value != null ? `${m.value}` : "N/A"),
-    normalRange: "70 – 99 (fasting)",
+    fields: [{ key: "value", label: "Glucose", placeholder: "95", keyboardType: "numeric" }],
+    format: (metric) => (metric?.value != null ? `${metric.value}` : "No data available"),
+    normalRange: "70 - 99 fasting",
   },
   {
     key: "temperature",
     label: "Temperature",
     icon: Thermometer,
-    unit: "°F",
-    color: healthColors.info.main,
-    fields: [
-      { key: "value", placeholder: "Body temp (e.g. 98.6)", keyboardType: "decimal-pad" },
-    ],
-    format: (m) => (m?.value != null ? `${m.value}°F` : "N/A"),
-    normalRange: "97.8 – 99.1 °F",
+    unit: "F",
+    fields: [{ key: "value", label: "Temperature", placeholder: "98.6", keyboardType: "decimal-pad" }],
+    format: (metric) => (metric?.value != null ? `${metric.value} F` : "No data available"),
+    normalRange: "97.8 - 99.1 F",
   },
   {
     key: "weight",
     label: "Weight",
     icon: Scale,
     unit: "kg",
-    color: healthColors.success.main,
-    fields: [
-      { key: "value", placeholder: "Weight in kg (e.g. 70)", keyboardType: "decimal-pad" },
-    ],
-    format: (m) => (m?.value != null ? `${m.value} kg` : "N/A"),
-    normalRange: "BMI-dependent",
+    fields: [{ key: "value", label: "Weight", placeholder: "70", keyboardType: "decimal-pad" }],
+    format: (metric) => (metric?.value != null ? `${metric.value} kg` : "No data available"),
+    normalRange: "BMI dependent",
   },
   {
     key: "bmi",
     label: "BMI",
     icon: Activity,
     unit: "",
-    color: healthColors.primary.main,
-    fields: [
-      { key: "value", placeholder: "BMI value (e.g. 22.5)", keyboardType: "decimal-pad" },
-    ],
-    format: (m) => (m?.value != null ? `${Number(m.value).toFixed(1)}` : "N/A"),
-    normalRange: "18.5 – 24.9",
+    fields: [{ key: "value", label: "BMI", placeholder: "22.5", keyboardType: "decimal-pad" }],
+    format: (metric) => (metric?.value != null ? `${Number(metric.value).toFixed(1)}` : "No data available"),
+    normalRange: "18.5 - 24.9",
   },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const getStatusBadge = (metricKey, value) => {
-  if (!value) return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
+  if (!value) {
+    return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
+  }
+
   if (metricKey === "bp") {
-    const { systolic, diastolic } = value;
-    if (!systolic || !diastolic) return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
-    if (systolic > 140 || diastolic > 90) return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
-    if (systolic < 90 || diastolic < 60) return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
+    const { systolic, diastolic } = value || {};
+    if (!systolic || !diastolic) {
+      return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
+    }
+    if (systolic > 140 || diastolic > 90) {
+      return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
+    }
+    if (systolic < 90 || diastolic < 60) {
+      return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
+    }
     return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
+
   if (metricKey === "sugar") {
     if (value > 140) return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
     if (value < 70) return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
     return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
+
   if (metricKey === "temperature") {
     if (value > 100.4) return { label: "Fever", color: healthColors.error.main, icon: AlertTriangle };
     if (value < 96.8) return { label: "Low", color: healthColors.info.main, icon: AlertTriangle };
     return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
+
   if (metricKey === "bmi") {
-    if (value < 18.5) return { label: "Underweight", color: healthColors.warning.main, icon: AlertTriangle };
+    if (value < 18.5) return { label: "Under", color: healthColors.warning.main, icon: AlertTriangle };
     if (value > 30) return { label: "Obese", color: healthColors.error.main, icon: AlertTriangle };
-    if (value > 25) return { label: "Overweight", color: healthColors.accent.yellow, icon: AlertTriangle };
+    if (value > 25) return { label: "Over", color: healthColors.warning.main, icon: AlertTriangle };
     return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
   }
+
   return { label: "Logged", color: healthColors.success.main, icon: CheckCircle2 };
 };
 
-const formatTimestamp = (ts) => {
-  if (!ts) return "";
-  const d = new Date(ts);
-  const isToday = d.toDateString() === new Date().toDateString();
-  if (isToday)
-    return `Today ${d.toLocaleTimeString("en-IN", {
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  const isToday = date.toDateString() === new Date().toDateString();
+  if (isToday) {
+    return `Today ${date.toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     })}`;
-  return d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+  }
+  return date.toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
-const HealthMetricsScreen = ({ navigation }) => {
-  const { user } = useSelector((state) => state.auth);
-  const { isConnected } = useNetworkStatus();
-  const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
+const normalizeMetricRecord = (record) => {
+  if (!record) return null;
 
-  // Add metric modal
+  return {
+    ...record,
+    id: record.id || record._id || `${record.type || "metric"}-${record.timestamp || Date.now()}`,
+    type: record.type,
+    value: record.value,
+    timestamp: record.timestamp || record.createdAt || new Date().toISOString(),
+  };
+};
+
+const MetricCard = React.memo(({ config, latestMetric, onAddPress }) => {
+  const badge = getStatusBadge(config.key, latestMetric?.value);
+  const StatusIcon = badge.icon;
+  const IconComponent = config.icon;
+  const hasData = badge.label !== "No Data";
+  const accentColor = healthColors.primary.main;
+
+  return (
+    <Card elevation="small" padding={false} style={styles.metricCard}>
+      <View style={styles.metricAccent} />
+      <View style={styles.metricContentRow}>
+        <View style={[styles.metricIconCircle, { backgroundColor: `${accentColor}14` }]}>
+          <IconComponent size={theme.iconSizes.md} color={accentColor} />
+        </View>
+
+        <View style={styles.metricBody}>
+          <View style={styles.metricTitleRow}>
+            <Text style={styles.metricTitle}>{config.label}</Text>
+            {!!config.unit && <Text style={styles.metricUnit}>{config.unit}</Text>}
+          </View>
+
+          <View style={styles.metricValueRow}>
+            <Text style={[styles.metricValue, !hasData && styles.metricValueEmpty]}>
+              {config.format(latestMetric)}
+            </Text>
+            <View style={[styles.statusBadge, { backgroundColor: `${badge.color}16` }]}>
+              <StatusIcon size={theme.iconSizes.xs} color={badge.color} />
+              <Text style={[styles.statusBadgeText, { color: badge.color }]}>{badge.label}</Text>
+            </View>
+          </View>
+
+          <View style={styles.metricFooter}>
+            <Text style={styles.metricRange}>Normal: {config.normalRange}</Text>
+            {!!latestMetric?.timestamp && (
+              <View style={styles.metricTimeWrap}>
+                <Clock size={theme.iconSizes.xs} color={healthColors.text.tertiary} />
+                <Text style={styles.metricTime}>{formatTimestamp(latestMetric.timestamp)}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.addMetricButton, { borderColor: `${accentColor}33` }]}
+          onPress={() => onAddPress(config)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Add ${config.label} reading`}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Plus size={theme.iconSizes.sm} color={accentColor} />
+        </TouchableOpacity>
+      </View>
+    </Card>
+  );
+});
+
+const HealthMetricsScreen = ({ navigation }) => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const insets = useSafeAreaInsets();
+  const { isConnected } = useNetworkStatus();
+  const queryClient = useQueryClient();
+  const horizontalPadding = getScreenPadding();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [inputValues, setInputValues] = useState({});
+
   const {
     data: metrics = [],
-    isLoading: loading,
+    isLoading,
     isRefetching,
     isError,
     error,
@@ -171,157 +255,144 @@ const HealthMetricsScreen = ({ navigation }) => {
   } = useQuery({
     queryKey: queryKeys.healthMetrics.patient(user?.id),
     enabled: !!user?.id && isConnected,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
     queryFn: async () => {
       const response = await healthMetricsService.getMetrics(user.id);
-      return Array.isArray(response?.data) ? response.data : [];
+      const items = response?.data;
+      return Array.isArray(items) ? items : [];
     },
   });
+
+  const latestMetricMap = useMemo(() => {
+    const map = {};
+    (Array.isArray(metrics) ? metrics : []).forEach((metric) => {
+      const normalizedMetric = normalizeMetricRecord(metric);
+      const type = normalizedMetric?.type;
+      if (!type) return;
+      const previous = map[type];
+      if (!previous || new Date(normalizedMetric.timestamp) > new Date(previous.timestamp)) {
+        map[type] = normalizedMetric;
+      }
+    });
+    return map;
+  }, [metrics]);
 
   const addMetricMutation = useMutation({
     mutationFn: (payload) => healthMetricsService.addMetric(user.id, payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.healthMetrics.patient(user?.id) });
+    onSuccess: async (response, variables) => {
+      const createdMetric = normalizeMetricRecord(response?.data?.metric || response?.data || variables);
+
+      queryClient.setQueryData(queryKeys.healthMetrics.patient(user?.id), (current = []) => {
+        const list = Array.isArray(current) ? current : [];
+        return createdMetric ? [createdMetric, ...list] : list;
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.healthMetrics.patient(user?.id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.healthMetrics.latest(user?.id) }),
+      ]);
+
+      dispatch(fetchHealthMetrics(user.id));
     },
   });
 
-  const onRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
-
-  // ── Latest per type ─────────────────────────────────────────────────────────
-  const getLatest = useCallback(
-    (type) => {
-      const filtered = metrics.filter((m) => m.type === type);
-      if (!filtered.length) return null;
-      return filtered.sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-      )[0];
-    },
-    [metrics]
-  );
-
-  // ── Add metric ──────────────────────────────────────────────────────────────
-  const openAddModal = (metricType) => {
+  const openAddModal = useCallback((metricType) => {
     setSelectedType(metricType);
     setInputValues({});
     setModalVisible(true);
-  };
+  }, []);
 
-  const handleSave = async () => {
-    if (!selectedType) return;
+  const closeModal = useCallback(() => {
+    setModalVisible(false);
+    setSelectedType(null);
+    setInputValues({});
+  }, []);
+
+  const handleInputChange = useCallback((fieldKey, value) => {
+    setInputValues((prev) => ({ ...prev, [fieldKey]: value }));
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+    if (user?.id) {
+      dispatch(fetchHealthMetrics(user.id));
+    }
+  }, [refetch, dispatch, user?.id]);
+
+  const handleSaveMetric = useCallback(async () => {
+    if (!selectedType || !user?.id) {
+      return;
+    }
+
     try {
       let value;
       if (selectedType.key === "bp") {
-        const sys = parseFloat(inputValues.systolic);
-        const dia = parseFloat(inputValues.diastolic);
-        if (!sys || !dia) {
+        const systolic = Number(inputValues.systolic);
+        const diastolic = Number(inputValues.diastolic);
+        if (!systolic || !diastolic) {
           showError("Please enter both systolic and diastolic values.");
           return;
         }
-        value = { systolic: sys, diastolic: dia };
+        value = { systolic, diastolic };
       } else {
-        const v = parseFloat(inputValues.value);
-        if (isNaN(v)) {
+        const numericValue = Number(inputValues.value);
+        if (Number.isNaN(numericValue)) {
           showError("Please enter a valid numeric value.");
           return;
         }
-        value = v;
+        value = numericValue;
       }
+
       await addMetricMutation.mutateAsync({
         type: selectedType.key,
         value,
         timestamp: new Date().toISOString(),
       });
+
       showSuccess(`${selectedType.label} logged successfully.`);
-      setModalVisible(false);
-      refetch();
-    } catch (err) {
-      logError(err, { context: "HealthMetricsScreen.handleSave" });
-      showError("Failed to save metric. Please try again.");
+      closeModal();
+    } catch (mutationError) {
+      logError(mutationError, { context: "HealthMetricsScreen.handleSaveMetric" });
+      showError("Unable to save metric right now. Please try again.");
     }
-  };
+  }, [selectedType, user?.id, inputValues, addMetricMutation, closeModal]);
 
-  // ── Render helpers ──────────────────────────────────────────────────────────
-  const renderMetricCard = (config) => {
-    const latest = getLatest(config.key);
-    const badge = getStatusBadge(config.key, latest?.value);
-    const displayValue = config.format(latest);
-    const IconComponent = config.icon;
-    const StatusIcon = badge.icon;
+  const renderMetricItem = useCallback(
+    ({ item }) => (
+      <MetricCard
+        config={item}
+        latestMetric={latestMetricMap[item.key] || null}
+        onAddPress={openAddModal}
+      />
+    ),
+    [latestMetricMap, openAddModal]
+  );
 
+  if (isLoading && !isRefetching) {
     return (
-      <View key={config.key} style={styles.card}>
-        <View style={[styles.cardAccent, { backgroundColor: config.color }]} />
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <View style={[styles.iconCircle, { backgroundColor: config.color + "15" }]}>
-              <IconComponent size={22} color={config.color} />
-            </View>
-            <View style={styles.cardTitleArea}>
-              <Text style={styles.cardTitle}>{config.label}</Text>
-              {config.unit ? (
-                <Text style={styles.cardUnit}>{config.unit}</Text>
-              ) : null}
-            </View>
-            <TouchableOpacity
-              style={[styles.addBtn, { backgroundColor: config.color + "10", borderColor: config.color + "30" }]}
-              onPress={() => openAddModal(config)}
-            >
-              <Plus size={20} color={config.color} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.cardValueRow}>
-            <Text style={[styles.cardValue, { color: healthColors.text.primary }]}>
-              {displayValue}
-            </Text>
-            <View style={[styles.badge, { backgroundColor: badge.color + "15" }]}>
-              <StatusIcon size={14} color={badge.color} style={{ marginRight: 4 }} />
-              <Text style={[styles.badgeText, { color: badge.color }]}>
-                {badge.label}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.cardFooter}>
-            <View style={styles.rangeRow}>
-              <Text style={styles.rangeLabel}>Normal: </Text>
-              <Text style={styles.rangeValue}>{config.normalRange}</Text>
-            </View>
-            {latest?.timestamp ? (
-              <View style={styles.timeRow}>
-                <Clock size={12} color={healthColors.text.tertiary} />
-                <Text style={styles.lastUpdated}>
-                  {formatTimestamp(latest.timestamp)}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  // ── Render ──────────────────────────────────────────────────────────────────
-  if (loading && !isRefetching) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
         <LinearGradient
           colors={healthColors.gradients.primary}
-          style={[styles.header, { paddingTop: insets.top + 8 }]}
+          style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
         >
           <TouchableOpacity
             onPress={() => handleSmartBack(navigation, "PatientTabs")}
-            style={styles.backBtn}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
-            <ArrowLeft size={24} color={theme.colors.text.white} />
+            <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Health Metrics</Text>
-          <View style={{ width: 40 }} />
+          <View style={styles.headerTitleWrap} pointerEvents="none">
+            <Text style={styles.headerTitle} numberOfLines={1}>Health Metrics</Text>
+          </View>
+          <View style={styles.headerPlaceholder} />
         </LinearGradient>
-        <View style={styles.centered}>
-          <View style={{ width: "100%", paddingHorizontal: 16, gap: 12 }}>
+
+        <View style={styles.loadingWrap}>
+          <View style={styles.loadingContent}>
             <SkeletonStatGrid rows={2} />
             <SkeletonCardRow />
             <SkeletonCardRow />
@@ -331,118 +402,126 @@ const HealthMetricsScreen = ({ navigation }) => {
     );
   }
 
-  const padding = getScreenPadding();
-
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
       <NetworkStatusIndicator />
+
+      <LinearGradient
+        colors={healthColors.gradients.primary}
+        style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
+      >
+        <TouchableOpacity
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
+        </TouchableOpacity>
+        <View style={styles.headerTitleWrap} pointerEvents="none">
+          <Text style={styles.headerTitle} numberOfLines={1}>Health Metrics</Text>
+        </View>
+        <View style={styles.headerPlaceholder} />
+      </LinearGradient>
 
       {isError ? (
         <ErrorRecovery
           error={parseError(error)}
-          onRetry={refetch}
+          onRetry={handleRefresh}
           onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
-      ) : null}
+      ) : (
+        <FlatList
+          data={METRIC_TYPES}
+          keyExtractor={(item) => item.key}
+          renderItem={renderMetricItem}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingHorizontal: horizontalPadding, paddingBottom: verticalScale(24) },
+          ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={handleRefresh}
+              colors={[healthColors.primary.main]}
+              tintColor={healthColors.primary.main}
+            />
+          }
+          ListHeaderComponent={
+            <View style={styles.headerSectionWrap}>
+              <SectionHeader title="Vitals Overview" style={styles.sectionHeader} />
+              <Card elevation="small" style={styles.hintCard}>
+                <View style={styles.hintRow}>
+                  <PlusCircle size={theme.iconSizes.sm} color={healthColors.primary.main} />
+                  <Text style={styles.hintText}>Tap the + button on any card to log a new reading.</Text>
+                </View>
+              </Card>
+              {metrics.length === 0 ? (
+                <EmptyState
+                  icon="pulse"
+                  title="Start Tracking Your Vitals"
+                  message="No readings found yet. Add your first metric to begin personalized monitoring."
+                />
+              ) : null}
+            </View>
+          }
+          ListFooterComponent={
+            <>
+              {metrics.length > 0 ? (
+                <View style={styles.historyWrap}>
+                  <Clock size={theme.iconSizes.xs} color={healthColors.text.tertiary} />
+                  <Text style={styles.historyText}>{metrics.length} total readings recorded</Text>
+                </View>
+              ) : null}
+            </>
+          }
+          removeClippedSubviews
+          maxToRenderPerBatch={8}
+          windowSize={8}
+          initialNumToRender={5}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
-      {/* Header */}
-      <LinearGradient
-        colors={healthColors.gradients.primary}
-        style={[styles.header, { paddingTop: insets.top + 8 }]}
-      >
-        <TouchableOpacity
-          onPress={() => handleSmartBack(navigation, "PatientTabs")}
-          style={styles.backBtn}
-        >
-          <ArrowLeft size={24} color={theme.colors.text.white} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Health Metrics</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: padding }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={onRefresh}
-            tintColor={healthColors.primary.main}
-          />
-        }
-      >
-        <View style={styles.hintBox}>
-          <PlusCircle size={16} color={healthColors.primary.main} />
-          <Text style={styles.sectionHint}>
-            Tap the plus button on any card to log a new reading.
-          </Text>
-        </View>
-
-        {METRIC_TYPES.map(renderMetricCard)}
-
-        {/* History link */}
-        {metrics.length > 0 && (
-          <View style={styles.historyNote}>
-            <Clock size={15} color={healthColors.text.tertiary} />
-            <Text style={styles.historyNoteText}>
-              {metrics.length} total readings recorded
-            </Text>
-          </View>
-        )}
-
-        {metrics.length === 0 && !loading && (
-          <EmptyState
-            icon="pulse"
-            title="No metrics yet"
-            message="Start tracking your vitals by tapping the + button on any metric card."
-          />
-        )}
-
-        <View style={{ height: verticalScale(24) }} />
-      </ScrollView>
-
-      {/* Add Record ModalSheet */}
       <ModalSheet
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={closeModal}
         title={selectedType ? `Log ${selectedType.label}` : "Log Metric"}
-        maxHeight={0.6}
+        maxHeight={0.7}
       >
         <View style={styles.modalContent}>
-          {selectedType && (
-            <View style={styles.inputContainer}>
-              {selectedType.fields.map((field) => (
-                <View key={field.key} style={styles.inputWrapper}>
-                  <Text style={styles.inputLabel}>{field.placeholder.split(' (')[0]}</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder={field.placeholder}
-                    placeholderTextColor={healthColors.text.tertiary}
-                    keyboardType={field.keyboardType}
-                    value={inputValues[field.key] || ""}
-                    onChangeText={(v) =>
-                      setInputValues((prev) => ({ ...prev, [field.key]: v }))
-                    }
-                  />
-                </View>
-              ))}
-              
-              <Button
-                variant="primary"
-                title={addMetricMutation.isPending ? "Saving..." : "Save Record"}
-                onPress={handleSave}
-                loading={addMetricMutation.isPending}
-                style={{ marginTop: spacing.md }}
-              />
-            </View>
-          )}
+          {selectedType?.fields?.map((field) => (
+            <Input
+              key={field.key}
+              label={field.label}
+              placeholder={field.placeholder}
+              keyboardType={field.keyboardType}
+              value={inputValues[field.key] || ""}
+              onChangeText={(value) => handleInputChange(field.key, value)}
+            />
+          ))}
+
+          <View style={styles.modalActions}>
+            <Button
+              variant="outline"
+              title="Cancel"
+              onPress={closeModal}
+              style={styles.modalButton}
+            />
+            <Button
+              variant="primary"
+              title={addMetricMutation.isPending ? "Saving..." : "Save"}
+              loading={addMetricMutation.isPending}
+              onPress={handleSaveMetric}
+              style={styles.modalButton}
+            />
+          </View>
         </View>
       </ModalSheet>
     </SafeAreaView>
   );
 };
 
-// ── Styles ─────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -452,191 +531,204 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+    minHeight: theme.layout.headerHeight + theme.spacing.lg,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
+  backButton: {
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
+    borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),
+    zIndex: 2,
+  },
+  headerTitleWrap: {
+    position: "absolute",
+    left: theme.spacing.xl,
+    right: theme.spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
   },
   headerTitle: {
     ...textStyles.h4,
-    color: "#fff",
+    color: healthColors.text.white,
+    textAlign: "center",
   },
-  centered: {
+  headerPlaceholder: {
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
+    zIndex: 2,
+  },
+  loadingWrap: {
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
   },
-  loadingText: {
-    ...textStyles.bodyLarge,
-    color: healthColors.text.secondary,
+  loadingContent: {
+    width: "100%",
+    paddingHorizontal: theme.spacing.md,
+    gap: spacing.sm,
   },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 24,
+  sectionHeader: {
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
   },
-  hintBox: {
+  listContent: {
+    paddingTop: theme.spacing.sm,
+  },
+  headerSectionWrap: {
+    paddingBottom: theme.spacing.xs,
+  },
+  hintCard: {
+    marginBottom: theme.spacing.md,
+    paddingVertical: theme.spacing.sm + theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: healthColors.primary.lightest,
+    borderColor: `${healthColors.primary.main}30`,
+  },
+  hintRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.primary.lightest,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    gap: 8,
   },
-  sectionHint: {
+  hintText: {
+    marginLeft: theme.spacing.xs,
     ...textStyles.bodySmall,
     color: healthColors.primary.main,
-    fontWeight: "500",
-  },
-
-  // Cards
-  card: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    marginBottom: 16,
-    ...theme.shadows.sm,
-    overflow: "hidden",
-  },
-  cardAccent: {
-    width: 4,
-  },
-  cardContent: {
     flex: 1,
-    padding: 16,
   },
-  cardHeader: {
+  metricCard: {
+    marginBottom: theme.spacing.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+  },
+  metricAccent: {
+    position: "relative",
+    left: 0,
+    top: 0,
+    width: "100%",
+    height: 2,
+    backgroundColor: `${healthColors.primary.main}33`,
+  },
+  metricContentRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    padding: theme.spacing.md,
+    minHeight: 126,
   },
-  iconCircle: {
+  metricIconCircle: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: theme.spacing.sm,
   },
-  cardTitleArea: {
+  metricBody: {
     flex: 1,
-    marginLeft: 12,
+    justifyContent: "center",
   },
-  cardTitle: {
+  metricTitleRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: theme.spacing.xs,
+  },
+  metricTitle: {
     ...textStyles.bodyLarge,
-    fontWeight: "700",
     color: healthColors.text.primary,
+    fontWeight: theme.typography.weights.semibold,
   },
-  cardUnit: {
+  metricUnit: {
     ...textStyles.caption,
-    color: healthColors.text.tertiary,
-    marginTop: 2,
+    color: healthColors.text.secondary,
   },
-  addBtn: {
+  addMetricButton: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: theme.borderRadius.button,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: healthColors.background.card,
+    marginLeft: theme.spacing.sm,
   },
-  cardValueRow: {
+  metricValueRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
   },
-  cardValue: {
+  metricValue: {
     ...textStyles.h2,
-    fontWeight: "800",
+    color: healthColors.text.primary,
+    fontWeight: theme.typography.weights.bold,
   },
-  badge: {
+  metricValueEmpty: {
+    ...textStyles.bodyMedium,
+    color: healthColors.text.secondary,
+    fontWeight: theme.typography.weights.medium,
+  },
+  statusBadge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: theme.borderRadius.full,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    gap: theme.spacing.xs,
   },
-  badgeText: {
+  statusBadgeText: {
     ...textStyles.caption,
-    fontWeight: "700",
+    fontWeight: theme.typography.weights.bold,
   },
-  cardFooter: {
+  metricFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: healthColors.neutral.gray100,
+    borderTopColor: healthColors.border.light,
+    paddingTop: theme.spacing.sm,
+    flexWrap: "wrap",
+    rowGap: theme.spacing.xs,
   },
-  rangeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  rangeLabel: {
+  metricRange: {
     ...textStyles.caption,
-    color: healthColors.text.tertiary,
-  },
-  rangeValue: {
-    ...textStyles.caption,
-    fontWeight: "600",
     color: healthColors.text.secondary,
+    flex: 1,
   },
-  timeRow: {
+  metricTimeWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: theme.spacing.xs,
   },
-  lastUpdated: {
+  metricTime: {
     ...textStyles.caption,
     color: healthColors.text.tertiary,
   },
-
-  // History
-  historyNote: {
+  historyWrap: {
+    marginTop: theme.spacing.xs,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
-    gap: 5,
-    marginTop: 8,
+    alignItems: "center",
+    gap: theme.spacing.xs,
   },
-  historyNoteText: {
+  historyText: {
     ...textStyles.bodySmall,
     color: healthColors.text.tertiary,
   },
-
-  // Modal Content
   modalContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  inputContainer: {
-    gap: spacing.md,
+  modalActions: {
+    marginTop: theme.spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
   },
-  inputWrapper: {
-    gap: 6,
-  },
-  inputLabel: {
-    ...textStyles.bodySmall,
-    fontWeight: "600",
-    color: healthColors.text.secondary,
-    marginLeft: 4,
-  },
-  input: {
-    backgroundColor: healthColors.neutral.gray50,
-    borderWidth: 1,
-    borderColor: healthColors.neutral.gray200,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    ...textStyles.bodyLarge,
-    color: healthColors.text.primary,
+  modalButton: {
+    flex: 1,
   },
 });
 

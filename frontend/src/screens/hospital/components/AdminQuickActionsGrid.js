@@ -18,6 +18,8 @@ const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
           style={styles.card}
           onPress={action.onPress}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={action.title || `Quick action ${i + 1}`}
         >
           <View style={[styles.iconWrap, { backgroundColor: action.color + "15" }]}>
             <DynamicIcon name={action.icon} size={24} color={action.color} />

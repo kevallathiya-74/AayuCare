@@ -48,7 +48,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
-// const mongoSanitize = require("express-mongo-sanitize");
+const mongoSanitize = require("express-mongo-sanitize");
 
 const connectDB = require("./src/config/database");
 const { connectPostgres, closePool } = require("./src/config/postgres");
@@ -183,7 +183,7 @@ app.use(cacheHeadersMiddleware);
 
 // Sanitize request data to prevent MongoDB operator injection ($gt, $where, etc.)
 // Strips keys that begin with '$' or contain '.' from req.body, req.params, and req.query
-// app.use(mongoSanitize({ replaceWith: '_' }));
+app.use(mongoSanitize({ replaceWith: '_' }));
 
 // Disable ETags to prevent 304 Not Modified responses (causes frontend cache issues)
 app.set('etag', false);

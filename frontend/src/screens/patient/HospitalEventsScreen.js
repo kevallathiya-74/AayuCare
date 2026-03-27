@@ -26,6 +26,7 @@ import { Calendar, Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw,
 import { theme, healthColors } from "../../theme";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
+import { getScreenPadding } from "../../utils/responsive";
 
 import { showError, logError, parseError } from "../../utils/errorHandler";
 import logger from "../../utils/logger";
@@ -352,6 +353,8 @@ const HospitalEventsScreen = ({ navigation }) => {
                 `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${convertTo12Hour(event.startTime)} - ${convertTo12Hour(event.endTime)}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`
               )
             }
+            accessibilityRole="button"
+            accessibilityLabel={`View details for ${event.title}`}
           >
             <Info
               
@@ -366,6 +369,9 @@ const HospitalEventsScreen = ({ navigation }) => {
               style={styles.registerButton}
               onPress={() => handleCancelRegistration(event)}
               disabled={registeringId === event._id}
+              accessibilityRole="button"
+              accessibilityLabel={`Cancel registration for ${event.title}`}
+              accessibilityState={{ disabled: registeringId === event._id }}
             >
               <LinearGradient
                 colors={[healthColors.error.main, healthColors.error.dark ?? healthColors.error.main + "DD"]}
@@ -386,6 +392,9 @@ const HospitalEventsScreen = ({ navigation }) => {
               ]}
               onPress={() => handleRegister(event)}
               disabled={registeringId === event._id || spotsRemaining <= 0}
+              accessibilityRole="button"
+              accessibilityLabel={spotsRemaining > 0 ? `Register for ${event.title}` : `${event.title} is full`}
+              accessibilityState={{ disabled: registeringId === event._id || spotsRemaining <= 0 }}
             >
               <LinearGradient
                 colors={
@@ -427,6 +436,9 @@ const HospitalEventsScreen = ({ navigation }) => {
               onPress={() => setFilter(option.key)}
               style={[styles.filterChip, active && styles.filterChipActive]}
               activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={`Filter ${option.label} events`}
+              accessibilityState={{ selected: active }}
             >
               <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
                 {option.label} ({option.count})
@@ -459,7 +471,12 @@ const HospitalEventsScreen = ({ navigation }) => {
       </Text>
       <View style={styles.emptyActionRow}>
         {filter !== "all" ? (
-          <TouchableOpacity style={styles.emptySecondaryBtn} onPress={() => setFilter("all")}> 
+          <TouchableOpacity
+            style={styles.emptySecondaryBtn}
+            onPress={() => setFilter("all")}
+            accessibilityRole="button"
+            accessibilityLabel="Show all events"
+          >
             <Text style={styles.emptySecondaryBtnText}>Show All</Text>
           </TouchableOpacity>
         ) : null}
@@ -468,23 +485,28 @@ const HospitalEventsScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
       />
 
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={healthColors.gradients.primary}
+        style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
             size={24}
-            color={healthColors.text.primary}
+            color={healthColors.text.white}
           />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
@@ -496,22 +518,25 @@ const HospitalEventsScreen = ({ navigation }) => {
           onPress={onRefresh}
           disabled={isRefetching}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh events"
+          accessibilityState={{ disabled: isRefetching }}
         >
           {isRefetching ? (
-            <ActivityIndicator size="small" color={healthColors.primary.main} />
+            <ActivityIndicator size="small" color={healthColors.text.white} />
           ) : (
             <RefreshCw
               
               size={24}
-              color={healthColors.primary.main}
+              color={healthColors.text.white}
             />
           )}
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       {/* Events List */}
       {loading && !isRefetching ? (
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : isError ? (
@@ -523,7 +548,12 @@ const HospitalEventsScreen = ({ navigation }) => {
           />
           <Text style={styles.errorTitle}>Failed to Load Events</Text>
           <Text style={styles.errorText}>{parseError(error)}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={refetch}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading events"
+          >
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -577,16 +607,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    paddingHorizontal: getScreenPadding(),
+    paddingBottom: theme.spacing.md,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: healthColors.background.tertiary,
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.16)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -595,22 +623,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.xl,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
+    color: healthColors.text.white,
   },
   headerSubtitle: {
-    fontSize: theme.typography.sizes.xs,
-    color: healthColors.text.secondary,
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.white,
+    opacity: 0.9,
     marginTop: 2,
   },
   refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: healthColors.primary.main + "15",
+    width: theme.touchTargets.md,
+    height: theme.touchTargets.md,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: "rgba(255,255,255,0.16)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  loadingListWrapper: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   filterContainer: {
     flexDirection: "row",
@@ -622,7 +655,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   filterRow: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: getScreenPadding(),
     gap: theme.spacing.sm,
     alignItems: "center",
     paddingBottom: theme.spacing.xs,
@@ -670,7 +703,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
   },
   countContainer: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: getScreenPadding(),
     paddingTop: theme.spacing.xs,
     paddingBottom: theme.spacing.sm,
   },
@@ -680,7 +713,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   listContent: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: getScreenPadding(),
     paddingTop: theme.spacing.xs,
   },
   footerLoader: {

@@ -24,7 +24,7 @@ import { notificationService } from "../../services";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { fetchHealthMetrics } from "../../store/slices/healthSlice";
 import { logError } from "../../utils/errorHandler";
-import { Calendar, FolderOpen, Stethoscope, Activity, MessageCircle, HeartPulse, Info, Users, Flower, ShoppingCart, Footprints, Home, Sun, CloudSun, Moon, User, Settings } from "lucide-react-native";
+import { Calendar, FolderOpen, Stethoscope, Activity, MessageCircle, HeartPulse, Info, Users, ShoppingCart, Home,User, Settings } from "lucide-react-native";
 import { SectionHeader } from "../../components/common";
 import { useDrawer } from "../../hooks/useDrawer";
 import { DrawerMenu } from "../../components/layout";
@@ -175,10 +175,8 @@ const PatientDashboard = ({ navigation }) => {
       { title: "AI Symptom Checker", icon: HeartPulse, iconColor: healthColors.error.main, onPress: () => navigation.navigate("AISymptomChecker") },
       { title: "Disease Info", icon: Info, iconColor: healthColors.accent.purple, onPress: () => navigation.navigate("DiseaseInfo") },
       { title: "Specialist Finder", icon: Users, iconColor: healthColors.info.main, onPress: () => navigation.navigate("SpecialistCareFinder") },
-      { title: "Women's Health", icon: Flower, iconColor: healthColors.accent.pink, onPress: () => navigation.navigate("WomensHealth") },
       { title: "Hospital Events", icon: Calendar, iconColor: healthColors.warning.main, onPress: () => navigation.navigate("HospitalEvents") },
       { title: "Pharmacy & Billing", icon: ShoppingCart, iconColor: healthColors.success.main, onPress: () => navigation.navigate("PharmacyBilling") },
-      { title: "Activity Tracker", icon: Footprints, iconColor: healthColors.accent.cyan, onPress: () => navigation.navigate("ActivityTracker") },
     ],
     [navigation]
   );
@@ -203,7 +201,6 @@ const PatientDashboard = ({ navigation }) => {
       title: "HEALTH & WELLNESS",
       items: [
         { icon: Activity, iconColor: theme.colors.healthcare.teal, label: "Health Metrics", onPress: nav("HealthMetrics") },
-        { icon: Footprints, iconColor: theme.colors.healthcare.cyan, label: "Activity Tracker", onPress: nav("ActivityTracker") },
         { icon: Info, iconColor: healthColors.info.main, label: "Disease Information", onPress: nav("DiseaseInfo") },
       ],
     },
@@ -229,7 +226,7 @@ const PatientDashboard = ({ navigation }) => {
   if (authLoading && !user) {
     return (
       <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
-        <View style={{ paddingHorizontal: getScreenPadding(), paddingTop: 20, gap: 12 }}>
+        <View style={styles.loadingSkeletonWrap}>
           <SkeletonStatGrid rows={2} />
           <SkeletonCardRow />
           <SkeletonCardRow />
@@ -328,6 +325,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
+  },
+  loadingSkeletonWrap: {
+    paddingHorizontal: getScreenPadding(),
+    paddingTop: theme.spacing.md + theme.spacing[4],
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   scrollView: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 24 },

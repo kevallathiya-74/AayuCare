@@ -115,6 +115,66 @@ api.get = (url, config = {}) => {
 
 let isHandlingAuthExpiry = false;
 
+const ENDPOINT_ROLE_RULES = [
+  {
+    pattern: /^\/admin(\/|$)/i,
+    allowedRoles: ["admin", "super_admin"],
+  },
+];
+
+const getCurrentUserRole = () => {
+  try {
+    const store = require("../store/store").default;
+    const role = store?.getState?.()?.auth?.user?.role;
+    return role ? String(role).toLowerCase() : null;
+  } catch (_) {
+    return null;
+  }
+};
+
+const normalizeRequestPath = (url = "") => {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      const parsed = new URL(raw);
+      const normalizedAbsolutePath = `/${String(parsed.pathname || "").replace(/^\/+/, "")}`;
+      return normalizedAbsolutePath.replace(/^\/api\/v1/i, "") || "/";
+    }
+  } catch (_) {
+    // Fall through to relative path normalization.
+  }
+
+  let path = raw;
+  const normalizedBase = apiBaseV1.replace(/\/+$/, "");
+  if (path.startsWith(normalizedBase)) {
+    path = path.slice(normalizedBase.length);
+  }
+
+  if (!path.startsWith("/")) {
+    path = `/${path}`;
+  }
+
+  return path.replace(/^\/api\/v1/i, "") || "/";
+};
+
+const getAllowedRolesForPath = (path = "") => {
+  const matchedRule = ENDPOINT_ROLE_RULES.find((rule) => rule.pattern.test(path));
+  return matchedRule?.allowedRoles || null;
+};
+
+const createRoleAccessError = ({ path, role, allowedRoles }) => {
+  const safeRole = role || "unknown";
+  const error = new Error(
+    `Access denied: role ${safeRole} cannot call ${path}.`
+  );
+  error.code = "ROLE_ACCESS_DENIED";
+  error.status = 403;
+  error.meta = { path, role: safeRole, allowedRoles };
+  return error;
+};
+
 // Log API URL for debugging (dev only)
 if (__DEV__) {
   console.log('[API] API Base URL:', apiBaseV1);
@@ -126,6 +186,26 @@ if (__DEV__) {
 api.interceptors.request.use(
   async (config) => {
     try {
+      const requestPath = normalizeRequestPath(config?.url);
+      const allowedRoles = getAllowedRolesForPath(requestPath);
+      const role = getCurrentUserRole();
+
+      if (
+        config?.skipRoleGuard !== true &&
+        role &&
+        Array.isArray(allowedRoles) &&
+        !allowedRoles.includes(role)
+      ) {
+        if (__DEV__) {
+          console.warn(
+            `[API] Blocked disallowed role endpoint call: role=${role} path=${requestPath}`
+          );
+        }
+        return Promise.reject(
+          createRoleAccessError({ path: requestPath, role, allowedRoles })
+        );
+      }
+
       const token = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
       if (token) {
