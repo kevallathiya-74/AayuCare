@@ -67,6 +67,8 @@ const BoxSelectionScreen = ({ navigation }) => {
           style={styles.cardWrapper}
           onPress={handleHospitalPress}
           activeOpacity={0.9}
+          accessibilityRole="button"
+          accessibilityLabel="Continue as hospital"
         >
           <LinearGradient
             colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -101,6 +103,8 @@ const BoxSelectionScreen = ({ navigation }) => {
           style={styles.cardWrapper}
           onPress={handleUserPress}
           activeOpacity={0.9}
+          accessibilityRole="button"
+          accessibilityLabel="Continue as user"
         >
           <LinearGradient
             colors={[healthColors.secondary.main, healthColors.secondary.dark]}

@@ -145,13 +145,6 @@ const healthColors = {
     gradient: ["#4DD0E1", "#66BB6A", "#FF7043"],
   },
 
-  // Women's Health
-  womens: {
-    lavender: "#CE93D8",
-    light: "#F3E5F5",
-    gradient: ["#CE93D8", "#E1BEE7"],
-  },
-
   // AI Guidance
   ai: {
     teal: "#00ACC1",

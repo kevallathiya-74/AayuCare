@@ -8,6 +8,18 @@ const { sendSuccess, sendError } = require("../utils/apiResponse");
 
 // Shared UUID regex — used to decide findById vs findByUserId
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const VALID_RECORD_TYPES = ["lab_report", "prescription", "doctor_visit", "test_result", "imaging", "vaccination", "other"];
+const RECORD_TYPE_ALIASES = {
+  lab: "lab_report",
+  visit: "doctor_visit",
+  report: "test_result",
+};
+
+const normalizeRecordType = (value) => {
+  if (!value) return value;
+  const normalized = String(value).trim().toLowerCase();
+  return RECORD_TYPE_ALIASES[normalized] || normalized;
+};
 
 /**
  * @desc    Get all medical records (admin only with filters)
@@ -26,9 +38,9 @@ exports.getAllMedicalRecords = async (req, res, next) => {
       limit = 10,
     } = req.query;
 
+    const normalizedRecordType = normalizeRecordType(recordType);
     // Validate recordType against allowed enum
-    const VALID_RECORD_TYPES = ['lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'vaccination', 'other'];
-    if (recordType && !VALID_RECORD_TYPES.includes(String(recordType))) {
+    if (normalizedRecordType && !VALID_RECORD_TYPES.includes(normalizedRecordType)) {
       return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
     }
     // Validate UUID-format IDs if provided
@@ -56,8 +68,8 @@ exports.getAllMedicalRecords = async (req, res, next) => {
       query.doctorId = doctorId;
     }
 
-    if (recordType) {
-      query.recordType = recordType;
+    if (normalizedRecordType) {
+      query.recordType = normalizedRecordType;
     }
 
     if (startDate || endDate) {
@@ -117,6 +129,11 @@ exports.createMedicalRecord = async (req, res, next) => {
       labResults,
       files,
     } = req.body;
+    const normalizedRecordType = normalizeRecordType(recordType);
+
+    if (!VALID_RECORD_TYPES.includes(normalizedRecordType)) {
+      return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
+    }
 
     // Find patient by UUID or custom userId (e.g. "PAT001")
     let patient;
@@ -144,7 +161,7 @@ exports.createMedicalRecord = async (req, res, next) => {
       patientId: patient.id, // Use id from found patient
       doctorId: req.user.id,
       hospitalId,
-      recordType,
+      recordType: normalizedRecordType,
       title,
       description,
       date: date || Date.now(),
@@ -172,7 +189,7 @@ exports.createMedicalRecord = async (req, res, next) => {
       action: AUDIT_ACTIONS.MEDICAL_RECORD_CREATE,
       entityType: "medicalRecord",
       entityId: medicalRecord._id ? String(medicalRecord._id) : null,
-      newValues: { patientId: patient.id, recordType, title },
+      newValues: { patientId: patient.id, recordType: normalizedRecordType, title },
       req,
     });
 
@@ -197,10 +214,10 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
   try {
     const { patientId } = req.params;
     const { recordType, startDate, endDate, page = 1, limit = 10 } = req.query;
+    const normalizedRecordType = normalizeRecordType(recordType);
 
     // Validate recordType against allowed enum
-    const VALID_RECORD_TYPES = ['lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'vaccination', 'other'];
-    if (recordType && !VALID_RECORD_TYPES.includes(String(recordType))) {
+    if (normalizedRecordType && !VALID_RECORD_TYPES.includes(normalizedRecordType)) {
       return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
     }
 
@@ -235,8 +252,8 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       query.hospitalId = req.hospitalId;
     }
 
-    if (recordType) {
-      query.recordType = recordType;
+    if (normalizedRecordType) {
+      query.recordType = normalizedRecordType;
     }
 
     if (startDate || endDate) {
@@ -330,9 +347,14 @@ exports.updateMedicalRecord = async (req, res, next) => {
       return next(new AppError("Not authorized to update this record", 403));
     }
 
+    const updates = {
+      ...req.body,
+      ...(req.body?.recordType ? { recordType: normalizeRecordType(req.body.recordType) } : {}),
+    };
+
     const updatedRecord = await medicalRecordRepository.update(
       req.params.id,
-      req.body
+      updates
     );
 
     logger.info(

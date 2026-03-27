@@ -111,6 +111,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         })
       }
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Open consultation details for ${item.patientName || "patient"}`}
     >
       <View style={styles.consultationHeader}>
         <View style={styles.patientInfo}>
@@ -202,6 +204,9 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         setFilter(filterValue);
       }}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter consultations by ${label}`}
+      accessibilityState={{ selected: filter === filterValue }}
     >
       <Text
         style={[
@@ -220,6 +225,8 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             

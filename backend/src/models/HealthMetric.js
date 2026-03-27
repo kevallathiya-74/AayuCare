@@ -82,90 +82,94 @@ healthMetricSchema.index({ patient: 1, type: 1, timestamp: -1 });
 healthMetricSchema.index({ patient: 1, timestamp: -1 });
 
 // Validation for specific metric types
-healthMetricSchema.pre('save', function(next) {
+healthMetricSchema.pre('save', function() {
     const metric = this;
+    const value = metric.value;
     
     // Validate blood pressure format
     if (metric.type === 'bp') {
-        if (!metric.value.systolic || !metric.value.diastolic) {
-            return next(new Error('Blood pressure requires systolic and diastolic values'));
+        if (
+            !value ||
+            typeof value !== 'object' ||
+            value.systolic == null ||
+            value.diastolic == null
+        ) {
+            throw new Error('Blood pressure requires systolic and diastolic values');
         }
         metric.unit = 'mmHg';
     }
     
     // Validate blood sugar
     if (metric.type === 'sugar') {
-        if (typeof metric.value !== 'number') {
-            return next(new Error('Blood sugar must be a number'));
+        if (typeof value !== 'number') {
+            throw new Error('Blood sugar must be a number');
         }
         metric.unit = 'mg/dL';
     }
     
     // Validate weight
     if (metric.type === 'weight') {
-        if (typeof metric.value !== 'number') {
-            return next(new Error('Weight must be a number'));
+        if (typeof value !== 'number') {
+            throw new Error('Weight must be a number');
         }
         metric.unit = 'kg';
     }
     
     // Validate BMI
     if (metric.type === 'bmi') {
-        if (typeof metric.value !== 'number') {
-            return next(new Error('BMI must be a number'));
+        if (typeof value !== 'number') {
+            throw new Error('BMI must be a number');
         }
         metric.unit = 'kg/m²';
     }
     
     // Validate temperature
     if (metric.type === 'temperature') {
-        if (typeof metric.value !== 'number') {
-            return next(new Error('Temperature must be a number'));
+        if (typeof value !== 'number') {
+            throw new Error('Temperature must be a number');
         }
         metric.unit = metric.unit || '°F';
     }
     
     // Validate steps
     if (metric.type === 'steps') {
-        if (typeof metric.value !== 'number') {
-            return next(new Error('Steps must be a number'));
+        if (typeof value !== 'number') {
+            throw new Error('Steps must be a number');
         }
         metric.unit = 'steps';
     }
     
     // Validate sleep data
     if (metric.type === 'sleep') {
-        if (!metric.value.duration) {
-            return next(new Error('Sleep requires duration'));
+        if (!value || typeof value !== 'object' || !value.duration) {
+            throw new Error('Sleep requires duration');
         }
         metric.unit = 'hours';
     }
     
     // Validate water intake
     if (metric.type === 'water') {
-        if (typeof metric.value !== 'number') {
-            return next(new Error('Water intake must be a number'));
+        if (typeof value !== 'number') {
+            throw new Error('Water intake must be a number');
         }
         metric.unit = 'glasses';
     }
 
     // Validate heart rate
     if (metric.type === 'heart-rate') {
-        if (typeof metric.value !== 'number' || metric.value < 20 || metric.value > 300) {
-            return next(new Error('Heart rate must be a number between 20 and 300'));
+        if (typeof value !== 'number' || value < 20 || value > 300) {
+            throw new Error('Heart rate must be a number between 20 and 300');
         }
         metric.unit = 'bpm';
     }
 
     // Validate oxygen saturation
     if (metric.type === 'oxygen') {
-        if (typeof metric.value !== 'number' || metric.value < 0 || metric.value > 100) {
-            return next(new Error('Oxygen saturation must be a number between 0 and 100'));
+        if (typeof value !== 'number' || value < 0 || value > 100) {
+            throw new Error('Oxygen saturation must be a number between 0 and 100');
         }
         metric.unit = '%';
     }
-
-    next();
 });
 
 // Static method to get latest metrics by patient

@@ -172,6 +172,8 @@ const WalkInPatientScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
@@ -251,6 +253,9 @@ const WalkInPatientScreen = ({ navigation }) => {
                     ]}
                     onPress={() => handleInputChange("gender", option)}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${option} gender`}
+                    accessibilityState={{ selected: formData.gender === option }}
                   >
                     <Phone
                       name={
@@ -308,6 +313,9 @@ const WalkInPatientScreen = ({ navigation }) => {
                   ]}
                   onPress={() => handleInputChange("bloodGroup", group)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select blood group ${group}`}
+                  accessibilityState={{ selected: formData.bloodGroup === group }}
                 >
                   <Droplet
                     

@@ -36,6 +36,68 @@ import { queryKeys } from "../../config/reactQueryConfig";
 import { DynamicIcon } from "../../components/common";
 import { handleSmartBack } from "../../utils/navigation";
 
+const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+const toDisplayText = (value, fallback = "N/A") => {
+  if (value == null) return fallback;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : fallback;
+  }
+  if (Array.isArray(value)) {
+    const items = value.map((item) => String(item || "").trim()).filter(Boolean);
+    return items.length ? items.join(", ") : fallback;
+  }
+  if (isPlainObject(value)) {
+    const values = Object.values(value)
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+    return values.length ? values.join(", ") : fallback;
+  }
+  return fallback;
+};
+
+const getDoctorSpecialtyText = (doctor) =>
+  toDisplayText(doctor?.specialization || doctor?.specialty, "General Medicine");
+
+const getDoctorExperienceText = (doctor) => {
+  const raw = doctor?.experience;
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return `${raw} years exp`;
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return raw.toLowerCase().includes("year") ? raw.trim() : `${raw.trim()} years exp`;
+  }
+  return "Experience unavailable";
+};
+
+const getDoctorAvailabilityText = (doctor) => {
+  const availability = doctor?.availability;
+  if (isPlainObject(availability)) {
+    const dayShort = {
+      monday: "Mon",
+      tuesday: "Tue",
+      wednesday: "Wed",
+      thursday: "Thu",
+      friday: "Fri",
+      saturday: "Sat",
+      sunday: "Sun",
+    };
+    const openDays = Object.entries(availability)
+      .filter(([, enabled]) => Boolean(enabled))
+      .map(([day]) => dayShort[String(day).toLowerCase()] || String(day).slice(0, 3));
+    if (!openDays.length) return "Check availability";
+    if (openDays.length > 3) {
+      return `${openDays.slice(0, 3).join(", ")} +${openDays.length - 3}`;
+    }
+    return openDays.join(", ");
+  }
+  return toDisplayText(availability, "Check availability");
+};
+
 const SpecialistCareFinderScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const { isConnected } = useNetworkStatus();
@@ -50,7 +112,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     { id: 3, name: "Pulmonology", icon: "fitness-outline" },
     { id: 4, name: "Neurology", icon: "bulb-outline" },
     { id: 5, name: "Pediatrics", icon: "happy-outline" },
-    { id: 6, name: "Women's Health", icon: "rose-outline" },
+    { id: 6, name: "Dermatology", icon: "leaf-outline" },
     { id: 7, name: "Orthopedics", icon: "body-outline" },
   ];
 
@@ -109,8 +171,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         <View style={styles.doctorInfo}>
           <Text style={styles.doctorName}>{doctor.name}</Text>
           <Text style={styles.doctorSpecialty}>
-            {doctor.specialization || doctor.specialty} •{" "}
-            {doctor.experience || "N/A"}
+            {getDoctorSpecialtyText(doctor)} • {getDoctorExperienceText(doctor)}
           </Text>
           <View style={styles.ratingContainer}>
             <Star  size={16} color={theme.colors.warning.main} />
@@ -135,8 +196,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 size={14}
                 color={healthColors.primary.main}
               />
-              <Text style={styles.availabilityText}>
-                {doctor.availability || "Check availability"}
+              <Text style={styles.availabilityText} numberOfLines={1} ellipsizeMode="tail">
+                {getDoctorAvailabilityText(doctor)}
               </Text>
             </View>
           </View>
@@ -213,18 +274,20 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
               doctorId: doctor._id || doctor.id,
             })
           }
+          accessibilityRole="button"
+          accessibilityLabel={`Book appointment with ${doctor.name}`}
         >
           <Text style={styles.actionButtonText}>Book Appointment</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.viewProfileButton}
           onPress={() =>
-            navigation.navigate("AppointmentBooking", {
-              doctorId: doctor._id || doctor.id,
-              doctorName: doctor.name,
-              specialization: doctor.specialization || doctor.specialty,
+            navigation.navigate("DoctorProfileView", {
+              doctor,
             })
           }
+          accessibilityRole="button"
+          accessibilityLabel={`View profile for ${doctor.name}`}
         >
           <Text style={styles.viewProfileText}>View Profile</Text>
         </TouchableOpacity>
@@ -264,6 +327,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
@@ -272,7 +337,11 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Specialist</Text>
-        <TouchableOpacity style={styles.searchButton}>
+        <TouchableOpacity
+          style={styles.searchButton}
+          accessibilityRole="button"
+          accessibilityLabel="Search specialists"
+        >
           <Search  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
@@ -311,7 +380,11 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 />
                 <Text style={styles.filterLabel}>Specialty:</Text>
               </View>
-              <TouchableOpacity style={styles.filterDropdown}>
+              <TouchableOpacity
+                style={styles.filterDropdown}
+                accessibilityRole="button"
+                accessibilityLabel="Specialty filter"
+              >
                 <Text style={styles.filterValue}>{selectedSpecialty}</Text>
                 <ChevronDown
                   
@@ -329,7 +402,11 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 />
                 <Text style={styles.filterLabel}>Availability:</Text>
               </View>
-              <TouchableOpacity style={styles.filterDropdown}>
+              <TouchableOpacity
+                style={styles.filterDropdown}
+                accessibilityRole="button"
+                accessibilityLabel="Availability filter"
+              >
                 <Text style={styles.filterValue}>{selectedAvailability}</Text>
                 <ChevronDown
                   
@@ -367,6 +444,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 key={specialty.id}
                 style={styles.specialtyChip}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by ${specialty.name}`}
+                accessibilityState={{ selected: selectedSpecialty === specialty.name }}
               >
                 <DynamicIcon
                   name={specialty.icon}
@@ -579,12 +659,15 @@ const styles = StyleSheet.create({
   },
   doctorDetails: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
   },
   detailItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    minWidth: 0,
+    flexShrink: 1,
   },
   feeText: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -594,6 +677,7 @@ const styles = StyleSheet.create({
   availabilityText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
+    flexShrink: 1,
   },
   consultationTypes: {
     flexDirection: "row",

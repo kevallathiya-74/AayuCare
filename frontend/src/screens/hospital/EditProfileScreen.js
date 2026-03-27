@@ -143,6 +143,8 @@ const EditProfileScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             

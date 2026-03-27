@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
@@ -21,14 +20,14 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, Mic, Send, BarChart2, PhoneCall } from "lucide-react-native";
+import { ArrowLeft, Mic, BarChart2, PhoneCall } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import {
   verticalScale,
   getScreenPadding,
 } from "../../utils/responsive";
-import { ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
+import { ChatComposer, ErrorRecovery, NetworkStatusIndicator } from "../../components/common";
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { aiService, healthMetricsService } from "../../services";
@@ -246,6 +245,9 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          accessibilityHint="Returns to patient dashboard"
         >
           <ArrowLeft
             size={24}
@@ -257,6 +259,9 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           style={styles.voiceButton}
           onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Voice input"
+          accessibilityHint="Opens voice input"
         >
           <Mic size={24} color={healthColors.primary.main} />
         </TouchableOpacity>
@@ -289,6 +294,8 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                   style={styles.suggestionCard}
                   onPress={() => handleSuggestionPress(suggestion)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Use suggestion: ${suggestion.text}`}
                 >
                   <Text style={styles.suggestionText}>{suggestion.text}</Text>
                 </TouchableOpacity>
@@ -374,6 +381,9 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                 style={styles.doctorButton}
                 onPress={() => navigation.navigate("AppointmentBooking")}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Talk to real doctor"
+                accessibilityHint="Opens appointment booking"
               >
                 <PhoneCall size={20} color={theme.colors.white} />
                 <Text style={styles.doctorButtonText}>Talk to Real Doctor</Text>
@@ -383,44 +393,16 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         </ScrollView>
 
         {/* Input Section */}
-        <View style={styles.inputSection}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Ask anything about your health..."
-              placeholderTextColor={healthColors.text.disabled}
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              style={styles.micButton}
-              onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
-              activeOpacity={0.7}
-            >
-              <Mic
-                size={24}
-                color={healthColors.text.secondary}
-              />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!message.trim() || analyzeSymptomsMutation.isPending) &&
-                styles.sendButtonDisabled,
-            ]}
-            onPress={handleSend}
-            disabled={!message.trim() || analyzeSymptomsMutation.isPending}
-          >
-            {analyzeSymptomsMutation.isPending ? (
-              <ActivityIndicator size="small" color={theme.colors.white} />
-            ) : (
-              <Send size={20} color={theme.colors.white} />
-            )}
-          </TouchableOpacity>
-        </View>
+        <ChatComposer
+          value={message}
+          onChangeText={setMessage}
+          onSend={handleSend}
+          onVoicePress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
+          sending={analyzeSymptomsMutation.isPending}
+          sendDisabled={!message.trim() || analyzeSymptomsMutation.isPending}
+          placeholder="Ask anything about your health..."
+          maxLength={500}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -587,54 +569,9 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.white,
   },
-  inputSection: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    paddingHorizontal: getScreenPadding(),
-    paddingVertical: 12,
-    backgroundColor: healthColors.background.card,
-    borderTopWidth: 1,
-    borderTopColor: healthColors.border.light,
-  },
-  inputContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    backgroundColor: healthColors.background.secondary,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  input: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    maxHeight: 100,
-    paddingVertical: 4,
-  },
-  micButton: {
-    padding: 4,
-    marginLeft: 4,
-  },
-  sendButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: healthColors.primary.main,
-    justifyContent: "center",
-    alignItems: "center",
-    ...theme.shadows.md,
-  },
-  sendButtonDisabled: {
-    backgroundColor: healthColors.text.disabled,
-  },
   keyboardContainer: {
     flex: 1,
   },
 });
 
 export default AIHealthAssistantScreen;
-
-
-

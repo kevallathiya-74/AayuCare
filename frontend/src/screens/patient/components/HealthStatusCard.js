@@ -61,6 +61,9 @@ const HealthStatusCard = ({
       style={[styles.card, { borderColor: cfg.color + "30" }]}
       onPress={onPress}
       activeOpacity={onPress ? 0.8 : 1}
+      accessibilityRole="button"
+      accessibilityLabel="Open health status details"
+      accessibilityState={{ disabled: !onPress }}
     >
       {/* Status row */}
       <View style={styles.statusRow}>

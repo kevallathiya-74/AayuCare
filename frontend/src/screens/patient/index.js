@@ -9,8 +9,6 @@ export { default as MyAppointmentsScreen } from './MyAppointmentsScreen';
 export { default as MyReportsScreen } from './MyReportsScreen';
 export { default as MyPrescriptionsScreen } from './MyPrescriptionsScreen';
 export { default as NotificationsScreen } from './NotificationsScreen';
-export { default as ActivityTrackerScreen } from './ActivityTrackerScreen';
-export { default as WomensHealthScreen } from './WomensHealthScreen';
 export { default as DiseaseInfoScreen } from './DiseaseInfoScreen';
 export { default as HospitalEventsScreen } from './HospitalEventsScreen';
 export { default as PharmacyBillingScreen } from './PharmacyBillingScreen';
@@ -19,6 +17,7 @@ export { default as AISymptomChecker } from './AISymptomChecker';
 export { default as EmergencyServices } from './EmergencyServices';
 export { default as AIHealthAssistantScreen } from './AIHealthAssistantScreen';
 export { default as SpecialistCareFinderScreen } from './SpecialistCareFinderScreen';
+export { default as DoctorProfileViewScreen } from './DoctorProfileViewScreen';
 export { default as AppointmentBookingScreen } from './AppointmentBookingScreen';
 export { default as PatientEditProfileScreen } from './PatientEditProfileScreen';
 

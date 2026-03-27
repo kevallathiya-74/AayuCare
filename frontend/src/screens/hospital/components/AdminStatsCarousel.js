@@ -40,6 +40,8 @@ const AdminStatsCarousel = ({ statCards = [], onCardPress }) => (
         ]}
         onPress={() => onCardPress && onCardPress(stat)}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`${stat.title}: ${stat.value}`}
       >
         <LinearGradient
           colors={stat.gradient}

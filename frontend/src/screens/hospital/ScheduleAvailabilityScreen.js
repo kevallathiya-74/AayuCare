@@ -13,9 +13,7 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
-  TextInput,
   Modal,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, AlertCircle, Info, Clock, Coffee, Edit, X, Trash2, PlusCircle } from "lucide-react-native";
@@ -25,8 +23,7 @@ import { queryKeys } from "../../config/reactQueryConfig";
 import { theme, healthColors } from "../../theme";
 import { convertTo12Hour } from "../../utils/helpers";
 import { parseError } from "../../utils/errorHandler";
-import { SkeletonCardRow, Input } from "../../components/common";
-import { DynamicIcon } from "../../components/common";
+import { DynamicIcon, Input, SkeletonCardRow } from "../../components/common";
 import { handleSmartBack } from "../../utils/navigation";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
@@ -188,6 +185,9 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <TouchableOpacity
             onPress={() => handleSmartBack(navigation, "DoctorTabs")}
             style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            accessibilityHint="Returns to doctor dashboard"
           >
             <ArrowLeft
               
@@ -198,7 +198,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>Schedule & Availability</Text>
           <View style={styles.headerRightSpacer} />
         </View>
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingSkeletonWrap}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
@@ -212,6 +212,9 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <TouchableOpacity
             onPress={() => handleSmartBack(navigation, "DoctorTabs")}
             style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            accessibilityHint="Returns to doctor dashboard"
           >
             <ArrowLeft
               
@@ -228,7 +231,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <Text style={styles.errorMessage}>
             {parseError(error)}
           </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={refetch}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading schedule"
+          >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -243,6 +251,9 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "DoctorTabs")}
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          accessibilityHint="Returns to doctor dashboard"
         >
           <ArrowLeft
             
@@ -304,6 +315,9 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   <Switch
                     value={isAvailable}
                     onValueChange={() => toggleDayAvailability(day.id)}
+                    accessibilityLabel={`${day.label} availability`}
+                    accessibilityRole="switch"
+                    accessibilityHint={`Toggle ${day.label} availability`}
                     trackColor={{
                       false: healthColors.border.main,
                       true: healthColors.primary.light,
@@ -353,6 +367,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={styles.editButton}
                   onPress={() => openEditModal(day)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${day.label} schedule`}
                 >
                   <Edit
                     
@@ -377,7 +393,11 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         <SafeAreaView style={styles.modalContainer}>
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close edit schedule"
+            >
               <X
                 
                 size={24}
@@ -385,7 +405,13 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
               />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Edit {selectedDay?.label}</Text>
-            <TouchableOpacity onPress={saveSchedule} disabled={saving}>
+            <TouchableOpacity
+              onPress={saveSchedule}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel="Save schedule"
+              accessibilityHint="Saves updated time slots and break time"
+            >
               {saving ? (
                 <ActivityIndicator
                   size="small"
@@ -406,31 +432,41 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   <View style={styles.timeInputs}>
                     <View style={styles.timeInputGroup}>
                       <Text style={styles.timeInputLabel}>Start</Text>
-                      <TextInput
-                        style={styles.timeInput}
+                      <Input
+                        style={styles.timeInputControl}
+                        inputStyle={styles.timeInputText}
                         value={slot.startTime}
                         onChangeText={(value) =>
                           updateTimeSlot(index, "startTime", value)
                         }
                         placeholder="09:00"
-                        placeholderTextColor={healthColors.text.tertiary}
+                        keyboardType="numeric"
+                        maxLength={5}
+                        accessibilityLabel="Start time"
                       />
                     </View>
                     <Text style={styles.timeSeparator}>-</Text>
                     <View style={styles.timeInputGroup}>
                       <Text style={styles.timeInputLabel}>End</Text>
-                      <TextInput
-                        style={styles.timeInput}
+                      <Input
+                        style={styles.timeInputControl}
+                        inputStyle={styles.timeInputText}
                         value={slot.endTime}
                         onChangeText={(value) =>
                           updateTimeSlot(index, "endTime", value)
                         }
                         placeholder="17:00"
-                        placeholderTextColor={healthColors.text.tertiary}
+                        keyboardType="numeric"
+                        maxLength={5}
+                        accessibilityLabel="End time"
                       />
                     </View>
                   </View>
-                  <TouchableOpacity onPress={() => removeTimeSlot(index)}>
+                  <TouchableOpacity
+                    onPress={() => removeTimeSlot(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove time slot ${index + 1}`}
+                  >
                     <Trash2
                       
                       size={20}
@@ -439,7 +475,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   </TouchableOpacity>
                 </View>
               ))}
-              <TouchableOpacity style={styles.addButton} onPress={addTimeSlot}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={addTimeSlot}
+                accessibilityRole="button"
+                accessibilityLabel="Add time slot"
+              >
                 <PlusCircle
                   
                   size={20}
@@ -455,27 +496,33 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
               <View style={styles.breakTimeEditor}>
                 <View style={styles.timeInputGroup}>
                   <Text style={styles.timeInputLabel}>Start</Text>
-                  <TextInput
-                    style={styles.timeInput}
+                  <Input
+                    style={styles.timeInputControl}
+                    inputStyle={styles.timeInputText}
                     value={breakTime.startTime}
                     onChangeText={(value) =>
                       setBreakTime({ ...breakTime, startTime: value })
                     }
                     placeholder="12:00"
-                    placeholderTextColor={healthColors.text.tertiary}
+                    keyboardType="numeric"
+                    maxLength={5}
+                    accessibilityLabel="Break start time"
                   />
                 </View>
                 <Text style={styles.timeSeparator}>-</Text>
                 <View style={styles.timeInputGroup}>
                   <Text style={styles.timeInputLabel}>End</Text>
-                  <TextInput
-                    style={styles.timeInput}
+                  <Input
+                    style={styles.timeInputControl}
+                    inputStyle={styles.timeInputText}
                     value={breakTime.endTime}
                     onChangeText={(value) =>
                       setBreakTime({ ...breakTime, endTime: value })
                     }
                     placeholder="14:00"
-                    placeholderTextColor={healthColors.text.tertiary}
+                    keyboardType="numeric"
+                    maxLength={5}
+                    accessibilityLabel="Break end time"
                   />
                 </View>
               </View>
@@ -528,6 +575,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  loadingSkeletonWrap: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   loadingText: {
     marginTop: 12,
@@ -688,13 +739,13 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     marginBottom: 4,
   },
-  timeInput: {
-    backgroundColor: healthColors.background.primary,
-    borderWidth: 1,
+  timeInputControl: {
+    marginBottom: 0,
+    borderRadius: theme.borderRadius.sm,
     borderColor: healthColors.border.main,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: healthColors.background.primary,
+  },
+  timeInputText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
   },

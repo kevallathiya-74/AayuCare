@@ -68,6 +68,8 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
           style={styles.secondaryBtn}
           onPress={() => onViewHistory(appointment)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`View history for ${appointment.patientName || "patient"}`}
         >
           <Text style={styles.secondaryBtnText}>View History</Text>
         </TouchableOpacity>
@@ -75,6 +77,9 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
           style={[styles.primaryBtn, !isActive && styles.primaryBtnDisabled]}
           onPress={() => isActive && onStartConsultation(appointment)}
           activeOpacity={isActive ? 0.8 : 1}
+          accessibilityRole="button"
+          accessibilityLabel={`${ns === "in_progress" ? "Continue" : "Start"} consultation for ${appointment.patientName || "patient"}`}
+          accessibilityState={{ disabled: !isActive }}
         >
           <Text style={styles.primaryBtnText}>
             {ns === "in_progress" ? "Continue" : "Start"}

@@ -235,6 +235,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => handleSmartBack(navigation, "AdminTabs")}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <DynamicIcon
               name="arrow-back"
@@ -261,6 +263,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => handleSmartBack(navigation, "AdminTabs")}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
@@ -273,6 +277,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={onRefresh}
           disabled={isRefetching}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh security settings"
+          accessibilityState={{ disabled: isRefetching }}
         >
           {isRefetching ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
@@ -413,6 +420,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => setShowPasswordModal(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Change password"
           >
             <View
               style={[
@@ -440,7 +449,12 @@ const SecuritySettingsScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Logout All Devices */}
-          <TouchableOpacity style={styles.actionCard} onPress={handleLogoutAll}>
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={handleLogoutAll}
+            accessibilityRole="button"
+            accessibilityLabel="Logout all devices"
+          >
             <View
               style={[
                 styles.actionIcon,
@@ -476,7 +490,11 @@ const SecuritySettingsScreen = ({ navigation }) => {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Change Password</Text>
-                <TouchableOpacity onPress={closePasswordModal}>
+                <TouchableOpacity
+                  onPress={closePasswordModal}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close password modal"
+                >
                   <X
                     
                     size={24}
@@ -612,6 +630,8 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={closePasswordModal}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel password change"
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -622,6 +642,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   ]}
                   onPress={handleChangePassword}
                   disabled={!canSubmitPassword}
+                  accessibilityRole="button"
+                  accessibilityLabel="Submit password change"
+                  accessibilityState={{ disabled: !canSubmitPassword }}
                 >
                   {passwordLoading ? (
                     <ActivityIndicator size="small" color={theme.colors.white} />

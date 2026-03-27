@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
 import {
   View,
@@ -12,7 +12,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
   StatusBar,
   ActivityIndicator,
   Alert,
@@ -24,13 +23,13 @@ import {
 } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { User, Droplet, Mail, Phone, FileText, Edit, Trash2, ArrowLeft, Plus, Search, XCircle } from "lucide-react-native";
+import { User, Droplet, Mail, Phone, FileText, Edit, Trash2, ArrowLeft, Plus } from "lucide-react-native";
 import { theme, healthColors } from "../../theme";
 import { patientService, adminService, doctorService } from "../../services";
 import { logError, parseError } from "../../utils/errorHandler";
 import { calculateAge } from "../../utils/dateHelpers";
 import logger from "../../utils/logger";
-import { EmptyState, SkeletonCardRow } from "../../components/common";
+import { EmptyState, SearchField, SkeletonCardRow } from "../../components/common";
 import { EmptyStateConfig } from "../../utils/constants";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
@@ -606,36 +605,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       {/* Search Section */}
       <View style={styles.searchSection}>
-        <View style={styles.searchContainer}>
-          <Search
-            
-            size={20}
-            color={healthColors.text.tertiary}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search patients by name"
-            placeholderTextColor={healthColors.text.tertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            accessibilityLabel="Search patients"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => setSearchQuery("")}
-              style={styles.clearButton}
-              accessibilityRole="button"
-              accessibilityLabel="Clear search"
-            >
-              <XCircle
-                
-                size={20}
-                color={healthColors.text.disabled}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchField
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search patients by name"
+          loading={searchLoading && !loading}
+          onClear={() => setSearchQuery("")}
+          accessibilityLabel="Search patients"
+        />
         {searchLoading && !loading && (
           <ActivityIndicator
             size="small"
@@ -647,7 +624,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       {/* Patients List */}
       {loading ? (
-        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.loadingSkeletonWrap}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : (
         <FlatList
           data={patients}
@@ -758,28 +735,13 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.sm + theme.spacing.xs,
     paddingBottom: theme.spacing.sm + theme.spacing.xs,
   },
-  searchContainer: {
-    height: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.neutral.gray100,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-  },
-  searchIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
-  clearButton: {
-    padding: theme.spacing.xs,
-  },
   searchLoader: {
     marginTop: theme.spacing.sm,
     alignSelf: "center",
+  },
+  loadingSkeletonWrap: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   listContent: {
     paddingHorizontal: theme.spacing.md,

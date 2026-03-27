@@ -23,12 +23,12 @@ import {
 } from "react-native-safe-area-context";
 import { Cross, ChevronRight, ArrowLeft, X } from "lucide-react-native";
 import { useSelector } from "react-redux";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from "../../components/common";
 import { parseError } from "../../utils/errorHandler";
 import { formatDate } from "../../utils/helpers";
-import { prescriptionService } from "../../services";
+import { appointmentService, prescriptionService } from "../../services";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { handleSmartBack } from "../../utils/navigation";
 
@@ -79,6 +79,31 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     [data]
   );
 
+  const { data: hasUpcomingAppointment = false } = useQuery({
+    queryKey: queryKeys.appointments.list({
+      scope: "prescriptions-empty-state-appointment-check",
+      patientId: user?.id,
+    }),
+    enabled: !!user?.id,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const response = await appointmentService.getPatientAppointments(user.id);
+      const appointments = response?.data?.appointments || response?.data || [];
+      if (!Array.isArray(appointments) || appointments.length === 0) {
+        return false;
+      }
+
+      return appointments.some((appointment) => {
+        const status = String(appointment?.status || "")
+          .toLowerCase()
+          .trim()
+          .replace(/-/g, "_");
+
+        return ["scheduled", "confirmed", "in_progress"].includes(status);
+      });
+    },
+  });
+
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -94,6 +119,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       style={styles.prescriptionCard}
       activeOpacity={0.7}
       onPress={() => setSelectedPrescription(item)}
+      accessibilityRole="button"
+      accessibilityLabel={`Open prescription from Dr. ${item.doctorName || "Unknown"}`}
     >
       <View style={styles.prescriptionHeader}>
         <View style={styles.prescriptionIcon}>
@@ -162,9 +189,17 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     <EmptyState
       icon="medical-outline"
       title="No Prescriptions Yet"
-      message="Your prescriptions from doctor visits will appear here. Book an appointment to get started."
-      actionLabel="Book Appointment"
-      onActionPress={() => navigation.navigate("AppointmentBooking")}
+      message={
+        hasUpcomingAppointment
+          ? "You already have an upcoming appointment. Your prescription will appear here after consultation."
+          : "Your prescriptions from doctor visits will appear here. Book an appointment to get started."
+      }
+      actionLabel={hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"}
+      onActionPress={() =>
+        hasUpcomingAppointment
+          ? navigation.navigate("MyAppointments")
+          : navigation.navigate("AppointmentBooking")
+      }
     />
   );
 
@@ -194,6 +229,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft
             
@@ -232,6 +269,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               <TouchableOpacity
                 onPress={() => setSelectedPrescription(null)}
                 style={styles.modalClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close prescription details"
               >
                 <X  size={22} color={healthColors.text.secondary} />
               </TouchableOpacity>
@@ -309,6 +348,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             <TouchableOpacity
               style={styles.modalDismiss}
               onPress={() => setSelectedPrescription(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
             >
               <Text style={styles.modalDismissText}>Close</Text>
             </TouchableOpacity>
@@ -317,7 +358,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       </Modal>
 
       {loading ? (
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
@@ -513,6 +554,10 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: theme.spacing.md,
     alignItems: "center",
+  },
+  loadingListWrapper: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   emptyContent: {
     flexGrow: 1,

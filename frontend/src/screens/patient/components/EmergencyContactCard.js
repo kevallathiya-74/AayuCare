@@ -37,6 +37,8 @@ const EmergencyContactCard = ({ user }) => {
         style={styles.buttonWrapper}
         onPress={handleEmergencyCall}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Call emergency contact"
       >
         <LinearGradient
           colors={[healthColors.error.main, "#C62828"]}
@@ -57,6 +59,8 @@ const EmergencyContactCard = ({ user }) => {
         style={styles.buttonWrapper}
         onPress={handleAmbulanceCall}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Call ambulance 108"
       >
         <LinearGradient
           colors={[healthColors.accent.coral || "#FF7043", "#E64A19"]}

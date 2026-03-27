@@ -133,26 +133,6 @@
     "uploadReport": "Upload Report Image",
     "manualEntry": "Manual Entry"
   },
-  "activity": {
-    "title": "Activity Tracker",
-    "stepsToday": "STEPS TODAY:",
-    "stepsToGo": "steps to go!",
-    "sleepTracker": "SLEEP TRACKER:",
-    "lastNight": "Last Night:",
-    "quality": "Quality:",
-    "bedtime": "Bedtime:",
-    "wake": "Wake:",
-    "viewWeekly": "View Weekly Report",
-    "waterIntake": "WATER INTAKE:",
-    "glassesToday": "glasses today",
-    "addGlass": "+ Add Glass",
-    "reminder": "Reminder every 2 hours",
-    "stressRelief": "STRESS RELIEF:",
-    "breathingExercise": "Breathing Exercise (5 min)",
-    "yogaSession": "Yoga Session (15 min)",
-    "meditation": "Meditation (10 min)",
-    "viewProgress": "View 30-Day Progress"
-  },
   "diseaseInfo": {
     "title": "Disease Information",
     "healthLibrary": "HEALTH LIBRARY",
@@ -171,23 +151,6 @@
     "prevention": "PREVENTION:",
     "dietChart": "DIET CHART",
     "exercisePlan": "EXERCISE PLAN"
-  },
-  "womensHealth": {
-    "title": "Women's Health",
-    "personalizedCare": "PERSONALIZED CARE FOR WOMEN",
-    "menstrualTracker": "MENSTRUAL TRACKER",
-    "currentCycle": "Current Cycle:",
-    "nextPeriod": "Next Period:",
-    "cycleCalendar": "Cycle Calendar:",
-    "todayInsight": "Today's Insight:",
-    "pregnancyCare": "PREGNANCY CARE",
-    "week": "Week",
-    "babySize": "Baby Size:",
-    "thisWeekTips": "This Week's Tips:",
-    "nextCheckup": "Next Checkup:",
-    "immunization": "Immunization Schedule",
-    "mentalWellness": "MENTAL WELLNESS",
-    "counselingSupport": "Counseling Support"
   },
   "hospitalEvents": {
     "title": "Hospital Events",

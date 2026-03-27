@@ -163,6 +163,31 @@ const ProfileScreen = ({ navigation }) => {
     ? "Profile statistics are loading"
     : `Appointments ${stats.appointments}, Records ${stats.records}, Prescriptions ${stats.prescriptions}`;
 
+  // Calculate age from dateOfBirth
+  const calculatedAge = user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
+
+  // Format medical history properly (array of objects)
+  const formatMedicalHistory = () => {
+    const history =
+      user?.medicalHistory?.length > 0
+        ? user.medicalHistory
+        : user?.chronicConditions || [];
+
+    if (!history || history.length === 0) return "None";
+
+    return history
+      .map((item) => {
+        if (typeof item === "string") return item;
+        const condition = item.condition || "Unknown";
+        const duration = item.diagnosedDate
+          ? ` (${formatMedicalHistoryDuration(item.diagnosedDate, item.status)})`
+          : "";
+        const status = item.status ? ` - ${item.status}` : "";
+        return `${condition}${duration}${status}`;
+      })
+      .join("; ");
+  };
+
   const profileSections = [
     {
       title: "Personal Information",
@@ -223,32 +248,6 @@ const ProfileScreen = ({ navigation }) => {
       ],
     },
   ];
-  // Calculate age from dateOfBirth
-  const calculatedAge = user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
-
-  // Format medical history properly (array of objects)
-  const formatMedicalHistory = () => {
-    const history =
-      user?.medicalHistory?.length > 0
-        ? user.medicalHistory
-        : user?.chronicConditions || [];
-
-    if (!history || history.length === 0) return "None";
-    
-    return history
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        const condition = item.condition || "Unknown";
-        const duration = item.diagnosedDate 
-          ? ` (${formatMedicalHistoryDuration(item.diagnosedDate, item.status)})`
-          : "";
-        const status = item.status ? ` - ${item.status}` : "";
-        return `${condition}${duration}${status}`;
-      })
-      .join("; ");
-  };
-
-
   const actionItems = [
     {
       title: "Edit Profile",

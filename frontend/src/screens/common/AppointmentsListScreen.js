@@ -91,6 +91,8 @@ const AppointmentsListScreen = ({ navigation, route }) => {
         style={styles.appointmentCard}
         onPress={() => navigation.navigate(user.role === 'patient' ? 'MyAppointments' : 'Appointments', { appointmentId: appointment._id })}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Open appointment details for ${user.role === 'patient' ? appointment.doctorName : appointment.patientName || 'patient'}`}
       >
         <View style={styles.cardHeader}>
           <View style={styles.iconContainer}>

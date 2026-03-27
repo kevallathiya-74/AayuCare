@@ -319,6 +319,8 @@ const NotificationsScreen = ({ navigation }) => {
       style={[styles.notificationCard, !isRead && styles.unreadCard]}
       onPress={() => handleNotificationPress(item)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Open notification ${item.title}`}
     >
       <View style={styles.notificationContent}>
         <View
@@ -353,6 +355,8 @@ const NotificationsScreen = ({ navigation }) => {
           style={styles.deleteButton}
           onPress={() => handleDeleteNotification(item._id, isRead)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel="Delete notification"
         >
           <DynamicIcon
             name="trash-2"
@@ -396,6 +400,8 @@ const NotificationsScreen = ({ navigation }) => {
           style={styles.backButton}
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
@@ -414,6 +420,8 @@ const NotificationsScreen = ({ navigation }) => {
             style={styles.actionButton}
             onPress={handleClearAll}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Clear all notifications"
           >
             <Trash2 size={20} color={healthColors.error.main} />
           </TouchableOpacity>
@@ -426,6 +434,8 @@ const NotificationsScreen = ({ navigation }) => {
           style={styles.markAllButton}
           onPress={handleMarkAllAsRead}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Mark all notifications as read"
         >
           <CheckCheck size={18} color={healthColors.primary.main} />
           <Text style={styles.markAllText}>Mark all as read</Text>
@@ -446,7 +456,7 @@ const NotificationsScreen = ({ navigation }) => {
           }}
         />
       ) : loading ? (
-        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.loadingListWrapper}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : notifications.length === 0 ? (
         <EmptyState
           icon="notifications-outline"
@@ -563,6 +573,10 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: theme.spacing.md,
+  },
+  loadingListWrapper: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
   footerLoader: {
     paddingVertical: theme.spacing.md,

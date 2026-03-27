@@ -29,7 +29,7 @@ import { SkeletonCardRow, NetworkStatusIndicator, ErrorRecovery, EmptyState } fr
 import { showError, logError } from "../../utils/errorHandler";
 import { useNetworkStatus } from "../../utils/offlineHandler";
 import { formatCurrency } from "../../utils/helpers";
-import { prescriptionService, paymentService } from "../../services";
+import { prescriptionService, paymentService, appointmentService } from "../../services";
 import { DynamicIcon } from "../../components/common";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "../../config/reactQueryConfig";
@@ -91,6 +91,31 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   });
 
   const prescription = routePrescription || fetchedPrescription || null;
+
+  const { data: hasUpcomingAppointment = false } = useQuery({
+    queryKey: queryKeys.appointments.list({
+      scope: "pharmacy-empty-state-appointment-check",
+      patientId: user?.id,
+    }),
+    enabled: !!user?.id,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const response = await appointmentService.getPatientAppointments(user.id);
+      const appointments = response?.data?.appointments || response?.data || [];
+      if (!Array.isArray(appointments) || appointments.length === 0) {
+        return false;
+      }
+
+      return appointments.some((appointment) => {
+        const status = String(appointment?.status || "")
+          .toLowerCase()
+          .trim()
+          .replace(/-/g, "_");
+
+        return ["scheduled", "confirmed", "in_progress"].includes(status);
+      });
+    },
+  });
 
   const subtotal =
     prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0), 0) ||
@@ -171,7 +196,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
@@ -185,15 +210,19 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     prescription.medicines.length === 0
   ) {
     return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
         <NetworkStatusIndicator />
         <LinearGradient
-          colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
-          style={styles.header}
+          colors={healthColors.gradients.primary}
+          style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
+          <TouchableOpacity
+            onPress={() => handleSmartBack(navigation, "PatientTabs")}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <ArrowLeft  size={24} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
@@ -210,25 +239,37 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <EmptyState
           icon="receipt-outline"
           title="No Active Prescription"
-          message="You need a valid prescription to purchase medicines. Please book an appointment and consult a doctor first."
-          actionLabel="Book Appointment"
-          onActionPress={() => navigation.navigate("AppointmentBooking")}
+          message={
+            hasUpcomingAppointment
+              ? "You already have an upcoming appointment. Your prescription will appear here after doctor consultation."
+              : "You need a valid prescription to purchase medicines. Please book an appointment and consult a doctor first."
+          }
+          actionLabel={hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"}
+          onActionPress={() =>
+            hasUpcomingAppointment
+              ? navigation.navigate("MyAppointments")
+              : navigation.navigate("AppointmentBooking")
+          }
         />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <NetworkStatusIndicator />
       {/* Header */}
       <LinearGradient
-        colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
-        style={styles.header}
+        colors={healthColors.gradients.primary}
+        style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
+        <TouchableOpacity
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <ArrowLeft  size={24} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -249,6 +290,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 )
               : Alert.alert("No Receipt", "Complete a payment to view the receipt.")
           }
+          accessibilityRole="button"
+          accessibilityLabel="View payment receipt"
         >
           <Receipt  size={24} color={theme.colors.white} />
         </TouchableOpacity>
@@ -341,6 +384,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   styles.purchaseOptionSelected,
               ]}
               onPress={() => setSelectedPurchase("hospital")}
+              accessibilityRole="button"
+              accessibilityLabel="Choose hospital pharmacy"
+              accessibilityState={{ selected: selectedPurchase === "hospital" }}
             >
               <View style={styles.purchaseOptionContent}>
                 <DynamicIcon
@@ -379,6 +425,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   styles.purchaseOptionSelected,
               ]}
               onPress={() => setSelectedPurchase("external")}
+              accessibilityRole="button"
+              accessibilityLabel="Choose external pharmacy"
+              accessibilityState={{ selected: selectedPurchase === "external" }}
             >
               <View style={styles.purchaseOptionContent}>
                 <DynamicIcon
@@ -467,6 +516,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   selectedPayment === method.id && styles.paymentMethodSelected,
                 ]}
                 onPress={() => setSelectedPayment(method.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select payment method ${method.name}`}
+                accessibilityState={{ selected: selectedPayment === method.id }}
               >
                 <View
                   style={[
@@ -500,6 +552,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           style={styles.payButton}
           onPress={handlePayment}
           disabled={paymentMutation.isPending}
+          accessibilityRole="button"
+          accessibilityLabel={`Pay ${formatCurrency(total)}`}
+          accessibilityState={{ disabled: paymentMutation.isPending }}
         >
           <LinearGradient
             colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
@@ -547,13 +602,16 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
+  loadingListWrapper: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: getScreenPadding(),
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(30),
+    paddingHorizontal: getScreenPadding(),
+    paddingBottom: theme.spacing.md,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
@@ -574,7 +632,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.withOpacity(theme.colors.text.white, 0.9),
+    color: theme.withOpacity(theme.colors.white, 0.9),
   },
   content: {
     padding: getScreenPadding(),

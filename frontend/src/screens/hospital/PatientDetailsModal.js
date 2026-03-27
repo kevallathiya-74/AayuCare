@@ -646,6 +646,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={() => refetch()}
+                accessibilityRole="button"
+                accessibilityLabel="Retry loading patient details"
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>

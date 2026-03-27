@@ -190,7 +190,9 @@ const EmergencyServices = ({ navigation }) => {
         end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
-          <ArrowLeft  size={24} color={theme.colors.white} />
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          accessibilityHint="Returns to patient dashboard"
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <EmergencyIcon size={32} />
@@ -213,6 +215,8 @@ const EmergencyServices = ({ navigation }) => {
           style={styles.ambulanceButton}
           onPress={handleAmbulanceCall}
           activeOpacity={0.9}
+          accessibilityRole="button"
+          accessibilityLabel="Call ambulance 108"
         >
           <LinearGradient
             colors={[healthColors.error.main, healthColors.error.dark, healthColors.error.dark]}
@@ -245,6 +249,8 @@ const EmergencyServices = ({ navigation }) => {
                   key={item.name}
                   style={styles.numberCard}
                   onPress={() => handleEmergencyCall(item.number, item.name)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Call ${item.name} ${item.number}`}
                 >
                   <View
                     style={[
@@ -266,7 +272,11 @@ const EmergencyServices = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Nearby Hospitals</Text>
-            <TouchableOpacity onPress={() => handleOpenMaps("hospitals near me")}>
+            <TouchableOpacity
+              onPress={() => handleOpenMaps("hospitals near me")}
+              accessibilityRole="button"
+              accessibilityLabel="Open nearby hospitals map"
+            >
               <Text style={styles.viewAllText}>View Map</Text>
             </TouchableOpacity>
           </View>
@@ -298,6 +308,8 @@ const EmergencyServices = ({ navigation }) => {
                     ? handleOpenMaps("hospitals near me")
                     : handleEmergencyCall(hospital.phone, hospital.name)
                 }
+                accessibilityRole="button"
+                accessibilityLabel={hospital.openMaps ? "Open hospital map" : `Call ${hospital.name}`}
               >
                 {hospital.openMaps ? (
                   <Map size={20} color={healthColors.primary.main} />

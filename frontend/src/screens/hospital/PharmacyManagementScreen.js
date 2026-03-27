@@ -10,20 +10,19 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   RefreshControl,
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, RefreshCcw, Search } from "lucide-react-native";
+import { ArrowLeft, RefreshCcw } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "../../theme";
 import { queryKeys } from "../../config/reactQueryConfig";
 import prescriptionService from "../../services/prescription.service";
 import { formatDate } from "../../utils/helpers";
 import { logError, parseError } from "../../utils/errorHandler";
-import { SkeletonCardRow, EmptyState } from "../../components/common";
+import { SkeletonCardRow, EmptyState, SearchField } from "../../components/common";
 import { EmptyStateConfig } from "../../utils/constants";
 import { handleSmartBack } from "../../utils/navigation";
 
@@ -99,6 +98,7 @@ const StatusChip = ({ label, count, isActive, onPress }) => {
       style={[styles.chipBase, isActive ? styles.chipActive : styles.chipInactive]}
       accessibilityRole="button"
       accessibilityLabel={`Filter ${label}`}
+      accessibilityHint="Shows pharmacy orders with this status"
     >
       <Text style={[styles.chipLabel, isActive ? styles.chipLabelActive : styles.chipLabelInactive]}>
         {label}
@@ -214,13 +214,18 @@ const PharmacyManagementScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerIconBtn} onPress={() => handleSmartBack(navigation, "AdminTabs")}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => handleSmartBack(navigation, "AdminTabs")}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pharmacy Management</Text>
           <View style={styles.headerIconBtn} />
         </View>
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
@@ -273,14 +278,14 @@ const PharmacyManagementScreen = ({ navigation }) => {
         ListHeaderComponent={
           <View>
             <View style={styles.searchWrap}>
-              <Search size={theme.iconSizes.sm} color={healthColors.text.tertiary} />
-              <TextInput
+              <SearchField
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                onClear={() => setSearchQuery("")}
                 placeholder="Search by patient, doctor, or medicine"
-                placeholderTextColor={healthColors.text.tertiary}
-                style={styles.searchInput}
-                returnKeyType="search"
+                accessibilityLabel="Search pharmacy orders"
+                accessibilityHint="Searches by patient, doctor, or medicine"
+                style={styles.searchField}
               />
             </View>
 
@@ -372,19 +377,14 @@ const styles = StyleSheet.create({
 
   searchWrap: {
     marginTop: theme.spacing.sm + theme.spacing.xs,
-    height: theme.touchTargets.min,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.sm + theme.spacing.xs,
-    backgroundColor: healthColors.neutral.gray100,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.sm,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.fontSizes.bodyMedium,
-    fontWeight: theme.typography.weights.regular,
-    color: healthColors.text.primary,
+  searchField: {
+    backgroundColor: healthColors.neutral.gray100,
+    borderColor: healthColors.border.light,
+  },
+  loadingListWrapper: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm + theme.spacing.xs,
   },
 
   filterRow: {

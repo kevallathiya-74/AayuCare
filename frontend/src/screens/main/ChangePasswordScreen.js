@@ -115,7 +115,12 @@ const ChangePasswordScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => handleSmartBack(navigation, "Settings")}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => handleSmartBack(navigation, "Settings")}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        > 
           <ArrowLeft  size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>

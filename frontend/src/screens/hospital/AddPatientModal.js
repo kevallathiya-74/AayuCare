@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -23,7 +22,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from "../../theme";
 import adminService from "../../services/admin.service";
-import { Button } from "../../components/common";
+import { Button, Input } from "../../components/common";
 import logger from "../../utils/logger";
 import { DynamicIcon } from "../../components/common";
 import { queryKeys } from "../../config/reactQueryConfig";
@@ -283,46 +282,42 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     multiline = false
   ) => (
     <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError]}>
-        <DynamicIcon
-          name={icon}
-          size={20}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.tertiary
+      <Input
+        label={label}
+        value={formData[key]}
+        onChangeText={(value) => {
+          if (key === "address") {
+            logger.debug("AddPatientModal", "Address changed", {
+              newValue: value,
+              length: value ? value.length : 0,
+              type: typeof value,
+            });
           }
-          style={styles.inputIcon}
-        />
-        <TextInput
-          style={[styles.input, multiline && styles.textArea]}
-          value={formData[key]}
-          onChangeText={(value) => {
-            if (key === 'address') {
-              logger.debug("AddPatientModal", "Address changed", {
-                newValue: value,
-                length: value ? value.length : 0,
-                type: typeof value
-              });
-            }
-            setFormData({ ...formData, [key]: value });
-            if (key === 'address') {
-              logger.debug("AddPatientModal", "Address state updated");
-            }
-            if (errors[key]) {
-              setErrors({ ...errors, [key]: null });
-            }
-          }}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          autoCapitalize={key === "email" ? "none" : "sentences"}
-          editable={!loading}
-          multiline={multiline}
-          numberOfLines={multiline ? 3 : 1}
-        />
-      </View>
-      {errors[key] && <Text style={styles.errorText}>{errors[key]}</Text>}
+          setFormData({ ...formData, [key]: value });
+          if (key === "address") {
+            logger.debug("AddPatientModal", "Address state updated");
+          }
+          if (errors[key]) {
+            setErrors({ ...errors, [key]: null });
+          }
+        }}
+        placeholder={placeholder}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={key === "email" ? "none" : "sentences"}
+        disabled={loading}
+        multiline={multiline}
+        numberOfLines={multiline ? 3 : 1}
+        leftIcon={
+          <DynamicIcon
+            name={icon}
+            size={20}
+            color={errors[key] ? healthColors.error.main : healthColors.text.tertiary}
+          />
+        }
+        error={errors[key]}
+        style={styles.formInput}
+      />
     </View>
   );
 
@@ -333,6 +328,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         style={[styles.inputWrapper, errors[key] && styles.inputError]}
         onPress={() => setShowPicker(true)}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={`Select ${label}`}
       >
         <DynamicIcon
           name={icon}
@@ -368,11 +365,18 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         style={styles.dropdownOverlay}
         activeOpacity={1}
         onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel={`Close ${title} options`}
       >
         <View style={styles.dropdownContainer}>
           <View style={styles.dropdownHeader}>
             <Text style={styles.dropdownTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={`Close ${title} options`}
+            >
+              
               <X
                 
                 size={24}
@@ -390,6 +394,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                   selectedValue === item && styles.dropdownItemSelected,
                 ]}
                 onPress={() => onSelect(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${item}`}
               >
                 <Text
                   style={[
@@ -433,6 +439,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               onPress={handleClose}
               style={styles.closeButton}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Close patient registration"
             >
               <X
                 size={24}
@@ -480,6 +488,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                 ]}
                 onPress={() => setShowDatePicker(true)}
                 disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Select date of birth"
               >
                 <Calendar
                   
@@ -680,6 +690,9 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: theme.spacing.md,
+  },
+  formInput: {
+    marginBottom: 0,
   },
   label: {
     fontSize: theme.typography.sizes.lg,

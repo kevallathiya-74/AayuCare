@@ -66,6 +66,8 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               onPress={handleClose}
               style={styles.closeButton}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Close edit doctor form"
             >
               <X
                 
@@ -146,6 +148,8 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               style={[styles.button, styles.cancelButton]}
               onPress={handleClose}
               disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel editing doctor profile"
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>

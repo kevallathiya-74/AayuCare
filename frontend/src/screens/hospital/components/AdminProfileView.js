@@ -26,7 +26,12 @@ const InfoRow = ({ icon, label, value, last }) => (
 
 const ActionRow = ({ icon, label, onPress, last }) => (
   <>
-    <TouchableOpacity style={styles.actionRow} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.actionRow}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
       <DynamicIcon name={icon} size={22} color={healthColors.text.primary} />
       <Text style={styles.actionLabel}>{label}</Text>
       <DynamicIcon name="chevron-forward" size={20} color={healthColors.text.tertiary} />
@@ -95,7 +100,12 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
 
       {/* Logout */}
       <View style={styles.section}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={onLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Logout"
+        >
           <LogOut  size={22} color={healthColors.error.main} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>

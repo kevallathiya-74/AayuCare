@@ -19,7 +19,6 @@ import {
   RefreshControl,
   Alert,
   Linking,
-  TextInput,
   Animated,
   Keyboard,
 } from "react-native";
@@ -36,7 +35,7 @@ import { queryKeys } from "../../config/reactQueryConfig";
 import { logError, parseError } from "../../utils/errorHandler";
 import { getStatusColor } from "../../utils/helpers";
 import { useDoctorAppointments } from "../../context/DoctorAppointmentContext";
-import { EmptyState, SkeletonCardRow, DynamicIcon } from "../../components/common";
+import { EmptyState, SkeletonCardRow, DynamicIcon, SearchField } from "../../components/common";
 import { handleSmartBack } from "../../utils/navigation";
 
 const STATUS_FILTERS_BY_TAB = {
@@ -66,7 +65,6 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState(null);
-  const searchInputRef = useRef(null);
   const searchBarAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
 
@@ -170,9 +168,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         toValue: 1,
         duration: 200,
         useNativeDriver: false,
-      }).start(() => {
-        searchInputRef.current?.focus();
-      });
+      }).start();
     }
   }, [showSearch, searchBarAnim]);
 
@@ -597,7 +593,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     );
   }, [selectedFilter, searchQuery, statusFilter]);
 
-  if (loading && !refreshing) {
+  if (loading && !isRefetching) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={{ padding: 16, gap: 12 }}>
@@ -664,23 +660,19 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       {/* Animated Search Bar */}
       <Animated.View style={[styles.searchBarWrapper, { height: searchBarHeight, overflow: "hidden" }]}>
         <View style={styles.searchBarContainer}>
-          <Search  size={18} color={healthColors.text.secondary} />
-          <TextInput
-            ref={searchInputRef}
-            style={styles.searchInput}
-            placeholder="Search by patient name, reason..."
-            placeholderTextColor={healthColors.text.secondary}
+          <SearchField
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onClear={() => setSearchQuery("")}
+            placeholder="Search by patient name, reason..."
             returnKeyType="search"
             autoCorrect={false}
             autoCapitalize="none"
+            autoFocus={showSearch}
+            accessibilityLabel="Search appointments"
+            accessibilityHint="Filter appointments by patient, reason, or time"
+            style={styles.searchField}
           />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <XCircle  size={18} color={healthColors.text.secondary} />
-            </TouchableOpacity>
-          )}
         </View>
       </Animated.View>
 
@@ -693,6 +685,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             onPress={() => handleFilterChange(tab.key)}
             activeOpacity={0.7}
             accessibilityRole="button"
+            accessibilityLabel={`Show ${tab.label} appointments`}
             accessibilityState={{ selected: selectedFilter === tab.key }}
           >
             <Text style={[styles.tabText, selectedFilter === tab.key && styles.tabTextActive]}>
@@ -718,6 +711,9 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               ]}
               onPress={() => handleStatusFilterChange(item.key)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Filter status ${item.label}`}
+              accessibilityState={{ selected: statusFilter === item.key }}
             >
               <Text
                 style={[
@@ -742,6 +738,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           </Text>
           <TouchableOpacity
             onPress={() => { setSearchQuery(""); setStatusFilter("all"); }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear filters"
           >
             <Text style={styles.clearFiltersText}>Clear</Text>
           </TouchableOpacity>
@@ -752,7 +750,11 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       {isError && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{parseError(error)}</Text>
-          <TouchableOpacity onPress={handleRefresh}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading appointments"
+          >
             <Text style={styles.retryText}>Tap to retry</Text>
           </TouchableOpacity>
         </View>

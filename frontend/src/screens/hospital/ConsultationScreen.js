@@ -18,7 +18,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   BackHandler,
   KeyboardAvoidingView,
@@ -37,7 +36,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService } from "../../services";
 import { logError } from "../../utils/errorHandler";
-import { Button } from "../../components/common";
+import { Button, Input } from "../../components/common";
 import { queryKeys } from "../../config/reactQueryConfig";
 import { handleSmartBack } from "../../utils/navigation";
 
@@ -396,6 +395,8 @@ const ConsultationScreen = ({ navigation, route }) => {
                 onPress={handleCreatePrescription}
                 accessibilityRole="button"
                 accessibilityLabel="Create prescription"
+                accessibilityHint="Opens prescription creation for this patient"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <FileText
                   
@@ -412,6 +413,8 @@ const ConsultationScreen = ({ navigation, route }) => {
                 onPress={handleViewHistory}
                 accessibilityRole="button"
                 accessibilityLabel="View patient history"
+                accessibilityHint="Opens this patient history"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <UserCircle
                   
@@ -441,10 +444,10 @@ const ConsultationScreen = ({ navigation, route }) => {
             <Text style={styles.fieldLabel}>Blood Pressure (mmHg)</Text>
             <View style={styles.bpRow}>
               <View style={styles.bpInputWrapper}>
-                <TextInput
-                  style={styles.bpInput}
+                <Input
+                  style={styles.bpInputControl}
+                  inputStyle={styles.bpInputText}
                   placeholder="Systolic"
-                  placeholderTextColor={healthColors.text.tertiary}
                   keyboardType="numeric"
                   value={vitals.bpSystolic}
                   onChangeText={(v) => updateVital("bpSystolic", v)}
@@ -455,10 +458,10 @@ const ConsultationScreen = ({ navigation, route }) => {
               </View>
               <Text style={styles.bpSlash}>/</Text>
               <View style={styles.bpInputWrapper}>
-                <TextInput
-                  style={styles.bpInput}
+                <Input
+                  style={styles.bpInputControl}
+                  inputStyle={styles.bpInputText}
                   placeholder="Diastolic"
-                  placeholderTextColor={healthColors.text.tertiary}
                   keyboardType="numeric"
                   value={vitals.bpDiastolic}
                   onChangeText={(v) => updateVital("bpDiastolic", v)}
@@ -473,10 +476,10 @@ const ConsultationScreen = ({ navigation, route }) => {
             <View style={styles.vitalRow}>
               <View style={styles.vitalField}>
                 <Text style={styles.fieldLabel}>Temp (°F)</Text>
-                <TextInput
-                  style={styles.input}
+                <Input
+                  style={styles.inputControl}
+                  inputStyle={styles.inputText}
                   placeholder="e.g. 98.6"
-                  placeholderTextColor={healthColors.text.tertiary}
                   keyboardType="decimal-pad"
                   value={vitals.temperature}
                   onChangeText={(v) => updateVital("temperature", v)}
@@ -487,10 +490,10 @@ const ConsultationScreen = ({ navigation, route }) => {
               <View style={styles.vitalFieldGap} />
               <View style={styles.vitalField}>
                 <Text style={styles.fieldLabel}>Pulse (bpm)</Text>
-                <TextInput
-                  style={styles.input}
+                <Input
+                  style={styles.inputControl}
+                  inputStyle={styles.inputText}
                   placeholder="e.g. 72"
-                  placeholderTextColor={healthColors.text.tertiary}
                   keyboardType="numeric"
                   value={vitals.pulse}
                   onChangeText={(v) => updateVital("pulse", v)}
@@ -512,13 +515,14 @@ const ConsultationScreen = ({ navigation, route }) => {
               <Text style={styles.sectionTitle}>Diagnosis</Text>
               <Text style={styles.sectionOptional}>(optional)</Text>
             </View>
-            <TextInput
-              style={styles.input}
+            <Input
+              style={styles.inputControl}
+              inputStyle={styles.inputText}
               placeholder="Enter diagnosis or ICD code..."
-              placeholderTextColor={healthColors.text.tertiary}
               value={diagnosis}
               onChangeText={setDiagnosis}
               maxLength={500}
+              autoCapitalize="sentences"
               accessibilityLabel="Diagnosis"
             />
           </View>
@@ -534,15 +538,16 @@ const ConsultationScreen = ({ navigation, route }) => {
               <Text style={styles.sectionTitle}>Consultation Notes</Text>
               <Text style={styles.sectionOptional}>(optional)</Text>
             </View>
-            <TextInput
-              style={[styles.input, styles.notesInput]}
+            <Input
+              style={styles.inputControl}
+              inputStyle={styles.notesInputText}
               placeholder="Enter consultation notes, observations, treatment plan..."
-              placeholderTextColor={healthColors.text.tertiary}
               value={notes}
               onChangeText={setNotes}
               multiline
-              textAlignVertical="top"
+              numberOfLines={5}
               maxLength={5000}
+              autoCapitalize="sentences"
               accessibilityLabel="Consultation notes"
             />
             <Text style={styles.charCount}>{notes.length}/5000</Text>
@@ -587,8 +592,11 @@ const styles = StyleSheet.create({
 
   // ── Header ──
   headerBackButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    minWidth: theme.touchTargets.md,
+    minHeight: theme.touchTargets.md,
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
     marginLeft: 4,
   },
   headerTitleContainer: {
@@ -776,20 +784,18 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     marginBottom: 6,
   },
-  input: {
+  inputControl: {
+    marginBottom: 0,
     backgroundColor: healthColors.background.secondary,
-    borderWidth: 1,
     borderColor: healthColors.border.light,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  },
+  inputText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    minHeight: 44,
   },
-  notesInput: {
+  notesInputText: {
     minHeight: 100,
-    paddingTop: 10,
+    textAlignVertical: "top",
   },
   charCount: {
     fontSize: theme.typography.sizes.caption,
@@ -816,11 +822,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     minHeight: 44,
   },
-  bpInput: {
+  bpInputControl: {
+    flex: 1,
+    marginBottom: 0,
+    borderWidth: 0,
+    backgroundColor: healthColors.background.secondary,
+  },
+  bpInputText: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.primary,
-    paddingVertical: 10,
+    paddingVertical: theme.spacing.sm,
   },
   bpUnit: {
     fontSize: theme.typography.sizes.caption,
