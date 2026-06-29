@@ -19,7 +19,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet, Dimensions } from "react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 

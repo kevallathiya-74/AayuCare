@@ -14,11 +14,11 @@ import {
 } from "react-native";
 import { Cloud, CloudOff, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from "../../theme";
-import { useNetworkStatus, useRequestQueue } from "../../utils/offlineHandler";
+import { theme, healthColors } from '@/theme';
+import { useNetworkStatus, useRequestQueue } from '@/utils/offlineHandler';
 import {
   verticalScale,
-} from "../../utils/responsive";
+} from '@/utils/responsive';
 
 const NetworkStatusIndicator = ({ onPress }) => {
   const { isConnected: isOnline } = useNetworkStatus();

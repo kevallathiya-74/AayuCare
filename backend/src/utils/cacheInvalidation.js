@@ -1,4 +1,4 @@
-const { deleteCacheByPattern } = require("../config/redis");
+const { deleteCacheByPattern } = require("../config/cache");
 const logger = require("./logger");
 
 const APPOINTMENT_CACHE_PATTERNS = [

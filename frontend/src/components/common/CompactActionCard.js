@@ -6,7 +6,7 @@
 
 import React, { memo } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const CompactActionCard = memo(
   ({

@@ -5,8 +5,8 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { theme, healthColors } from "../../theme";
-import { captureException } from "../../config/sentry";
+import { theme, healthColors } from '@/theme';
+import { captureException } from '@/config/sentry';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {

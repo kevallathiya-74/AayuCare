@@ -8,9 +8,9 @@
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { theme, healthColors } from "../../theme";
-import { textStyles } from "../../theme/typography";
-import { spacing } from "../../theme/spacing";
+import { theme, healthColors } from '@/theme';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
 
 const LoadingOverlay = ({
   visible = false,

@@ -35,7 +35,7 @@ import {
 } from "react-native";
 import { X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const ANIMATION_DURATION = 280;

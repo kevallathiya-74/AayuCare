@@ -5,7 +5,7 @@
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { healthMetricsService } from '../../services';
+import { healthMetricsService } from '@/services';
 
 // Thunks
 export const fetchHealthMetrics = createAsyncThunk(

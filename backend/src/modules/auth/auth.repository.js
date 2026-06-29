@@ -1,6 +1,6 @@
-const userRepository = require("../../repositories/userRepository");
-const doctorRepository = require("../../repositories/doctorRepository");
-const patientRepository = require("../../repositories/patientRepository");
+const userRepository = require("./user.repository");
+const doctorRepository = require("../doctor/doctor.repository");
+const patientRepository = require("../patient/patient.repository");
 
 module.exports = {
   userRepository,

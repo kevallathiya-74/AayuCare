@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import permissionService from "../../services/notificationPermission.service";
+import permissionService from '@/services/notificationPermission.service';
 
 const initialState = {
   notification: {

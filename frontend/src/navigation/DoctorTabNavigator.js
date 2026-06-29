@@ -9,17 +9,17 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { CalendarDays, Circle, Home, SquareUserRound, UsersRound } from "lucide-react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors, theme } from "../theme";
+import { healthColors, theme } from '@/theme';
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import {
   DoctorAppointmentProvider,
   useDoctorAppointments,
 } from "../context/DoctorAppointmentContext";
-import DoctorHomeScreen from "../screens/hospital/DoctorHomeScreen";
-import TodaysAppointmentsScreen from "../screens/hospital/TodaysAppointmentsScreen";
-import DoctorPatientsScreen from "../screens/hospital/DoctorPatientsScreen";
-import DoctorProfileScreen from "../screens/hospital/DoctorProfileScreen";
+import DoctorHomeScreen from "@/features/hospital/screens/DoctorHomeScreen";
+import TodaysAppointmentsScreen from "@/features/hospital/screens/TodaysAppointmentsScreen";
+import DoctorPatientsScreen from "@/features/hospital/screens/DoctorPatientsScreen";
+import DoctorProfileScreen from "@/features/hospital/screens/DoctorProfileScreen";
 
 const Tab = createBottomTabNavigator();
 

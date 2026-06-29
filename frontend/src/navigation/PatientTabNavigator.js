@@ -7,14 +7,14 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Circle, HeartPulse, Home, LibraryBig, MoreHorizontal } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors, theme } from "../theme";
-import { getTabBarHeight } from "../utils/responsive";
+import { healthColors, theme } from '@/theme';
+import { getTabBarHeight } from '@/utils/responsive';
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
-import PatientDashboard from "../screens/patient/PatientDashboard";
-import HealthMetricsScreen from "../screens/patient/HealthMetricsScreen";
-import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
-import SettingsScreen from "../screens/main/SettingsScreen";
+import PatientDashboard from "@/features/patient/screens/PatientDashboard";
+import HealthMetricsScreen from "@/features/patient/screens/HealthMetricsScreen";
+import DiseaseInfoScreen from "@/features/patient/screens/DiseaseInfoScreen";
+import SettingsScreen from "@/features/main/screens/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
 

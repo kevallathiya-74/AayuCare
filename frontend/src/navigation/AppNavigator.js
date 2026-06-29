@@ -14,63 +14,63 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
 import { useQueryClient } from "@tanstack/react-query";
-import { loadUser } from "../store/slices/authSlice";
-import { initializeNotificationPermissions } from "../store/slices/permissionSlice";
-import { healthColors } from "../theme";
-import { queryKeys } from "../config/reactQueryConfig";
-import adminService from "../services/admin.service";
+import { loadUser } from '@/store/slices/authSlice';
+import { initializeNotificationPermissions } from '@/store/slices/permissionSlice';
+import { healthColors } from '@/theme';
+import { queryKeys } from '@/config/reactQueryConfig';
+import adminService from '@/services/admin.service';
 import {
   appointmentService,
   doctorService,
   medicalRecordService,
   notificationService,
   prescriptionService,
-} from "../services";
-import logger from "../utils/logger";
-import SplashScreen from "../screens/splash/SplashScreen";
-import BoxSelectionScreen from "../screens/splash/BoxSelectionScreen";
-import LoginScreen from "../screens/auth/LoginScreen";
-import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
+} from '@/services';
+import logger from '@/utils/logger';
+import SplashScreen from "@/features/splash/screens/SplashScreen";
+import BoxSelectionScreen from "@/features/splash/screens/BoxSelectionScreen";
+import LoginScreen from "@/features/auth/screens/LoginScreen";
+import ForgotPasswordScreen from "@/features/auth/screens/ForgotPasswordScreen";
 
 import AdminTabNavigator from "./AdminTabNavigator";
 import DoctorTabNavigator from "./DoctorTabNavigator";
 import PatientTabNavigator from "./PatientTabNavigator";
 
-import ManageDoctorsScreen from "../screens/hospital/ManageDoctorsScreen";
-import ManagePatientsScreen from "../screens/hospital/ManagePatientsScreen";
-import EnhancedPrescriptionScreen from "../screens/hospital/EnhancedPrescriptionScreen";
-import WalkInPatientScreen from "../screens/hospital/WalkInPatientScreen";
-import ReportsScreen from "../screens/hospital/ReportsScreen";
-import PharmacyManagementScreen from "../screens/hospital/PharmacyManagementScreen";
-import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
-import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
-import SecuritySettingsScreen from "../screens/hospital/SecuritySettingsScreen";
-import EditProfileScreen from "../screens/hospital/EditProfileScreen";
-import ConsultationHistoryScreen from "../screens/hospital/ConsultationHistoryScreen";
-import ConsultationScreen from "../screens/hospital/ConsultationScreen";
-import ScheduleAvailabilityScreen from "../screens/hospital/ScheduleAvailabilityScreen";
+import ManageDoctorsScreen from "@/features/hospital/screens/ManageDoctorsScreen";
+import ManagePatientsScreen from "@/features/hospital/screens/ManagePatientsScreen";
+import EnhancedPrescriptionScreen from "@/features/hospital/screens/EnhancedPrescriptionScreen";
+import WalkInPatientScreen from "@/features/hospital/screens/WalkInPatientScreen";
+import ReportsScreen from "@/features/hospital/screens/ReportsScreen";
+import PharmacyManagementScreen from "@/features/hospital/screens/PharmacyManagementScreen";
+import AppointmentsScreen from "@/features/hospital/screens/AppointmentsScreen";
+import AdminSettingsScreen from "@/features/hospital/screens/AdminSettingsScreen";
+import SecuritySettingsScreen from "@/features/hospital/screens/SecuritySettingsScreen";
+import EditProfileScreen from "@/features/hospital/screens/EditProfileScreen";
+import ConsultationHistoryScreen from "@/features/hospital/screens/ConsultationHistoryScreen";
+import ConsultationScreen from "@/features/hospital/screens/ConsultationScreen";
+import ScheduleAvailabilityScreen from "@/features/hospital/screens/ScheduleAvailabilityScreen";
 
-import ProfileScreen from "../screens/patient/ProfileScreen";
-import PatientEditProfileScreen from "../screens/patient/PatientEditProfileScreen";
-import MyPrescriptionsScreen from "../screens/patient/MyPrescriptionsScreen";
-import NotificationsScreen from "../screens/patient/NotificationsScreen";
-import HealthMetricsScreen from "../screens/patient/HealthMetricsScreen";
-import DiseaseInfoScreen from "../screens/patient/DiseaseInfoScreen";
-import HospitalEventsScreen from "../screens/patient/HospitalEventsScreen";
-import PharmacyBillingScreen from "../screens/patient/PharmacyBillingScreen";
-import AIHealthAssistantScreen from "../screens/patient/AIHealthAssistantScreen";
-import SpecialistCareFinderScreen from "../screens/patient/SpecialistCareFinderScreen";
-import DoctorProfileViewScreen from "../screens/patient/DoctorProfileViewScreen";
-import AppointmentBookingScreen from "../screens/patient/AppointmentBookingScreen";
-import MedicalRecordsScreen from "../screens/patient/MedicalRecordsScreen";
-import AISymptomChecker from "../screens/patient/AISymptomChecker";
-import EmergencyServices from "../screens/patient/EmergencyServices";
-import MyAppointmentsScreen from "../screens/patient/MyAppointmentsScreen";
-import MyReportsScreen from "../screens/patient/MyReportsScreen";
+import ProfileScreen from "@/features/patient/screens/ProfileScreen";
+import PatientEditProfileScreen from "@/features/patient/screens/PatientEditProfileScreen";
+import MyPrescriptionsScreen from "@/features/patient/screens/MyPrescriptionsScreen";
+import NotificationsScreen from "@/features/patient/screens/NotificationsScreen";
+import HealthMetricsScreen from "@/features/patient/screens/HealthMetricsScreen";
+import DiseaseInfoScreen from "@/features/patient/screens/DiseaseInfoScreen";
+import HospitalEventsScreen from "@/features/patient/screens/HospitalEventsScreen";
+import PharmacyBillingScreen from "@/features/patient/screens/PharmacyBillingScreen";
+import AIHealthAssistantScreen from "@/features/patient/screens/AIHealthAssistantScreen";
+import SpecialistCareFinderScreen from "@/features/patient/screens/SpecialistCareFinderScreen";
+import DoctorProfileViewScreen from "@/features/patient/screens/DoctorProfileViewScreen";
+import AppointmentBookingScreen from "@/features/patient/screens/AppointmentBookingScreen";
+import MedicalRecordsScreen from "@/features/patient/screens/MedicalRecordsScreen";
+import AISymptomChecker from "@/features/patient/screens/AISymptomChecker";
+import EmergencyServices from "@/features/patient/screens/EmergencyServices";
+import MyAppointmentsScreen from "@/features/patient/screens/MyAppointmentsScreen";
+import MyReportsScreen from "@/features/patient/screens/MyReportsScreen";
 
-import SettingsScreen from "../screens/main/SettingsScreen";
-import SettingsAccessibilityScreen from "../screens/main/SettingsAccessibilityScreen";
-import ChangePasswordScreen from "../screens/main/ChangePasswordScreen";
+import SettingsScreen from "@/features/main/screens/SettingsScreen";
+import SettingsAccessibilityScreen from "@/features/main/screens/SettingsAccessibilityScreen";
+import ChangePasswordScreen from "@/features/main/screens/ChangePasswordScreen";
 
 const Stack = createNativeStackNavigator();
 

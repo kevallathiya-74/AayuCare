@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { ChevronDown } from "lucide-react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 export const FilterHeaderRow = ({ onClear, clearLabel = "Clear" }) => (
   <View style={styles.headerRow}>

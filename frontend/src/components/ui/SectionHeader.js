@@ -12,7 +12,7 @@
 
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const SectionHeader = ({ title, actionLabel, onAction, style }) => (
   <View style={[styles.container, style]}>

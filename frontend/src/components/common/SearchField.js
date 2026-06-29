@@ -1,7 +1,7 @@
 import React from "react";
 import { View, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Search, XCircle } from "lucide-react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const SearchField = ({
   value,

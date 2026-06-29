@@ -24,7 +24,7 @@ import {
   Animated,
   StyleSheet,
 } from "react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 import DynamicIcon from "../common/DynamicIcon";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);

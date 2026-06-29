@@ -154,6 +154,7 @@ const initAuth = () => {
           userAgent: "user_agent",
           createdAt: "created_at",
           updatedAt: "updated_at",
+          token: "token_hash",
         },
         expiresIn: 60 * 60 * 24 * 30, // 30 days
         updateAge: 60 * 60 * 24, // Update every 24 hours
@@ -215,7 +216,7 @@ const initAuth = () => {
         "http://localhost:19006",
         "http://localhost:8081",
         "exp://192.168.137.1:8081",
-        "*",
+        process.env.NODE_ENV === "development" ? "*" : null,
       ].filter(Boolean),
     });
 

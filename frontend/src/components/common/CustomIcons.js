@@ -8,7 +8,7 @@ import { View, StyleSheet } from "react-native";
 import { Sparkles } from "lucide-react-native";
 import DynamicIcon from "./DynamicIcon";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 // Animated Icon with Background
 export const IconWithBackground = ({

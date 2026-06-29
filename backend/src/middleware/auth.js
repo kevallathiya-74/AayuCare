@@ -38,9 +38,9 @@ exports.protect = async (req, res, next) => {
         // Query session from PostgreSQL (Better Auth stores sessions in PostgreSQL)
         try {
           const sessionResult = await query(
-            `SELECT token, user_id as "userId", expires_at as "expiresAt"
+            `SELECT token_hash as token, user_id as "userId", expires_at as "expiresAt"
              FROM session
-             WHERE (token = $1 OR token = $2)
+             WHERE (token_hash = $1 OR token_hash = $2)
                AND expires_at > NOW()
              ORDER BY created_at DESC
              LIMIT 1`,
@@ -192,11 +192,11 @@ exports.optionalAuth = async (req, res, next) => {
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
         try {
           const sessionResult = await query(
-            `SELECT token, user_id as "userId", expires_at as "expiresAt"
+            `SELECT token_hash as token, user_id as "userId", expires_at as "expiresAt"
              FROM session
-               WHERE (token = $1 OR token = $2) AND expires_at > NOW()
+             WHERE (token_hash = $1 OR token_hash = $2) AND expires_at > NOW()
              LIMIT 1`,
-              [token, hashedToken]
+            [token, hashedToken]
           );
           if (sessionResult.rows.length > 0) {
             const userResult = await query(

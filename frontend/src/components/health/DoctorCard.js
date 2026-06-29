@@ -7,9 +7,9 @@
 
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { healthColors } from '../../theme/healthColors';
-import { textStyles } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
 import Card from '../common/Card';
 import Avatar from '../common/Avatar';
 import Button from '../common/Button';

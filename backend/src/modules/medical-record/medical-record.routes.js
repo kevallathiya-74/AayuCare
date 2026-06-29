@@ -53,4 +53,15 @@ router.delete(
   medicalRecordController.deleteMedicalRecord
 );
 
+router.post(
+  "/upload",
+  authorize("doctor", "admin"),
+  medicalRecordController.uploadAttachment
+);
+
+router.get(
+  "/files/:id",
+  medicalRecordController.downloadAttachment
+);
+
 module.exports = router;

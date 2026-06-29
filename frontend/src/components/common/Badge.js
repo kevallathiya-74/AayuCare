@@ -6,11 +6,11 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { theme } from "../../theme";
-import { healthColors } from "../../theme/healthColors";
-import { textStyles } from "../../theme/typography";
-import { spacing } from "../../theme/spacing";
-import { getStatusStyle } from "../../utils/helpers";
+import { theme } from '@/theme';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
+import { getStatusStyle } from '@/utils/helpers';
 
 const Badge = ({
   children,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: healthColors.borderRadius.medium,
+    borderRadius: theme.borderRadius.badge,
     alignSelf: "flex-start",
   },
   small: {
