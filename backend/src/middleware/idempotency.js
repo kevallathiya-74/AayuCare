@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { getCache, setCache } = require("../config/redis");
+const { getCache, setCache } = require("../config/cache");
 
 const IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
 

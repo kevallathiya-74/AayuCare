@@ -8,9 +8,9 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { User } from 'lucide-react-native';
-import { healthColors } from '../../theme/healthColors';
-import { textStyles } from '../../theme/typography';
-import { layout } from '../../theme/spacing';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { layout } from '@/theme/spacing';
 
 const Avatar = ({
   source,

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { Inbox } from "lucide-react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 import Button from "./Button";
 import DynamicIcon from "./DynamicIcon";
 

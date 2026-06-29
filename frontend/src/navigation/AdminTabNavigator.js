@@ -9,18 +9,18 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { CalendarDays, ChartColumnIncreasing, Circle, LayoutDashboard, Settings } from "lucide-react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors, theme } from "../theme";
-import { getTabBarHeight } from "../utils/responsive";
+import { healthColors, theme } from '@/theme';
+import { getTabBarHeight } from '@/utils/responsive';
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import {
   AdminAppointmentProvider,
   useAdminAppointments,
 } from "../context/AdminAppointmentContext";
-import AdminHomeScreen from "../screens/hospital/AdminHomeScreen";
-import AppointmentsScreen from "../screens/hospital/AppointmentsScreen";
-import ReportsScreen from "../screens/hospital/ReportsScreen";
-import AdminSettingsScreen from "../screens/hospital/AdminSettingsScreen";
+import AdminHomeScreen from "@/features/hospital/screens/AdminHomeScreen";
+import AppointmentsScreen from "@/features/hospital/screens/AppointmentsScreen";
+import ReportsScreen from "@/features/hospital/screens/ReportsScreen";
+import AdminSettingsScreen from "@/features/hospital/screens/AdminSettingsScreen";
 
 const Tab = createBottomTabNavigator();
 

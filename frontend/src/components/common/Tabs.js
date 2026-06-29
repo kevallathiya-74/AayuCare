@@ -15,10 +15,10 @@ import {
     Dimensions,
     Animated,
 } from 'react-native';
-import { theme } from '../../theme';
-import { healthColors } from '../../theme/healthColors';
-import { textStyles } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { theme } from '@/theme';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
 import DynamicIcon from './DynamicIcon';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

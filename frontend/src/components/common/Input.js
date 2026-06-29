@@ -14,14 +14,14 @@ import {
   Animated,
 } from 'react-native';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react-native';
-import { theme, healthColors } from '../../theme';
-import { textStyles, fontFamilies } from '../../theme/typography';
-import { spacing, componentSpacing, layout } from '../../theme/spacing';
+import { theme, healthColors } from '@/theme';
+import { textStyles, fontFamilies } from '@/theme/typography';
+import { spacing, componentSpacing, layout } from '@/theme/spacing';
 import { 
     touchTargets,
     borderRadius as responsiveBorderRadius,
     getInputHeight,
-} from '../../utils/responsive';
+} from '@/utils/responsive';
 
 const Input = ({
   label,
@@ -182,9 +182,14 @@ const styles = StyleSheet.create({
   },
   containerFocused: {
     borderColor: healthColors.input.borderFocused,
-    borderWidth: 1.5,
+    borderWidth: 2,
     backgroundColor: healthColors.background.primary,
     outlineStyle: 'none',
+    shadowColor: '#14B8A6',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 0,
   },
   containerError: {
     borderColor: healthColors.input.borderError,

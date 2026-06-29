@@ -11,7 +11,6 @@
 --   4. appointments- Appointment scheduling
 --   5. payments    - Financial transactions
 --
--- Note: Prescriptions, schedules, medical records are in MongoDB
 -- =====================================================
 
 -- Enable UUID extension
@@ -221,6 +220,202 @@ CREATE TABLE IF NOT EXISTS doctor_ratings (
 CREATE INDEX idx_doctor_ratings_doctor_id ON doctor_ratings(doctor_id);
 
 -- =====================================================
+-- HOSPITALS TABLE (Multi-tenant master catalog)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS hospitals (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hospital_id VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    address TEXT,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    pincode VARCHAR(10),
+    phone VARCHAR(20),
+    email VARCHAR(255) UNIQUE,
+    license_number VARCHAR(100),
+    plan VARCHAR(20) DEFAULT 'starter' CHECK (plan IN ('starter','professional','enterprise')),
+    is_active BOOLEAN DEFAULT TRUE,
+    settings JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_hospitals_hospital_id ON hospitals(hospital_id);
+
+-- =====================================================
+-- SCHEDULES TABLE (Doctor availability slots)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS schedules (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    hospital_id VARCHAR(50) NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
+    day_of_week SMALLINT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    slot_duration_minutes SMALLINT DEFAULT 15 CHECK (slot_duration_minutes > 0),
+    is_available BOOLEAN DEFAULT TRUE,
+    max_patients SMALLINT DEFAULT 20,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT unique_doctor_day_slot UNIQUE (doctor_id, hospital_id, day_of_week, start_time)
+);
+
+CREATE INDEX idx_schedules_doctor_hospital ON schedules(doctor_id, hospital_id);
+
+-- =====================================================
+-- PRESCRIPTIONS TABLE (Patient prescriptions)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS prescriptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    prescription_id VARCHAR(50) UNIQUE NOT NULL,
+    appointment_id UUID REFERENCES appointments(id) ON DELETE SET NULL,
+    patient_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    hospital_id VARCHAR(50) NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
+    diagnosis TEXT,
+    chief_complaint TEXT,
+    medications JSONB NOT NULL DEFAULT '[]',
+    instructions TEXT,
+    follow_up_date DATE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_prescriptions_patient ON prescriptions(patient_id);
+CREATE INDEX idx_prescriptions_doctor ON prescriptions(doctor_id);
+CREATE INDEX idx_prescriptions_hospital ON prescriptions(hospital_id);
+
+-- =====================================================
+-- MEDICAL RECORDS TABLE & ATTACHMENTS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS medical_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    record_id VARCHAR(50) UNIQUE NOT NULL,
+    patient_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    hospital_id VARCHAR(50) NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
+    record_type VARCHAR(50) NOT NULL CHECK (record_type IN ('lab_report','prescription','doctor_visit','test_result','imaging','vaccination','other')),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    diagnosis TEXT,
+    symptoms TEXT[],
+    file_urls JSONB DEFAULT '[]',
+    ai_analysis JSONB DEFAULT '{}',
+    is_shared BOOLEAN DEFAULT FALSE,
+    shared_with JSONB DEFAULT '[]',
+    record_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS attachments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    medical_record_id UUID REFERENCES medical_records(id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    file_size INTEGER NOT NULL,
+    file_data BYTEA NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_medical_records_patient ON medical_records(patient_id);
+CREATE INDEX idx_medical_records_doctor ON medical_records(doctor_id);
+CREATE INDEX idx_medical_records_hospital ON medical_records(hospital_id);
+CREATE INDEX idx_attachments_medical_record ON attachments(medical_record_id);
+
+-- =====================================================
+-- NOTIFICATIONS TABLE (Sent notifications log)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    hospital_id VARCHAR(50) NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    data JSONB DEFAULT '{}',
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP,
+    sent_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read, created_at DESC);
+CREATE INDEX idx_notifications_hospital ON notifications(hospital_id);
+
+-- =====================================================
+-- HEALTH METRICS TABLE (Patient vital signs/logs)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS health_metrics (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    hospital_id VARCHAR(50) NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
+    metric_type VARCHAR(50) NOT NULL CHECK (metric_type IN ('bp','sugar','weight','bmi','temperature','steps','sleep','water','exercise','stress','heart-rate','oxygen','other')),
+    value JSONB NOT NULL,
+    unit VARCHAR(20),
+    notes TEXT,
+    recorded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    source VARCHAR(20) DEFAULT 'manual' CHECK (source IN ('manual','device','app','doctor')),
+    recorded_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_health_metrics_patient_type ON health_metrics(patient_id, metric_type, recorded_at DESC);
+CREATE INDEX idx_health_metrics_hospital ON health_metrics(hospital_id);
+
+-- =====================================================
+-- EVENTS TABLE (Hospital camps & awareness programs)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hospital_id VARCHAR(50) NOT NULL REFERENCES hospitals(hospital_id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_type VARCHAR(50) DEFAULT 'general',
+    icon VARCHAR(50) DEFAULT 'calendar',
+    color VARCHAR(20) DEFAULT '#2196F3',
+    date DATE NOT NULL,
+    start_time VARCHAR(20) NOT NULL,
+    end_time VARCHAR(20) NOT NULL,
+    venue VARCHAR(255),
+    organizer VARCHAR(255),
+    available_spots INTEGER DEFAULT 0,
+    registered_count INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'upcoming' CHECK (status IN ('upcoming','ongoing','completed','cancelled')),
+    requirements TEXT[],
+    benefits TEXT[],
+    contact_info JSONB DEFAULT '{}',
+    registrations JSONB DEFAULT '[]'::jsonb,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_events_hospital_start ON events(hospital_id, date DESC);
+
+-- =====================================================
+-- SESSION TABLE (User session management)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS session (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) NOT NULL UNIQUE,
+    device_info JSONB DEFAULT '{}',
+    ip_address INET,
+    user_agent TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP NOT NULL,
+    last_used_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_user_id ON session(user_id);
+CREATE INDEX IF NOT EXISTS idx_session_token_hash ON session(token_hash);
+CREATE INDEX IF NOT EXISTS idx_session_expires_at ON session(expires_at);
+
+-- =====================================================
 -- TRIGGERS FOR UPDATED_AT
 -- =====================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -252,8 +447,18 @@ CREATE TRIGGER update_notification_prefs_updated_at BEFORE UPDATE ON notificatio
 CREATE TRIGGER update_doctor_ratings_updated_at BEFORE UPDATE ON doctor_ratings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- =====================================================
--- GRANT PERMISSIONS (adjust as needed)
--- =====================================================
--- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO aayucare_admin;
--- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO aayucare_admin;
+CREATE TRIGGER update_hospitals_updated_at BEFORE UPDATE ON hospitals
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_schedules_updated_at BEFORE UPDATE ON schedules
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_prescriptions_updated_at BEFORE UPDATE ON prescriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_medical_records_updated_at BEFORE UPDATE ON medical_records
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+

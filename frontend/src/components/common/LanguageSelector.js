@@ -15,8 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Globe, CheckCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { theme, healthColors } from "../../theme";
-import { changeLanguage } from "../../i18n";
+import { theme, healthColors } from '@/theme';
+import { changeLanguage } from '@/i18n';
 
 const LANGUAGES = [
   { code: "en", label: "EN", fullName: "English" },

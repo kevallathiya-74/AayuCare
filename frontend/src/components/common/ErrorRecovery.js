@@ -7,10 +7,10 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { RefreshCw, ArrowLeft, Headphones } from "lucide-react-native";
-import { theme, healthColors } from "../../theme";
-import { verticalScale } from "../../utils/responsive";
+import { theme, healthColors } from '@/theme';
+import { verticalScale } from '@/utils/responsive';
 import DynamicIcon from "./DynamicIcon";
-import { parseError } from "../../utils/errorHandler";
+import { parseError } from '@/utils/errorHandler';
 
 const ErrorRecovery = ({
   error,

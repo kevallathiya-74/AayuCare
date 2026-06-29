@@ -8,9 +8,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { healthColors } from '../../theme/healthColors';
-import { textStyles } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
 
 const ProgressBar = ({
     progress = 0, // 0 to 100

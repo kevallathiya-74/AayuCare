@@ -26,10 +26,7 @@ const errorHandler = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
 
-    // MongoDB CastError (e.g., invalid ObjectId in URL param)
-    if (err.name === 'CastError') {
-        return sendError(res, req, `Invalid ${err.path}: ${err.value}`, 400, 'VALIDATION_ERROR');
-    }
+
 
     // PostgreSQL unique constraint violation
     if (err.code === '23505') {
@@ -63,17 +60,8 @@ const errorHandler = (err, req, res, next) => {
     if (err.name === 'TokenExpiredError') {
         return sendError(res, req, 'Token expired. Please log in again.', 401, 'UNAUTHORIZED');
     }
-    if (err.isJoi || (err.name === 'ValidationError' && !err.errors)) {
+    if (err.isJoi) {
         return sendError(res, req, err.message, 400, 'VALIDATION_ERROR');
-    }
-
-    // Mongoose ValidationError with per-field details
-    if (err.name === 'ValidationError' && err.errors) {
-        const fields = Object.values(err.errors).map((e) => ({
-            field: e.path,
-            message: e.message,
-        }));
-        return sendError(res, req, 'Validation failed', 400, 'VALIDATION_ERROR', fields);
     }
 
     if (process.env.NODE_ENV === 'development') {

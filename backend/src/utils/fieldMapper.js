@@ -122,8 +122,8 @@ const mapPrescriptionData = (dbPrescription) => {
 };
 
 /**
- * Map medical record data from MongoDB to API response format
- * @param {Object} dbRecord - Medical record data from MongoDB
+ * Map medical record data from Database to API response format
+ * @param {Object} dbRecord - Medical record data from Database
  * @returns {Object} Mapped medical record data
  */
 const mapMedicalRecordData = (dbRecord) => {

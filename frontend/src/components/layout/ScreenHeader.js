@@ -27,7 +27,7 @@ import {
 } from "react-native";
 import { Menu, Bell, UserCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 import LanguageSelector from "../common/LanguageSelector";
 
 const ScreenHeader = ({

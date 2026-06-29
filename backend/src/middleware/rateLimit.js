@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { checkRateLimit } = require("../config/redis");
+const { checkRateLimit } = require("../config/cache");
 const { sendError } = require("../utils/apiResponse");
 const logger = require("../utils/logger");
 const { APP_ENV } = require("../config/env");

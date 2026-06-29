@@ -23,7 +23,6 @@ if (process.env.NODE_ENV !== "production") {
 // Validate Critical Environment Variables
 // =============================================================================
 const requiredEnvVars = [
-  'MONGODB_URI',
   'JWT_SECRET',
   'BETTER_AUTH_SECRET',
   'BETTER_AUTH_URL'
@@ -47,12 +46,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-const mongoose = require("mongoose");
-const mongoSanitize = require("express-mongo-sanitize");
 
-const connectDB = require("./src/config/database");
 const { connectPostgres, closePool } = require("./src/config/postgres");
-const { connectRedis, closeRedis } = require("./src/config/redis");
 const { errorHandler } = require("./src/middleware/errorHandler");
 const { requestIdMiddleware } = require("./src/middleware/requestId");
 const { cacheHeadersMiddleware } = require("./src/middleware/cacheHeaders");
@@ -70,21 +65,10 @@ const app = express();
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
-// Connect to databases
 const initializeDatabases = async () => {
   try {
-    // MongoDB (for medical records, logs, documents) - non-blocking
-    try {
-      await connectDB();
-    } catch (mongoError) {
-      logger.warn("⚠️  Continuing without MongoDB");
-    }
-
     // PostgreSQL (for relational data)
     await connectPostgres();
-
-    // Redis (for caching and sessions)
-    await connectRedis();
 
     // Initialize Better Auth after all DB connections
     try {
@@ -181,10 +165,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cacheHeadersMiddleware);
 
-// Sanitize request data to prevent MongoDB operator injection ($gt, $where, etc.)
-// Strips keys that begin with '$' or contain '.' from req.body, req.params, and req.query
-app.use(mongoSanitize({ replaceWith: '_' }));
-
 // Disable ETags to prevent 304 Not Modified responses (causes frontend cache issues)
 app.set('etag', false);
 
@@ -213,9 +193,6 @@ app.get("/api", (req, res) => {
 
 // Health check
 app.get("/api/health", async (req, res) => {
-  const mongoStatus =
-    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
-
   // Check PostgreSQL
   let postgresStatus = "disconnected";
   try {
@@ -224,16 +201,6 @@ app.get("/api/health", async (req, res) => {
     postgresStatus = "connected";
   } catch (error) {
     logger.error("PostgreSQL health check failed:", error.message);
-  }
-
-  // Check Redis
-  let redisStatus = "disconnected";
-  try {
-    const { redisClient } = require("./src/config/redis");
-    await redisClient.ping();
-    redisStatus = "connected";
-  } catch (error) {
-    logger.error("Redis health check failed:", error.message);
   }
 
   // Better Auth health check
@@ -248,8 +215,7 @@ app.get("/api/health", async (req, res) => {
     logger.error('Better Auth health check failed:', error.message);
   }
 
-  const criticalDependenciesHealthy =
-    postgresStatus === "connected" && redisStatus === "connected";
+  const criticalDependenciesHealthy = postgresStatus === "connected";
   const overallStatus = criticalDependenciesHealthy ? "healthy" : "degraded";
 
   return sendSuccess(
@@ -259,9 +225,7 @@ app.get("/api/health", async (req, res) => {
       status: overallStatus,
       environment: process.env.NODE_ENV,
       databases: {
-        mongodb: mongoStatus,
         postgresql: postgresStatus,
-        redis: redisStatus,
       },
       betterAuth: betterAuthStatus,
     },
@@ -278,7 +242,6 @@ app.get("/api/livez", (req, res) => {
 // Readiness probe - critical dependencies are up
 app.get("/api/readyz", async (req, res) => {
   let postgresStatus = "disconnected";
-  let redisStatus = "disconnected";
 
   try {
     const { query } = require("./src/config/postgres");
@@ -288,15 +251,7 @@ app.get("/api/readyz", async (req, res) => {
     logger.error("Readiness PostgreSQL check failed:", error.message);
   }
 
-  try {
-    const { redisClient } = require("./src/config/redis");
-    await redisClient.ping();
-    redisStatus = "connected";
-  } catch (error) {
-    logger.error("Readiness Redis check failed:", error.message);
-  }
-
-  const ready = postgresStatus === "connected" && redisStatus === "connected";
+  const ready = postgresStatus === "connected";
 
   return sendSuccess(
     res,
@@ -305,7 +260,6 @@ app.get("/api/readyz", async (req, res) => {
       status: ready ? "ready" : "not_ready",
       dependencies: {
         postgresql: postgresStatus,
-        redis: redisStatus,
       },
     },
     ready ? "Service is ready" : "Service is not ready",
@@ -339,24 +293,10 @@ let server;
 
 const closeConnections = async () => {
   try {
-    await mongoose.connection.close();
-    logger.info("✅ MongoDB connection closed");
-  } catch (error) {
-    logger.warn(`⚠️ MongoDB close warning: ${error.message}`);
-  }
-
-  try {
     await closePool();
     logger.info("✅ PostgreSQL connection closed");
   } catch (error) {
     logger.warn(`⚠️ PostgreSQL close warning: ${error.message}`);
-  }
-
-  try {
-    await closeRedis();
-    logger.info("✅ Redis connection closed");
-  } catch (error) {
-    logger.warn(`⚠️ Redis close warning: ${error.message}`);
   }
 };
 

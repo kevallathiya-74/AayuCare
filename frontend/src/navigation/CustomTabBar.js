@@ -16,7 +16,7 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from "../theme";
+import { theme, healthColors } from '@/theme';
 import { DynamicIcon } from "../components/common";
 
 // Full route → icon map covering all three tab navigators

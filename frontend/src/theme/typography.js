@@ -257,8 +257,8 @@ export const textStyles = {
 export const fontsToLoad = {
   // Placeholder for custom font loading
   // Example:
-  // 'Poppins-SemiBold': require('../../assets/fonts/Poppins-SemiBold.ttf'),
-  // 'Inter-Regular': require('../../assets/fonts/Inter-Regular.ttf'),
+  // 'Poppins-SemiBold': require('@/assets/fonts/Poppins-SemiBold.ttf'),
+  // 'Inter-Regular': require('@/assets/fonts/Inter-Regular.ttf'),
 };
 
 // Default export with all typography utilities

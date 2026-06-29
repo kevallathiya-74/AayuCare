@@ -1,18 +1,15 @@
-/**
- * AayuCare Theme System
- * Single Source of Truth for ALL UI/UX Values
- * Production-Grade Healthcare Application
+﻿/**
+ * AayuCare Theme System â€” Single Source of Truth
+ * Premium Healthcare SaaS Design Tokens
  *
  * USAGE:
- * import { theme } from '../theme';
- *
- * Example:
- * color: theme.colors.primary
- * fontSize: theme.typography.sizes.body
- * padding: theme.spacing.md
+ *   import { theme } from '@/theme';
+ *   color: theme.colors.primary
+ *   fontSize: theme.typography.sizes.body
+ *   padding: theme.spacing.md
  */
 
-import { healthColors, withOpacity } from "./healthColors";
+import { healthColors, withOpacity } from './healthColors';
 import {
   fontFamilies,
   fontWeights,
@@ -20,107 +17,114 @@ import {
   lineHeights,
   letterSpacing,
   textStyles,
-} from "./typography";
-import { spacing, componentSpacing, layout, breakpoints, grid, safeAreaConfig } from "./spacing";
+} from './typography';
+import { spacing, componentSpacing, layout, breakpoints, grid, safeAreaConfig } from './spacing';
 
-// Backward-compatible typography aliases used across older screens.
+
 const typographySizes = {
   ...fontSizes,
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  xxl: 24,
-  xxxl: 28,
-  xxxxl: 32,
-  base: 16,
-  body: 14,
+  // legacy short aliases
+  xs: fontSizes.bodySmall,   // 12
+  sm: fontSizes.bodyMedium,  // 14
+  md: fontSizes.bodyLarge,   // 16
+  lg: fontSizes.h5,          // 18
+  xl: fontSizes.h4,          // 20
+  xxl: fontSizes.h3,          // 24
+  xxxl: fontSizes.h2,          // 28
+  xxxxl: fontSizes.h1,          // 32
+  base: fontSizes.bodyLarge,   // 16
+  body: fontSizes.bodyMedium,  // 14
 };
 
 const typographyWeights = {
   ...fontWeights,
-  semiBold: fontWeights.semibold,
+  semiBold: fontWeights.semibold, // camelCase alias
 };
 
-// ===================================================================
-// THEME OBJECT - Single Export for Entire App
-// ===================================================================
 
 export const theme = {
-  // =================================================================
-  // COLORS - Complete Color System
-  // =================================================================
+
+  // COLORS
   colors: {
-    // Primary Brand Colors
+    // Brand
     primary: healthColors.primary.main,
     primaryLight: healthColors.primary.light,
     primaryDark: healthColors.primary.dark,
+    primaryBg: healthColors.primary.surface,
 
-    // Secondary Colors
     secondary: healthColors.secondary.main,
     secondaryLight: healthColors.secondary.light,
     secondaryDark: healthColors.secondary.dark,
+    secondaryBg: healthColors.secondary.surface,
 
-    // Semantic Colors
+    // Semantic
     success: {
       main: healthColors.success.main,
       light: healthColors.success.light,
       dark: healthColors.success.dark,
       background: healthColors.success.background,
+      surface: healthColors.success.surface,
     },
-
     error: {
       main: healthColors.error.main,
       light: healthColors.error.light,
       dark: healthColors.error.dark,
       background: healthColors.error.background,
+      surface: healthColors.error.surface,
     },
-
     warning: {
       main: healthColors.warning.main,
       light: healthColors.warning.light,
       dark: healthColors.warning.dark,
       background: healthColors.warning.background,
+      surface: healthColors.warning.surface,
     },
-
     info: {
       main: healthColors.info.main,
       light: healthColors.info.light,
       dark: healthColors.info.dark,
       background: healthColors.info.background,
+      surface: healthColors.info.surface,
     },
 
-    // Background Colors
+    // Backgrounds
     background: {
       primary: healthColors.background.primary,
       secondary: healthColors.background.secondary,
+      tertiary: healthColors.background.tertiary,
       card: healthColors.background.card,
       overlay: healthColors.background.overlay,
+      glass: healthColors.background.glass,
+      glassDark: healthColors.background.glassDark,
     },
 
-    // Text Colors
+    // Text
     text: {
       primary: healthColors.text.primary,
       secondary: healthColors.text.secondary,
       tertiary: healthColors.text.tertiary,
       white: healthColors.text.white,
       disabled: healthColors.text.disabled,
+      link: healthColors.text.link,
+      onPrimary: healthColors.text.onPrimary,
     },
 
-    // Border Colors
+    // Border
     border: {
       main: healthColors.border.main,
       light: healthColors.border.light,
+      medium: healthColors.border.medium,
       dark: healthColors.border.dark,
+      focus: healthColors.border.focus,
+      error: healthColors.border.error,
     },
 
-    // Neutral Colors
+    // Neutrals
     white: healthColors.white,
     black: healthColors.black,
     transparent: healthColors.transparent,
 
-    // Grays
+    // Gray scale
     grays: {
       gray50: healthColors.neutral.gray50,
       gray100: healthColors.neutral.gray100,
@@ -135,7 +139,7 @@ export const theme = {
       black: healthColors.neutral.black,
     },
 
-    // Healthcare Specific
+    // Healthcare vitals
     healthcare: {
       heartRate: healthColors.health.heartRate,
       bloodPressure: healthColors.health.bloodPressure,
@@ -144,52 +148,52 @@ export const theme = {
       oxygen: healthColors.health.oxygen,
       weight: healthColors.health.weight,
       steps: healthColors.health.steps,
-      teal: healthColors.accent.aqua || healthColors.accent.cyan,
-      navy: healthColors.primary.dark,
+      sleep: healthColors.health.sleep,
+      teal: healthColors.primary.main,
+      navy: healthColors.hospital.navy,
       purple: healthColors.accent.purple,
       pink: healthColors.accent.pink,
       cyan: healthColors.accent.cyan,
     },
 
-    // Status Colors
+    // Status (appointment / medical)
     status: {
       pending: healthColors.status.pending,
+      pendingBg: healthColors.status.pendingBg,
       confirmed: healthColors.status.confirmed,
+      confirmedBg: healthColors.status.confirmedBg,
       cancelled: healthColors.status.cancelled,
+      cancelledBg: healthColors.status.cancelledBg,
       completed: healthColors.status.completed,
+      completedBg: healthColors.status.completedBg,
       inProgress: healthColors.status.inProgress,
+      inProgressBg: healthColors.status.inProgressBg,
+      urgent: healthColors.status.urgent,
+      urgentBg: healthColors.status.urgentBg,
     },
+
+    // Role-based colors
+    roles: healthColors.roles,
+
+    // Accent
+    accent: healthColors.accent,
   },
 
-  // =================================================================
-  // TYPOGRAPHY - All Font Sizes, Weights, Line Heights
-  // =================================================================
+
+  // TYPOGRAPHY
   typography: {
-    // Font Families
-    fontFamilies: fontFamilies,
-    fontFamily: fontFamilies, // Keep for backward compatibility
-
-    // Font Sizes (from typography.js)
+    fontFamilies,
+    fontFamily: fontFamilies,   // backward compat
     sizes: typographySizes,
-    fontSizes, // Also export as fontSizes for compatibility
-
-    // Font Weights
+    fontSizes,                    // canonical scale export
     weights: typographyWeights,
-    fontWeights, // Also export as fontWeights for compatibility
-
-    // Line Heights
+    fontWeights,
     lineHeights,
-
-    // Letter Spacing
     letterSpacing,
-
-    // Text Styles (pre-configured text combinations)
     textStyles,
   },
 
-  // =================================================================
-  // SPACING - All Margins, Paddings, Gaps
-  // =================================================================
+  // SPACING
   spacing,
   componentSpacing,
   layout,
@@ -197,9 +201,7 @@ export const theme = {
   grid,
   safeAreaConfig,
 
-  // =================================================================
-  // BORDER RADIUS - All Rounded Corners
-  // =================================================================
+  // BORDER RADIUS
   borderRadius: {
     none: 0,
     xs: 4,
@@ -209,80 +211,85 @@ export const theme = {
     xl: 20,
     xxl: 24,
     full: 9999,
-
-    // Semantic Radius
+    // Semantic
     button: 12,
     card: 16,
     input: 10,
     modal: 20,
     badge: 12,
+    pill: 9999,
   },
 
-  // =================================================================
-  // SHADOWS & ELEVATION (iOS & Android Compatible)
-  // =================================================================
+
+  // SHADOWS & ELEVATION
   shadows: {
     none: {
-      shadowColor: "transparent",
+      shadowColor: 'transparent',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0,
       shadowRadius: 0,
       elevation: 0,
     },
-
-    sm: {
-      shadowColor: healthColors.shadows.light,
+    xs: {
+      shadowColor: healthColors.shadows.color,
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
+      shadowOpacity: 0.04,
       shadowRadius: 2,
       elevation: 1,
     },
-
-    md: {
-      shadowColor: healthColors.shadows.medium,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+    sm: {
+      shadowColor: healthColors.shadows.color,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 3,
       elevation: 2,
     },
-
+    md: {
+      shadowColor: healthColors.shadows.color,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      elevation: 3,
+    },
     lg: {
-      shadowColor: healthColors.shadows.medium,
+      shadowColor: healthColors.shadows.color,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
+      shadowOpacity: 0.10,
+      shadowRadius: 12,
+      elevation: 5,
+    },
+    xl: {
+      shadowColor: healthColors.shadows.color,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.14,
+      shadowRadius: 20,
+      elevation: 8,
+    },
+    // Semantic shadows
+    card: {
+      shadowColor: healthColors.shadows.color,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 6,
+      elevation: 2,
+    },
+    button: {
+      shadowColor: healthColors.primary.main,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
       shadowRadius: 8,
       elevation: 4,
     },
-
-    xl: {
-      shadowColor: healthColors.shadows.dark,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
-      elevation: 8,
-    },
-
-    // Semantic Shadows
-    card: {
-      shadowColor: healthColors.shadows.medium,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-
-    button: {
-      shadowColor: healthColors.shadows.medium,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.08,
-      shadowRadius: 3,
-      elevation: 1,
+    modal: {
+      shadowColor: healthColors.shadows.color,
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.18,
+      shadowRadius: 24,
+      elevation: 16,
     },
   },
 
-  // =================================================================
-  // TOUCH TARGETS - Minimum Sizes for Accessibility
-  // =================================================================
+  // TOUCH TARGETS (Accessibility â€” min 44dp)
   touchTargets: {
     min: 44,
     sm: 36,
@@ -291,80 +298,83 @@ export const theme = {
     xl: 64,
   },
 
-  // =================================================================
   // ICON SIZES
-  // =================================================================
   iconSizes: {
-    xs: 14,
-    sm: 18,
-    md: 24,
-    lg: 32,
-    xl: 40,
-    xxl: 48,
+    xs: 12,
+    sm: 16,
+    md: 20,
+    lg: 24,
+    xl: 28,
+    xxl: 32,
+    nav: 24,   // bottom tab icon
+    fab: 28,   // floating action button
   },
 
-  // =================================================================
-  // ANIMATION DURATIONS (Consistent Timing)
-  // =================================================================
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ANIMATION DURATIONS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   animation: {
+    instant: 50,
     fast: 150,
     normal: 250,
     slow: 400,
     verySlow: 600,
+    spring: { damping: 18, stiffness: 200, mass: 1 },
   },
 
-  // =================================================================
-  // GRADIENTS (Pre-configured)
-  // =================================================================
+  // GRADIENTS
   gradients: {
-    primary: ["#00ACC1", "#4DD0E1"],
-    secondary: ["#81D4FA", "#4FC3F7"],
-    success: ["#66BB6A", "#43A047"],
-    error: ["#FF7043", "#F4511E"],
-    warm: ["#FF9800", "#FFB74D"],
-    cool: ["#00ACC1", "#81D4FA"],
+    primary: ['#14B8A6', '#0EA5E9'],
+    primaryV: ['#0F766E', '#14B8A6'],
+    secondary: ['#0EA5E9', '#38BDF8'],
+    success: ['#22C55E', '#16A34A'],
+    error: ['#EF4444', '#DC2626'],
+    warm: ['#F59E0B', '#F97316'],
+    cool: ['#14B8A6', '#6366F1'],
+    hero: ['#0F172A', '#1E293B'],
+    health: ['#22C55E', '#14B8A6'],
   },
 
-  // =================================================================
-  // UTILITY FUNCTIONS (as methods)
-  // =================================================================
-
+  // UTILITY FUNCTIONS
   /**
    * Get color with opacity
    * @param {string} color - Hex color
    * @param {number} opacity - 0 to 1
-   * @returns {string} rgba color
    */
-  withOpacity: (color, opacity) => {
-    // Defensive checks
-    if (!color || typeof color !== "string") {
-      return `rgba(0, 0, 0, ${opacity || 0})`;
-    }
+  withOpacity: (color, opacity) => withOpacity(color, opacity),
 
-    const hex = color.replace("#", "");
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  /**
+   * Get status color config (main + bg) for a given status string
+   * @param {'pending'|'confirmed'|'cancelled'|'completed'|'inProgress'|'urgent'} status
+   */
+  getStatusColors: (status) => {
+    const s = healthColors.status;
+    const map = {
+      pending: { color: s.pending, bg: s.pendingBg },
+      confirmed: { color: s.confirmed, bg: s.confirmedBg },
+      cancelled: { color: s.cancelled, bg: s.cancelledBg },
+      completed: { color: s.completed, bg: s.completedBg },
+      inProgress: { color: s.inProgress, bg: s.inProgressBg },
+      urgent: { color: s.urgent, bg: s.urgentBg },
+    };
+    return map[status] ?? { color: s.completed, bg: s.completedBg };
   },
 
   /**
-   * Create shadow with specific elevation
-   * @param {number} elevation - 0 to 8
-   * @returns {object} shadow style object
+   * Create shadow by elevation level 0â€“8
    */
   createShadow: function (elevation) {
-    // Use 'this' to access shadows from the theme object
-    if (elevation === 0) return this.shadows.none;
-    if (elevation <= 1) return this.shadows.sm;
-    if (elevation <= 2) return this.shadows.md;
-    if (elevation <= 4) return this.shadows.lg;
+    if (elevation <= 0) return this.shadows.none;
+    if (elevation <= 1) return this.shadows.xs;
+    if (elevation <= 2) return this.shadows.sm;
+    if (elevation <= 3) return this.shadows.md;
+    if (elevation <= 5) return this.shadows.lg;
     return this.shadows.xl;
   },
 };
 
 export default theme;
-export { 
+export {
   withOpacity,
   healthColors,
   fontFamilies,
@@ -380,5 +390,3 @@ export {
   grid,
   safeAreaConfig,
 };
-
-

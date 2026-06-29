@@ -8,7 +8,7 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { Sparkles } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 const AITagline = ({
   animated = true,
   variant = "default", // 'default', 'gradient', 'minimal'

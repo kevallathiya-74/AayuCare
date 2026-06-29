@@ -5,7 +5,7 @@
  */
 
 const { AppError } = require('./errorHandler');
-const userRepository = require('../repositories/userRepository');
+const userRepository = require("../modules/auth/user.repository");
 
 /**
  * Attach hospitalId to request based on authenticated user
@@ -144,7 +144,7 @@ exports.restrictToSameHospital = async (req, res, next) => {
 };
 
 /**
- * Add hospital filter to MongoDB query
+ * Add hospital filter to Database query
  * Helper function for use in services/controllers
  */
 exports.addHospitalFilter = (query, user, options = {}) => {

@@ -60,6 +60,23 @@ export const getItem = async (key) => {
 };
 
 /**
+ * Get item from storage synchronously
+ */
+export const getItemSync = (key) => {
+  try {
+    if (isWeb) {
+      return getWebItem(key);
+    }
+    return SecureStore.getItem(key);
+  } catch (error) {
+    if (__DEV__) {
+      console.error(`[appStorage] getItemSync error for key "${key}":`, error);
+    }
+    return null;
+  }
+};
+
+/**
  * Set item in storage
  * @param {string} key - Storage key
  * @param {string} value - Value to store
@@ -72,8 +89,6 @@ export const setItem = async (key, value) => {
       return;
     }
 
-    // SecureStore has a 2048 byte limit. 
-    // If value is too large, we might need a fallback, but for SaaS-grade tokens it's perfect.
     if (value && value.length > 2000) {
       if (__DEV__) {
         console.warn(`[appStorage] WARNING: Value for key "${key}" is approaching SecureStore limit.`);
@@ -83,6 +98,24 @@ export const setItem = async (key, value) => {
   } catch (error) {
     if (__DEV__) {
       console.error(`[appStorage] setItem error for key "${key}":`, error);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Set item in storage synchronously
+ */
+export const setItemSync = (key, value) => {
+  try {
+    if (isWeb) {
+      setWebItem(key, value);
+      return;
+    }
+    SecureStore.setItem(key, value);
+  } catch (error) {
+    if (__DEV__) {
+      console.error(`[appStorage] setItemSync error for key "${key}":`, error);
     }
     throw error;
   }
@@ -103,6 +136,24 @@ export const deleteItem = async (key) => {
   } catch (error) {
     if (__DEV__) {
       console.error(`[appStorage] deleteItem error for key "${key}":`, error);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Remove item from storage synchronously
+ */
+export const deleteItemSync = (key) => {
+  try {
+    if (isWeb) {
+      removeWebItem(key);
+      return;
+    }
+    SecureStore.deleteItem(key);
+  } catch (error) {
+    if (__DEV__) {
+      console.error(`[appStorage] deleteItemSync error for key "${key}":`, error);
     }
     throw error;
   }
@@ -179,6 +230,9 @@ const appStorage = {
   removeItem,
   clear,
   getAllKeys,
+  getItemSync,
+  setItemSync,
+  deleteItemSync,
 };
 
 export default appStorage;

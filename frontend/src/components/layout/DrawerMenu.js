@@ -28,7 +28,7 @@ import {
 } from "react-native";
 import { User, X, ChevronRight, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const ROLE_LABELS = {
   patient: "Patient Account",

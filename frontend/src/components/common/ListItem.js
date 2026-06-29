@@ -7,10 +7,10 @@
 
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { healthColors } from '../../theme/healthColors';
-import { textStyles } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
-import { getListItemHeight } from '../../utils/responsive';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
+import { getListItemHeight } from '@/utils/responsive';
 import Avatar from './Avatar';
 import DynamicIcon from './DynamicIcon';
 

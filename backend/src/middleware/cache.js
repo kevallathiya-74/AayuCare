@@ -1,8 +1,8 @@
-const { getCache, setCache, deleteCacheByPattern } = require("../config/redis");
+const { getCache, setCache, deleteCacheByPattern } = require("../config/cache");
 const logger = require("../utils/logger");
 
 /**
- * Redis Cache Middleware
+ * In-Memory Cache Middleware
  * Cache GET request responses with configurable TTL
  * Version: 1.0 - All cache keys are versioned to prevent stale data after API updates
  */

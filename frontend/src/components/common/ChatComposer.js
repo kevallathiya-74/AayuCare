@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Mic, Send } from "lucide-react-native";
-import { theme, healthColors } from "../../theme";
+import { theme, healthColors } from '@/theme';
 
 const ChatComposer = ({
   value,

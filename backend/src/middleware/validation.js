@@ -105,7 +105,7 @@ const validateQuery = (schema) => {
 };
 
 /**
- * Validate MongoDB ObjectId format (for backward compatibility)
+ * Validate ID format (handles UUID and legacy formats for backward compatibility)
  * @param {string} paramName - Name of the parameter to validate
  * @returns {Function} Express middleware
  */
@@ -117,7 +117,7 @@ const validateObjectId = (paramName = "id") => {
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    // Check if it's a valid MongoDB ObjectId (24 hex characters)
+    // Check if it's a legacy ObjectId (24 hex characters for backward compatibility)
     const objectIdRegex = /^[0-9a-f]{24}$/i;
 
     if (!uuidRegex.test(id) && !objectIdRegex.test(id)) {

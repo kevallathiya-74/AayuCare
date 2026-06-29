@@ -12,8 +12,8 @@
  */
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import * as authService from "../../services/auth.service";
-import logger from "../../utils/logger";
+import * as authService from '@/features/auth/api/auth.service';
+import logger from '@/utils/logger';
 
 // Runtime guard: Prevent accidental 'storage' references
 if (typeof storage !== 'undefined' && typeof window === 'undefined') {

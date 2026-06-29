@@ -1,260 +1,314 @@
 /**
- * AayuCare Health Colors - Complete Color System
- * Professional, trustworthy, and healing color palette
- * Optimized for healthcare application
+ * AayuCare Health Colors — Premium Healthcare SaaS Palette
+ *
+ * Design Philosophy:
+ *   - Trustworthy, calm, clinical precision
+ *   - Primary: Teal (#14B8A6) — healing, technology, trust
+ *   - Secondary: Blue (#0EA5E9) — care, clarity, digital-first
+ *   - Neutral: Slate-based scale — modern, premium, readable
+ * 
  */
 
 const healthColors = {
-  // Common Colors - Quick Access
-  white: "#FFFFFF",
-  black: "#000000",
-  transparent: "transparent",
+  // ─── Core Neutrals ─────────────────────────────────────────────────
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
 
-  // Neutral Colors - Grayscale
   neutral: {
-    white: "#FFFFFF",
-    gray50: "#FAFAFA",
-    gray100: "#F5F5F5",
-    gray200: "#EEEEEE",
-    gray300: "#E0E0E0",
-    gray400: "#BDBDBD",
-    gray500: "#9E9E9E",
-    gray600: "#757575",
-    gray700: "#616161",
-    gray800: "#424242",
-    gray900: "#212121",
-    black: "#000000",
+    white:   '#FFFFFF',
+    gray50:  '#F8FAFC',
+    gray100: '#F1F5F9',
+    gray200: '#E2E8F0',
+    gray300: '#CBD5E1',
+    gray400: '#94A3B8',
+    gray500: '#64748B',
+    gray600: '#475569',
+    gray700: '#334155',
+    gray800: '#1E293B',
+    gray900: '#0F172A',
+    black:   '#000000',
   },
 
-  // Primary Colors - Healing & Trust
+  // ─── Primary — Teal (Trust, Healing, Healthcare) ───────────────────
   primary: {
-    main: "#00ACC1",
-    light: "#4DD0E1",
-    dark: "#00838F",
-    gradient: ["#00ACC1", "#4DD0E1", "#81D4FA"],
+    50:       '#F0FDFA',
+    100:      '#CCFBF1',
+    200:      '#99F6E4',
+    300:      '#5EEAD4',
+    400:      '#2DD4BF',
+    main:     '#14B8A6',
+    600:      '#0D9488',
+    dark:     '#0F9488',
+    700:      '#0F766E',
+    800:      '#115E59',
+    900:      '#134E4A',
+    light:    '#5EEAD4',
+    gradient: ['#14B8A6', '#0EA5E9'],
+    surface:  '#F0FDFA',
   },
 
-  // Secondary Colors - Wellness & Energy
+  // ─── Secondary — Sky Blue (Digital, Precision, Innovation) ─────────
   secondary: {
-    main: "#81D4FA",
-    light: "#B3E5FC",
-    dark: "#4FC3F7",
-    gradient: ["#81D4FA", "#4FC3F7"],
+    50:       '#F0F9FF',
+    100:      '#E0F2FE',
+    200:      '#BAE6FD',
+    300:      '#7DD3FC',
+    400:      '#38BDF8',
+    main:     '#0EA5E9',
+    600:      '#0284C7',
+    dark:     '#0369A1',
+    light:    '#BAE6FD',
+    gradient: ['#0EA5E9', '#38BDF8'],
+    surface:  '#F0F9FF',
   },
 
-  // Hospital Professional - Teal + Navy
-  hospital: {
-    teal: "#00ACC1",
-    navy: "#1A237E",
-    gradient: ["#00ACC1", "#1A237E"],
-  },
-
-  // Accent Colors
-  accent: {
-    coral: "#FF7043",
-    green: "#66BB6A",
-    lavender: "#CE93D8",
-    aqua: "#4DD0E1",
-    purple: "#7E57C2",
-    pink: "#EC4899",
-    cyan: "#00BCD4",
-  },
-
-  // Semantic Colors
+  // ─── Semantic: Success ──────────────────────────────────────────────
   success: {
-    main: "#66BB6A",
-    light: "#C8E6C9",
-    dark: "#43A047",
-    background: "#E8F5E9",
+    50:         '#F0FDF4',
+    100:        '#DCFCE7',
+    main:       '#22C55E',
+    dark:       '#16A34A',
+    light:      '#86EFAC',
+    background: '#F0FDF4',
+    surface:    '#DCFCE7',
   },
 
-  error: {
-    main: "#FF7043",
-    light: "#FFCCBC",
-    dark: "#F4511E",
-    background: "#FBE9E7",
-  },
-
+  // ─── Semantic: Warning ──────────────────────────────────────────────
   warning: {
-    main: "#FFA726",
-    light: "#FFE0B2",
-    dark: "#FB8C00",
-    background: "#FFF3E0",
+    50:         '#FFFBEB',
+    100:        '#FEF3C7',
+    main:       '#F59E0B',
+    dark:       '#D97706',
+    light:      '#FCD34D',
+    background: '#FFFBEB',
+    surface:    '#FEF3C7',
   },
 
+  // ─── Semantic: Error ────────────────────────────────────────────────
+  error: {
+    50:         '#FEF2F2',
+    100:        '#FEE2E2',
+    main:       '#EF4444',
+    dark:       '#DC2626',
+    light:      '#FCA5A5',
+    background: '#FEF2F2',
+    surface:    '#FEE2E2',
+  },
+
+  // ─── Semantic: Info ─────────────────────────────────────────────────
   info: {
-    main: "#81D4FA",
-    light: "#B3E5FC",
-    dark: "#4FC3F7",
-    background: "#E1F5FE",
+    50:         '#EFF6FF',
+    100:        '#DBEAFE',
+    main:       '#3B82F6',
+    dark:       '#2563EB',
+    light:      '#93C5FD',
+    background: '#EFF6FF',
+    surface:    '#DBEAFE',
   },
 
-  // Background Colors
+  // ─── Background / Surface ───────────────────────────────────────────
   background: {
-    main: "#FFFFFF",
-    primary: "#FFFFFF",
-    secondary: "#F8FAFB",
-    tertiary: "#F0F4F7",
-    card: "#FFFFFF",
-    overlay: "rgba(0, 0, 0, 0.5)",
+    main:      '#FFFFFF',
+    primary:   '#FFFFFF',
+    secondary: '#F8FAFC',
+    tertiary:  '#F1F5F9',
+    card:      '#FFFFFF',
+    overlay:   'rgba(15, 23, 42, 0.5)',
+    glass:     'rgba(255, 255, 255, 0.85)',
+    glassDark: 'rgba(15, 23, 42, 0.6)',
   },
 
-  // Text Colors
+  // ─── Text ───────────────────────────────────────────────────────────
   text: {
-    primary: "#2C3E50",
-    secondary: "#7F8C8D",
-    tertiary: "#95A5A6",
-    white: "#FFFFFF",
-    link: "#00ACC1",
-    disabled: "#BDC3C7",
+    primary:   '#0F172A',
+    secondary: '#475569',
+    tertiary:  '#94A3B8',
+    white:     '#FFFFFF',
+    link:      '#14B8A6',
+    disabled:  '#CBD5E1',
+    inverse:   '#FFFFFF',
+    onPrimary: '#FFFFFF',
   },
 
-  // Border Colors
+  // ─── Border ─────────────────────────────────────────────────────────
   border: {
-    light: "#E8EAED",
-    main: "#DADCE0",
-    medium: "#DADCE0",
-    dark: "#BDC1C6",
+    light:   '#F1F5F9',
+    main:    '#E2E8F0',
+    medium:  '#CBD5E1',
+    dark:    '#94A3B8',
+    focus:   '#14B8A6',
+    error:   '#EF4444',
   },
 
-  // Shadow Colors
-  shadows: {
-    light: "#000000",
-    medium: "#000000",
-    dark: "#000000",
-  },
-
-  // Input Colors
+  // ─── Input ──────────────────────────────────────────────────────────
   input: {
-    background: "#FFFFFF",
-    backgroundDisabled: "#F5F5F5",
-    border: "#DADCE0",
-    borderFocused: "#00ACC1",
-    borderError: "#FF7043",
-    borderDisabled: "#E0E0E0",
-    placeholder: "#9E9E9E",
-    text: "#2C3E50",
-    textDisabled: "#BDC3C7",
+    background:         '#FFFFFF',
+    backgroundDisabled: '#F8FAFC',
+    border:             '#E2E8F0',
+    borderFocused:      '#14B8A6',
+    borderError:        '#EF4444',
+    borderDisabled:     '#E2E8F0',
+    placeholder:        '#94A3B8',
+    text:               '#0F172A',
+    textDisabled:       '#CBD5E1',
+    focusGlow:          'rgba(20, 184, 166, 0.15)',
   },
 
-  // Fitness & Wellness
-  fitness: {
-    aqua: "#4DD0E1",
-    green: "#66BB6A",
-    coral: "#FF7043",
-    gradient: ["#4DD0E1", "#66BB6A", "#FF7043"],
-  },
-
-  // AI Guidance
-  ai: {
-    teal: "#00ACC1",
-    white: "#FFFFFF",
-    coral: "#FF7043",
-    gradient: ["#00ACC1", "#FFFFFF"],
-  },
-
-  // Dashboard Specific
-  dashboard: {
-    background: "#FFFFFF",
-    primaryButton: "#00ACC1",
-    secondaryButton: "#81D4FA",
-    alert: "#FF7043",
-    safe: "#66BB6A",
-  },
-
-  // Card Colors
-  card: {
-    background: "#FFFFFF",
-    border: "#E8EAED",
-    shadow: "rgba(0, 0, 0, 0.1)",
-  },
-
-  // Button Colors
+  // ─── Button ─────────────────────────────────────────────────────────
   button: {
-    disabled: "#E0E0E0",
-    disabledText: "#9E9E9E",
+    disabled:     '#E2E8F0',
+    disabledText: '#94A3B8',
   },
 
-  // Shadow Colors
+  // ─── Shadows ────────────────────────────────────────────────────────
   shadows: {
-    light: "rgba(0, 0, 0, 0.05)",
-    medium: "rgba(0, 0, 0, 0.1)",
-    dark: "rgba(0, 0, 0, 0.2)",
+    light:  'rgba(15, 23, 42, 0.04)',
+    medium: 'rgba(15, 23, 42, 0.08)',
+    dark:   'rgba(15, 23, 42, 0.16)',
+    color:  '#0F172A',
   },
 
-  // Healthcare-Specific Colors
-  health: {
-    heartRate: "#E91E63",
-    bloodPressure: "#9C27B0",
-    temperature: "#FF9800",
-    glucose: "#66BB6A",
-    oxygen: "#00ACC1",
-    weight: "#FF7043",
-    steps: "#81D4FA",
-  },
-
-  // Status Colors
+  // ─── Status (Appointment / Records) ─────────────────────────────────
   status: {
-    pending: "#FFA726",
-    confirmed: "#66BB6A",
-    cancelled: "#FF7043",
-    completed: "#9E9E9E",
-    inProgress: "#00ACC1",
+    pending:      '#F59E0B',
+    pendingBg:    '#FFFBEB',
+    confirmed:    '#22C55E',
+    confirmedBg:  '#F0FDF4',
+    cancelled:    '#EF4444',
+    cancelledBg:  '#FEF2F2',
+    completed:    '#64748B',
+    completedBg:  '#F8FAFC',
+    inProgress:   '#14B8A6',
+    inProgressBg: '#F0FDFA',
+    urgent:       '#DC2626',
+    urgentBg:     '#FEF2F2',
   },
 
-  // Gradient Combinations
+  // ─── Healthcare Vitals ──────────────────────────────────────────────
+  health: {
+    heartRate:     '#E11D48',
+    bloodPressure: '#7C3AED',
+    temperature:   '#D97706',
+    glucose:       '#16A34A',
+    oxygen:        '#0EA5E9',
+    weight:        '#DC2626',
+    steps:         '#14B8A6',
+    sleep:         '#6366F1',
+    hydration:     '#0891B2',
+    stress:        '#F59E0B',
+  },
+
+  // ─── Role-based Accent Colors ────────────────────────────────────────
+  roles: {
+    admin:   { main: '#7C3AED', bg: '#F5F3FF', light: '#C4B5FD' },
+    doctor:  { main: '#14B8A6', bg: '#F0FDFA', light: '#5EEAD4' },
+    patient: { main: '#0EA5E9', bg: '#F0F9FF', light: '#7DD3FC' },
+    nurse:   { main: '#EC4899', bg: '#FDF2F8', light: '#F9A8D4' },
+  },
+
+  // ─── Hospital Professional ────────────────────────────────────────────
+  hospital: {
+    teal:     '#14B8A6',
+    navy:     '#1E293B',
+    gradient: ['#14B8A6', '#0EA5E9'],
+    dark:     ['#0F766E', '#0369A1'],
+  },
+
+  // ─── Accent / Decorative ──────────────────────────────────────────────
+  accent: {
+    coral:    '#F43F5E',
+    green:    '#22C55E',
+    lavender: '#A78BFA',
+    aqua:     '#2DD4BF',
+    purple:   '#8B5CF6',
+    pink:     '#EC4899',
+    cyan:     '#06B6D4',
+    orange:   '#F97316',
+    indigo:   '#6366F1',
+  },
+
+  // ─── Card ─────────────────────────────────────────────────────────────
+  card: {
+    background: '#FFFFFF',
+    border:     '#F1F5F9',
+    shadow:     'rgba(15, 23, 42, 0.06)',
+    hover:      '#F8FAFC',
+  },
+
+  // ─── Dashboard / Analytics ────────────────────────────────────────────
+  dashboard: {
+    background:      '#F8FAFC',
+    primaryButton:   '#14B8A6',
+    secondaryButton: '#0EA5E9',
+    alert:           '#EF4444',
+    safe:            '#22C55E',
+    stat1:           '#14B8A6',
+    stat2:           '#0EA5E9',
+    stat3:           '#F59E0B',
+    stat4:           '#8B5CF6',
+  },
+
+  // ─── Gradients ────────────────────────────────────────────────────────
   gradients: {
-    primary: ["#00ACC1", "#00838F"],
-    secondary: ["#81D4FA", "#4FC3F7"],
-    warm: ["#FF9800", "#FFB74D"],
-    cool: ["#00ACC1", "#81D4FA"],
-    health: ["#66BB6A", "#00ACC1"],
+    primary:   ['#14B8A6', '#0EA5E9'],
+    primaryV:  ['#0F766E', '#14B8A6'],
+    secondary: ['#0EA5E9', '#38BDF8'],
+    health:    ['#22C55E', '#14B8A6'],
+    warm:      ['#F59E0B', '#F97316'],
+    cool:      ['#14B8A6', '#6366F1'],
+    hero:      ['#0F172A', '#1E293B'],
+    glass:     ['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.6)'],
   },
 
-  // Border Radius
+  // ─── Border Radius (backward compat) ──────────────────────────────────
   borderRadius: {
-    small: 8,
+    small:  8,
     medium: 12,
-    large: 16,
+    large:  16,
     xlarge: 24,
-    round: 999,
+    round:  9999,
+  },
+
+  // ─── Fitness & Wellness ───────────────────────────────────────────────
+  fitness: {
+    aqua:     '#2DD4BF',
+    green:    '#22C55E',
+    coral:    '#F43F5E',
+    gradient: ['#2DD4BF', '#22C55E', '#F43F5E'],
+  },
+
+  // ─── AI / Assistant ───────────────────────────────────────────────────
+  ai: {
+    teal:     '#14B8A6',
+    white:    '#FFFFFF',
+    coral:    '#F43F5E',
+    gradient: ['#14B8A6', '#6366F1'],
   },
 };
 
-// Validate healthColors object structure
-const validateHealthColors = (colors) => {
-  const requiredKeys = [
-    "card",
-    "border",
-    "primary",
-    "secondary",
-    "background",
-    "text",
-    "neutral",
-  ];
-  for (const key of requiredKeys) {
-    if (!colors[key]) {
-      return colors;
-    }
-  }
-  if (colors.card && !colors.card.border) {
-    return colors;
-  }
-  return colors;
-};
+// ─── Dev Validation ───────────────────────────────────────────────────────
+if (__DEV__) {
+  const required = ['primary', 'secondary', 'background', 'text', 'border', 'neutral', 'status'];
+  required.forEach(k => {
+    if (!healthColors[k]) console.warn(`[healthColors] Missing required key: ${k}`);
+  });
+}
 
-// Validate on load
-validateHealthColors(healthColors);
-
-// Utility function to get rgba color with opacity
+/**
+ * Returns an rgba string from a hex color + opacity value (0–1)
+ */
 const withOpacity = (color, opacity) => {
-  const hex = color.replace("#", "");
+  if (!color || typeof color !== 'string') return `rgba(0,0,0,${opacity ?? 0})`;
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return `rgba(0,0,0,${opacity ?? 0})`;
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  return `rgba(${r},${g},${b},${opacity})`;
 };
 
-// ES6 exports for React Native compatibility
 export { healthColors, withOpacity };
 export default healthColors;
+
+

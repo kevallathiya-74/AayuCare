@@ -8,9 +8,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Calendar, Clock, MapPin, XCircle } from "lucide-react-native";
-import { healthColors } from '../../theme/healthColors';
-import { textStyles } from '../../theme/typography';
-import { spacing } from '../../theme/spacing';
+import { healthColors } from '@/theme/healthColors';
+import { textStyles } from '@/theme/typography';
+import { spacing } from '@/theme/spacing';
 import Card from '../common/Card';
 import Avatar from '../common/Avatar';
 import Badge from '../common/Badge';
