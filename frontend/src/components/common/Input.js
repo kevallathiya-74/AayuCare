@@ -4,7 +4,7 @@
  * Features: floating label, validation states, icons, password toggle
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, forwardRef, memo, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -16,14 +16,14 @@ import {
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react-native';
 import { theme, healthColors } from '@/theme';
 import { textStyles, fontFamilies } from '@/theme/typography';
-import { spacing, componentSpacing, layout } from '@/theme/spacing';
+import { spacing, layout } from '@/theme/spacing';
 import { 
     touchTargets,
     borderRadius as responsiveBorderRadius,
     getInputHeight,
 } from '@/utils/responsive';
 
-const Input = ({
+const Input = memo(forwardRef(({
   label,
   value,
   onChangeText,
@@ -40,43 +40,35 @@ const Input = ({
   style,
   inputStyle,
   ...props
-}) => {
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [labelAnim] = useState(new Animated.Value(value ? 1 : 0));
+  
+  // Use useRef to keep the Animated.Value reference completely stable across renders
+  const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
-  const handleFocus = () => {
-    setIsFocused(true);
-
+  // Keep labelAnim synchronized with focus and value changes smoothly
+  useEffect(() => {
     Animated.timing(labelAnim, {
-      toValue: 1,
+      toValue: (value || isFocused) ? 1 : 0,
       duration: 200,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
-  };
+  }, [value, isFocused, labelAnim]);
 
-  const handleBlur = () => {
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
     setIsFocused(false);
-    if (!value) {
-      Animated.timing(labelAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    }
-  };
+  }, []);
 
   const labelStyle = {
     position: 'absolute',
     left: leftIcon ? 48 : spacing.md,
-    top: labelAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [13, -10],
-    }),
-    fontSize: labelAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [16, 12],
-    }),
+    top: 13,
+    fontSize: 16,
     color: error
       ? healthColors.error.main
       : success
@@ -88,6 +80,26 @@ const Input = ({
     paddingHorizontal: 6,
     fontWeight: '500',
     zIndex: 1,
+    transform: [
+      {
+        translateY: labelAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -23],
+        }),
+      },
+      {
+        scale: labelAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 0.75],
+        }),
+      },
+      {
+        translateX: labelAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -12],
+        }),
+      },
+    ],
   };
 
   const containerStyle = [
@@ -103,15 +115,14 @@ const Input = ({
       <View style={containerStyle}>
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
 
-        {label && <Animated.Text style={labelStyle}>{label}</Animated.Text>}
+        {label && <Animated.Text style={labelStyle} pointerEvents="none">{label}</Animated.Text>}
 
         <TextInput
+          ref={ref}
           value={value}
-          onChangeText={(text) => {
-            onChangeText && onChangeText(text);
-          }}
-          placeholder={label && !isFocused && !value ? '' : placeholder}
-          placeholderTextColor={healthColors.input.placeholder}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={(label && !isFocused && !value) ? 'transparent' : healthColors.input.placeholder}
           onFocus={handleFocus}
           onBlur={handleBlur}
           editable={!disabled}
@@ -164,7 +175,7 @@ const Input = ({
       )}
     </View>
   );
-};
+}));
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -182,10 +193,9 @@ const styles = StyleSheet.create({
   },
   containerFocused: {
     borderColor: healthColors.input.borderFocused,
-    borderWidth: 2,
+    borderWidth: 1.5,
     backgroundColor: healthColors.background.primary,
-    outlineStyle: 'none',
-    shadowColor: '#14B8A6',
+    shadowColor: healthColors.primary.main,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 6,
@@ -196,7 +206,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   containerSuccess: {
-    borderColor: healthColors.success.main || '#10B981',
+    borderColor: healthColors.success.main,
     borderWidth: 1.5,
   },
   containerDisabled: {
@@ -211,7 +221,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     paddingTop: 10,
-    outlineStyle: 'none',
     textAlign: 'left',
   },
   inputWithLeftIcon: {
