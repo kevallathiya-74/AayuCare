@@ -56,7 +56,7 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
     },
 
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined;
+      return lastPage.pagination?.nextCursor ?? undefined;
     },
 
     initialPageParam: null,
@@ -97,7 +97,7 @@ export function usePatientAppointmentsInfinite(patientId, filters = {}, options 
     },
 
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined;
+      return lastPage.pagination?.nextCursor ?? undefined;
     },
 
     initialPageParam: null,
@@ -139,7 +139,7 @@ export function useDoctorAppointmentsInfinite(doctorId, filters = {}, options = 
     },
 
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination?.hasMore ? lastPage.pagination.nextCursor : undefined;
+      return lastPage.pagination?.nextCursor ?? undefined;
     },
 
     initialPageParam: null,

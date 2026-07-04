@@ -43,7 +43,7 @@ const calculateAge = (dateOfBirth) => {
     }
 
     return age >= 0 ? age : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -152,7 +152,7 @@ exports.getDoctorStats = async (req, res, next) => {
  */
 exports.getDoctorDashboard = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -280,9 +280,8 @@ exports.getDoctorDashboard = async (req, res, next) => {
         : null;
 
       return {
-        _id: apt.id,
-        appointmentId: apt.id,
         id: apt.id,
+        appointmentId: apt.id,
         time: formatAppointmentTime(apt),
         appointmentDate: apt.appointmentDate || apt.appointment_date || null,
         appointmentTime: apt.appointmentTime || apt.appointment_time || null,
@@ -322,7 +321,7 @@ exports.getDoctorDashboard = async (req, res, next) => {
           ).length,
         },
         recentPrescriptions: enrichedPrescriptions.map((p) => ({
-          id: p.id || p._id,
+          id: p.id,
           patientName: p.patientName || "Unknown",
           date: p.createdAt || p.created_at,
           medicationsCount: p.medicines?.length || 0,
@@ -335,7 +334,7 @@ exports.getDoctorDashboard = async (req, res, next) => {
     logger.error("Doctor dashboard error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?.id || req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -348,7 +347,7 @@ exports.getDoctorDashboard = async (req, res, next) => {
  */
 exports.getTodaysAppointments = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const { filter = "all" } = req.query;
     const normalizedFilter = String(filter || "all").toLowerCase();
 
@@ -449,7 +448,6 @@ exports.getTodaysAppointments = async (req, res, next) => {
         appointments: visibleAppointments.map((apt) => {
           const formattedTime = formatAppointmentTime(apt);
           return {
-            _id: apt.id,
             id: apt.id,
             time: formattedTime,
             timeSlot: formattedTime,
@@ -475,7 +473,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
     logger.error("Today appointments error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?.id || req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -488,7 +486,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
  */
 exports.getUpcomingAppointments = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const { page = 1, limit = 10 } = req.query;
 
     const tomorrow = new Date();
@@ -523,7 +521,6 @@ exports.getUpcomingAppointments = async (req, res, next) => {
         appointments: appointments.map((apt) => {
           const formattedTime = formatAppointmentTime(apt);
           return {
-            _id: apt.id,
             id: apt.id,
             date: apt.appointmentDate || apt.appointment_date,
             time: formattedTime,
@@ -553,7 +550,7 @@ exports.getUpcomingAppointments = async (req, res, next) => {
     logger.error("Upcoming appointments error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?.id || req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -566,7 +563,7 @@ exports.getUpcomingAppointments = async (req, res, next) => {
  */
 exports.searchPatients = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const { q } = req.query;
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const requestedLimit = parseInt(req.query.limit, 10) || 20;
@@ -630,7 +627,7 @@ exports.searchPatients = async (req, res, next) => {
     logger.error("Patient search error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -643,7 +640,7 @@ exports.searchPatients = async (req, res, next) => {
  */
 exports.getPatientDetails = async (req, res, next) => {
   try {
-    const userId = req.user.id || req.user._id;
+    const userId = req.user.id;
     const userRole = req.user.role;
     const { patientId } = req.params;
 
@@ -657,7 +654,6 @@ exports.getPatientDetails = async (req, res, next) => {
     const {
       mapPatientData,
       mapPrescriptionData,
-      mapMedicalRecordData,
       mapArray,
     } = require("../../utils/fieldMapper");
 
@@ -772,7 +768,7 @@ exports.getPatientDetails = async (req, res, next) => {
     logger.error("Get patient details error:", {
       error: error.message,
       stack: error.stack,
-      userId: req.user?._id,
+      userId: req.user?.id,
       role: req.user?.role,
     });
     next(error);
@@ -788,7 +784,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status, notes } = req.body;
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
 
     const normalizedStatus = normalizeAppointmentStatus(status);
 
@@ -868,7 +864,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
  */
 exports.getDoctorProfileStats = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const effectiveHospitalId = (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : undefined;
 
     const [totalPatients, completedCounts, doctor] = await Promise.all([
@@ -896,7 +892,7 @@ exports.getDoctorProfileStats = async (req, res, next) => {
     logger.error("Doctor profile stats error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -911,7 +907,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
   try {
     const { name, age, gender, phone, bloodGroup, symptoms, address } =
       req.body;
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const effectiveHospitalId =
       req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
     const normalizedPhone = String(phone || "").trim();
@@ -992,7 +988,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
 
       // Add walk-in appointment for existing patient when symptoms provided.
       if (symptoms) {
-        const { scheduledAt, localDate, appointmentTime } = await getNextAvailableSlot(
+        const { localDate, appointmentTime } = await getNextAvailableSlot(
           doctorId, 
           effectiveHospitalId
         );
@@ -1078,7 +1074,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
 
     // Create appointment immediately if needed
     if (symptoms) {
-      const { scheduledAt, localDate, appointmentTime } = await getNextAvailableSlot(
+      const { localDate, appointmentTime } = await getNextAvailableSlot(
         doctorId, 
         effectiveHospitalId
       );
@@ -1129,7 +1125,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
     logger.error("Register walk-in patient error:", {
       error: error.message,
       stack: error.stack,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -1142,7 +1138,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const {
       name,
       email,
@@ -1197,7 +1193,7 @@ exports.updateProfile = async (req, res, next) => {
   } catch (error) {
     logger.error("Update profile error:", {
       error: error.message,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -1210,7 +1206,7 @@ exports.updateProfile = async (req, res, next) => {
  */
 exports.getConsultationHistory = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const { page = 1, limit = 20, status, startDate, endDate } = req.query;
 
     const filters = { 
@@ -1266,7 +1262,7 @@ exports.getConsultationHistory = async (req, res, next) => {
   } catch (error) {
     logger.error("Get consultation history error:", {
       error: error.message,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -1279,7 +1275,7 @@ exports.getConsultationHistory = async (req, res, next) => {
  */
 exports.getSchedule = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
     // Use findByDoctor (not findAvailableByDoctor) so all 7 days are always returned,
@@ -1330,7 +1326,7 @@ exports.getSchedule = async (req, res, next) => {
   } catch (error) {
     logger.error("Get schedule error:", {
       error: error.message,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -1343,7 +1339,7 @@ exports.getSchedule = async (req, res, next) => {
  */
 exports.updateSchedule = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const { dayOfWeek } = req.params;
     const { isAvailable, timeSlots, breakTime, notes } = req.body;
 
@@ -1371,7 +1367,7 @@ exports.updateSchedule = async (req, res, next) => {
       if (breakTime) updateData.breakTime = breakTime;
       if (notes !== undefined) updateData.notes = notes;
       
-      schedule = await scheduleRepository.update(schedule._id, updateData);
+      schedule = await scheduleRepository.update(schedule.id, updateData);
     } else {
       const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
       schedule = await scheduleRepository.create({
@@ -1402,7 +1398,7 @@ exports.updateSchedule = async (req, res, next) => {
   } catch (error) {
     logger.error("Update schedule error:", {
       error: error.message,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }
@@ -1415,7 +1411,7 @@ exports.updateSchedule = async (req, res, next) => {
  */
 exports.toggleDayAvailability = async (req, res, next) => {
   try {
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const { dayOfWeek } = req.params;
     const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
@@ -1437,7 +1433,7 @@ exports.toggleDayAvailability = async (req, res, next) => {
       });
     }
 
-    const updatedSchedule = await scheduleRepository.update(schedule._id, {
+    const updatedSchedule = await scheduleRepository.update(schedule.id, {
       isAvailable: !schedule.isAvailable,
     });
 
@@ -1459,7 +1455,7 @@ exports.toggleDayAvailability = async (req, res, next) => {
   } catch (error) {
     logger.error("Toggle availability error:", {
       error: error.message,
-      doctorId: req.user?._id,
+      doctorId: req.user?.id,
     });
     next(error);
   }

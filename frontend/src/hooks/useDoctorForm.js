@@ -79,7 +79,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       let parsed = {};
       if (doctor.availability) {
         parsed = typeof doctor.availability === "object" ? doctor.availability : {};
-        try { if (typeof doctor.availability === "string") parsed = JSON.parse(doctor.availability); } catch {}
+        try { if (typeof doctor.availability === "string") parsed = JSON.parse(doctor.availability); } catch { /* ignore parse errors */ }
       }
       setAvailabilitySlots(parsed);
       setErrors({});
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.medium,
   },
   dayChipTextActive: {
-    color: "#fff",
+    color: healthColors.text.white,
   },
   daySlotRow: {
     marginTop: theme.spacing.sm,
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   slotChipActive: {
-    backgroundColor: healthColors.primary.main + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.12),
   },
   slotChipText: {
     fontSize: theme.typography.sizes.caption,
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   dropdownOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   dropdownContainer: {
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   dropdownItemSelected: {
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
   },
   dropdownItemText: {
     fontSize: theme.typography.sizes.body,

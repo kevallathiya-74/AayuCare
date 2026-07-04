@@ -1,6 +1,4 @@
 const { query } = require("../../config/postgres");
-const { withTransaction } = require("../../utils/transaction");
-const logger = require("../../utils/logger");
 
 /**
  * Admin Repository
@@ -457,7 +455,7 @@ class AdminRepository {
 
   // Returns the raw pool client for bulk transactions
   async getRawClient() {
-    return await require("../../config/postgres").getClient();
+    return require("../../config/postgres").getClient();
   }
 }
 

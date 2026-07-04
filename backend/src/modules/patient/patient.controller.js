@@ -19,7 +19,6 @@ const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 /**
  * Helper to check if the requesting user is the same as the target patient
- * Handles both backward compatible _id and custom userId formats
  * @param {Object} user - The authenticated user (req.user)
  * @param {String} patientId - The patient identifier from request params
  * @returns {Boolean} - True if user is the same patient
@@ -29,8 +28,6 @@ const isOwnPatientData = (user, patientId) => {
   if (user.id && user.id === patientId) return true;
   // Check against custom userId (e.g., "PAT001", "PAT9")
   if (user.userId && user.userId === patientId) return true;
-  // Check against backward compatibility _id
-  if (user._id && user._id.toString() === patientId) return true;
   return false;
 };
 
@@ -154,9 +151,7 @@ exports.getCompleteHistory = async (req, res, next) => {
       recordQuery.hospitalId = req.hospitalId;
     }
     const medicalRecords = await medicalRecordRepository.findWithFilters(recordQuery, {
-      populate: { doctorId: "name specialization userId isActive" },
-      sort: { createdAt: -1 },
-      lean: true
+      sort: 'created_at DESC'
     });
 
     // Get all appointments (sorted by most recent) - PostgreSQL
@@ -192,20 +187,21 @@ exports.getCompleteHistory = async (req, res, next) => {
         appointments.length > 0 ? appointments[0].appointmentDate : null,
     };
 
-    // Get recent vitals from medical records
-    const recentVitals = medicalRecords
-      .filter((r) => r.vitals && Object.keys(r.vitals).length > 0)
+    // Get records with ai_analysis for insights
+    const recordsWithAnalysis = medicalRecords
+      .filter((r) => r.ai_analysis && typeof r.ai_analysis === 'object')
       .slice(0, 5)
       .map((r) => ({
-        date: r.createdAt,
-        vitals: r.vitals,
+        date: r.created_at || r.createdAt,
+        recordType: r.record_type || r.recordType,
+        diagnosis: r.diagnosis,
       }));
 
     // Compile complete history
     const completeHistory = {
       patient,
       stats,
-      recentVitals,
+      recentRecords: recordsWithAnalysis,
       medicalRecords,
       appointments,
       prescriptions,
@@ -476,9 +472,8 @@ exports.getHealthMetrics = async (req, res, next) => {
     }
     
     const metrics = await healthMetricRepository.findWithFilters(metricsQuery, {
-      sort: { timestamp: -1 },
-      limit: 100,
-      lean: true
+      sort: 'recorded_at DESC',
+      limit: 100
     });
 
     return sendSuccess(res, req, { count: metrics.length, metrics }, "Health metrics retrieved successfully", 200);
@@ -606,16 +601,10 @@ exports.getActivityData = async (req, res, next) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const todayMetricsQuery = {
-      patient: patientObjectId,
-      type: { $in: activityTypes },
-      timestamp: { $gte: today },
-    };
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      todayMetricsQuery.hospitalId = req.hospitalId;
-    }
-    
-    const todayMetrics = await healthMetricRepository.findWithFilters(todayMetricsQuery, { lean: true });
+    const todayMetrics = await healthMetricRepository.findTodayMetrics(
+      patientObjectId,
+      activityTypes
+    );
 
     return sendSuccess(
       res,
@@ -772,20 +761,8 @@ exports.updateHealthMetric = async (req, res, next) => {
       return sendError(res, req, "Not authorized to update metrics for this patient", 403, "FORBIDDEN");
     }
 
-    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    let patient;
-    if (uuidRegex.test(patientId)) {
-      patient = await userRepository.findById(patientId);
-    } else {
-      patient = await userRepository.findByUserId(patientId);
-    }
-    const resolvedPatientId = patient ? patient.id : patientId;
-
-    const existing = await healthMetricRepository.findWithFilters(
-      { _id: metricId, patient: resolvedPatientId },
-      { limit: 1 }
-    );
-    if (existing.length === 0) {
+    const existing = await healthMetricRepository.findById(metricId);
+    if (!existing) {
       return sendError(res, req, "Metric not found", 404, "NOT_FOUND");
     }
 
@@ -826,28 +803,13 @@ exports.deleteHealthMetric = async (req, res, next) => {
       return sendError(res, req, "Not authorized to delete metrics for this patient", 403, "FORBIDDEN");
     }
 
-    // Resolve patient using PostgreSQL repository
-    const uuidRegexDel = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    let deletePatient;
-    if (uuidRegexDel.test(patientId)) {
-      deletePatient = await userRepository.findById(patientId);
-    } else {
-      deletePatient = await userRepository.findByUserId(patientId);
-    }
-
-    const deletePatientId = deletePatient ? deletePatient.id : patientId;
-    
     // First find the metric to verify it belongs to the patient
-    const existingMetric = await healthMetricRepository.findWithFilters({
-      _id: metricId,
-      patient: deletePatientId,
-    }, { limit: 1 });
+    const existingMetric = await healthMetricRepository.findById(metricId);
     
-    if (existingMetric.length === 0) {
+    if (!existingMetric) {
       return sendError(res, req, "Metric not found", 404, "NOT_FOUND");
     }
     
-    const metric = existingMetric[0];
     await healthMetricRepository.delete(metricId);
 
     // Invalidate patient-related caches after metric deletion

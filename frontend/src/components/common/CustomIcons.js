@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Sparkles } from "lucide-react-native";
 import DynamicIcon from "./DynamicIcon";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,7 +15,7 @@ export const IconWithBackground = ({
   name,
   size = 24,
   color = healthColors.primary.main,
-  backgroundColor = healthColors.primary.main + "15",
+  backgroundColor = theme.withOpacity(healthColors.primary.main, 0.08),
   borderRadius = 12,
   padding = 12,
   gradient = false,

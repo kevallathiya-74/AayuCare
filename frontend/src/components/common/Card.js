@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   variantOutline: {
-    backgroundColor: "transparent",
+    backgroundColor: healthColors.transparent,
     borderWidth: 1.5,
     borderColor: healthColors.border.main,
   },

@@ -74,9 +74,9 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.error.main,
     justifyContent: "center", alignItems: "center",
     paddingHorizontal: 4,
-    borderWidth: 1.5, borderColor: "#fff",
+    borderWidth: 1.5, borderColor: healthColors.text.white,
   },
-  badgeText: { color: "#fff", fontSize: theme.typography.sizes.overline, fontWeight: "700" },
+  badgeText: { color: healthColors.text.white, fontSize: theme.typography.sizes.overline, fontWeight: "700" },
   label: {
     fontSize: theme.typography.sizes.bodySmall,
     fontWeight: "700",

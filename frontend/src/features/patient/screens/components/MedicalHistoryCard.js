@@ -138,9 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: healthColors.background.tertiary,
   },
-  status_active: { backgroundColor: healthColors.error.background || "#FFEBEE" },
-  status_chronic: { backgroundColor: healthColors.warning.background || "#FFF8E1" },
-  status_resolved: { backgroundColor: healthColors.success.background || "#E8F5E9" },
+
   statusText: {
     fontSize: theme.typography.sizes.overline,
     fontWeight: "600",
@@ -159,10 +157,10 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: healthColors.warning.background || "#FFF8E1",
+    backgroundColor: healthColors.warning.background,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: healthColors.warning.main + "30",
+    borderColor: theme.withOpacity(healthColors.warning.main, 0.19),
   },
   allergyText: {
     fontSize: theme.typography.sizes.bodySmall,

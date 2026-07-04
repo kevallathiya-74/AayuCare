@@ -4,7 +4,7 @@
  */
 
 import api from './apiClient';
-import { logError, showError } from '../utils/errorHandler';
+import { logError } from '../utils/errorHandler';
 import { normalizeServiceResponse } from './responseNormalizer';
 
 class NotificationService {
@@ -92,5 +92,6 @@ class NotificationService {
     }
 }
 
+export { NotificationService };
 export default new NotificationService();
 

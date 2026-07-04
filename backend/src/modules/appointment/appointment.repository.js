@@ -1,6 +1,5 @@
-const { query, getClient } = require("../../config/postgres");
+const { query } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
-const logger = require("../../utils/logger");
 const { mapAppointmentData, mapArray } = require("../../utils/fieldMapper");
 
 /**

@@ -7,7 +7,7 @@ const { AppError } = require("./errorHandler");
 const humanizeField = (path = "field") => {
   return String(path)
     .replace(/["']/g, "")
-    .replace(/[_\.]/g, " ")
+    .replace(/[_.]/g, " ")
     .trim()
     .replace(/\b\w/g, (c) => c.toUpperCase());
 };
@@ -105,7 +105,12 @@ const validateQuery = (schema) => {
 };
 
 /**
- * Validate ID format (handles UUID and legacy formats for backward compatibility)
+ * Validate UUID format for PostgreSQL primary keys.
+ *
+ * The legacy 24-character ObjectId compatibility branch was removed on
+ * 2026-06-30 — the database has been PostgreSQL-only since the initial
+ * migration and no code path produces ObjectId-shaped identifiers.
+ *
  * @param {string} paramName - Name of the parameter to validate
  * @returns {Function} Express middleware
  */
@@ -113,14 +118,11 @@ const validateObjectId = (paramName = "id") => {
   return (req, res, next) => {
     const id = req.params[paramName];
 
-    // Check if it's a valid UUID (PostgreSQL format)
+    // PostgreSQL UUID only — format: 8-4-4-4-12 hex characters with dashes
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    // Check if it's a legacy ObjectId (24 hex characters for backward compatibility)
-    const objectIdRegex = /^[0-9a-f]{24}$/i;
-
-    if (!uuidRegex.test(id) && !objectIdRegex.test(id)) {
+    if (!uuidRegex.test(id)) {
       return next(new AppError(`Invalid ${paramName} format`, 400));
     }
 

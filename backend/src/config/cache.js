@@ -96,27 +96,27 @@ const deleteCacheByPattern = async (pattern) => {
 };
 
 const setSession = async (sessionId, sessionData, ttl = 604800) => {
-  return await setCache(`session:${sessionId}`, sessionData, ttl);
+  return setCache(`session:${sessionId}`, sessionData, ttl);
 };
 
 const getSession = async (sessionId) => {
-  return await getCache(`session:${sessionId}`);
+  return getCache(`session:${sessionId}`);
 };
 
 const deleteSession = async (sessionId) => {
-  return await deleteCache(`session:${sessionId}`);
+  return deleteCache(`session:${sessionId}`);
 };
 
 const setOTP = async (identifier, otp, ttl = 300) => {
-  return await setCache(`otp:${identifier}`, { otp, createdAt: new Date().toISOString() }, ttl);
+  return setCache(`otp:${identifier}`, { otp, createdAt: new Date().toISOString() }, ttl);
 };
 
 const getOTP = async (identifier) => {
-  return await getCache(`otp:${identifier}`);
+  return getCache(`otp:${identifier}`);
 };
 
 const deleteOTP = async (identifier) => {
-  return await deleteCache(`otp:${identifier}`);
+  return deleteCache(`otp:${identifier}`);
 };
 
 const checkRateLimit = async (identifier, maxRequests = 100, windowSeconds = 60) => {
@@ -137,12 +137,13 @@ const checkRateLimit = async (identifier, maxRequests = 100, windowSeconds = 60)
   
   const allowed = entry.count <= maxRequests;
   const remaining = Math.max(0, maxRequests - entry.count);
+  const resetInSeconds = Math.max(1, Math.ceil((entry.expiresAt - now) / 1000));
   
-  return { allowed, remaining, current: entry.count };
+  return { allowed, remaining, resetInSeconds, current: entry.count };
 };
 
 const blacklistToken = async (token, ttl = 2592000) => {
-  return await setCache(`blacklist:${token}`, { blacklistedAt: new Date().toISOString() }, ttl);
+  return setCache(`blacklist:${token}`, { blacklistedAt: new Date().toISOString() }, ttl);
 };
 
 const isTokenBlacklisted = async (token) => {

@@ -8,7 +8,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { healthColors } from '@/theme/healthColors';
+import { theme, healthColors } from '@/theme';
 import { textStyles } from '@/theme/typography';
 import { spacing } from '@/theme/spacing';
 
@@ -28,7 +28,7 @@ const ProgressBar = ({
             toValue: progress,
             useNativeDriver: false,
         }).start();
-    }, [progress]);
+    }, [progress, widthAnim]);
 
     const animatedWidth = widthAnim.interpolate({
         inputRange: [0, 100],
@@ -67,12 +67,12 @@ const ProgressBar = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        borderRadius: 999,
+        borderRadius: theme.borderRadius.full,
         overflow: 'hidden',
     },
     progress: {
         height: '100%',
-        borderRadius: 999,
+        borderRadius: theme.borderRadius.full,
     },
     gradient: {
         flex: 1,

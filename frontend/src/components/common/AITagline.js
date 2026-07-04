@@ -38,7 +38,7 @@ const AITagline = ({
       fadeAnim.setValue(1);
       scaleAnim.setValue(1);
     }
-  }, [animated]);
+  }, [animated, fadeAnim, scaleAnim]);
 
   if (variant === "gradient") {
     return (
@@ -60,8 +60,8 @@ const AITagline = ({
         >
           <Sparkles
             
-            size={16}
-            color={healthColors.neutral.white}
+          size={theme.iconSizes.sm}
+          color={healthColors.neutral.white}
           />
           <Text style={styles.gradientText}>
             Your health, enhanced by intelligence.
@@ -83,7 +83,7 @@ const AITagline = ({
           },
         ]}
       >
-        <Sparkles  size={14} color={theme.colors.healthcare.purple} />
+        <Sparkles  size={theme.iconSizes.xs} color={theme.colors.healthcare.purple} />
         <Text style={styles.minimalText}>
           Your health, enhanced by intelligence.
         </Text>
@@ -104,7 +104,7 @@ const AITagline = ({
       ]}
     >
       <View style={styles.iconCircle}>
-        <Sparkles  size={16} color={theme.colors.healthcare.purple} />
+        <Sparkles  size={theme.iconSizes.sm} color={theme.colors.healthcare.purple} />
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.text}>Your health, enhanced by intelligence.</Text>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing.md,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     borderColor: theme.colors.border.light,
     gap: theme.spacing.sm,
@@ -131,15 +131,13 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: theme.borderRadius.full,
     backgroundColor: healthColors.neutral.white,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: theme.colors.healthcare.purple,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    ...theme.shadows.md,
   },
   textContainer: {
     flex: 1,
@@ -148,18 +146,18 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: theme.colors.healthcare.purple,
     fontWeight: theme.typography.weights.medium,
-    lineHeight: 18,
-    marginBottom: 4,
+    lineHeight: theme.spacing.md,
+    marginBottom: theme.spacing[2],
   },
   aiIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: theme.spacing.xs,
   },
   aiDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: theme.borderRadius.xs,
     backgroundColor: theme.colors.success.main,
   },
   aiLabel: {
@@ -173,7 +171,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: theme.spacing.md,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.card,
     gap: theme.spacing.sm,
   },
   gradientText: {

@@ -13,7 +13,6 @@ import {
   StatusBar,
   RefreshControl,
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
 } from "react-native";
@@ -31,6 +30,7 @@ import { formatDate } from '@/utils/helpers';
 import { appointmentService, prescriptionService } from '@/services';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const PAGE_SIZE = 20;
 
@@ -126,7 +126,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         <View style={styles.prescriptionIcon}>
           <Cross
             
-            size={24}
+            size={theme.iconSizes.lg}
             color={healthColors.primary.main}
           />
         </View>
@@ -140,7 +140,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         </View>
         <ChevronRight
           
-          size={20}
+          size={theme.iconSizes.md}
           color={healthColors.text.tertiary}
         />
       </View>
@@ -162,8 +162,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             {meds.slice(0, 3).map((med, idx) => (
               <View key={idx} style={styles.medicationChip}>
                 <Cross
-                  
-                  size={12}
+                   
+                  size={theme.iconSizes.xs}
                   color={healthColors.primary.main}
                 />
                 <Text style={styles.medicationText} numberOfLines={1}>
@@ -197,8 +197,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       actionLabel={hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"}
       onActionPress={() =>
         hasUpcomingAppointment
-          ? navigation.navigate("MyAppointments")
-          : navigation.navigate("AppointmentBooking")
+          ? navigation.navigate(Routes.PATIENT.MY_APPOINTMENTS)
+          : navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING)
       }
     />
   );
@@ -257,7 +257,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
                 <View style={styles.modalIcon}>
-                  <Cross  size={22} color={healthColors.primary.main} />
+                      <Cross  size={theme.iconSizes.md} color={healthColors.primary.main} />
                 </View>
                 <View>
                   <Text style={styles.modalTitle}>Prescription Details</Text>
@@ -272,7 +272,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Close prescription details"
               >
-                <X  size={22} color={healthColors.text.secondary} />
+                <X  size={theme.iconSizes.md} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
 
@@ -302,7 +302,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                   (selectedPrescription?.medications || selectedPrescription?.medicines || []).map((med, idx) => (
                     <View key={idx} style={styles.medRow}>
                       <View style={styles.medBullet}>
-                        <Cross  size={14} color={healthColors.primary.main} />
+                        <Cross  size={theme.iconSizes.xs} color={healthColors.primary.main} />
                       </View>
                       <View style={styles.medInfo}>
                         <Text style={styles.medName}>
@@ -365,7 +365,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         <FlatList
           data={prescriptions}
           renderItem={renderPrescription}
-          keyExtractor={(item, index) => item._id || item.id || `prescription-${index}`}
+          keyExtractor={(item, index) => item.id || `prescription-${index}`}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalSheet: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: healthColors.primary.light + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.12),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: healthColors.primary.light + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.12),
     justifyContent: "center",
     alignItems: "center",
     marginTop: 2,
@@ -562,16 +562,7 @@ const styles = StyleSheet.create({
   emptyContent: {
     flexGrow: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-  },
+
   prescriptionCard: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.lg,
@@ -587,7 +578,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.light + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.12),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,
@@ -632,7 +623,7 @@ const styles = StyleSheet.create({
   medicationChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.primary.light + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.08),
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.md,

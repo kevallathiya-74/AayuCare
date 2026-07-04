@@ -5,7 +5,6 @@
  */
 
 const scheduleRepository = require("../schedule/schedule.repository");
-const userRepository = require("../auth/user.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
 
@@ -112,7 +111,7 @@ const updateDaySchedule = async (doctorUuid, dayOfWeek, updates, hospitalId) => 
     throw new AppError('Access denied — schedule belongs to a different hospital', 403);
   }
 
-  const updated = await scheduleRepository.update(existing._id.toString(), updates);
+  const updated = await scheduleRepository.update(existing.id.toString(), updates);
   await invalidateScheduleCache(doctorUuid);
   return updated;
 };
@@ -120,7 +119,7 @@ const updateDaySchedule = async (doctorUuid, dayOfWeek, updates, hospitalId) => 
 /**
  * Add a time slot to a specific day
  */
-const addTimeSlot = async (doctorUuid, dayOfWeek, timeSlot, hospitalId) => {
+const addTimeSlot = async (doctorUuid, dayOfWeek, timeSlot, _hospitalId) => {
   if (!UUID_REGEX.test(doctorUuid)) {
     throw new AppError('Invalid doctor ID format', 400);
   }
@@ -141,7 +140,7 @@ const addTimeSlot = async (doctorUuid, dayOfWeek, timeSlot, hospitalId) => {
 /**
  * Remove a time slot from a specific day
  */
-const removeTimeSlot = async (doctorUuid, dayOfWeek, timeSlotId, hospitalId) => {
+const removeTimeSlot = async (doctorUuid, dayOfWeek, timeSlotId, _hospitalId) => {
   if (!UUID_REGEX.test(doctorUuid)) {
     throw new AppError('Invalid doctor ID format', 400);
   }

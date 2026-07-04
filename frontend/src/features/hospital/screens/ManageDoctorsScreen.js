@@ -90,8 +90,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       const rawDoctorsList = response?.doctors || response?.data?.doctors || response?.data || [];
       const items = (Array.isArray(rawDoctorsList) ? rawDoctorsList : []).map((doctor) => ({
         ...doctor,
-        _id: doctor?._id || doctor?.id || doctor?.user_uuid || doctor?.doctorId,
-        id: doctor?.id || doctor?._id || doctor?.user_uuid || doctor?.doctorId,
+        id: doctor?.id || doctor?.user_uuid || doctor?.doctorId,
         userId: doctor?.userId || doctor?.user_id || doctor?.custom_user_id,
         isActive:
           typeof doctor?.isActive === "boolean"
@@ -141,7 +140,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
     const newStatus = !doctor.isActive;
     logger.debug("ManageDoctorsScreen", "Updating doctor status", {
-      doctorId: doctor._id,
+      doctorId: doctor.id,
       userId: doctor.userId,
       currentStatus: doctor.isActive,
       requestedStatus: newStatus,
@@ -155,7 +154,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         {
           text: "Confirm",
           onPress: async () => {
-            setUpdatingId(doctor._id || doctor.id || doctor.userId);
+            setUpdatingId(doctor.id || doctor.userId);
             try {
               const response = await adminService.updateUserStatus(doctor.userId, newStatus);
               logger.debug("ManageDoctorsScreen", "Status update response", {
@@ -198,7 +197,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   }, [queryClient]);
 
   const handleSoftDeleteDoctor = useCallback(async (doctor) => {
-    setUpdatingId(doctor._id || doctor.id || doctor.userId);
+    setUpdatingId(doctor.id || doctor.userId);
     try {
       await adminService.deleteUser(doctor.userId);
       queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
@@ -217,7 +216,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     } finally {
       setUpdatingId(null);
     }
-  }, []);
+  }, [queryClient]);
 
   const handleDeleteDoctor = useCallback(async (doctor) => {
     if (!canManageUsers) {
@@ -253,7 +252,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [canManageUsers, isSuperAdmin, handleSoftDeleteDoctor]);
+  }, [canManageUsers, isSuperAdmin, handleSoftDeleteDoctor, handlePermanentDeleteDoctor]);
 
   const handlePermanentDeleteDoctor = useCallback(async (doctor) => {
     if (!isSuperAdmin) {
@@ -278,7 +277,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
           text: "YES, DELETE PERMANENTLY",
           style: "destructive",
           onPress: async () => {
-            setUpdatingId(doctor._id);
+            setUpdatingId(doctor.id);
             try {
               await adminService.permanentDeleteUser(doctor.userId);
               queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
@@ -302,7 +301,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, queryClient]);
 
   const handleDoctorPress = (doctor) => {
     setSelectedDoctor(doctor);
@@ -323,13 +322,12 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     }
 
     const matchedDoctor = doctors.find((doctor) => {
-      const ids = [doctor?._id, doctor?.id, doctor?.userId, doctor?.user_id, doctor?.doctorId].filter(Boolean);
+      const ids = [doctor?.id, doctor?.userId, doctor?.user_id, doctor?.doctorId].filter(Boolean);
       return ids.includes(doctorIdFromRoute);
     });
 
     handleDoctorPress(
       matchedDoctor || {
-        _id: doctorIdFromRoute,
         id: doctorIdFromRoute,
         userId: doctorIdFromRoute,
         name: route?.params?.doctorName || "",
@@ -384,7 +382,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
             </View>
           </View>
           <View style={styles.switchContainer}>
-            {updatingId === item._id ? (
+            {updatingId === item.id ? (
               <ActivityIndicator
                 size="small"
                 color={healthColors.primary.main}
@@ -396,7 +394,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
                 disabled={!canManageUsers}
                 trackColor={{
                   false: healthColors.border.light,
-                  true: healthColors.primary.light + "50",
+                  true: theme.withOpacity(healthColors.primary.light, 0.31),
                 }}
                 thumbColor={
                   item.isActive
@@ -538,7 +536,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         <FlatList
           data={doctors}
           renderItem={renderDoctor}
-          keyExtractor={(item, index) => item._id || item.id || `doctor-${index}`}
+          keyExtractor={(item, index) => item.id || `doctor-${index}`}
           contentContainerStyle={styles.listContent}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.3}
@@ -699,7 +697,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -746,7 +744,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,
@@ -802,16 +800,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.md,
-  },
+
   actionButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -830,7 +819,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   editButton: {
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     borderWidth: 1,
     borderColor: healthColors.primary.main,
   },
@@ -840,7 +829,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
   },
   deleteButton: {
-    backgroundColor: healthColors.error.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.error.main, 0.08),
     borderWidth: 1,
     borderColor: healthColors.error.main,
   },
@@ -851,7 +840,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   detailsModalContainer: {
@@ -888,7 +877,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     marginBottom: theme.spacing.sm,
   },
   detailsDoctorName: {

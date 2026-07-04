@@ -1,16 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const eventController = require("./event.controller");
-const { protect, authorize } = require("../../middleware/auth");
+const { protect, authorize, optionalAuth } = require("../../middleware/auth");
+const { attachHospitalId } = require("../../middleware/hospitalMiddleware");
 const { validateBody } = require("../../middleware/validation");
 const { createEventSchema, updateEventSchema } = require("../../validators/schemas");
 const { cacheMiddleware } = require("../../middleware/cache");
 
-router.get("/", cacheMiddleware(300), eventController.getUpcomingEvents);
-router.get("/:eventId", cacheMiddleware(300), eventController.getEventById);
+router.get("/", optionalAuth, cacheMiddleware(300), eventController.getUpcomingEvents);
+router.get("/:eventId", optionalAuth, cacheMiddleware(300), eventController.getEventById);
 
-router.post("/:eventId/register", protect, eventController.registerForEvent);
-router.delete("/:eventId/register", protect, eventController.cancelRegistration);
+router.post("/:eventId/register", protect, attachHospitalId, eventController.registerForEvent);
+router.delete("/:eventId/register", protect, attachHospitalId, eventController.cancelRegistration);
 
 router.post(
   "/",

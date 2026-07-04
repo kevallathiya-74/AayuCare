@@ -3,7 +3,7 @@ import { useFonts } from "./src/hooks/useFonts";
 import { StatusBar } from "expo-status-bar";
 import { Provider as ReduxProvider } from "react-redux";
 import { Provider as PaperProvider } from "react-native-paper";
-import { View, Platform, StyleSheet, LogBox } from "react-native";
+import { View, StyleSheet, LogBox } from "react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initializeSentry } from "./src/config/sentry";
@@ -20,18 +20,18 @@ if (__DEV__) {
       typeof args[0] === "string" &&
       args[0].includes("Property")
     ) {
-      console.log("[DEBUG] Property error context:", new Error().stack);
+      console.warn("[DEBUG] Property error context:", new Error().stack);
     }
     originalConsoleError.apply(console, args);
   };
 
   // Set up global error handler
   const errorHandler = (error, isFatal) => {
-    console.log("[GLOBAL ERROR CAUGHT]");
-    console.log("Error:", error?.message || error);
-    console.log("Stack:", error?.stack);
+    console.warn("[GLOBAL ERROR CAUGHT]");
+    console.warn("Error:", error?.message || error);
+    console.warn("Stack:", error?.stack);
     if (isFatal) {
-      console.log("[FATAL ERROR] App will restart");
+      console.warn("[FATAL ERROR] App will restart");
     }
   };
 
@@ -125,7 +125,7 @@ export default function App() {
 
   // Fix 2.3 — Prevent white flash
   if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: paperTheme.colors.primary }} />;
+    return <View style={styles.splash} />;
   }
 
   return (
@@ -152,5 +152,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
+  },
+  splash: {
+    flex: 1,
+    backgroundColor: healthColors.primary.main,
   },
 });

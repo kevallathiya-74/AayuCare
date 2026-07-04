@@ -11,7 +11,6 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from "react-native";
 import { AlertTriangle, Cross, FileText, Calendar, Clock, X, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
@@ -326,11 +325,11 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           icon="calendar-outline"
           title="No Appointments"
           message="This patient hasn't booked any appointments yet."
-          style={{ paddingVertical: 32 }}
+          style={styles.emptyStateStyle}
         />
       );
     }
-
+    
     return (
       <View style={styles.tabContent}>
         {appointments.map((appointment, index) => {
@@ -342,7 +341,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
 
           return (
           <View
-            key={appointment._id || appointment.id || appointment.appointmentId || index}
+            key={appointment.id || appointment.appointmentId || index}
             style={styles.appointmentCard}
           >
             <View style={styles.appointmentHeader}>
@@ -413,11 +412,11 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           icon="folder-open-outline"
           title="No Medical Records"
           message="Medical records for this patient will appear here once added by a doctor."
-          style={{ paddingVertical: 32 }}
+          style={styles.emptyStateStyle}
         />
       );
     }
-
+    
     return (
       <View style={styles.tabContent}>
         {records.map((record, index) => {
@@ -426,7 +425,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           const recordDate = record.date || record.createdAt || record.created_at;
 
           return (
-          <View key={record._id || record.id || index} style={styles.recordCard}>
+          <View key={record.id || index} style={styles.recordCard}>
             <View style={styles.recordHeader}>
               <DynamicIcon
                 name={getRecordIcon(recordType)}
@@ -470,11 +469,11 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           icon="medical-outline"
           title="No Prescriptions"
           message="Prescriptions issued to this patient will appear here."
-          style={{ paddingVertical: 32 }}
+          style={styles.emptyStateStyle}
         />
       );
     }
-
+    
     return (
       <View style={styles.tabContent}>
         {prescriptions.map((prescription, index) => {
@@ -485,7 +484,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
 
           return (
           <View
-            key={prescription._id || prescription.id || prescription.prescriptionId || index}
+            key={prescription.id || prescription.prescriptionId || index}
             style={styles.prescriptionCard}
           >
             <View style={styles.prescriptionHeader}>
@@ -632,7 +631,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
 
           {/* Content */}
           {loading ? (
-            <View style={{ padding: 16, gap: 12 }}>
+            <View style={styles.skeletonContainer}>
               {[1, 2, 3].map((i) => (<SkeletonCardRow key={i} />))}
             </View>
           ) : errorMessage ? (
@@ -712,7 +711,7 @@ const TabButton = ({ icon, label, active, onPress }) => (
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -760,7 +759,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    borderBottomColor: healthColors.transparent,
   },
   tabButtonActive: {
     borderBottomColor: healthColors.primary.main,
@@ -852,10 +851,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   allergyChip: {
-    backgroundColor: healthColors.warning.light + "40",
+    backgroundColor: theme.withOpacity(healthColors.warning.light, 0.25),
   },
   medicationChip: {
-    backgroundColor: healthColors.primary.light + "40",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.25),
   },
   chipText: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -1029,17 +1028,12 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     marginLeft: 10,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-    minHeight: 300,
+  emptyStateStyle: {
+    paddingVertical: 32,
   },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: 12,
+  skeletonContainer: {
+    padding: 16,
+    gap: 12,
   },
   errorContainer: {
     flex: 1,

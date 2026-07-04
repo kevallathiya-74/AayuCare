@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.error.background,
     borderRadius: theme.borderRadius.card,
     padding: 16,
-    borderWidth: 1, borderColor: healthColors.error.main + "30",
+    borderWidth: 1, borderColor: theme.withOpacity(healthColors.error.main, 0.19),
   },
   logoutText: { fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.error.main },
 });

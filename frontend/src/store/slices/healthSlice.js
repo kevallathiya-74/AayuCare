@@ -22,10 +22,7 @@ export const fetchHealthMetrics = createAsyncThunk(
 
 // Initial state
 const initialState = {
-  healthRecords: [],
   vitals: [],
-  prescriptions: [],
-  selectedRecord: null,
   isLoading: false,
   error: null,
 };
@@ -37,12 +34,6 @@ const healthSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null;
-    },
-    setSelectedRecord: (state, action) => {
-      state.selectedRecord = action.payload;
-    },
-    clearSelectedRecord: (state) => {
-      state.selectedRecord = null;
     },
   },
   extraReducers: (builder) => {
@@ -62,7 +53,7 @@ const healthSlice = createSlice({
   },
 });
 
-export const { clearError, setSelectedRecord, clearSelectedRecord } = healthSlice.actions;
+export const { clearError } = healthSlice.actions;
 
 export default healthSlice.reducer;
 

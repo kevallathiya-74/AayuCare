@@ -12,7 +12,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Platform,
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -58,13 +57,13 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
     iconEl = options.tabBarIcon({
       focused: isFocused,
       color: isFocused ? healthColors.primary.main : healthColors.text.tertiary,
-      size: 22,
+      size: theme.iconSizes.md,
     });
   } else {
     iconEl = (
       <DynamicIcon
         name={isFocused ? icons.focused : icons.unfocused}
-        size={22}
+        size={theme.iconSizes.md}
         color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
       />
     );
@@ -162,18 +161,8 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
-    paddingTop: 6,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
+    paddingTop: theme.spacing.xs,
+    ...theme.shadows.md,
   },
   tab: {
     flex: 1,
@@ -183,13 +172,13 @@ const styles = StyleSheet.create({
   tabInner: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     minWidth: 56,
   },
   tabInnerActive: {
-    backgroundColor: healthColors.primary.main + "12",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.07),
   },
   iconWrap: {
     position: "relative",
@@ -208,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.error.main,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 3,
+    paddingHorizontal: theme.spacing[2],
     borderWidth: 1.5,
     borderColor: healthColors.background.primary,
   },
@@ -221,7 +210,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: theme.typography.sizes.overline,
     fontWeight: "600",
-    marginTop: 3,
+    marginTop: theme.spacing[2],
     letterSpacing: 0.2,
   },
   labelActive: {
@@ -232,7 +221,7 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: healthColors.primary.main,
-    marginTop: 3,
+    marginTop: theme.spacing[2],
   },
 });
 

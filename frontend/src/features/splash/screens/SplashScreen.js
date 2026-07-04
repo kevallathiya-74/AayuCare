@@ -5,27 +5,28 @@
  */
 
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { useSelector } from "react-redux";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
-  withRepeat, 
-  withSequence, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
   Easing,
-  runOnJS
-} from 'react-native-reanimated';
-import { Image } from 'expo-image';
-import { healthColors, textStyles, spacing } from '@/theme';
-import logger from '@/utils/logger';
-
-const { width } = Dimensions.get('window');
+  runOnJS,
+} from "react-native-reanimated";
+import { Image } from "expo-image";
+import { healthColors, textStyles, spacing, theme } from "@/theme";
+import logger from "@/utils/logger";
 
 const SplashScreen = ({ navigation }) => {
-  const { isAuthenticated, user, isLoading } = useSelector((state) => state.auth || {});
+  const { isAuthenticated, user, isLoading } = useSelector(
+    (state) => state.auth || {},
+  );
   const routed = useRef(false);
+  const { height } = useWindowDimensions();
 
   // Reanimated shared values
   const opacity = useSharedValue(1);
@@ -36,12 +37,12 @@ const SplashScreen = ({ navigation }) => {
     pulseScale.value = withRepeat(
       withSequence(
         withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
       ),
       -1, // Infinite repeat
-      true
+      true,
     );
-  }, []);
+  }, [pulseScale]);
 
   logger.debug("SplashScreen", "Rendering");
 
@@ -58,7 +59,10 @@ const SplashScreen = ({ navigation }) => {
     routed.current = true;
 
     if (!isAuthenticated) {
-      logger.debug("SplashScreen", "Not authenticated — navigate to BoxSelection");
+      logger.debug(
+        "SplashScreen",
+        "Not authenticated — navigate to BoxSelection",
+      );
       navigation.replace("BoxSelection");
       return;
     }
@@ -72,9 +76,13 @@ const SplashScreen = ({ navigation }) => {
 
     const navigateTo = (screen) => {
       // Fade out animation before navigating
-      opacity.value = withTiming(0, { duration: 400, easing: Easing.inOut(Easing.ease) }, () => {
-        runOnJS(navigation.replace)(screen);
-      });
+      opacity.value = withTiming(
+        0,
+        { duration: 400, easing: Easing.inOut(Easing.ease) },
+        () => {
+          runOnJS(navigation.replace)(screen);
+        },
+      );
     };
 
     if (role === "admin") {
@@ -93,7 +101,7 @@ const SplashScreen = ({ navigation }) => {
     }
 
     navigateTo("BoxSelection");
-  }, [isAuthenticated, user?.id, user?.role, isLoading, navigation]);
+  }, [isAuthenticated, user?.id, user?.role, isLoading, navigation, opacity]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -105,14 +113,26 @@ const SplashScreen = ({ navigation }) => {
     transform: [{ scale: pulseScale.value }],
   }));
 
+  // Dynamic logo size based on screen height
+  const logoSize = height < 600 ? 80 : 96;
+
   return (
     <Animated.View style={animatedContainerStyle}>
-      <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView
+        style={styles.container}
+        edges={["top", "left", "right", "bottom"]}
+      >
         <View style={styles.content}>
-          <Animated.View style={[styles.logoContainer, animatedLogoStyle]}>
+          <Animated.View
+            style={[
+              styles.logoContainer,
+              animatedLogoStyle,
+              { borderRadius: (logoSize + spacing.md * 2) / 2 },
+            ]}
+          >
             <Image
-              source={require('../../../../assets/icons/aayucare-logo.png')}
-              style={styles.logo}
+              source={require("../../../../assets/icons/aayucare-logo.png")}
+              style={[styles.logo, { width: logoSize, height: logoSize }]}
               contentFit="contain"
               transition={300}
             />
@@ -138,13 +158,12 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     padding: spacing.md,
-    backgroundColor: 'rgba(20, 184, 166, 0.05)',
-    borderRadius: 60,
+    backgroundColor: healthColors.primary.surface,
     marginBottom: spacing.lg,
+    ...theme.shadows.sm,
   },
   logo: {
-    width: 96,
-    height: 96,
+    // Dynamic sizing applied in inline styles
   },
   title: {
     ...textStyles.h1,

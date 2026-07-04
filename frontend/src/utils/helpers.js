@@ -203,7 +203,7 @@ export const getHeartRateCategory = (heartRate) => {
  * @param {string} context - The context (appointment, payment, etc.)
  * @returns {string} Hex color code
  */
-export const getStatusColor = (status, context = 'appointment') => {
+export const getStatusColor = (status, _context = 'appointment') => {
   if (!status) return theme.colors.grey[500];
   
   const s = status.toLowerCase();
@@ -310,7 +310,7 @@ export const getErrorMessage = (error) => {
  * Trigger haptic feedback (vibration)
  * @param {string} type - Type of feedback ('light', 'medium', 'heavy')
  */
-export const hapticFeedback = (type = 'light') => {
+export const hapticFeedback = (_type = 'light') => {
   if (Platform.OS === 'ios') {
     // iOS haptic feedback would go here
     // Requires expo-haptics

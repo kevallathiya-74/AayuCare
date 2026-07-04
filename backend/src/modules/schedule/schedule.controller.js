@@ -6,7 +6,6 @@
 
 const scheduleService = require("../schedule/schedule.service");
 const { AppError } = require("../../middleware/errorHandler");
-const logger = require("../../utils/logger");
 const { sendSuccess } = require("../../utils/apiResponse");
 
 /**

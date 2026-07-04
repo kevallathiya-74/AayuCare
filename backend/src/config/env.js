@@ -1,4 +1,6 @@
- const normalizeNodeEnv = () => {
+const MIN_JWT_SECRET_LENGTH = 64;
+
+const normalizeNodeEnv = () => {
   const raw = String(process.env.NODE_ENV || "").trim().toLowerCase();
   if (raw === "production" || raw === "development" || raw === "test") {
     return raw;
@@ -66,14 +68,37 @@ const APP_ENV = {
       windowSeconds: toNumber(process.env.RATE_LIMIT_AI_WINDOW_SECONDS, 60 * 60),
     },
   },
+  jwtSecretMinLength: MIN_JWT_SECRET_LENGTH,
   security: {
     helmet: {
-      contentSecurityPolicy: isProduction,
+      contentSecurityPolicy: isProduction
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: ["'self'"],
+              styleSrc: ["'self'", "'unsafe-inline'"],
+              imgSrc: ["'self'", "data:", "blob:"],
+              connectSrc: ["'self'"],
+              fontSrc: ["'self'"],
+              objectSrc: ["'none'"],
+              frameAncestors: ["'none'"],
+              upgradeInsecureRequests: [],
+            },
+          }
+        : false,
       crossOriginEmbedderPolicy: false,
+      hsts: isProduction
+        ? {
+            maxAge: 63072000,
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
     },
   },
 };
 
 module.exports = {
   APP_ENV,
+  MIN_JWT_SECRET_LENGTH,
 };

@@ -20,15 +20,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  ArrowLeft,
   BriefcaseMedical,
   Phone,
   MapPin,
   Info,
   CheckCircle,
-  Shield,
-  Flame,
-  Venus,
   Map,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -42,12 +38,11 @@ import NetworkStatusIndicator from '@/components/common/NetworkStatusIndicator';
 import ErrorRecovery from '@/components/common/ErrorRecovery';
 import { showError, logError, parseError } from '@/utils/errorHandler';
 import { useSelector } from "react-redux";
-import { useNetworkStatus } from '@/utils/offlineHandler';
 import { handleSmartBack } from '@/utils/navigation';
 
 const EmergencyServices = ({ navigation }) => {
   const [error, setError] = useState(null);
-  const { isConnected } = useNetworkStatus();
+
   const insets = useSafeAreaInsets();
   const { user } = useSelector((state) => state.auth);
   // Build hospitals list: user's own hospital first, then generic placeholders
@@ -189,11 +184,12 @@ const EmergencyServices = ({ navigation }) => {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <TouchableOpacity onPress={() => handleSmartBack(navigation, "PatientTabs")}>
+        <TouchableOpacity
+          onPress={() => handleSmartBack(navigation, "PatientTabs")}
           accessibilityRole="button"
           accessibilityLabel="Go back"
           accessibilityHint="Returns to patient dashboard"
-        </TouchableOpacity>
+        />
         <View style={styles.headerContent}>
           <EmergencyIcon size={32} />
           <View style={styles.headerText}>
@@ -506,7 +502,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,
@@ -550,7 +546,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
   },

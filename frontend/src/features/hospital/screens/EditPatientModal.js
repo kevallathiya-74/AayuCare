@@ -222,17 +222,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
 
       // Better error handling
       let errorMessage = parseError(error);
-      let fieldError = null;
 
       // Specific handling for duplicate errors with field highlighting
       if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
         setErrors({ ...errors, email: "This email is already registered" });
         errorMessage = "This email is already in use. Please use a different email.";
-        fieldError = "email";
       } else if (errorMessage.toLowerCase().includes("phone") && errorMessage.toLowerCase().includes("already exists")) {
         setErrors({ ...errors, phone: "This phone number is already registered" });
         errorMessage = "This phone number is already in use. Please use a different number.";
-        fieldError = "phone";
       }
 
       // Show alert with clear message
@@ -613,9 +610,8 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               loading={updatePatientMutation.isPending}
               onPress={handleSubmit}
               style={styles.submitButton}
-            >
-              Save Changes
-            </Button>
+            title="Save Changes"
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -667,7 +663,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -724,16 +720,7 @@ const styles = StyleSheet.create({
   inputIcon: {
     marginRight: theme.spacing.sm,
   },
-  input: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.primary,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
+
   pickerText: {
     flex: 1,
     paddingVertical: theme.spacing.md,
@@ -745,7 +732,7 @@ const styles = StyleSheet.create({
   },
   dropdownOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   dropdownContainer: {
@@ -777,7 +764,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   dropdownItemSelected: {
-    backgroundColor: healthColors.primary.main + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.06),
   },
   dropdownItemText: {
     fontSize: theme.typography.sizes.lg,
@@ -824,11 +811,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: healthColors.primary.main,
   },
-  submitButtonText: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.white,
-  },
+
 });
 
 export default EditPatientModal;

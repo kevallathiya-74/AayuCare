@@ -1,6 +1,7 @@
 const express = require("express");
 const scheduleController = require("./schedule.controller");
 const { protect, restrictTo } = require("../../middleware/auth");
+const { attachHospitalId } = require("../../middleware/hospitalMiddleware");
 const { cache } = require("../../middleware/cache");
 const {
   validateSchedule,
@@ -10,9 +11,11 @@ const {
 const router = express.Router();
 
 router.use(protect);
+router.use(attachHospitalId);
 
 router.get(
   "/:doctorId",
+  restrictTo("patient", "doctor", "admin", "super_admin"),
   cache(
     300,
     (req) =>
@@ -21,7 +24,11 @@ router.get(
   scheduleController.getDoctorSchedule
 );
 
-router.get("/:doctorId/slots", scheduleController.getAvailableSlots);
+router.get(
+  "/:doctorId/slots",
+  restrictTo("patient", "doctor", "admin", "super_admin"),
+  scheduleController.getAvailableSlots
+);
 
 router.put(
   "/:doctorId/weekly",

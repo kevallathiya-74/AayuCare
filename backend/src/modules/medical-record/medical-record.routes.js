@@ -38,7 +38,7 @@ router.get(
   medicalRecordController.getPatientHistory
 );
 
-router.get("/:id", cacheMiddleware(120), medicalRecordController.getMedicalRecord);
+router.get("/:id", authorize("patient", "doctor", "admin"), cacheMiddleware(120), medicalRecordController.getMedicalRecord);
 
 router.put(
   "/:id",
@@ -61,6 +61,7 @@ router.post(
 
 router.get(
   "/files/:id",
+  authorize("doctor", "admin", "patient"),
   medicalRecordController.downloadAttachment
 );
 

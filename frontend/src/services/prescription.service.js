@@ -4,7 +4,7 @@
  */
 
 import api from './apiClient';
-import { parseError } from '../utils/errorHandler';
+import { logError } from '../utils/errorHandler';
 import { normalizeServiceResponse } from './responseNormalizer';
 
 class PrescriptionService {
@@ -18,7 +18,8 @@ class PrescriptionService {
             const response = await api.post('/prescriptions', prescriptionData);
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.createPrescription' });
+            throw error;
         }
     }
 
@@ -33,7 +34,8 @@ class PrescriptionService {
             const response = await api.get(`/prescriptions/patient/${patientId}${query ? `?${query}` : ''}`);
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.getPatientPrescriptions' });
+            throw error;
         }
     }
 
@@ -47,7 +49,8 @@ class PrescriptionService {
             const response = await api.get(`/prescriptions/${prescriptionId}`);
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.getPrescriptionById' });
+            throw error;
         }
     }
 
@@ -61,7 +64,8 @@ class PrescriptionService {
             const response = await api.get(`/prescriptions/doctor/${doctorId}`);
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.getDoctorPrescriptions' });
+            throw error;
         }
     }
 
@@ -76,7 +80,8 @@ class PrescriptionService {
             const response = await api.patch(`/prescriptions/${prescriptionId}/status`, { status });
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.updatePrescriptionStatus' });
+            throw error;
         }
     }
 
@@ -92,7 +97,8 @@ class PrescriptionService {
             const response = await api.patch(`/prescriptions/${prescriptionId}/pharmacy-status`, { pharmacyStatus, ...paymentData });
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.updatePharmacyStatus' });
+            throw error;
         }
     }
 
@@ -107,7 +113,8 @@ class PrescriptionService {
             const response = await api.get(`/prescriptions${queryString ? `?${queryString}` : ''}`);
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.getAllPrescriptions' });
+            throw error;
         }
     }
 
@@ -121,12 +128,9 @@ class PrescriptionService {
             const response = await api.delete(`/prescriptions/${prescriptionId}`);
             return normalizeServiceResponse(response.data);
         } catch (error) {
-            throw this.handleError(error);
+            logError(error, { context: 'PrescriptionService.deletePrescription' });
+            throw error;
         }
-    }
-
-    handleError(error) {
-        return new Error(parseError(error));
     }
 }
 

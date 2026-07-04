@@ -6,14 +6,13 @@
  */
 
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
 // Lazy import Sentry to prevent crash if not available
 let Sentry = null;
 try {
     Sentry = require('@sentry/react-native');
-} catch (e) {
-    if (__DEV__) { console.log('[Sentry] Module not available in Expo Go'); }
+} catch {
+    if (__DEV__) { console.warn('[Sentry] Module not available in Expo Go'); }
 }
 
 /**
@@ -41,8 +40,8 @@ const getSentryDSN = () => {
         if (dsn && typeof dsn === 'string' && !dsn.includes('your-dsn-here') && dsn !== 'null' && dsn !== '') {
             return dsn;
         }
-    } catch (e) {
-        if (__DEV__) { console.log('[Sentry] Error getting DSN:', e.message); }
+    } catch {
+        if (__DEV__) { console.warn('[Sentry] Error getting DSN'); }
     }
 
     return null;
@@ -55,19 +54,19 @@ const getSentryDSN = () => {
 export const initializeSentry = () => {
     // Skip if already initialized
     if (sentryInitialized) {
-        if (__DEV__) { console.log('[Sentry] Already initialized'); }
+        if (__DEV__) { console.warn('[Sentry] Already initialized'); }
         return;
     }
 
     // Skip in Expo Go
     if (isExpoGo) {
-        if (__DEV__) { console.log('[Sentry] Skipped - running in Expo Go'); }
+        if (__DEV__) { console.warn('[Sentry] Skipped - running in Expo Go'); }
         return;
     }
 
     // Skip if Sentry module not available
     if (!Sentry) {
-        if (__DEV__) { console.log('[Sentry] Skipped - module not available'); }
+        if (__DEV__) { console.warn('[Sentry] Skipped - module not available'); }
         return;
     }
 
@@ -75,7 +74,7 @@ export const initializeSentry = () => {
     
     // Skip if no DSN configured
     if (!dsn) {
-        if (__DEV__) { console.log('[Sentry] Skipped - no DSN configured'); }
+        if (__DEV__) { console.warn('[Sentry] Skipped - no DSN configured'); }
         return;
     }
 
@@ -93,14 +92,14 @@ export const initializeSentry = () => {
             beforeSend(event) {
                 // Filter out development errors
                 if (__DEV__) {
-                    console.log('[Sentry] Event captured:', event);
+                    console.warn('[Sentry] Event captured:', event);
                 }
                 return event;
             },
         });
 
         sentryInitialized = true;
-        if (__DEV__) { console.log('[Sentry] Initialized successfully'); }
+        if (__DEV__) { console.warn('[Sentry] Initialized successfully'); }
     } catch (error) {
         if (__DEV__) { console.error('[Sentry] Initialization failed:', error); }
     }
@@ -141,7 +140,7 @@ export const captureException = (error, context = {}) => {
  */
 export const captureMessage = (message, level = 'info', context = {}) => {
     if (!isSentryEnabled()) {
-        console.log(`[${level.toUpperCase()}]`, message, context);
+        console.warn(`[${level.toUpperCase()}]`, message, context);
         return;
     }
 

@@ -176,26 +176,25 @@ const AppointmentsScreen = ({ navigation }) => {
     retry: 1,
   });
 
-  const statusCounts = statsSnapshot?.statusCounts || {
+  const statusCounts = useMemo(() => statsSnapshot?.statusCounts || {
     all: 0,
     pending: 0,
     in_progress: 0,
     completed: 0,
     no_show: 0,
     cancelled: 0,
-  };
+  }, [statsSnapshot?.statusCounts]);
 
-  const dateCounts = statsSnapshot?.dateCounts || {
+  const dateCounts = useMemo(() => statsSnapshot?.dateCounts || {
     all: 0,
     today: 0,
     next_7_days: 0,
-  };
+  }, [statsSnapshot?.dateCounts]);
 
   // Use infinite query hook for admin appointments with lazy loading
   const {
     data,
     isLoading,
-    isError,
     error,
     fetchNextPage,
     hasNextPage,
@@ -609,7 +608,7 @@ const AppointmentsScreen = ({ navigation }) => {
         <FlatList
           data={filteredAppointments}
           renderItem={renderAppointment}
-          keyExtractor={(item, index) => item._id || item.id || `appointment-${index}`}
+          keyExtractor={(item, index) => item.id || `appointment-${index}`}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -805,7 +804,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,
@@ -846,36 +845,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.md,
-  },
   footerLoader: {
     paddingVertical: theme.spacing.md,
     alignItems: "center",
-  },
-  filterSheetHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginBottom: 8,
-  },
-  filterSheetClear: {
-    color: healthColors.secondary.main,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: "600",
-  },
-  filterSectionTitle: {
-    fontSize: theme.typography.sizes.h6,
-    fontWeight: "700",
-    color: healthColors.text.primary,
-    marginTop: 8,
-    marginBottom: 8,
   },
   filterOptionRow: {
     flexDirection: "row",
@@ -895,7 +867,7 @@ const styles = StyleSheet.create({
   },
   radioOptionActive: {
     borderColor: healthColors.primary.main,
-    backgroundColor: healthColors.primary.main + "12",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.07),
   },
   radioDot: {
     width: 12,
@@ -913,86 +885,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
     fontWeight: "600",
   },
-  selectLikeField: {
-    minHeight: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    backgroundColor: healthColors.background.card,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  chevronOpen: {
-    transform: [{ rotate: "180deg" }],
-  },
-  dropdownMenu: {
-    marginTop: 8,
-    marginBottom: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    backgroundColor: healthColors.background.card,
-    overflow: "hidden",
-  },
-  dropdownOption: {
-    minHeight: 42,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  dropdownOptionActive: {
-    backgroundColor: healthColors.primary.main + "12",
-  },
-  dropdownOptionText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    fontWeight: "600",
-  },
-  dropdownOptionTextActive: {
-    color: healthColors.primary.main,
-  },
-  dropdownOptionCount: {
-    fontSize: theme.typography.sizes.bodySmall,
-    color: healthColors.text.tertiary,
-    fontWeight: "700",
-  },
-  selectLikeText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    fontWeight: "500",
-  },
-  chipWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 4,
-  },
-  chipOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    backgroundColor: healthColors.background.card,
-  },
-  chipOptionActive: {
-    borderColor: healthColors.primary.main,
-    backgroundColor: healthColors.primary.main,
-  },
-  chipOptionText: {
-    fontSize: theme.typography.sizes.bodySmall,
-    color: healthColors.text.secondary,
-    fontWeight: "600",
-  },
-  chipOptionTextActive: {
-    color: theme.colors.white,
-  },
+
   applyFilterButton: {
     marginTop: 16,
     marginBottom: 6,

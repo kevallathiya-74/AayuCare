@@ -35,6 +35,7 @@ import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const UUID_V4_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -51,7 +52,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const selectedPatientId = selectedPatient?._id || selectedPatient?.id || selectedPatient?.userId;
+  const selectedPatientId = selectedPatient?.id || selectedPatient?.userId;
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   
@@ -88,14 +89,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               : { page: Math.floor(pageParam / PAGE_SIZE) + 1, limit: PAGE_SIZE }
           );
 
-      let patientsList = Array.isArray(response)
+      const patientsList = Array.isArray(response)
         ? response
         : (response?.patients || response?.data || []);
 
       const items = (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
         ...patient,
-        _id: patient?._id || patient?.id || patient?.userId,
-        id: patient?.id || patient?._id || patient?.userId,
+        id: patient?.id || patient?.userId,
         userId: patient?.userId || patient?.user_id,
         isActive:
           typeof patient?.isActive === "boolean"
@@ -130,7 +130,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
     const idsToPrefetch = patients
       .slice(0, 8)
-      .map((patient) => patient?._id || patient?.id || patient?.userId)
+      .map((patient) => patient?.id || patient?.userId)
       .filter((id) => UUID_V4_LIKE_REGEX.test(String(id || "")));
 
     if (normalizedUserRole === "doctor") {
@@ -167,7 +167,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
     const newStatus = !patient.isActive;
     logger.debug("ManagePatientsScreen", "Updating patient status", {
-      patientId: patient._id,
+      patientId: patient.id,
       userId: patient.userId,
       currentStatus: patient.isActive,
       requestedStatus: newStatus,
@@ -181,7 +181,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         {
           text: "Confirm",
           onPress: async () => {
-            setUpdatingId(patient._id || patient.id || patient.userId);
+    setUpdatingId(patient.id || patient.userId);
             try {
               const response = await adminService.updateUserStatus(
                 patient.userId,
@@ -227,7 +227,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   }, [queryClient]);
 
   const handleSoftDeletePatient = useCallback(async (patient) => {
-    setUpdatingId(patient._id || patient.id || patient.userId);
+    setUpdatingId(patient.id || patient.userId);
     try {
       await adminService.deleteUser(patient.userId);
       queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
@@ -246,7 +246,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     } finally {
       setUpdatingId(null);
     }
-  }, []);
+  }, [queryClient]);
 
   const handleDeletePatient = useCallback(async (patient) => {
     if (!canManageUsers) {
@@ -282,7 +282,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [canManageUsers, isSuperAdmin, handleSoftDeletePatient]);
+  }, [canManageUsers, isSuperAdmin, handleSoftDeletePatient, handlePermanentDeletePatient]);
 
   const handlePermanentDeletePatient = useCallback(async (patient) => {
     if (!isSuperAdmin) {
@@ -307,7 +307,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           text: "YES, DELETE PERMANENTLY",
           style: "destructive",
           onPress: async () => {
-            setUpdatingId(patient._id);
+            setUpdatingId(patient.id);
             try {
               await adminService.permanentDeleteUser(patient.userId);
               queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
@@ -332,7 +332,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         },
       ]
     );
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, queryClient]);
 
   const handlePatientPress = (patient) => {
     setSelectedPatient(patient);
@@ -341,13 +341,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
   const handleCreatePrescription = useCallback(
     (patient) => {
-      const resolvedPatientId = patient?._id || patient?.id || patient?.userId;
+      const resolvedPatientId = patient?.id || patient?.userId;
       if (!resolvedPatientId) {
         Alert.alert("Patient Missing", "Unable to identify this patient for prescription.");
         return;
       }
 
-      navigation.navigate("CreatePrescription", {
+      navigation.navigate(Routes.DOCTOR.CREATE_PRESCRIPTION, {
         patientId: resolvedPatientId,
         patientName: patient?.name,
       });
@@ -369,12 +369,11 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     // Try to find patient in already-loaded list for richer data;
     // fall back to a minimal stub — PatientDetailsModal fetches its own data.
     const matchedPatient = patients.find((patient) => {
-      const ids = [patient?._id, patient?.id, patient?.userId].filter(Boolean);
+      const ids = [patient?.id, patient?.userId].filter(Boolean);
       return ids.includes(patientIdFromRoute);
     });
 
     handlePatientPress(matchedPatient || {
-      _id: patientIdFromRoute,
       id: patientIdFromRoute,
       userId: patientIdFromRoute,
       name: route?.params?.patientName || "",
@@ -434,7 +433,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               </View>
             </View>
             <View style={styles.switchContainer}>
-              {updatingId === item._id ? (
+              {updatingId === item.id ? (
                 <ActivityIndicator
                   size="small"
                   color={healthColors.primary.main}
@@ -446,7 +445,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                   disabled={!canManageUsers}
                   trackColor={{
                     false: healthColors.border.light,
-                    true: healthColors.primary.light + "50",
+                    true: theme.withOpacity(healthColors.primary.light, 0.31),
                   }}
                   thumbColor={
                     item.isActive
@@ -630,7 +629,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         <FlatList
           data={patients}
           renderItem={renderPatient}
-          keyExtractor={(item, index) => item._id || item.id || `patient-${index}`}
+          keyExtractor={(item, index) => item.id || `patient-${index}`}
           contentContainerStyle={styles.listContent}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.3}
@@ -775,7 +774,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: healthColors.primary.light + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.12),
     alignItems: "center",
     justifyContent: "center",
     marginRight: theme.spacing.md,
@@ -831,16 +830,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.sm,
     color: healthColors.text.secondary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.md,
-  },
+
   actionButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -863,7 +853,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   editButton: {
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     borderWidth: 1,
     borderColor: healthColors.primary.main,
   },
@@ -873,7 +863,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
   },
   prescriptionButton: {
-    backgroundColor: healthColors.accent.coral + "15",
+    backgroundColor: theme.withOpacity(healthColors.accent.coral, 0.08),
     borderWidth: 1,
     borderColor: healthColors.accent.coral,
   },
@@ -883,7 +873,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
   },
   deleteButton: {
-    backgroundColor: healthColors.error.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.error.main, 0.08),
     borderWidth: 1,
     borderColor: healthColors.error.main,
   },

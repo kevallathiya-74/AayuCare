@@ -5,14 +5,13 @@
  * Features: scrollable tabs, icon support, badge support
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    Dimensions,
     Animated,
 } from 'react-native';
 import { theme } from '@/theme';
@@ -20,8 +19,6 @@ import { healthColors } from '@/theme/healthColors';
 import { textStyles } from '@/theme/typography';
 import { spacing } from '@/theme/spacing';
 import DynamicIcon from './DynamicIcon';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const Tabs = ({
     tabs = [], // [{ label, icon, badge }]
@@ -75,7 +72,7 @@ const Tabs = ({
                 onLayout={(event) => handleTabLayout(index, event)}
                 style={[
                     styles.tab,
-                    !scrollable && { flex: 1 },
+                    !scrollable && styles.tabFlex,
                 ]}
                 activeOpacity={0.7}
             >
@@ -142,6 +139,9 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.md,
         minWidth: 80,
     },
+    tabFlex: {
+        flex: 1,
+    },
     tabIcon: {
         marginRight: spacing.xs,
     },
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     },
     badge: {
         backgroundColor: healthColors.error.main,
-        borderRadius: 10,
+        borderRadius: theme.borderRadius.badge,
         minWidth: 18,
         height: 18,
         alignItems: 'center',
@@ -170,13 +170,6 @@ const styles = StyleSheet.create({
         color: healthColors.neutral.white,
         fontSize: theme.typography.sizes.overline,
         fontWeight: '600',
-    },
-    indicator: {
-        height: 3,
-        backgroundColor: healthColors.primary.main,
-        borderRadius: 2,
-        position: 'absolute',
-        bottom: 0,
     },
 });
 

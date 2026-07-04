@@ -5,7 +5,7 @@
  * Note: API Configuration is in config/appConfig.js (APP_CONFIG)
  */
 
-import { Calendar, Users, FileText, Activity, AlertCircle, Clock, Stethoscope, Search, FileEdit, Archive, Inbox, FileSpreadsheet, Pill } from "lucide-react-native";
+import { Calendar, Users, FileText, AlertCircle, Stethoscope, Search, FileEdit, Archive, Inbox, FileSpreadsheet, Pill } from "lucide-react-native";
 
 // Storage Keys - SecureStore compatible (alphanumeric, dots, dashes, underscores only)
 export const STORAGE_KEYS = {

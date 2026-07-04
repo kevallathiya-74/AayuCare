@@ -92,7 +92,7 @@ class AIService {
 
   /**
    * Analyze a specific medical record with AI (doctor/admin only)
-   * @param {String} recordId - MongoDB ObjectId of the medical record
+   * @param {String} recordId - UUID of the medical record
    * @returns {Promise<Object>} - AI analysis of the medical record
    */
   async analyzeMedicalRecord(recordId) {

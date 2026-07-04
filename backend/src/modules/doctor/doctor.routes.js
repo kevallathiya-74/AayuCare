@@ -113,7 +113,7 @@ router.get(
   doctorController.getSchedule
 );
 
-router.get("/:id", doctorController.getDoctor);
+router.get("/:id", optionalAuth, doctorController.getDoctor);
 
 router.post(
   "/me/walk-in-patient",
@@ -155,6 +155,7 @@ router.patch(
 router.get(
   "/:id/stats",
   protect,
+  attachHospitalId,
   authorize("doctor", "admin"),
   doctorController.getDoctorStats
 );

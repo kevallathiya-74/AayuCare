@@ -15,7 +15,7 @@ class NotificationService {
     async createNotification(notificationData) {
         try {
             const notification = await notificationRepository.create(notificationData);
-            logger.info(`[Notification] Created: ${notification._id}`);
+            logger.info(`[Notification] Created: ${notification.id}`);
             
             // Send push notification if enabled
             if (notificationData.sendPush) {
@@ -75,7 +75,7 @@ class NotificationService {
                 message: `Your prescription from Dr. ${doctor.name} is ready for collection`,
                 priority: 'medium',
                 metadata: {
-                    prescriptionId: prescription._id,
+                    prescriptionId: prescription.id,
                 },
             });
 
@@ -155,18 +155,14 @@ class NotificationService {
      * Mark notification as read
      */
     async markAsRead(notificationId, userId) {
-        const notification = await notificationRepository.findOne({
-            _id: notificationId,
-            userId,
-        });
+        const notification = await notificationRepository.findById(notificationId);
 
-        if (!notification) {
+        if (!notification || notification.userId !== userId) {
             throw new Error('Notification not found');
         }
 
         const updated = await notificationRepository.update(notificationId, {
             read: true,
-            readAt: new Date()
         });
 
         return updated || notification;

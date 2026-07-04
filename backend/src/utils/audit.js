@@ -65,7 +65,7 @@ async function writeAuditLog({
 }) {
   try {
     // Sanitize x-forwarded-for: take only the first (client) IP and validate format
-    const IPV4_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
+    const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
     const IPV6_REGEX = /^[0-9a-fA-F:]+$/;
     const rawIp = req
       ? (req.headers["x-forwarded-for"] || req.ip || null)

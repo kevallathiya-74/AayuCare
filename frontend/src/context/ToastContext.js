@@ -17,7 +17,6 @@ import React, {
   useCallback,
 } from "react";
 import {
-  View,
   Text,
   Animated,
   StyleSheet,
@@ -25,7 +24,6 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X } from "lucide-react-native";
 import { theme, healthColors } from "../theme";
 import { DynamicIcon } from "../components/common";
 
@@ -174,7 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
+        shadowColor: healthColors.shadows.color,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.18,
         shadowRadius: 8,

@@ -16,9 +16,6 @@ import { Cloud, CloudOff, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from '@/theme';
 import { useNetworkStatus, useRequestQueue } from '@/utils/offlineHandler';
-import {
-  verticalScale,
-} from '@/utils/responsive';
 
 const NetworkStatusIndicator = ({ onPress }) => {
   const { isConnected: isOnline } = useNetworkStatus();
@@ -43,7 +40,7 @@ const NetworkStatusIndicator = ({ onPress }) => {
         useNativeDriver: true,
       }).start(() => setShowIndicator(false));
     }
-  }, [isOnline, queueSize]);
+  }, [isOnline, queueSize, slideAnim]);
 
   if (!showIndicator) return null;
 
@@ -78,7 +75,7 @@ const NetworkStatusIndicator = ({ onPress }) => {
         activeOpacity={0.8}
         disabled={!onPress}
       >
-        <IconComponent size={20} color="#FFFFFF" />
+        <IconComponent size={20} color={healthColors.text.white} />
         <Text style={styles.message}>{message}</Text>
         {queueSize > 0 && (
           <View style={styles.badge}>
@@ -109,16 +106,16 @@ const styles = StyleSheet.create({
   message: {
     fontSize: theme.typography.sizes.sm,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: healthColors.text.white,
   },
   badge: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
+    backgroundColor: healthColors.background.card,
+    borderRadius: theme.borderRadius.badge,
     minWidth: 20,
     height: 20,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: theme.spacing.xs,
   },
   badgeText: {
     fontSize: theme.typography.sizes.overline,

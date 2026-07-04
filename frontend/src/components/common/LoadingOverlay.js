@@ -25,6 +25,7 @@ const LoadingOverlay = ({
       visible={visible}
       animationType="fade"
       statusBarTranslucent
+      accessibilityLabel="Loading"
     >
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.content}>

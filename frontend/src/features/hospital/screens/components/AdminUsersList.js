@@ -88,7 +88,7 @@ const AdminUsersList = ({
       <View style={styles.card}>
         {safeUsers.map((user, i) => (
           <AdminUserRow
-            key={user._id || user.id || user.userId || user.user_id || user.doctorId || user.patientId || i}
+            key={user.id || user.userId || user.user_id || user.doctorId || user.patientId || i}
             user={user}
             iconColor={iconColor}
             onUserPress={onUserPress}

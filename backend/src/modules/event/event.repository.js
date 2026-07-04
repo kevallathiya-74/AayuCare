@@ -1,11 +1,9 @@
 const { query } = require("../../config/postgres");
-const logger = require("../../utils/logger");
 
 const mapEventRow = (row) => {
   if (!row) return null;
   return {
     id: row.id,
-    _id: row.id, // Compatibility
     hospitalId: row.hospital_id,
     title: row.title,
     description: row.description,
@@ -133,17 +131,15 @@ const findWithFilters = async (filters = {}, options = {}) => {
     params.push(filters.status);
     paramIndex++;
   }
-  if (filters.date) {
-    if (filters.date.$gte) {
-      queryText += ` AND date >= $${paramIndex}`;
-      params.push(filters.date.$gte);
-      paramIndex++;
-    }
-    if (filters.date.$lte) {
-      queryText += ` AND date <= $${paramIndex}`;
-      params.push(filters.date.$lte);
-      paramIndex++;
-    }
+  if (filters.startDate) {
+    queryText += ` AND date >= $${paramIndex}`;
+    params.push(filters.startDate);
+    paramIndex++;
+  }
+  if (filters.endDate) {
+    queryText += ` AND date <= $${paramIndex}`;
+    params.push(filters.endDate);
+    paramIndex++;
   }
 
   let sqlSort = 'date DESC';
@@ -271,7 +267,7 @@ const update = async (id, updateData) => {
     }
   }
 
-  if (fields.length === 0) return await findById(id);
+  if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
     `UPDATE events SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,

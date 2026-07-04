@@ -29,6 +29,7 @@ import { getItem, setItem } from '@/utils/appStorage';
 import { logError } from '@/utils/errorHandler';
 import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const ACCESSIBILITY_SETTINGS_KEY = "aayucare_accessibility_settings";
 const FONT_SIZE_KEY = "aayucare_font_size";
@@ -138,7 +139,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         onValueChange={onToggle}
         trackColor={{
           false: healthColors.border.light,
-          true: healthColors.primary.main + "40",
+          true: theme.withOpacity(healthColors.primary.main, 0.25),
         }}
         thumbColor={
           value ? healthColors.primary.main : healthColors.background.tertiary
@@ -374,7 +375,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
             <ActionRow
               icon="key-outline"
               label="Change Password"
-              onPress={() => navigation.navigate("ChangePassword")}
+              onPress={() => navigation.navigate(Routes.SHARED.CHANGE_PASSWORD)}
             />
             <SettingRow
               icon="finger-print-outline"
@@ -519,7 +520,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: healthColors.primary.main + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.06),
     borderRadius: 8,
   },
   changeButtonText: {

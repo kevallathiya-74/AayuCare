@@ -40,7 +40,7 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
       {/* Header row */}
       <View style={styles.headerRow}>
         <View style={styles.timeChip}>
-          <Clock  size={14} color={healthColors.primary.main} />
+          <Clock  size={theme.iconSizes.xs} color={healthColors.primary.main} />
           <Text style={styles.timeText}>{appointment.time || "--:--"}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: color + "1A" }]}>
@@ -96,49 +96,49 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
-    padding: 14,
+    padding: theme.spacing.md,
     borderWidth: 1,
     borderColor: healthColors.border.light,
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
     ...theme.shadows.sm,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing[10],
     flexWrap: "wrap",
   },
   timeChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: theme.spacing.xs,
     backgroundColor: healthColors.primary.main + "0E",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
   },
   timeText: { fontSize: theme.typography.sizes.bodySmall, fontWeight: "700", color: healthColors.primary.main },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  statusBadge: { paddingHorizontal: theme.spacing.sm, paddingVertical: theme.spacing.xs, borderRadius: theme.borderRadius.sm },
   statusText: { fontSize: theme.typography.sizes.caption, fontWeight: "600" },
   typeBadge: {
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: healthColors.info.main + "14",
+    backgroundColor: theme.withOpacity(healthColors.info.main, 0.08),
     justifyContent: "center", alignItems: "center",
   },
   patientName: {
-    fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary, marginBottom: 4,
+    fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary, marginBottom: theme.spacing.xs,
   },
   patientMeta: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, marginBottom: 12 },
-  actions: { flexDirection: "row", gap: 10 },
+  actions: { flexDirection: "row", gap: theme.spacing[10] },
   secondaryBtn: {
-    flex: 1, paddingVertical: 9, borderRadius: 10,
+    flex: 1, paddingVertical: 9, borderRadius: theme.borderRadius.input,
     borderWidth: 1.5, borderColor: healthColors.primary.main,
     alignItems: "center",
   },
   secondaryBtnText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "600", color: healthColors.primary.main },
   primaryBtn: {
-    flex: 1, paddingVertical: 9, borderRadius: 10,
+    flex: 1, paddingVertical: 9, borderRadius: theme.borderRadius.input,
     backgroundColor: healthColors.primary.main,
     alignItems: "center",
     ...theme.shadows.sm,

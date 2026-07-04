@@ -14,6 +14,7 @@ export const AUTH = Object.freeze({
   BOX_SELECTION: "BoxSelection",
   LOGIN: "Login",
   FORGOT_PASSWORD: "ForgotPassword",
+  RESET_PASSWORD: "ResetPassword",
 });
 
 // ─── Tab Navigators ───────────────────────────────────────────────────────────

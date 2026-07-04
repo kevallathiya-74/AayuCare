@@ -104,7 +104,8 @@ const mapPrescriptionData = (dbPrescription) => {
   if (!dbPrescription) return null;
 
   return {
-    _id: dbPrescription._id,
+    // NOTE: `_id` MongoDB-shape residue was removed on 2026-06-30.
+    // PostgreSQL exposes a UUID `id` via the `prescriptions.id` column.
     prescriptionId: dbPrescription.prescriptionId,
     patientId: dbPrescription.patientId,
     doctorId: dbPrescription.doctorId,
@@ -130,7 +131,8 @@ const mapMedicalRecordData = (dbRecord) => {
   if (!dbRecord) return null;
 
   return {
-    _id: dbRecord._id,
+    // NOTE: `_id` MongoDB-shape residue was removed on 2026-06-30.
+    // PostgreSQL exposes a UUID `id` via the `medical_records.id` column.
     patientId: dbRecord.patientId,
     doctorId: dbRecord.doctorId,
     hospitalId: dbRecord.hospitalId,

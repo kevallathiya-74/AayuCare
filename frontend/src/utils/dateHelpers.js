@@ -27,7 +27,7 @@ export const calculateAge = (dateOfBirth) => {
     }
     
     return age >= 0 ? age : null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -49,7 +49,7 @@ export const formatDate = (date) => {
       month: 'short',
       year: 'numeric'
     });
-  } catch (error) {
+  } catch {
     return "N/A";
   }
 };
@@ -79,7 +79,7 @@ export const formatDateTime = (date) => {
     });
     
     return `${dateStr}, ${timeStr}`;
-  } catch (error) {
+  } catch {
     return "N/A";
   }
 };
@@ -101,7 +101,7 @@ export const formatTime = (date) => {
       minute: '2-digit',
       hour12: true
     });
-  } catch (error) {
+  } catch {
     return "N/A";
   }
 };
@@ -131,7 +131,7 @@ export const getRelativeTime = (date) => {
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
     return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`;
-  } catch (error) {
+  } catch {
     return "N/A";
   }
 };
@@ -151,7 +151,7 @@ export const isToday = (date) => {
     return d.getDate() === today.getDate() &&
            d.getMonth() === today.getMonth() &&
            d.getFullYear() === today.getFullYear();
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -167,7 +167,7 @@ export const isPast = (date) => {
   try {
     const d = new Date(date);
     return d < new Date();
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -195,7 +195,7 @@ export const formatMedicalHistoryDuration = (diagnosedDate, status) => {
     if (years === 0) return `Since ${diagnosedYear} (recent)`;
     if (years === 1) return `Since ${diagnosedYear} (1 year)`;
     return `Since ${diagnosedYear} (${years} years)`;
-  } catch (error) {
+  } catch {
     return "Unknown duration";
   }
 };

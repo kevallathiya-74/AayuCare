@@ -108,3 +108,30 @@ The initial release focuses entirely on the **Hospital Module** to secure hospit
 * **Latency:** API responses under 200ms; UI interactions under 16ms (60 FPS on mobile).
 * **Data Privacy:** Strict HIPAA/DISHA guidelines for Protected Health Information (PHI) encryption.
 * **Offline Resiliency:** Local storage caching in Expo mobile client to allow viewing appointments when offline.
+
+
+## @Context 7 Guide
+
+Use Context7 MCP as the primary implementation reference before making any architectural or implementation decisions.
+
+Before changing code:
+• Read AGENTS.md
+• Read every file inside .ai/
+• Read PROJECT_STATUS_REPORT.md
+• Read PROJECT_ROADMAP.md
+• Read all related documentation for the current phase
+
+Use every available project capability whenever applicable, including:
+• ECC Workflow
+• Impeccable
+• @Agency Agents
+• Vercel Skills
+• Context7 MCP
+• PostgreSQL MCP
+• Postman MCP
+• Project Context
+• AGENTS.md
+• .ai documentation
+• Enterprise Validation Workflow
+• Security Review
+

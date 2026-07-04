@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { medicalRecordService } from '@/services';
-import { logError, parseError } from '@/utils/errorHandler';
+import { parseError } from '@/utils/errorHandler';
 import { formatDate } from '@/utils/helpers';
 import {
   EmptyState,
@@ -81,7 +81,7 @@ const ReportsScreen = ({ navigation }) => {
         const recordType = String(report?.recordType || report?.type || "other").toLowerCase();
         return {
           ...report,
-          id: report?._id || report?.id || `record-${index}`,
+          id: report?.id || `record-${index}`,
           recordType,
           recordTypeLabel: formatRecordTypeLabel(recordType),
           patientName:
@@ -264,12 +264,12 @@ const ReportsScreen = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.skeletonContainer}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       ) : (
         <FlatList
           data={filteredReports}
           renderItem={renderReport}
-          keyExtractor={(item, index) => item._id || item.id || `report-${index}`}
+          keyExtractor={(item, index) => item.id || `report-${index}`}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,
@@ -424,15 +424,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: healthColors.border.light,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.md,
+  skeletonContainer: {
+    padding: 16,
+    gap: 12,
   },
   applyFilterButton: {
     marginTop: 16,

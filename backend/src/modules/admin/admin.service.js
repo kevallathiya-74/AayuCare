@@ -11,7 +11,6 @@ const doctorRepository = require("../doctor/doctor.repository");
 const patientRepository = require("../patient/patient.repository");
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const notificationRepository = require("../notification/notification.repository");
-const appointmentRepository = require("../appointment/appointment.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
@@ -84,8 +83,8 @@ const getDashboardStats = async (ctx) => {
     adminRepository.getDoctorStats({ currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
     adminRepository.getPatientStats({ currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
     safePrescriptionCount(baseQuery, "prescriptions_total"),
-    safePrescriptionCount({ ...baseQuery, date: { $gte: today, $lt: tomorrow } }, "prescriptions_today"),
-    safePrescriptionCount({ ...baseQuery, date: { $gte: yesterday, $lt: today } }, "prescriptions_yesterday"),
+    safePrescriptionCount({ ...baseQuery, startDate: today, endDate: tomorrow }, "prescriptions_today"),
+    safePrescriptionCount({ ...baseQuery, startDate: yesterday, endDate: today }, "prescriptions_yesterday"),
     adminRepository.getRevenueStats({ today, tomorrow, yesterday, hospitalId: scopedHospitalId }),
   ]);
 
@@ -167,7 +166,7 @@ const getRecentActivities = async (limit, ctx) => {
   ]);
 
   const recentAppointments = recentAppointmentRows.map(row => ({
-    _id: row.id,
+    id: row.id,
     createdAt: row.created_at,
     patientId: { name: row.patient_name, userId: row.patient_user_id },
     doctorId: { name: row.doctor_name, userId: row.doctor_user_id },
@@ -175,7 +174,7 @@ const getRecentActivities = async (limit, ctx) => {
 
   const activities = [
     ...recentAppointments.map(apt => ({
-      id: apt._id,
+      id: apt.id,
       text: `${apt.doctorId?.name || "Doctor"} scheduled appointment with ${apt.patientId?.name || "patient"}`,
       icon: "calendar",
       time: apt.createdAt,
@@ -214,7 +213,6 @@ const getUsers = async ({ role, search, includeInactive, limit, page, ctx }) => 
   });
 
   const users = rows.map(row => ({
-    _id: row.id,
     id: row.id,
     userId: row.user_id,
     name: row.name,
@@ -482,7 +480,7 @@ const getMedicalRecordsOverview = async ({ patientId, limit, skip, ctx }) => {
   typeStatsQuery += ` GROUP BY record_type`;
 
   const typeStatsResult = await query(typeStatsQuery, params);
-  const typeStats = typeStatsResult.rows.map(r => ({ _id: r.type, count: parseInt(r.count, 10) }));
+  const typeStats = typeStatsResult.rows.map(r => ({ type: r.type, count: parseInt(r.count, 10) }));
 
   return { records, stats: typeStats, total };
 };
@@ -514,7 +512,7 @@ const getNotificationsManagement = async ({ type, status, limit, skip, ctx }) =>
   }
   typeDistQuery += ` GROUP BY type`;
   const typeStatsResult = await query(typeDistQuery, params);
-  const typeStats = typeStatsResult.rows.map(r => ({ _id: r.type, count: parseInt(r.count, 10) }));
+  const typeStats = typeStatsResult.rows.map(r => ({ type: r.type, count: parseInt(r.count, 10) }));
 
   return { notifications, total, unreadCount, typeDistribution: typeStats };
 };
@@ -606,16 +604,15 @@ const createUser = async (req) => {
   } else if (role === "patient") {
     const patientFields = ["user_id"];
     const patientValues = [user.id];
-    let paramIndex = 2;
-    if (dateOfBirth) { patientFields.push("date_of_birth"); patientValues.push(dateOfBirth); paramIndex++; }
-    if (gender) { patientFields.push("gender"); patientValues.push(gender); paramIndex++; }
-    if (bloodGroup) { patientFields.push("blood_group"); patientValues.push(bloodGroup); paramIndex++; }
-    if (address) { patientFields.push("address"); patientValues.push(address); paramIndex++; }
-    if (emergencyContactName) { patientFields.push("emergency_contact_name"); patientValues.push(emergencyContactName); paramIndex++; }
-    if (emergencyContactPhone) { patientFields.push("emergency_contact_phone"); patientValues.push(emergencyContactPhone); paramIndex++; }
-    if (emergencyContactRelation) { patientFields.push("emergency_contact_relation"); patientValues.push(emergencyContactRelation); paramIndex++; }
-    if (Array.isArray(allergies) && allergies.length > 0) { patientFields.push("allergies"); patientValues.push(allergies); paramIndex++; }
-    if (Array.isArray(chronicConditions) && chronicConditions.length > 0) { patientFields.push("chronic_conditions"); patientValues.push(chronicConditions); paramIndex++; }
+    if (dateOfBirth) { patientFields.push("date_of_birth"); patientValues.push(dateOfBirth); }
+    if (gender) { patientFields.push("gender"); patientValues.push(gender); }
+    if (bloodGroup) { patientFields.push("blood_group"); patientValues.push(bloodGroup); }
+    if (address) { patientFields.push("address"); patientValues.push(address); }
+    if (emergencyContactName) { patientFields.push("emergency_contact_name"); patientValues.push(emergencyContactName); }
+    if (emergencyContactPhone) { patientFields.push("emergency_contact_phone"); patientValues.push(emergencyContactPhone); }
+    if (emergencyContactRelation) { patientFields.push("emergency_contact_relation"); patientValues.push(emergencyContactRelation); }
+    if (Array.isArray(allergies) && allergies.length > 0) { patientFields.push("allergies"); patientValues.push(allergies); }
+    if (Array.isArray(chronicConditions) && chronicConditions.length > 0) { patientFields.push("chronic_conditions"); patientValues.push(chronicConditions); }
 
     const placeholders = patientValues.map((_, idx) => `$${idx + 1}`).join(", ");
     await adminRepository.createPatientProfile(`INSERT INTO patients (${patientFields.join(", ")}) VALUES (${placeholders})`, patientValues);

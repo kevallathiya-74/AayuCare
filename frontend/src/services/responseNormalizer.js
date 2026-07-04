@@ -88,7 +88,7 @@ export const normalizeServiceResponse = (payload, options = {}) => {
   const success =
     typeof payload.success === "boolean"
       ? payload.success
-      : payload.status
+      : payload.status != null
       ? payload.status === "success"
       : !payload.error;
 

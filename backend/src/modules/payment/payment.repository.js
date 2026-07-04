@@ -1,10 +1,36 @@
-const { query, getClient } = require("../../config/postgres");
+const { query } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
-const logger = require("../../utils/logger");
 
 /**
  * Payment Repository - PostgreSQL data access layer
  */
+/**
+ * Build the WHERE clause and parameter list shared by `findByPatient`
+ * and `countByPatient`. Returns { whereClause, params } where the WHERE
+ * clause is a leading-AND-friendly string (or empty) and params is the
+ * matching array of bound values.
+ */
+const buildPatientFiltersWhere = (patientId, filters = {}) => {
+  const where = [`p.patient_id = $1`];
+  const params = [patientId];
+  let idx = 2;
+
+  if (filters.status) {
+    where.push(`p.status = $${idx++}`);
+    params.push(filters.status);
+  }
+  if (filters.startDate) {
+    where.push(`p.created_at >= $${idx++}`);
+    params.push(filters.startDate);
+  }
+  if (filters.endDate) {
+    where.push(`p.created_at <= $${idx++}`);
+    params.push(filters.endDate);
+  }
+
+  return { whereClause: `WHERE ${where.join(" AND ")}`, params };
+};
+
 class PaymentRepository {
   /**
    * Create payment
@@ -88,10 +114,11 @@ class PaymentRepository {
    * @returns {Promise<Array>} Array of payments
    */
   async findByPatient(patientId, filters = {}) {
-    const { status, startDate, endDate, limit = 20, offset = 0 } = filters;
+    const { limit = 20, offset = 0 } = filters;
+    const { whereClause, params } = buildPatientFiltersWhere(patientId, filters);
 
-    let sql = `
-            SELECT p.*, 
+    const sql = `
+            SELECT p.*,
                    a.appointment_date, a.appointment_time,
                    d.name as doctor_name,
                    doc.specialization
@@ -99,36 +126,34 @@ class PaymentRepository {
             LEFT JOIN appointments a ON p.appointment_id = a.id
             LEFT JOIN users d ON p.doctor_id = d.id
             LEFT JOIN doctors doc ON d.id = doc.user_id
-            WHERE p.patient_id = $1
+            ${whereClause}
         `;
 
-    const params = [patientId];
-    let paramCount = 2;
-
-    if (status) {
-      sql += ` AND p.status = $${paramCount}`;
-      params.push(status);
-      paramCount++;
-    }
-
-    if (startDate) {
-      sql += ` AND p.created_at >= $${paramCount}`;
-      params.push(startDate);
-      paramCount++;
-    }
-
-    if (endDate) {
-      sql += ` AND p.created_at <= $${paramCount}`;
-      params.push(endDate);
-      paramCount++;
-    }
-
-    sql += ` ORDER BY p.created_at DESC`;
-    sql += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
     params.push(limit, offset);
 
-    const result = await query(sql, params);
+    const result = await query(
+      `${sql} ORDER BY p.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
     return result.rows;
+  }
+
+  /**
+   * Count payments matching the same filter set as `findByPatient`.
+   * Returned for accurate pagination `total` (page size != total records).
+   * @param {string} patientId - Patient UUID
+   * @param {Object} filters - Filter options (status, startDate, endDate)
+   * @returns {Promise<number>} Total matching payment count
+   */
+  async countByPatient(patientId, filters = {}) {
+    const { whereClause, params } = buildPatientFiltersWhere(patientId, filters);
+    const sql = `
+            SELECT COUNT(*) AS total
+            FROM payments p
+            ${whereClause}
+        `;
+    const result = await query(sql, params);
+    return parseInt(result.rows[0].total, 10);
   }
 
   /**

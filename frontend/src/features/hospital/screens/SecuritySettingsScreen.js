@@ -32,15 +32,11 @@ import { handleSmartBack } from '@/utils/navigation';
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const [actionLoading, setActionLoading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState({});
   const [passwordSubmitError, setPasswordSubmitError] = useState("");
 
@@ -247,7 +243,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>Security Settings</Text>
           <View style={styles.backButton} />
         </View>
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.skeletonContainer}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
@@ -312,7 +308,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <View
                 style={[
                   styles.statusIcon,
-                  { backgroundColor: healthColors.success.main + "15" },
+                  { backgroundColor: theme.withOpacity(healthColors.success.main, 0.08) },
                 ]}
               >
                 <ShieldCheck
@@ -426,7 +422,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             <View
               style={[
                 styles.actionIcon,
-                { backgroundColor: healthColors.primary.main + "15" },
+                { backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08) },
               ]}
             >
               <Lock
@@ -458,7 +454,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             <View
               style={[
                 styles.actionIcon,
-                { backgroundColor: healthColors.error.main + "15" },
+                { backgroundColor: theme.withOpacity(healthColors.error.main, 0.08) },
               ]}
             >
               <LogOut
@@ -688,15 +684,9 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: theme.spacing.md,
+  skeletonContainer: {
+    padding: 16,
+    gap: 12,
   },
   content: {
     flex: 1,
@@ -862,30 +852,6 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
-  inputContainer: {
-    marginBottom: theme.spacing.md,
-  },
-  inputLabel: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  passwordInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.primary,
-    borderRadius: theme.borderRadius.small,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  input: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
   modalActions: {
     flexDirection: "row",
     gap: theme.spacing.md,
@@ -910,11 +876,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.caption,
     marginTop: theme.spacing.xs,
     fontWeight: theme.typography.weights.medium,
-  },
-  passwordFieldError: {
-    marginTop: theme.spacing.xs,
-    color: healthColors.error.main,
-    fontSize: theme.typography.sizes.overline,
   },
   passwordSubmitError: {
     color: healthColors.error.main,

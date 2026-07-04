@@ -24,7 +24,7 @@ export const FilterSelectField = ({ label, onPress, isOpen = false, accessibilit
   >
     <Text style={styles.selectFieldText}>{label}</Text>
     <ChevronDown
-      size={16}
+      size={theme.iconSizes.sm}
       color={healthColors.text.secondary}
       style={isOpen ? styles.chevronOpen : undefined}
     />
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   clearText: {
     color: healthColors.secondary.main,
@@ -112,16 +112,16 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.h6,
     fontWeight: "700",
     color: healthColors.text.primary,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
   selectField: {
     minHeight: 44,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: healthColors.border.light,
     backgroundColor: healthColors.background.card,
-    paddingHorizontal: 12,
+    paddingHorizontal: theme.spacing.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -135,9 +135,9 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "180deg" }],
   },
   dropdownMenu: {
-    marginTop: 8,
-    marginBottom: 8,
-    borderRadius: 12,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: healthColors.border.light,
     backgroundColor: healthColors.background.card,
@@ -145,8 +145,8 @@ const styles = StyleSheet.create({
   },
   dropdownOption: {
     minHeight: 42,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing[10],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   dropdownOptionActive: {
-    backgroundColor: healthColors.primary.main + "12",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.07),
   },
   dropdownOptionText: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -175,13 +175,13 @@ const styles = StyleSheet.create({
   chipWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 4,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   chipOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.pill,
     borderWidth: 1,
     borderColor: healthColors.border.light,
     backgroundColor: healthColors.background.card,

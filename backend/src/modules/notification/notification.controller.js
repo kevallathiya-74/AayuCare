@@ -14,7 +14,7 @@ const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 // Resolve user's UUID string id from the authenticated request
 const resolveUserId = (req) =>
-  req.user?.id || req.user?.userId || req.user?._id?.toString();
+  req.user?.id;
 
 /**
  * @desc    Get user notifications
@@ -156,7 +156,7 @@ exports.markAllAsRead = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, { updated: result.modifiedCount }, "All notifications marked as read");
+    return sendSuccess(res, req, { updated: result.rowCount }, "All notifications marked as read");
   } catch (error) {
     logger.error("Mark all as read error:", {
       error: error.message,
@@ -227,7 +227,7 @@ exports.clearAllNotifications = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, { deleted: result.deletedCount }, "All notifications cleared");
+    return sendSuccess(res, req, { deleted: result.rowCount }, "All notifications cleared");
   } catch (error) {
     logger.error("Clear all notifications error:", {
       error: error.message,
@@ -261,7 +261,7 @@ exports.createNotification = async (req, res, next) => {
     const notification = await notificationRepository.create({
       userId,
       title,
-      message,
+      body: message,
       type: type || "system",
       priority: priority || "medium",
       data,
@@ -311,7 +311,7 @@ exports.broadcastNotification = async (req, res, next) => {
     const notifications = userIds.map((userId) => ({
       userId,
       title,
-      message,
+      body: message,
       type: type || "system",
       priority: priority || "medium",
       data,

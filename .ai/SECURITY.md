@@ -1,46 +1,25 @@
-# AayuCare — Security & Compliance Standards
+# AayuCare Security Standards
 
-Security, data privacy, and HIPAA/DISHA compliance are core tenets of the AayuCare platform. All architecture, logic, and data handling processes must adhere strictly to the protocols documented below.
+**Last Updated**: 2026-07-04
 
----
+## 1. Authentication
+- **Provider**: Better Auth (`/api/auth/*`).
+- **Secrets**: `JWT_SECRET` must be a cryptographically secure random string of at least 64 characters. Never log or commit secrets.
 
-## 1. Authentication & Session Management
-* **Credentials Hashing:** User passwords must never be stored in plain text. Use `bcryptjs` with a work factor of 12 for password hashing.
-* **Token-based Authentication:** Sessions are secured via JSON Web Tokens (JWT) or sessions configured with `better-auth`.
-* **Token Expiration & Rotation:** Tokens should have a short lifespan (e.g. 1 hour for access tokens) and employ secure HTTP-only cookies on web environments, or secure Keychain/SharedPreferences on Expo mobile clients (`expo-secure-store`).
-* **Dev Helpers Policy:** Demo auto-fill credentials are only active during `__DEV__` environment checks. Never expose auto-fill buttons or mock logins in production distributions.
+## 2. Authorization (RBAC)
+- All protected endpoints MUST use the `authorizeRole` middleware.
+- Example: `router.get('/dashboard', authMiddleware, authorizeRole('admin'), adminController.getDashboard);`
+- **Data Scoping**: Controllers and Repositories MUST filter database records by the requesting user's `hospital_id` or `id` to prevent cross-tenant data leakage (IDOR).
 
----
+## 3. Data Protection
+- **No SQL Injection**: Parameterized queries via `pg` are absolutely mandatory. String concatenation in SQL is an immediate rejection criteria.
+- **PHI / HIPAA Compliance**: Treat patient medical records, prescriptions, and personal details as Protected Health Information (PHI). Do not log patient names or IDs in server logs.
 
-## 2. Authorization & Multi-Tenancy Protection
-* **Role-Based Access Control (RBAC):** Access to APIs is gated by roles:
-  * `admin`: Operations management (doctors, clinics, schedules, reports).
-  * `doctor`: Medical diagnostics, patient vitals, and prescription writing.
-  * `patient`: Personal EHR timelines, appointment history, and reports.
-* **Tenant Isolation Gating:** Every database query querying appointments, medical records, or user lists must explicitly join and filter by `hospital_id`.
+## 4. Input Validation
+- Validate ALL incoming request bodies, queries, and params at the router level using **Joi** schemas (located in `backend/src/validators/`).
+- Fail fast with a 400 Bad Request before the request reaches the controller.
 
----
-
-## 3. Data Protection & PHI Privacy
-* **Protected Health Information (PHI):** Medical history, vitals, prescriptions, and diagnoses represent PHI and are protected by law:
-  * **Data Minimization:** Do not log medical conditions, diagnoses, or prescriptions inside application logs (Sentry/Winston).
-  * **Encryption at Rest:** Ensure database files and backups are encrypted at rest using AES-256.
-  * **Encryption in Transit:** All network communication must enforce TLS 1.3 (HTTPS). Plaintext HTTP endpoints are strictly prohibited.
-
----
-
-## 4. Input Validation & Query Security
-* **SQL Injection Prevention:** Never use string interpolation to construct SQL queries. All queries executed against PostgreSQL must utilize parameterized query markers (`$1`, `$2` placeholders).
-* **Sanitization:** Sanitize user input text to strip HTML tags and scripts to prevent Cross-Site Scripting (XSS) attacks.
-* **Backend Validation DTOs:** Every controller endpoint must validate incoming request bodies against strict schemas (Joi or Express-validator) before executing business services.
-* **Rate Limiting:** Protect public auth and registration endpoints using Express rate-limiting middleware (`express-rate-limit`) to mitigate brute-force attacks.
-
----
-
-## 5. Audit Logging Policy
-* **Comprehensive Audit Trail:** All additions, modifications, and updates to appointments, patient records, and prescriptions must register a secure audit log containing:
-  * Timestamp of the event
-  * Action category (`CREATE`, `UPDATE`, `DELETE`)
-  * Identifier of the user performing the action
-  * Affected record reference
-* **Audit Confidentiality:** The log entry must *never* record the actual medical contents of the changes, only the action metadata.
+## 5. Security Middleware
+- `helmet` is required to set strict security headers.
+- Rate limiting is enforced via `express-rate-limit` (stored in memory). Limits are tighter for `POST` and auth routes to prevent brute force attacks.
+- Cross-Origin Resource Sharing (CORS) is strictly permitted only to defined frontend domains and local dev ports (`19006`, `3000`).

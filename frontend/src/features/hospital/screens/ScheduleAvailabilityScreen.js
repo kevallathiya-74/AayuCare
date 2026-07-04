@@ -80,7 +80,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       const response = await toggleAvailabilityMutation.mutateAsync(dayOfWeek);
       await refetch();
       Alert.alert("Success", response?.message || "Availability updated");
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to toggle availability");
     }
   };
@@ -167,7 +167,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       await refetch();
       setModalVisible(false);
       Alert.alert("Success", "Schedule updated successfully");
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to update schedule");
     } finally {
       setSaving(false);
@@ -571,19 +571,9 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   loadingSkeletonWrap: {
     padding: theme.spacing.md,
     gap: theme.spacing.sm + theme.spacing.xs,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
   },
   scrollView: {
     flex: 1,
@@ -781,18 +771,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
     gap: 8,
   },
-  notesInput: {
-    backgroundColor: healthColors.background.card,
-    borderWidth: 1,
-    borderColor: healthColors.border.main,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
+
   characterCount: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
@@ -829,7 +808,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    color: "#fff",
+    color: healthColors.text.white,
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
   },

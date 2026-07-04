@@ -43,7 +43,7 @@ import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import { getSafeAreaEdges } from '@/utils/responsive';
 import { getPatientMedicalRecords } from '@/services/medicalRecord.service';
 import { queryKeys } from '@/config/reactQueryConfig';
-import { logError, parseError } from '@/utils/errorHandler';
+import { parseError } from '@/utils/errorHandler';
 import { format, parseISO } from "date-fns";
 import { handleSmartBack } from '@/utils/navigation';
 
@@ -201,7 +201,7 @@ const FilterPill = React.memo(({ filter, isActive, onPress }) => {
         <IconComp
           size={13}
           color={isActive ? healthColors.text.white : healthColors.text.secondary}
-          style={{ marginRight: 4 }}
+          style={styles.filterIcon}
         />
       ) : null}
       <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
@@ -218,7 +218,7 @@ const FilterPill = React.memo(({ filter, isActive, onPress }) => {
 const RecordSkeleton = () => (
   <View style={styles.card}>
     <SkeletonLoader variant="avatar" size={44} />
-    <View style={{ flex: 1, marginLeft: 12, gap: 6 }}>
+    <View style={styles.skeletonRow}>
       <SkeletonLoader variant="line" width="55%" height={14} />
       <SkeletonLoader variant="line" width="80%" height={11} />
     </View>
@@ -249,7 +249,7 @@ const ErrorView = ({ message, onRetry }) => (
       accessibilityRole="button"
       accessibilityLabel="Retry loading medical records"
     >
-      <RefreshCw size={15} color={healthColors.text.white} style={{ marginRight: 6 }} />
+      <RefreshCw size={15} color={healthColors.text.white} style={styles.retryIcon} />
       <Text style={styles.retryText}>Try Again</Text>
     </TouchableOpacity>
   </View>
@@ -369,7 +369,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
   );
 
   const keyExtractor = useCallback(
-    (item, idx) => item._id || item.id || String(idx),
+    (item, idx) => item.id || String(idx),
     []
   );
 
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.primary.main,
   },
   pillText: {
-    fontSize: 13,
+    fontSize: theme.typography.sizes.bodySmall,
     fontWeight: theme.typography.weights.medium,
     color: healthColors.text.secondary,
   },
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   cardMeta: {
-    fontSize: 12,
+    fontSize: theme.typography.sizes.bodySmall,
     color: healthColors.text.secondary,
   },
   cardDoctor: {
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   typeBadgeText: {
-    fontSize: 10,
+    fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.semibold,
   },
 
@@ -618,6 +618,9 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.white,
   },
+  filterIcon: { marginRight: 4 },
+  skeletonRow: { flex: 1, marginLeft: 12, gap: 6 },
+  retryIcon: { marginRight: 6 },
 });
 
 export default MedicalRecordsScreen;

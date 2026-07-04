@@ -2,22 +2,13 @@
  * AayuCare - Auth Controller
  * Custom endpoints extending Better Auth
  * Fully refactored to use PostgreSQL repository pattern
+ * Architecture: Controller -> Service -> Repository -> Database
  */
 
-const { getAuth } = require("../../lib/auth");
-const { AppError } = require("../../middleware/errorHandler");
-const userRepository = require("./user.repository");
-const doctorRepository = require("../doctor/doctor.repository");
-const patientRepository = require("../patient/patient.repository");
-const { createUserWithProfile } = require("../../utils/transaction");
+const authService = require("./auth.service");
 const logger = require("../../utils/logger");
-const bcrypt = require("bcryptjs");
-const {
-  invalidateAfterAuthProfileMutation,
-  invalidateAfterPasswordMutation,
-} = require("../../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
+const { sendSuccess } = require("../../utils/apiResponse");
 
 /**
  * @desc    Get user email by userId (for Better Auth login)
@@ -27,43 +18,8 @@ const { sendSuccess, sendError } = require("../../utils/apiResponse");
 exports.getEmailByUserId = async (req, res, next) => {
   try {
     const { userId } = req.body;
-    
-    // Validate userId parameter
-    if (!userId || typeof userId !== 'string' || userId.length === 0) {
-      return sendError(res, req, 'User ID is required.', 400, 'VALIDATION_ERROR');
-    }
-    
-    // Exact-match policy: preserve input as-is and reject hidden whitespace differences.
-    if (userId !== userId.trim()) {
-      return sendError(
-        res,
-        req,
-        'User ID must match exactly. Remove leading or trailing spaces and use exact uppercase/lowercase.',
-        400,
-        'VALIDATION_ERROR'
-      );
-    }
-
-    if (userId.length > 50) {
-      return sendError(res, req, 'User ID format is invalid.', 400, 'VALIDATION_ERROR');
-    }
-
-    // Strict case-sensitive lookup against stored user_id.
-    let user = await userRepository.findByUserId(userId);
-
-    if (!user) {
-      return sendError(
-        res,
-        req,
-        'Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).',
-        404,
-        'NOT_FOUND'
-      );
-    }
-
-    return sendSuccess(res, req, {
-      email: user.email,
-    }, 'User email retrieved successfully');
+    const result = await authService.getEmailByUserId(userId);
+    return sendSuccess(res, req, result, 'User email retrieved successfully');
   } catch (error) {
     logger.error("Error in getEmailByUserId", {
       error: error.message,
@@ -78,36 +34,33 @@ exports.getEmailByUserId = async (req, res, next) => {
  * @desc    Get current session token (for mobile apps after Better Auth login)
  * @route   POST /api/user/current-session
  * @access  Private (requires authentication)
+ *
+ * IMPORTANT (added 2026-06-30):
+ *   The `token` value returned below is the Better Auth session identifier,
+ *   which is stored in PostgreSQL as `session.token_hash` (see
+ *   `lib/auth.js:158` — Better Auth maps its `token` field to the
+ *   `token_hash` column). It is NOT a Bearer credential that can be sent
+ *   as `Authorization: Bearer <value>` to authenticate subsequent
+ *   requests — Bearer tokens are never persisted server-side, by design.
+ *
+ *   The endpoint is preserved for backwards compatibility with any client
+ *   that needs to identify the active session, but new code should not
+ *   treat this value as a Bearer token. Use the `token` returned by
+ *   `/api/user/session-token` (which calls Better Auth's `signInEmail`)
+ *   as the Bearer credential instead.
  */
 exports.getCurrentSession = async (req, res, next) => {
   try {
     // Use authenticated user's UUID — never trust req.body.userId
     const userId = req.user.id;
+    const result = await authService.getCurrentSession(userId);
 
-    // Query PostgreSQL session table (Better Auth uses PostgreSQL now)
-    const { query } = require("../../config/postgres");
-    
-    // Find the most recent valid session for this user
-    const result = await query(
-      `SELECT token_hash as token, expires_at as "expiresAt"
-       FROM session
-       WHERE user_id = $1
-         AND expires_at > NOW()
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [userId]
-    );
+    // The returned `token` is `session.token_hash` — see JSDoc above.
+    // Logged at debug level so future developers see a hint in their terminal
+    // when this endpoint is exercised. No change to the response payload.
+    logger.debug("[auth.getCurrentSession] returning session identifier (not a Bearer token)");
 
-    if (result.rows.length === 0) {
-      return sendError(res, req, 'No active session found', 404, 'NOT_FOUND');
-    }
-
-    const session = result.rows[0];
-
-    return sendSuccess(res, req, {
-      token: session.token,
-      expiresAt: session.expiresAt,
-    }, 'Session token retrieved successfully');
+    return sendSuccess(res, req, result, 'Session token retrieved successfully');
   } catch (error) {
     logger.error("Error in getCurrentSession", {
       error: error.message,
@@ -125,53 +78,8 @@ exports.getCurrentSession = async (req, res, next) => {
 exports.getSessionTokenByCredentials = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return sendError(res, req, 'Email/User ID and password are required exactly as provided.', 400, 'VALIDATION_ERROR');
-    }
-
-    const auth = getAuth();
-    try {
-      const result = await auth.api.signInEmail({
-        body: { email: String(email), password: String(password) },
-        headers: req.headers,
-      });
-
-      if (!result || !result.session) {
-        return sendError(res, req, 'No active session found', 404, 'NOT_FOUND');
-      }
-
-      const user = result.user;
-      if (user && user.isActive === false) {
-        await auth.api.revokeSession({
-          body: { token: result.session.token },
-        }).catch(() => {});
-
-        return sendError(
-          res,
-          req,
-          'Your account has been deactivated. Please contact support.',
-          403,
-          'FORBIDDEN'
-        );
-      }
-
-      return sendSuccess(res, req, {
-        token: result.token || result.session.token,
-        expiresAt: result.session.expiresAt,
-      }, 'Session token retrieved successfully');
-    } catch (e) {
-      if (e.name === 'APIError' || e.message.includes('Invalid') || e.message.includes('not found')) {
-        return sendError(
-          res,
-          req,
-          'Invalid credentials. Enter the exact User ID/email and password.',
-          401,
-          'UNAUTHORIZED'
-        );
-      }
-      throw e;
-    }
+    const result = await authService.getSessionTokenByCredentials(email, password);
+    return sendSuccess(res, req, result, 'Session token retrieved successfully');
   } catch (error) {
     logger.error("Error in getSessionTokenByCredentials", {
       error: error.message,
@@ -190,68 +98,8 @@ exports.getSessionTokenByCredentials = async (req, res, next) => {
 exports.getProfileByEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      return sendError(res, req, 'Email is required', 400, 'VALIDATION_ERROR');
-    }
-
-    // Query PostgreSQL users table
-    const user = await userRepository.findByEmail(email);
-
-    if (!user) {
-      return sendError(res, req, 'User not found', 404, 'NOT_FOUND');
-    }
-
-    // Return user-friendly data (no password hash)
-    const userProfile = {
-      id: user.id,
-      userId: user.user_id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      hospitalId: user.hospital_id,
-      hospitalName: user.hospital_name,
-      isActive: user.is_active,
-      isVerified: user.email_verified,
-    };
-
-    // Add role-specific fields from related tables
-    if (user.role === "admin") {
-      // Admin-specific fields can be added here if needed
-    } else if (user.role === "doctor") {
-      // Fetch doctor profile
-      const doctor = await doctorRepository.findByUserId(user.id);
-      if (doctor) {
-        userProfile.specialization = doctor.specialization;
-        userProfile.qualification = doctor.qualification;
-        userProfile.experience = doctor.experience;
-        userProfile.consultationFee = doctor.consultation_fee;
-        userProfile.availability = doctor.availability || {};
-      }
-    } else if (user.role === "patient") {
-      // Fetch patient profile
-      const patient = await patientRepository.findByUserId(user.id);
-      if (patient) {
-        userProfile.dateOfBirth = patient.date_of_birth;
-        userProfile.gender = patient.gender;
-        userProfile.bloodGroup = patient.blood_group;
-        userProfile.address = patient.address;
-        userProfile.emergencyContactName = patient.emergency_contact_name;
-        userProfile.emergencyContactPhone = patient.emergency_contact_phone;
-        userProfile.emergencyContactRelation = patient.emergency_contact_relation || null;
-        userProfile.emergencyContact = {
-          name: patient.emergency_contact_name || null,
-          phone: patient.emergency_contact_phone || null,
-          relation: patient.emergency_contact_relation || null,
-        };
-        userProfile.allergies = patient.allergies || [];
-        userProfile.chronicConditions = patient.chronic_conditions || [];
-        userProfile.medicalHistory = patient.chronic_conditions || [];
-      }
-    }
-
-    return sendSuccess(res, req, userProfile, 'User profile retrieved successfully');
+    const result = await authService.getProfileByEmail(email);
+    return sendSuccess(res, req, result, 'User profile retrieved successfully');
   } catch (error) {
     logger.error("Error in getProfileByEmail", {
       error: error.message,
@@ -269,10 +117,8 @@ exports.getProfileByEmail = async (req, res, next) => {
  */
 exports.getMe = async (req, res, next) => {
   try {
-    return sendSuccess(res, req, {
-      user: req.user,
-      session: req.session,
-    }, 'Current user retrieved successfully');
+    const result = await authService.getMe(req.user, req.session);
+    return sendSuccess(res, req, result, 'Current user retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -285,86 +131,18 @@ exports.getMe = async (req, res, next) => {
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const allowedUpdates = [
-      "name",
-      "phone",
-    ];
-
-    const filteredUpdates = {};
-    Object.keys(req.body).forEach((key) => {
-      if (allowedUpdates.includes(key)) {
-        filteredUpdates[key] = req.body[key];
-      }
-    });
-
-    // Update user in PostgreSQL
-    const user = await userRepository.update(req.user.id, filteredUpdates);
-
-    if (!user) {
-      return next(new AppError("User not found", 404));
-    }
-
-    // Update role-specific profile
-    if (req.user.role === "doctor") {
-      const doctorUpdates = {};
-      [
-        "specialization",
-        "qualification",
-        "experience",
-        "consultationFee",
-        "department",
-        "bio",
-        "availability",
-      ].forEach((key) => {
-        if (req.body[key] !== undefined) {
-          doctorUpdates[key] = req.body[key];
-        }
-      });
-
-      if (Object.keys(doctorUpdates).length > 0) {
-        await doctorRepository.update(req.user.id, doctorUpdates);
-      }
-    } else if (req.user.role === "patient") {
-      const patientUpdates = {};
-      [
-        "dateOfBirth",
-        "gender",
-        "bloodGroup",
-        "allergies",
-        "chronicConditions",
-        "address",
-        "emergencyContactName",
-        "emergencyContactPhone",
-        "emergencyContactRelation",
-      ].forEach((key) => {
-        if (req.body[key] !== undefined) {
-          patientUpdates[key] = req.body[key];
-        }
-      });
-
-      if (Object.keys(patientUpdates).length > 0) {
-        await patientRepository.update(req.user.id, patientUpdates);
-      }
-    }
-
-    // Invalidate relevant caches after profile update
-    try {
-      await invalidateAfterAuthProfileMutation();
-      logger.debug("Cache invalidated after profile update");
-    } catch (cacheError) {
-      logger.warn("Failed to invalidate cache:", cacheError.message);
-    }
+    const result = await authService.updateProfile(req.user.id, req.body);
 
     await writeAuditLog({
       userId: req.user.id,
       action: AUDIT_ACTIONS.PROFILE_UPDATE,
       entityType: "user",
       entityId: req.user.id,
-      newValues: filteredUpdates,
+      newValues: req.body,
       req,
     });
 
-    return sendSuccess(res, req, { user }, 'Profile updated successfully');
+    return sendSuccess(res, req, { user: result }, 'Profile updated successfully');
   } catch (error) {
     next(error);
   }
@@ -378,42 +156,7 @@ exports.updateProfile = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-
-    if (currentPassword === newPassword) {
-      return next(
-        new AppError(
-          "New password must be different from current password",
-          400
-        )
-      );
-    }
-
-    const user = await userRepository.findByEmail(req.user.email, true);
-
-    if (!user) {
-      return next(new AppError("User not found", 404));
-    }
-
-    // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, user.password_hash);
-
-    if (!isValid) {
-      return next(new AppError("Current password incorrect", 401));
-    }
-
-    // Hash new password
-    const passwordHash = await bcrypt.hash(newPassword, 12);
-
-    // Update password
-    await userRepository.update(req.user.id, { password_hash: passwordHash });
-
-    // Invalidate session-related caches after password change
-    try {
-      await invalidateAfterPasswordMutation(req.user.id);
-      logger.debug("Cache invalidated after password change");
-    } catch (cacheError) {
-      logger.warn("Failed to invalidate cache:", cacheError.message);
-    }
+    await authService.changePassword(req.user.id, currentPassword, newPassword);
 
     await writeAuditLog({
       userId: req.user.id,
@@ -437,14 +180,7 @@ exports.changePassword = async (req, res, next) => {
 exports.updatePushToken = async (req, res, next) => {
   try {
     const { token } = req.body;
-
-    if (!token) {
-      return sendError(res, req, 'Push token is required', 400, 'VALIDATION_ERROR');
-    }
-
-    // Update user in PostgreSQL (we added expo_push_token to the schema)
-    await userRepository.update(req.user.id, { expo_push_token: token });
-
+    await authService.updatePushToken(req.user.id, token);
     return sendSuccess(res, req, {}, 'Push token updated successfully');
   } catch (error) {
     logger.error("Error updating push token", {

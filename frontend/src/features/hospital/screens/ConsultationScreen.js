@@ -31,7 +31,6 @@ import { ChevronLeft, Clock, User, Calendar, Cross, FileText, UserCircle, Activi
 import { theme, healthColors } from '@/theme';
 import {
   getScreenPadding,
-  verticalScale,
 } from '@/utils/responsive';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService } from '@/services';
@@ -39,6 +38,7 @@ import { logError } from '@/utils/errorHandler';
 import { Button, Input } from '@/components/common';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -98,7 +98,7 @@ const ConsultationScreen = ({ navigation, route }) => {
   const appointment = route?.params?.appointment || {};
 
   // Appointment fields — tolerate both camelCase and snake_case field names
-  const appointmentId = appointment.id || appointment._id || appointment.appointmentId;
+  const appointmentId = appointment.id || appointment.appointmentId;
   const patientName = appointment.patientName || "Unknown Patient";
   const patientShortId = appointment.patientUserId || appointment.patientId || "";
   const patientUUID = appointment.patientUUID || appointment.patientId || "";
@@ -106,8 +106,6 @@ const ConsultationScreen = ({ navigation, route }) => {
   const reason = appointment.reason || appointment.chiefComplaint || appointment.chief_complaint || "";
   const appointmentDate = appointment.appointmentDate || appointment.appointment_date || "";
   const appointmentTime = appointment.appointmentTime || appointment.appointment_time || "";
-  const doctorName = appointment.doctorName || "";
-
   // Timer
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef(null);
@@ -273,7 +271,7 @@ const ConsultationScreen = ({ navigation, route }) => {
   // Navigate to prescription
   // ---------------------------------------------------------------------------
   const handleCreatePrescription = useCallback(() => {
-    navigation.navigate("CreatePrescription", {
+    navigation.navigate(Routes.DOCTOR.CREATE_PRESCRIPTION, {
       patientId: patientShortId || patientUUID,
       appointmentId,
     });
@@ -283,7 +281,7 @@ const ConsultationScreen = ({ navigation, route }) => {
   // Navigate to patient history
   // ---------------------------------------------------------------------------
   const handleViewHistory = useCallback(() => {
-    navigation.navigate("PatientManagement", {
+    navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
       patientId: patientShortId || patientUUID,
       patientName,
     });
@@ -566,9 +564,8 @@ const ConsultationScreen = ({ navigation, route }) => {
             accessibilityRole="button"
             accessibilityLabel="Complete consultation"
             accessibilityHint="Marks this consultation as completed"
-          >
-            Complete Consultation
-          </Button>
+          title="Complete Consultation"
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -658,7 +655,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: healthColors.shadows?.light || "#000",
+    shadowColor: healthColors.shadows.color,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -674,7 +671,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: healthColors.primary.main + "18",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.09),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -754,7 +751,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: healthColors.shadows?.light || "#000",
+    shadowColor: healthColors.shadows.color,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -868,15 +865,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  completeButtonDisabled: {
-    opacity: 0.6,
-  },
-  completeButtonText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: "700",
-    color: "#fff",
-    letterSpacing: 0.3,
-  },
+
 });
 
 export default ConsultationScreen;

@@ -1,148 +1,177 @@
-/**
- * BoxSelectionScreen — Role selection screen
- * Preserved: all navigation handlers
- * Enhanced: improved heading hierarchy, premium branded gradient cards
- */
-
-import React from "react";
+import React, { memo, useCallback, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  Dimensions,
   Image,
+  ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Building2, ArrowRight, UserCircle2, ChevronRight, ShieldCheck } from "lucide-react-native";
-import { theme, healthColors, textStyles, spacing } from '@/theme';
-import { ModalSheet, Button } from '@/components/common';
-import logger from '@/utils/logger';
+import {
+  Building2,
+  UserCircle2,
+  ChevronRight,
+  ShieldCheck,
+} from "lucide-react-native";
+import { theme, healthColors, textStyles, spacing } from "@/theme";
+import { ModalSheet, Button } from "@/components/common";
+import logger from "@/utils/logger";
+import Routes from "@/navigation/routes";
 
-const { height } = Dimensions.get("window");
-const SMALL = height < 700;
+const RoleCard = memo(
+  ({
+    icon: Icon,
+    gradientColors,
+    onPress,
+    accessibilityLabel,
+    title,
+    subtitle,
+    badge,
+  }) => (
+    <TouchableOpacity
+      style={styles.cardWrapper}
+      onPress={onPress}
+      activeOpacity={0.9}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cardGradient}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.iconContainer}>
+            <Icon size={theme.iconSizes.xxl} color={theme.colors.text.white} />
+          </View>
+          <View style={styles.cardTextContainer}>
+            <Text style={styles.cardLabel}>CONTINUE AS</Text>
+            <Text style={styles.cardTitle}>{title}</Text>
+            <Text style={styles.cardDescription}>{subtitle}</Text>
+          </View>
+          {badge ? (
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>{badge}</Text>
+            </View>
+          ) : (
+            <View style={styles.actionIcon}>
+              <ChevronRight
+                size={theme.iconSizes.lg}
+                color={theme.withOpacity(theme.colors.text.white, 0.7)}
+              />
+            </View>
+          )}
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  ),
+);
 
 const BoxSelectionScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const [showUserModal, setShowUserModal] = React.useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const { height } = useWindowDimensions();
 
-  const handleHospitalPress = () => {
+  const handleHospitalPress = useCallback(() => {
     try {
-      navigation.navigate("Login");
+      navigation.navigate(Routes.AUTH.LOGIN);
     } catch (error) {
       logger.error("BoxSelectionScreen", "Navigation error", error);
     }
-  };
+  }, [navigation]);
 
-  const handleUserPress = () => {
+  const handleUserPress = useCallback(() => {
     setShowUserModal(true);
-  };
+  }, []);
+
+  // Compute dynamic spacing and heights based on screen size
+  const isSmallScreen = height < 650;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logoWrap}>
-          <Image
-            source={require('../../../../assets/icons/aayucare-logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top, spacing.lg),
+            paddingBottom: Math.max(insets.bottom + spacing.md, spacing.lg),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={[styles.header, isSmallScreen && styles.headerSmall]}>
+          <View
+            style={[styles.logoWrap, isSmallScreen && styles.logoWrapSmall]}
+          >
+            <Image
+              source={require("../../../../assets/icons/aayucare-logo.png")}
+              style={[styles.logo, isSmallScreen && styles.logoSmall]}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.welcomeText}>Welcome to</Text>
+          <Text style={styles.brandTitle}>AayuCare</Text>
+          <View style={styles.subtitleWrap}>
+            <Text style={styles.subtitle}>Choose your role to get started</Text>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.cardsContainer,
+            isSmallScreen && styles.cardsContainerSmall,
+          ]}
+        >
+          <RoleCard
+            icon={Building2}
+            gradientColors={[
+              healthColors.primary.main,
+              healthColors.primary.dark,
+            ]}
+            onPress={handleHospitalPress}
+            accessibilityLabel="Continue as hospital"
+            title="Hospital"
+            subtitle="Admin, Doctor & Employee Access"
+          />
+
+          <RoleCard
+            icon={UserCircle2}
+            gradientColors={[
+              healthColors.secondary.main,
+              healthColors.secondary.dark,
+            ]}
+            onPress={handleUserPress}
+            accessibilityLabel="Continue as user"
+            title="User"
+            subtitle="Personal Health & Wellness"
+            badge="LIMITED ACCESS"
           />
         </View>
-        <Text style={styles.welcomeText}>Welcome to</Text>
-        <Text style={styles.brandTitle}>AayuCare</Text>
-        <View style={styles.subtitleWrap}>
-          <Text style={styles.subtitle}>Choose your role to get started</Text>
+
+        <View style={styles.footer}>
+          <View style={styles.trustBadge}>
+            <ShieldCheck
+              size={theme.iconSizes.sm}
+              color={healthColors.success.main}
+            />
+            <Text style={styles.footerText}>Secure · Private · Trusted</Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
 
-      {/* Cards Container */}
-      <View style={styles.cardsContainer}>
-        {/* Hospital Card */}
-        <TouchableOpacity
-          style={styles.cardWrapper}
-          onPress={handleHospitalPress}
-          activeOpacity={0.9}
-          accessibilityRole="button"
-          accessibilityLabel="Continue as hospital"
-        >
-          <LinearGradient
-            colors={[healthColors.primary.main, healthColors.primary.dark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.cardGradient}
-          >
-            {/* Background Decoration */}
-            <View style={styles.decorCircle1} />
-            <View style={styles.decorCircle2} />
-
-            <View style={styles.cardContent}>
-              <View style={styles.iconContainer}>
-                <Building2 size={36} color={theme.colors.text.white} />
-              </View>
-              <View style={styles.cardTextContainer}>
-                <Text style={styles.cardLabel}>CONTINUE AS</Text>
-                <Text style={styles.cardTitle}>Hospital</Text>
-                <Text style={styles.cardDescription}>
-                  Admin, Doctor & Employee Access
-                </Text>
-              </View>
-              <View style={styles.actionIcon}>
-                <ChevronRight size={24} color={theme.withOpacity(theme.colors.text.white, 0.7)} />
-              </View>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* User Card */}
-        <TouchableOpacity
-          style={styles.cardWrapper}
-          onPress={handleUserPress}
-          activeOpacity={0.9}
-          accessibilityRole="button"
-          accessibilityLabel="Continue as user"
-        >
-          <LinearGradient
-            colors={[healthColors.secondary.main, healthColors.secondary.dark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.cardGradient}
-          >
-            {/* Decoration */}
-            <View style={[styles.decorCircle1, { backgroundColor: theme.withOpacity(theme.colors.text.white, 0.05) }]} />
-            
-            <View style={styles.cardContent}>
-              <View style={[styles.iconContainer, { backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2) }]}>
-                <UserCircle2 size={36} color={theme.colors.text.white} />
-              </View>
-              <View style={styles.cardTextContainer}>
-                <Text style={styles.cardLabel}>CONTINUE AS</Text>
-                <Text style={styles.cardTitle}>User</Text>
-                <Text style={styles.cardDescription}>
-                  Personal Health & Wellness
-                </Text>
-              </View>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>LIMITED ACCESS</Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-
-      {/* Footer */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + 16, 24) }]}>
-        <View style={styles.trustBadge}>
-          <ShieldCheck size={16} color={healthColors.success.main} />
-          <Text style={styles.footerText}>Secure • Private • Trusted</Text>
-        </View>
-      </View>
-
-      {/* User Section Modal */}
       <ModalSheet
         visible={showUserModal}
         onClose={() => setShowUserModal(false)}
@@ -151,13 +180,14 @@ const BoxSelectionScreen = ({ navigation }) => {
       >
         <View style={styles.modalContent}>
           <Text style={styles.modalBody}>
-            The User section is currently under development. Please utilize the Hospital portal for doctor and admin functions.
+            The User section is currently under development. Please utilize the
+            Hospital portal for doctor and admin functions.
           </Text>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             title="Got it"
             onPress={() => setShowUserModal(false)}
-            style={{ marginTop: 24 }}
+            style={styles.modalButton}
           />
         </View>
       </ModalSheet>
@@ -166,33 +196,52 @@ const BoxSelectionScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: healthColors.background.primary 
+  container: {
+    flex: 1,
+    backgroundColor: healthColors.background.primary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "space-between",
   },
   header: {
-    paddingTop: height * (SMALL ? 0.05 : 0.08),
+    paddingTop: spacing.xxl,
     alignItems: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: spacing.xl,
+  },
+  headerSmall: {
+    paddingTop: spacing.md,
   },
   logoWrap: {
     width: 90,
     height: 90,
-    borderRadius: 24,
+    borderRadius: theme.borderRadius.xl,
     backgroundColor: theme.colors.text.white,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: spacing.lg,
     ...theme.shadows.sm,
   },
-  logo: { 
-    width: 64, 
-    height: 64 
+  logoWrapSmall: {
+    width: 70,
+    height: 70,
+    marginBottom: spacing.sm,
+  },
+  logo: {
+    width: 64,
+    height: 64,
+  },
+  logoSmall: {
+    width: 48,
+    height: 48,
   },
   welcomeText: {
     ...textStyles.h4,
     color: healthColors.text.secondary,
-    fontWeight: "500",
+    fontWeight: theme.typography.weights.medium,
     letterSpacing: 0.5,
   },
   brandTitle: {
@@ -201,33 +250,35 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   subtitleWrap: {
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    backgroundColor: healthColors.primary.lightest,
-    borderRadius: 20,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: healthColors.primary.surface,
+    borderRadius: theme.borderRadius.pill,
   },
   subtitle: {
     ...textStyles.bodySmall,
     color: healthColors.primary.main,
-    fontWeight: "600",
+    fontWeight: theme.typography.weights.semibold,
   },
   cardsContainer: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    gap: 20,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    gap: spacing.lg,
+  },
+  cardsContainerSmall: {
+    paddingVertical: spacing.sm,
+    gap: spacing.md,
   },
   cardWrapper: {
-    height: height * (SMALL ? 0.18 : 0.2),
-    borderRadius: 24,
+    height: 128,
+    borderRadius: theme.borderRadius.xxl,
     ...theme.shadows.md,
     overflow: "hidden",
   },
   cardGradient: {
     flex: 1,
-    padding: 24,
-    position: "relative",
+    padding: spacing.lg,
   },
   cardContent: {
     flex: 1,
@@ -235,13 +286,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
+    width: 56,
+    height: 56,
+    borderRadius: theme.borderRadius.lg,
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.25),
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 20,
+    marginRight: spacing.lg,
   },
   cardTextContainer: {
     flex: 1,
@@ -255,12 +306,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     ...textStyles.h2,
     color: theme.colors.text.white,
-    marginTop: 2,
+    marginTop: spacing.xs,
   },
   cardDescription: {
     ...textStyles.bodySmall,
     color: theme.withOpacity(theme.colors.text.white, 0.85),
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   actionIcon: {
     width: 32,
@@ -271,63 +322,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statusBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     right: 0,
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: theme.borderRadius.sm,
   },
   statusText: {
     ...textStyles.overline,
     color: theme.colors.text.white,
     fontWeight: theme.typography.weights.bold,
   },
-  decorCircle1: {
-    position: "absolute",
-    top: -40,
-    right: -20,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.1),
-  },
-  decorCircle2: {
-    position: "absolute",
-    bottom: -30,
-    left: 20,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.05),
-  },
   footer: {
     alignItems: "center",
+    marginTop: spacing.md,
   },
   trustBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: theme.colors.text.white,
-    borderRadius: 20,
+    borderRadius: theme.borderRadius.pill,
     ...theme.shadows.xs,
   },
-  footerText: { 
+  footerText: {
     ...textStyles.caption,
-    color: healthColors.text.tertiary, 
-    fontWeight: "600" 
+    color: healthColors.text.tertiary,
+    fontWeight: theme.typography.weights.semibold,
   },
   modalContent: {
-    paddingBottom: 8,
+    paddingBottom: spacing.sm,
   },
   modalBody: {
     ...textStyles.bodyLarge,
     color: healthColors.text.secondary,
     lineHeight: 24,
     textAlign: "center",
+  },
+  modalButton: {
+    marginTop: spacing.lg,
   },
 });
 

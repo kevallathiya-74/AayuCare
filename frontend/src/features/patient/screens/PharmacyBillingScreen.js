@@ -18,13 +18,10 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft, Cross, Receipt, FileText, BriefcaseMedical, Building, Calculator, CreditCard, Info } from "lucide-react-native";
+import { ArrowLeft, Cross, Receipt, FileText, BriefcaseMedical, Building, CreditCard, Info } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
-import {
-  getScreenPadding,
-  verticalScale,
-} from '@/utils/responsive';
+import { getScreenPadding } from '@/utils/responsive';
 import { SkeletonCardRow, NetworkStatusIndicator, ErrorRecovery, EmptyState } from '@/components/common';
 import { showError, logError } from '@/utils/errorHandler';
 import { useNetworkStatus } from '@/utils/offlineHandler';
@@ -34,6 +31,7 @@ import { DynamicIcon } from '@/components/common';
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
   const [paymentResult, setPaymentResult] = useState(null);
@@ -66,7 +64,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
       const latest = prescriptions[0];
       return {
-        id: latest._id,
+        id: latest.id,
         date: new Date(latest.prescriptionDate || latest.createdAt).toLocaleDateString(
           "en-IN",
           {
@@ -223,10 +221,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft  size={24} color={theme.colors.white} />
+            <ArrowLeft  size={theme.iconSizes.lg} color={theme.colors.white} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Cross  size={32} color={theme.colors.white} />
+            <Cross  size={theme.iconSizes.xxl} color={theme.colors.white} />
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
               <Text style={styles.headerSubtitle}>
@@ -247,8 +245,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           actionLabel={hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"}
           onActionPress={() =>
             hasUpcomingAppointment
-              ? navigation.navigate("MyAppointments")
-              : navigation.navigate("AppointmentBooking")
+              ? navigation.navigate(Routes.PATIENT.MY_APPOINTMENTS)
+              : navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING)
           }
         />
       </SafeAreaView>
@@ -270,10 +268,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft  size={24} color={theme.colors.white} />
+          <ArrowLeft  size={theme.iconSizes.lg} color={theme.colors.white} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Cross  size={32} color={theme.colors.white} />
+          <Cross  size={theme.iconSizes.xxl} color={theme.colors.white} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
             <Text style={styles.headerSubtitle}>
@@ -293,7 +291,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="View payment receipt"
         >
-          <Receipt  size={24} color={theme.colors.white} />
+          <Receipt  size={theme.iconSizes.lg} color={theme.colors.white} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -308,7 +306,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <FileText
               
-              size={20}
+              size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
             <Text style={styles.sectionTitle}>PRESCRIPTION DETAILS</Text>
@@ -334,7 +332,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Medicines List */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <BriefcaseMedical size={20} color={healthColors.primary.main} />
+            <BriefcaseMedical size={theme.iconSizes.md} color={healthColors.primary.main} />
             <Text style={styles.sectionTitle}>
               MEDICINES ({prescription.medicines.length})
             </Text>
@@ -371,7 +369,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <Building
               
-              size={20}
+              size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
             <Text style={styles.sectionTitle}>PURCHASE OPTIONS</Text>
@@ -461,7 +459,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <DynamicIcon
               name="calculator-outline"
-              size={20}
+              size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
             <Text style={styles.sectionTitle}>BILLING SUMMARY</Text>
@@ -502,7 +500,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           <View style={styles.sectionTitleContainer}>
             <CreditCard
               
-              size={20}
+              size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
             <Text style={styles.sectionTitle}>PAYMENT METHOD</Text>
@@ -526,7 +524,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                     { backgroundColor: method.color + "20" },
                   ]}
                 >
-                  <DynamicIcon name={method.icon} size={24} color={method.color} />
+                  <DynamicIcon name={method.icon} size={theme.iconSizes.lg} color={method.color} />
                 </View>
                 <Text style={styles.paymentName}>{method.name}</Text>
                 <DynamicIcon
@@ -535,12 +533,12 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                       ? "checkmark-circle"
                       : "circle"
                   }
-                  size={24}
-                  color={
-                    selectedPayment === method.id
-                      ? method.color
-                      : healthColors.text.tertiary
-                  }
+                   size={theme.iconSizes.lg}
+                   color={
+                     selectedPayment === method.id
+                       ? method.color
+                       : healthColors.text.tertiary
+                   }
                 />
               </TouchableOpacity>
             ))}
@@ -566,7 +564,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
               <>
-                <DynamicIcon name="card" size={24} color={theme.colors.white} />
+                <DynamicIcon name="card" size={theme.iconSizes.lg} color={theme.colors.white} />
                 <Text style={styles.payButtonText}>
                   Pay {formatCurrency(total)}
                 </Text>
@@ -577,7 +575,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Info  size={20} color={theme.colors.info.main} />
+          <Info  size={theme.iconSizes.md} color={theme.colors.info.main} />
           <Text style={styles.infoText}>
             Medicine will be dispensed after successful payment verification
           </Text>
@@ -592,16 +590,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: healthColors.background.primary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
+
   loadingListWrapper: {
     padding: theme.spacing.md,
     gap: theme.spacing.sm + theme.spacing.xs,
@@ -701,9 +690,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: theme.spacing.md,
   },
-  medicineEmoji: {
-    fontSize: theme.typography.sizes.h3,
-  },
+
   medicineInfo: {
     flex: 1,
   },
@@ -739,7 +726,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.sm,
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: healthColors.transparent,
   },
   purchaseOptionSelected: {
     borderColor: healthColors.success.dark,
@@ -833,7 +820,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.sm,
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: healthColors.transparent,
   },
   paymentMethodSelected: {
     borderColor: healthColors.success.dark,

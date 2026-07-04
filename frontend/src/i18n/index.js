@@ -6,7 +6,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import appStorage from '../utils/appStorage';
-import * as Localization from 'expo-localization';
 import { STORAGE_KEYS } from '../utils/constants';
 
 import en from '../locales/en.json';
@@ -34,21 +33,17 @@ i18n
             useSuspense: false,
         },
     })
-    .catch((error) => {
-        console.error('[i18n] Initialization error:', error);
-    });
-
-// Load saved language after initialization
-setTimeout(async () => {
-    try {
-        const savedLanguage = await appStorage.getItem(LANGUAGE_STORAGE_KEY);
+    .then(() => {
+        return appStorage.getItem(LANGUAGE_STORAGE_KEY);
+    })
+    .then((savedLanguage) => {
         if (savedLanguage && ['en', 'hi', 'gu'].includes(savedLanguage)) {
-            await i18n.changeLanguage(savedLanguage);
+            return i18n.changeLanguage(savedLanguage);
         }
-    } catch (error) {
-        console.log('[i18n] Could not load saved language:', error.message);
-    }
-}, 100);
+    })
+    .catch((error) => {
+        console.warn('[i18n] Init or language load failed:', error.message);
+    });
 
 export default i18n;
 

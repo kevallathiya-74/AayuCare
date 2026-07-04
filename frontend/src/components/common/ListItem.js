@@ -7,10 +7,9 @@
 
 import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { healthColors } from '@/theme/healthColors';
+import { theme, healthColors } from '@/theme';
 import { textStyles } from '@/theme/typography';
 import { spacing } from '@/theme/spacing';
-import { getListItemHeight } from '@/utils/responsive';
 import Avatar from './Avatar';
 import DynamicIcon from './DynamicIcon';
 
@@ -142,7 +141,7 @@ const styles = StyleSheet.create({
     iconContainer: {
         width: 40,
         height: 40,
-        borderRadius: 20,
+        borderRadius: theme.borderRadius.modal,
         backgroundColor: healthColors.primary.light + '20',
         alignItems: 'center',
         justifyContent: 'center',
@@ -154,12 +153,12 @@ const styles = StyleSheet.create({
         ...textStyles.bodyLarge,
         fontWeight: '600',
         color: healthColors.text.primary,
-        marginBottom: 2,
+        marginBottom: theme.spacing[2],
     },
     subtitle: {
         ...textStyles.bodyMedium,
         color: healthColors.text.secondary,
-        marginBottom: 2,
+        marginBottom: theme.spacing[2],
     },
     description: {
         ...textStyles.bodySmall,

@@ -4,7 +4,7 @@
  */
 
 import api from '@/services/apiClient';
-import { logError, parseError } from '@/utils/errorHandler';
+import { logError } from '@/utils/errorHandler';
 import { normalizeServiceResponse } from '@/services/responseNormalizer';
 
 class PatientService {
@@ -24,7 +24,7 @@ class PatientService {
             return normalizeServiceResponse(response.data, { fallbackData: [] });
         } catch (error) {
             logError(error, { context: 'PatientService.getAllPatients' });
-            throw this.handleError(error);
+            throw error;
         }
     }
 
@@ -39,7 +39,7 @@ class PatientService {
             return normalizeServiceResponse(response.data, { fallbackData: [] });
         } catch (error) {
             logError(error, { context: 'PatientService.searchPatients', query });
-            throw this.handleError(error);
+            throw error;
         }
     }
 
@@ -58,7 +58,7 @@ class PatientService {
             return normalizeServiceResponse(response.data, { fallbackData: null });
         } catch (error) {
             logError(error, { context: 'PatientService.getPatientById', patientId });
-            throw this.handleError(error);
+            throw error;
         }
     }
 
@@ -73,7 +73,7 @@ class PatientService {
             return normalizeServiceResponse(response.data, { fallbackData: null });
         } catch (error) {
             logError(error, { context: 'PatientService.getCompleteHistory', patientId });
-            throw this.handleError(error);
+            throw error;
         }
     }
 
@@ -98,12 +98,8 @@ class PatientService {
             return normalizeServiceResponse(response.data);
         } catch (error) {
             logError(error, { context: 'PatientService.updatePatientProfile', patientId });
-            throw this.handleError(error);
+            throw error;
         }
-    }
-
-    handleError(error) {
-        return new Error(parseError(error));
     }
 }
 

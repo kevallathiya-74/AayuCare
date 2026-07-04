@@ -29,9 +29,9 @@ import { showError, logError, parseError } from '@/utils/errorHandler';
 import { useNetworkStatus } from '@/utils/offlineHandler';
 import { adminService, notificationService } from '@/services';
 import { queryKeys } from '@/config/reactQueryConfig';
-import logger from '@/utils/logger';
 import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const PAGE_SIZE = 20;
 
@@ -44,15 +44,6 @@ const NotificationsScreen = ({ navigation }) => {
   const canUseNotifications =
     !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
 
-  // Map actionUrl path strings to registered React Navigation route names
-  const ACTION_ROUTE_MAP = {
-    '/appointments': isAdminUser ? 'Appointments' : 'MyAppointments',
-    '/prescriptions': 'MyPrescriptions',
-    '/medical-records': 'MedicalRecords',
-    '/profile': isAdminUser ? 'ManageDoctors' : 'Profile',
-    '/events': isAdminUser ? 'HospitalEventsScreen' : 'HospitalEvents',
-    '/emergency': 'Emergency',
-  };
   const { isConnected } = useNetworkStatus();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -143,7 +134,7 @@ const NotificationsScreen = ({ navigation }) => {
         const isRead = notification.read ?? notification.isRead ?? false;
         // Mark as read if unread
         if (!isRead && !isAdminUser) {
-          await notificationService.markAsRead(notification._id);
+          await notificationService.markAsRead(notification.id);
 
           // Update local state
           queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
@@ -151,6 +142,14 @@ const NotificationsScreen = ({ navigation }) => {
         }
 
         // Navigate based on notification actionUrl
+        const ACTION_ROUTE_MAP = {
+          '/appointments': isAdminUser ? 'Appointments' : 'MyAppointments',
+          '/prescriptions': 'MyPrescriptions',
+          '/medical-records': 'MedicalRecords',
+          '/profile': isAdminUser ? 'ManageDoctors' : 'Profile',
+          '/events': isAdminUser ? 'HospitalEventsScreen' : 'HospitalEvents',
+          '/emergency': 'Emergency',
+        };
         if (notification.actionUrl && typeof notification.actionUrl === 'string') {
           try {
             // Map URL-style paths to registered RN route names
@@ -159,7 +158,7 @@ const NotificationsScreen = ({ navigation }) => {
               navigation.navigate(routeName);
             }
             // If no mapping found, silently ignore (unknown/external URL)
-          } catch (_e) {
+          } catch {
             // navigation error — silently ignore
           }
         }
@@ -169,7 +168,7 @@ const NotificationsScreen = ({ navigation }) => {
         });
       }
     },
-    [navigation, isAdminUser, canUseNotifications]
+    [navigation, isAdminUser, canUseNotifications, queryClient, refetchUnread]
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
@@ -331,7 +330,7 @@ const NotificationsScreen = ({ navigation }) => {
         >
           <DynamicIcon
             name={getNotificationIcon(item.type)}
-            size={24}
+            size={theme.iconSizes.lg}
             color={getNotificationColor(item.priority)}
           />
         </View>
@@ -353,7 +352,7 @@ const NotificationsScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.deleteButton}
-          onPress={() => handleDeleteNotification(item._id, isRead)}
+          onPress={() => handleDeleteNotification(item.id, isRead)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
           accessibilityLabel="Delete notification"
@@ -451,7 +450,7 @@ const NotificationsScreen = ({ navigation }) => {
           actionLabel="Open Settings"
           onActionPress={() => {
             Linking.openSettings().catch(() => {
-              navigation.navigate("Settings");
+              navigation.navigate(Routes.PATIENT.SETTINGS);
             });
           }}
         />
@@ -467,7 +466,7 @@ const NotificationsScreen = ({ navigation }) => {
         <FlatList
           data={notifications}
           renderItem={renderNotification}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => item.id}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
@@ -590,7 +589,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   unreadCard: {
-    backgroundColor: healthColors.primary.light + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.06),
     borderLeftWidth: 3,
     borderLeftColor: healthColors.primary.main,
   },
@@ -644,16 +643,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xs,
     marginLeft: theme.spacing.sm,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-  },
+
 });
 
 export default NotificationsScreen;

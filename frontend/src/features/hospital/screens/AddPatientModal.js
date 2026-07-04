@@ -658,7 +658,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -715,16 +715,7 @@ const styles = StyleSheet.create({
   inputIcon: {
     marginRight: theme.spacing.sm,
   },
-  input: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.primary,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
+
   pickerText: {
     flex: 1,
     paddingVertical: theme.spacing.md,
@@ -736,7 +727,7 @@ const styles = StyleSheet.create({
   },
   dropdownOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   dropdownContainer: {
@@ -768,7 +759,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   dropdownItemSelected: {
-    backgroundColor: healthColors.primary.main + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.06),
   },
   dropdownItemText: {
     fontSize: theme.typography.sizes.lg,

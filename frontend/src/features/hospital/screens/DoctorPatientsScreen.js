@@ -26,8 +26,9 @@ import { theme, healthColors } from '@/theme';
 import { getScreenPadding } from '@/utils/responsive';
 import { doctorService } from '@/services';
 import { queryKeys } from '@/config/reactQueryConfig';
-import { logError, parseError } from '@/utils/errorHandler';
+import { parseError } from '@/utils/errorHandler';
 import { SkeletonCardRow, EmptyState, SearchField } from '@/components/common';
+import Routes from '@/navigation/routes';
 
 const PAGE_SIZE = 20;
 
@@ -65,8 +66,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
       const normalized = list.map((p) => ({
         ...p,
-        id: p.id || p._id || p.userId,
-        _id: p._id || p.id || p.userId,
+        id: p.id || p.userId,
       }));
 
       const start = pageParam;
@@ -112,20 +112,20 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
   const handleWriteRx = useCallback(
     (patient) => {
-      const patientId = patient.userId || patient.id || patient._id;
+      const patientId = patient.userId || patient.id;
       if (!patientId) {
         Alert.alert("Error", "Unable to identify patient. Please try again.");
         return;
       }
-      navigation.navigate("CreatePrescription", { patientId });
+      navigation.navigate(Routes.DOCTOR.CREATE_PRESCRIPTION, { patientId });
     },
     [navigation]
   );
 
   const handleViewHistory = useCallback(
     (patient) => {
-      const patientId = patient.userId || patient.id || patient._id;
-      navigation.navigate("PatientDetails", {
+      const patientId = patient.userId || patient.id;
+      navigation.navigate(Routes.DOCTOR.PATIENT_DETAILS, {
         patientId,
         patientName: patient.name,
       });
@@ -205,7 +205,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
         </View>
         <TouchableOpacity
           style={styles.walkInButton}
-          onPress={() => navigation.navigate("WalkInPatient")}
+          onPress={() => navigation.navigate(Routes.DOCTOR.WALK_IN_PATIENT)}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Register walk-in patient"
@@ -235,7 +235,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
         <FlatList
           data={patients}
           renderItem={renderPatientCard}
-          keyExtractor={(item, index) => String(item.id || item._id || item.userId || item.patientId || `patient-${index}`)}
+          keyExtractor={(item, index) => String(item.id || item.userId || item.patientId || `patient-${index}`)}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
@@ -245,7 +245,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
           contentContainerStyle={[
             styles.listContent,
-            patients.length === 0 && { flexGrow: 1 },
+            patients.length === 0 && styles.listContentEmpty,
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           refreshControl={
@@ -281,7 +281,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
                     : "Patients who have consulted you will appear here. Register a walk-in patient to get started."
                 }
                 actionLabel={searchQuery ? undefined : "Register Walk-In"}
-                onActionPress={searchQuery ? undefined : () => navigation.navigate("WalkInPatient")}
+                onActionPress={searchQuery ? undefined : () => navigation.navigate(Routes.DOCTOR.WALK_IN_PATIENT)}
               />
             )
           }
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   walkInButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: healthColors.primary.light + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.12),
   },
   searchContainer: {
     marginHorizontal: getScreenPadding(),
@@ -335,6 +335,9 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: getScreenPadding(),
     paddingTop: 4,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
   },
   footerLoader: {
     paddingVertical: 12,
@@ -360,7 +363,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: healthColors.primary.light + "30",
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.19),
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -410,17 +413,7 @@ const styles = StyleSheet.create({
   historyButton: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: healthColors.primary.light + "20",
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.body,
-    color: healthColors.text.secondary,
+    backgroundColor: theme.withOpacity(healthColors.primary.light, 0.12),
   },
 });
 

@@ -20,13 +20,13 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     // Always log error to console for debugging with clear markers
-    console.log("═══════════════════════════════════════════");
-    console.log("[ERROR BOUNDARY CAUGHT ERROR]");
-    console.log("Error:", error);
-    console.log("Error Message:", error?.message);
-    console.log("Error Stack:", error?.stack);
-    console.log("Component Stack:", errorInfo?.componentStack);
-    console.log("═══════════════════════════════════════════");
+    console.warn("═══════════════════════════════════════════");
+    console.warn("[ERROR BOUNDARY CAUGHT ERROR]");
+    console.warn("Error:", error);
+    console.warn("Error Message:", error?.message);
+    console.warn("Error Stack:", error?.stack);
+    console.warn("Component Stack:", errorInfo?.componentStack);
+    console.warn("═══════════════════════════════════════════");
 
     // Send to Sentry
     try {
@@ -35,7 +35,7 @@ class ErrorBoundary extends React.Component {
         extra: { errorInfo },
       });
     } catch (sentryError) {
-      console.log(
+      console.warn(
         "[ErrorBoundary] Sentry capture failed:",
         sentryError.message
       );
@@ -92,10 +92,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     maxWidth: 400,
   },
-  emoji: {
-    fontSize: theme.typography.sizes.displayLarge,
-    marginBottom: theme.spacing.lg,
-  },
   title: {
     fontSize: theme.typography.sizes.h3,
     fontWeight: "bold",
@@ -113,7 +109,7 @@ const styles = StyleSheet.create({
   errorDetails: {
     backgroundColor: healthColors.background.secondary,
     padding: theme.spacing.md,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.sm,
     marginBottom: theme.spacing.lg,
     width: "100%",
   },
@@ -126,7 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main,
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.md,
-    borderRadius: 8,
+    borderRadius: theme.borderRadius.sm,
     minWidth: 150,
   },
   buttonText: {

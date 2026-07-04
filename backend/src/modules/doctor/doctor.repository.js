@@ -1,6 +1,5 @@
-const { query, getClient } = require("../../config/postgres");
+const { query } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
-const logger = require("../../utils/logger");
 
 /**
  * Doctor Repository - PostgreSQL data access layer
@@ -71,7 +70,6 @@ class DoctorRepository {
     
     // Map snake_case PostgreSQL fields to camelCase for frontend
     return {
-      _id: row.user_uuid,
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,
@@ -172,13 +170,12 @@ class DoctorRepository {
       params.push(hospitalId);
     }
 
-    sql += ` ORDER BY u.name`;
+    sql += ` ORDER BY u.name LIMIT 100`;
 
     const result = await query(sql, params);
     
     // Map snake_case PostgreSQL fields to camelCase for frontend
     const mappedDoctors = result.rows.map(row => ({
-      _id: row.user_uuid,
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,
@@ -243,7 +240,6 @@ class DoctorRepository {
     
     // Map snake_case PostgreSQL fields to camelCase for frontend
     const mappedDoctors = result.rows.map(row => ({
-      _id: row.user_uuid, // MongoDB compatibility
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,
@@ -330,7 +326,6 @@ class DoctorRepository {
     
     // Map snake_case PostgreSQL fields to camelCase for frontend
     const mappedDoctors = result.rows.map(row => ({
-      _id: row.user_uuid, // MongoDB compatibility
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,

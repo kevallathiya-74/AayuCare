@@ -42,6 +42,7 @@ import { AIIcon } from '@/components/common/CustomIcons';
 import { getScreenPadding } from '@/utils/responsive';
 import { handleSmartBack } from '@/utils/navigation';
 import { showError, parseError, logError } from '@/utils/errorHandler';
+import Routes from '@/navigation/routes';
 import { useNetworkStatus } from '@/utils/offlineHandler';
 import aiService from '@/services/ai.service';
 
@@ -526,7 +527,7 @@ const AISymptomChecker = ({ navigation }) => {
             <SectionHeader
               title="3. Disease Info"
               actionLabel="Open Full Center"
-              onAction={() => navigation.navigate("DiseaseInfo")}
+              onAction={() => navigation.navigate(Routes.PATIENT.DISEASE_INFO)}
             />
 
             {!topCondition ? (
