@@ -3,6 +3,7 @@
     { "path": "ecc" },
     { "path": "agency-agents" },
     { "path": "impeccable" },
-    { "path": "vercel-skills" }
+    { "path": "vercel-skills" },
+    { "path": "skills" }
   ]
 }

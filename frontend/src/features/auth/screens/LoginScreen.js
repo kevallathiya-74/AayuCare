@@ -41,7 +41,13 @@ const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { isLoading } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height: windowHeight } = useWindowDimensions();
+  const initialHeightRef = useRef(0);
+  if (initialHeightRef.current === 0 && windowHeight > 0) {
+    initialHeightRef.current = windowHeight;
+  }
+  // Use initial height to prevent keyboard-triggered layout resizing and input focus loss
+  const height = initialHeightRef.current || windowHeight || 800;
 
   // Responsive header height: 35% on tall phones, 30% min on small screens
   const headerHeight = Math.max(height * 0.35, 220);
@@ -129,9 +135,9 @@ const LoginScreen = ({ navigation }) => {
         backgroundColor={healthColors.primary.dark}
       />
 
-      {/* Single KeyboardAvoidingView — works on both iOS (padding) and Android (height) */}
+      {/* Single KeyboardAvoidingView — iOS-only padding avoidance, native Android adjustment */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.keyboardView}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
