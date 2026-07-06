@@ -15,7 +15,7 @@ import {
   Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
+import { theme } from '@/theme';
 
 
 import { DynamicIcon } from '@/components/common';

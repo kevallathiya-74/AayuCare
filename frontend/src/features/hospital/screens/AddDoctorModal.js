@@ -166,9 +166,8 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               loading={loading}
               onPress={handleSubmit}
               style={styles.submitButton}
-            >
-              Add Doctor
-            </Button>
+              title="Add Doctor"
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -179,7 +178,7 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -209,100 +208,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     flexShrink: 1,
   },
-  inputContainer: {
-    marginBottom: theme.spacing.md,
-  },
-  label: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    paddingHorizontal: theme.spacing.md,
-  },
-  inputError: {
-    borderColor: healthColors.error.main,
-  },
-  inputIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.primary,
-  },
-  picker: {
-    flex: 1,
-    height: 50,
-    color: healthColors.text.primary,
-    marginLeft: -8,
-  },
-  pickerText: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.primary,
-  },
-  placeholderText: {
-    color: healthColors.text.tertiary,
-  },
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  dropdownContainer: {
-    backgroundColor: healthColors.background.primary,
-    borderTopLeftRadius: theme.borderRadius.lg,
-    borderTopRightRadius: theme.borderRadius.lg,
-    maxHeight: "60%",
-    ...theme.shadows.lg,
-  },
-  dropdownHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  dropdownTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  dropdownItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  dropdownItemSelected: {
-    backgroundColor: healthColors.primary.main + "10",
-  },
-  dropdownItemText: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.primary,
-  },
-  dropdownItemTextSelected: {
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  errorText: {
-    fontSize: theme.typography.sizes.sm,
-    color: healthColors.error.main,
-    marginTop: theme.spacing.xs,
-  },
+
   noteText: {
     fontSize: theme.typography.sizes.sm,
     color: healthColors.text.tertiary,
@@ -335,11 +241,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: healthColors.primary.main,
   },
-  submitButtonText: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.white,
-  },
+
 });
 
 export default AddDoctorModal;

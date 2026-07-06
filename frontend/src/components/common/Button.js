@@ -88,7 +88,8 @@ const Button = ({
   };
 
   const getButtonStyle = () => {
-    const baseStyle = [styles.button, styles[size]];
+    const sizeStyles = { small: styles.small, medium: styles.medium, large: styles.large };
+    const baseStyle = [styles.button, sizeStyles[size] || sizeStyles.medium];
     if (fullWidth) baseStyle.push(styles.fullWidth);
     if (disabled || loading) baseStyle.push(styles.disabled);
 
@@ -105,7 +106,8 @@ const Button = ({
   };
 
   const getTextStyle = () => {
-    const baseStyle = [styles.buttonText, styles[`${size}Text`]];
+    const sizeTextStyles = { small: styles.smallText, medium: styles.mediumText, large: styles.largeText };
+    const baseStyle = [styles.buttonText, sizeTextStyles[size] || sizeTextStyles.medium];
 
     switch (variant) {
       case 'secondary': baseStyle.push(styles.secondaryText); break;
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // Sizes
+  // Sizes (dynamically accessed via styles[size])
   small: {
     height: Math.max(getButtonHeight('small'), touchTargets.medium),
     paddingHorizontal: spacing.md,
@@ -216,27 +218,23 @@ const styles = StyleSheet.create({
   // Variants
   primary: {
     backgroundColor: healthColors.primary.main,
-    shadowColor: healthColors.primary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 4,
+    ...theme.shadows.button,
   },
   secondary: {
     backgroundColor: healthColors.primary.surface,
     borderWidth: 0,
   },
   outline: {
-    backgroundColor: 'transparent',
+    backgroundColor: healthColors.transparent,
     borderWidth: 1.5,
     borderColor: healthColors.primary.main,
   },
   ghost: {
-    backgroundColor: 'transparent',
+    backgroundColor: healthColors.transparent,
     borderWidth: 0,
   },
   textBtn: {
-    backgroundColor: 'transparent',
+    backgroundColor: healthColors.transparent,
     borderWidth: 0,
     paddingHorizontal: spacing.sm,
   },
@@ -256,12 +254,8 @@ const styles = StyleSheet.create({
   },
   gradientWrapper: {
     padding: 0,
-    backgroundColor: 'transparent',
-    shadowColor: healthColors.primary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: healthColors.transparent,
+    ...theme.shadows.button,
   },
 
   // Text styles (responsive)

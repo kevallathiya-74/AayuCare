@@ -36,7 +36,7 @@ const PatientSearchBar = ({
       <View style={styles.results}>
         {results.map((patient) => (
           <TouchableOpacity
-            key={patient._id || patient.id}
+            key={patient.id}
             style={styles.resultRow}
             onPress={() => onSelectPatient(patient)}
             activeOpacity={0.7}
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   resultAvatar: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: healthColors.primary.main + "14",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center", alignItems: "center",
   },
   resultInfo: { flex: 1 },

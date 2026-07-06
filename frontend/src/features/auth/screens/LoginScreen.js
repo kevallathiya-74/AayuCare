@@ -1,10 +1,10 @@
 /**
  * Login Screen
- * Single authentication screen with role-based login
+ * Premium SaaS UI - HealthCare UX
  * Supports: Admin, Doctor, Patient roles
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -15,227 +15,292 @@ import {
   ScrollView,
   StatusBar,
   Animated,
+  Keyboard,
+  useWindowDimensions,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Cross, Users, User, Lock, AlertCircle, ShieldCheck } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
-import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from '@/store/slices/authSlice';
 import {
-  getScreenPadding,
-  getSafeAreaEdges,
-  getKeyboardConfig,
-  isTablet,
-} from '@/utils/responsive';
-import { Input, Button, DynamicIcon } from '@/components/common';
-
-// Development auto-fill credentials (only available in __DEV__ mode)
-// Simple test credentials for easy development
-const DEV_CREDENTIALS = __DEV__
-  ? {
-      patient: { userId: "pat1", password: "password123" },
-      doctor: { userId: "doc1", password: "password123" },
-      admin: { userId: "adm1", password: "password123" },
-    }
-  : null;
+  User,
+  Lock,
+  AlertCircle,
+  ShieldCheck,
+  ArrowRight,
+  HeartPulse,
+} from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { theme, healthColors } from "@/theme";
+import Routes from "@/navigation/routes";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "@/store/slices/authSlice";
+import { Input, Button } from "@/components/common";
 
 const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { isLoading } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+
+  // Responsive header height: 35% on tall phones, 30% min on small screens
+  const headerHeight = Math.max(height * 0.35, 220);
+  // Card overlap into header — proportional so it never clips on small screens
+  const cardOverlap = Math.min(headerHeight * 0.12, 48);
 
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [showDevHelper, setShowDevHelper] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ userId: "", password: "" });
   const [formError, setFormError] = useState("");
 
   const passwordInputRef = useRef(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
-  const handleAutoFill = (role) => {
-    const credentials = DEV_CREDENTIALS[role];
-    if (credentials) {
-      setUserId(credentials.userId);
-      setPassword(credentials.password);
-      setFieldErrors({ userId: "", password: "" });
-      setFormError("");
-      setShowDevHelper(false);
-    }
-  };
-
-  const validateLoginForm = () => {
-    const nextErrors = { userId: "", password: "" };
-    const trimmedUserId = userId.trim();
-
-    if (!trimmedUserId) {
-      nextErrors.userId = "Email or User ID is required";
-    } else if (trimmedUserId.length < 3) {
-      nextErrors.userId = "Enter a valid Email or User ID";
-    }
-
-    if (!password) {
-      nextErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters";
-    }
-
-    setFieldErrors(nextErrors);
-    return !nextErrors.userId && !nextErrors.password;
-  };
-
-  const handleLogin = async () => {
-    setFormError("");
-
-    if (!validateLoginForm()) {
-      return;
-    }
-
-    // Animate button press
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.97,
-        duration: 80,
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
         useNativeDriver: true,
       }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 120,
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
+  }, [fadeAnim, slideAnim]);
+
+  const handleLogin = useCallback(async () => {
+    Keyboard.dismiss();
+
+    const newErrors = { userId: "", password: "" };
+    if (!userId.trim()) newErrors.userId = "User ID is required";
+    if (!password) newErrors.password = "Password is required";
+
+    if (newErrors.userId || newErrors.password) {
+      setFieldErrors(newErrors);
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.95,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      return;
+    }
+
+    setFieldErrors({ userId: "", password: "" });
+    setFormError("");
 
     try {
-      await dispatch(
-        loginUser({
-          userId,
-          password,
-        })
-      ).unwrap();
-      // Role-based navigation handled automatically by AppNavigator
-    } catch (err) {
-      const message = err?.message || err?.toString() || "Login failed";
-      setFormError(message);
+      await dispatch(loginUser({ userId, password })).unwrap();
+    } catch (error) {
+      setFormError(error?.message || "Invalid credentials. Please try again.");
     }
-  };
+  }, [userId, password, dispatch, scaleAnim]);
 
-  const handleForgotPassword = () => {
-    navigation.navigate("ForgotPassword");
-  };
+  const onUserIdChange = useCallback((text) => {
+    setUserId(text);
+    setFieldErrors((prev) => (prev.userId ? { ...prev, userId: "" } : prev));
+    setFormError((prev) => (prev ? "" : prev));
+  }, []);
+
+  const onPasswordChange = useCallback((text) => {
+    setPassword(text);
+    setFieldErrors((prev) =>
+      prev.password ? { ...prev, password: "" } : prev,
+    );
+    setFormError((prev) => (prev ? "" : prev));
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={healthColors.primary.main}
+        backgroundColor={healthColors.primary.dark}
       />
 
+      {/* Single KeyboardAvoidingView — works on both iOS (padding) and Android (height) */}
       <KeyboardAvoidingView
-        behavior={getKeyboardConfig().behavior}
-        keyboardVerticalOffset={getKeyboardConfig().keyboardVerticalOffset}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom + 24, 36) },
+        <LoginForm
+          scrollInsets={insets}
+          navigation={navigation}
+          userId={userId}
+          password={password}
+          onUserIdChange={onUserIdChange}
+          onPasswordChange={onPasswordChange}
+          fieldErrors={fieldErrors}
+          formError={formError}
+          isLoading={isLoading}
+          handleLogin={handleLogin}
+          passwordInputRef={passwordInputRef}
+          fadeAnim={fadeAnim}
+          slideAnim={slideAnim}
+          scaleAnim={scaleAnim}
+          headerHeight={headerHeight}
+          cardOverlap={cardOverlap}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const iconColor = healthColors.text.tertiary;
+const iconSize = theme.iconSizes.md;
+const emailIcon = <User size={iconSize} color={iconColor} />;
+const lockIcon = <Lock size={iconSize} color={iconColor} />;
+
+const LoginForm = memo(
+  ({
+    scrollInsets,
+    navigation,
+    userId,
+    password,
+    onUserIdChange,
+    onPasswordChange,
+    fieldErrors,
+    formError,
+    isLoading,
+    handleLogin,
+    passwordInputRef,
+    fadeAnim,
+    slideAnim,
+    scaleAnim,
+    headerHeight,
+    cardOverlap,
+  }) => {
+    const onEmailSubmit = useCallback(() => {
+      passwordInputRef.current?.focus();
+    }, [passwordInputRef]);
+
+    return (
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(scrollInsets.bottom + 24, 40) },
+        ]}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* ── Premium Header ── */}
+        <LinearGradient
+          colors={[
+            healthColors.primary.dark,
+            healthColors.primary.main,
+            healthColors.secondary.main,
           ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          style={[styles.header, { height: headerHeight }]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1.5 }}
         >
-          {/* ── Hero Header ── */}
-          <LinearGradient
-            colors={['#0F766E', '#14B8A6', '#0EA5E9']}
-            style={styles.header}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            {/* Decorative circles */}
-            <View style={styles.circleTopRight} pointerEvents="none" />
-            <View style={styles.circleBottomLeft} pointerEvents="none" />
-            <View style={styles.circleMid} pointerEvents="none" />
+          <View style={styles.abstractShape1} pointerEvents="none" />
+          <View style={styles.abstractShape2} pointerEvents="none" />
 
-            <View style={styles.logoContainer}>
-              <View style={styles.logo}>
-                <Cross
-                  size={44}
-                  color={healthColors.neutral.white}
+          <Animated.View style={[styles.logoContainer, { opacity: fadeAnim }]}>
+            <View style={styles.logoOuter}>
+              <LinearGradient
+                colors={[
+                  theme.withOpacity(healthColors.text.white, 0.3),
+                  theme.withOpacity(healthColors.text.white, 0.1),
+                ]}
+                style={styles.logoInner}
+              >
+                <HeartPulse
+                  size={42}
+                  color={healthColors.text.white}
+                  strokeWidth={2.5}
                 />
-              </View>
-              <Text style={styles.appName}>AayuCare</Text>
-              <Text style={styles.tagline}>Smart Healthcare Management</Text>
+              </LinearGradient>
             </View>
-          </LinearGradient>
-
-          {/* ── Login Form Card ── */}
-          <View style={styles.formCard}>
-            <Text style={styles.welcomeText}>Welcome Back</Text>
-            <Text style={styles.subtitleText}>
-              Sign in to access your healthcare dashboard
+            <Text style={styles.appName} accessibilityRole="header">
+              AayuCare
             </Text>
+            <Text style={styles.tagline}>Elevating Healthcare Together</Text>
+          </Animated.View>
+        </LinearGradient>
 
-            {/* Role pill */}
-            <View style={styles.roleIndicator}>
-              <Users
-                
-                size={14}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.roleText}>Admin · Doctor · Patient</Text>
-            </View>
+        {/* ── Glassmorphic Form Card ── */}
+        <Animated.View
+          style={[
+            styles.formCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+              marginTop: -cardOverlap,
+            },
+          ]}
+        >
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>Sign In</Text>
+            <Text style={styles.subtitleText}>
+              Enter your credentials to continue
+            </Text>
+          </View>
 
-            {/* ── User ID ── */}
+          <View
+            style={styles.rolePills}
+            accessible={true}
+            accessibilityLabel="Roles available: Admin, Doctor, Patient"
+          >
+            {["Admin", "Doctor", "Patient"].map((role, idx) => (
+              <View key={role} style={styles.roleBadge}>
+                <View
+                  style={[
+                    styles.roleDot,
+                    {
+                      backgroundColor:
+                        idx === 0
+                          ? healthColors.accent.coral
+                          : idx === 1
+                            ? healthColors.secondary.main
+                            : healthColors.primary.main,
+                    },
+                  ]}
+                />
+                <Text style={styles.roleBadgeText}>{role}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.inputGroup}>
             <Input
               label="Email or User ID"
               value={userId}
-              onChangeText={(text) => {
-                setUserId(text);
-                if (fieldErrors.userId || formError) {
-                  setFieldErrors((prev) => ({ ...prev, userId: "" }));
-                  setFormError("");
-                }
-              }}
-              placeholder="Enter your email or user ID"
-              leftIcon={
-                <User
-                  
-                  size={18}
-                  color={healthColors.text.tertiary}
-                />
-              }
+              onChangeText={onUserIdChange}
+              placeholder="e.g. pat1, doc1, admin@aayucare.com"
+              leftIcon={emailIcon}
               error={fieldErrors.userId}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current?.focus()}
+              onSubmitEditing={onEmailSubmit}
               editable={!isLoading}
-              keyboardType="email-address"
               style={styles.inputSpacing}
+              accessibilityLabel="Email or User ID Input"
             />
+          </View>
 
-            {/* ── Password ── */}
+          <View style={styles.inputGroup}>
             <Input
               label="Password"
               value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (fieldErrors.password || formError) {
-                  setFieldErrors((prev) => ({ ...prev, password: "" }));
-                  setFormError("");
-                }
-              }}
+              onChangeText={onPasswordChange}
               placeholder="Enter your password"
-              leftIcon={
-                <Lock
-                  
-                  size={18}
-                  color={healthColors.text.tertiary}
-                />
-              }
+              leftIcon={lockIcon}
               secureTextEntry
               error={fieldErrors.password}
               ref={passwordInputRef}
@@ -243,137 +308,75 @@ const LoginScreen = ({ navigation }) => {
               onSubmitEditing={handleLogin}
               editable={!isLoading}
               style={styles.inputSpacing}
+              accessibilityLabel="Password Input"
             />
+          </View>
 
-            {/* Form-level error */}
-            {!!formError && (
-              <View style={styles.formErrorContainer}>
-                <AlertCircle
-                  
-                  size={16}
-                  color={healthColors.error.main}
-                />
-                <Text style={styles.formErrorText}>{formError}</Text>
-              </View>
-            )}
+          {!!formError && (
+            <View style={styles.formErrorContainer} accessibilityRole="alert">
+              <AlertCircle
+                size={theme.iconSizes.sm}
+                color={healthColors.error.main}
+              />
+              <Text style={styles.formErrorText}>{formError}</Text>
+            </View>
+          )}
 
-            {/* Forgot password */}
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Forgot password"
-              accessibilityHint="Opens password reset screen"
-            >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => navigation.navigate(Routes.AUTH.FORGOT_PASSWORD)}
+            activeOpacity={0.6}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            accessibilityRole="button"
+            accessibilityLabel="Forgot Password"
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
 
-            {/* ── Dev Quick-Login Helper ── */}
-            {__DEV__ && (
-              <View style={styles.devHelper}>
-                <TouchableOpacity
-                  style={styles.devToggle}
-                  onPress={() => setShowDevHelper(!showDevHelper)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={showDevHelper ? "Hide quick login" : "Show quick login"}
-                >
-                  <DynamicIcon
-                    name={showDevHelper ? "chevron-up" : "chevron-down"}
-                    size={14}
-                    color={healthColors.info.main}
+          <Animated.View
+            style={[
+              styles.loginBtnWrapper,
+              { transform: [{ scale: scaleAnim }] },
+            ]}
+          >
+            <Button
+              onPress={handleLogin}
+              loading={isLoading}
+              disabled={isLoading}
+              style={styles.loginBtn}
+              gradient
+              fullWidth
+              icon={
+                !isLoading ? (
+                  <ArrowRight
+                    size={theme.iconSizes.md}
+                    color={healthColors.text.white}
                   />
-                  <Text style={styles.devToggleText}>
-                    {showDevHelper ? "Hide Quick Login" : "Quick Login"}
-                  </Text>
-                </TouchableOpacity>
+                ) : null
+              }
+              iconPosition="right"
+              accessibilityRole="button"
+              accessibilityLabel="Continue to Login"
+            >
+              <Text>Continue</Text>
+            </Button>
+          </Animated.View>
+        </Animated.View>
 
-                {showDevHelper && (
-                  <View style={styles.devButtons}>
-                    {[
-                      { role: "patient", icon: "people", color: healthColors.primary.main },
-                      { role: "doctor", icon: "medical", color: healthColors.secondary.main },
-                      { role: "admin", icon: "shield-checkmark", color: healthColors.accent.coral },
-                    ].map(({ role, icon, color }) => (
-                      <TouchableOpacity
-                        key={role}
-                        style={[styles.devButton, { borderColor: color + "40" }]}
-                        onPress={() => handleAutoFill(role)}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Use ${role} demo credentials`}
-                      >
-                        <DynamicIcon name={icon} size={14} color={color} />
-                        <Text style={styles.devButtonText}>
-                          {role.charAt(0).toUpperCase() + role.slice(1)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* ── Login Button ── */}
-            <Animated.View style={[styles.loginBtnWrapper, { transform: [{ scale: scaleAnim }] }]}>
-              <Button
-                onPress={handleLogin}
-                loading={isLoading}
-                disabled={isLoading}
-                variant="primary"
-                gradient
-                fullWidth
-                size="large"
-                icon={
-                  !isLoading ? (
-                    <DynamicIcon
-                      name="arrow-forward"
-                      size={20}
-                      color={healthColors.neutral.white}
-                    />
-                  ) : null
-                }
-                iconPosition="right"
-              >
-                Sign In
-              </Button>
-            </Animated.View>
-
-            {/* Dev credentials reference */}
-            {__DEV__ && (
-              <View style={styles.demoSection}>
-                <Text style={styles.demoTitle}>Dev Credentials</Text>
-                {[
-                  { label: "Patient:", value: "pat1 / password123" },
-                  { label: "Doctor:", value: "doc1 / password123" },
-                  { label: "Admin:", value: "adm1 / password123" },
-                ].map(({ label, value }) => (
-                  <View key={label} style={styles.demoRow}>
-                    <Text style={styles.demoLabel}>{label}</Text>
-                    <Text style={styles.demoValue}>{value}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* ── Footer ── */}
-          <View style={styles.footer}>
-            <ShieldCheck
-              
-              size={14}
-              color={healthColors.text.tertiary}
-            />
-            <Text style={styles.footerText}>
-              Secure Login · Your data is protected
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-};
+        {/* ── Footer ── */}
+        <View style={styles.footer}>
+          <ShieldCheck
+            size={theme.iconSizes.sm}
+            color={healthColors.primary.main}
+          />
+          <Text style={styles.footerText}>
+            End-to-end encrypted · HIPAA Compliant
+          </Text>
+        </View>
+      </ScrollView>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -383,239 +386,165 @@ const styles = StyleSheet.create({
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1 },
 
-  // ── Header ──
+  // ── Premium Header ──
   header: {
-    paddingTop: 52,
-    paddingBottom: 68,
-    alignItems: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
-    overflow: 'hidden',
-    shadowColor: '#0F766E',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 12,
+    overflow: "hidden",
+    ...theme.shadows.xl,
   },
-  circleTopRight: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
+  abstractShape1: {
+    position: "absolute",
+    top: -50,
+    right: -80,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.08),
+  },
+  abstractShape2: {
+    position: "absolute",
+    bottom: -60,
+    left: -40,
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.05),
   },
-  circleBottomLeft: {
-    position: 'absolute',
-    bottom: -30,
-    left: -30,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+  logoContainer: {
+    alignItems: "center",
   },
-  circleMid: {
-    position: 'absolute',
-    top: 20,
-    left: '30%',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+  logoOuter: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.15),
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.withOpacity(healthColors.text.white, 0.3),
   },
-  logoContainer: { alignItems: 'center' },
-  logo: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.28)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+  logoInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
   },
   appName: {
     fontSize: theme.typography.sizes.h1,
-    fontWeight: '800',
-    color: healthColors.neutral.white,
+    fontWeight: "800",
+    color: healthColors.text.white,
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: theme.spacing.xs,
   },
   tagline: {
-    fontSize: theme.typography.sizes.bodySmall,
-    color: 'rgba(255,255,255,0.82)',
-    letterSpacing: 0.6,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: theme.withOpacity(healthColors.text.white, 0.9),
+    letterSpacing: 0.5,
+    fontWeight: "500",
   },
 
-  // ── Form Card ──
+  // ── Glassmorphic Form Card ──
   formCard: {
-    marginTop: -40,
-    marginHorizontal: getScreenPadding(),
-    maxWidth: isTablet() ? 480 : 440,
-    width: '100%',
-    alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 28,
+    marginHorizontal: theme.spacing.lg,
+    backgroundColor: healthColors.background.card,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
     borderWidth: 1,
-    borderColor: healthColors.border.light,
-    shadowColor: '#0F172A',
+    borderColor: theme.withOpacity(healthColors.neutral.gray200, 0.8),
+    shadowColor: healthColors.neutral.gray500,
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOpacity: 0.08,
+    shadowRadius: 30,
+    elevation: 8,
+  },
+  welcomeContainer: {
+    marginBottom: theme.spacing.lg,
   },
   welcomeText: {
-    fontSize: theme.typography.sizes.h3,
-    fontWeight: '700',
+    fontSize: theme.typography.sizes.h2,
+    fontWeight: "800",
     color: healthColors.text.primary,
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
     letterSpacing: 0.2,
   },
   subtitleText: {
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
-    lineHeight: 20,
-    marginBottom: 20,
+    lineHeight: 22,
   },
-  roleIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: healthColors.primary.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: healthColors.primary[200],
-    gap: 6,
+  rolePills: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
-  roleText: {
+  roleBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: healthColors.background.tertiary,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.badge,
+    gap: theme.spacing.xs,
+  },
+  roleDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  roleBadgeText: {
     fontSize: theme.typography.sizes.bodySmall,
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semibold,
-    letterSpacing: 0.3,
+    color: healthColors.text.secondary,
+    fontWeight: "600",
   },
-  inputSpacing: { marginBottom: 12 },
+  inputGroup: {
+    marginBottom: theme.spacing.lg,
+  },
+  inputSpacing: {
+    marginBottom: 0,
+  },
 
-  // ── Form Error ──
+  // ── Errors & Helpers ──
   formErrorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
     backgroundColor: healthColors.error.background,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: healthColors.error.surface,
+    gap: theme.spacing.sm,
   },
   formErrorText: {
     flex: 1,
-    fontSize: theme.typography.sizes.caption,
+    fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.error.main,
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: "500",
   },
-
-  // ── Forgot password ──
   forgotPassword: {
     alignSelf: "flex-end",
-    marginBottom: 20,
-    marginTop: 2,
-    paddingVertical: 4,
+    marginBottom: theme.spacing.xl,
   },
   forgotPasswordText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semibold,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.secondary.main,
+    fontWeight: "600",
   },
 
-  // ── Login button wrapper ──
-  loginBtnWrapper: { width: "100%", marginTop: 8 },
-
-  // ── Dev Helper ──
-  devHelper: {
-    marginBottom: 16,
-    backgroundColor: healthColors.info.main + "08",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.info.main + "1A",
-    overflow: "hidden",
+  // ── Login Button ──
+  loginBtnWrapper: {
+    width: "100%",
+    marginBottom: theme.spacing.md,
   },
-  devToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    gap: 6,
-  },
-  devToggleText: {
-    fontSize: theme.typography.sizes.bodySmall,
-    color: healthColors.info.main,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  devButtons: {
-    flexDirection: "row",
-    gap: 8,
-    padding: 12,
-    paddingTop: 4,
-  },
-  devButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    backgroundColor: healthColors.background.card,
-  },
-  devButtonText: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-  },
-
-  // ── Demo Section ──
-  demoSection: {
-    marginTop: 20,
-    padding: 14,
-    backgroundColor: healthColors.background.tertiary,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    borderStyle: "dashed",
-  },
-  demoTitle: {
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.secondary,
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  demoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  demoLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-    fontWeight: theme.typography.weights.medium,
-  },
-  demoValue: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.medium,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+  loginBtn: {
+    height: 56,
+    borderRadius: theme.borderRadius.button,
   },
 
   // ── Footer ──
@@ -623,12 +552,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 24,
-    gap: 6,
+    marginTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.lg,
+    gap: theme.spacing.sm,
   },
   footerText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
+    fontWeight: "500",
   },
 });
 

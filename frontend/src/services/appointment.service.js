@@ -199,5 +199,6 @@ class AppointmentService {
     }
 }
 
+export { AppointmentService };
 export default new AppointmentService();
 

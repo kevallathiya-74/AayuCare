@@ -39,11 +39,9 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     } = req.query;
 
     const normalizedRecordType = normalizeRecordType(recordType);
-    // Validate recordType against allowed enum
     if (normalizedRecordType && !VALID_RECORD_TYPES.includes(normalizedRecordType)) {
       return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
     }
-    // Validate UUID-format IDs if provided
     const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (patientId && !UUID_RE.test(String(patientId))) {
       return next(new AppError('Invalid patient ID format', 400));
@@ -52,43 +50,26 @@ exports.getAllMedicalRecords = async (req, res, next) => {
       return next(new AppError('Invalid doctor ID format', 400));
     }
 
-    // Build query
     const query = {};
 
-    // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
       query.hospitalId = req.hospitalId;
     }
 
-    if (patientId) {
-      query.patientId = patientId;
-    }
+    if (patientId) query.patientId = patientId;
+    if (doctorId) query.doctorId = doctorId;
+    if (normalizedRecordType) query.recordType = normalizedRecordType;
+    if (startDate) query.startDate = new Date(startDate);
+    if (endDate) query.endDate = new Date(endDate);
 
-    if (doctorId) {
-      query.doctorId = doctorId;
-    }
-
-    if (normalizedRecordType) {
-      query.recordType = normalizedRecordType;
-    }
-
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
-    }
-
-    // Pagination
     const skip = (page - 1) * limit;
-
     const options = {
-      sort: { date: -1 },
+      sort: 'record_date DESC',
       offset: skip,
       limit: parseInt(limit),
     };
 
     const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
-
     const total = await medicalRecordRepository.count(query);
 
     return sendSuccess(
@@ -188,7 +169,7 @@ exports.createMedicalRecord = async (req, res, next) => {
       userId: req.user.id,
       action: AUDIT_ACTIONS.MEDICAL_RECORD_CREATE,
       entityType: "medicalRecord",
-      entityId: medicalRecord._id ? String(medicalRecord._id) : null,
+      entityId: medicalRecord.id,
       newValues: { patientId: patient.id, recordType: normalizedRecordType, title },
       req,
     });
@@ -256,23 +237,17 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       query.recordType = normalizedRecordType;
     }
 
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
-    }
+    if (startDate) query.startDate = new Date(startDate);
+    if (endDate) query.endDate = new Date(endDate);
 
-    // Pagination
     const skip = (page - 1) * limit;
-
     const options = {
-      sort: { date: -1 },
+      sort: 'record_date DESC',
       offset: skip,
       limit: parseInt(limit),
     };
 
     const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
-
     const total = await medicalRecordRepository.count(query);
 
     return sendSuccess(
@@ -447,7 +422,7 @@ exports.getPatientHistory = async (req, res, next) => {
     }
     
     const historyOptions = {
-      sort: { date: -1 },
+      sort: 'record_date DESC',
       limit: 200,
     };
     

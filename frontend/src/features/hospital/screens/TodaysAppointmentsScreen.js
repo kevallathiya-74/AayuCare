@@ -26,7 +26,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { User, Clock, Calendar, CheckCircle, XCircle, Phone, Cross, FileText, UserCircle, ArrowLeft, RefreshCw, Search } from "lucide-react-native";
+import { User, Clock, Calendar, CheckCircle, XCircle, Phone, Cross, FileText, UserCircle, ArrowLeft } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
@@ -37,6 +37,7 @@ import { getStatusColor } from '@/utils/helpers';
 import { useDoctorAppointments } from '@/context/DoctorAppointmentContext';
 import { EmptyState, SkeletonCardRow, DynamicIcon, SearchField } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const STATUS_FILTERS_BY_TAB = {
   today: [
@@ -194,7 +195,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
   const handleStatusUpdate = useCallback(
     async (appointment, nextStatus) => {
-      const appointmentId = appointment?.id || appointment?._id;
+      const appointmentId = appointment?.id;
       if (!appointmentId) {
         Alert.alert("Error", "Invalid appointment ID");
         return;
@@ -269,7 +270,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
   const handleStartConsultation = useCallback(
     async (appointment) => {
-      const appointmentId = appointment.id || appointment._id;
+      const appointmentId = appointment.id;
       if (!appointmentId) {
         Alert.alert("Error", "Invalid appointment ID");
         return;
@@ -281,7 +282,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         setUpdatingAppointmentId(appointmentId);
         await doctorService.updateAppointmentStatus(appointmentId, "in_progress");
         refreshCount();
-        navigation.navigate("Consultation", { appointment });
+        navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
       } catch (err) {
         logError(err, "TodaysAppointmentsScreen.handleStartConsultation");
         Alert.alert("Error", "Unable to start consultation. Please try again.");
@@ -311,16 +312,16 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       const resolvedPatientId =
         appointment?.patientId ||
         appointment?.patientUserId ||
-        appointment?.patient?._id ||
+        appointment?.patient?.id ||
         appointment?.patient?.id;
-      const resolvedAppointmentId = appointment?.id || appointment?._id;
+      const resolvedAppointmentId = appointment?.id;
 
       if (!resolvedPatientId) {
         Alert.alert("Patient Missing", "Unable to identify patient for this appointment.");
         return;
       }
 
-      navigation.navigate("CreatePrescription", {
+      navigation.navigate(Routes.DOCTOR.CREATE_PRESCRIPTION, {
         patientId: resolvedPatientId,
         appointmentId: resolvedAppointmentId,
       });
@@ -368,7 +369,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                     
                     size={14}
                     color={healthColors.text.secondary}
-                    style={{ marginLeft: 8 }}
+                    style={styles.calendarIconMargin}
                   />
                   <Text style={styles.time}>
                     {new Date(item.appointmentDate).toLocaleDateString("en-IN", {
@@ -383,7 +384,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               const canConfirm = normalizedStatus === "scheduled";
               const canCancel =
                 normalizedStatus === "scheduled" || normalizedStatus === "confirmed";
-              const isBusy = updatingAppointmentId === (item.id || item._id);
+              const isBusy = updatingAppointmentId === item.id;
 
               if (!canConfirm && !canCancel) {
                 return null;
@@ -519,14 +520,14 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             <FileText
               
               size={20}
-              color={healthColors.accent?.coral || "#FF6B6B"}
+              color={healthColors.accent.coral}
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
             activeOpacity={0.7}
             onPress={() =>
-              navigation.navigate("PatientManagement", {
+              navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
                 patientId: item.patientUserId || item.patientId,
                 patientName: item.patientName,
               })
@@ -538,7 +539,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             <UserCircle
               
               size={20}
-              color={healthColors.info?.main || healthColors.primary.main}
+              color={healthColors.info.main}
             />
           </TouchableOpacity>
           <View
@@ -596,7 +597,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   if (loading && !isRefetching) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.skeletonContainer}>
           {[1, 2, 3, 4].map((i) => (
             <SkeletonCardRow key={i} />
           ))}
@@ -658,7 +659,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       </View>
 
       {/* Animated Search Bar */}
-      <Animated.View style={[styles.searchBarWrapper, { height: searchBarHeight, overflow: "hidden" }]}>
+      <Animated.View style={[styles.searchBarWrapper, styles.searchBarHidden, { height: searchBarHeight }]}>
         <View style={styles.searchBarContainer}>
           <SearchField
             value={searchQuery}
@@ -764,7 +765,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       <FlatList
         data={filteredAppointments}
         renderItem={renderAppointmentCard}
-        keyExtractor={(item, index) => item.id || item._id || `appt-${index}`}
+        keyExtractor={(item, index) => item.id || `appt-${index}`}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: Math.max(insets.bottom, 20) },
@@ -794,15 +795,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: healthColors.background.primary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  skeletonContainer: {
+    padding: 16,
+    gap: 12,
   },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
+  searchBarHidden: {
+    overflow: "hidden",
+  },
+  calendarIconMargin: {
+    marginLeft: 8,
   },
   // Header
   header: {
@@ -835,7 +836,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerIconBtnActive: {
-    backgroundColor: healthColors.primary.main + "20",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.12),
   },
   // Search Bar
   searchBarWrapper: {
@@ -855,12 +856,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
     height: 40,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    padding: 0,
-  },
+
   // Tab filters
   tabsContainer: {
     flexDirection: "row",
@@ -912,7 +908,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statusChipActive: {
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     borderColor: healthColors.primary.main,
   },
   statusChipText: {
@@ -987,7 +983,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
   },

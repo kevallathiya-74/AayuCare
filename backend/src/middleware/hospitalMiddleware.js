@@ -35,7 +35,7 @@ exports.attachHospitalId = async (req, res, next) => {
 exports.enforceHospitalScope = (options = {}) => {
     return async (req, res, next) => {
         try {
-            const { allowSuperAdmin = true, modelName } = options;
+            const { allowSuperAdmin = true } = options;
 
             // Super admins can access all data
             if (allowSuperAdmin && req.user.role === 'super_admin') {

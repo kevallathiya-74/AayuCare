@@ -30,7 +30,6 @@ import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
 import {
   ErrorRecovery,
-  NetworkStatusIndicator,
   SkeletonCardRow,
   EmptyState,
   ModalSheet,
@@ -38,8 +37,7 @@ import {
   FilterSectionTitle,
   FilterChipGroup,
 } from '@/components/common';
-import { showError, logError, parseError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
+import { parseError } from '@/utils/errorHandler';
 import { medicalRecordService } from '@/services';
 import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
@@ -49,19 +47,19 @@ const MyReportsScreen = ({ navigation }) => {
   const [filterType, setFilterType] = useState(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const user = useSelector((state) => state.auth.user);
-  const { isConnected } = useNetworkStatus();
+
   const insets = useSafeAreaInsets();
 
   const { data: reports = [], isLoading: loading, isRefetching, isError, error, refetch } = useQuery({
     queryKey: queryKeys.medicalRecords.list({ scope: "patient-reports", patientId: user?.id }),
-    enabled: !!user?.id && isConnected,
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const response = await medicalRecordService.getPatientRecords(user.id);
       const records = response?.data?.medicalRecords || response?.medicalRecords || [];
 
       return records.map((record) => ({
-        id: record._id,
+        id: record.id,
         title: record.title || "Medical Report",
         type: formatRecordType(record.recordType || "general"),
         date: new Date(record.createdAt || record.date).toLocaleDateString("en-IN", {
@@ -133,7 +131,7 @@ const MyReportsScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>My Reports</Text>
           <View style={styles.headerRightSpacer} />
         </View>
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.skeletonWrap}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
@@ -151,7 +149,7 @@ const MyReportsScreen = ({ navigation }) => {
       {/* Removed navigation to non-existent ReportViewer screen */}
       <View style={styles.reportLeft}>
         <View style={[styles.fileIcon, styles[`fileType_${item.fileType}`]]}>
-          <DynamicIcon name={getFileIcon(item.fileType)} size={24} color={healthColors.text.white} />
+          <DynamicIcon name={getFileIcon(item.fileType)} size={theme.iconSizes.lg} color={healthColors.text.white} />
         </View>
         <View style={styles.reportInfo}>
           <Text style={styles.reportTitle}>{item.title}</Text>
@@ -159,7 +157,7 @@ const MyReportsScreen = ({ navigation }) => {
           <View style={styles.reportMeta}>
             <DynamicIcon
               name="calendar-outline"
-              size={12}
+              size={theme.iconSizes.xs}
               color={healthColors.text.tertiary}
             />
             <Text style={styles.metaText}>{item.date}</Text>
@@ -243,7 +241,7 @@ const MyReportsScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Open report filters"
         >
-          <Filter  size={24} color={healthColors.text.primary} />
+          <Filter  size={theme.iconSizes.lg} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
@@ -311,15 +309,15 @@ const MyReportsScreen = ({ navigation }) => {
               {selectedReport && (
                 <>
                   <View style={styles.detailRow}>
-                    <Calendar  size={15} color={healthColors.text.secondary} />
+                    <Calendar  size={theme.iconSizes.xs} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{selectedReport.date}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Folder  size={15} color={healthColors.text.secondary} />
+                    <Folder  size={theme.iconSizes.xs} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{selectedReport.type}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <User  size={15} color={healthColors.text.secondary} />
+                    <User  size={theme.iconSizes.xs} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>Dr. {selectedReport.doctor}</Text>
                   </View>
                   {selectedReport.recordData?.description && (
@@ -335,7 +333,7 @@ const MyReportsScreen = ({ navigation }) => {
                     </View>
                   )}
                   {selectedReport.recordData?.aiAnalysis?.summary && (
-                    <View style={[styles.detailBlock, { borderLeftColor: healthColors.primary.main, borderLeftWidth: 3 }]}>
+                    <View style={styles.detailBlockAi}>
                       <Text style={styles.detailBlockTitle}>AI Analysis</Text>
                       <Text style={styles.detailBlockBody}>{selectedReport.recordData.aiAnalysis.summary}</Text>
                     </View>
@@ -345,14 +343,16 @@ const MyReportsScreen = ({ navigation }) => {
                       style={styles.modalActionBtn}
                       onPress={() => {
                         const url = selectedReport.recordData?.attachments?.[0];
-                        url
-                          ? Linking.openURL(url).catch(() => Alert.alert("Error", "Unable to open file."))
-                          : Alert.alert("Not Available", "No file attached.");
+                        if (url) {
+                          Linking.openURL(url).catch(() => Alert.alert("Error", "Unable to open file."));
+                        } else {
+                          Alert.alert("Not Available", "No file attached.");
+                        }
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Download selected report"
                     >
-                      <Download  size={18} color={healthColors.primary.main} />
+                      <Download  size={theme.iconSizes.sm} color={healthColors.primary.main} />
                       <Text style={styles.modalActionText}>Download</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -366,7 +366,7 @@ const MyReportsScreen = ({ navigation }) => {
                       accessibilityRole="button"
                       accessibilityLabel="Share selected report"
                     >
-                      <Share2  size={18} color={healthColors.text.secondary} />
+                      <Share2  size={theme.iconSizes.sm} color={healthColors.text.secondary} />
                       <Text style={styles.modalActionText}>Share</Text>
                     </TouchableOpacity>
                   </View>
@@ -469,12 +469,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  fileType_PDF: {
-    backgroundColor: healthColors.error.main,
-  },
-  fileType_Image: {
-    backgroundColor: healthColors.info.main,
-  },
+
   reportInfo: {
     flex: 1,
     justifyContent: "center",
@@ -511,7 +506,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -523,16 +518,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-  },
+
   emptyListContent: {
     flexGrow: 1,
   },
@@ -541,7 +527,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -611,26 +597,15 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyMedium,
     color: healthColors.text.secondary,
   },
-  filterOption: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  filterOptionActive: {
-    backgroundColor: healthColors.primary.main + "10",
-    borderRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  filterOptionText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
-  filterOptionTextActive: {
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semibold,
+
+  skeletonWrap: { padding: 16, gap: 12 },
+  detailBlockAi: {
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.md,
+    backgroundColor: healthColors.background.secondary,
+    borderRadius: theme.borderRadius.md,
+    borderLeftColor: healthColors.primary.main,
+    borderLeftWidth: 3,
   },
 });
 

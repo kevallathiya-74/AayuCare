@@ -92,7 +92,7 @@ const DrawerMenu = ({
             <View style={styles.headerContent}>
               <View style={styles.profileRow}>
                 <View style={styles.avatarCircle}>
-                  <User  size={28} color={healthColors.white} />
+                  <User  size={theme.iconSizes.xl} color={healthColors.white} />
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={styles.userName} numberOfLines={1}>
@@ -111,7 +111,7 @@ const DrawerMenu = ({
                 accessibilityRole="button"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <X  size={26} color={healthColors.white} />
+                <X  size={theme.iconSizes.xl} color={healthColors.white} />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -146,14 +146,14 @@ const DrawerMenu = ({
                     >
                       {item.icon ? (
                         <item.icon
-                          size={20}
+                          size={theme.iconSizes.md}
                           color={item.iconColor || healthColors.primary.main}
                         />
                       ) : null}
                     </View>
                     <Text style={styles.menuLabel}>{item.label}</Text>
                     <ChevronRight
-                      size={16}
+                      size={theme.iconSizes.sm}
                       color={healthColors.text.tertiary}
                     />
                   </TouchableOpacity>
@@ -168,6 +168,8 @@ const DrawerMenu = ({
                   style={[styles.menuItem, styles.logoutItem]}
                   onPress={handleLogout}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sign Out"
                 >
                   <View
                     style={[
@@ -176,8 +178,8 @@ const DrawerMenu = ({
                     ]}
                   >
                     <LogOut
-                      
-                      size={20}
+                       
+                      size={theme.iconSizes.md}
                       color={healthColors.error.main}
                     />
                   </View>
@@ -200,7 +202,7 @@ const DrawerMenu = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: healthColors.background.overlay,
     flexDirection: "row",
   },
   drawer: {
@@ -227,7 +229,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),
     alignItems: "center",
     justifyContent: "center",
     marginRight: theme.spacing.md,
@@ -241,12 +243,12 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
   },
   userRole: {
-    color: "rgba(255,255,255,0.75)",
+    color: theme.withOpacity(healthColors.text.white, 0.75),
     fontSize: theme.typography.sizes.sm,
     marginTop: 2,
   },
   userId: {
-    color: "rgba(255,255,255,0.6)",
+    color: theme.withOpacity(healthColors.text.white, 0.6),
     fontSize: theme.typography.sizes.xs,
     marginTop: 2,
   },

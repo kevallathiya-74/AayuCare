@@ -51,7 +51,7 @@ const withTransaction = async (callback) => {
  * @returns {Promise<Object>} Created appointment and payment
  */
 const createAppointmentWithPayment = async (appointmentData, paymentData) => {
-  return await withTransaction(async (client) => {
+  return withTransaction(async (client) => {
     // Insert appointment
     const appointmentSql = `
             INSERT INTO appointments (appointment_id, patient_id, doctor_id, hospital_id, 
@@ -111,7 +111,7 @@ const cancelAppointmentWithRefund = async (
   cancelledBy,
   cancellationReason
 ) => {
-  return await withTransaction(async (client) => {
+  return withTransaction(async (client) => {
     // Update appointment status
     const appointmentSql = `
             UPDATE appointments
@@ -159,7 +159,7 @@ const cancelAppointmentWithRefund = async (
  * @returns {Promise<Object>} Updated appointment and payment
  */
 const completeAppointmentWithPayment = async (appointmentId, notes = null) => {
-  return await withTransaction(async (client) => {
+  return withTransaction(async (client) => {
     // Update appointment status
     const appointmentSql = `
             UPDATE appointments
@@ -201,7 +201,7 @@ const completeAppointmentWithPayment = async (appointmentId, notes = null) => {
  * @returns {Promise<Object>} Created user and profile
  */
 const createUserWithProfile = async (userData, roleData) => {
-  return await withTransaction(async (client) => {
+  return withTransaction(async (client) => {
     // Insert user
     const userSql = `
             INSERT INTO users (user_id, name, email, phone, password_hash, role, hospital_id, hospital_name)

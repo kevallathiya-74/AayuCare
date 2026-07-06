@@ -3,7 +3,7 @@
  * Find doctors by specialty with filters and booking
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -11,8 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Image,
-  Alert,
   RefreshControl,
 } from "react-native";
 import { useSelector } from "react-redux";
@@ -28,13 +26,13 @@ import {
   getScreenPadding,
 } from '@/utils/responsive';
 import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from '@/components/common';
-import { showError, logError, parseError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
+import { parseError } from '@/utils/errorHandler';
 import { formatCurrency } from '@/utils/helpers';
 import { doctorService } from '@/services';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -100,11 +98,10 @@ const getDoctorAvailabilityText = (doctor) => {
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
-  const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
-  const [selectedSpecialty, setSelectedSpecialty] = useState("All");
-  const [selectedAvailability, setSelectedAvailability] = useState("Today");
-  const [feeRange, setFeeRange] = useState([0, 1000]);
+  const selectedSpecialty = "All";
+  const selectedAvailability = "Today";
+  const feeRange = [0, 1000];
 
   const specialties = [
     { id: 1, name: "All", icon: "apps-outline" },
@@ -130,7 +127,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       feeRange,
       hospitalId: user?.hospitalId,
     }),
-    enabled: isConnected,
+    enabled: true,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const filters = {};
@@ -163,7 +160,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
   };
 
   const renderDoctorCard = (doctor) => (
-    <View key={doctor._id || doctor.id} style={styles.doctorCard}>
+    <View key={doctor.id} style={styles.doctorCard}>
       <View style={styles.doctorHeader}>
         <View style={styles.doctorAvatar}>
           <User  size={32} color={healthColors.primary.main} />
@@ -270,8 +267,8 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>
-            navigation.navigate("AppointmentBooking", {
-              doctorId: doctor._id || doctor.id,
+            navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING, {
+              doctorId: doctor.id,
             })
           }
           accessibilityRole="button"
@@ -282,7 +279,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.viewProfileButton}
           onPress={() =>
-            navigation.navigate("DoctorProfileView", {
+            navigation.navigate(Routes.PATIENT.DOCTOR_PROFILE_VIEW, {
               doctor,
             })
           }
@@ -628,7 +625,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -697,7 +694,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   consultationTypeActive: {
-    backgroundColor: healthColors.primary.main + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.06),
     borderColor: healthColors.primary.main,
   },
   consultationTypeText: {
@@ -743,11 +740,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: 12,
-  },
+
   doctorCountContainer: {
     paddingVertical: 16,
     alignItems: "center",

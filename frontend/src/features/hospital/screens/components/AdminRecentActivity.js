@@ -36,7 +36,7 @@ const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => 
         />
       ) : (
         activities.map((activity, i) => (
-          <View key={activity.id || activity._id || i} style={styles.row}>
+          <View key={activity.id || i} style={styles.row}>
             <View style={styles.iconWrap}>
               <DynamicIcon
                 name={activity.icon || "CheckCircle"}
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "flex-start", padding: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: healthColors.border.light },
   iconWrap: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center", alignItems: "center",
     flexShrink: 0,
   },

@@ -163,7 +163,7 @@ Hospital Contact: ${process.env.HOSPITAL_CONTACT_PHONE || '+91-0000000000'}
 Reply CANCEL to cancel appointment.
         `.trim();
 
-        return await this.sendSMS(patient.phone, message);
+        return this.sendSMS(patient.phone, message);
     }
 
     /**
@@ -183,7 +183,7 @@ Date: ${new Date(appointment.appointmentDate).toLocaleDateString('en-IN')}
 Please arrive 10 minutes early.
         `.trim();
 
-        return await this.sendSMS(patient.phone, message);
+        return this.sendSMS(patient.phone, message);
     }
 
     /**
@@ -201,7 +201,7 @@ You can collect it from the pharmacy.
 Show this SMS at the pharmacy counter.
         `.trim();
 
-        return await this.sendSMS(patient.phone, message);
+        return this.sendSMS(patient.phone, message);
     }
 
     /**
@@ -218,7 +218,7 @@ ${alertMessage}
 Please consult your doctor if you have any concerns.
         `.trim();
 
-        return await this.sendSMS(patient.phone, message);
+        return this.sendSMS(patient.phone, message);
     }
 
     /**

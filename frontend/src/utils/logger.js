@@ -16,9 +16,9 @@ const logger = {
   debug: (context, message, data = null) => {
     if (isDev) {
       if (data) {
-        console.log(`[${context}] ${message}`, data);
+        console.warn(`[${context}] ${message}`, data);
       } else {
-        console.log(`[${context}] ${message}`);
+        console.warn(`[${context}] ${message}`);
       }
     }
   },
@@ -32,9 +32,9 @@ const logger = {
   info: (context, message, data = null) => {
     if (isDev) {
       if (data) {
-        console.info(`[${context}] ℹ️ ${message}`, data);
+        console.warn(`[${context}] ℹ️ ${message}`, data);
       } else {
-        console.info(`[${context}] ℹ️ ${message}`);
+        console.warn(`[${context}] ℹ️ ${message}`);
       }
     }
   },
@@ -74,7 +74,7 @@ const logger = {
    */
   success: (context, message) => {
     if (isDev) {
-      console.log(`[${context}] ✅ ${message}`);
+      console.warn(`[${context}] ✅ ${message}`);
     }
   },
 
@@ -86,7 +86,7 @@ const logger = {
    */
   apiRequest: (method, url, data = null) => {
     if (isDev) {
-      console.log(`[API] 🔄 ${method} ${url}`, data || "");
+      console.warn(`[API] 🔄 ${method} ${url}`, data || "");
     }
   },
 
@@ -98,7 +98,7 @@ const logger = {
    */
   apiResponse: (method, url, response) => {
     if (isDev) {
-      console.log(`[API] ✅ ${method} ${url}`, response);
+      console.warn(`[API] ✅ ${method} ${url}`, response);
     }
   },
 

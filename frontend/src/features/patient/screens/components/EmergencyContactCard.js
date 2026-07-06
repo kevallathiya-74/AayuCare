@@ -41,7 +41,7 @@ const EmergencyContactCard = ({ user }) => {
         accessibilityLabel="Call emergency contact"
       >
         <LinearGradient
-          colors={[healthColors.error.main, "#C62828"]}
+          colors={[healthColors.error.main, healthColors.error.dark]}
           style={styles.button}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -63,7 +63,7 @@ const EmergencyContactCard = ({ user }) => {
         accessibilityLabel="Call ambulance 108"
       >
         <LinearGradient
-          colors={[healthColors.accent.coral || "#FF7043", "#E64A19"]}
+          colors={[healthColors.accent.coral, healthColors.error.main]}
           style={styles.button}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}

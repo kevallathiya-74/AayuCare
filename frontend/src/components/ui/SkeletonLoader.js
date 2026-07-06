@@ -18,10 +18,8 @@
  */
 
 import React, { useEffect, useRef } from "react";
-import { View, Animated, StyleSheet, Dimensions } from "react-native";
+import { View, Animated, StyleSheet } from "react-native";
 import { theme, healthColors } from '@/theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const BASE_COLOR = healthColors.neutral.gray200;
 const HIGHLIGHT_COLOR = healthColors.neutral.gray100;
@@ -122,7 +120,7 @@ export const SkeletonCardRow = ({ style }) => (
     <SkeletonLoader variant="avatar" size={44} />
     <View style={styles.cardRowLines}>
       <SkeletonLoader variant="line" width="55%" height={14} />
-      <SkeletonLoader variant="line" width="80%" height={12} style={{ marginTop: 6 }} />
+      <SkeletonLoader variant="line" width="80%" height={12} style={styles.cardRowSecondLine} />
     </View>
   </View>
 );
@@ -163,6 +161,9 @@ const styles = StyleSheet.create({
   },
   statItem: {
     marginBottom: theme.spacing.sm,
+  },
+  cardRowSecondLine: {
+    marginTop: 6,
   },
 });
 

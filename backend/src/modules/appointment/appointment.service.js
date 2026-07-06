@@ -1,8 +1,6 @@
 const userRepository = require("../auth/user.repository");
 const appointmentRepository = require("../appointment/appointment.repository");
-const paymentRepository = require("../payment/payment.repository");
 const doctorRepository = require("../doctor/doctor.repository");
-const patientRepository = require("../patient/patient.repository");
 const { createAppointmentWithPayment, cancelAppointmentWithRefund, completeAppointmentWithPayment } = require("../../utils/transaction");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
@@ -82,7 +80,7 @@ class AppointmentService {
     }
 
     // Create appointment and payment atomically using transaction
-    const { appointment, payment } = await createAppointmentWithPayment(
+    const { appointment } = await createAppointmentWithPayment(
       {
         appointmentId: `APT-${Date.now()}-${require("crypto").randomBytes(5).toString('hex').toUpperCase()}`,
         patientId,
@@ -165,7 +163,6 @@ class AppointmentService {
       endDate,
       limit = 20,
       cursor = 0,
-      hospitalId,
     } = filters;
 
     const parsedLimit = parseInt(limit, 10);
@@ -197,7 +194,7 @@ class AppointmentService {
    * Get appointments for a doctor - Uses PostgreSQL
    */
   async getDoctorAppointmentsCursor(doctorId, filters = {}) {
-    const { status, date, startDate, endDate, limit = 20, cursor = 0, hospitalId } = filters;
+    const { status, date, startDate, endDate, limit = 20, cursor = 0 } = filters;
 
     const parsedLimit = parseInt(limit, 10);
     const offset = parseInt(cursor, 10) || 0;
@@ -288,7 +285,6 @@ class AppointmentService {
       endDate,
       page = 1,
       limit = 10,
-      hospitalId,
     } = filters;
 
     const offset = (page - 1) * limit;
@@ -322,7 +318,7 @@ class AppointmentService {
    * Get appointments for a doctor - Uses PostgreSQL
    */
   async getDoctorAppointments(doctorId, filters = {}) {
-    const { status, date, page = 1, limit = 10, hospitalId } = filters;
+    const { status, date, page = 1, limit = 10 } = filters;
 
     let startDate, endDate;
     if (date) {
@@ -570,7 +566,7 @@ class AppointmentService {
     // Define all possible time slots (9 AM to 8 PM, 30-minute intervals)
     const allSlots = [];
     for (let hour = 9; hour <= 20; hour++) {
-      for (let minute of [0, 30]) {
+      for (const minute of [0, 30]) {
         if (hour === 20 && minute === 30) break; // Stop at 8:00 PM
         const timeSlot = `${hour.toString().padStart(2, "0")}:${minute
           .toString()

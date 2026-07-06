@@ -14,17 +14,16 @@ import {
   StatusBar,
   RefreshControl,
   Alert,
-  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AlertTriangle, Calendar, Users, FileText, UserPlus, Home, User, Settings, Sun, CloudSun, Moon } from "lucide-react-native";
+import { AlertTriangle, Calendar, Users, FileText, UserPlus, Home, User, Settings } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from '@/theme';
 import { getScreenPadding, getSafeAreaEdges } from '@/utils/responsive';
 import { logoutUser } from '@/store/slices/authSlice';
-import { showConfirmation, logError, parseError } from '@/utils/errorHandler';
+import { logError, parseError } from '@/utils/errorHandler';
 import { doctorService } from '@/services';
 import { useDoctorAppointments } from '@/context/DoctorAppointmentContext';
 import { queryKeys } from '@/config/reactQueryConfig';
@@ -37,6 +36,7 @@ import {
   PatientSearchBar,
   TodayAppointmentCard,
 } from "./components";
+import Routes from '@/navigation/routes';
 
 const QUICK_ACTIONS = [
   { icon: Calendar, color: healthColors.primary.main, label: "Today's\nAppointments", screen: "DoctorTabs", params: { screen: "TodaysAppointments" } },
@@ -144,20 +144,20 @@ const DoctorHomeScreen = ({ navigation }) => {
 
   const handleStartConsultation = useCallback(async (appointment) => {
     try {
-      const id = appointment._id || appointment.id;
+      const id = appointment.id;
       if (!id) { Alert.alert("Error", "Invalid appointment ID"); return; }
       await doctorService.updateAppointmentStatus(id, "in_progress");
       refetchDashboard();
       refreshCount();
-      navigation.navigate("Consultation", { appointment });
-    } catch (err) {
-      logError(err, { context: "DoctorHomeScreen.startConsultation" });
+navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
+      } catch (err) {
+        logError(err, { context: "DoctorHomeScreen.startConsultation" });
       Alert.alert("Error", "Failed to start consultation. Please try again.");
     }
   }, [refetchDashboard, refreshCount, navigation]);
 
   const handleViewHistory = useCallback((appointment) => {
-    navigation.navigate("PatientManagement", {
+    navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
       patientId: appointment.patientId,
       patientName: appointment.patientName,
     });
@@ -242,8 +242,8 @@ const DoctorHomeScreen = ({ navigation }) => {
           greetingIcon={getGreetingIcon()}
           notificationCount={schedule.pending}
           onMenuOpen={openMenu}
-          onNotificationPress={() => navigation.navigate("NotificationsScreen")}
-          onProfilePress={() => navigation.navigate("EditProfile")}
+          onNotificationPress={() => navigation.navigate(Routes.DOCTOR.NOTIFICATIONS)}
+          onProfilePress={() => navigation.navigate(Routes.DOCTOR.EDIT_PROFILE)}
         />
 
         <View style={styles.body}>
@@ -268,8 +268,8 @@ const DoctorHomeScreen = ({ navigation }) => {
             results={searchResults}
             onClear={() => { setSearchQuery(""); setSearchResults([]); }}
             onSelectPatient={(p) =>
-              navigation.navigate("PatientManagement", {
-                patientId: p.userId || p._id,
+              navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
+                patientId: p.userId,
               })
             }
           />
@@ -285,7 +285,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           ) : (
             visibleAppointments.map((appt) => (
               <TodayAppointmentCard
-                key={appt._id || appt.id}
+                key={appt.id}
                 appointment={appt}
                 onViewHistory={handleViewHistory}
                 onStartConsultation={handleStartConsultation}
@@ -345,18 +345,16 @@ const DoctorHomeScreen = ({ navigation }) => {
             onPress={() => setShowLogoutModal(false)}
             style={styles.modalButton}
             disabled={loggingOut}
-          >
-            Cancel
-          </Button>
+            title="Cancel"
+          />
           <Button 
             variant="primary" 
             onPress={confirmLogout}
             style={[styles.modalButton, { backgroundColor: healthColors.error.main, borderColor: healthColors.error.main }]}
             textStyle={{ color: healthColors.neutral.white }}
             loading={loggingOut}
-          >
-            Logout
-          </Button>
+            title="Logout"
+          />
         </View>
       </ModalSheet>
     </SafeAreaView>

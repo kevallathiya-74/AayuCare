@@ -1,12 +1,10 @@
 const { query } = require("../../config/postgres");
-const logger = require("../../utils/logger");
 
 const mapMetricRow = (row) => {
   if (!row) return null;
   return {
     id: row.id,
-    _id: row.id,
-    patient: row.patient_id, // Mongoose backward compatibility
+    patient: row.patient_id,
     patientId: row.patient_id,
     hospitalId: row.hospital_id,
     type: row.metric_type,
@@ -128,11 +126,11 @@ const findWithFilters = async (filters = {}, options = {}) => {
 };
 
 const findByPatientId = async (patientId, options = {}) => {
-  return await findWithFilters({ patient: patientId }, options);
+  return findWithFilters({ patient: patientId }, options);
 };
 
 const findByType = async (patientId, type, options = {}) => {
-  return await findWithFilters({ patient: patientId, type }, options);
+  return findWithFilters({ patient: patientId, type }, options);
 };
 
 const count = async (filters = {}) => {
@@ -186,7 +184,7 @@ const update = async (id, updateData) => {
     }
   }
 
-  if (fields.length === 0) return await findById(id);
+  if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
     `UPDATE health_metrics SET ${fields.join(', ')} WHERE id = $1 RETURNING *`,
@@ -239,9 +237,30 @@ const getTodayMetrics = async (patientId) => {
   const { rows } = await query(
     `SELECT * FROM health_metrics 
      WHERE patient_id = $1 AND recorded_at >= $2 AND recorded_at < $3 
-     ORDER BY recorded_at DESC`,
+     ORDER BY recorded_at DESC LIMIT 500`,
     [patientId, today, tomorrow]
   );
+  return rows.map(mapMetricRow);
+};
+
+const findTodayMetrics = async (patientId, metricTypes = []) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  let queryText = `SELECT * FROM health_metrics WHERE patient_id = $1 AND recorded_at >= $2 AND recorded_at < $3`;
+  const params = [patientId, today, tomorrow];
+  const paramIndex = 4;
+
+  if (metricTypes.length > 0) {
+    queryText += ` AND metric_type = ANY($${paramIndex})`;
+    params.push(metricTypes);
+  }
+
+  queryText += ` ORDER BY recorded_at DESC LIMIT 500`;
+
+  const { rows } = await query(queryText, params);
   return rows.map(mapMetricRow);
 };
 
@@ -290,5 +309,6 @@ module.exports = {
   deleteOldMetrics,
   getLatestMetrics,
   getTodayMetrics,
+  findTodayMetrics,
   getMetricStats,
 };

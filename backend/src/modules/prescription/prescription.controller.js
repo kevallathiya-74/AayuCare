@@ -125,7 +125,7 @@ exports.createPrescription = async (req, res, next) => {
       sendOptions,
     } = req.body;
 
-    const doctorId = req.user.id || req.user._id;
+    const doctorId = req.user.id;
     const meds = medications || medicines || [];
 
     // Guard: doctor session must be valid
@@ -189,7 +189,7 @@ exports.createPrescription = async (req, res, next) => {
       userId: req.user.id,
       action: AUDIT_ACTIONS.PRESCRIPTION_CREATE,
       entityType: "prescription",
-      entityId: prescription._id ? String(prescription._id) : null,
+      entityId: prescription.id,
       newValues: { patientId: patient.id, doctorId, medicationsCount: normalizedMedicines.length },
       req,
     });
@@ -231,7 +231,7 @@ exports.getPatientPrescriptions = async (req, res, next) => {
       return sendError(res, req, "Not authorized to view these prescriptions", 403, "FORBIDDEN");
     }
 
-    const prescriptions = await prescriptionRepository.findByPatient(patient.id, {
+    const prescriptions = await prescriptionRepository.findByPatientId(patient.id, {
       hospitalId: req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined,
       limit: Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 100),
       skip: Math.max(parseInt(String(req.query.skip  || '0'),  10) || 0,  0),
@@ -278,7 +278,7 @@ exports.getDoctorPrescriptions = async (req, res, next) => {
       return sendError(res, req, "Not authorized to view these prescriptions", 403, "FORBIDDEN");
     }
 
-    const prescriptions = await prescriptionRepository.findByDoctor(doctor.id, {
+    const prescriptions = await prescriptionRepository.findByDoctorId(doctor.id, {
       hospitalId: req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : undefined,
       limit: Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 100),
       skip: Math.max(parseInt(String(req.query.skip  || '0'),  10) || 0,  0),

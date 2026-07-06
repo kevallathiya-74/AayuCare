@@ -14,6 +14,7 @@ import { ArrowLeft } from "lucide-react-native";
 import { useDispatch } from "react-redux";
 import { useMutation } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
+import Routes from '@/navigation/routes';
 import authService from '@/features/auth/api/auth.service';
 import { logoutUser } from '@/store/slices/authSlice';
 import { logError, parseError } from '@/utils/errorHandler';
@@ -83,7 +84,7 @@ const ChangePasswordScreen = ({ navigation }) => {
     try {
       await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
       await dispatch(logoutUser()).unwrap();
-      navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+      navigation.reset({ index: 0, routes: [{ name: Routes.AUTH.LOGIN }] });
     } catch (error) {
       const message = parseError(error);
       setSubmitError(message);
@@ -111,7 +112,7 @@ const ChangePasswordScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
@@ -128,7 +129,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       </View>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
@@ -208,7 +209,7 @@ const ChangePasswordScreen = ({ navigation }) => {
             onPress={handleSubmit}
             style={styles.submitButton}
           >
-            Change Password
+            <Text>Change Password</Text>
           </Button>
         </View>
       </ScrollView>
@@ -218,6 +219,7 @@ const ChangePasswordScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  keyboardView: { flex: 1 },
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
@@ -271,39 +273,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.sm,
     borderRadius: theme.borderRadius.sm,
   },
-  inputBlock: {
-    marginBottom: theme.spacing.md,
-  },
-  inputLabel: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.primary,
-    fontWeight: theme.typography.weights.semibold,
-    marginBottom: theme.spacing.xs,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.primary,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    borderRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing.md,
-    minHeight: 48,
-  },
-  inputWrapperError: {
-    borderColor: healthColors.error.main,
-  },
-  input: {
-    flex: 1,
-    color: healthColors.text.primary,
-    fontSize: theme.typography.sizes.bodyMedium,
-    paddingVertical: theme.spacing.sm,
-  },
-  fieldError: {
-    marginTop: theme.spacing.xs,
-    color: healthColors.error.main,
-    fontSize: theme.typography.sizes.overline,
-  },
   rulesBox: {
     backgroundColor: healthColors.background.secondary,
     borderRadius: theme.borderRadius.sm,
@@ -331,14 +300,6 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.primary.main,
     borderRadius: theme.borderRadius.sm,
     marginTop: theme.spacing.sm,
-  },
-  submitButtonDisabled: {
-    backgroundColor: healthColors.button.disabled,
-  },
-  submitButtonText: {
-    color: healthColors.text.white,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.bold,
   },
 });
 

@@ -1,4 +1,4 @@
-const { query, getClient } = require("../../config/postgres");
+const { query } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
 
 /**

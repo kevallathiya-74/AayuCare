@@ -15,11 +15,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authService from '@/features/auth/api/auth.service';
 import logger from '@/utils/logger';
 
-// Runtime guard: Prevent accidental 'storage' references
-if (typeof storage !== 'undefined' && typeof window === 'undefined') {
-  console.warn('[authSlice] WARNING: Global "storage" detected in React Native context. This should NOT exist.');
-}
-
 // Initial state
 const initialState = {
   user: null,
@@ -68,7 +63,7 @@ export const logoutUser = createAsyncThunk(
 
 export const loadUser = createAsyncThunk(
   "auth/loadUser",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue: _rejectWithValue }) => {
     try {
       logger.debug("authSlice", "Load user thunk started");
 

@@ -322,7 +322,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               <EmptyState
                 icon={Info}
                 title="No matching categories"
-                message={`No results found for \"${searchQuery}\".`}
+                message={`No results found for "${searchQuery}".`}
               />
             ) : (
               <View style={styles.categoryGrid}>
@@ -502,14 +502,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.white,
     textAlign: "center",
   },
-  headerSubtitle: {
-    marginTop: theme.spacing.xs,
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.white,
-    opacity: 0.92,
-    textAlign: "center",
-    lineHeight: theme.typography.sizes.bodySmall + 4,
-  },
+
   scrollContent: {
     flexGrow: 1,
   },
@@ -695,7 +688,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.45)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.45),
   },
 });
 

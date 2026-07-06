@@ -34,6 +34,7 @@ import { aiService, healthMetricsService } from '@/services';
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const AIHealthAssistantScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
@@ -379,7 +380,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
 
               <TouchableOpacity
                 style={styles.doctorButton}
-                onPress={() => navigation.navigate("AppointmentBooking")}
+                onPress={() => navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING)}
                 activeOpacity={0.8}
                 accessibilityRole="button"
                 accessibilityLabel="Talk to real doctor"
@@ -434,7 +435,7 @@ const styles = StyleSheet.create({
   },
   voiceButton: {
     padding: 8,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     borderRadius: 20,
   },
   messagesContainer: {

@@ -48,14 +48,14 @@ const idempotencyMiddleware = async (req, res, next) => {
             IDEMPOTENCY_TTL_SECONDS
           );
         }
-      } catch (_) {
+      } catch {
         // Best-effort cache write; request should still complete.
       }
       return originalJson(payload);
     };
 
     next();
-  } catch (_) {
+  } catch {
     // Never block request flow on idempotency middleware failures.
     next();
   }

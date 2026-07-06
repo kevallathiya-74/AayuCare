@@ -16,16 +16,16 @@ import { User, Calendar, Clock, FileText, Phone, ArrowLeft } from "lucide-react-
 import { theme, healthColors } from '@/theme';
 import {
   getScreenPadding,
-  verticalScale,
 } from '@/utils/responsive';
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { queryKeys } from '@/config/reactQueryConfig';
 import { doctorService } from '@/services';
-import { logError, parseError } from '@/utils/errorHandler';
+import { parseError } from '@/utils/errorHandler';
 import { convertTo12Hour, getStatusColor } from '@/utils/helpers';
 import { SkeletonCardRow, EmptyState } from '@/components/common';
 import { EmptyStateConfig } from '@/utils/constants';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const PAGE_SIZE = 20;
 
@@ -105,7 +105,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
     <TouchableOpacity
       style={styles.consultationCard}
       onPress={() =>
-        navigation.navigate("PatientDetails", {
+        navigation.navigate(Routes.DOCTOR.PATIENT_DETAILS, {
           patientId: item.patientUserId || item.patientId,
           patientName: item.patientName,
         })
@@ -259,10 +259,10 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       <FlatList
         data={consultations}
         renderItem={renderConsultation}
-        keyExtractor={(item, index) => item.id || item._id || `consultation-${index}`}
+        keyExtractor={(item, index) => item.id || `consultation-${index}`}
         contentContainerStyle={[
           styles.listContent,
-          consultations.length === 0 && { flexGrow: 1 },
+          consultations.length === 0 && styles.listContentEmpty,
           { paddingBottom: Math.max(insets.bottom, 20) },
         ]}
         refreshControl={
@@ -315,7 +315,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       />
 
       {loading && consultations.length === 0 && (
-        <View style={{ padding: 16, gap: 12 }}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.skeletonContainer}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
       )}
     </SafeAreaView>
   );
@@ -390,6 +390,13 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: getScreenPadding(),
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+  },
+  skeletonContainer: {
+    padding: 16,
+    gap: 12,
   },
   consultationCard: {
     backgroundColor: healthColors.background.card,
@@ -466,17 +473,6 @@ const styles = StyleSheet.create({
   contactText: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.disabled,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: verticalScale(80),
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: 12,
   },
   footerLoader: {
     marginVertical: 20,

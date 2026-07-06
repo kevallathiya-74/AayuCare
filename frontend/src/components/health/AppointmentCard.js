@@ -8,7 +8,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Calendar, Clock, MapPin, XCircle } from "lucide-react-native";
-import { healthColors } from '@/theme/healthColors';
+import { theme, healthColors } from '@/theme';
 import { textStyles } from '@/theme/typography';
 import { spacing } from '@/theme/spacing';
 import Card from '../common/Card';
@@ -78,18 +78,18 @@ const AppointmentCard = ({
 
             <View style={styles.details}>
                 <View style={styles.detailRow}>
-                    <Calendar  size={18} color={healthColors.text.secondary} />
+                    <Calendar  size={theme.iconSizes.sm} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{date}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
-                    <Clock  size={18} color={healthColors.text.secondary} />
+                    <Clock  size={theme.iconSizes.sm} color={healthColors.text.secondary} />
                     <Text style={styles.detailText}>{time}</Text>
                 </View>
 
                 {location && (
                     <View style={styles.detailRow}>
-                        <MapPin  size={18} color={healthColors.text.secondary} />
+                        <MapPin  size={theme.iconSizes.sm} color={healthColors.text.secondary} />
                         <Text style={styles.detailText} numberOfLines={1}>
                             {location}
                         </Text>
@@ -107,8 +107,8 @@ const AppointmentCard = ({
                                 style={styles.actionButton}
                             >
                                 <Calendar
-                                    
-                                    size={18}
+                                     
+                                    size={theme.iconSizes.sm}
                                     color={healthColors.primary.main}
                                 />
                                 <Text style={styles.actionText}>Reschedule</Text>
@@ -121,8 +121,8 @@ const AppointmentCard = ({
                                 style={styles.actionButton}
                             >
                                 <XCircle
-                                    
-                                    size={18}
+                                     
+                                    size={theme.iconSizes.sm}
                                     color={healthColors.error.main}
                                 />
                                 <Text style={[styles.actionText, { color: healthColors.error.main }]}>

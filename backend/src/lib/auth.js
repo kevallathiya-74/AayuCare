@@ -191,18 +191,18 @@ const initAuth = () => {
         autoSignInAfterVerification: true,
         password: {
           hash: async (password) => {
-            return await bcrypt.hash(password, 12);
+            return bcrypt.hash(password, 12);
           },
           verify: async ({ hash, password }) => {
-            return await bcrypt.compare(password, hash);
+            return bcrypt.compare(password, hash);
           },
         },
       },
 
       advanced: {
-        cookieSameSite: "none", 
-        cookieSecure: false,
-        useSecureCookies: false, 
+        cookieSameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        cookieSecure: process.env.NODE_ENV === "production" ? true : false,
+        useSecureCookies: process.env.NODE_ENV === "production" ? true : false,
         requireOriginHeader: false,
         disableCSRFCheck: true,
         crossSubdomainCookies: {

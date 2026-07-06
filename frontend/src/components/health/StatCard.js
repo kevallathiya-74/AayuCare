@@ -91,7 +91,7 @@ const StatCard = ({
       <View
         style={[styles.iconWrap, { backgroundColor: color + "18" }]}
       >
-        <DynamicIcon name={icon} size={22} color={color} />
+        <DynamicIcon name={icon} size={theme.iconSizes.md} color={color} />
       </View>
 
       {/* Value */}
@@ -108,7 +108,7 @@ const StatCard = ({
       {displayTrend ? (
         <View style={styles.trendRow}>
           {trendIcon ? (
-            <DynamicIcon name={trendIcon} size={11} color={trendColor} />
+            <DynamicIcon name={trendIcon} size={theme.iconSizes.xs} color={trendColor} />
           ) : null}
           <Text style={[styles.trendText, { color: trendColor }]}>
             {" "}{displayTrend}

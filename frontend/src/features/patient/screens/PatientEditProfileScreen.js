@@ -169,7 +169,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}> 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.flexContainer}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
@@ -300,7 +300,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
           onPress={handleSave}
           style={styles.saveButton}
         >
-          Save Changes
+          <Text>Save Changes</Text>
         </Button>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -396,25 +396,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     marginBottom: spacing.lg,
   },
-  fieldGroup: {
-    marginBottom: spacing.md,
-  },
-  fieldLabel: {
-    ...textStyles.body,
-    color: healthColors.text.secondary,
-    marginBottom: spacing.xs,
-    fontWeight: theme.typography.weights.medium,
-  },
-  input: {
-    height: 48,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    paddingHorizontal: spacing.md,
-    color: healthColors.text.primary,
-    backgroundColor: healthColors.background.primary,
-    fontSize: theme.typography.sizes.body,
-  },
+
   saveButton: {
     height: 48,
     borderRadius: theme.borderRadius.md,
@@ -422,14 +404,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: healthColors.primary.main,
   },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveText: {
-    ...textStyles.body,
-    color: theme.colors.white,
-    fontWeight: theme.typography.weights.semibold,
-  },
+
   pickerGroup: {
     marginBottom: spacing.md,
   },
@@ -486,11 +461,11 @@ const styles = StyleSheet.create({
   },
   pickerModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   pickerModalContent: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.background.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -512,6 +487,7 @@ const styles = StyleSheet.create({
     color: healthColors.primary.main,
     fontWeight: theme.typography.weights.semibold,
   },
+  flexContainer: { flex: 1 },
 });
 
 export default PatientEditProfileScreen;

@@ -138,7 +138,7 @@ const ModalSheet = ({
                 onPress={onClose}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <X  size={22} color={healthColors.text.secondary} />
+                <X  size={theme.iconSizes.md} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
           ) : null}
@@ -159,7 +159,7 @@ const ModalSheet = ({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: healthColors.background.overlay,
   },
   keyboardView: {
     flex: 1,
@@ -169,17 +169,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
+    ...theme.shadows.modal,
   },
   handleWrap: {
     alignItems: "center",
@@ -189,7 +179,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    borderRadius: 2,
+    borderRadius: theme.borderRadius.xs,
     backgroundColor: healthColors.border.main,
   },
   header: {
@@ -208,7 +198,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   closeButton: {
-    padding: 4,
+    padding: theme.spacing.xs,
   },
   content: {
     flexGrow: 0,

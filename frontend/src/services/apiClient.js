@@ -21,10 +21,12 @@ if (!appStorage || typeof appStorage.getItem !== 'function') {
 // Create axios instance using centralized configuration.
 // Guard against malformed runtime config values to avoid startup crashes.
 const normalizedBaseUrl = String(APP_CONFIG?.api?.baseURL ?? '').trim().replace(/\/+$/, '');
-const safeBaseUrl = normalizedBaseUrl.length > 0 ? normalizedBaseUrl : 'http://localhost:5000/api';
-const apiBaseV1 = safeBaseUrl.endsWith('/v1')
-  ? safeBaseUrl
-  : `${safeBaseUrl}/v1`;
+if (!normalizedBaseUrl) {
+  throw new Error('CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.');
+}
+const apiBaseV1 = normalizedBaseUrl.endsWith('/v1')
+  ? normalizedBaseUrl
+  : `${normalizedBaseUrl}/v1`;
 
 const api = axios.create({
   baseURL: apiBaseV1,
@@ -37,6 +39,7 @@ const api = axios.create({
 // Lightweight in-memory cache + in-flight dedupe for GET requests.
 // Improves perceived performance across the app without backend changes.
 const DEFAULT_GET_CACHE_TTL_MS = 15000;
+const MAX_GET_CACHE_SIZE = 100;
 const getResponseCache = new Map();
 const inFlightGetRequests = new Map();
 
@@ -103,6 +106,10 @@ api.get = (url, config = {}) => {
         response: cloneAxiosResponse(response),
         timestamp: Date.now(),
       });
+      if (getResponseCache.size > MAX_GET_CACHE_SIZE) {
+        const oldest = getResponseCache.keys().next().value;
+        if (oldest) getResponseCache.delete(oldest);
+      }
       return response;
     })
     .finally(() => {
@@ -114,6 +121,14 @@ api.get = (url, config = {}) => {
 };
 
 let isHandlingAuthExpiry = false;
+
+const resetAuthExpiryFlag = () => { isHandlingAuthExpiry = false; };
+
+export const resetApiState = () => {
+  getResponseCache.clear();
+  inFlightGetRequests.clear();
+  isHandlingAuthExpiry = false;
+};
 
 const ENDPOINT_ROLE_RULES = [
   {
@@ -127,7 +142,7 @@ const getCurrentUserRole = () => {
     const store = require("../store/store").default;
     const role = store?.getState?.()?.auth?.user?.role;
     return role ? String(role).toLowerCase() : null;
-  } catch (_) {
+  } catch {
     return null;
   }
 };
@@ -142,7 +157,7 @@ const normalizeRequestPath = (url = "") => {
       const normalizedAbsolutePath = `/${String(parsed.pathname || "").replace(/^\/+/, "")}`;
       return normalizedAbsolutePath.replace(/^\/api\/v1/i, "") || "/";
     }
-  } catch (_) {
+  } catch {
     // Fall through to relative path normalization.
   }
 
@@ -177,9 +192,9 @@ const createRoleAccessError = ({ path, role, allowedRoles }) => {
 
 // Log API URL for debugging (dev only)
 if (__DEV__) {
-  console.log('[API] API Base URL:', apiBaseV1);
-  console.log('[API] Environment:', APP_CONFIG.env.isDevelopment ? 'Development' : 'Production');
-  console.log('[API] Expo Go:', APP_CONFIG.env.isExpoGo);
+  console.warn('[API] API Base URL:', apiBaseV1);
+  console.warn('[API] Environment:', APP_CONFIG.env.isDevelopment ? 'Development' : 'Production');
+  console.warn('[API] Expo Go:', APP_CONFIG.env.isExpoGo);
 }
 
 // Request interceptor - Add auth token
@@ -207,20 +222,23 @@ api.interceptors.request.use(
       }
 
       const token = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const localConfig = config;
+      const headers = localConfig.headers || {};
 
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        headers.Authorization = `Bearer ${token}`;
+        localConfig.headers = headers;
         if (__DEV__) {
-          console.log('[TOKEN] Authorization header set');
+          console.warn('[TOKEN] Authorization header set');
         }
       } else {
         if (__DEV__) {
-          console.log('⚠️ No auth token found in storage');
+          console.warn('⚠️ No auth token found in storage');
         }
       }
 
       if (__DEV__) {
-        console.log(`[REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
+        console.warn(`[REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
       }
 
       return config;
@@ -274,39 +292,42 @@ api.interceptors.response.use(
 
       isHandlingAuthExpiry = true;
 
-      if (__DEV__) {
-        console.log('[API] 401 error - Session expired, clearing storage');
-      }
-      
-      // Better Auth doesn't use refresh tokens - session is managed server-side
-      // Clear storage and force re-login
-      await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-      await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-
-      // Dispatch logout to Redux so UI state is also cleared
       try {
-        const store = require('../store/store').default;
-        const { logoutUser } = require('../store/slices/authSlice');
-        store.dispatch(logoutUser());
-      } catch (storeErr) {
         if (__DEV__) {
-          console.warn('[API] Could not dispatch logoutUser to Redux store:', storeErr);
+          console.warn('[API] 401 error - Session expired, clearing storage');
         }
+        
+        // Better Auth doesn't use refresh tokens - session is managed server-side
+        // Clear storage and force re-login
+        await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+        await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+
+        // Dispatch logout to Redux so UI state is also cleared
+        try {
+          const store = require('../store/store').default;
+          const { logoutUser } = require('../store/slices/authSlice');
+          store.dispatch(logoutUser());
+        } catch (storeErr) {
+          if (__DEV__) {
+            console.warn('[API] Could not dispatch logoutUser to Redux store:', storeErr);
+          }
+        }
+
+        const authError = new Error('Session expired. Please login again.');
+        authError.code = 'AUTH_EXPIRED';
+        return Promise.reject(authError);
+      } finally {
+        resetAuthExpiryFlag();
       }
-      
-      const authError = new Error('Session expired. Please login again.');
-      authError.code = 'AUTH_EXPIRED';
-      isHandlingAuthExpiry = false;
-      return Promise.reject(authError);
     }
 
     // Handle network errors
     if (!error.response) {
       const networkError = new Error('Unable to connect to server. Please check your internet connection and try again.');
       if (__DEV__) {
-        console.error('[NETWORK] Network Error');
-        console.error('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
-        console.error('[INFO] API Base URL:', APP_CONFIG.api.baseURL);
+        console.warn('[NETWORK] Network Error');
+        console.warn('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
+        console.warn('[INFO] API Base URL:', APP_CONFIG.api.baseURL);
       }
       return Promise.reject(networkError);
     }
@@ -315,7 +336,7 @@ api.interceptors.response.use(
     if (__DEV__) {
       console.error('[ERROR] API Error:', errorMessage);
       if (error.response?.data?.message) {
-        console.error('[ERROR] Raw server message:', error.response.data.message);
+        console.warn('[ERROR] Raw server message:', error.response.data.message);
       }
     }
 

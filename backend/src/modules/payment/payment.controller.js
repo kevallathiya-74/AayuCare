@@ -18,7 +18,7 @@ const { sendSuccess } = require("../../utils/apiResponse");
  */
 exports.createPayment = async (req, res, next) => {
   try {
-    const { prescriptionId, amount, paymentMethod, purchaseType, medicines } =
+    const { prescriptionId, amount, paymentMethod, purchaseType } =
       req.body;
     const patientId = req.user?.id;
     const hospitalId = req.hospitalId;
@@ -146,8 +146,8 @@ exports.getPatientPayments = async (req, res, next) => {
     if (requestingUser.role === "patient") {
       patientIdToQuery = requestingUser.id;
     } else {
-      const { patientId } = req.body;
-      patientIdToQuery = patientId;
+      // Path parameter `:patientId` (declared in payment.routes.js) — not body
+      patientIdToQuery = req.params.patientId;
     }
 
     if (!patientIdToQuery) {
@@ -155,15 +155,17 @@ exports.getPatientPayments = async (req, res, next) => {
     }
 
     const { status, startDate, endDate, page = 1, limit = 20 } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 20;
+    const offset = (pageNum - 1) * limitNum;
+    const filters = { status, startDate, endDate, limit: limitNum, offset };
 
-    const payments = await paymentRepository.findByPatient(patientIdToQuery, {
-      status,
-      startDate,
-      endDate,
-      limit: parseInt(limit),
-      offset,
-    });
+    // Parallelize the page query and the count query so pagination `total`
+    // is the true record count, not the page size.
+    const [payments, total] = await Promise.all([
+      paymentRepository.findByPatient(patientIdToQuery, filters),
+      paymentRepository.countByPatient(patientIdToQuery, filters),
+    ]);
 
     return sendSuccess(
       res,
@@ -171,9 +173,9 @@ exports.getPatientPayments = async (req, res, next) => {
       {
         payments,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: payments.length,
+          page: pageNum,
+          limit: limitNum,
+          total,
         },
       },
       "Patient payments retrieved successfully"

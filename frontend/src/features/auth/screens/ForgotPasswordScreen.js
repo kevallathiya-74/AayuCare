@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -17,6 +17,7 @@ import { ArrowLeft, Key, Mail, CheckCircle, ShieldCheck, Shield } from "lucide-r
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import { theme, healthColors } from '@/theme';
+import Routes from '@/navigation/routes';
 import {
   showError,
   showSuccess,
@@ -33,6 +34,21 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
   const [emailSent, setEmailSent] = useState(false);
+
+  const gradientColors = isHospital
+    ? [theme.colors.success.background, theme.colors.background.primary]
+    : [theme.colors.info.background, theme.colors.background.primary];
+  const iconColor = isHospital
+    ? theme.colors.success.dark
+    : theme.colors.info.main;
+  const iconGradient = isHospital
+    ? [theme.colors.success.light, theme.colors.success.main]
+    : [theme.colors.info.light, theme.colors.info.main];
+
+  const handleEmailChange = useCallback((text) => {
+    setEmail(text);
+    setErrors(prev => prev.email ? { ...prev, email: "" } : prev);
+  }, []);
 
   const handleSendOTP = () => {
     // Validation
@@ -67,26 +83,16 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
 
     // Navigate to reset password or OTP verification
     setTimeout(() => {
-      navigation.navigate("ResetPassword", { email, userType });
+      navigation.navigate(Routes.AUTH.RESET_PASSWORD, { email, userType });
     }, 1500);
   };
 
   const handleBack = () => {
-    handleSmartBack(navigation, "Login");
+    handleSmartBack(navigation, Routes.AUTH.LOGIN);
   };
 
-  const gradientColors = isHospital
-    ? [theme.colors.success.background, theme.colors.background.primary]
-    : [theme.colors.info.background, theme.colors.background.primary];
-  const iconColor = isHospital
-    ? theme.colors.success.dark
-    : theme.colors.info.main;
-  const iconGradient = isHospital
-    ? [theme.colors.success.light, theme.colors.success.main]
-    : [theme.colors.info.light, theme.colors.info.main];
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -152,14 +158,9 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                     }
                     placeholder={isHospital ? "HOS123456" : "example@email.com"}
                     value={email}
-                    onChangeText={(text) => {
-                      setEmail(text);
-                      setErrors({ ...errors, email: "" });
-                    }}
+                    onChangeText={handleEmailChange}
                     error={errors.email}
-                    leftIcon={
-                      <Mail size={20} color={iconColor} />
-                    }
+                    leftIcon={<Mail size={20} color={iconColor} />}
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
@@ -173,7 +174,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                       isHospital && styles.hospitalButton,
                     ]}
                   >
-                    Send Reset Link
+                    <Text>Send Reset Link</Text>
                   </Button>
                 </View>
 

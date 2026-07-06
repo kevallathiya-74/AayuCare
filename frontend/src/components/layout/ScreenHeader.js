@@ -31,7 +31,7 @@ import { theme, healthColors } from '@/theme';
 import LanguageSelector from "../common/LanguageSelector";
 
 const ScreenHeader = ({
-  user,
+  user: _user,
   title = "AayuCare",
   greeting,
   subtitle,
@@ -67,7 +67,7 @@ const ScreenHeader = ({
             accessibilityLabel="Open menu"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Menu  size={24} color={healthColors.white} />
+            <Menu  size={theme.iconSizes.lg} color={healthColors.white} />
           </TouchableOpacity>
         ) : (
           <View style={styles.iconButton} />
@@ -92,7 +92,7 @@ const ScreenHeader = ({
               accessibilityLabel="Notifications"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Bell  size={24} color={healthColors.white} />
+              <Bell  size={theme.iconSizes.lg} color={healthColors.white} />
               {notificationCount > 0 ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
@@ -111,7 +111,7 @@ const ScreenHeader = ({
               accessibilityLabel="Profile"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <UserCircle  size={26} color={healthColors.white} />
+              <UserCircle  size={theme.iconSizes.xl} color={healthColors.white} />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.sm,
   },
   greeting: {
-    color: "rgba(255,255,255,0.85)",
+    color: theme.withOpacity(healthColors.text.white, 0.85),
     fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.medium,
   },

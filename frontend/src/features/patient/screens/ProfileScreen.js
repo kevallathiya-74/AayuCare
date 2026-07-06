@@ -11,7 +11,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   RefreshControl,
   Alert,
 } from "react-native";
@@ -44,7 +43,6 @@ import { theme, healthColors, textStyles, spacing } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
 import {
   getSafeAreaEdges,
-  verticalScale,
 } from '@/utils/responsive';
 import { Card } from '@/components/common';
 import { logoutUser } from '@/store/slices/authSlice';
@@ -55,6 +53,7 @@ import {
 } from '@/services';
 import { calculateAge, formatDate, formatMedicalHistoryDuration } from '@/utils/dateHelpers';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -253,19 +252,19 @@ const ProfileScreen = ({ navigation }) => {
       title: "Edit Profile",
       Icon: Pencil,
       color: healthColors.primary.main,
-      onPress: () => navigation.navigate("PatientEditProfile"),
+      onPress: () => navigation.navigate(Routes.PATIENT.EDIT_PROFILE),
     },
     {
       title: "Change Password",
       Icon: Lock,
       color: healthColors.info.main,
-      onPress: () => navigation.navigate("ChangePassword"),
+      onPress: () => navigation.navigate(Routes.SHARED.CHANGE_PASSWORD),
     },
     {
       title: "Privacy Settings",
       Icon: ShieldCheck,
       color: healthColors.success.main,
-      onPress: () => navigation.navigate("SettingsAccessibility"),
+      onPress: () => navigation.navigate(Routes.PATIENT.SETTINGS_ACCESSIBILITY),
     },
     {
       title: "Help & Support",
@@ -321,7 +320,7 @@ const ProfileScreen = ({ navigation }) => {
             accessibilityHint="Returns to your dashboard tabs"
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
-            <ArrowLeft  size={24} color={theme.colors.white} />
+            <ArrowLeft  size={theme.iconSizes.lg} color={theme.colors.white} />
           </TouchableOpacity>
 
           <View style={styles.avatarContainer}>
@@ -335,8 +334,8 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.userRole}>{user?.role || "Patient"}</Text>
             <View style={styles.userIdBadge}>
               <CreditCard
-                size={14}
-                color="rgba(255, 255, 255, 0.9)"
+                size={theme.iconSizes.xs}
+                color={theme.withOpacity(healthColors.text.white, 0.9)}
               />
               <Text style={styles.userIdText}>
                 ID: {user?.userId || "\u2014"}
@@ -383,7 +382,7 @@ const ProfileScreen = ({ navigation }) => {
           <View key={index} style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionIconContainer}>
-                <SectionIcon size={20} color={healthColors.primary.main} />
+                <SectionIcon size={theme.iconSizes.md} color={healthColors.primary.main} />
               </View>
               <Text style={styles.sectionTitle}>{section.title}</Text>
             </View>
@@ -409,7 +408,7 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconContainer}>
-              <Settings size={20} color={healthColors.primary.main} />
+              <Settings size={theme.iconSizes.md} color={healthColors.primary.main} />
             </View>
             <Text style={styles.sectionTitle}>Account Actions</Text>
           </View>
@@ -435,12 +434,12 @@ const ProfileScreen = ({ navigation }) => {
                       { backgroundColor: item.color + "20" },
                     ]}
                   >
-                    <ActionIcon size={22} color={item.color} />
+                    <ActionIcon size={theme.iconSizes.md} color={item.color} />
                   </View>
                   <Text style={[styles.actionText, { color: item.color }]}> 
                     {item.title}
                   </Text>
-                  <ChevronRight size={20} color={healthColors.text.secondary} />
+                  <ChevronRight size={theme.iconSizes.md} color={healthColors.text.secondary} />
                 </TouchableOpacity>
               );
             })}
@@ -553,7 +552,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
   },

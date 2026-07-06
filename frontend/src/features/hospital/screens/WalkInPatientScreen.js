@@ -30,6 +30,7 @@ import { Input, Button } from '@/components/common';
 import { DynamicIcon } from '@/components/common';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -64,7 +65,7 @@ const WalkInPatientScreen = ({ navigation }) => {
             text: "View Queue",
             style: "default",
             onPress: () => {
-              navigation.navigate("DoctorTabs", { screen: "TodaysAppointments" });
+              navigation.navigate(Routes.TABS.DOCTOR, { screen: Routes.DOCTOR_TABS.TODAYS_APPOINTMENTS });
             },
           },
           {
@@ -395,9 +396,8 @@ const WalkInPatientScreen = ({ navigation }) => {
           loading={loading}
           onPress={handleRegister}
           style={styles.registerButton}
-        >
-          Register Patient
-        </Button>
+        title="Register Patient"
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -489,35 +489,7 @@ const styles = StyleSheet.create({
     color: healthColors.error.main,
     fontSize: theme.typography.sizes.bodyMedium,
   },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    borderRadius: 12,
-    backgroundColor: healthColors.background.primary,
-    paddingHorizontal: 14,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  inputIconTop: {
-    marginRight: 10,
-    marginTop: 12,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 14,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
-  textAreaWrapper: {
-    alignItems: "flex-start",
-  },
-  textArea: {
-    height: 100,
-    paddingTop: 12,
-  },
+
   row: {
     flexDirection: "row",
     gap: 12,
@@ -611,16 +583,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  registerButtonDisabled: {
-    opacity: 0.5,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  registerButtonText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
+
 });
 
 export default WalkInPatientScreen;

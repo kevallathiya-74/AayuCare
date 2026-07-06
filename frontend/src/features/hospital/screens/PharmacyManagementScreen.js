@@ -3,7 +3,7 @@
  * Production-focused, information-dense layout for pharmacy operations.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
 import prescriptionService from '@/services/prescription.service';
 import { formatDate } from '@/utils/helpers';
-import { logError, parseError } from '@/utils/errorHandler';
+import { parseError } from '@/utils/errorHandler';
 import { SkeletonCardRow, EmptyState, SearchField } from '@/components/common';
 import { EmptyStateConfig } from '@/utils/constants';
 import { handleSmartBack } from '@/utils/navigation';
@@ -263,7 +263,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
 
       <FlatList
         data={filteredOrders}
-        keyExtractor={(item, index) => item._id || item.id || `order-${index}`}
+        keyExtractor={(item, index) => item.id || `order-${index}`}
         renderItem={({ item }) => <OrderCard order={item} />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -515,17 +515,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.white,
   },
 
-  centerState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: theme.spacing.lg,
-  },
-  centerStateText: {
-    marginTop: theme.spacing.sm + theme.spacing.xs,
-    fontSize: theme.typography.fontSizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
+
 });
 
 export default PharmacyManagementScreen;

@@ -134,8 +134,8 @@ const LanguageSelector = ({
           key={language.code}
           style={[
             styles.languageButton,
-            currentLanguage === language.code && styles.languageButtonActive,
-            { borderColor: iconColor + "40" },
+            currentLanguage === language.code &&             styles.languageButtonActive,
+            { borderColor: theme.withOpacity(iconColor, 0.25) },
           ]}
           onPress={() => handleLanguageChange(language.code)}
           accessibilityRole="button"
@@ -166,15 +166,15 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   languageButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: theme.spacing[10],
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.xs,
     borderWidth: 1,
     minWidth: 38,
     alignItems: "center",
   },
   languageButtonActive: {
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.25),
     borderWidth: 1.5,
   },
   languageText: {
@@ -187,11 +187,11 @@ const styles = StyleSheet.create({
   compactButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing[10],
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.modal,
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),
   },
   compactLabel: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -199,18 +199,18 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
   },
   modalOverlayPressable: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: theme.spacing.lg,
   },
   modalContent: {
     backgroundColor: healthColors.background.card,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.lg,
     width: "85%",
     maxWidth: 340,
     ...theme.shadows.xl,
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
-    paddingBottom: 16,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -234,15 +234,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    marginBottom: 8,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.input,
+    marginBottom: theme.spacing.sm,
   },
   languageOptionActive: {
-    backgroundColor: healthColors.primary.main + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.1),
     borderWidth: 1,
-    borderColor: healthColors.primary.main + "30",
+    borderColor: theme.withOpacity(healthColors.primary.main, 0.3),
   },
   languageInfo: {
     flex: 1,

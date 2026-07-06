@@ -43,6 +43,12 @@ const Avatar = ({
   const fontSize = getFontSize();
   const defaultBgColor = backgroundColor || healthColors.primary.main;
   const defaultTextColor = textColor || healthColors.neutral.white;
+  const avatarDynamicStyle = {
+    width: avatarSize,
+    height: avatarSize,
+    borderRadius: avatarSize / 2,
+    backgroundColor: variant === 'image' ? healthColors.transparent : defaultBgColor,
+  };
 
   const renderContent = () => {
     if (variant === 'image' && source) {
@@ -76,12 +82,7 @@ const Avatar = ({
       <View
         style={[
           styles.avatar,
-          {
-            width: avatarSize,
-            height: avatarSize,
-            borderRadius: avatarSize / 2,
-            backgroundColor: variant === 'image' ? 'transparent' : defaultBgColor,
-          },
+          avatarDynamicStyle,
         ]}
       >
         {renderContent()}

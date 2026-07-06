@@ -7,7 +7,7 @@
 
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { healthColors } from '@/theme/healthColors';
+import { theme, healthColors } from '@/theme';
 import { textStyles } from '@/theme/typography';
 import { spacing } from '@/theme/spacing';
 import Card from '../common/Card';
@@ -55,7 +55,7 @@ const DoctorCard = ({
                 <DynamicIcon
                     key={i}
                     name="star"
-                    size={14}
+                    size={theme.iconSizes.xs}
                     color={
                         i <= Math.round(rating)
                             ? healthColors.warning.main
@@ -96,7 +96,7 @@ const DoctorCard = ({
                     <Animated.View style={{ transform: [{ scale: heartScale }] }}>
                         <DynamicIcon
                             name="heart"
-                            size={24}
+                            size={theme.iconSizes.lg}
                             color={favorite ? healthColors.accent.pink : healthColors.text.tertiary}
                         />
                     </Animated.View>
@@ -107,7 +107,7 @@ const DoctorCard = ({
                 <View style={styles.experienceContainer}>
                     <DynamicIcon
                         name="briefcase-medical"
-                        size={16}
+                        size={theme.iconSizes.sm}
                         color={healthColors.text.secondary}
                     />
                     <Text style={styles.experienceText}>{experience} years exp.</Text>
@@ -134,7 +134,7 @@ const DoctorCard = ({
                     fullWidth
                     style={styles.bookButton}
                 >
-                    Book Appointment
+                    <Text>Book Appointment</Text>
                 </Button>
             )}
         </Card>
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     name: {
         ...textStyles.h4,
         color: healthColors.text.primary,
-        marginBottom: 2,
+        marginBottom: spacing[2],
     },
     specialty: {
         ...textStyles.bodyMedium,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
         marginRight: spacing.xs,
     },
     star: {
-        marginRight: 2,
+        marginRight: spacing[2],
     },
     ratingText: {
         ...textStyles.bodySmall,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     availabilityDot: {
         width: 8,
         height: 8,
-        borderRadius: 4,
+        borderRadius: theme.borderRadius.xs,
         marginRight: spacing.xs,
     },
     availabilityText: {

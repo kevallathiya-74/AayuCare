@@ -53,6 +53,7 @@ router.get(
 
 router.get(
   "/:prescriptionId",
+  authorize("patient", "doctor", "admin"),
   cacheMiddleware(120),
   prescriptionController.getPrescriptionById
 );
@@ -66,13 +67,6 @@ router.patch(
 
 router.patch(
   "/:prescriptionId/pharmacy-status",
-  authorize("admin"),
-  validateBody(updatePrescriptionPharmacySchema),
-  prescriptionController.updatePharmacyStatus
-);
-
-router.patch(
-  "/:prescriptionId",
   authorize("admin"),
   validateBody(updatePrescriptionPharmacySchema),
   prescriptionController.updatePharmacyStatus

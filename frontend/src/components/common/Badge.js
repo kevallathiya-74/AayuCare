@@ -57,6 +57,7 @@ const Badge = ({
           getSizeStyle(),
           style,
         ]}
+        accessibilityLabel="Status indicator"
       />
     );
   }
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   countBadge: {
     minWidth: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: theme.borderRadius.badge,
     paddingHorizontal: spacing.xs,
     justifyContent: "center",
     alignItems: "center",
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: theme.borderRadius.xs,
   },
 });
 

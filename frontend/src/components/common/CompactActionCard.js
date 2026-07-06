@@ -33,7 +33,7 @@ const CompactActionCard = memo(
         <View
           style={[styles.iconContainer, { backgroundColor: iconColor + "15" }]}
         >
-          {Icon ? <Icon size={28} color={iconColor} /> : null}
+          {Icon ? <Icon size={theme.iconSizes.xl} color={iconColor} /> : null}
         </View>
 
         <Text style={styles.title} numberOfLines={2}>
@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
   card: {
     width: "48%",
     backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.md,
     alignItems: "center",
     borderWidth: 2,
     borderColor: healthColors.border.light,
@@ -70,27 +70,27 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
   title: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textAlign: "center",
-    lineHeight: 16,
+    lineHeight: theme.spacing.md,
   },
   badge: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: theme.spacing.sm,
+    right: theme.spacing.sm,
     backgroundColor: healthColors.error.main,
-    borderRadius: 10,
+    borderRadius: theme.borderRadius.badge,
     minWidth: 20,
     height: 20,
-    paddingHorizontal: 6,
+    paddingHorizontal: theme.spacing.xs,
     justifyContent: "center",
     alignItems: "center",
   },

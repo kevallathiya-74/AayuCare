@@ -11,6 +11,9 @@ web-build/
 dist/
 
 # Environment variables
+.env
+.env.*
+!.env.example
 
 # Build outputs
 build/
@@ -57,5 +60,3 @@ coverage/
 .nyc_output/
 
 dump.rdb
-.agents
-.agent

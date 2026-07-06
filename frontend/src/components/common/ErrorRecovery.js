@@ -8,7 +8,6 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { RefreshCw, ArrowLeft, Headphones } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
-import { verticalScale } from '@/utils/responsive';
 import DynamicIcon from "./DynamicIcon";
 import { parseError } from '@/utils/errorHandler';
 
@@ -124,7 +123,7 @@ const ErrorRecovery = ({
           { backgroundColor: errorInfo.iconColor + "15" },
         ]}
       >
-        <DynamicIcon name={errorInfo.icon} size={36} color={errorInfo.iconColor} />
+        <DynamicIcon name={errorInfo.icon} size={theme.iconSizes.xxl} color={errorInfo.iconColor} />
       </View>
 
       <Text style={styles.title}>{errorInfo.title}</Text>
@@ -152,7 +151,7 @@ const ErrorRecovery = ({
             onPress={onRetry}
             activeOpacity={0.8}
           >
-            <RefreshCw  size={20} color={healthColors.white} />
+            <RefreshCw  size={theme.iconSizes.md} color={healthColors.white} />
             <Text style={styles.primaryButtonText}>Try Again</Text>
           </TouchableOpacity>
         )}
@@ -164,8 +163,8 @@ const ErrorRecovery = ({
             activeOpacity={0.8}
           >
             <ArrowLeft
-              
-              size={20}
+               
+              size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
             <Text style={styles.secondaryButtonText}>Go Back</Text>
@@ -179,8 +178,8 @@ const ErrorRecovery = ({
             activeOpacity={0.8}
           >
             <Headphones
-              
-              size={20}
+               
+              size={theme.iconSizes.md}
               color={healthColors.text.secondary}
             />
             <Text style={styles.supportButtonText}>Contact Support</Text>
@@ -202,7 +201,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 72,
     height: 72,
-    borderRadius: 36,
+    borderRadius: theme.borderRadius.full,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: theme.spacing.md,

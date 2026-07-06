@@ -1,5 +1,4 @@
 const { query } = require("../../config/postgres");
-const logger = require("../../utils/logger");
 
 /**
  * Medical Record Repository - PostgreSQL Data Access Layer
@@ -43,7 +42,13 @@ const findById = async (id) => {
 };
 
 const findWithFilters = async (filters = {}, options = {}) => {
-  const { limit = 50, offset = 0, sort = 'record_date DESC' } = options;
+  const { limit = 50, offset = 0, sort: sortOpt = 'record_date DESC' } = options;
+
+  let sortClause = 'record_date DESC';
+  if (typeof sortOpt === 'string') {
+    const validSortColumns = ['record_date DESC', 'record_date ASC', 'created_at DESC', 'created_at ASC'];
+    sortClause = validSortColumns.includes(sortOpt) ? sortOpt : 'record_date DESC';
+  }
   
   let queryText = `SELECT * FROM medical_records WHERE 1=1`;
   const params = [];
@@ -69,23 +74,18 @@ const findWithFilters = async (filters = {}, options = {}) => {
     params.push(filters.recordType);
     paramIndex++;
   }
-  if (filters.date) {
-    if (filters.date.$gte) {
-      queryText += ` AND record_date >= $${paramIndex}`;
-      params.push(filters.date.$gte);
-      paramIndex++;
-    }
-    if (filters.date.$lte) {
-      queryText += ` AND record_date <= $${paramIndex}`;
-      params.push(filters.date.$lte);
-      paramIndex++;
-    }
+  if (filters.startDate) {
+    queryText += ` AND record_date >= $${paramIndex}`;
+    params.push(filters.startDate);
+    paramIndex++;
+  }
+  if (filters.endDate) {
+    queryText += ` AND record_date <= $${paramIndex}`;
+    params.push(filters.endDate);
+    paramIndex++;
   }
 
-  // Add sorting
-  const validSortColumns = ['record_date DESC', 'record_date ASC', 'created_at DESC', 'created_at ASC'];
-  const activeSort = validSortColumns.includes(sort) ? sort : 'record_date DESC';
-  queryText += ` ORDER BY ${activeSort}`;
+  queryText += ` ORDER BY ${sortClause}`;
 
   // Add pagination
   queryText += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
@@ -120,17 +120,15 @@ const count = async (filters = {}) => {
     params.push(filters.recordType);
     paramIndex++;
   }
-  if (filters.date) {
-    if (filters.date.$gte) {
-      queryText += ` AND record_date >= $${paramIndex}`;
-      params.push(filters.date.$gte);
-      paramIndex++;
-    }
-    if (filters.date.$lte) {
-      queryText += ` AND record_date <= $${paramIndex}`;
-      params.push(filters.date.$lte);
-      paramIndex++;
-    }
+  if (filters.startDate) {
+    queryText += ` AND record_date >= $${paramIndex}`;
+    params.push(filters.startDate);
+    paramIndex++;
+  }
+  if (filters.endDate) {
+    queryText += ` AND record_date <= $${paramIndex}`;
+    params.push(filters.endDate);
+    paramIndex++;
   }
 
   const { rows } = await query(queryText, params);
@@ -171,7 +169,7 @@ const update = async (id, updateData) => {
     }
   }
 
-  if (fields.length === 0) return await findById(id);
+  if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
     `UPDATE medical_records SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,

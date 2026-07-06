@@ -18,6 +18,7 @@ import { loadUser } from '@/store/slices/authSlice';
 import { initializeNotificationPermissions } from '@/store/slices/permissionSlice';
 import { healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import adminService from '@/services/admin.service';
 import {
   appointmentService,
@@ -121,7 +122,7 @@ const AppNavigator = () => {
     };
 
     initAuth();
-  }, []); // Empty deps - run ONCE on mount
+  }, [dispatch]); // dispatch is stable from Redux
 
   useEffect(() => {
     if (permissionsInitialized.current) {
@@ -415,6 +416,7 @@ const AppNavigator = () => {
   const userRole = user?.role;
 
   return (
+    <ErrorBoundary>
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName="SplashScreen"
@@ -636,6 +638,7 @@ const AppNavigator = () => {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    </ErrorBoundary>
   );
 };
 

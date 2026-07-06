@@ -13,17 +13,17 @@ import { DynamicIcon } from '@/components/common';
 const STATUS_CONFIG = {
   HEALTHY: {
     color: healthColors.success.main,
-    bg: healthColors.success.background || "#E8F5E9",
+    bg: healthColors.success.background,
     icon: "checkmark-circle",
   },
   MONITOR: {
     color: healthColors.warning.main,
-    bg: healthColors.warning.background || "#FFF8E1",
+    bg: healthColors.warning.background,
     icon: "warning",
   },
   "CONSULT DOCTOR": {
     color: healthColors.error.main,
-    bg: healthColors.error.background || "#FFEBEE",
+    bg: healthColors.error.background,
     icon: "alert-circle",
   },
   UNKNOWN: {
@@ -50,8 +50,8 @@ const HealthStatusCard = ({
     return (
       <View style={styles.card}>
         <SkeletonLoader variant="row" />
-        <SkeletonLoader variant="line" style={{ marginTop: 12 }} />
-        <SkeletonLoader variant="line" style={{ marginTop: 8, width: "70%" }} />
+        <SkeletonLoader variant="line" style={styles.skeletonLine1} />
+        <SkeletonLoader variant="line" style={styles.skeletonLine2} />
       </View>
     );
   }
@@ -197,6 +197,8 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.tertiary,
   },
+  skeletonLine1: { marginTop: 12 },
+  skeletonLine2: { marginTop: 8, width: "70%" },
 });
 
 export default HealthStatusCard;

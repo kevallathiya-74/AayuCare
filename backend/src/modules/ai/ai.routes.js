@@ -22,6 +22,7 @@ router.post(
 
 router.get(
   "/health-insights/:patientId",
+  authorize("patient", "doctor", "admin"),
   validatePatientId,
   cacheMiddleware(120),
   aiController.getHealthInsights

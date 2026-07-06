@@ -19,7 +19,7 @@ const { sendSuccess, sendError } = require("../../utils/apiResponse");
  */
 exports.analyzeSymptoms = async (req, res, next) => {
   try {
-    const { symptoms = [], duration, severity = "moderate" } = req.body;
+    const { symptoms = [], severity = "moderate" } = req.body;
 
     if (!symptoms || symptoms.length === 0) {
       return sendError(res, req, "Please provide at least one symptom", 400, "VALIDATION_ERROR");
@@ -92,10 +92,10 @@ exports.getHealthInsights = async (req, res, next) => {
     }
 
     // Get recent medical records using patient.id
-    const records = await medicalRecordRepository.findByPatientId(patient.id, {
-      sort: { createdAt: -1 },
-      limit: 10
-    });
+    const records = await medicalRecordRepository.findWithFilters(
+      { patientId: patient.id },
+      { sort: 'created_at DESC', limit: 10 }
+    );
 
     // Generate comprehensive insights
     const insights = generateHealthInsights(patient, records);
@@ -433,7 +433,7 @@ function generateRecommendations(symptoms, severity) {
   ];
 }
 
-function getEmergencySignals(symptoms) {
+function getEmergencySignals(_symptoms) {
   return [
     "Temperature above 103°F (39.4°C)",
     "Difficulty breathing or shortness of breath",
@@ -569,7 +569,7 @@ function generateDietPlan(age, weight, height, conditions, allergies, goal) {
   };
 }
 
-function generateExercisePlan(age, fitness, conditions, goal) {
+function generateExercisePlan(_age, _fitness, _conditions, _goal) {
   return {
     monday: {
       type: "Cardio",
@@ -617,7 +617,7 @@ function generateExercisePlan(age, fitness, conditions, goal) {
 
 async function analyzeRecordWithAI(record) {
   // Simplified AI analysis
-  const { symptoms = [], diagnosis, vitals = {}, labResults = {} } = record;
+  const { vitals = {} } = record;
 
   const insights = [];
   let riskScore = 0;

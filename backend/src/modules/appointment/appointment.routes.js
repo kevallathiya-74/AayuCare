@@ -22,15 +22,16 @@ const router = express.Router();
 router.use(protect);
 router.use(attachHospitalId);
 
-router.get("/cursor", cachePatientAppointments, appointmentController.getAppointmentsCursor);
-router.get("/stats", appointmentController.getAppointmentStats);
-router.get("/patient/:patientId", appointmentController.getPatientAppointments);
+router.get("/cursor", authorize("patient", "doctor", "admin"), cachePatientAppointments, appointmentController.getAppointmentsCursor);
+router.get("/stats", authorize("admin", "doctor"), appointmentController.getAppointmentStats);
+router.get("/patient/:patientId", authorize("patient", "doctor", "admin"), appointmentController.getPatientAppointments);
 router.get(
   "/slots/:doctorId",
+  authorize("patient", "doctor", "admin"),
   validateGetAvailableSlots,
   appointmentController.getAvailableSlots
 );
-router.get("/", validateGetAppointments, appointmentController.getAppointments);
+router.get("/", authorize("patient", "doctor", "admin"), validateGetAppointments, appointmentController.getAppointments);
 
 router.post(
   "/",
@@ -41,7 +42,7 @@ router.post(
   appointmentController.createAppointment
 );
 
-router.get("/:id", appointmentController.getAppointment);
+router.get("/:id", authorize("patient", "doctor", "admin"), appointmentController.getAppointment);
 
 router.put(
   "/:id",
@@ -57,6 +58,6 @@ router.patch(
   appointmentController.updateAppointmentStatus
 );
 
-router.post("/:id/cancel", validateCancelAppointment, appointmentController.cancelAppointment);
+router.post("/:id/cancel", authorize("patient", "doctor", "admin"), validateCancelAppointment, appointmentController.cancelAppointment);
 
 module.exports = router;

@@ -7,12 +7,10 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   StatusBar,
   RefreshControl,
-  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
@@ -23,8 +21,7 @@ import { getSafeAreaEdges, getScreenPadding } from '@/utils/responsive';
 import { notificationService } from '@/services';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { fetchHealthMetrics } from '@/store/slices/healthSlice';
-import { logError } from '@/utils/errorHandler';
-import { Calendar, FolderOpen, Stethoscope, Activity, MessageCircle, HeartPulse, Info, Users, ShoppingCart, Home,User, Settings } from "lucide-react-native";
+import { Calendar, FolderOpen, Stethoscope, Activity, MessageCircle, HeartPulse, Info, Users, ShoppingCart, Home, User, Settings } from "lucide-react-native";
 import { SectionHeader } from '@/components/common';
 import { useDrawer } from '@/hooks/useDrawer';
 import { DrawerMenu } from '@/components/layout';
@@ -37,8 +34,7 @@ import {
   EmergencyContactCard,
   QuickActionsGrid,
 } from "./components";
-
-const { width } = Dimensions.get("window");
+import Routes from '@/navigation/routes';
 
 const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -130,7 +126,7 @@ const PatientDashboard = ({ navigation }) => {
     if (riskScore < 20) return { status: "HEALTHY", riskScore };
     if (riskScore < 40) return { status: "MONITOR", riskScore };
     return { status: "CONSULT DOCTOR", riskScore };
-  }, [safeMetrics]);
+  }, [safeMetrics, getLatestMetric]);
 
   const getLastUpdateTime = useCallback(() => {
     if (!safeMetrics.length) return "No data";
@@ -167,16 +163,16 @@ const PatientDashboard = ({ navigation }) => {
   // ── Action cards ──
   const actionCards = useMemo(
     () => [
-      { title: "Book Appointment", icon: Calendar, iconColor: healthColors.primary.main, onPress: () => navigation.navigate("AppointmentBooking") },
-      { title: "Medical Records", icon: FolderOpen, iconColor: healthColors.accent.aqua, onPress: () => navigation.navigate("MedicalRecords") },
-      { title: "Prescriptions", icon: Stethoscope, iconColor: healthColors.success.main, onPress: () => navigation.navigate("MyPrescriptions") },
-      { title: "Health Metrics", icon: Activity, iconColor: healthColors.primary.main, onPress: () => navigation.navigate("HealthMetrics") },
-      { title: "AI Health Assistant", icon: MessageCircle, iconColor: healthColors.secondary.main, onPress: () => navigation.navigate("AIHealthAssistant") },
-      { title: "AI Symptom Checker", icon: HeartPulse, iconColor: healthColors.error.main, onPress: () => navigation.navigate("AISymptomChecker") },
-      { title: "Disease Info", icon: Info, iconColor: healthColors.accent.purple, onPress: () => navigation.navigate("DiseaseInfo") },
-      { title: "Specialist Finder", icon: Users, iconColor: healthColors.info.main, onPress: () => navigation.navigate("SpecialistCareFinder") },
-      { title: "Hospital Events", icon: Calendar, iconColor: healthColors.warning.main, onPress: () => navigation.navigate("HospitalEvents") },
-      { title: "Pharmacy & Billing", icon: ShoppingCart, iconColor: healthColors.success.main, onPress: () => navigation.navigate("PharmacyBilling") },
+      { title: "Book Appointment", icon: Calendar, iconColor: healthColors.primary.main, onPress: () => navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING) },
+      { title: "Medical Records", icon: FolderOpen, iconColor: healthColors.accent.aqua, onPress: () => navigation.navigate(Routes.PATIENT.MEDICAL_RECORDS) },
+      { title: "Prescriptions", icon: Stethoscope, iconColor: healthColors.success.main, onPress: () => navigation.navigate(Routes.PATIENT.MY_PRESCRIPTIONS) },
+      { title: "Health Metrics", icon: Activity, iconColor: healthColors.primary.main, onPress: () => navigation.navigate(Routes.PATIENT.HEALTH_METRICS) },
+      { title: "AI Health Assistant", icon: MessageCircle, iconColor: healthColors.secondary.main, onPress: () => navigation.navigate(Routes.PATIENT.AI_HEALTH_ASSISTANT) },
+      { title: "AI Symptom Checker", icon: HeartPulse, iconColor: healthColors.error.main, onPress: () => navigation.navigate(Routes.PATIENT.AI_SYMPTOM_CHECKER) },
+      { title: "Disease Info", icon: Info, iconColor: healthColors.accent.purple, onPress: () => navigation.navigate(Routes.PATIENT.DISEASE_INFO) },
+      { title: "Specialist Finder", icon: Users, iconColor: healthColors.info.main, onPress: () => navigation.navigate(Routes.PATIENT.SPECIALIST_CARE_FINDER) },
+      { title: "Hospital Events", icon: Calendar, iconColor: healthColors.warning.main, onPress: () => navigation.navigate(Routes.PATIENT.HOSPITAL_EVENTS) },
+      { title: "Pharmacy & Billing", icon: ShoppingCart, iconColor: healthColors.success.main, onPress: () => navigation.navigate(Routes.PATIENT.PHARMACY_BILLING) },
     ],
     [navigation]
   );
@@ -219,7 +215,7 @@ const PatientDashboard = ({ navigation }) => {
         { icon: Settings, iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("PatientTabs", { screen: "More" }) },
       ],
     },
-  ], [navigation, closeMenu]);
+  ], [nav]);
 
   const healthStatus = useMemo(() => getHealthStatus(), [getHealthStatus]);
 
@@ -263,8 +259,8 @@ const PatientDashboard = ({ navigation }) => {
           greeting={getTimeBasedGreeting()}
           greetingIcon={getGreetingIcon()}
           onMenuOpen={openMenu}
-          onNotificationPress={() => navigation.navigate("Notifications")}
-          onProfilePress={() => navigation.navigate("Profile")}
+          onNotificationPress={() => navigation.navigate(Routes.PATIENT.NOTIFICATIONS)}
+          onProfilePress={() => navigation.navigate(Routes.PATIENT.PROFILE)}
         />
 
         <View style={styles.body}>
@@ -278,7 +274,7 @@ const PatientDashboard = ({ navigation }) => {
             sugar={formatSugar()}
             temp={formatTemp()}
             lastUpdated={getLastUpdateTime()}
-            onPress={() => navigation.navigate("HealthMetrics")}
+            onPress={() => navigation.navigate(Routes.PATIENT.HEALTH_METRICS)}
           />
 
           {/* ── Medical History ── */}

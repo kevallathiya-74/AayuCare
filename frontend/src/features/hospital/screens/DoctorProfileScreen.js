@@ -19,7 +19,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { CreditCard, ChevronRight, LogOut } from "lucide-react-native";
+import { CreditCard, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
@@ -32,8 +32,8 @@ import {
 import Avatar from '@/components/common/Avatar';
 import { logoutUser } from '@/store/slices/authSlice';
 import { doctorService } from '@/services';
-import { logError } from '@/utils/errorHandler';
 import { DynamicIcon } from '@/components/common';
+import Routes from '@/navigation/routes';
 
 const DoctorProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -76,25 +76,25 @@ const DoctorProfileScreen = ({ navigation }) => {
       id: 1,
       title: "Edit Profile",
       icon: "create-outline",
-      onPress: () => navigation.navigate("EditProfile"),
+      onPress: () => navigation.navigate(Routes.DOCTOR.EDIT_PROFILE),
     },
     {
       id: 2,
       title: "Schedule & Availability",
       icon: "calendar-outline",
-      onPress: () => navigation.navigate("ScheduleAvailability"),
+      onPress: () => navigation.navigate(Routes.DOCTOR.SCHEDULE_AVAILABILITY),
     },
     {
       id: 3,
       title: "Consultation History",
       icon: "time-outline",
-      onPress: () => navigation.navigate("ConsultationHistory"),
+      onPress: () => navigation.navigate(Routes.DOCTOR.CONSULTATION_HISTORY),
     },
     {
       id: 4,
       title: "Settings",
       icon: "settings-outline",
-      onPress: () => navigation.navigate("Settings"),
+      onPress: () => navigation.navigate(Routes.DOCTOR.SETTINGS),
     },
     {
       id: 5,
@@ -145,7 +145,7 @@ const DoctorProfileScreen = ({ navigation }) => {
             {user?.specialization || "Specialist"} · {user?.department || "OPD"}
           </Text>
           <View style={styles.idBadge}>
-            <CreditCard  size={13} color="rgba(255,255,255,0.85)" />
+            <CreditCard  size={13} color={theme.withOpacity(healthColors.text.white, 0.85)} />
             <Text style={styles.idBadgeText}>ID: {user?.userId || "—"}</Text>
           </View>
 
@@ -245,14 +245,14 @@ const styles = StyleSheet.create({
   },
   specializationHero: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: "rgba(255,255,255,0.85)",
+    color: theme.withOpacity(healthColors.text.white, 0.85),
     marginBottom: spacing.xs,
   },
   idBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 14,
@@ -260,12 +260,12 @@ const styles = StyleSheet.create({
   },
   idBadgeText: {
     fontSize: theme.typography.sizes.caption,
-    color: "rgba(255,255,255,0.9)",
+    color: theme.withOpacity(healthColors.text.white, 0.9),
     fontWeight: theme.typography.weights.semibold,
   },
   heroStats: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.15),
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   heroStatDivider: {
     width: 1,
-    backgroundColor: "rgba(255,255,255,0.3)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.3),
   },
   heroStatValue: {
     fontSize: theme.typography.sizes.h3,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     fontSize: theme.typography.sizes.caption,
-    color: "rgba(255,255,255,0.8)",
+    color: theme.withOpacity(healthColors.text.white, 0.8),
   },
   optionsSection: {
     backgroundColor: healthColors.background.card,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,

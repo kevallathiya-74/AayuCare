@@ -64,7 +64,7 @@ const getApiBaseUrl = () => {
   );
   if (explicitUrl) {
     if (__DEV__) {
-      console.log('[APP_CONFIG] Using explicit API URL:', explicitUrl);
+      console.warn('[APP_CONFIG] Using explicit API URL:', explicitUrl);
     }
     return explicitUrl;
   }
@@ -81,55 +81,12 @@ const getApiBaseUrl = () => {
     }
   }
 
-  // Development mode auto-detection
-  if (isDevEnv) {
-    const isExpoGo = Constants.appOwnership === 'expo';
-    const manifestUrl = Constants.expoConfig?.hostUri;
-
-    // 1. Web Localhost
-    if (Platform.OS === 'web') {
-      const webUrl = 'http://localhost:5000/api';
-      console.log('[APP_CONFIG] Web Development - using local backend:', webUrl);
-      return webUrl;
-    }
-
-    // 2. Expo Go / LAN (works for emulator + physical device)
-    // hostUri is usually like: 10.130.73.190:8081
-    if (isExpoGo && manifestUrl) {
-      const localIp = manifestUrl.split(':')[0];
-      if (localIp) {
-        const localBackendUrl = `http://${localIp}:5000/api`;
-        console.log('[APP_CONFIG] Expo Go Development - using hostUri backend:', localBackendUrl);
-        return localBackendUrl;
-      }
-    }
-    
-    // 3. Android Emulator mapping fallback
-    // Android emulator maps 10.0.2.2 to host machine's localhost
-    if (Platform.OS === 'android' && !Constants.isDevice) {
-      const androidEmulatorUrl = 'http://10.0.2.2:5000/api';
-      console.log('[APP_CONFIG] Android Emulator Fallback - using host backend:', androidEmulatorUrl);
-      return androidEmulatorUrl;
-    }
-
-    // 4. iOS Simulator mapping
-    if (Platform.OS === 'ios' && !Constants.isDevice) {
-      const iosDevUrl = 'http://localhost:5000/api';
-      console.log('[APP_CONFIG] iOS Simulator - using local backend:', iosDevUrl);
-      return iosDevUrl;
-    }
-  }
-
-  // Production fallback from configured app extra/env only.
-  const prodUrl = normalizeUrl(
-    getEnvVar("EXPO_PUBLIC_API_BASE_URL_PROD") ||
-    getEnvVar("PRODUCTION_API_URL") ||
-    getEnvVar("API_BASE_URL_PROD")
+  // No URL configured
+  console.error(
+    '[APP_CONFIG] FATAL: No API base URL configured. ' +
+    'Please set EXPO_PUBLIC_API_BASE_URL in your frontend/.env file.'
   );
-  if (__DEV__) {
-    console.log('[APP_CONFIG] Fallback to production backend:', prodUrl);
-  }
-  return prodUrl;
+  return "";
 };
 
 /**
@@ -182,7 +139,7 @@ export default APP_CONFIG;
 
 // Log configuration on initialization (only in development)
 if (__DEV__) {
-  console.log('[APP_CONFIG] Initialized:', {
+  console.warn('[APP_CONFIG] Initialized:', {
     apiUrl: APP_CONFIG.api.baseURL,
     environment: APP_CONFIG.env.isDevelopment ? 'Development' : 'Production',
     platform: APP_CONFIG.env.platform,

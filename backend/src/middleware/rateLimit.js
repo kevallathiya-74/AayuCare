@@ -74,7 +74,7 @@ const tieredRateLimit = async (req, res, next) => {
     res.setHeader("X-RateLimit-Window", String(policy.windowSeconds));
 
     if (!result.allowed) {
-      res.setHeader("Retry-After", String(policy.windowSeconds));
+      res.setHeader("Retry-After", String(result.resetInSeconds));
       return sendError(
         res,
         req,
@@ -86,6 +86,18 @@ const tieredRateLimit = async (req, res, next) => {
 
     return next();
   } catch (error) {
+    // Auth rate limiting MUST be fail-closed (security > availability)
+    const path = req.path || req.originalUrl || "";
+    if (path.startsWith("/api/auth/sign-in") || path.startsWith("/api/auth/sign-up")) {
+      logger.error(`Rate limiter critical error on auth endpoint: ${error.message}`);
+      return sendError(
+        res,
+        req,
+        "Authentication service temporarily unavailable",
+        503,
+        "AUTH_SERVICE_UNAVAILABLE"
+      );
+    }
     logger.warn(`Rate limiter fallback (fail-open): ${error.message}`);
     return next();
   }

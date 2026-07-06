@@ -12,7 +12,6 @@
 
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { logError } from '../utils/errorHandler';
-import { APP_CONFIG } from './appConfig';
 
 const extractStatus = (error) => error?.status ?? error?.response?.status;
 const isRoleDeniedError = (error) =>
@@ -208,7 +207,7 @@ export const queryKeys = {
 /**
  * Helper to invalidate related queries after mutations
  */
-export const invalidateRelatedQueries = async (queryClient, entityType, action = 'update') => {
+export const invalidateRelatedQueries = async (queryClient, entityType, _action = 'update') => {
   const invalidations = [];
 
   switch (entityType) {

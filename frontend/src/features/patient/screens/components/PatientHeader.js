@@ -6,7 +6,7 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import { Menu, Bell, User, CreditCard } from "lucide-react-native";
+import { Menu, Bell, User } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from '@/theme';
 import LanguageSelector from '@/components/common/LanguageSelector';

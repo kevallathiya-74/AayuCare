@@ -16,7 +16,7 @@ const { sendSuccess, sendError } = require("../../utils/apiResponse");
  */
 exports.getUpcomingEvents = async (req, res, next) => {
     try {
-        const { type, limit = 20, hospitalId } = req.query;
+        const { type, limit = 20, hospitalId: queryHospitalId } = req.query;
 
         // Whitelist allowed event types from the Event model enum
         const ALLOWED_EVENT_TYPES = ['health_camp', 'awareness', 'vaccination', 'screening', 'seminar', 'workshop', 'other'];
@@ -24,11 +24,14 @@ exports.getUpcomingEvents = async (req, res, next) => {
             return next(new AppError(`Invalid event type. Allowed: ${ALLOWED_EVENT_TYPES.join(', ')}`, 400));
         }
         
+        // Use hospitalId from authenticated user (via optionalAuth) if available,
+        // falling back to query param for public (unauthenticated) access
+        const effectiveHospitalId = req.hospitalId || queryHospitalId;
+        
         const query = {
             isActive: true,
-            date: { $gte: new Date() },
-            status: { $in: ['upcoming', 'ongoing'] },
-            ...(hospitalId && { hospitalId: hospitalId.toUpperCase() }),
+            startDate: new Date(),
+            ...(effectiveHospitalId && { hospitalId: effectiveHospitalId.toUpperCase() }),
         };
         
         if (type) {

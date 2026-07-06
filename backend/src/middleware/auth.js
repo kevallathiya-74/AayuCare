@@ -23,7 +23,7 @@ exports.protect = async (req, res, next) => {
       session = await auth.api.getSession({
         headers: req.headers,
       });
-    } catch (cookieError) {
+    } catch {
       // Cookie session failed, will try Bearer token
     }
 
@@ -91,9 +91,7 @@ exports.protect = async (req, res, next) => {
       return next(new AppError("Account deactivated", 403));
     }
 
-    // Attach user and session to request
-    req.user = session.user;
-    req.session = session.session;
+    Object.assign(req, { user: session.user, session: session.session });
 
     next();
   } catch (error) {
@@ -180,7 +178,7 @@ exports.optionalAuth = async (req, res, next) => {
     let session = null;
     try {
       session = await auth.api.getSession({ headers: req.headers });
-    } catch (_) {
+    } catch {
       // Ignore cookie errors
     }
 
@@ -210,17 +208,16 @@ exports.optionalAuth = async (req, res, next) => {
               session = { user: userResult.rows[0], session: sessionResult.rows[0] };
             }
           }
-        } catch (_) {
+        } catch {
           // Ignore token errors
         }
       }
     }
 
     if (session?.user?.isActive) {
-      req.user = session.user;
-      req.session = session.session;
+      Object.assign(req, { user: session.user, session: session.session });
     }
-  } catch (error) {
+  } catch {
     // Always continue - optional auth never blocks
   }
   next();

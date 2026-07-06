@@ -1,5 +1,4 @@
 const { query } = require("../../config/postgres");
-const logger = require("../../utils/logger");
 
 const DAYS_MAP = {
   sunday: 0,
@@ -48,7 +47,7 @@ const generateTimeSlots = (startTimeStr, endTimeStr, durationMin) => {
     const h = Math.floor(currentMin / 60).toString().padStart(2, '0');
     const m = (currentMin % 60).toString().padStart(2, '0');
     slots.push({
-      _id: `slot_${index}`,
+      id: `slot_${index}`,
       time: `${h}:${m}`,
       isAvailable: true
     });
@@ -68,7 +67,6 @@ const mapScheduleRow = (row) => {
   
   return {
     id: row.id,
-    _id: row.id, // For backward compatibility
     doctorId: row.doctor_id,
     hospitalId: row.hospital_id,
     dayOfWeek: getDayStr(row.day_of_week),
@@ -189,7 +187,7 @@ const update = async (id, updates) => {
     paramIndex++;
   }
 
-  if (fields.length === 0) return await findById(id);
+  if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
     `UPDATE schedules SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,
@@ -199,14 +197,13 @@ const update = async (id, updates) => {
 };
 
 const updateByDoctorAndDay = async (doctorId, dayOfWeek, updates) => {
-  const dayNum = getDayNum(dayOfWeek);
   const existing = await findByDoctorAndDay(doctorId, dayOfWeek);
   
   if (existing) {
-    return await update(existing.id, updates);
+    return update(existing.id, updates);
   } else {
     // Create new
-    return await create({
+    return create({
       doctorId,
       dayOfWeek,
       hospitalId: updates.hospitalId || "MAIN",
@@ -243,7 +240,7 @@ const bulkCreate = async (doctorId, schedules) => {
   return created;
 };
 
-const getAvailableTimeSlots = async (doctorId, dayOfWeek, hospitalId = null) => {
+const getAvailableTimeSlots = async (doctorId, dayOfWeek, _hospitalId = null) => {
   const schedule = await findByDoctorAndDay(doctorId, dayOfWeek);
   if (!schedule || !schedule.isAvailable) return [];
   return schedule.timeSlots;

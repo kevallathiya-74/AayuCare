@@ -135,7 +135,7 @@ const EditProfileScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
@@ -277,9 +277,8 @@ const EditProfileScreen = ({ navigation }) => {
           loading={updateProfileMutation.isPending}
           onPress={handleSave}
           style={styles.saveButton}
-        >
-          Save Changes
-        </Button>
+        title="Save Changes"
+        />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -287,6 +286,7 @@ const EditProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
@@ -337,46 +337,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: healthColors.border.light,
   },
-  inputGroup: {
-    marginBottom: 18,
-  },
-  label: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginBottom: 8,
-  },
   required: {
     color: healthColors.error.main,
     fontSize: theme.typography.sizes.bodyMedium,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    borderRadius: 12,
-    backgroundColor: healthColors.background.primary,
-    paddingHorizontal: 14,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 14,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
-  textAreaWrapper: {
-    alignItems: "flex-start",
-    paddingTop: 12,
-    paddingBottom: 8,
-    minHeight: 100,
-  },
-  textArea: {
-    minHeight: 88,
-    paddingVertical: 0,
   },
   charCount: {
     fontSize: theme.typography.sizes.caption,
@@ -414,16 +377,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  saveButtonDisabled: {
-    opacity: 0.5,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  saveButtonText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
+
 });
 
 export default EditProfileScreen;

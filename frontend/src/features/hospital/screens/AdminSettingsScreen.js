@@ -18,9 +18,10 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ChevronRight, ArrowLeft, User, LogOut } from "lucide-react-native";
+import { ArrowLeft, User, LogOut } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
+import Routes from '@/navigation/routes';
 import { logoutUser } from '@/store/slices/authSlice';
 import { logError } from '@/utils/errorHandler';
 import { ModalSheet, Button } from '@/components/common';
@@ -123,7 +124,7 @@ const AdminSettingsScreen = ({ navigation }) => {
       if (item.screen) {
         // Navigate to tab screens via AdminTabs, others directly
         if (item.isTabScreen) {
-          navigation.navigate("AdminTabs", { screen: item.screen });
+          navigation.navigate(Routes.TABS.ADMIN, { screen: item.screen });
         } else {
           navigation.navigate(item.screen);
         }
@@ -269,18 +270,16 @@ const AdminSettingsScreen = ({ navigation }) => {
             onPress={() => setShowLogoutModal(false)}
             style={styles.modalButton}
             disabled={loggingOut}
-          >
-            Cancel
-          </Button>
+            title="Cancel"
+          />
           <Button 
             variant="primary" 
             onPress={confirmLogout}
             style={[styles.modalButton, { backgroundColor: healthColors.error.main, borderColor: healthColors.error.main }]}
             textStyle={{ color: healthColors.neutral.white }}
             loading={loggingOut}
-          >
-            Logout
-          </Button>
+            title="Logout"
+          />
         </View>
       </ModalSheet>
     </SafeAreaView>
@@ -331,7 +330,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,

@@ -7,6 +7,7 @@ import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import { APP_CONFIG } from "@/config/appConfig";
 import api from "@/services/apiClient";
+import logger from '@/utils/logger';
 import appStorage from '@/utils/appStorage';
 import { STORAGE_KEYS } from '@/utils/constants';
 
@@ -14,7 +15,7 @@ import { STORAGE_KEYS } from '@/utils/constants';
 const getAuthBaseURL = () => {
   const baseURL = String(APP_CONFIG?.api?.baseURL ?? "").trim();
   if (!baseURL) {
-    return "http://localhost:5000";
+    throw new Error('CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.');
   }
   return baseURL.replace(/\/api\/?$/, "");
 };
@@ -135,7 +136,7 @@ const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
 export const login = async (credentials) => {
   try {
     const userInput = credentials.userId || credentials.email;
-    if (__DEV__) { console.log('[auth.service] Login attempt with:', isEmail(userInput) ? 'email' : 'userId'); }
+    if (__DEV__) { logger.debug('[auth.service] Login attempt with:', isEmail(userInput) ? 'email' : 'userId'); }
     
     // Validate credentials
     if (!userInput || !credentials.password) {
@@ -145,8 +146,8 @@ export const login = async (credentials) => {
 
     // If input is not an email, convert userId to email
     if (!isEmail(email)) {
-      if (__DEV__) { console.log('[auth.service] Converting userId to email...'); }
-      if (__DEV__) { console.log('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`); }
+      if (__DEV__) { logger.debug('[auth.service] Converting userId to email...'); }
+      if (__DEV__) { logger.debug('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`); }
       
       const emailResponse = await fetchWithTimeout(
         `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`,
@@ -160,7 +161,7 @@ export const login = async (credentials) => {
         10000 // 10 second timeout
       );
 
-      if (__DEV__) { console.log('[auth.service] Email lookup response status:', emailResponse.status); }
+      if (__DEV__) { logger.debug('[auth.service] Email lookup response status:', emailResponse.status); }
 
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json().catch(() => ({}));
@@ -181,19 +182,19 @@ export const login = async (credentials) => {
         throw new Error('Invalid server response. Please try again.');
       }
 
-      if (__DEV__) { console.log('[auth.service] Email found for userId'); }
+      if (__DEV__) { logger.debug('[auth.service] Email found for userId'); }
     } else {
-      if (__DEV__) { console.log('[auth.service] Using email directly for login'); }
+      if (__DEV__) { logger.debug('[auth.service] Using email directly for login'); }
     }
 
     // Sign in using Better Auth with email and password
-    if (__DEV__) { console.log('[auth.service] Attempting Better Auth sign-in...'); }
+    if (__DEV__) { logger.debug('[auth.service] Attempting Better Auth sign-in...'); }
     const result = await signIn.email({
       email: email,
       password: credentials.password,
     });
 
-    if (__DEV__) { console.log('[auth.service] Better Auth sign-in completed'); }
+    if (__DEV__) { logger.debug('[auth.service] Better Auth sign-in completed'); }
     if (!result.data?.user) {
       throw new Error('Invalid credentials. Please enter the exact User ID and password.');
     }
@@ -203,7 +204,7 @@ export const login = async (credentials) => {
     // Better Auth sign-in payload token shape may differ from the DB session token
     // used by backend Bearer protection. Use it only as temporary fallback.
     let sessionToken = result.data?.session?.token || result.data?.token || null;
-    if (__DEV__) { console.log('[auth.service] Session token from sign-in:', sessionToken ? 'exists' : 'missing'); }
+    if (__DEV__) { logger.debug('[auth.service] Session token from sign-in:', sessionToken ? 'exists' : 'missing'); }
 
     // Build auth headers for subsequent protected requests
     const authHeaders = {
@@ -212,7 +213,7 @@ export const login = async (credentials) => {
     };
 
     // Fetch full user profile with user-friendly data
-    if (__DEV__) { console.log('[auth.service] Fetching full user profile...'); }
+    if (__DEV__) { logger.debug('[auth.service] Fetching full user profile...'); }
     const profileResponse = await fetchWithTimeout(
       `${APP_CONFIG.api.baseURL}/v1/user/profile-by-email`,
       {
@@ -230,7 +231,7 @@ export const login = async (credentials) => {
 
     const profileData = await profileResponse.json();
     const normalizedUser = normalizeUserProfile(profileData.data || {});
-    if (__DEV__) { console.log('[auth.service] Profile fetched for role:', normalizedUser.role); }
+    if (__DEV__) { logger.debug('[auth.service] Profile fetched for role:', normalizedUser.role); }
 
     // BLocker: Do not allow deactivated users to login
     if (normalizedUser.isActive === false) {
@@ -239,7 +240,7 @@ export const login = async (credentials) => {
     }
 
     // Always exchange credentials for authoritative session token used by protected API middleware
-    if (__DEV__) { console.log('[auth.service] Exchanging credentials for session token...'); }
+    if (__DEV__) { logger.debug('[auth.service] Exchanging credentials for session token...'); }
     try {
       const sessionResponse = await fetchWithTimeout(
         `${APP_CONFIG.api.baseURL}/v1/user/session-token`,
@@ -260,7 +261,7 @@ export const login = async (credentials) => {
       if (sessionResponse.ok) {
         const sessionData = await sessionResponse.json();
         sessionToken = sessionData.token || sessionToken;
-        if (__DEV__) { console.log('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
+        if (__DEV__) { logger.debug('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
       } else {
         if (__DEV__) { console.warn('[auth.service] Session token exchange failed:', sessionResponse.status); }
         throw new Error('Login failed. Please check your exact User ID and password.');
@@ -275,12 +276,12 @@ export const login = async (credentials) => {
     // Store session token in appStorage for API interceptor
     if (sessionToken) {
       await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-      if (__DEV__) { console.log('[auth.service] Session token stored in appStorage'); }
+      if (__DEV__) { logger.debug('[auth.service] Session token stored in appStorage'); }
     } else {
       if (__DEV__) { console.warn('[auth.service] No session token available - API calls may fail'); }
     }
 
-    if (__DEV__) { console.log('[auth.service] Login successful for role:', profileData.data.role); }
+    if (__DEV__) { logger.debug('[auth.service] Login successful for role:', profileData.data.role); }
 
     return {
       user: normalizedUser,
@@ -326,7 +327,7 @@ export const register = async (userData) => {
   const sessionToken = result.data?.session?.token;
   if (sessionToken) {
     await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-    if (__DEV__) { console.log('[auth.service] Registration token stored'); }
+    if (__DEV__) { logger.debug('[auth.service] Registration token stored'); }
   }
 
   // Normalize user profile for consistent camelCase shape in Redux
@@ -345,11 +346,11 @@ export const logout = async () => {
     // Clear token from appStorage
     await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
     await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-    if (__DEV__) { console.log('[auth.service] Storage cleared'); }
+    if (__DEV__) { logger.debug('[auth.service] Storage cleared'); }
 
     // Sign out from Better Auth
     await signOut();
-    if (__DEV__) { console.log('[auth.service] Logout complete'); }
+    if (__DEV__) { logger.debug('[auth.service] Logout complete'); }
   } catch (error) {
     if (__DEV__) { console.error('[auth.service] Logout error:', error); }
     // Continue even if error - best effort logout
@@ -358,13 +359,13 @@ export const logout = async () => {
 
 export const getSession = async () => {
   try {
-    if (__DEV__) { console.log('[auth.service] Checking for active session...'); }
+    if (__DEV__) { logger.debug('[auth.service] Checking for active session...'); }
 
     // Read the session token we stored in AsyncStorage at login time
     const storedToken = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
     if (!storedToken) {
-      if (__DEV__) { console.log('[auth.service] No token in AsyncStorage - user must log in'); }
+      if (__DEV__) { logger.debug('[auth.service] No token in AsyncStorage - user must log in'); }
       return null;
     }
 
@@ -384,7 +385,7 @@ export const getSession = async () => {
 
     if (!validateResponse.ok) {
       // Token expired or invalid - clear it so the user is prompted to log in
-      if (__DEV__) { console.log('[auth.service] Stored token is no longer valid, clearing storage'); }
+      if (__DEV__) { logger.debug('[auth.service] Stored token is no longer valid, clearing storage'); }
       await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
       await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
       return null;
@@ -395,12 +396,12 @@ export const getSession = async () => {
     const userProfile = sessionData.data?.user || sessionData.user || null;
 
     if (!userProfile) {
-      if (__DEV__) { console.log('[auth.service] Session valid but no user data returned'); }
+      if (__DEV__) { logger.debug('[auth.service] Session valid but no user data returned'); }
       return null;
     }
 
     const normalizedUser = normalizeUserProfile(userProfile);
-    if (__DEV__) { console.log('[auth.service] Session restored for:', normalizedUser.role, normalizedUser.email); }
+    if (__DEV__) { logger.debug('[auth.service] Session restored for:', normalizedUser.role, normalizedUser.email); }
     return { user: normalizedUser, token: storedToken };
   } catch (error) {
     if (__DEV__) { console.error('[auth.service] getSession error:', error?.message || error); }

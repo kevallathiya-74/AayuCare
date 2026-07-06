@@ -6,6 +6,7 @@ module.exports = ({ config }) => {
 
   return {
     ...base,
+    plugins: [...(base.plugins || []), "expo-image"],
     updates: {
       ...base.updates,
       url: `https://u.expo.dev/${projectId}`,

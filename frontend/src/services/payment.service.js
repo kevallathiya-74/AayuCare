@@ -4,7 +4,7 @@
  */
 
 import api from "./apiClient";
-import { logError, parseError } from "../utils/errorHandler";
+import { logError } from "../utils/errorHandler";
 import { normalizeServiceResponse } from "./responseNormalizer";
 
 class PaymentService {
@@ -24,7 +24,7 @@ class PaymentService {
       return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.createPayment" });
-      throw this.handleError(error);
+      throw error;
     }
   }
 
@@ -42,7 +42,7 @@ class PaymentService {
       return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.getPatientPayments" });
-      throw this.handleError(error);
+      throw error;
     }
   }
 
@@ -57,7 +57,7 @@ class PaymentService {
       return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.getPaymentById" });
-      throw this.handleError(error);
+      throw error;
     }
   }
 
@@ -72,12 +72,8 @@ class PaymentService {
       return normalizeServiceResponse(response.data);
     } catch (error) {
       logError(error, { context: "PaymentService.getPaymentStats" });
-      throw this.handleError(error);
+      throw error;
     }
-  }
-
-  handleError(error) {
-    return new Error(parseError(error));
   }
 }
 

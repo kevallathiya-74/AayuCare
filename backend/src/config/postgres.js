@@ -30,7 +30,8 @@ const buildPoolConfig = () => {
       min: parseInt(process.env.POSTGRES_MIN_POOL, 10) || 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: { rejectUnauthorized: false },
+      statement_timeout: 10000,
+      ...(process.env.NODE_ENV === "production" ? { ssl: { rejectUnauthorized: false } } : {})
     };
   }
   return {
@@ -43,6 +44,7 @@ const buildPoolConfig = () => {
     min: parseInt(process.env.POSTGRES_MIN_POOL, 10) || 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
+    statement_timeout: 10000,
   };
 };
 
@@ -52,16 +54,21 @@ const poolConfig = buildPoolConfig();
 const pool = new Pool(poolConfig);
 
 // Connection event handlers
-pool.on("connect", (client) => {
-  logger.info("✅ PostgreSQL client connected to pool");
-});
+// Per-connection lifecycle logs are debug-tier; gate them so production
+// logs aren't flooded with one INFO line per checkout/checkin (could be
+// hundreds per minute under load). Development keeps full visibility.
+if (process.env.NODE_ENV !== 'production') {
+  pool.on("connect", (_client) => {
+    logger.info("✅ PostgreSQL client connected to pool");
+  });
 
-pool.on("error", (err, client) => {
+  pool.on("remove", (_client) => {
+    logger.info("📤 PostgreSQL client removed from pool");
+  });
+}
+
+pool.on("error", (err, _client) => {
   logger.error("❌ Unexpected error on idle PostgreSQL client:", err);
-});
-
-pool.on("remove", (client) => {
-  logger.info("📤 PostgreSQL client removed from pool");
 });
 
 // Log pool statistics every 60 seconds in development
@@ -234,7 +241,7 @@ const query = async (text, params) => {
  * @returns {Promise<PoolClient>} Database client
  */
 const getClient = async () => {
-  return await pool.connect();
+  return pool.connect();
 };
 
 /**

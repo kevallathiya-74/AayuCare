@@ -1,4 +1,4 @@
-const { query, getClient } = require("../../config/postgres");
+const { query } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
 
@@ -161,7 +161,6 @@ class UserRepository {
     logger.info("[USER_UPDATE] Executing SQL update", {
       id,
       updates,
-      sql: sql.substring(0, 100),
       values: values.map((v, i) => i === values.indexOf(updates.password_hash) ? '***' : v)
     });
 
@@ -172,11 +171,9 @@ class UserRepository {
       throw new AppError("User not found or update failed", 404);
     }
     
-    const row = result.rows[0];
-    
     logger.info("[USER_UPDATE] SQL update successful", {
-      userId: row.user_id,
-      updatedIsActive: row.is_active
+      id,
+      updates
     });
     
     // Map snake_case PostgreSQL fields to camelCase for frontend
@@ -210,36 +207,27 @@ class UserRepository {
 
   /**
    * Get next auto-increment ID number for a role
-   * @param {string} role - User role (patient, doctor, admin)
-   * @param {string} hospitalId - Hospital ID (optional)
-   * @returns {Promise<string>} Next ID in format PAT1, DOC1, ADM1, etc.
+   *
+   * Concurrency-safe: uses a PostgreSQL SEQUENCE (one per role prefix)
+   * to atomically reserve the next user_id. Replaces the previous
+   * SELECT-then-increment algorithm that could produce duplicate IDs
+   * under concurrent registrations.
+   *
+   * @param {string} role - User role (patient, doctor, admin, super_admin)
+   * @returns {Promise<string>} Next ID in format PAT1, DOC1, ADM1, SADM1, etc.
    */
   async getNextUserId(role) {
-    let prefix;
-    if (role === 'patient') prefix = 'PAT';
-    else if (role === 'doctor') prefix = 'DOC';
-    else if (role === 'super_admin') prefix = 'SADM';
-    else prefix = 'ADM';
+    // Map role → { sequence name, prefix }. Default to admin for safety.
+    const roleMap = {
+      patient:     { seq: "user_id_pat_seq",  prefix: "PAT"  },
+      doctor:      { seq: "user_id_doc_seq",  prefix: "DOC"  },
+      super_admin: { seq: "user_id_sadm_seq", prefix: "SADM" },
+    };
+    const { seq, prefix } = roleMap[role] || { seq: "user_id_adm_seq", prefix: "ADM" };
 
-    // Global scope — user_id is UNIQUE across the entire table,
-    // so numbering must be global, not per-hospital.
-    const sql = `
-      SELECT user_id FROM users
-      WHERE role = $1 AND user_id LIKE $2
-      ORDER BY CAST(SUBSTRING(user_id FROM '[0-9]+') AS INTEGER) DESC
-      LIMIT 1
-    `;
-
-    const result = await query(sql, [role, `${prefix}%`]);
-
-    if (result.rows.length === 0) {
-      return `${prefix}1`;
-    }
-
-    // Extract number from last ID (e.g., PAT123 -> 123)
-    const lastId = result.rows[0].user_id;
-    const lastNumber = parseInt(lastId.replace(prefix, ''), 10) || 0;
-    return `${prefix}${lastNumber + 1}`;
+    // nextval() is atomic; concurrent callers receive distinct values.
+    const result = await query(`SELECT nextval($1) AS n`, [seq]);
+    return `${prefix}${result.rows[0].n}`;
   }
 
   /**
@@ -354,7 +342,6 @@ class UserRepository {
 
     // Map snake_case PostgreSQL fields to camelCase for frontend
     const mappedData = dataResult.rows.map(row => ({
-      _id: row.id, // MongoDB compatibility
       id: row.id,
       userId: row.user_id,
       name: row.name,
@@ -443,7 +430,6 @@ class UserRepository {
     ]);
 
     const mappedData = dataResult.rows.map(row => ({
-      _id: row.id,
       id: row.id,
       userId: row.user_id,
       name: row.name,

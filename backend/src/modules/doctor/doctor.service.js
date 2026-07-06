@@ -20,7 +20,6 @@ class DoctorService {
       search,
       page = 1,
       limit = 10,
-      sortBy = "name",
       includeInactive = false,
       hospitalId,
     } = filters;

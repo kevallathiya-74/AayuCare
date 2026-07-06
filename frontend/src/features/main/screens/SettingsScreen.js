@@ -34,6 +34,7 @@ import { useNetworkStatus } from '@/utils/offlineHandler';
 import { useDispatch, useSelector } from "react-redux";
 import { getItem, setItem } from '@/utils/appStorage';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 import { setNotificationsEnabled } from '@/store/slices/permissionSlice';
 
 const SETTINGS_STORAGE_KEY = "aayucare_notification_settings";
@@ -42,9 +43,9 @@ const SettingsScreen = ({ navigation }) => {
   const [appointmentReminders, setAppointmentReminders] = useState(true);
   const [medicationReminders, setMedicationReminders] = useState(true);
   const [healthTips, setHealthTips] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [error, setError] = useState(null);
-  const { isConnected } = useNetworkStatus();
+  useNetworkStatus();
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const userRole = useSelector((state) => state.auth?.user?.role);
@@ -169,13 +170,13 @@ const SettingsScreen = ({ navigation }) => {
       title: "Change Password",
       leftIcon: { name: "lock-closed", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => navigation.navigate("ChangePassword"),
+      onPress: () => navigation.navigate(Routes.SHARED.CHANGE_PASSWORD),
     },
     {
       title: "Accessibility & Advanced",
       leftIcon: { name: "accessibility", color: healthColors.primary.main },
       rightIcon: { name: "chevron-forward" },
-      onPress: () => navigation.navigate("SettingsAccessibility"),
+      onPress: () => navigation.navigate(Routes.ADMIN.SETTINGS_ACCESSIBILITY),
     },
   ];
 
@@ -198,7 +199,7 @@ const SettingsScreen = ({ navigation }) => {
       rightIcon: { name: "chevron-forward" },
       onPress: () => {
         if (userRole === "admin") {
-          navigation.navigate("SecuritySettings");
+          navigation.navigate(Routes.ADMIN.SECURITY_SETTINGS);
         } else {
           Alert.alert(
             "Data & Privacy",
@@ -257,7 +258,7 @@ const SettingsScreen = ({ navigation }) => {
       {error ? (
         <ErrorRecovery error={error} onRetry={() => setError(null)} />
       ) : loading ? (
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.loadingSkeleton}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       ) : (
@@ -484,16 +485,9 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: spacing.xl,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.xl,
-  },
-  loadingText: {
-    ...textStyles.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: spacing.md,
+  loadingSkeleton: {
+    padding: 16,
+    gap: 12,
   },
 });
 

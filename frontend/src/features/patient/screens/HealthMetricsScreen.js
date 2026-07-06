@@ -169,7 +169,7 @@ const normalizeMetricRecord = (record) => {
 
   return {
     ...record,
-    id: record.id || record._id || `${record.type || "metric"}-${record.timestamp || Date.now()}`,
+    id: record.id || `${record.type || "metric"}-${record.timestamp || Date.now()}`,
     type: record.type,
     value: record.value,
     timestamp: record.timestamp || record.createdAt || new Date().toISOString(),

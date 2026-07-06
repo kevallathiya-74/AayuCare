@@ -30,15 +30,16 @@ import {
   getKeyboardConfig,
 } from '@/utils/responsive';
 import { useSelector } from "react-redux";
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from '@/components/common';
+import { SkeletonCardRow, EmptyState } from '@/components/common';
 import { Input, Button } from '@/components/common';
 import { showError, logError, parseError } from '@/utils/errorHandler';
 import { useNetworkStatus } from '@/utils/offlineHandler';
-import { formatDate, formatTime, formatCurrency, convertTo24Hour, convertTo12Hour } from '@/utils/helpers';
+import { formatDate, formatCurrency, convertTo24Hour, convertTo12Hour } from '@/utils/helpers';
 import { doctorService, appointmentService } from '@/services';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import Routes from '@/navigation/routes';
 
 const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -78,7 +79,7 @@ const getDoctorExperienceText = (doctor) => {
   return "Experience unavailable";
 };
 
-const AppointmentBookingScreen = ({ navigation, route }) => {
+const AppointmentBookingScreen = ({ navigation, route: _route }) => {
   // Get authenticated user for hospitalId
   const { user } = useSelector((state) => state.auth);
   
@@ -92,7 +93,6 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSpecialtyModal, setShowSpecialtyModal] = useState(false);
 
-  const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -159,7 +159,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     }
   }, [specialties, selectedSpecialty]);
 
-  const selectedDoctorId = selectedDoctor?._id || selectedDoctor?.id;
+  const selectedDoctorId = selectedDoctor?.id;
   const { data: timeSlots = [] } = useQuery({
     queryKey: queryKeys.appointments.list({
       scope: "available-slots",
@@ -199,7 +199,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           {
             text: "OK",
             onPress: () =>
-              navigation.navigate("PatientTabs", { screen: "Dashboard" }),
+              navigation.navigate(Routes.TABS.PATIENT, { screen: "Dashboard" }),
           },
         ]
       );
@@ -332,7 +332,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         <Text style={styles.headerTitle}>Book Appointment</Text>
         <TouchableOpacity
           style={styles.calendarButton}
-          onPress={() => navigation.navigate("MyAppointments")}
+          onPress={() => navigation.navigate(Routes.PATIENT.MY_APPOINTMENTS)}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Open my appointments"
@@ -448,7 +448,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                         icon="information-circle-outline"
                         title="No Specialties Available"
                         message="Please check back later."
-                        style={{ paddingVertical: 24 }}
+                        style={styles.emptyStatePadding}
                       />
                     ) : (
                       specialties.map((specialty) => (
@@ -517,17 +517,17 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             ) : (
               doctors.map((doctor) => (
                 <TouchableOpacity
-                  key={doctor._id || doctor.id || doctor.userId || doctor.email}
+                  key={doctor.id || doctor.userId || doctor.email}
                   style={[
                     styles.doctorCard,
-                    selectedDoctorId === (doctor._id || doctor.id) &&
+                    selectedDoctorId === doctor.id &&
                       styles.doctorCardSelected,
                   ]}
                   onPress={() => setSelectedDoctor(doctor)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`Choose doctor ${doctor.name}`}
-                  accessibilityState={{ selected: selectedDoctorId === (doctor._id || doctor.id) }}
+                  accessibilityState={{ selected: selectedDoctorId === doctor.id }}
                 >
                   <View style={styles.doctorAvatar}>
                     <User
@@ -560,7 +560,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       </View>
                     </View>
                   </View>
-                  {selectedDoctorId === (doctor._id || doctor.id) && (
+                  {selectedDoctorId === doctor.id && (
                     <CheckCircle
                       
                       size={24}
@@ -806,7 +806,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               accessibilityLabel="Confirm appointment"
               accessibilityHint="Books your selected doctor, date and time"
             >
-              Confirm Appointment
+              <Text>Confirm Appointment</Text>
             </Button>
           </View>
 
@@ -911,7 +911,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -1053,36 +1053,10 @@ const styles = StyleSheet.create({
   timeSlotTextSelected: {
     color: theme.colors.white,
   },
-  reasonInput: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    textAlignVertical: "top",
-    minHeight: 80,
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-  },
-  confirmButton: {
-    backgroundColor: healthColors.primary.main,
-    padding: 18,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  confirmButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  confirmButtonText: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -1119,7 +1093,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.border.light,
   },
   specialtyOptionSelected: {
-    backgroundColor: healthColors.primary.main + "08",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.03),
     borderColor: healthColors.primary.main,
     borderWidth: 2,
   },
@@ -1135,7 +1109,7 @@ const styles = StyleSheet.create({
   datePickerModal: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: healthColors.background.overlay,
   },
   datePickerContainer: {
     backgroundColor: theme.colors.white,
@@ -1161,25 +1135,13 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
-  paymentNote: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    marginTop: 12,
-  },
+
   loadingContainer: {
     padding: 40,
     alignItems: "center",
     justifyContent: "center",
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
-  confirmButtonDisabled: {
-    opacity: 0.6,
-  },
+
   bottomSpacer: {
     height: 80,
   },
@@ -1232,6 +1194,7 @@ const styles = StyleSheet.create({
   indicatorLineCompleted: {
     backgroundColor: healthColors.success.main,
   },
+  emptyStatePadding: { paddingVertical: 24 },
 });
 
 export default AppointmentBookingScreen;

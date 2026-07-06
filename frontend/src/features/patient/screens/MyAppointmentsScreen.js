@@ -23,22 +23,21 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
 import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from '@/components/common';
-import { showError, logError, parseError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import { verticalScale } from '@/utils/responsive';
+import { logError, parseError } from '@/utils/errorHandler';
 import { usePatientAppointmentsInfinite } from '@/hooks/useAppointments';
 import { appointmentService } from '@/services';
 import { EmptyStateConfig } from '@/utils/constants';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
 import { formatDate, convertTo12Hour } from '@/utils/helpers';
+import Routes from '@/navigation/routes';
 
 const getAppointmentDateLabel = (appointment) => {
   const rawDate = appointment?.date || appointment?.appointmentDate || appointment?.appointment_date;
   if (!rawDate) return "Date TBD";
   try {
     return formatDate(rawDate);
-  } catch (_) {
+  } catch {
     return String(rawDate);
   }
 };
@@ -66,7 +65,7 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
       return {
         ...page,
         appointments: records.filter(
-          (appointment) => (appointment?._id || appointment?.id) !== appointmentId
+          (appointment) => appointment?.id !== appointmentId
         ),
       };
     }),
@@ -75,7 +74,6 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
 
 const MyAppointmentsScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
-  const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -126,8 +124,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
   }, [refetch]);
 
   const handleRescheduleAppointment = useCallback((appointment) => {
-    navigation.navigate("AppointmentBooking", {
-      rescheduleId: appointment._id || appointment.id,
+    navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING, {
+      rescheduleId: appointment.id,
     });
   }, [navigation]);
 
@@ -177,7 +175,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
           style: "destructive",
           onPress: async () => {
             await cancelAppointmentMutation.mutateAsync({
-              appointmentId: appointment._id || appointment.id,
+              appointmentId: appointment.id,
               reason: "Cancelled by patient",
             });
           },
@@ -363,10 +361,10 @@ const MyAppointmentsScreen = ({ navigation }) => {
         <FlatList
           data={appointments}
           renderItem={renderAppointment}
-          keyExtractor={(item) => item._id || item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.listContent,
-            appointments.length === 0 && { flexGrow: 1 },
+            appointments.length === 0 && styles.flexGrow,
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           showsVerticalScrollIndicator={false}
@@ -405,7 +403,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
                   : "Your completed and cancelled appointments will appear here."
               }
               actionLabel={selectedTab === "upcoming" ? "Book Appointment" : undefined}
-              onActionPress={selectedTab === "upcoming" ? () => navigation.navigate("AppointmentBooking") : undefined}
+              onActionPress={selectedTab === "upcoming" ? () => navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING) : undefined}
             />
           }
         />
@@ -490,7 +488,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -508,24 +506,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: theme.borderRadius.small,
   },
-  status_scheduled: {
-    backgroundColor: healthColors.warning.background,
-  },
-  status_confirmed: {
-    backgroundColor: healthColors.success.background,
-  },
-  status_completed: {
-    backgroundColor: healthColors.success.background,
-  },
-  status_in_progress: {
-    backgroundColor: healthColors.primary.main + "20",
-  },
-  status_cancelled: {
-    backgroundColor: healthColors.error.background,
-  },
-  status_no_show: {
-    backgroundColor: healthColors.text.secondary + "20",
-  },
+
   statusText: {
     fontSize: theme.typography.sizes.xs,
     fontWeight: theme.typography.weights.semibold,
@@ -562,7 +543,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.small,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
   },
   cancelButton: {
     backgroundColor: healthColors.error.background,
@@ -575,16 +556,7 @@ const styles = StyleSheet.create({
   cancelText: {
     color: healthColors.error.main,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: theme.spacing.md,
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.lg,
-    color: healthColors.text.secondary,
-  },
+  flexGrow: { flexGrow: 1 },
   loadingListWrapper: {
     padding: theme.spacing.md,
     gap: theme.spacing.sm + theme.spacing.xs,

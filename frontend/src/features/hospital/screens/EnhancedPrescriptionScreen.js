@@ -3,7 +3,7 @@
  * AUTO-SYNC to patient app and pharmacy
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -100,7 +100,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     queryFn: async () => {
       const response = await patientService.getPatientById(selectedPatientId);
       const patientData = response?.data || response;
-      return patientData?.id || patientData?._id || patientData?.userId ? patientData : null;
+      return patientData?.id || patientData?.userId ? patientData : null;
     },
   });
 
@@ -131,13 +131,13 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       const uniquePatients = Array.from(
         new Map(
           merged.map((entry) => {
-            const uniqueId = entry?.id || entry?._id || entry?.userId;
+            const uniqueId = entry?.id || entry?.userId;
             return [uniqueId, entry];
           })
         ).values()
       );
 
-      return uniquePatients.filter((entry) => entry?.id || entry?._id || entry?.userId);
+      return uniquePatients.filter((entry) => entry?.id || entry?.userId);
     },
   });
 
@@ -246,7 +246,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       return;
     }
 
-    const resolvedPatientId = patient?.id || patient?._id;
+    const resolvedPatientId = patient?.id;
     if (!resolvedPatientId) {
       Alert.alert(
         "Patient Required",
@@ -352,7 +352,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     return (
       <View style={styles.patientListCard}>
         {patientOptions.slice(0, 20).map((item) => {
-          const itemId = item?.id || item?._id || item?.userId;
+          const itemId = item?.id || item?.userId;
           const isSelected = selectedPatientId === itemId;
 
           return (
@@ -381,7 +381,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={styles.skeletonContainer}>
           {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
         </View>
       </SafeAreaView>
@@ -651,12 +651,12 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                           display="spinner"
                           minimumDate={new Date()}
                           onChange={handleDatePickerChange}
-                          style={{ width: "100%" }}
-                        />
-                      </View>
-                    </View>
-                  </Modal>
-                ) : (
+                           style={styles.datePicker}
+                         />
+                       </View>
+                     </View>
+                   </Modal>
+                 ) : (
                   <DateTimePicker
                     value={nextVisitDate || new Date()}
                     mode="date"
@@ -887,15 +887,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: healthColors.background.secondary,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  skeletonContainer: {
+    padding: 16,
+    gap: 12,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
+  datePicker: {
+    width: "100%",
   },
   header: {
     flexDirection: "row",
@@ -998,7 +995,7 @@ const styles = StyleSheet.create({
   timingChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     borderRadius: 16,
   },
   timingText: {
@@ -1027,17 +1024,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
-  instructionsInput: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    textAlignVertical: "top",
-    minHeight: 100,
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-  },
+
   dateSelector: {
     flexDirection: "row",
     alignItems: "center",
@@ -1157,7 +1144,7 @@ const styles = StyleSheet.create({
     borderBottomColor: healthColors.border.light,
   },
   patientListItemSelected: {
-    backgroundColor: healthColors.primary.main + "10",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.06),
   },
   patientListName: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -1186,7 +1173,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
@@ -1202,20 +1189,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
     marginBottom: 8,
   },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-    backgroundColor: healthColors.background.primary,
-  },
-  modalInputMulti: {
-    minHeight: 72,
-    textAlignVertical: "top",
-  },
+
   timingToggleRow: {
     flexDirection: "row",
     gap: 8,
@@ -1232,7 +1206,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
   },
   timingToggleChipActive: {
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
     borderColor: healthColors.primary.main,
   },
   timingToggleText: {
@@ -1276,7 +1250,7 @@ const styles = StyleSheet.create({
   // Date picker overlay (iOS modal)
   datePickerOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    backgroundColor: healthColors.background.overlay,
     justifyContent: "flex-end",
   },
   datePickerContainer: {

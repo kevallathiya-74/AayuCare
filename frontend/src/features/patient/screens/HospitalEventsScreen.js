@@ -4,7 +4,7 @@
  * Redesigned to match app UI/UX with end-to-end data connectivity
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -28,7 +28,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { queryKeys } from '@/config/reactQueryConfig';
 import { getScreenPadding } from '@/utils/responsive';
 
-import { showError, logError, parseError } from '@/utils/errorHandler';
+import { logError, parseError } from '@/utils/errorHandler';
 import logger from '@/utils/logger';
 import { eventService } from '@/services';
 import { convertTo12Hour, getStatusColor } from '@/utils/helpers';
@@ -129,9 +129,9 @@ const HospitalEventsScreen = ({ navigation }) => {
             text: "Register",
             onPress: async () => {
               try {
-                setRegisteringId(event._id);
-                await registerMutation.mutateAsync(event._id);
-                setRegisteredEventIds((prev) => new Set([...prev, event._id]));
+                setRegisteringId(event.id);
+                await registerMutation.mutateAsync(event.id);
+                setRegisteredEventIds((prev) => new Set([...prev, event.id]));
                 Alert.alert(
                   "Success",
                   `Successfully registered for "${event.title}"!`
@@ -141,7 +141,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 const errorMsg = parseError(err);
                 logError(err, {
                   context: "HospitalEventsScreen.handleRegister",
-                  eventId: event._id,
+                  eventId: event.id,
                 });
                 Alert.alert("Error", errorMsg);
               } finally {
@@ -167,18 +167,18 @@ const HospitalEventsScreen = ({ navigation }) => {
             style: "destructive",
             onPress: async () => {
               try {
-                setRegisteringId(event._id);
-                await cancelMutation.mutateAsync(event._id);
+                setRegisteringId(event.id);
+                await cancelMutation.mutateAsync(event.id);
                 setRegisteredEventIds((prev) => {
                   const next = new Set(prev);
-                  next.delete(event._id);
+                  next.delete(event.id);
                   return next;
                 });
                 Alert.alert("Done", `Registration cancelled for "${event.title}".`);
                 await refetch();
               } catch (err) {
                 const msg = parseError(err);
-                logError(err, { context: "HospitalEventsScreen.handleCancelRegistration", eventId: event._id });
+                logError(err, { context: "HospitalEventsScreen.handleCancelRegistration", eventId: event.id });
                 Alert.alert("Error", msg);
               } finally {
                 setRegisteringId(null);
@@ -364,14 +364,14 @@ const HospitalEventsScreen = ({ navigation }) => {
             <Text style={styles.detailsButtonText}>Details</Text>
           </TouchableOpacity>
 
-          {registeredEventIds.has(event._id) ? (
+          {registeredEventIds.has(event.id) ? (
             <TouchableOpacity
               style={styles.registerButton}
               onPress={() => handleCancelRegistration(event)}
-              disabled={registeringId === event._id}
+              disabled={registeringId === event.id}
               accessibilityRole="button"
               accessibilityLabel={`Cancel registration for ${event.title}`}
-              accessibilityState={{ disabled: registeringId === event._id }}
+              accessibilityState={{ disabled: registeringId === event.id }}
             >
               <LinearGradient
                 colors={[healthColors.error.main, healthColors.error.dark ?? healthColors.error.main + "DD"]}
@@ -380,7 +380,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 end={{ x: 1, y: 0 }}
               >
                 <Text style={styles.registerButtonText}>
-                  {registeringId === event._id ? "Cancelling..." : "Cancel Registration"}
+                  {registeringId === event.id ? "Cancelling..." : "Cancel Registration"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -391,10 +391,10 @@ const HospitalEventsScreen = ({ navigation }) => {
                 spotsRemaining <= 0 && styles.registerButtonDisabled,
               ]}
               onPress={() => handleRegister(event)}
-              disabled={registeringId === event._id || spotsRemaining <= 0}
+              disabled={registeringId === event.id || spotsRemaining <= 0}
               accessibilityRole="button"
               accessibilityLabel={spotsRemaining > 0 ? `Register for ${event.title}` : `${event.title} is full`}
-              accessibilityState={{ disabled: registeringId === event._id || spotsRemaining <= 0 }}
+              accessibilityState={{ disabled: registeringId === event.id || spotsRemaining <= 0 }}
             >
               <LinearGradient
                 colors={
@@ -561,7 +561,7 @@ const HospitalEventsScreen = ({ navigation }) => {
         <FlatList
           data={filteredEvents}
           renderItem={renderEventCard}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => item.id}
           onEndReached={onLoadMore}
           onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
@@ -573,7 +573,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[
             styles.listContent,
-            filteredEvents.length === 0 && { flexGrow: 1 },
+            filteredEvents.length === 0 && styles.flexGrow,
             { paddingBottom: Math.max(insets.bottom, 20) },
           ]}
           refreshControl={
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     width: theme.touchTargets.md,
     height: theme.touchTargets.md,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: "rgba(255,255,255,0.16)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.16),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     width: theme.touchTargets.md,
     height: theme.touchTargets.md,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: "rgba(255,255,255,0.16)",
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.16),
     justifyContent: "center",
     alignItems: "center",
   },
@@ -645,12 +645,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     gap: theme.spacing.sm + theme.spacing.xs,
   },
-  filterContainer: {
-    flexDirection: "row",
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
+  flexGrow: { flexGrow: 1 },
   filterScroll: {
     marginTop: theme.spacing.sm,
   },
@@ -680,28 +675,7 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: theme.colors.white,
   },
-  filterTab: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.small,
-    backgroundColor: healthColors.background.card,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  filterTabActive: {
-    backgroundColor: healthColors.primary.main,
-    borderColor: healthColors.primary.main,
-  },
-  filterTabText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.medium,
-    color: healthColors.text.secondary,
-  },
-  filterTabTextActive: {
-    color: theme.colors.white,
-    fontWeight: theme.typography.weights.bold,
-  },
+
   countContainer: {
     paddingHorizontal: getScreenPadding(),
     paddingTop: theme.spacing.xs,
@@ -758,20 +732,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyPrimaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: healthColors.primary.main,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  emptyPrimaryBtnText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-  },
+
   emptySecondaryBtn: {
     borderWidth: 1,
     borderColor: healthColors.border.medium,
@@ -873,7 +834,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.small,
-    backgroundColor: healthColors.primary.main + "15",
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
   },
   detailsButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -900,17 +861,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.white,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    marginTop: 12,
-  },
+
   errorContainer: {
     flex: 1,
     justifyContent: "center",
