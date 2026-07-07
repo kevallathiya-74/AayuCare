@@ -176,6 +176,8 @@ class UserRepository {
       updates
     });
     
+    const row = result.rows[0];
+    
     // Map snake_case PostgreSQL fields to camelCase for frontend
     return {
       id: row.id,

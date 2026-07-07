@@ -260,23 +260,28 @@ export const login = async (credentials) => {
 
       if (sessionResponse.ok) {
         const sessionData = await sessionResponse.json();
-        sessionToken = sessionData.token || sessionToken;
+        sessionToken = sessionData.data?.token || sessionData.token || sessionToken;
         if (__DEV__) { logger.debug('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
       } else {
-        if (__DEV__) { console.warn('[auth.service] Session token exchange failed:', sessionResponse.status); }
-        throw new Error('Login failed. Please check your exact User ID and password.');
+        if (__DEV__) { console.warn('[auth.service] Session token exchange returned error status:', sessionResponse.status); }
+        if (!sessionToken) {
+          throw new Error('Login failed. Please check your exact User ID and password.');
+        }
+        if (__DEV__) { logger.debug('[auth.service] Using client-side session token fallback'); }
       }
     } catch (sessionError) {
       if (__DEV__) { console.error('[auth.service] Error during session token exchange:', sessionError); }
-      if (sessionError.message.includes('Login failed')) {
+      if (!sessionToken) {
         throw sessionError;
       }
+      if (__DEV__) { logger.debug('[auth.service] Using client-side session token fallback after exception'); }
     }
 
-    // Store session token in appStorage for API interceptor
+    // Store session token and user data in appStorage for API interceptor and fast boot
     if (sessionToken) {
       await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-      if (__DEV__) { logger.debug('[auth.service] Session token stored in appStorage'); }
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+      if (__DEV__) { logger.debug('[auth.service] Session token and user data stored in appStorage'); }
     } else {
       if (__DEV__) { console.warn('[auth.service] No session token available - API calls may fail'); }
     }
@@ -323,16 +328,19 @@ export const register = async (userData) => {
     ...userData,
   });
 
-  // Extract and store session token
+  // Extract and store session token and user data
   const sessionToken = result.data?.session?.token;
-  if (sessionToken) {
-    await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-    if (__DEV__) { logger.debug('[auth.service] Registration token stored'); }
-  }
-
   // Normalize user profile for consistent camelCase shape in Redux
   const rawUser = result.data?.user;
   const normalizedUser = rawUser ? normalizeUserProfile(rawUser) : null;
+
+  if (sessionToken) {
+    await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
+    if (normalizedUser) {
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+    }
+    if (__DEV__) { logger.debug('[auth.service] Registration token and user data stored'); }
+  }
 
   return {
     success: !!rawUser,
@@ -357,6 +365,12 @@ export const logout = async () => {
   }
 };
 
+const getStartupTimeout = () => {
+  const customTimeout = APP_CONFIG.api.timeoutStart || process.env.EXPO_PUBLIC_AUTH_STARTUP_TIMEOUT || process.env.AUTH_STARTUP_TIMEOUT;
+  if (customTimeout) return parseInt(customTimeout, 10);
+  return __DEV__ ? 3000 : 5000;
+};
+
 export const getSession = async () => {
   try {
     if (__DEV__) { logger.debug('[auth.service] Checking for active session...'); }
@@ -369,43 +383,84 @@ export const getSession = async () => {
       return null;
     }
 
-    // Validate the token against the backend using the existing /user/me endpoint
-    // (checks the token against the PostgreSQL session table for expiry)
-    const validateResponse = await fetchWithTimeout(
-      `${APP_CONFIG.api.baseURL}/v1/user/me`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${storedToken}`,
-          'Content-Type': 'application/json',
+    // Try to get cached user profile for fast loading / offline fallback
+    const cachedUserJson = await appStorage.getItem(STORAGE_KEYS.USER_DATA);
+    let cachedUser = null;
+    if (cachedUserJson) {
+      try {
+        cachedUser = JSON.parse(cachedUserJson);
+      } catch (e) {
+        if (__DEV__) { console.error('[auth.service] Error parsing cached user profile:', e); }
+      }
+    }
+
+    const timeout = getStartupTimeout();
+
+    try {
+      // Validate the token against the backend using the existing /user/me endpoint
+      // (checks the token against the PostgreSQL session table for expiry)
+      const validateResponse = await fetchWithTimeout(
+        `${APP_CONFIG.api.baseURL}/v1/user/me`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            'Content-Type': 'application/json',
+          },
         },
-      },
-      8000
-    );
+        timeout
+      );
 
-    if (!validateResponse.ok) {
-      // Token expired or invalid - clear it so the user is prompted to log in
-      if (__DEV__) { logger.debug('[auth.service] Stored token is no longer valid, clearing storage'); }
-      await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-      await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+      if (!validateResponse.ok) {
+        // ONLY clear session if the server explicitly rejects the token (401 or 403)
+        if (validateResponse.status === 401 || validateResponse.status === 403) {
+          if (__DEV__) { logger.debug('[auth.service] Stored token is invalid/expired (401/403), clearing storage'); }
+          await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+          await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+          return null;
+        }
+
+        // For other server errors (5xx), fallback to cached user profile if available
+        if (cachedUser) {
+          if (__DEV__) { logger.debug('[auth.service] Server error, falling back to cached user'); }
+          return { user: cachedUser, token: storedToken, isOffline: true };
+        }
+        return null;
+      }
+
+      const sessionData = await validateResponse.json();
+      const userProfile = sessionData.data?.user || sessionData.user || null;
+
+      if (!userProfile) {
+        if (__DEV__) { logger.debug('[auth.service] Session valid but no user data returned'); }
+        return null;
+      }
+
+      const normalizedUser = normalizeUserProfile(userProfile);
+
+      // Cache the valid user profile
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+
+      if (__DEV__) { logger.debug('[auth.service] Session restored and cached for:', normalizedUser.role, normalizedUser.email); }
+      return { user: normalizedUser, token: storedToken };
+    } catch (networkError) {
+      // Catch network error or timeout
+      const isTimeout = networkError.message?.includes('timeout') || networkError.message?.includes('not responding');
+
+      if (__DEV__) {
+        console.warn(`[auth.service] Network error during session validation (Timeout: ${isTimeout}):`, networkError.message);
+      }
+
+      // If we have a cached user profile, return it as a fallback instead of forcing user to log out
+      if (cachedUser) {
+        if (__DEV__) { logger.debug('[auth.service] Network unreachable, falling back to cached user'); }
+        return { user: cachedUser, token: storedToken, isOffline: true, isTimeout };
+      }
+
       return null;
     }
-
-    const sessionData = await validateResponse.json();
-    // /user/me returns { status: 'success', data: { user: {...}, session: {...} } }
-    const userProfile = sessionData.data?.user || sessionData.user || null;
-
-    if (!userProfile) {
-      if (__DEV__) { logger.debug('[auth.service] Session valid but no user data returned'); }
-      return null;
-    }
-
-    const normalizedUser = normalizeUserProfile(userProfile);
-    if (__DEV__) { logger.debug('[auth.service] Session restored for:', normalizedUser.role, normalizedUser.email); }
-    return { user: normalizedUser, token: storedToken };
   } catch (error) {
-    if (__DEV__) { console.error('[auth.service] getSession error:', error?.message || error); }
-    // Network error - don't clear storage (user might be offline)
+    if (__DEV__) { console.error('[auth.service] getSession critical error:', error?.message || error); }
     return null;
   }
 };

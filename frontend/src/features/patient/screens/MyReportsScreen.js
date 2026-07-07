@@ -287,7 +287,7 @@ const MyReportsScreen = ({ navigation }) => {
       )}
 
       {/* Report Detail Modal */}
-      <Modal
+      <Modal statusBarTranslucent
         animationType="slide"
         transparent={true}
         visible={!!selectedReport}

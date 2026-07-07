@@ -22,7 +22,7 @@ const initAuth = () => {
           max: 10,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 10000,
-          ssl: { rejectUnauthorized: false },
+          ...(process.env.NODE_ENV === "production" ? { ssl: { rejectUnauthorized: false } } : {})
         }
       : {
           host: process.env.POSTGRES_HOST || "localhost",
@@ -79,56 +79,6 @@ const initAuth = () => {
             required: false,
             input: true,
           },
-          dateOfBirth: {
-            type: "date",
-            required: false,
-            input: true,
-          },
-          gender: {
-            type: "string",
-            required: false,
-            input: true,
-          },
-          specialization: {
-            type: "string",
-            required: false,
-            input: true,
-          },
-          qualification: {
-            type: "string",
-            required: false,
-            input: true,
-          },
-          experience: {
-            type: "number",
-            required: false,
-            input: true,
-          },
-          consultationFee: {
-            type: "number",
-            required: false,
-            input: true,
-          },
-          department: {
-            type: "string",
-            required: false,
-            input: true,
-          },
-          address: {
-            type: "string",
-            required: false,
-            input: true,
-          },
-          avatar: {
-            type: "string",
-            required: false,
-            input: true,
-          },
-          bloodGroup: {
-            type: "string",
-            required: false,
-            input: true,
-          },
           isActive: {
             type: "boolean",
             required: false,
@@ -153,7 +103,7 @@ const initAuth = () => {
           ipAddress: "ip_address",
           userAgent: "user_agent",
           createdAt: "created_at",
-          updatedAt: "updated_at",
+          updatedAt: "last_used_at",
           token: "token_hash",
         },
         expiresIn: 60 * 60 * 24 * 30, // 30 days

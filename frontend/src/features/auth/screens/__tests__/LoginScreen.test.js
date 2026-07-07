@@ -17,6 +17,7 @@ jest.mock("lucide-react-native", () => {
     ShieldCheck: Icon,
     ArrowRight: Icon,
     HeartPulse: Icon,
+    ArrowLeft: Icon,
     Calendar: Icon,
     Clock: Icon,
     MapPin: Icon,
@@ -93,11 +94,11 @@ jest.mock("@/components/common", () => {
           error ? R.createElement(Text, { key: "error" }, error) : null,
         ])
     ),
-    Button: ({ children, onPress, loading, disabled, ...props }) =>
+    Button: ({ children, title, onPress, loading, disabled, ...props }) =>
       R.createElement(
         TouchableOpacity,
         { onPress, disabled: disabled || loading, ...props },
-        children
+        children || (title ? R.createElement(Text, null, title) : null)
       ),
     SectionHeader: ({ title }) =>
       R.createElement(View, null, R.createElement(Text, null, title)),

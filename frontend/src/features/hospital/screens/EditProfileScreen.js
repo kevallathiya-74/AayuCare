@@ -18,6 +18,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import {
   getScreenPadding,
+  getKeyboardConfig,
 } from '@/utils/responsive';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService } from '@/services';
@@ -134,10 +135,8 @@ const EditProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
       <View style={styles.header}>
         <TouchableOpacity

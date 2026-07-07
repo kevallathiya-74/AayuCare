@@ -12,9 +12,10 @@ import {
   View,
   StyleSheet,
 } from "react-native";
-import { ChevronDown, X, Check } from "lucide-react-native";
+import { X, Check } from "lucide-react-native";
 import { theme, healthColors } from "../theme";
 import { DynamicIcon } from "../components/common";
+import { showError } from "../utils/errorHandler";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -188,14 +189,20 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       if (typeof error === "string") errorMessage = error;
       else if (error.response?.data?.message) errorMessage = error.response.data.message;
       else if (error.message) errorMessage = error.message;
-      if (errorMessage.includes("already exists")) {
-        if (errorMessage.includes("email"))
+
+      const lowerMessage = errorMessage.toLowerCase();
+      if (lowerMessage.includes("already exists")) {
+        if (lowerMessage.includes("email")) {
           errorMessage = "This email is already registered. Please use a different email.";
-        else if (errorMessage.includes("phone"))
+          setErrors(prev => ({ ...prev, email: "This email is already registered" }));
+        } else if (lowerMessage.includes("phone")) {
           errorMessage = "This phone number is already registered.";
-        else errorMessage = "A doctor with these details already exists.";
+          setErrors(prev => ({ ...prev, phone: "This phone number is already registered" }));
+        } else {
+          errorMessage = "A doctor with these details already exists.";
+        }
       }
-      Alert.alert("Error", errorMessage);
+      showError(errorMessage, mode === "add" ? "Registration Failed" : "Update Failed");
     } finally {
       setLoading(false);
     }
@@ -299,11 +306,15 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputWrapper, errors[key] && styles.inputError, multiline && styles.inputWrapperMultiline]}>
-        <ChevronDown
+        <DynamicIcon
           name={icon}
           size={18}
-          color={healthColors.text.secondary}
-          style={styles.inputIcon}
+          color={
+            errors[key]
+              ? healthColors.error.main
+              : healthColors.text.secondary
+          }
+          style={[styles.inputIcon, multiline ]}
         />
         <TextInput
           style={[styles.input, multiline && styles.inputMultiline]}
@@ -342,7 +353,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         <DynamicIcon  size={18} color={healthColors.text.secondary} />
       </TouchableOpacity>
 
-      <Modal
+      <Modal statusBarTranslucent
         visible={showSpecializationPicker}
         transparent
         animationType="slide"
@@ -450,9 +461,8 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   inputMultiline: {
-    minHeight: 100,
-    paddingTop: theme.spacing.sm,
-    fontFamily: "monospace",
+    minHeight: 10,
+    paddingTop: 2,
   },
   availabilityBox: {
     backgroundColor: healthColors.background.card,

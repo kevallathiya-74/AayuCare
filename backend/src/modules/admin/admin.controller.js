@@ -46,7 +46,15 @@ exports.getUsers = async (req, res, next) => {
         role: req.user.role,
       },
     });
-    return sendSuccess(res, req, data, "Users retrieved successfully");
+    const totalPages = Math.ceil(data.total / limit);
+    const responseData = {
+      ...data,
+      data: data.users,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1
+    };
+    return sendSuccess(res, req, responseData, "Users retrieved successfully");
   } catch (error) {
     next(error);
   }

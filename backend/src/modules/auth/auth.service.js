@@ -86,49 +86,80 @@ class AuthService {
    * @param {string} password - User password
    * @returns {Promise<Object>} Session token and expiration
    */
-  async getSessionTokenByCredentials(email, password) {
+  async getSessionTokenByCredentials(email, password, requestInfo = {}) {
     if (!email || !password) {
       throw new AppError('Email/User ID and password are required exactly as provided.', 400, 'VALIDATION_ERROR');
     }
 
+    // 1. Find user by email (include password hash)
+    const user = await userRepository.findByEmail(email, true);
+    if (!user) {
+      throw new AppError(
+        'Invalid credentials. Enter the exact User ID/email and password.',
+        401,
+        'UNAUTHORIZED'
+      );
+    }
+
+    // 2. Verify password hash
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
+      throw new AppError(
+        'Invalid credentials. Enter the exact User ID/email and password.',
+        401,
+        'UNAUTHORIZED'
+      );
+    }
+
+    if (user.is_active === false) {
+      throw new AppError(
+        'Your account has been deactivated. Please contact support.',
+        403,
+        'FORBIDDEN'
+      );
+    }
+
+    // 3. Retrieve most recent active session from database
+    const sessions = await authRepository.findSessionsByUserId(user.id);
+    if (sessions.length > 0) {
+      const session = sessions[0];
+      return {
+        token: session.token,
+        expiresAt: session.expiresAt,
+      };
+    }
+
+    // Fallback: Attempt Better Auth server-side sign-in if session does not exist in DB yet
     const auth = getAuth();
     try {
+      const headers = new Headers();
+      if (requestInfo.ip) {
+        headers.set("x-forwarded-for", requestInfo.ip);
+      }
+      if (requestInfo.userAgent) {
+        headers.set("user-agent", requestInfo.userAgent);
+      }
+
       const result = await auth.api.signInEmail({
         body: { email: String(email), password: String(password) },
-        headers: {}, // Headers would be passed from controller
+        headers,
       });
 
-      if (!result || !result.session) {
-        throw new AppError('No active session found', 404, 'NOT_FOUND');
+      if (result) {
+        const activeSessions = await authRepository.findSessionsByUserId(user.id);
+        if (activeSessions.length > 0) {
+          const session = activeSessions[0];
+          return {
+            token: session.token,
+            expiresAt: session.expiresAt,
+          };
+        }
       }
-
-      const user = result.user;
-      if (user && user.isActive === false) {
-        await auth.api.revokeSession({
-          body: { token: result.session.token },
-        }).catch(() => {});
-
-        throw new AppError(
-          'Your account has been deactivated. Please contact support.',
-          403,
-          'FORBIDDEN'
-        );
-      }
-
-      return {
-        token: result.token || result.session.token,
-        expiresAt: result.session.expiresAt,
-      };
     } catch (e) {
-      if (e.name === 'APIError' || e.message.includes('Invalid') || e.message.includes('not found')) {
-        throw new AppError(
-          'Invalid credentials. Enter the exact User ID/email and password.',
-          401,
-          'UNAUTHORIZED'
-        );
-      }
-      throw e;
+      logger.error("Better Auth fallback signInEmail failed:", e.message);
     }
+
+    throw new AppError('No active session found', 404, 'NOT_FOUND');
   }
 
   /**

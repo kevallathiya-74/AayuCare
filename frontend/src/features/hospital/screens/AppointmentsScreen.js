@@ -87,7 +87,7 @@ const AppointmentsScreen = ({ navigation }) => {
 
     const filters = {
       status: selectedStatus?.status,
-      limit: 20,
+      limit: 10,
     };
 
     const now = new Date();

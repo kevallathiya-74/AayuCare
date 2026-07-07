@@ -277,6 +277,7 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     medications JSONB NOT NULL DEFAULT '[]',
     instructions TEXT,
     follow_up_date DATE,
+    pharmacy_status VARCHAR(50) DEFAULT 'pending',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -399,7 +400,7 @@ CREATE INDEX idx_events_hospital_start ON events(hospital_id, date DESC);
 -- SESSION TABLE (User session management)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS session (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id VARCHAR(255) PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash VARCHAR(255) NOT NULL UNIQUE,
     device_info JSONB DEFAULT '{}',
@@ -462,3 +463,25 @@ CREATE TRIGGER update_medical_records_updated_at BEFORE UPDATE ON medical_record
 CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- =====================================================
+-- ACCOUNT TABLE (Better Auth credentials/providers)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS account (
+    id VARCHAR(255) PRIMARY KEY,
+    account_id VARCHAR(255) NOT NULL,
+    provider_id VARCHAR(255) NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    access_token TEXT,
+    refresh_token TEXT,
+    id_token TEXT,
+    access_token_expires_at TIMESTAMP,
+    refresh_token_expires_at TIMESTAMP,
+    password VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_account_user_id ON account(user_id);
+
+CREATE TRIGGER update_account_updated_at BEFORE UPDATE ON account
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

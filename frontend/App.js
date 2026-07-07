@@ -3,7 +3,8 @@ import { useFonts } from "./src/hooks/useFonts";
 import { StatusBar } from "expo-status-bar";
 import { Provider as ReduxProvider } from "react-redux";
 import { Provider as PaperProvider } from "react-native-paper";
-import { View, StyleSheet, LogBox } from "react-native";
+import { View, StyleSheet, LogBox, AppState, Platform } from "react-native";
+import { focusManager } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initializeSentry } from "./src/config/sentry";
@@ -116,11 +117,22 @@ export default function App() {
   const { fontsLoaded, onLayoutRootView } = useFonts();
 
   useEffect(() => {
+    const onAppStateChange = (status) => {
+      if (Platform.OS !== "web") {
+        focusManager.setFocused(status === "active");
+      }
+    };
+    const subscription = AppState.addEventListener("change", onAppStateChange);
+
     if (__DEV__) {
       if (!paperTheme || !paperTheme.colors || !paperTheme.fonts) {
         console.warn("[App] Theme not fully loaded");
       }
     }
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   // Fix 2.3 — Prevent white flash

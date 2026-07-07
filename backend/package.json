@@ -11,10 +11,9 @@
     "migrate:up": "node-pg-migrate up -m migrations -j sql --envPath .env",
     "migrate:down": "node-pg-migrate down -m migrations -j sql --envPath .env",
     "migrate:redo": "node-pg-migrate redo -m migrations -j sql --envPath .env",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",

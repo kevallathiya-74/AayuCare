@@ -1,4 +1,4 @@
-const { query } = require("../../config/postgres");
+const { query, withTransaction } = require("../../config/postgres");
 
 /**
  * Admin Repository
@@ -451,6 +451,95 @@ class AdminRepository {
       client.release();
     }
     return results;
+  }
+
+  async getDatabaseSize() {
+    const result = await query("SELECT pg_size_pretty(pg_database_size(current_database())) as size");
+    return result.rows[0]?.size || "unknown";
+  }
+
+  async getMedicalRecordTypeStats(scopedHospitalId, patientId) {
+    let typeStatsQuery = `
+      SELECT record_type as type, COUNT(*) as count 
+      FROM medical_records 
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (scopedHospitalId) {
+      typeStatsQuery += ` AND hospital_id = $${paramIndex}`;
+      params.push(scopedHospitalId);
+      paramIndex++;
+    }
+    if (patientId) {
+      typeStatsQuery += ` AND patient_id = $${paramIndex}`;
+      params.push(patientId);
+      paramIndex++;
+    }
+    typeStatsQuery += ` GROUP BY record_type`;
+
+    const result = await query(typeStatsQuery, params);
+    return result.rows.map(r => ({ type: r.type, count: parseInt(r.count, 10) }));
+  }
+
+  async getNotificationTypeStats(scopedHospitalId, type) {
+    let typeDistQuery = `
+      SELECT type, COUNT(*) as count 
+      FROM notifications 
+      WHERE hospital_id = $1
+    `;
+    const params = [scopedHospitalId || "MAIN"];
+    if (type) {
+      typeDistQuery += ` AND type = $2`;
+      params.push(type);
+    }
+    typeDistQuery += ` GROUP BY type`;
+
+    const result = await query(typeDistQuery, params);
+    return result.rows.map(r => ({ type: r.type, count: parseInt(r.count, 10) }));
+  }
+
+  async purgeUserData(user) {
+    await withTransaction(async (client) => {
+      // 1. Delete payments
+      await client.query("DELETE FROM payments WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
+      
+      // 2. Delete appointments
+      await client.query("DELETE FROM appointments WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
+      
+      // 3. Delete prescriptions
+      await client.query("DELETE FROM prescriptions WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
+      
+      // 4. Delete attachments
+      await client.query(`
+        DELETE FROM attachments 
+        WHERE medical_record_id IN (
+          SELECT id FROM medical_records WHERE patient_id = $1 OR doctor_id = $1
+        )
+      `, [user.id]);
+      
+      // 5. Delete medical records
+      await client.query("DELETE FROM medical_records WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
+      
+      // 6. Delete notification preferences
+      await client.query("DELETE FROM notification_preferences WHERE user_id = $1", [user.id]);
+      
+      // 7. Delete patient or doctor specific profiles
+      if (user.role === "doctor") {
+        await client.query("DELETE FROM doctors WHERE user_id = $1", [user.id]);
+        await client.query("DELETE FROM schedules WHERE doctor_id = $1", [user.id]);
+      } else if (user.role === "patient") {
+        await client.query("DELETE FROM patients WHERE user_id = $1", [user.id]);
+        await client.query("DELETE FROM health_metrics WHERE patient_id = $1", [user.id]);
+      }
+      
+      // 8. Delete user audit logs and session logs
+      await client.query("DELETE FROM audit_logs WHERE user_id = $1", [user.id]);
+      
+      // 9. Finally, delete the user row itself
+      await client.query("DELETE FROM users WHERE id = $1", [user.id]);
+    });
   }
 
   // Returns the raw pool client for bulk transactions

@@ -26,6 +26,7 @@ import { theme, healthColors } from '@/theme';
 import {
   verticalScale,
   getScreenPadding,
+  getKeyboardConfig,
 } from '@/utils/responsive';
 import { ChatComposer, ErrorRecovery, NetworkStatusIndicator } from '@/components/common';
 import { showError, logError } from '@/utils/errorHandler';
@@ -269,9 +270,9 @@ const AIHealthAssistantScreen = ({ navigation }) => {
       </View>
 
       <KeyboardAvoidingView
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={getKeyboardConfig().behavior}
         keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 56 : 0}
+        style={styles.keyboardContainer}
       >
         <ScrollView
           ref={scrollViewRef}

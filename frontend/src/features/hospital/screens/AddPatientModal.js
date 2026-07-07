@@ -27,6 +27,7 @@ import logger from '@/utils/logger';
 import { DynamicIcon } from '@/components/common';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { parseError } from '@/utils/errorHandler';
+import { getKeyboardConfig } from '@/utils/responsive';
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -355,7 +356,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   );
 
   const renderPickerModal = (title, options, selectedValue, onSelect, visible, onClose) => (
-    <Modal
+    <Modal statusBarTranslucent
       visible={visible}
       transparent={true}
       animationType="slide"
@@ -421,14 +422,13 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   );
 
   return (
-    <Modal
+    <Modal statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>

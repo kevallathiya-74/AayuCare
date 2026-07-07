@@ -112,20 +112,25 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     queryKey: queryKeys.patients.list({ scope: "prescription-patient-options", doctorId: user?.id }),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      const isDoctor = String(user?.role || "").toLowerCase() === "doctor";
       const [doctorLinkedResult, allPatientsResult] = await Promise.allSettled([
-        doctorService.searchMyPatients(""),
+        isDoctor ? doctorService.searchMyPatients("") : Promise.resolve([]),
         patientService.getAllPatients({}),
       ]);
 
-      const doctorLinkedPatients =
-        doctorLinkedResult.status === "fulfilled"
-          ? (doctorLinkedResult.value?.data || doctorLinkedResult.value?.patients || doctorLinkedResult.value || [])
-          : [];
+      const doctorLinkedVal = doctorLinkedResult.status === "fulfilled" ? doctorLinkedResult.value : null;
+      const doctorLinkedPatients = Array.isArray(doctorLinkedVal)
+        ? doctorLinkedVal
+        : (Array.isArray(doctorLinkedVal?.data)
+            ? doctorLinkedVal.data
+            : (doctorLinkedVal?.data?.patients || doctorLinkedVal?.data?.data || doctorLinkedVal?.patients || []));
 
-      const allPatients =
-        allPatientsResult.status === "fulfilled"
-          ? (allPatientsResult.value?.data || allPatientsResult.value?.patients || allPatientsResult.value || [])
-          : [];
+      const allPatientsVal = allPatientsResult.status === "fulfilled" ? allPatientsResult.value : null;
+      const allPatients = Array.isArray(allPatientsVal)
+        ? allPatientsVal
+        : (Array.isArray(allPatientsVal?.data)
+            ? allPatientsVal.data
+            : (allPatientsVal?.data?.patients || allPatientsVal?.data?.data || allPatientsVal?.patients || []));
 
       const merged = [...doctorLinkedPatients, ...allPatients].filter(Boolean);
       const uniquePatients = Array.from(
@@ -488,50 +493,56 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             {/* Medications */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>MEDICATIONS:</Text>
-              <View style={styles.medicationsCard}>
-                {medications.map((med, index) => (
-                  <View key={med.id} style={styles.medicationItem}>
-                    <View style={styles.medicationHeader}>
-                      <Text style={styles.medicationNumber}>{index + 1}.</Text>
-                      <View style={styles.medicationInfo}>
-                        <Text style={styles.medicationName}>{med.name}</Text>
-                        <Text style={styles.medicationDosage}>
-                          Dosage: {med.dosage} Duration: {med.duration}
-                        </Text>
-                        <View style={styles.timingsRow}>
-                          {med.timings.morning && (
-                            <View style={styles.timingChip}>
-                              <Text style={styles.timingText}>Morning</Text>
-                            </View>
-                          )}
-                          {med.timings.afternoon && (
-                            <View style={styles.timingChip}>
-                              <Text style={styles.timingText}>Afternoon</Text>
-                            </View>
-                          )}
-                          {med.timings.evening && (
-                            <View style={styles.timingChip}>
-                              <Text style={styles.timingText}>Evening</Text>
-                            </View>
-                          )}
+              {medications.length > 0 ? (
+                <View style={styles.medicationsCard}>
+                  {medications.map((med, index) => (
+                    <View key={med.id} style={styles.medicationItem}>
+                      <View style={styles.medicationHeader}>
+                        <Text style={styles.medicationNumber}>{index + 1}.</Text>
+                        <View style={styles.medicationInfo}>
+                          <Text style={styles.medicationName}>{med.name}</Text>
+                          <Text style={styles.medicationDosage}>
+                            Dosage: {med.dosage} Duration: {med.duration}
+                          </Text>
+                          <View style={styles.timingsRow}>
+                            {med.timings.morning && (
+                              <View style={styles.timingChip}>
+                                <Text style={styles.timingText}>Morning</Text>
+                              </View>
+                            )}
+                            {med.timings.afternoon && (
+                              <View style={styles.timingChip}>
+                                <Text style={styles.timingText}>Afternoon</Text>
+                              </View>
+                            )}
+                            {med.timings.evening && (
+                              <View style={styles.timingChip}>
+                                <Text style={styles.timingText}>Evening</Text>
+                              </View>
+                            )}
+                          </View>
                         </View>
+                        <TouchableOpacity
+                          style={styles.removeButton}
+                          onPress={() => handleRemoveMedicine(med.id)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Remove ${med.name}`}
+                        >
+                          <XCircle
+                            
+                            size={24}
+                            color={healthColors.error.main}
+                          />
+                        </TouchableOpacity>
                       </View>
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveMedicine(med.id)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Remove ${med.name}`}
-                      >
-                        <XCircle
-                          
-                          size={24}
-                          color={healthColors.error.main}
-                        />
-                      </TouchableOpacity>
                     </View>
-                  </View>
-                ))}
-              </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.emptyMedications}>
+                  <Text style={styles.emptyMedicationsText}>No medications added yet.</Text>
+                </View>
+              )}
 
               <TouchableOpacity
                 style={styles.addMedicineButton}
@@ -621,7 +632,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               {/* iOS inline picker shown in a modal; Android shown as dialog */}
               {showDatePicker && (
                 Platform.OS === "ios" ? (
-                  <Modal
+                  <Modal statusBarTranslucent
                     transparent
                     animationType="slide"
                     onRequestClose={() => setShowDatePicker(false)}
@@ -790,7 +801,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      <Modal
+      <Modal statusBarTranslucent
         visible={showAddMedicine}
         transparent
         animationType="slide"
@@ -957,6 +968,20 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 2,
     borderColor: healthColors.border.light,
+  },
+  emptyMedications: {
+    backgroundColor: healthColors.background.secondary,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: healthColors.border.dark,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyMedicationsText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.secondary,
   },
   medicationItem: {
     marginBottom: 16,

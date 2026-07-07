@@ -7,8 +7,6 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "tunnel": "expo start --tunnel",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit"

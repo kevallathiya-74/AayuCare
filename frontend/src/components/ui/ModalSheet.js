@@ -34,6 +34,7 @@ import {
   ScrollView,
 } from "react-native";
 import { X } from "lucide-react-native";
+import { getKeyboardConfig } from "@/utils/responsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from '@/theme';
 
@@ -109,8 +110,7 @@ const ModalSheet = ({
       </Animated.View>
 
       {/* Sheet panel */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.keyboardView}
         pointerEvents="box-none"
       >

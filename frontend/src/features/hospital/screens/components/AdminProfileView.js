@@ -6,10 +6,17 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { User, ShieldCheck, LogOut } from "lucide-react-native";
+import { ShieldCheck, LogOut } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from '@/theme';
 import { DynamicIcon } from '@/components/common';
+
+const getInitials = (name) => {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 const InfoRow = ({ icon, label, value, last }) => (
   <>
@@ -58,7 +65,7 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
       >
         <View style={styles.avatarWrap}>
           <View style={styles.avatar}>
-            <User  size={56} color={theme.colors.text.white} />
+            <Text style={styles.avatarText}>{getInitials(user?.name || "Admin User")}</Text>
           </View>
         </View>
         <Text style={styles.heroName}>{user?.name || "Admin User"}</Text>
@@ -124,8 +131,14 @@ const styles = StyleSheet.create({
   avatarWrap: { marginBottom: 12 },
   avatar: {
     width: 96, height: 96, borderRadius: 48,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.22),
+    backgroundColor: healthColors.white,
     justifyContent: "center", alignItems: "center",
+    ...theme.shadows.md,
+  },
+  avatarText: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: healthColors.primary.main,
   },
   heroName: { fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
   heroEmail: { fontSize: theme.typography.sizes.bodyMedium, color: theme.withOpacity(theme.colors.text.white, 0.75) },

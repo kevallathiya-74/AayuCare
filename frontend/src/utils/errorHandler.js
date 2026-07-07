@@ -123,6 +123,23 @@ export const parseError = (error) => {
         const status = error.response.status;
         const data = error.response.data;
 
+        if (status === 403) {
+            const url = error.config?.url || 'unknown';
+            const method = error.config?.method?.toUpperCase() || 'GET';
+            let currentRole = 'unknown';
+            try {
+                const store = require('../store/store').default;
+                currentRole = store?.getState?.()?.auth?.user?.role || 'unknown';
+            } catch {
+                // Safe ignore if store is not initialized or in a non-UI test runtime environment
+            }
+
+            return `Permission Denied (403)\n` +
+                   `Action: ${method} ${url}\n` +
+                   `Current Role: ${currentRole}\n` +
+                   `Details: Incorrect endpoint selected or insufficient role privileges.`;
+        }
+
         const code = data?.code || data?.errorCode;
         if (code === 'AUTH_EXPIRED' || code === 'UNAUTHORIZED') {
             return ERROR_MESSAGES.AUTHENTICATION;
@@ -165,6 +182,16 @@ export const parseError = (error) => {
 export const getHumanReadableError = parseError;
 
 
+let activeDialogTrigger = null;
+
+/**
+ * Register global dialog handler (for UI custom dialog redirection)
+ * @param {Function} triggerFn - Trigger function from Dialog provider
+ */
+export const registerDialogTrigger = (triggerFn) => {
+    activeDialogTrigger = triggerFn;
+};
+
 /**
  * Show error alert to user
  * @param {Error|string} error - Error to display
@@ -174,6 +201,21 @@ export const getHumanReadableError = parseError;
 export const showError = (error, title = 'Error', onDismiss) => {
     const message = parseError(error);
     
+    if (activeDialogTrigger) {
+        activeDialogTrigger({
+            type: 'error',
+            title,
+            message,
+            buttons: [
+                {
+                    text: 'OK',
+                    onPress: onDismiss,
+                }
+            ]
+        });
+        return;
+    }
+
     Alert.alert(
         title,
         message,
@@ -194,6 +236,21 @@ export const showError = (error, title = 'Error', onDismiss) => {
  * @param {Function} onDismiss - Optional callback when dismissed
  */
 export const showSuccess = (message, title = 'Success', onDismiss) => {
+    if (activeDialogTrigger) {
+        activeDialogTrigger({
+            type: 'success',
+            title,
+            message,
+            buttons: [
+                {
+                    text: 'OK',
+                    onPress: onDismiss,
+                }
+            ]
+        });
+        return;
+    }
+
     Alert.alert(
         title,
         message,
@@ -220,6 +277,27 @@ export const showConfirmation = (
     onCancel,
     title = 'Confirm'
 ) => {
+    if (activeDialogTrigger) {
+        activeDialogTrigger({
+            type: 'confirm',
+            title,
+            message,
+            buttons: [
+                {
+                    text: 'Cancel',
+                    onPress: onCancel,
+                    style: 'cancel',
+                },
+                {
+                    text: 'Confirm',
+                    onPress: onConfirm,
+                    style: 'default',
+                }
+            ]
+        });
+        return;
+    }
+
     Alert.alert(
         title,
         message,
@@ -366,6 +444,7 @@ export default {
     showError,
     showSuccess,
     showConfirmation,
+    registerDialogTrigger,
     logError,
     validateRequiredFields,
     validateEmail,

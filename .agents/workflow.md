@@ -42,9 +42,9 @@ Domain tags: `frontend` · `backend` · `database` · `security` · `testing` ·
 
 | Agent | Scope | Relevant Skills |
 |---|---|---|
-| Frontend | Screens, components, navigation, styling | `ecc/frontend-patterns`, `ecc/react-patterns`, `ecc/motion-ui`, `ecc/**` · `agency-agents/engineering-mobile-app-builder`, `agency-agents/**` |
-| Backend | Controllers, services, repositories, middleware | `ecc/backend-patterns`, `ecc/api-design`, `ecc/error-handling`, `ecc/**` · `agency-agents/engineering-backend-architect`, `agency-agents/engineering-senior-developer`, `agency-agents/**` |
-| Database | Schema, migrations, queries, indexes | `ecc/postgres-patterns`, `ecc/**` · `agency-agents/engineering-database-optimizer`, `agency-agents/**` |
+| Frontend | Screens, components, navigation, styling | `ecc/frontend-patterns`, `ecc/react-patterns`, `ecc/motion-ui`, `ecc/**` · `skills/vercel-react-native-skills`, `skills/react-native-best-practices`, `skills/react-native-design`, `skills/react-native-architecture`, `skills/building-native-ui`, `skills/native-data-fetching` · `agency-agents/engineering-mobile-app-builder`, `agency-agents/**` |
+| Backend | Controllers, services, repositories, middleware | `ecc/backend-patterns`, `ecc/api-design`, `ecc/error-handling`, `ecc/**` · `skills/nodejs-backend-patterns` · `agency-agents/engineering-backend-architect`, `agency-agents/engineering-senior-developer`, `agency-agents/**` |
+| Database | Schema, migrations, queries, indexes | `ecc/postgres-patterns`, `ecc/**` · `skills/supabase-postgres-best-practices`, `skills/postgresql-table-design`, `skills/postgresql-optimization` · `agency-agents/engineering-database-optimizer`, `agency-agents/**` |
 | Security | Auth, RBAC, PHI, input validation | `ecc/security-review`, `ecc/healthcare-phi-compliance`, `ecc/**` · `agency-agents/**` |
 | Testing | Unit, integration, E2E | `ecc/tdd-workflow`, `ecc/react-testing`, `ecc/e2e-testing`, `ecc/**` · `agency-agents/**` |
 | DevOps | CI/CD, deployment, Render | `ecc/production-audit`, `ecc/**` · `agency-agents/engineering-devops-automator`, `agency-agents/engineering-sre`, `agency-agents/**` |
@@ -75,9 +75,9 @@ context7: resolve-library-id → query-docs → implement
 > Use skills from `.agents/` for every applicable task. Do not re-implement what a skill already defines.
 
 Load by domain:
-- Backend → `.agents/ecc/backend-patterns/` · `.agents/ecc/api-design/` · `.agents/ecc/error-handling/`
-- Frontend → `.agents/ecc/frontend-patterns/` · `.agents/ecc/react-patterns/`
-- Database → `.agents/ecc/postgres-patterns/`
+- Backend → `.agents/ecc/backend-patterns/` · `.agents/ecc/api-design/` · `.agents/ecc/error-handling/` · `.agents/skills/nodejs-backend-patterns/`
+- Frontend → `.agents/ecc/frontend-patterns/` · `.agents/ecc/react-patterns/` · `.agents/skills/vercel-react-native-skills/` · `.agents/skills/react-native-best-practices/` · `.agents/skills/react-native-design/` · `.agents/skills/react-native-architecture/` · `.agents/skills/building-native-ui/` · `.agents/skills/native-data-fetching/`
+- Database → `.agents/ecc/postgres-patterns/` · `.agents/skills/supabase-postgres-best-practices/` · `.agents/skills/postgresql-table-design/` · `.agents/skills/postgresql-optimization/`
 - Security → `.agents/ecc/security-review/` · `.agents/ecc/healthcare-phi-compliance/`
 - Testing → `.agents/ecc/tdd-workflow/` · `.agents/ecc/verification-loop/`
 - Quality → `.agents/ecc/plankton-code-quality/` · `.agents/ecc/coding-standards/`

@@ -245,7 +245,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       {/* Content */}
 
       {/* Prescription Detail Modal */}
-      <Modal
+      <Modal statusBarTranslucent
         visible={!!selectedPrescription}
         animationType="slide"
         transparent

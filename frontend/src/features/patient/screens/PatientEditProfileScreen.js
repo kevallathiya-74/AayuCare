@@ -16,7 +16,7 @@ import { ArrowLeft, Calendar, ChevronDown } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors, spacing, textStyles } from '@/theme';
-import { getSafeAreaEdges } from '@/utils/responsive';
+import { getSafeAreaEdges, getKeyboardConfig } from '@/utils/responsive';
 import { Card, Button, Input } from '@/components/common';
 import { patientService } from '@/services';
 import { updateUser } from '@/store/slices/authSlice';
@@ -168,10 +168,8 @@ const PatientEditProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}> 
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.flexContainer}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -307,7 +305,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
 
       {/* Date of Birth Picker */}
       {Platform.OS === "ios" ? (
-        <Modal
+        <Modal statusBarTranslucent
           transparent
           animationType="slide"
           visible={showDobPicker}

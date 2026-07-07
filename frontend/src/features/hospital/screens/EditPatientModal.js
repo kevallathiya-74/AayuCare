@@ -26,6 +26,7 @@ import logger from '@/utils/logger';
 import { DynamicIcon } from '@/components/common';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { parseError } from '@/utils/errorHandler';
+import { getKeyboardConfig } from '@/utils/responsive';
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -379,7 +380,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     visible,
     onClose
   ) => (
-    <Modal
+    <Modal statusBarTranslucent
       visible={visible}
       transparent={true}
       animationType="slide"
@@ -442,14 +443,13 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   );
 
   return (
-    <Modal
+    <Modal statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>
@@ -596,21 +596,19 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
 
           {/* Footer Actions */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+            <Button
+              variant="secondary"
               onPress={handleClose}
               disabled={updatePatientMutation.isPending}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel editing patient profile"
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              style={styles.flexButton}
+              title="Cancel"
+            />
             <Button
               variant="primary"
               loading={updatePatientMutation.isPending}
               onPress={handleSubmit}
-              style={styles.submitButton}
-            title="Save Changes"
+              style={styles.flexButton}
+              title="Save Changes"
             />
           </View>
         </View>
@@ -793,23 +791,8 @@ const styles = StyleSheet.create({
     borderTopColor: healthColors.border.light,
     gap: theme.spacing.md,
   },
-  button: {
+  flexButton: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cancelButton: {
-    backgroundColor: healthColors.background.tertiary,
-  },
-  cancelButtonText: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.secondary,
-  },
-  submitButton: {
-    backgroundColor: healthColors.primary.main,
   },
 
 });

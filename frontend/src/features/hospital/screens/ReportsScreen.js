@@ -19,6 +19,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { ChevronRight, ArrowLeft, Filter } from "lucide-react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
@@ -67,7 +68,7 @@ const ReportsScreen = ({ navigation }) => {
     queryKey: queryKeys.medicalRecords.list({ scope: "admin-reports" }),
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const response = await medicalRecordService.getAllRecords();
+      const response = await medicalRecordService.getAllRecords({ limit: 20 });
 
       const responseData = response?.data;
       const rawReports =
@@ -95,6 +96,12 @@ const ReportsScreen = ({ navigation }) => {
       });
     },
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const availableRecordTypes = useMemo(
     () =>

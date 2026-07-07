@@ -15,6 +15,7 @@ import React, {
   useRef,
   useState,
   useCallback,
+  useEffect,
 } from "react";
 import {
   Text,
@@ -22,10 +23,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  View,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from "../theme";
 import { DynamicIcon } from "../components/common";
+import Button from "../components/common/Button";
+import { registerDialogTrigger } from "../utils/errorHandler";
 
 const ToastContext = createContext(null);
 
@@ -61,6 +66,25 @@ export const ToastProvider = ({ children }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(60)).current;
   const timerRef = useRef(null);
+  const [dialog, setDialog] = useState(null);
+
+  useEffect(() => {
+    registerDialogTrigger((config) => {
+      setDialog(config);
+    });
+    return () => registerDialogTrigger(null);
+  }, []);
+
+  const closeDialog = () => {
+    setDialog(null);
+  };
+
+  const handleButtonPress = (btnOnPress) => {
+    closeDialog();
+    if (btnOnPress) {
+      btnOnPress();
+    }
+  };
 
   const hideToast = useCallback(() => {
     Animated.parallel([
@@ -141,6 +165,79 @@ export const ToastProvider = ({ children }) => {
           </TouchableOpacity>
         </Animated.View>
       ) : null}
+      {dialog ? (
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={!!dialog}
+          onRequestClose={closeDialog}
+        >
+          <View style={styles.dialogOverlay}>
+            <View style={styles.dialogContent}>
+              {/* Top Circular Icon */}
+              <View
+                style={[
+                  styles.dialogIconContainer,
+                  dialog.type === "success" && styles.iconSuccessBg,
+                  dialog.type === "error" && styles.iconErrorBg,
+                  dialog.type === "warning" && styles.iconWarningBg,
+                  dialog.type === "confirm" && styles.iconConfirmBg,
+                ]}
+              >
+                <DynamicIcon
+                  name={
+                    dialog.type === "success"
+                      ? "checkmark-circle"
+                      : dialog.type === "error"
+                      ? "close-circle"
+                      : dialog.type === "warning"
+                      ? "warning"
+                      : "help-circle"
+                  }
+                  size={30}
+                  color={
+                    dialog.type === "success"
+                      ? healthColors.success.main
+                      : dialog.type === "error"
+                      ? healthColors.error.main
+                      : dialog.type === "warning"
+                      ? healthColors.warning.main
+                      : healthColors.primary.main
+                  }
+                />
+              </View>
+
+              {/* Title & Message */}
+              <Text style={styles.dialogTitle}>{dialog.title}</Text>
+              <Text style={styles.dialogMessage}>{dialog.message}</Text>
+
+              {/* Action Buttons */}
+              <View
+                style={[
+                  styles.dialogButtonsContainer,
+                  dialog.buttons.length > 1 && styles.dialogButtonsRow,
+                ]}
+              >
+                {dialog.buttons.map((btn, index) => (
+                  <Button
+                    key={index}
+                    title={btn.text}
+                    variant={
+                      btn.style === "cancel"
+                        ? "secondary"
+                        : btn.style === "destructive"
+                        ? "danger"
+                        : "primary"
+                    }
+                    onPress={() => handleButtonPress(btn.onPress)}
+                    style={dialog.buttons.length > 1 ? styles.dialogButtonFlex : styles.dialogButtonFull}
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </ToastContext.Provider>
   );
 };
@@ -195,6 +292,78 @@ const styles = StyleSheet.create({
   closeButton: {
     marginLeft: theme.spacing.sm,
     padding: 2,
+  },
+  dialogOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dialogContent: {
+    backgroundColor: healthColors.background.card,
+    borderRadius: 16,
+    padding: 24,
+    width: "88%",
+    maxWidth: 380,
+    alignItems: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: healthColors.shadows.color,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.16,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  dialogIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  iconSuccessBg: {
+    backgroundColor: "#F0FDFA",
+  },
+  iconErrorBg: {
+    backgroundColor: "#FEF2F2",
+  },
+  iconWarningBg: {
+    backgroundColor: "#FFFBEB",
+  },
+  iconConfirmBg: {
+    backgroundColor: "#F0FDF4",
+  },
+  dialogTitle: {
+    fontSize: theme.typography.sizes.xl,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  dialogMessage: {
+    fontSize: theme.typography.sizes.body,
+    color: healthColors.text.secondary,
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  dialogButtonsContainer: {
+    width: "100%",
+    gap: 12,
+  },
+  dialogButtonsRow: {
+    flexDirection: "row",
+  },
+  dialogButtonFlex: {
+    flex: 1,
+  },
+  dialogButtonFull: {
+    width: "100%",
   },
 });
 

@@ -78,7 +78,11 @@ exports.getCurrentSession = async (req, res, next) => {
 exports.getSessionTokenByCredentials = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const result = await authService.getSessionTokenByCredentials(email, password);
+    const requestInfo = {
+      ip: req.ip || req.headers["x-forwarded-for"] || "127.0.0.1",
+      userAgent: req.headers["user-agent"] || "",
+    };
+    const result = await authService.getSessionTokenByCredentials(email, password, requestInfo);
     return sendSuccess(res, req, result, 'Session token retrieved successfully');
   } catch (error) {
     logger.error("Error in getSessionTokenByCredentials", {

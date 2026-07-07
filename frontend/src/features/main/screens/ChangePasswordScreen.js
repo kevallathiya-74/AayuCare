@@ -20,6 +20,7 @@ import { logoutUser } from '@/store/slices/authSlice';
 import { logError, parseError } from '@/utils/errorHandler';
 import { Input, Button } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
+import { getKeyboardConfig } from '@/utils/responsive';
 
 const ChangePasswordScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -128,10 +129,8 @@ const ChangePasswordScreen = ({ navigation }) => {
         <View style={styles.backButton} />
       </View>
 
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>

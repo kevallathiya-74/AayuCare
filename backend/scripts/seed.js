@@ -48,14 +48,28 @@ const seed = async () => {
     [DEMO_ADMIN_ID, 'ADM1', 'Admin User', 'admin@aayucare.com', hashedPassword, '+91-9876543211', 'admin', DEMO_HOSPITAL_ID, true]
   );
   await query(
+    `INSERT INTO account (account_id, provider_id, user_id, password) VALUES ($1, $2, $3, $4)`,
+    ['cred_adm1', 'credential', DEMO_ADMIN_ID, hashedPassword]
+  );
+
+  await query(
     `INSERT INTO users (id, user_id, name, email, password_hash, phone, role, hospital_id, is_active)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [DEMO_DOCTOR_ID, 'DOC1', 'Dr. Sharma', 'doctor@aayucare.com', hashedPassword, '+91-9876543212', 'doctor', DEMO_HOSPITAL_ID, true]
   );
   await query(
+    `INSERT INTO account (account_id, provider_id, user_id, password) VALUES ($1, $2, $3, $4)`,
+    ['cred_doc1', 'credential', DEMO_DOCTOR_ID, hashedPassword]
+  );
+
+  await query(
     `INSERT INTO users (id, user_id, name, email, password_hash, phone, role, hospital_id, is_active)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [DEMO_PATIENT_ID, 'PAT1', 'Rahul Patient', 'patient@aayucare.com', hashedPassword, '+91-9876543213', 'patient', DEMO_HOSPITAL_ID, true]
+  );
+  await query(
+    `INSERT INTO account (account_id, provider_id, user_id, password) VALUES ($1, $2, $3, $4)`,
+    ['cred_pat1', 'credential', DEMO_PATIENT_ID, hashedPassword]
   );
 
   // Create doctor profile

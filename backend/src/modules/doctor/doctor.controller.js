@@ -197,7 +197,7 @@ exports.getDoctorDashboard = async (req, res, next) => {
         status: 'scheduled,confirmed',
       }),
       // Recent prescriptions
-      prescriptionRepository.findByDoctor(doctorId, {
+      prescriptionRepository.findByDoctorId(doctorId, {
         limit: 5,
         hospitalId: baseFilters.hospitalId,
       }),
@@ -684,6 +684,19 @@ exports.getPatientDetails = async (req, res, next) => {
       patientUser.hospital_id !== req.hospitalId
     ) {
       return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
+    }
+
+    if (req.user.role === "doctor") {
+      const { query } = require("../../config/postgres");
+      const hasRelationship = await query(
+        `SELECT 1 FROM appointments 
+         WHERE doctor_id = $1 AND patient_id = $2
+         LIMIT 1`,
+        [req.user.id, resolvedPatientId]
+      );
+      if (hasRelationship.rows.length === 0) {
+        return sendError(res, req, "Access denied — you do not have an appointment with this patient", 403, "FORBIDDEN");
+      }
     }
 
     const dbPatient = await patientRepository.findByUserId(resolvedPatientId);

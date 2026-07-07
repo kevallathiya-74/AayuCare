@@ -53,9 +53,9 @@ export const getPatientHistory = async (patientId) => {
 /**
  * Get all medical records
  */
-export const getAllRecords = async () => {
+export const getAllRecords = async (params = {}) => {
     try {
-        const response = await api.get('/medical-records');
+        const response = await api.get('/medical-records', { params });
         return normalizeServiceResponse(response.data);
     } catch (error) {
         logError(error, { context: 'medicalRecordService.getAllRecords' });
