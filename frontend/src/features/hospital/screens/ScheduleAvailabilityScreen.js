@@ -384,7 +384,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Edit Modal */}
-      <Modal
+      <Modal statusBarTranslucent
         visible={modalVisible}
         animationType="slide"
         presentationStyle="pageSheet"

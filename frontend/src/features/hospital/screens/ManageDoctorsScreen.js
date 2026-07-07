@@ -34,7 +34,7 @@ import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 import { handleSmartBack } from '@/utils/navigation';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const ManageDoctorsScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -586,7 +586,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         />
       )}
 
-      <Modal
+      <Modal statusBarTranslucent
         visible={showDetailsModal}
         transparent
         animationType="slide"

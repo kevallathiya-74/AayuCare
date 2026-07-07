@@ -21,8 +21,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { Calendar, Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react-native";
+import { Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from '@/config/reactQueryConfig';
@@ -32,11 +31,11 @@ import { logError, parseError } from '@/utils/errorHandler';
 import logger from '@/utils/logger';
 import { eventService } from '@/services';
 import { convertTo12Hour, getStatusColor } from '@/utils/helpers';
-import { SkeletonCardRow } from '@/components/common';
+import { SkeletonCardRow, EmptyState } from '@/components/common';
 import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 const HospitalEventsScreen = ({ navigation }) => {
   const queryClient = useQueryClient();
@@ -455,33 +454,21 @@ const HospitalEventsScreen = ({ navigation }) => {
   );
 
   const renderEmpty = () => (
-    <View style={styles.emptyStateWrap}>
-      <View style={styles.emptyIconShell}>
-        <Calendar size={30} color={healthColors.text.tertiary} />
-      </View>
-      <Text style={styles.emptyTitle}>
-        {filter === "all"
+    <EmptyState
+      icon="calendar-outline"
+      title={
+        filter === "all"
           ? "No Events Found"
-          : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Events`}
-      </Text>
-      <Text style={styles.emptyMessage}>
-        {filter === "all"
+          : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Events`
+      }
+      message={
+        filter === "all"
           ? "No events are available at the moment."
-          : `No ${filter} events right now. You can switch to All events.`}
-      </Text>
-      <View style={styles.emptyActionRow}>
-        {filter !== "all" ? (
-          <TouchableOpacity
-            style={styles.emptySecondaryBtn}
-            onPress={() => setFilter("all")}
-            accessibilityRole="button"
-            accessibilityLabel="Show all events"
-          >
-            <Text style={styles.emptySecondaryBtnText}>Show All</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
-    </View>
+          : `No ${filter} events right now. You can switch to All events.`
+      }
+      actionLabel={filter !== "all" ? "Show All" : undefined}
+      onActionPress={filter !== "all" ? () => setFilter("all") : undefined}
+    />
   );
 
   return (
@@ -492,8 +479,7 @@ const HospitalEventsScreen = ({ navigation }) => {
       />
 
       {/* Header */}
-      <LinearGradient
-        colors={healthColors.gradients.primary}
+      <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
       >
         <TouchableOpacity
@@ -504,9 +490,8 @@ const HospitalEventsScreen = ({ navigation }) => {
           accessibilityLabel="Go back"
         >
           <ArrowLeft
-            
             size={24}
-            color={healthColors.text.white}
+            color={healthColors.text.primary}
           />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
@@ -523,16 +508,15 @@ const HospitalEventsScreen = ({ navigation }) => {
           accessibilityState={{ disabled: isRefetching }}
         >
           {isRefetching ? (
-            <ActivityIndicator size="small" color={healthColors.text.white} />
+            <ActivityIndicator size="small" color={healthColors.text.primary} />
           ) : (
             <RefreshCw
-              
               size={24}
-              color={healthColors.text.white}
+              color={healthColors.text.primary}
             />
           )}
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       {/* Events List */}
       {loading && !isRefetching ? (
@@ -609,12 +593,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
     paddingBottom: theme.spacing.md,
+    backgroundColor: healthColors.background.secondary,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: theme.touchTargets.md,
     height: theme.touchTargets.md,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.withOpacity(healthColors.text.white, 0.16),
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -623,21 +610,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.h5,
+    fontSize: theme.typography.sizes.h6,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.white,
+    color: healthColors.text.primary,
   },
   headerSubtitle: {
     fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.white,
-    opacity: 0.9,
+    color: healthColors.text.secondary,
     marginTop: 2,
   },
   refreshButton: {
     width: theme.touchTargets.md,
     height: theme.touchTargets.md,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.withOpacity(healthColors.text.white, 0.16),
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -693,58 +679,6 @@ const styles = StyleSheet.create({
   footerLoader: {
     paddingVertical: theme.spacing.md,
     alignItems: "center",
-  },
-  emptyStateWrap: {
-    flex: 1,
-    minHeight: 320,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: 56,
-    paddingBottom: 24,
-  },
-  emptyIconShell: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.background.tertiary,
-    marginBottom: 14,
-  },
-  emptyTitle: {
-    fontSize: theme.typography.sizes.h5,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginBottom: 6,
-    textAlign: "center",
-  },
-  emptyMessage: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 18,
-  },
-  emptyActionRow: {
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  emptySecondaryBtn: {
-    borderWidth: 1,
-    borderColor: healthColors.border.medium,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: healthColors.background.card,
-  },
-  emptySecondaryBtnText: {
-    color: healthColors.text.secondary,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
   },
   eventCard: {
     backgroundColor: healthColors.background.card,

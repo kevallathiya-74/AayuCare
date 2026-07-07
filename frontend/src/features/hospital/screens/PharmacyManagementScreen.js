@@ -15,6 +15,7 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { ArrowLeft, RefreshCcw } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
@@ -161,10 +162,16 @@ const PharmacyManagementScreen = ({ navigation }) => {
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const response = await prescriptionService.getAllPrescriptions();
-      const data = response?.prescriptions || response?.data || response || [];
+      const data = response?.data?.prescriptions || response?.prescriptions || response?.data || response || [];
       return Array.isArray(data) ? data : [];
     },
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const onRefresh = useCallback(() => {
     refetch();

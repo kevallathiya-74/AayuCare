@@ -142,6 +142,19 @@ exports.getCompleteHistory = async (req, res, next) => {
     // Use patient id for querying related collections
     const patientDbId = patient.id;
 
+    if (req.user.role === "doctor") {
+      const { query } = require("../../config/postgres");
+      const hasRelationship = await query(
+        `SELECT 1 FROM appointments 
+         WHERE doctor_id = $1 AND patient_id = $2
+         LIMIT 1`,
+        [req.user.id, patientDbId]
+      );
+      if (hasRelationship.rows.length === 0) {
+        return sendError(res, req, "Access denied — you do not have an appointment with this patient", 403, "FORBIDDEN");
+      }
+    }
+
     // Fetch patient profile from patients table for medical fields
     const patientProfile = await patientRepository.findByUserId(patientDbId);
 
@@ -273,6 +286,19 @@ exports.getPatientProfile = async (req, res, next) => {
     // Verify hospital access
     if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
       return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
+    }
+
+    if (req.user.role === "doctor") {
+      const { query } = require("../../config/postgres");
+      const hasRelationship = await query(
+        `SELECT 1 FROM appointments 
+         WHERE doctor_id = $1 AND patient_id = $2
+         LIMIT 1`,
+        [req.user.id, patient.id]
+      );
+      if (hasRelationship.rows.length === 0) {
+        return sendError(res, req, "Access denied — you do not have an appointment with this patient", 403, "FORBIDDEN");
+      }
     }
 
     // Get quick stats using patient id

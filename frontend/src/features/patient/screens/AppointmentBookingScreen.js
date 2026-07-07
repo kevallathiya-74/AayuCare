@@ -345,9 +345,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={getKeyboardConfig().behavior}
-        keyboardVerticalOffset={getKeyboardConfig().keyboardVerticalOffset}
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -420,7 +418,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
             </TouchableOpacity>
 
             {/* Specialty Selection Modal */}
-            <Modal
+            <Modal statusBarTranslucent
               visible={showSpecialtyModal}
               transparent
               animationType="slide"
@@ -691,7 +689,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
 
             {/* Date picker: native dialog on Android, sheet on iOS */}
             {Platform.OS === "ios" ? (
-              <Modal
+              <Modal statusBarTranslucent
                 visible={showDatePicker}
                 transparent
                 animationType="slide"

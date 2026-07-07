@@ -567,7 +567,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
   };
 
   return (
-    <Modal
+    <Modal statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}

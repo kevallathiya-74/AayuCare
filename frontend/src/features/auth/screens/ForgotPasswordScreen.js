@@ -94,8 +94,9 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
         <LinearGradient
           colors={gradientColors}
@@ -166,6 +167,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                   />
 
                   <Button
+                    title="Send Reset Link"
                     variant="primary"
                     size="large"
                     onPress={handleSendOTP}
@@ -173,9 +175,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                       styles.sendButton,
                       isHospital && styles.hospitalButton,
                     ]}
-                  >
-                    <Text>Send Reset Link</Text>
-                  </Button>
+                  />
                 </View>
 
                 {/* Back to Login */}

@@ -8,8 +8,8 @@ const create = async (data) => {
   const { rows } = await query(
     `INSERT INTO prescriptions (
       prescription_id, appointment_id, patient_id, doctor_id, hospital_id,
-      diagnosis, chief_complaint, medications, instructions, follow_up_date
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      diagnosis, chief_complaint, medications, instructions, follow_up_date, pharmacy_status
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *`,
     [
       prescriptionId,
@@ -21,7 +21,8 @@ const create = async (data) => {
       data.chiefComplaint,
       JSON.stringify(data.medications || []),
       data.instructions,
-      data.followUpDate || null
+      data.followUpDate || null,
+      data.pharmacyStatus || 'pending'
     ]
   );
   return rows[0];
@@ -87,6 +88,11 @@ const findWithFilters = async (filters = {}, options = {}) => {
     params.push(filters.prescriptionId);
     paramIndex++;
   }
+  if (filters.pharmacyStatus || filters.status) {
+    queryText += ` AND pharmacy_status = $${paramIndex}`;
+    params.push(filters.pharmacyStatus || filters.status);
+    paramIndex++;
+  }
   if (filters.startDate) {
     queryText += ` AND created_at >= $${paramIndex}`;
     params.push(filters.startDate);
@@ -123,6 +129,11 @@ const count = async (filters = {}) => {
   if (filters.hospitalId) {
     queryText += ` AND hospital_id = $${paramIndex}`;
     params.push(filters.hospitalId);
+    paramIndex++;
+  }
+  if (filters.pharmacyStatus || filters.status) {
+    queryText += ` AND pharmacy_status = $${paramIndex}`;
+    params.push(filters.pharmacyStatus || filters.status);
     paramIndex++;
   }
   if (filters.startDate) {
@@ -164,6 +175,30 @@ const update = async (id, updates) => {
   return rows[0] || null;
 };
 
+const updatePharmacyStatus = async (id, status) => {
+  const { rows } = await query(
+    `UPDATE prescriptions SET pharmacy_status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    [id, status]
+  );
+  return rows[0] || null;
+};
+
+const getPharmacyStatusCounts = async (filters = {}) => {
+  let queryText = `SELECT pharmacy_status AS status, COUNT(*) as count FROM prescriptions WHERE 1=1`;
+  const params = [];
+  let paramIndex = 1;
+
+  if (filters.hospitalId) {
+    queryText += ` AND hospital_id = $${paramIndex}`;
+    params.push(filters.hospitalId);
+    paramIndex++;
+  }
+
+  queryText += ` GROUP BY pharmacy_status`;
+  const { rows } = await query(queryText, params);
+  return rows;
+};
+
 const remove = async (id) => {
   const { rowCount } = await query(
     `DELETE FROM prescriptions WHERE id = $1`,
@@ -177,9 +212,12 @@ module.exports = {
   findById,
   findByPrescriptionId,
   findByPatientId,
+  findByPatient: findByPatientId,
   findByDoctorId,
   findWithFilters,
   count,
   update,
+  updatePharmacyStatus,
+  getPharmacyStatusCounts,
   delete: remove,
 };

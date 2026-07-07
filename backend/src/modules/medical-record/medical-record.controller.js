@@ -72,6 +72,7 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
     const total = await medicalRecordRepository.count(query);
 
+    const totalPages = Math.ceil(total / limit);
     return sendSuccess(
       res,
       req,
@@ -81,8 +82,15 @@ exports.getAllMedicalRecords = async (req, res, next) => {
           page: parseInt(page),
           limit: parseInt(limit),
           total,
-          pages: Math.ceil(total / limit),
+          pages: totalPages,
         },
+        data: medicalRecords,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages,
+        hasNextPage: parseInt(page) < totalPages,
+        hasPreviousPage: parseInt(page) > 1
       },
       "Medical records retrieved successfully"
     );

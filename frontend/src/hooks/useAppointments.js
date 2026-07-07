@@ -43,7 +43,7 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
         const response = await appointmentService.getAppointmentsCursor({
           ...filters,
           cursor: pageParam,
-          limit: filters.limit || 20,
+          limit: filters.limit || 10,
         });
 
         ensureSuccess(response, 'Failed to fetch appointments');

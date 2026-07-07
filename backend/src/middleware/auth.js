@@ -100,16 +100,31 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-/**
- * Restrict access to specific roles
- */
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
+      logger.warn('[Auth] Authorization failed: Authentication required');
       return next(new AppError("Authentication required", 401));
     }
     if (!roles.includes(req.user.role)) {
-      return next(new AppError("Access denied", 403));
+      const userEmail = req.user.email || 'unknown';
+      const userId = req.user.id || req.user.userId || 'unknown';
+      const role = req.user.role || 'unknown';
+      const hospitalId = req.user.hospitalId || 'none';
+      const route = req.originalUrl || req.url || 'unknown';
+
+      logger.warn(
+        `[Auth] Access Denied Details:\n` +
+        `  - User ID: ${userId} (${userEmail})\n` +
+        `  - Current Role: ${role}\n` +
+        `  - Hospital ID: ${hospitalId}\n` +
+        `  - Requested Route: ${route}\n` +
+        `  - Required Roles: ${roles.join(', ')}\n` +
+        `  - Middleware Name: restrictTo (authorize)\n` +
+        `  - Denied Reason: Current role '${role}' is not allowed to access this route.`
+      );
+
+      return next(new AppError(`Access denied: role '${role}' cannot access this endpoint.`, 403));
     }
     next();
   };

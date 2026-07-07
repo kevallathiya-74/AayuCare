@@ -18,6 +18,7 @@ import {
 import { X } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
 import { Button } from '@/components/common';
+import { getKeyboardConfig } from '@/utils/responsive';
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -48,14 +49,13 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
   } = useDoctorForm({ mode: "add", onClose, onSuccess });
 
   return (
-    <Modal
+    <Modal statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>
@@ -143,7 +143,10 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
               "bio",
               "Bio *",
               "Short professional bio",
-              "information-circle"
+              "information-circle",
+              "default",
+              false,
+              true
             )}
             {renderAvailabilityPicker()}
 
@@ -152,20 +155,18 @@ const AddDoctorModal = ({ visible, onClose, onSuccess }) => {
 
           {/* Footer Actions */}
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+            <Button
+              variant="secondary"
               onPress={handleClose}
               disabled={loading}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel adding doctor"
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              style={styles.flexButton}
+              title="Cancel"
+            />
             <Button
               variant="primary"
               loading={loading}
               onPress={handleSubmit}
-              style={styles.submitButton}
+              style={styles.flexButton}
               title="Add Doctor"
             />
           </View>
@@ -223,23 +224,8 @@ const styles = StyleSheet.create({
     borderTopColor: healthColors.border.light,
     gap: theme.spacing.md,
   },
-  button: {
+  flexButton: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cancelButton: {
-    backgroundColor: healthColors.background.tertiary,
-  },
-  cancelButtonText: {
-    fontSize: theme.typography.sizes.lg,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.secondary,
-  },
-  submitButton: {
-    backgroundColor: healthColors.primary.main,
   },
 
 });

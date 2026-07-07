@@ -18,7 +18,7 @@ class AuthRepository {
               SELECT id, user_id as "userId", token_hash as "token",
                      ip_address as "ipAddress", user_agent as "userAgent",
                      expires_at as "expiresAt", created_at as "createdAt",
-                     updated_at as "updatedAt"
+                     last_used_at as "updatedAt"
               FROM session
               WHERE token_hash = $1
                   AND expires_at > NOW()
@@ -43,7 +43,7 @@ class AuthRepository {
               SELECT id, user_id as "userId", token_hash as "token",
                      ip_address as "ipAddress", user_agent as "userAgent",
                      expires_at as "expiresAt", created_at as "createdAt",
-                     updated_at as "updatedAt"
+                     last_used_at as "updatedAt"
               FROM session
               WHERE user_id = $1
                   AND expires_at > NOW()
@@ -79,7 +79,7 @@ class AuthRepository {
               RETURNING id, user_id as "userId", token_hash as "token",
                         ip_address as "ipAddress", user_agent as "userAgent",
                         expires_at as "expiresAt", created_at as "createdAt",
-                        updated_at as "updatedAt"
+                        last_used_at as "updatedAt"
           `;
 
       const result = await query(sql, [
@@ -136,7 +136,7 @@ class AuthRepository {
             RETURNING id, user_id as "userId", token_hash as "token",
                       ip_address as "ipAddress", user_agent as "userAgent",
                       expires_at as "expiresAt", created_at as "createdAt",
-                      updated_at as "updatedAt"
+                      last_used_at as "updatedAt"
         `;
 
     try {

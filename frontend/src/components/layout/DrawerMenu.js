@@ -26,8 +26,15 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { User, X, ChevronRight, LogOut } from "lucide-react-native";
+import { X, ChevronRight, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+
+const getInitials = (name) => {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 import { theme, healthColors } from '@/theme';
 
 const ROLE_LABELS = {
@@ -92,7 +99,7 @@ const DrawerMenu = ({
             <View style={styles.headerContent}>
               <View style={styles.profileRow}>
                 <View style={styles.avatarCircle}>
-                  <User  size={theme.iconSizes.xl} color={healthColors.white} />
+                  <Text style={styles.avatarInitials}>{getInitials(user?.name)}</Text>
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={styles.userName} numberOfLines={1}>
@@ -229,10 +236,16 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),
+    backgroundColor: healthColors.white,
     alignItems: "center",
     justifyContent: "center",
     marginRight: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  avatarInitials: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: healthColors.primary.main,
   },
   userInfo: {
     flex: 1,

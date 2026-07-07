@@ -16,7 +16,6 @@ const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
 const logger = require("../../utils/logger");
 const bcrypt = require("bcryptjs");
-const { query, withTransaction } = require("../../config/postgres");
 
 const CACHE_KEYS = {
   USER: "v1:cache:*user*",
@@ -184,7 +183,7 @@ const getRecentActivities = async (limit, ctx) => {
       id: presc.id,
       text: `Prescription added for patient`,
       icon: "document-text",
-      time: presc.createdAt,
+      time: presc.created_at || presc.createdAt,
       type: "prescription",
     })),
   ]
@@ -420,12 +419,12 @@ const getSystemMetrics = async (ctx) => {
   const weekAgo = new Date(today);
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const [userGrowth, appointmentTrends, activeUsers, totalUsers, dbStatsResult] = await Promise.all([
+  const [userGrowth, appointmentTrends, activeUsers, totalUsers, dataSize] = await Promise.all([
     adminRepository.getUserGrowth(scopedHospitalId),
     adminRepository.getAppointmentTrends(scopedHospitalId),
     adminRepository.getActiveUsersCount(weekAgo, scopedHospitalId),
     adminRepository.getTotalUsersCount(scopedHospitalId),
-    query("SELECT pg_size_pretty(pg_database_size(current_database())) as size"),
+    adminRepository.getDatabaseSize(),
   ]);
 
   return {
@@ -435,9 +434,9 @@ const getSystemMetrics = async (ctx) => {
     totalUsers,
     database: {
       collections: 0,
-      dataSize: dbStatsResult.rows[0]?.size || "unknown",
+      dataSize,
       indexSize: "0 kB",
-      storageSize: dbStatsResult.rows[0]?.size || "unknown",
+      storageSize: dataSize,
     },
     timestamp: new Date(),
   };
@@ -460,27 +459,7 @@ const getMedicalRecordsOverview = async ({ patientId, limit, skip, ctx }) => {
   ]);
 
   // Aggregate record type counts
-  let typeStatsQuery = `
-    SELECT record_type as type, COUNT(*) as count 
-    FROM medical_records 
-    WHERE 1=1
-  `;
-  const params = [];
-  let paramIndex = 1;
-  if (scopedHospitalId) {
-    typeStatsQuery += ` AND hospital_id = $${paramIndex}`;
-    params.push(scopedHospitalId);
-    paramIndex++;
-  }
-  if (patientId) {
-    typeStatsQuery += ` AND patient_id = $${paramIndex}`;
-    params.push(patientId);
-    paramIndex++;
-  }
-  typeStatsQuery += ` GROUP BY record_type`;
-
-  const typeStatsResult = await query(typeStatsQuery, params);
-  const typeStats = typeStatsResult.rows.map(r => ({ type: r.type, count: parseInt(r.count, 10) }));
+  const typeStats = await adminRepository.getMedicalRecordTypeStats(scopedHospitalId, patientId);
 
   return { records, stats: typeStats, total };
 };
@@ -500,19 +479,7 @@ const getNotificationsManagement = async ({ type, status, limit, skip, ctx }) =>
   ]);
 
   // Get type distribution in SQL
-  let typeDistQuery = `
-    SELECT type, COUNT(*) as count 
-    FROM notifications 
-    WHERE hospital_id = $1
-  `;
-  const params = [scopedHospitalId || "MAIN"];
-  if (type) {
-    typeDistQuery += ` AND type = $2`;
-    params.push(type);
-  }
-  typeDistQuery += ` GROUP BY type`;
-  const typeStatsResult = await query(typeDistQuery, params);
-  const typeStats = typeStatsResult.rows.map(r => ({ type: r.type, count: parseInt(r.count, 10) }));
+  const typeStats = await adminRepository.getNotificationTypeStats(scopedHospitalId, type);
 
   return { notifications, total, unreadCount, typeDistribution: typeStats };
 };
@@ -765,45 +732,7 @@ const permanentDeleteUser = async (req) => {
   }
 
   // Atomically delete all records in Postgres (in proper dependency order)
-  await withTransaction(async (client) => {
-    // 1. Delete payments
-    await client.query("DELETE FROM payments WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
-    
-    // 2. Delete appointments
-    await client.query("DELETE FROM appointments WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
-    
-    // 3. Delete prescriptions
-    await client.query("DELETE FROM prescriptions WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
-    
-    // 4. Delete attachments
-    await client.query(`
-      DELETE FROM attachments 
-      WHERE medical_record_id IN (
-        SELECT id FROM medical_records WHERE patient_id = $1 OR doctor_id = $1
-      )
-    `, [user.id]);
-    
-    // 5. Delete medical records
-    await client.query("DELETE FROM medical_records WHERE patient_id = $1 OR doctor_id = $1", [user.id]);
-    
-    // 6. Delete notification preferences
-    await client.query("DELETE FROM notification_preferences WHERE user_id = $1", [user.id]);
-    
-    // 7. Delete patient or doctor specific profiles (handled by ON DELETE CASCADE, but delete explicitly just in case)
-    if (user.role === "doctor") {
-      await client.query("DELETE FROM doctors WHERE user_id = $1", [user.id]);
-      await client.query("DELETE FROM schedules WHERE doctor_id = $1", [user.id]);
-    } else if (user.role === "patient") {
-      await client.query("DELETE FROM patients WHERE user_id = $1", [user.id]);
-      await client.query("DELETE FROM health_metrics WHERE patient_id = $1", [user.id]);
-    }
-    
-    // 8. Delete user audit logs and session logs
-    await client.query("DELETE FROM audit_logs WHERE user_id = $1", [user.id]);
-    
-    // 9. Finally, delete the user row itself
-    await client.query("DELETE FROM users WHERE id = $1", [user.id]);
-  });
+  await adminRepository.purgeUserData(user);
 
   await writeAuditLog({
     userId: req.user.id,

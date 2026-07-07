@@ -6,6 +6,7 @@
 
 const prescriptionRepository = require("./prescription.repository");
 const userRepository = require("../auth/user.repository");
+const { mapPrescriptionData } = require("../../utils/fieldMapper");
 const logger = require("../../utils/logger");
 const { invalidateAfterPrescriptionMutation } = require("../../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
@@ -50,9 +51,13 @@ const enrichPrescriptionUsers = async (prescriptions = []) => {
     return [];
   }
 
+  const mappedPrescriptions = prescriptions.map((entry) => {
+    return entry.patientId ? entry : mapPrescriptionData(entry);
+  });
+
   const userIds = [
     ...new Set(
-      prescriptions
+      mappedPrescriptions
         .flatMap((entry) => [entry.patientId, entry.doctorId])
         .filter(Boolean)
     ),
@@ -61,7 +66,7 @@ const enrichPrescriptionUsers = async (prescriptions = []) => {
   const users = await userRepository.findByIds(userIds);
   const userMap = new Map(users.filter(Boolean).map((user) => [user.id, user]));
 
-  return prescriptions.map((entry) => ({
+  return mappedPrescriptions.map((entry) => ({
     ...entry,
     patientName: userMap.get(entry.patientId)?.name || "Unknown Patient",
     patientUserId: userMap.get(entry.patientId)?.user_id || null,
@@ -77,16 +82,13 @@ const enrichPrescriptionUsers = async (prescriptions = []) => {
  */
 exports.getAllPrescriptions = async (req, res, next) => {
   try {
-    const { limit = 50, skip = 0, pharmacyStatus, startDate, endDate } = req.query;
+    const { limit = 50, skip = 0, startDate, endDate } = req.query;
 
     // Get prescriptions from repository
-    const prescriptions = await prescriptionRepository.findAll({
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      pharmacyStatus,
-      startDate,
-      endDate,
-    });
+    const prescriptions = await prescriptionRepository.findWithFilters(
+      { startDate, endDate },
+      { limit: parseInt(limit), offset: parseInt(skip) }
+    );
 
     // Enrich with patient and doctor names via batch lookup
     const prescriptionsWithNames = await enrichPrescriptionUsers(prescriptions);
@@ -197,7 +199,7 @@ exports.createPrescription = async (req, res, next) => {
     return sendSuccess(
       res,
       req,
-      prescription,
+      mapPrescriptionData(prescription),
       "Prescription created successfully. Patient will be notified.",
       201
     );
@@ -383,7 +385,7 @@ exports.updatePrescriptionStatus = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, prescription, "Prescription status updated successfully", 200);
+    return sendSuccess(res, req, mapPrescriptionData(prescription), "Prescription status updated successfully", 200);
   } catch (error) {
     logger.error("Update prescription status error:", {
       error: error.message,
@@ -433,7 +435,7 @@ exports.updatePharmacyStatus = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, prescription, "Pharmacy status updated successfully", 200);
+    return sendSuccess(res, req, mapPrescriptionData(prescription), "Pharmacy status updated successfully", 200);
   } catch (error) {
     logger.error("Update pharmacy status error:", {
       error: error.message,

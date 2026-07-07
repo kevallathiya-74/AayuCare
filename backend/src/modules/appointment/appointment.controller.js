@@ -235,7 +235,24 @@ exports.getAppointments = async (req, res, next) => {
       return next(new AppError("Not authorized to view appointments", 403));
     }
 
-    return sendSuccess(res, req, result, "Appointments retrieved successfully");
+    let responseData = result;
+    if (result && result.appointments && result.pagination) {
+      const { appointments, pagination } = result;
+      const totalPages = pagination.pages || Math.ceil(pagination.total / pagination.limit);
+      responseData = {
+        appointments,
+        pagination,
+        data: appointments,
+        page: pagination.page,
+        limit: pagination.limit,
+        total: pagination.total,
+        totalPages,
+        hasNextPage: pagination.page < totalPages,
+        hasPreviousPage: pagination.page > 1
+      };
+    }
+
+    return sendSuccess(res, req, responseData, "Appointments retrieved successfully");
   } catch (error) {
     next(error);
   }

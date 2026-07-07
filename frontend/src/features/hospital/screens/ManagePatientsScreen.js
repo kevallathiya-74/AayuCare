@@ -91,7 +91,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       const patientsList = Array.isArray(response)
         ? response
-        : (response?.patients || response?.data || []);
+        : (Array.isArray(response?.data)
+            ? response.data
+            : (response?.data?.patients || response?.data?.data || []));
 
       const items = (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
         ...patient,
@@ -105,7 +107,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               : !!patient?.is_active,
       }));
 
-      return { items, total: Number(response?.total || response?.data?.total || 0) };
+      const total = Number(
+        response?.total ||
+        response?.data?.total ||
+        response?.pagination?.total ||
+        (Array.isArray(patientsList) ? patientsList.length : 0)
+      );
+
+      return { items, total };
     },
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);

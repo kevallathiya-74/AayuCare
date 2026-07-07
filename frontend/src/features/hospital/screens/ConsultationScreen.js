@@ -31,6 +31,7 @@ import { ChevronLeft, Clock, User, Calendar, Cross, FileText, UserCircle, Activi
 import { theme, healthColors } from '@/theme';
 import {
   getScreenPadding,
+  getKeyboardConfig,
 } from '@/utils/responsive';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService } from '@/services';
@@ -306,10 +307,8 @@ const ConsultationScreen = ({ navigation, route }) => {
       style={styles.container}
       edges={["bottom", "left", "right"]}
     >
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
         <ScrollView
           style={styles.flex}

@@ -14,6 +14,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authService from '@/features/auth/api/auth.service';
 import logger from '@/utils/logger';
+import appStorage from '@/utils/appStorage';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 // Initial state
 const initialState = {
@@ -61,13 +63,57 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+export const validateSessionBackground = createAsyncThunk(
+  "auth/validateSessionBackground",
+  async ({ token: _token }, { dispatch }) => {
+    try {
+      logger.debug("authSlice", "Background session validation started");
+      const session = await authService.getSession();
+      
+      if (!session || !session.user) {
+        logger.warn("authSlice", "Background validation failed - invalid/expired session. Logging out.");
+        dispatch(logoutUser());
+        return null;
+      }
+      
+      logger.debug("authSlice", "Background validation successful", { id: session.user.id });
+      return { user: session.user, token: session.token };
+    } catch (error) {
+      logger.warn("authSlice", "Background validation failed (network/timeout). Keeping cached session.", error?.message || error);
+      return null;
+    }
+  }
+);
+
 export const loadUser = createAsyncThunk(
   "auth/loadUser",
-  async (_, { rejectWithValue: _rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue: _rejectWithValue }) => {
     try {
       logger.debug("authSlice", "Load user thunk started");
 
-      // Validate stored token and restore session (reads from AsyncStorage)
+      // 1. Fast path: load cached user profile and token from local storage
+      const storedToken = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const cachedUserJson = await appStorage.getItem(STORAGE_KEYS.USER_DATA);
+
+      let cachedUser = null;
+      if (cachedUserJson) {
+        try {
+          cachedUser = JSON.parse(cachedUserJson);
+        } catch (e) {
+          logger.error("authSlice", "Error parsing cached user profile:", e);
+        }
+      }
+
+      if (storedToken && cachedUser) {
+        logger.debug("authSlice", "Fast-loaded user from cache, bypassing splash wait", { id: cachedUser.id });
+        
+        // Dispatch background validation thunk
+        dispatch(validateSessionBackground({ token: storedToken }));
+        
+        return { user: cachedUser, token: storedToken };
+      }
+
+      // 2. Slow path/No cache: validate stored token against backend
       const session = await authService.getSession();
 
       if (!session || !session.user) {
@@ -161,6 +207,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
+      })
+      // Background validation
+      .addCase(validateSessionBackground.fulfilled, (state, action) => {
+        if (action.payload?.user) {
+          state.user = action.payload.user;
+          state.token = action.payload.token || null;
+          state.isAuthenticated = true;
+        }
       });
   },
 });

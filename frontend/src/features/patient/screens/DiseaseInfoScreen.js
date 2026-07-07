@@ -392,7 +392,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <Modal
+      <Modal statusBarTranslucent
         visible={detailVisible}
         animationType="slide"
         transparent

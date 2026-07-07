@@ -4,7 +4,7 @@
  * Supports: Admin, Doctor, Patient roles
  */
 
-import React, { useState, useRef, useEffect, useCallback, memo } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   ArrowRight,
   HeartPulse,
+  ArrowLeft,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "@/theme";
@@ -41,13 +42,7 @@ const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { isLoading } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const initialHeightRef = useRef(0);
-  if (initialHeightRef.current === 0 && windowHeight > 0) {
-    initialHeightRef.current = windowHeight;
-  }
-  // Use initial height to prevent keyboard-triggered layout resizing and input focus loss
-  const height = initialHeightRef.current || windowHeight || 800;
+  const { height } = useWindowDimensions();
 
   // Responsive header height: 35% on tall phones, 30% min on small screens
   const headerHeight = Math.max(height * 0.35, 220);
@@ -59,10 +54,18 @@ const LoginScreen = ({ navigation }) => {
   const [fieldErrors, setFieldErrors] = useState({ userId: "", password: "" });
   const [formError, setFormError] = useState("");
 
+  const scrollViewRef = useRef(null);
   const passwordInputRef = useRef(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+
+  const backButtonStyle = useMemo(() => [
+    styles.backButton,
+    {
+      top: Math.max(insets.top + theme.spacing.sm, 16),
+    }
+  ], [insets.top]);
 
   useEffect(() => {
     Animated.parallel([
@@ -129,19 +132,33 @@ const LoginScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView 
+      style={styles.container} 
+      edges={["top", "left", "right"]}
+    >
       <StatusBar
         barStyle="light-content"
         backgroundColor={healthColors.primary.dark}
       />
 
+      {/* Floating Back Button — Safe Area aware placement */}
+      <TouchableOpacity
+        style={backButtonStyle}
+        onPress={() => navigation.navigate(Routes.AUTH.BOX_SELECTION)}
+        accessibilityRole="button"
+        accessibilityLabel="Go back to role selection"
+      >
+        <ArrowLeft size={20} color={healthColors.primary.main} />
+      </TouchableOpacity>
+
       {/* Single KeyboardAvoidingView — iOS-only padding avoidance, native Android adjustment */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
         <LoginForm
+          scrollViewRef={scrollViewRef}
           scrollInsets={insets}
           navigation={navigation}
           userId={userId}
@@ -171,6 +188,7 @@ const lockIcon = <Lock size={iconSize} color={iconColor} />;
 
 const LoginForm = memo(
   ({
+    scrollViewRef,
     scrollInsets,
     navigation,
     userId,
@@ -192,8 +210,19 @@ const LoginForm = memo(
       passwordInputRef.current?.focus();
     }, [passwordInputRef]);
 
+    const handleInputFocus = useCallback((yOffset) => {
+      setTimeout(() => {
+        if (yOffset === 'end') {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        } else {
+          scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
+        }
+      }, 150);
+    }, [scrollViewRef]);
+
     return (
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: Math.max(scrollInsets.bottom + 24, 40) },
@@ -297,6 +326,7 @@ const LoginForm = memo(
               editable={!isLoading}
               style={styles.inputSpacing}
               accessibilityLabel="Email or User ID Input"
+              onFocus={() => handleInputFocus(60)}
             />
           </View>
 
@@ -315,6 +345,7 @@ const LoginForm = memo(
               editable={!isLoading}
               style={styles.inputSpacing}
               accessibilityLabel="Password Input"
+              onFocus={() => handleInputFocus('end')}
             />
           </View>
 
@@ -346,10 +377,12 @@ const LoginForm = memo(
             ]}
           >
             <Button
+              title="Continue"
               onPress={handleLogin}
               loading={isLoading}
               disabled={isLoading}
               style={styles.loginBtn}
+              size="large"
               gradient
               fullWidth
               icon={
@@ -363,9 +396,7 @@ const LoginForm = memo(
               iconPosition="right"
               accessibilityRole="button"
               accessibilityLabel="Continue to Login"
-            >
-              <Text>Continue</Text>
-            </Button>
+            />
           </Animated.View>
         </Animated.View>
 
@@ -388,6 +419,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
+  },
+  backButton: {
+    position: "absolute",
+    left: theme.spacing.lg,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: healthColors.white,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: healthColors.neutral.gray200,
+    ...theme.shadows.sm,
   },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1 },

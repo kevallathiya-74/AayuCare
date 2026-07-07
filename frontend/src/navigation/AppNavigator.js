@@ -162,12 +162,18 @@ const AppNavigator = () => {
           error: error?.message || String(error),
         });
       }
+
+      // If we are not authenticated, attempt to reload/validate user session on focus (recovery)
+      if (!isAuthenticated) {
+        logger.debug("AppNavigator", "App focused and unauthenticated, retrying loadUser...");
+        dispatch(loadUser());
+      }
     });
 
     return () => {
       subscription.remove();
     };
-  }, [dispatch]);
+  }, [dispatch, isAuthenticated]);
 
   // Auto-navigate after successful login
   useEffect(() => {
@@ -417,7 +423,12 @@ const AppNavigator = () => {
 
   return (
     <ErrorBoundary>
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      onStateChange={() => {
+        queryClient.refetchQueries({ active: true });
+      }}
+    >
       <Stack.Navigator
         initialRouteName="SplashScreen"
         screenOptions={{

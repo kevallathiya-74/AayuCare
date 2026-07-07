@@ -61,7 +61,7 @@ const LanguageSelector = ({
           </Text>
         </TouchableOpacity>
 
-        <Modal
+        <Modal statusBarTranslucent
           animationType="fade"
           transparent={true}
           visible={modalVisible}

@@ -103,22 +103,34 @@ const mapAppointmentData = (dbAppointment) => {
 const mapPrescriptionData = (dbPrescription) => {
   if (!dbPrescription) return null;
 
+  // Extract medicines from medications (jsonb array in PG) or fallback
+  let rawMedicines = dbPrescription.medications || dbPrescription.medicines;
+  if (typeof rawMedicines === "string") {
+    try {
+      rawMedicines = JSON.parse(rawMedicines);
+    } catch {
+      rawMedicines = [];
+    }
+  }
+
   return {
     // NOTE: `_id` MongoDB-shape residue was removed on 2026-06-30.
     // PostgreSQL exposes a UUID `id` via the `prescriptions.id` column.
-    prescriptionId: dbPrescription.prescriptionId,
-    patientId: dbPrescription.patientId,
-    doctorId: dbPrescription.doctorId,
-    appointmentId: dbPrescription.appointmentId,
-    hospitalId: dbPrescription.hospitalId,
-    prescriptionDate: dbPrescription.prescriptionDate || dbPrescription.createdAt,
+    id: dbPrescription.id,
+    prescriptionId: dbPrescription.prescription_id || dbPrescription.prescriptionId,
+    patientId: dbPrescription.patient_id || dbPrescription.patientId,
+    doctorId: dbPrescription.doctor_id || dbPrescription.doctorId,
+    appointmentId: dbPrescription.appointment_id || dbPrescription.appointmentId,
+    hospitalId: dbPrescription.hospital_id || dbPrescription.hospitalId,
+    prescriptionDate: dbPrescription.prescription_date || dbPrescription.prescriptionDate || dbPrescription.created_at || dbPrescription.createdAt,
     diagnosis: dbPrescription.diagnosis,
-    medicines: dbPrescription.medicines || [],
+    medicines: Array.isArray(rawMedicines) ? rawMedicines : [],
     instructions: dbPrescription.instructions,
-    followUpDate: dbPrescription.followUpDate,
-    isActive: dbPrescription.isActive !== false,
-    createdAt: dbPrescription.createdAt,
-    updatedAt: dbPrescription.updatedAt,
+    followUpDate: dbPrescription.follow_up_date || dbPrescription.followUpDate,
+    isActive: dbPrescription.is_active !== false && dbPrescription.isActive !== false,
+    pharmacyStatus: dbPrescription.pharmacy_status || dbPrescription.pharmacyStatus || "pending",
+    createdAt: dbPrescription.created_at || dbPrescription.createdAt,
+    updatedAt: dbPrescription.updated_at || dbPrescription.updatedAt,
   };
 };
 

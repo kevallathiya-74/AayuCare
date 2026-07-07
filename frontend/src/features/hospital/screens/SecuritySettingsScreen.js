@@ -476,7 +476,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
         </View>
 
         {/* Password Change Modal */}
-        <Modal
+        <Modal statusBarTranslucent
           visible={showPasswordModal}
           transparent
           animationType="fade"

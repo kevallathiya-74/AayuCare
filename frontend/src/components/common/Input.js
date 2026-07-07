@@ -39,6 +39,8 @@ const Input = memo(forwardRef(({
   numberOfLines = 1,
   style,
   inputStyle,
+  onFocus,
+  onBlur,
   ...props
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -52,17 +54,23 @@ const Input = memo(forwardRef(({
     Animated.timing(labelAnim, {
       toValue: (value || isFocused) ? 1 : 0,
       duration: 200,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [value, isFocused, labelAnim]);
 
-  const handleFocus = useCallback(() => {
+  const handleFocus = useCallback((e) => {
     setIsFocused(true);
-  }, []);
+    if (onFocus) {
+      onFocus(e);
+    }
+  }, [onFocus]);
 
-  const handleBlur = useCallback(() => {
+  const handleBlur = useCallback((e) => {
     setIsFocused(false);
-  }, []);
+    if (onBlur) {
+      onBlur(e);
+    }
+  }, [onBlur]);
 
   const labelStyle = {
     position: 'absolute',
@@ -195,11 +203,8 @@ const styles = StyleSheet.create({
     borderColor: healthColors.input.borderFocused,
     borderWidth: 1.5,
     backgroundColor: healthColors.background.primary,
-    shadowColor: healthColors.primary.main,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 0,
+    // Removed shadows/elevation here because adding them dynamically on focus 
+    // causes a native view rebuild on Android, which immediately blurs the input!
   },
   containerError: {
     borderColor: healthColors.input.borderError,
