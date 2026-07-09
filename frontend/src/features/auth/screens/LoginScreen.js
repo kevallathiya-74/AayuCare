@@ -35,10 +35,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import { loginUser } from "@/store/slices/authSlice";
 import { Input, Button } from "@/components/common";
 
 const LoginScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { isLoading } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
@@ -87,8 +89,8 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss();
 
     const newErrors = { userId: "", password: "" };
-    if (!userId.trim()) newErrors.userId = "User ID is required";
-    if (!password) newErrors.password = "Password is required";
+    if (!userId.trim()) newErrors.userId = t("auth.userIdRequired", "User ID is required");
+    if (!password) newErrors.password = t("auth.passwordRequired", "Password is required");
 
     if (newErrors.userId || newErrors.password) {
       setFieldErrors(newErrors);
@@ -113,9 +115,9 @@ const LoginScreen = ({ navigation }) => {
     try {
       await dispatch(loginUser({ userId, password })).unwrap();
     } catch (error) {
-      setFormError(error?.message || "Invalid credentials. Please try again.");
+      setFormError(error?.message || t("auth.loginError", "Invalid credentials. Please try again."));
     }
-  }, [userId, password, dispatch, scaleAnim]);
+  }, [userId, password, dispatch, scaleAnim, t]);
 
   const onUserIdChange = useCallback((text) => {
     setUserId(text);
@@ -206,6 +208,7 @@ const LoginForm = memo(
     headerHeight,
     cardOverlap,
   }) => {
+    const { t } = useTranslation();
     const onEmailSubmit = useCallback(() => {
       passwordInputRef.current?.focus();
     }, [passwordInputRef]);
@@ -262,9 +265,9 @@ const LoginForm = memo(
               </LinearGradient>
             </View>
             <Text style={styles.appName} accessibilityRole="header">
-              AayuCare
+              {t("common.appName", "AayuCare")}
             </Text>
-            <Text style={styles.tagline}>Elevating Healthcare Together</Text>
+            <Text style={styles.tagline}>{t("common.tagline", "Elevating Healthcare Together")}</Text>
           </Animated.View>
         </LinearGradient>
 
@@ -280,18 +283,18 @@ const LoginForm = memo(
           ]}
         >
           <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeText}>Sign In</Text>
+            <Text style={styles.welcomeText}>{t("auth.signIn", "Sign In")}</Text>
             <Text style={styles.subtitleText}>
-              Enter your credentials to continue
+              {t("auth.enterCredentials", "Enter your credentials to continue")}
             </Text>
           </View>
 
           <View
             style={styles.rolePills}
             accessible={true}
-            accessibilityLabel="Roles available: Admin, Doctor, Patient"
+            accessibilityLabel={t("auth.rolesAvailable", "Roles available: Admin, Doctor, Patient")}
           >
-            {["Admin", "Doctor", "Patient"].map((role, idx) => (
+            {[t("auth.admin", "Admin"), t("auth.doctor", "Doctor"), t("auth.patient", "Patient")].map((role, idx) => (
               <View key={role} style={styles.roleBadge}>
                 <View
                   style={[
@@ -313,10 +316,10 @@ const LoginForm = memo(
 
           <View style={styles.inputGroup}>
             <Input
-              label="Email or User ID"
+              label={t("auth.emailOrUserId", "Email or User ID")}
               value={userId}
               onChangeText={onUserIdChange}
-              placeholder="e.g. pat1, doc1, admin@aayucare.com"
+              placeholder={t("auth.userIdPlaceholder", "e.g. pat1, doc1, admin@aayucare.com")}
               leftIcon={emailIcon}
               error={fieldErrors.userId}
               autoCapitalize="none"
@@ -332,10 +335,10 @@ const LoginForm = memo(
 
           <View style={styles.inputGroup}>
             <Input
-              label="Password"
+              label={t("auth.password", "Password")}
               value={password}
               onChangeText={onPasswordChange}
-              placeholder="Enter your password"
+              placeholder={t("auth.passwordPlaceholder", "Enter your password")}
               leftIcon={lockIcon}
               secureTextEntry
               error={fieldErrors.password}
@@ -365,9 +368,9 @@ const LoginForm = memo(
             activeOpacity={0.6}
             hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
             accessibilityRole="button"
-            accessibilityLabel="Forgot Password"
+            accessibilityLabel={t("auth.forgotPassword", "Forgot Password?")}
           >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            <Text style={styles.forgotPasswordText}>{t("auth.forgotPassword", "Forgot Password?")}</Text>
           </TouchableOpacity>
 
           <Animated.View
@@ -377,7 +380,7 @@ const LoginForm = memo(
             ]}
           >
             <Button
-              title="Continue"
+              title={t("auth.continue", "Continue")}
               onPress={handleLogin}
               loading={isLoading}
               disabled={isLoading}
@@ -407,7 +410,7 @@ const LoginForm = memo(
             color={healthColors.primary.main}
           />
           <Text style={styles.footerText}>
-            End-to-end encrypted · HIPAA Compliant
+            {t("auth.footerCompliance", "End-to-end encrypted · HIPAA Compliant")}
           </Text>
         </View>
       </ScrollView>

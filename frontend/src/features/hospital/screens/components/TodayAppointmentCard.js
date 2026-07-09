@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing[10],
+    marginBottom: theme.spacing.sm,
     flexWrap: "wrap",
   },
   timeChip: {
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary, marginBottom: theme.spacing.xs,
   },
   patientMeta: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, marginBottom: 12 },
-  actions: { flexDirection: "row", gap: theme.spacing[10] },
+    actions: { flexDirection: "row", gap: theme.spacing.sm },
   secondaryBtn: {
     flex: 1, paddingVertical: 9, borderRadius: theme.borderRadius.input,
     borderWidth: 1.5, borderColor: healthColors.primary.main,

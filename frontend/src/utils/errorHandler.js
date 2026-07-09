@@ -275,13 +275,15 @@ export const showConfirmation = (
     message,
     onConfirm,
     onCancel,
-    title = 'Confirm'
+    title = 'Confirm',
+    icon = 'help-circle'
 ) => {
     if (activeDialogTrigger) {
         activeDialogTrigger({
             type: 'confirm',
             title,
             message,
+            icon,
             buttons: [
                 {
                     text: 'Cancel',

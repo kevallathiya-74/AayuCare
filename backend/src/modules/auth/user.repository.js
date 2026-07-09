@@ -28,7 +28,7 @@ class UserRepository {
             INSERT INTO users (user_id, name, email, phone, password_hash, role, hospital_id, hospital_name)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id, user_id, name, email, phone, role, hospital_id, hospital_name, 
-                      is_active, email_verified, phone_verified, created_at, updated_at
+                      is_active, email_verified, phone_verified, preferred_language, created_at, updated_at
         `;
 
     const result = await query(sql, [
@@ -53,7 +53,7 @@ class UserRepository {
   async findById(id) {
     const sql = `
             SELECT id, user_id, name, email, phone, role, hospital_id, hospital_name, 
-                   is_active, email_verified, phone_verified, created_at, updated_at, last_login
+                   is_active, email_verified, phone_verified, preferred_language, created_at, updated_at, last_login
             FROM users
             WHERE id = $1
         `;
@@ -70,8 +70,8 @@ class UserRepository {
    */
   async findByEmail(email, includePassword = false) {
     const fields = includePassword
-      ? "id, user_id, name, email, phone, password_hash, role, hospital_id, hospital_name, is_active"
-      : "id, user_id, name, email, phone, role, hospital_id, hospital_name, is_active, email_verified, phone_verified";
+      ? "id, user_id, name, email, phone, password_hash, role, hospital_id, hospital_name, is_active, preferred_language"
+      : "id, user_id, name, email, phone, role, hospital_id, hospital_name, is_active, email_verified, phone_verified, preferred_language";
 
     const sql = `SELECT ${fields} FROM users WHERE email = $1`;
     const result = await query(sql, [email]);
@@ -86,7 +86,7 @@ class UserRepository {
   async findByPhone(phone) {
     const sql = `
             SELECT id, user_id, name, email, phone, role, hospital_id, hospital_name, 
-                   is_active, email_verified, phone_verified
+                   is_active, email_verified, phone_verified, preferred_language
             FROM users
             WHERE phone = $1
         `;
@@ -103,7 +103,7 @@ class UserRepository {
   async findByUserId(userId) {
     const sql = `
             SELECT id, user_id, name, email, phone, role, hospital_id, hospital_name, 
-                   is_active, email_verified, phone_verified, created_at, updated_at
+                   is_active, email_verified, phone_verified, preferred_language, created_at, updated_at
             FROM users
          WHERE user_id = $1
         `;
@@ -129,6 +129,7 @@ class UserRepository {
       "email_verified",
       "phone_verified",
       "last_login",
+      "preferred_language",
     ];
 
     const updateFields = [];
@@ -155,7 +156,7 @@ class UserRepository {
             SET ${updateFields.join(", ")}
             WHERE id = $${paramCount}
             RETURNING id, user_id, name, email, phone, role, hospital_id, hospital_name, 
-                      is_active, email_verified, phone_verified, created_at, updated_at
+                      is_active, email_verified, phone_verified, preferred_language, created_at, updated_at
         `;
 
     logger.info("[USER_UPDATE] Executing SQL update", {

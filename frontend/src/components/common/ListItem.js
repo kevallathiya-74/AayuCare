@@ -77,7 +77,7 @@ const ListItem = ({
 
                 {leftIcon && (
                     <View style={styles.leftSection}>
-                        <View style={styles.iconContainer}>
+                        <View style={[styles.iconContainer, { backgroundColor: (leftIcon.color || healthColors.primary.main) + '15' }]}>
                             <DynamicIcon
                                 name={leftIcon.name}
                                 size={leftIcon.size || 24}

@@ -18,7 +18,14 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, User, LogOut } from "lucide-react-native";
+import { ArrowLeft, LogOut } from "lucide-react-native";
+
+const getInitials = (name) => {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import Routes from '@/navigation/routes';
@@ -168,18 +175,22 @@ const AdminSettingsScreen = ({ navigation }) => {
       />
 
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, "AdminTabs")}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft
-            size={24}
-            color={healthColors.text.primary}
-          />
-        </TouchableOpacity>
+        {navigation.canGoBack() ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => handleSmartBack(navigation, "AdminTabs")}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft
+              size={24}
+              color={healthColors.text.primary}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={styles.placeholder} />
       </View>
@@ -194,11 +205,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <User
-              
-              size={32}
-              color={healthColors.primary.main}
-            />
+            <Text style={styles.avatarText}>{getInitials(user?.name || "Admin")}</Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{user?.name || "Admin"}</Text>
@@ -334,6 +341,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: theme.spacing.md,
+  },
+  avatarText: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: healthColors.primary.main,
   },
   profileInfo: {
     flex: 1,

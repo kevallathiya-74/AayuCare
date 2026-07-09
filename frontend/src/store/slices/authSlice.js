@@ -16,6 +16,7 @@ import * as authService from '@/features/auth/api/auth.service';
 import logger from '@/utils/logger';
 import appStorage from '@/utils/appStorage';
 import { STORAGE_KEYS } from '@/utils/constants';
+import i18n from '@/i18n';
 
 // Initial state
 const initialState = {
@@ -50,10 +51,33 @@ export const loginUser = createAsyncThunk(
 
 export const logoutUser = createAsyncThunk(
   "auth/logout",
-  async (_, { rejectWithValue }) => {
+  async (options, { rejectWithValue }) => {
     try {
-      logger.debug("authSlice", "Logout thunk started");
-      await authService.logout();
+      logger.debug("authSlice", "Logout thunk started", { silent: options?.silent });
+      
+      // Cancel and clear React Query cache immediately
+      try {
+        const queryClient = require('@/config/reactQueryConfig').default;
+        queryClient.cancelQueries();
+        queryClient.clear();
+      } catch (err) {
+        logger.warn("authSlice", "Error clearing queryClient cache during logout:", err.message);
+      }
+
+      // Check if we should call backend logout
+      const storedToken = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (storedToken && !options?.silent) {
+        try {
+          await authService.logout();
+        } catch (e) {
+          logger.warn("authSlice", "Backend logout request failed:", e.message);
+        }
+      } else {
+        // Just clear storage silently if silent or no token
+        await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+        await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
+      }
+
       logger.debug("authSlice", "Logout complete");
       return null;
     } catch (error) {
@@ -146,6 +170,10 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
+      if (action.payload?.preferred_language) {
+        appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.preferred_language).catch(() => {});
+        i18n.changeLanguage(action.payload.preferred_language).catch(() => {});
+      }
     },
     setToken: (state, action) => {
       state.token = action.payload;
@@ -164,6 +192,10 @@ const authSlice = createSlice({
         state.token = action.payload?.token || null;
         state.isAuthenticated = !!action.payload?.user;
         state.error = null;
+        if (action.payload?.user?.preferred_language) {
+          appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.user.preferred_language).catch(() => {});
+          i18n.changeLanguage(action.payload.user.preferred_language).catch(() => {});
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -197,6 +229,10 @@ const authSlice = createSlice({
           state.user = action.payload.user;
           state.token = action.payload.token || null;
           state.isAuthenticated = true;
+          if (action.payload?.user?.preferred_language) {
+            appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.user.preferred_language).catch(() => {});
+            i18n.changeLanguage(action.payload.user.preferred_language).catch(() => {});
+          }
         } else {
           state.user = null;
           state.token = null;
@@ -214,6 +250,10 @@ const authSlice = createSlice({
           state.user = action.payload.user;
           state.token = action.payload.token || null;
           state.isAuthenticated = true;
+          if (action.payload?.user?.preferred_language) {
+            appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.user.preferred_language).catch(() => {});
+            i18n.changeLanguage(action.payload.user.preferred_language).catch(() => {});
+          }
         }
       });
   },

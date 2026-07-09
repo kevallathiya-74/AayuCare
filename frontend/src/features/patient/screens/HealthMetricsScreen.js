@@ -11,10 +11,10 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearGradient } from "expo-linear-gradient";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -373,8 +373,8 @@ const HealthMetricsScreen = ({ navigation }) => {
   if (isLoading && !isRefetching) {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-        <LinearGradient
-          colors={healthColors.gradients.primary}
+        <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+        <View
           style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
         >
           <TouchableOpacity
@@ -383,13 +383,13 @@ const HealthMetricsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
+            <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text style={styles.headerTitle} numberOfLines={1}>Health Metrics</Text>
           </View>
           <View style={styles.headerPlaceholder} />
-        </LinearGradient>
+        </View>
 
         <View style={styles.loadingWrap}>
           <View style={styles.loadingContent}>
@@ -404,10 +404,10 @@ const HealthMetricsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
       <NetworkStatusIndicator />
 
-      <LinearGradient
-        colors={healthColors.gradients.primary}
+      <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
       >
         <TouchableOpacity
@@ -416,13 +416,13 @@ const HealthMetricsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
+          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap} pointerEvents="none">
           <Text style={styles.headerTitle} numberOfLines={1}>Health Metrics</Text>
         </View>
         <View style={styles.headerPlaceholder} />
-      </LinearGradient>
+      </View>
 
       {isError ? (
         <ErrorRecovery
@@ -534,6 +534,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing.md,
     minHeight: theme.layout.headerHeight + theme.spacing.lg,
+    backgroundColor: healthColors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: theme.touchTargets.md,
@@ -541,7 +544,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),
+    backgroundColor: healthColors.background.tertiary,
     zIndex: 2,
   },
   headerTitleWrap: {
@@ -554,7 +557,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...textStyles.h4,
-    color: healthColors.text.white,
+    color: healthColors.text.primary,
     textAlign: "center",
   },
   headerPlaceholder: {

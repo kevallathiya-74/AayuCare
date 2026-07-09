@@ -28,7 +28,6 @@ import {
   Animated,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
   Dimensions,
   ScrollView,

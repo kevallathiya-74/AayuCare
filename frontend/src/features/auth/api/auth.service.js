@@ -465,6 +465,26 @@ export const getSession = async () => {
   }
 };
 
+export const updateProfile = async (profileData) => {
+  const response = await api.put("/user/profile", profileData);
+  const responseData = response.data;
+  const userProfile = responseData?.data?.user || responseData?.user;
+  
+  if (userProfile) {
+    const normalizedUser = normalizeUserProfile(userProfile);
+    await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+    return {
+      success: true,
+      data: normalizedUser,
+    };
+  }
+  
+  return {
+    success: false,
+    message: responseData?.message || "Failed to update profile",
+  };
+};
+
 export const changePassword = async (currentPassword, newPassword) => {
   const response = await api.put("/user/change-password", {
     currentPassword,
@@ -484,6 +504,7 @@ export default {
   logout,
   getSession,
   changePassword,
+  updateProfile,
   authClient,
 };
 

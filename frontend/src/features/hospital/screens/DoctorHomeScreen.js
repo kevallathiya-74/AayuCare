@@ -15,13 +15,13 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { AlertTriangle, Calendar, Users, FileText, UserPlus, Home, User, Settings } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { theme, healthColors } from '@/theme';
-import { getScreenPadding, getSafeAreaEdges } from '@/utils/responsive';
+import { getScreenPadding } from '@/utils/responsive';
 import { logoutUser } from '@/store/slices/authSlice';
 import { logError, parseError } from '@/utils/errorHandler';
 import { doctorService } from '@/services';
@@ -64,7 +64,7 @@ const DoctorHomeScreen = ({ navigation }) => {
     refetch: refetchDashboard,
   } = useQuery({
     queryKey: queryKeys.dashboardStats.doctor(user?.id),
-    enabled: !!user?.id,
+    enabled: !!user?.id && user?.role === "doctor",
     staleTime: 60 * 1000,
     queryFn: async () => {
       const response = await doctorService.getDashboard();
@@ -210,7 +210,7 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
 
   // ── Render ──
   return (
-    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
 
       <ScrollView
@@ -243,7 +243,6 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
           notificationCount={schedule.pending}
           onMenuOpen={openMenu}
           onNotificationPress={() => navigation.navigate(Routes.DOCTOR.NOTIFICATIONS)}
-          onProfilePress={() => navigation.navigate(Routes.DOCTOR.EDIT_PROFILE)}
         />
 
         <View style={styles.body}>
@@ -357,7 +356,7 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
           />
         </View>
       </ModalSheet>
-    </SafeAreaView>
+    </View>
   );
 };
 

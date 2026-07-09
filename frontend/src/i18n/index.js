@@ -47,11 +47,17 @@ i18n
 
 export default i18n;
 
+import api from '../services/apiClient';
+
 // Helper function to change language
 export const changeLanguage = async (languageCode) => {
     try {
         await i18n.changeLanguage(languageCode);
         await appStorage.setItem(LANGUAGE_STORAGE_KEY, languageCode);
+        
+        // Silent background synchronization to the backend
+        api.put('/user/profile', { preferred_language: languageCode }).catch(() => {});
+        
         return true;
     } catch (error) {
         console.error('Error changing language:', error);

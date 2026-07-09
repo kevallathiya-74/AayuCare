@@ -18,6 +18,34 @@ export default [
       "react-native": reactNativePlugin,
     },
 
+    languageOptions: {
+      globals: {
+        __DEV__: "readonly",
+        console: "readonly",
+        window: "readonly",
+        process: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        require: "readonly",
+        module: "readonly",
+        describe: "readonly",
+        it: "readonly",
+        expect: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        jest: "readonly",
+        global: "readonly",
+        __dirname: "readonly",
+        AbortController: "readonly",
+        fetch: "readonly",
+        URLSearchParams: "readonly",
+        URL: "readonly",
+        beforeAll: "readonly",
+      }
+    },
+
     settings: {
       react: { version: "19.0" },
     },
@@ -43,7 +71,7 @@ export default [
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-require-imports": "off",
-      "no-undef": "off",
+      "no-undef": "error",
       "prefer-const": "warn",
       "no-var": "error",
       "eqeqeq": ["warn", "smart"],

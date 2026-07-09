@@ -25,7 +25,7 @@ import {
   verticalScale,
   getScreenPadding,
 } from '@/utils/responsive';
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState } from '@/components/common';
+import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState, Card } from '@/components/common';
 import { parseError } from '@/utils/errorHandler';
 import { formatCurrency } from '@/utils/helpers';
 import { doctorService } from '@/services';
@@ -127,7 +127,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       feeRange,
       hospitalId: user?.hospitalId,
     }),
-    enabled: true,
+    enabled: !!user?.id && user?.role === "patient",
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const filters = {};
@@ -160,7 +160,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
   };
 
   const renderDoctorCard = (doctor) => (
-    <View key={doctor.id} style={styles.doctorCard}>
+    <Card key={doctor.id} style={styles.doctorCard}>
       <View style={styles.doctorHeader}>
         <View style={styles.doctorAvatar}>
           <User  size={32} color={healthColors.primary.main} />
@@ -291,7 +291,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       </View>
       {/* Fixed: BookAppointment -> AppointmentBooking (correct screen name) */}
       {/* Fixed: DoctorProfile replaced with Alert (screen does not exist) */}
-    </View>
+    </Card>
   );
 
   if (isError) {
@@ -610,12 +610,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(16),
   },
   doctorCard: {
-    backgroundColor: theme.colors.white,
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
   },
   doctorHeader: {
     flexDirection: "row",

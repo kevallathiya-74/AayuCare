@@ -11,16 +11,19 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, UserPlus, User, Calendar, Phone, Droplet, MapPin, Cross, Info } from "lucide-react-native";
+import { ArrowLeft, UserPlus, User, Calendar, Droplet, MapPin, Cross, Info } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import {
   getScreenPadding,
+  getKeyboardConfig,
 } from '@/utils/responsive';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showError, logError } from '@/utils/errorHandler';
@@ -168,7 +171,9 @@ const WalkInPatientScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* Header */}
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <KeyboardAvoidingView {...getKeyboardConfig()} style={styles.flex}>
+        {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "DoctorTabs")}
@@ -241,48 +246,50 @@ const WalkInPatientScreen = ({ navigation }) => {
             </View>
 
             <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Text style={styles.label}>
-                Gender <Text style={styles.required}>*</Text>
-              </Text>
-              <View style={styles.genderRow}>
-                {genderOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.genderButton,
-                      formData.gender === option && styles.genderButtonActive,
-                    ]}
-                    onPress={() => handleInputChange("gender", option)}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select ${option} gender`}
-                    accessibilityState={{ selected: formData.gender === option }}
-                  >
-                    <Phone
-                      name={
-                        option === "male"
-                          ? "male"
-                          : option === "female"
-                            ? "female"
-                            : "male-female"
-                      }
-                      size={14}
-                      color={
-                        formData.gender === option
-                          ? theme.colors.white
-                          : healthColors.text.secondary
-                      }
-                    />
-                    <Text
+              <View style={styles.genderContainer}>
+                <Text style={styles.genderLabel}>
+                  Gender <Text style={styles.required}>*</Text>
+                </Text>
+                <View style={styles.genderRow}>
+                  {genderOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option}
                       style={[
-                        styles.genderText,
-                        formData.gender === option && styles.genderTextActive,
+                        styles.genderButton,
+                        formData.gender === option && styles.genderButtonActive,
                       ]}
+                      onPress={() => handleInputChange("gender", option)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${option} gender`}
+                      accessibilityState={{ selected: formData.gender === option }}
                     >
-                      {option.charAt(0).toUpperCase()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <DynamicIcon
+                        name={
+                          option === "male"
+                            ? "male"
+                            : option === "female"
+                              ? "female"
+                              : "male-female"
+                        }
+                        size={14}
+                        color={
+                          formData.gender === option
+                            ? theme.colors.white
+                            : healthColors.text.secondary
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.genderText,
+                          formData.gender === option && styles.genderTextActive,
+                        ]}
+                      >
+                        {option.charAt(0).toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             </View>
           </View>
@@ -297,7 +304,7 @@ const WalkInPatientScreen = ({ navigation }) => {
             }
             keyboardType="phone-pad"
             maxLength={10}
-            leftIcon={<DynamicIcon  size={18} color={healthColors.text.disabled} />}
+            leftIcon={<DynamicIcon name="phone-portrait" size={18} color={healthColors.text.disabled} />}
           />
 
           {/* Blood Group */}
@@ -387,23 +394,26 @@ const WalkInPatientScreen = ({ navigation }) => {
           </Text>
         </View>
 
-        {/* Register Button */}
         <Button
           variant="primary"
           size="large"
           fullWidth
           gradient
-          loading={loading}
+          loading={registerWalkInMutation.isPending}
           onPress={handleRegister}
           style={styles.registerButton}
-        title="Register Patient"
+          title="Register Patient"
         />
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: healthColors.background.secondary,
@@ -497,25 +507,47 @@ const styles = StyleSheet.create({
   halfWidth: {
     flex: 1,
   },
-  genderRow: {
+  genderContainer: {
+    height: 56,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    borderRadius: 12,
+    backgroundColor: healthColors.background.card,
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    paddingHorizontal: 8,
+    position: "relative",
+  },
+  genderLabel: {
+    position: "absolute",
+    top: -10,
+    left: 12,
+    backgroundColor: healthColors.background.card,
+    paddingHorizontal: 6,
+    fontSize: 12,
+    fontWeight: "500",
+    color: healthColors.text.tertiary,
+    zIndex: 1,
+  },
+  genderRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   genderButton: {
     flex: 1,
+    height: 38,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-    backgroundColor: healthColors.background.primary,
+    borderRadius: 8,
+    backgroundColor: healthColors.background.secondary,
     gap: 4,
   },
   genderButtonActive: {
     backgroundColor: healthColors.primary.main,
-    borderColor: healthColors.primary.main,
   },
   genderText: {
     fontSize: theme.typography.sizes.caption,
@@ -569,19 +601,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   registerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.success.main,
-    borderRadius: 14,
-    paddingVertical: 16,
     marginBottom: 24,
-    gap: 10,
-    shadowColor: healthColors.success.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
 
 });

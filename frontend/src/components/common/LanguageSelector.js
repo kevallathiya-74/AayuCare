@@ -55,7 +55,7 @@ const LanguageSelector = ({
           accessibilityRole="button"
           accessibilityLabel={`Current language: ${currentLang.fullName}. Tap to change language`}
         >
-          <Globe  size={20} color={iconColor} />
+          <Globe  size={theme.iconSizes.lg} color={iconColor} />
           <Text style={[styles.compactLabel, { color: iconColor }]}>
             {currentLang.label}
           </Text>
@@ -78,8 +78,7 @@ const LanguageSelector = ({
               >
                 <View style={styles.modalHeader}>
                   <Globe
-                    
-                    size={24}
+                    size={theme.iconSizes.lg}
                     color={healthColors.primary.main}
                   />
                   <Text style={styles.modalTitle}>Select Language</Text>
@@ -105,8 +104,7 @@ const LanguageSelector = ({
                     </View>
                     {currentLanguage === language.code && (
                       <CheckCircle
-                        
-                        size={24}
+                        size={theme.iconSizes.lg}
                         color={healthColors.primary.main}
                       />
                     )}
@@ -124,8 +122,7 @@ const LanguageSelector = ({
   return (
     <View style={[styles.container, style]}>
       <Globe
-        
-        size={16}
+        size={theme.iconSizes.sm}
         color={iconColor}
         style={styles.icon}
       />
@@ -166,11 +163,11 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   languageButton: {
-    paddingHorizontal: theme.spacing[10],
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.xs,
     borderWidth: 1,
-    minWidth: 38,
+    minWidth: 40,
     alignItems: "center",
   },
   languageButtonActive: {
@@ -188,7 +185,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing[10],
+    paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.modal,
     backgroundColor: theme.withOpacity(healthColors.text.white, 0.2),

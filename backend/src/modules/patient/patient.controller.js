@@ -289,16 +289,8 @@ exports.getPatientProfile = async (req, res, next) => {
     }
 
     if (req.user.role === "doctor") {
-      const { query } = require("../../config/postgres");
-      const hasRelationship = await query(
-        `SELECT 1 FROM appointments 
-         WHERE doctor_id = $1 AND patient_id = $2
-         LIMIT 1`,
-        [req.user.id, patient.id]
-      );
-      if (hasRelationship.rows.length === 0) {
-        return sendError(res, req, "Access denied — you do not have an appointment with this patient", 403, "FORBIDDEN");
-      }
+      // Doctors are allowed to view basic profile details of any patient in their assigned hospital.
+      // The hospital-level tenancy check on line 287 guarantees they belong to the same hospital scope.
     }
 
     // Get quick stats using patient id
@@ -361,7 +353,7 @@ exports.updatePatientProfile = async (req, res, next) => {
       return sendError(res, req, "Not authorized to update this patient data", 403, "FORBIDDEN");
     }
 
-    const allowedUserUpdates = ["name", "phone"];
+    const allowedUserUpdates = ["name", "email", "phone", "preferred_language"];
     const allowedPatientUpdates = [
       "dateOfBirth",
       "gender",

@@ -11,11 +11,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -266,11 +266,11 @@ const AISymptomChecker = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
       <NetworkStatusIndicator />
 
-      <LinearGradient
-        colors={healthColors.gradients.primary}
+      <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
       >
         <TouchableOpacity
@@ -280,7 +280,7 @@ const AISymptomChecker = ({ navigation }) => {
           accessibilityLabel="Go back"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
+          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
         </TouchableOpacity>
 
         <View style={styles.headerTitleWrap} pointerEvents="none">
@@ -293,7 +293,7 @@ const AISymptomChecker = ({ navigation }) => {
         </View>
 
         <View style={styles.headerButton} />
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={[
@@ -591,6 +591,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: getScreenPadding(),
     paddingBottom: theme.spacing.md,
     minHeight: theme.spacing.xxxxl,
+    backgroundColor: healthColors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   headerButton: {
     width: theme.touchTargets.md,
@@ -606,14 +609,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: theme.typography.sizes.xl,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.white,
+    color: healthColors.text.primary,
     textAlign: "center",
   },
   headerSubtitle: {
     marginTop: theme.spacing.xs,
     fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.white,
-    opacity: 0.9,
+    color: healthColors.text.secondary,
     textAlign: "center",
     lineHeight: theme.typography.sizes.bodySmall + 4,
     paddingHorizontal: theme.spacing.xs,

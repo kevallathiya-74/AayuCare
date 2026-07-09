@@ -20,6 +20,7 @@ import { calculateAge } from '@/utils/dateHelpers';
 import { SkeletonCardRow, EmptyState } from '@/components/common';
 import { DynamicIcon } from '@/components/common';
 import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import { queryKeys } from '@/config/reactQueryConfig';
 
 const PATIENT_DETAILS_MODAL_CACHE_TTL_MS = 60 * 1000;
@@ -45,6 +46,7 @@ const setCachedPatientDetails = (patientId, value) => {
 };
 
 const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initialPatient }) => {
+  const user = useSelector((state) => state.auth.user);
   const [activeTab, setActiveTab] = useState("overview");
 
   const seededPatientData = useMemo(() => {
@@ -91,7 +93,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
 
       throw new Error("Failed to load patient details");
     },
-    enabled: visible && !!patientId,
+    enabled: visible && !!patientId && (user?.role === "doctor" || user?.role === "admin" || user?.role === "receptionist"),
     staleTime: PATIENT_DETAILS_MODAL_CACHE_TTL_MS,
     retry: 1,
     initialData: seededPatientData,

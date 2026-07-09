@@ -23,7 +23,30 @@
     "forgotPassword": "पासवर्ड भूल गए?",
     "loginSuccess": "लॉगिन सफल",
     "loginError": "अमान्य क्रेडेंशियल",
-    "demoCredentials": "डेमो क्रेडेंशियल"
+    "demoCredentials": "डेमो क्रेडेंशियल",
+    "signIn": "साइन इन करें",
+    "enterCredentials": "आगे बढ़ने के लिए अपने क्रेडेंशियल दर्ज करें",
+    "emailOrUserId": "ईमेल या यूजर आईडी",
+    "userIdPlaceholder": "जैसे pat1, doc1, admin@aayucare.com",
+    "passwordPlaceholder": "अपना पासवर्ड दर्ज करें",
+    "footerCompliance": "एंड-टू-एंड एन्क्रिप्टेड · HIPAA अनुपालन",
+    "forgotPasswordTitle": "पासवर्ड भूल गए?",
+    "checkInstructions": "रीसेट निर्देशों के लिए अपना ईमेल जांचें",
+    "enterRegisteredToReset": "पासवर्ड रीसेट करने के लिए अपना पंजीकृत ईमेल या फोन दर्ज करें",
+    "enterHospitalIdToReset": "पासवर्ड रीसेट करने के लिए अपना अस्पताल आईडी या ईमेल दर्ज करें",
+    "hospitalIdOrEmail": "अस्पताल आईडी या ईमेल",
+    "emailOrPhone": "ईमेल या फोन",
+    "hospitalIdPlaceholder": "HOS123456",
+    "emailPlaceholder": "example@email.com",
+    "sendResetLink": "रीसेट लिंक भेजें",
+    "rememberPassword": "अपना पासवर्ड याद है?",
+    "backToLogin": "लॉगिन पर वापस जाएं",
+    "userIdRequired": "यूजर आईडी आवश्यक है",
+    "passwordRequired": "पासवर्ड आवश्यक है",
+    "hospitalIdRequired": "अस्पताल आईडी या ईमेल आवश्यक है",
+    "emailOrPhoneRequired": "ईमेल या फोन आवश्यक है",
+    "validEmailRequired": "कृपया एक मान्य ईमेल पता दर्ज करें",
+    "validPhoneRequired": "कृपया एक मान्य फोन नंबर दर्ज करें"
   },
   "dashboard": {
     "welcome": "स्वागत है",
@@ -81,5 +104,28 @@
     "addReading": "रीडिंग जोड़ें",
     "setGoals": "लक्ष्य निर्धारित करें",
     "weekTrend": "7-दिन का रुझान"
+  },
+  "navigation": {
+    "home": "मुख्य",
+    "appointments": "अपॉइंटमेंट",
+    "reports": "रिपोर्ट",
+    "settings": "सेटिंग्स",
+    "today": "आज",
+    "patients": "मरीज",
+    "me": "प्रोफ़ाइल",
+    "health": "स्वास्थ्य",
+    "info": "जानकारी",
+    "more": "अधिक"
+  },
+  "drawer": {
+    "systemManagement": "सिस्टम प्रबंधन",
+    "dashboard": "डैशबोर्ड",
+    "manageDoctors": "डॉक्टर प्रबंधित करें",
+    "managePatients": "मरीज प्रबंधित करें",
+    "appointments": "अपॉइंटमेंट",
+    "reportsAndRecords": "रिपोर्ट और रिकॉर्ड",
+    "account": "खाता",
+    "profile": "प्रोफ़ाइल",
+    "settings": "सेटिंग्स"
   }
 }

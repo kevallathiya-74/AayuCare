@@ -24,7 +24,7 @@ import { Cross, ChevronRight, ArrowLeft, X } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from '@/components/common';
+import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState, Card } from '@/components/common';
 import { parseError } from '@/utils/errorHandler';
 import { formatDate } from '@/utils/helpers';
 import { appointmentService, prescriptionService } from '@/services';
@@ -115,12 +115,9 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const renderPrescription = ({ item }) => (
-    <TouchableOpacity
+    <Card
       style={styles.prescriptionCard}
-      activeOpacity={0.7}
       onPress={() => setSelectedPrescription(item)}
-      accessibilityRole="button"
-      accessibilityLabel={`Open prescription from Dr. ${item.doctorName || "Unknown"}`}
     >
       <View style={styles.prescriptionHeader}>
         <View style={styles.prescriptionIcon}>
@@ -182,7 +179,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           </View>
         );
       })()}
-    </TouchableOpacity>
+    </Card>
   );
 
   const renderEmptyState = () => (
@@ -413,7 +410,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: 40,
@@ -564,11 +562,7 @@ const styles = StyleSheet.create({
   },
 
   prescriptionCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
     marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
   },
   prescriptionHeader: {
     flexDirection: "row",

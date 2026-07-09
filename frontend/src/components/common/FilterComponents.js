@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   dropdownOption: {
     minHeight: 42,
     paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing[10],
+    paddingVertical: theme.spacing.xs,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

@@ -23,6 +23,7 @@ import {
 import { Calendar, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import { formatDate, getStatusColor } from '@/utils/helpers';
 import { useAdminAppointments } from '@/context/AdminAppointmentContext';
@@ -46,6 +47,7 @@ import { parseError } from '@/utils/errorHandler';
 import { handleSmartBack } from '@/utils/navigation';
 
 const AppointmentsScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const insets = useSafeAreaInsets();
   const { refreshCount } = useAdminAppointments();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -174,6 +176,7 @@ const AppointmentsScreen = ({ navigation }) => {
     },
     staleTime: 60 * 1000,
     retry: 1,
+    enabled: !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
   });
 
   const statusCounts = useMemo(() => statsSnapshot?.statusCounts || {
@@ -203,6 +206,8 @@ const AppointmentsScreen = ({ navigation }) => {
     isRefetching,
   } = useAppointmentsInfinite({
     ...queryFilters,
+  }, {
+    enabled: !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
   });
 
   useEffect(() => {
@@ -564,19 +569,22 @@ const AppointmentsScreen = ({ navigation }) => {
       />
 
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, "AdminTabs")}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
-        </TouchableOpacity>
+        {navigation.canGoBack() ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => handleSmartBack(navigation, "AdminTabs")}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft
+              size={24}
+              color={healthColors.text.primary}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
         <Text style={styles.headerTitle}>Appointments</Text>
         <TouchableOpacity
           style={styles.filterButton}
@@ -751,6 +759,9 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.tertiary,
     justifyContent: "center",
     alignItems: "center",
+  },
+  placeholder: {
+    width: 40,
   },
   filterButton: {
     minWidth: 86,

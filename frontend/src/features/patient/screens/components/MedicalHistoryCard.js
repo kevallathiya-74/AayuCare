@@ -9,7 +9,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
 import { formatMedicalHistoryDuration } from '@/utils/dateHelpers';
-import { DynamicIcon } from '@/components/common';
+import { DynamicIcon, Card } from '@/components/common';
 
 const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedications = [] }) => {
   const hasData =
@@ -17,7 +17,7 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
   if (!hasData) return null;
 
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       {medicalHistory.length > 0 && (
         <Group icon="medical" iconColor={healthColors.error.main} title="Conditions">
           {medicalHistory.map((item, index) => {
@@ -71,7 +71,7 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
           ))}
         </Group>
       )}
-    </View>
+    </Card>
   );
 };
 
@@ -87,13 +87,7 @@ const Group = ({ icon, iconColor, title, children }) => (
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.card,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
     gap: 16,
-    ...theme.shadows.sm,
   },
   group: {},
   groupHeader: {
