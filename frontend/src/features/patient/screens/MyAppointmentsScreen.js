@@ -22,7 +22,7 @@ import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from '@/components/common';
+import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState, Card } from '@/components/common';
 import { logError, parseError } from '@/utils/errorHandler';
 import { usePatientAppointmentsInfinite } from '@/hooks/useAppointments';
 import { appointmentService } from '@/services';
@@ -185,7 +185,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
   }, [cancelAppointmentMutation]);
 
   const renderAppointment = ({ item }) => (
-    <View style={styles.appointmentCard}>
+    <Card style={styles.appointmentCard}>
       <View style={styles.cardHeader}>
         <View style={styles.doctorInfo}>
           <View style={styles.doctorAvatar}>
@@ -277,7 +277,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </Card>
   );
 
   return (
@@ -424,7 +424,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: 40,
@@ -468,10 +469,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   appointmentCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    ...theme.shadows.md,
+    marginBottom: theme.spacing.sm,
   },
   cardHeader: {
     flexDirection: "row",

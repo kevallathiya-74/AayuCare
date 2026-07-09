@@ -59,7 +59,7 @@ const PatientDashboard = ({ navigation }) => {
       const response = await notificationService.getUnreadCount();
       return Number(response?.data?.count || 0);
     },
-    enabled: !!user?.id && canUseNotifications,
+    enabled: !!user?.id && user?.role === "patient" && canUseNotifications,
     staleTime: 30 * 1000,
     retry: 1,
   });

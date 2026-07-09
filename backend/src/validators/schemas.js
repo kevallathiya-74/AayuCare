@@ -229,6 +229,7 @@ const updateProfileSchema = Joi.object({
   phone: Joi.string()
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .optional(),
+  preferred_language: Joi.string().valid("en", "hi", "gu").optional(),
   
   // Doctor-specific fields
   specialization: Joi.string().max(255).optional(),

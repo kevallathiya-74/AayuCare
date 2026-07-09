@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RefreshCw, ShieldCheck, Clock, Calendar, Lock, Smartphone, ChevronRight, LogOut, X } from "lucide-react-native";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
@@ -31,6 +31,7 @@ import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
 
 const SecuritySettingsScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -39,6 +40,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState({});
   const [passwordSubmitError, setPasswordSubmitError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   const passwordRules = {
     minLength: newPassword.length >= 8,
@@ -67,9 +69,6 @@ const SecuritySettingsScreen = ({ navigation }) => {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setShowCurrentPassword(false);
-    setShowNewPassword(false);
-    setShowConfirmPassword(false);
     setPasswordErrors({});
     setPasswordSubmitError("");
   };
@@ -97,6 +96,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
   } = useQuery({
     queryKey: queryKeys.doctors.list({ scope: "security-settings" }),
     staleTime: 60 * 1000,
+    enabled: !!user?.id && user?.role === "admin",
     queryFn: async () => {
       const response = await adminService.getSecuritySettings();
       return response?.data || null;
@@ -448,6 +448,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.actionCard}
             onPress={handleLogoutAll}
+            disabled={actionLoading}
             accessibilityRole="button"
             accessibilityLabel="Logout all devices"
           >
@@ -467,11 +468,15 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <Text style={styles.actionTitle}>Logout All Devices</Text>
               <Text style={styles.actionSubtitle}>End all active sessions</Text>
             </View>
-            <ChevronRight
-              
-              size={24}
-              color={healthColors.text.tertiary}
-            />
+            {actionLoading ? (
+              <ActivityIndicator size="small" color={healthColors.error.main} />
+            ) : (
+              <ChevronRight
+                
+                size={24}
+                color={healthColors.text.tertiary}
+              />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -703,10 +708,11 @@ const styles = StyleSheet.create({
   statusCard: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.md,
+    borderCurve: "continuous",
     padding: theme.spacing.lg,
-    ...theme.shadows.md,
     borderWidth: 1,
     borderColor: healthColors.border.light,
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02)",
   },
   statusHeader: {
     flexDirection: "row",
@@ -765,13 +771,14 @@ const styles = StyleSheet.create({
     minWidth: "45%",
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.md,
+    borderCurve: "continuous",
     padding: theme.spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    ...theme.shadows.sm,
     borderWidth: 1,
     borderColor: healthColors.border.light,
     borderLeftWidth: 4,
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.01)",
   },
   statIconContainer: {
     width: 48,
@@ -799,11 +806,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.md,
+    borderCurve: "continuous",
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
     borderWidth: 1,
     borderColor: healthColors.border.light,
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02)",
   },
   actionIcon: {
     width: 48,

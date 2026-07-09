@@ -426,7 +426,9 @@ const AppNavigator = () => {
     <NavigationContainer
       ref={navigationRef}
       onStateChange={() => {
-        queryClient.refetchQueries({ active: true });
+        if (isAuthenticated) {
+          queryClient.refetchQueries({ active: true });
+        }
       }}
     >
       <Stack.Navigator

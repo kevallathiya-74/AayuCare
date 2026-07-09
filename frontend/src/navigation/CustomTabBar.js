@@ -18,6 +18,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme, healthColors } from '@/theme';
 import { DynamicIcon } from "../components/common";
 
+import { useTranslation } from "react-i18next";
+
 // Full route → icon map covering all three tab navigators
 const ICON_MAP = {
   Dashboard: { focused: "layout-dashboard", unfocused: "layout-dashboard-outline" },
@@ -33,6 +35,7 @@ const ICON_MAP = {
 };
 
 const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -42,12 +45,16 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
     Animated.spring(scaleAnim, { toValue: 1, friction: 4, tension: 100, useNativeDriver: true }).start();
   };
 
-  const label =
+  const rawLabel =
     options.tabBarLabel !== undefined
       ? options.tabBarLabel
       : options.title !== undefined
         ? options.title
         : route.name;
+
+  const label = typeof rawLabel === 'string'
+    ? t(`navigation.${rawLabel.toLowerCase().replace(/[-_\s]+/g, '')}`, rawLabel)
+    : rawLabel;
 
   const badge = options.tabBarBadge;
   const icons = ICON_MAP[route.name] || { focused: "ellipse", unfocused: "ellipse-outline" };

@@ -13,24 +13,10 @@ import {
   Text,
   TouchableOpacity,
   View,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Brain,
-  Eye,
-  Heart,
-  Info,
-  Leaf,
-  Library,
-  Search,
-  ShieldCheck,
-  Stethoscope,
-  Wind,
-  X,
-} from "lucide-react-native";
+import { ArrowLeft, ArrowUpRight, Brain, Eye, Heart, Info, Leaf, Library, Search, ShieldCheck, Stethoscope, Wind, X } from "lucide-react-native";
 
 import { theme, healthColors } from '@/theme';
 import {
@@ -262,10 +248,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
       <NetworkStatusIndicator />
 
-      <LinearGradient
-        colors={healthColors.gradients.primary}
+      <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
       >
         <TouchableOpacity
@@ -275,7 +261,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
           accessibilityLabel="Go back"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.white} />
+          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
         </TouchableOpacity>
 
         <View style={styles.headerTitleWrap} pointerEvents="none">
@@ -291,9 +277,9 @@ const DiseaseInfoScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel={searchVisible ? "Hide search" : "Show search"}
         >
-          <Search size={theme.iconSizes.md} color={healthColors.text.white} />
+          <Search size={theme.iconSizes.md} color={healthColors.text.primary} />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={[
@@ -484,6 +470,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: getScreenPadding(),
     paddingBottom: theme.spacing.md,
     minHeight: theme.spacing.xxxxl,
+    backgroundColor: healthColors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   headerButton: {
     width: theme.touchTargets.md,
@@ -499,7 +488,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: theme.typography.sizes.xl,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.white,
+    color: healthColors.text.primary,
     textAlign: "center",
   },
 

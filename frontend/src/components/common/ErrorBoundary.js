@@ -5,7 +5,8 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { theme, healthColors } from '@/theme';
+import { AlertTriangle, RotateCw } from "lucide-react-native";
+import { healthColors } from '@/theme';
 import { captureException } from '@/config/sentry';
 
 class ErrorBoundary extends React.Component {
@@ -48,30 +49,42 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      const errorMsg = this.state.error
+        ? this.state.error.message || String(this.state.error)
+        : "Unknown Error";
+
       return (
         <View style={styles.container}>
-          <View style={styles.content}>
-            <Text style={styles.title}>Oops! Something went wrong</Text>
-            <Text style={styles.message}>
-              We&#39;re sorry for the inconvenience. Please try again.
-            </Text>
-
-            {__DEV__ && this.state.error && (
-              <View style={styles.errorDetails}>
-                <Text style={styles.errorText}>
-                  {this.state.error.toString()}
-                </Text>
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={this.handleReset}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>Try Again</Text>
-            </TouchableOpacity>
+          <View style={styles.iconContainer}>
+            <AlertTriangle size={40} color={healthColors.error.main} />
           </View>
+
+          <Text style={styles.title}>Oops! Something went wrong</Text>
+          <Text style={styles.message}>
+            The application encountered an unexpected error. You can try reloading the screen to restore functionality.
+          </Text>
+
+          {__DEV__ && this.state.error && (
+            <View style={styles.errorDetails}>
+              <View style={styles.errorHeader}>
+                <Text style={styles.errorLabel}>Technical Details</Text>
+              </View>
+              <Text style={styles.errorText} numberOfLines={6}>
+                {errorMsg}
+              </Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={this.handleReset}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Try reloading the screen"
+          >
+            <RotateCw size={18} color={healthColors.white} style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -86,50 +99,87 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.primary,
     justifyContent: "center",
     alignItems: "center",
-    padding: theme.spacing.lg,
+    padding: 24,
   },
-  content: {
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: healthColors.error.surface, // soft red tint
+    justifyContent: "center",
     alignItems: "center",
-    maxWidth: 400,
+    marginBottom: 20,
+    shadowColor: healthColors.error.main,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
   title: {
-    fontSize: theme.typography.sizes.h3,
-    fontWeight: "bold",
+    fontSize: 22,
+    fontWeight: "700",
     color: healthColors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: 10,
     textAlign: "center",
   },
   message: {
-    fontSize: theme.typography.sizes.bodyLarge,
+    fontSize: 15,
     color: healthColors.text.secondary,
     textAlign: "center",
-    marginBottom: theme.spacing.xl,
-    lineHeight: 24,
+    marginBottom: 24,
+    lineHeight: 22,
+    paddingHorizontal: 12,
   },
   errorDetails: {
     backgroundColor: healthColors.background.secondary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.sm,
-    marginBottom: theme.spacing.lg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    padding: 16,
     width: "100%",
+    maxWidth: 340,
+    marginBottom: 28,
+  },
+  errorHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  errorLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: healthColors.text.secondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   errorText: {
-    fontSize: theme.typography.sizes.bodySmall,
+    fontSize: 13,
     color: healthColors.error.main,
     fontFamily: "monospace",
+    lineHeight: 18,
   },
   button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: healthColors.primary.main,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: 26,
+    paddingVertical: 14,
+    borderRadius: 24, // pill button
+    shadowColor: healthColors.primary.main,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
     minWidth: 150,
   },
+  buttonIcon: {
+    marginRight: 8,
+  },
   buttonText: {
-    color: healthColors.text.white,
-    fontSize: theme.typography.sizes.bodyLarge,
+    color: healthColors.white,
+    fontSize: 16,
     fontWeight: "600",
-    textAlign: "center",
   },
 });
 

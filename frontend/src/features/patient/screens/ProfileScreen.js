@@ -80,7 +80,7 @@ const ProfileScreen = ({ navigation }) => {
     refetch,
   } = useQuery({
     queryKey: queryKeys.dashboardStats.patient(user?.id),
-    enabled: !!user?.id,
+    enabled: !!user?.id && user?.role === "patient",
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const [appointmentsRes, recordsRes, prescriptionsRes] = await Promise.allSettled([

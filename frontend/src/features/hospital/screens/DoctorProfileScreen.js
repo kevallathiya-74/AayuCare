@@ -16,7 +16,6 @@ import {
   Linking,
 } from "react-native";
 import {
-  SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { CreditCard, LogOut } from "lucide-react-native";
@@ -35,13 +34,22 @@ import { doctorService } from '@/services';
 import { DynamicIcon } from '@/components/common';
 import Routes from '@/navigation/routes';
 
+const formatDoctorName = (name) => {
+  if (!name) return "Doctor";
+  const trimmed = name.trim();
+  if (trimmed.toLowerCase().startsWith("dr.") || trimmed.toLowerCase().startsWith("dr ")) {
+    return trimmed;
+  }
+  return `Dr. ${trimmed}`;
+};
+
 const DoctorProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const { data: stats = { totalPatients: 0, rating: null, yearsExperience: 0 }, isLoading: loading, isRefetching, refetch } = useQuery({
     queryKey: queryKeys.doctors.detail(user?.id || "me"),
-    enabled: !!user,
+    enabled: !!user && user?.role === "doctor",
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const response = await doctorService.getProfileStats();
@@ -116,10 +124,10 @@ const DoctorProfileScreen = ({ navigation }) => {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container}>
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={healthColors.background.primary}
+        barStyle="light-content"
+        backgroundColor={healthColors.primary.main}
       />
 
       <ScrollView
@@ -137,10 +145,16 @@ const DoctorProfileScreen = ({ navigation }) => {
         {/* Gradient Hero Header */}
         <LinearGradient
           colors={[healthColors.primary.main, healthColors.primary.dark]}
-          style={styles.hero}
+          style={[styles.hero, { paddingTop: insets.top + spacing.xl }]}
         >
-          <Avatar size={90} name={user?.name || "Doctor"} />
-          <Text style={styles.doctorNameHero}>{user?.name || "Doctor"}</Text>
+          <Avatar
+            size={90}
+            name={formatDoctorName(user?.name)}
+            backgroundColor={theme.withOpacity(theme.colors.white, 0.15)}
+            textColor={theme.colors.white}
+            style={styles.avatarBorder}
+          />
+          <Text style={styles.doctorNameHero}>{formatDoctorName(user?.name)}</Text>
           <Text style={styles.specializationHero}>
             {user?.specialization || "Specialist"} · {user?.department || "OPD"}
           </Text>
@@ -176,10 +190,13 @@ const DoctorProfileScreen = ({ navigation }) => {
 
         {/* Options */}
         <View style={styles.optionsSection}>
-          {profileOptions.map((option) => (
+          {profileOptions.map((option, index) => (
             <TouchableOpacity
               key={option.id}
-              style={styles.optionItem}
+              style={[
+                styles.optionItem,
+                index === profileOptions.length - 1 && styles.optionItemLast,
+              ]}
               onPress={option.onPress}
               activeOpacity={0.7}
               accessibilityRole="button"
@@ -187,7 +204,11 @@ const DoctorProfileScreen = ({ navigation }) => {
             >
               <View style={styles.optionLeft}>
                 <View style={styles.optionIconContainer}>
-                  <DynamicIcon name={option.icon} size={22} color={healthColors.primary.main} />
+                  <DynamicIcon
+                    name={option.icon}
+                    size={23}
+                    color={healthColors.primary.main}
+                  />
                 </View>
                 <Text style={styles.optionTitle}>{option.title}</Text>
               </View>
@@ -220,7 +241,7 @@ const DoctorProfileScreen = ({ navigation }) => {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -230,12 +251,16 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.secondary,
   },
   hero: {
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xl + spacing.md,
     paddingHorizontal: spacing.lg,
     alignItems: "center",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  avatarBorder: {
+    borderWidth: 2.5,
+    borderColor: theme.colors.white,
+    borderRadius: 45,
   },
   doctorNameHero: {
     ...textStyles.h1,
@@ -265,11 +290,13 @@ const styles = StyleSheet.create({
   },
   heroStats: {
     flexDirection: "row",
-    backgroundColor: theme.withOpacity(healthColors.text.white, 0.15),
+    backgroundColor: theme.withOpacity(healthColors.text.white, 0.12),
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 20,
     width: "100%",
+    borderWidth: 1,
+    borderColor: theme.withOpacity(theme.colors.white, 0.15),
   },
   heroStatItem: {
     flex: 1,
@@ -295,8 +322,9 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(20),
     borderRadius: 12,
     overflow: "hidden",
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: healthColors.border.light,
+    ...theme.shadows.sm,
   },
   optionItem: {
     flexDirection: "row",
@@ -305,6 +333,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
+  },
+  optionItemLast: {
+    borderBottomWidth: 0,
   },
   optionLeft: {
     flexDirection: "row",
@@ -332,10 +363,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: healthColors.background.card,
+    backgroundColor: theme.withOpacity(healthColors.error.main, 0.03),
     padding: 16,
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: healthColors.error.main,
   },
   logoutText: {

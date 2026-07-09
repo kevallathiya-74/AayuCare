@@ -13,7 +13,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { X } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';

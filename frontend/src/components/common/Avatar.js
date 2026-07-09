@@ -9,7 +9,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { User } from 'lucide-react-native';
 import { healthColors } from '@/theme/healthColors';
-import { textStyles } from '@/theme/typography';
+import { fontFamilies } from '@/theme/typography';
 import { layout } from '@/theme/spacing';
 
 const Avatar = ({
@@ -24,6 +24,7 @@ const Avatar = ({
   style,
 }) => {
   const getSize = () => {
+    if (typeof size === 'number') return size;
     return layout.avatar[size] || layout.avatar.medium;
   };
 
@@ -43,11 +44,12 @@ const Avatar = ({
   const fontSize = getFontSize();
   const defaultBgColor = backgroundColor || healthColors.primary.main;
   const defaultTextColor = textColor || healthColors.neutral.white;
+  const isInitialsVariant = variant === 'initials' || (variant === 'image' && !source);
   const avatarDynamicStyle = {
     width: avatarSize,
     height: avatarSize,
     borderRadius: avatarSize / 2,
-    backgroundColor: variant === 'image' ? healthColors.transparent : defaultBgColor,
+    backgroundColor: isInitialsVariant ? defaultBgColor : healthColors.transparent,
   };
 
   const renderContent = () => {
@@ -117,7 +119,9 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   initials: {
-    ...textStyles.bodyMediumBold,
+    fontFamily: fontFamilies.heading,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   onlineIndicator: {
     position: 'absolute',

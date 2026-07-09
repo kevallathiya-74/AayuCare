@@ -15,6 +15,7 @@ import {
   Linking,
   Alert,
   TouchableOpacity,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
@@ -254,6 +255,10 @@ const SettingsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.secondary}
+      />
       <NetworkStatusIndicator />
       {error ? (
         <ErrorRecovery error={error} onRetry={() => setError(null)} />

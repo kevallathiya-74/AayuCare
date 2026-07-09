@@ -1,32 +1,42 @@
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, Edit, User, Cross, Building, GraduationCap, CreditCard, Banknote, Phone, Mail, Clock, Info } from "lucide-react-native";
+import { ArrowLeft, Edit, User, Cross, Phone, Info } from "lucide-react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { theme, healthColors } from '@/theme';
+import { fontFamilies } from '@/theme/typography';
 import {
   getScreenPadding,
   getKeyboardConfig,
 } from '@/utils/responsive';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { doctorService } from '@/services';
+import { doctorService, authService } from '@/services';
 import { logError } from '@/utils/errorHandler';
 import { setUser } from '@/store/slices/authSlice';
 import { Input, Button } from '@/components/common';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import appStorage from '@/utils/appStorage';
+import { STORAGE_KEYS } from '@/utils/constants';
+
+const getInitials = (name) => {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 const EditProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -57,20 +67,11 @@ const EditProfileScreen = ({ navigation }) => {
       Alert.alert("Validation Error", "Name is required");
       return false;
     }
-    if (!formData.specialization.trim()) {
-      Alert.alert("Validation Error", "Specialization is required");
-      return false;
-    }
     if (!formData.phone.trim() || formData.phone.length !== 10) {
       Alert.alert(
         "Validation Error",
         "Valid 10-digit phone number is required"
       );
-      return false;
-    }
-    const expNum = parseInt(formData.yearsOfExperience);
-    if (isNaN(expNum) || expNum < 0 || expNum > 60) {
-      Alert.alert("Validation Error", "Experience must be between 0 and 60 years");
       return false;
     }
     if (formData.email.trim()) {
@@ -80,11 +81,23 @@ const EditProfileScreen = ({ navigation }) => {
         return false;
       }
     }
-    if (formData.consultationFee.trim()) {
-      const fee = parseFloat(formData.consultationFee);
-      if (isNaN(fee) || fee < 0) {
-        Alert.alert("Validation Error", "Consultation fee must be a positive number");
+
+    if (user?.role !== "admin") {
+      if (!formData.specialization.trim()) {
+        Alert.alert("Validation Error", "Specialization is required");
         return false;
+      }
+      const expNum = parseInt(formData.yearsOfExperience);
+      if (isNaN(expNum) || expNum < 0 || expNum > 60) {
+        Alert.alert("Validation Error", "Experience must be between 0 and 60 years");
+        return false;
+      }
+      if (formData.consultationFee.trim()) {
+        const fee = parseFloat(formData.consultationFee);
+        if (isNaN(fee) || fee < 0) {
+          Alert.alert("Validation Error", "Consultation fee must be a positive number");
+          return false;
+        }
       }
     }
     return true;
@@ -94,31 +107,50 @@ const EditProfileScreen = ({ navigation }) => {
     if (!validateForm()) return;
 
     try {
-      const response = await updateProfileMutation.mutateAsync({
-        name: formData.name.trim(),
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim(),
-        specialization: formData.specialization.trim(),
-        qualification: formData.qualification.trim() || undefined,
-        department: formData.department.trim() || undefined,
-        experience: parseInt(formData.yearsOfExperience) || 0,
-        consultationFee: formData.consultationFee.trim()
-          ? parseFloat(formData.consultationFee)
-          : undefined,
-        licenseNumber: formData.licenseNumber.trim() || undefined,
-        bio: formData.bio.trim() || undefined,
-      });
+      const isAdmin = user?.role === "admin";
+      const payload = isAdmin
+        ? {
+            name: formData.name.trim(),
+            email: formData.email.trim() || undefined,
+            phone: formData.phone.trim(),
+          }
+        : {
+            name: formData.name.trim(),
+            email: formData.email.trim() || undefined,
+            phone: formData.phone.trim(),
+            specialization: formData.specialization.trim(),
+            qualification: formData.qualification.trim() || undefined,
+            department: formData.department.trim() || undefined,
+            experience: parseInt(formData.yearsOfExperience) || 0,
+            consultationFee: formData.consultationFee.trim()
+              ? parseFloat(formData.consultationFee)
+              : undefined,
+            licenseNumber: formData.licenseNumber.trim() || undefined,
+            bio: formData.bio.trim() || undefined,
+          };
+
+      const response = await updateProfileMutation.mutateAsync(payload);
 
       if (response.success) {
-        dispatch(setUser({ ...user, ...response.data }));
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.doctor(user?.id || "unknown") }),
-        ]);
+        const updatedUser = response.data?.user || response.data;
+        const newUserState = { ...user, ...updatedUser };
+        dispatch(setUser(newUserState));
+        await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(newUserState));
+        
+        if (isAdmin) {
+          await queryClient.invalidateQueries({ queryKey: queryKeys.doctors.list({ scope: "security-settings" }) });
+        } else {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.doctor(user?.id || "unknown") }),
+          ]);
+        }
+
+        const backTarget = isAdmin ? "AdminTabs" : "DoctorTabs";
         Alert.alert("Success", "Profile Updated Successfully", [
           {
             text: "OK",
-            onPress: () => handleSmartBack(navigation, "DoctorTabs"),
+            onPress: () => handleSmartBack(navigation, backTarget),
           },
         ]);
       }
@@ -129,18 +161,27 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   const updateProfileMutation = useMutation({
-    mutationFn: (payload) => doctorService.updateProfile(payload),
+    mutationFn: (payload) => {
+      if (user?.role === "admin") {
+        return authService.updateProfile(payload);
+      }
+      return doctorService.updateProfile(payload);
+    },
     retry: 1,
   });
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
       <KeyboardAvoidingView {...getKeyboardConfig()}
         style={styles.flex}
       >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
+          onPress={() => handleSmartBack(navigation, user?.role === "admin" ? "AdminTabs" : "DoctorTabs")}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -172,6 +213,14 @@ const EditProfileScreen = ({ navigation }) => {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>{getInitials(user?.name || "Admin")}</Text>
+          </View>
+          <Text selectable style={styles.avatarLabel}>{user?.role === "admin" ? "Admin Account" : "Doctor Account"}</Text>
+          <Text selectable style={styles.avatarEmail}>{user?.email}</Text>
+        </View>
+
         <View style={styles.formSection}>
           <Input
             label="Full Name *"
@@ -180,43 +229,15 @@ const EditProfileScreen = ({ navigation }) => {
             onChangeText={(v) => handleInputChange("name", v)}
             leftIcon={<User  size={18} color={healthColors.text.disabled} />}
           />
-          <Input
-            label="Specialization *"
-            placeholder="e.g., Cardiologist"
-            value={formData.specialization}
-            onChangeText={(v) => handleInputChange("specialization", v)}
-            leftIcon={<Cross  size={18} color={healthColors.text.disabled} />}
-          />
-          <Input
-            label="Department"
-            placeholder="e.g., Cardiology"
-            value={formData.department}
-            onChangeText={(v) => handleInputChange("department", v)}
-            leftIcon={<Building  size={18} color={healthColors.text.disabled} />}
-          />
-          <Input
-            label="Qualification"
-            placeholder="e.g., MBBS, MD"
-            value={formData.qualification}
-            onChangeText={(v) => handleInputChange("qualification", v)}
-            leftIcon={<GraduationCap  size={18} color={healthColors.text.disabled} />}
-          />
-          <Input
-            label="License Number"
-            placeholder="Medical license number"
-            value={formData.licenseNumber}
-            onChangeText={(v) => handleInputChange("licenseNumber", v)}
-            autoCapitalize="characters"
-            leftIcon={<CreditCard  size={18} color={healthColors.text.disabled} />}
-          />
-          <Input
-            label="Consultation Fee (₹)"
-            placeholder="e.g., 500"
-            value={formData.consultationFee}
-            onChangeText={(v) => handleInputChange("consultationFee", v.replace(/[^0-9.]/g, ""))}
-            keyboardType="decimal-pad"
-            leftIcon={<Banknote  size={18} color={healthColors.text.disabled} />}
-          />
+          {user?.role !== "admin" && (
+            <Input
+              label="Specialization *"
+              placeholder="e.g., Cardiologist"
+              value={formData.specialization}
+              onChangeText={(v) => handleInputChange("specialization", v)}
+              leftIcon={<Cross  size={18} color={healthColors.text.disabled} />}
+            />
+          )}
           <Input
             label="Phone Number *"
             placeholder="10-digit mobile number"
@@ -226,34 +247,7 @@ const EditProfileScreen = ({ navigation }) => {
             maxLength={10}
             leftIcon={<Phone  size={18} color={healthColors.text.disabled} />}
           />
-          <Input
-            label="Email"
-            placeholder="your.email@hospital.com"
-            value={formData.email}
-            onChangeText={(v) => handleInputChange("email", v)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            leftIcon={<Mail  size={18} color={healthColors.text.disabled} />}
-          />
-          <Input
-            label="Years of Experience"
-            placeholder="Years"
-            value={formData.yearsOfExperience}
-            onChangeText={(v) => handleInputChange("yearsOfExperience", v.replace(/[^0-9]/g, ""))}
-            keyboardType="numeric"
-            maxLength={2}
-            leftIcon={<Clock  size={18} color={healthColors.text.disabled} />}
-          />
-          <Input
-            label="Bio"
-            placeholder="Brief professional bio…"
-            value={formData.bio}
-            onChangeText={(v) => handleInputChange("bio", v)}
-            multiline
-            numberOfLines={4}
-            maxLength={1000}
-          />
-          <Text style={styles.charCount}>{formData.bio.length}/1000</Text>
+
         </View>
 
         <View style={styles.noteContainer}>
@@ -328,24 +322,53 @@ const styles = StyleSheet.create({
   content: {
     padding: getScreenPadding(),
   },
+  avatarSection: {
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  avatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: healthColors.primary.main + "20",
+    boxShadow: "0 4px 10px rgba(20, 184, 166, 0.15)",
+  },
+  avatarText: {
+    fontFamily: fontFamilies.heading,
+    fontSize: 26,
+    fontWeight: "800",
+    color: healthColors.primary.main,
+  },
+  avatarLabel: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: theme.typography.weights.bold,
+    color: healthColors.text.primary,
+  },
+  avatarEmail: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
+    marginTop: 2,
+  },
   formSection: {
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
+    borderCurve: "continuous",
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: healthColors.border.light,
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02)",
   },
   required: {
     color: healthColors.error.main,
     fontSize: theme.typography.sizes.bodyMedium,
   },
-  charCount: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.disabled,
-    textAlign: "right",
-    marginTop: 4,
-  },
+
   noteContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -353,8 +376,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
+    borderCurve: "continuous",
     marginBottom: 20,
     gap: 8,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
   },
   note: {
     fontSize: theme.typography.sizes.caption,
@@ -362,19 +389,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   saveButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.primary.main,
-    borderRadius: 14,
-    paddingVertical: 16,
+    marginTop: 8,
     marginBottom: 24,
-    gap: 10,
-    shadowColor: healthColors.primary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
 
 });

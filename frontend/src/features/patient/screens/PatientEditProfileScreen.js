@@ -23,6 +23,8 @@ import { updateUser } from '@/store/slices/authSlice';
 import { logError, parseError } from '@/utils/errorHandler';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { handleSmartBack } from '@/utils/navigation';
+import appStorage from '@/utils/appStorage';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["male", "female", "other"];
@@ -122,31 +124,34 @@ const PatientEditProfileScreen = ({ navigation }) => {
       const response = await updateProfileMutation.mutateAsync({ userId: user.id, payload });
       const updatedProfile = response?.data || {};
 
-      dispatch(
-        updateUser({
-          ...payload,
-          ...updatedProfile,
-          gender: updatedProfile.gender || payload.gender,
-          dateOfBirth: updatedProfile.dateOfBirth || payload.dateOfBirth,
-          emergencyContact: {
-            name:
-              updatedProfile.emergencyContact?.name ||
-              updatedProfile.emergencyContactName ||
-              payload.emergencyContactName ||
-              null,
-            phone:
-              updatedProfile.emergencyContact?.phone ||
-              updatedProfile.emergencyContactPhone ||
-              payload.emergencyContactPhone ||
-              null,
-            relation:
-              updatedProfile.emergencyContact?.relation ||
-              updatedProfile.emergencyContactRelation ||
-              payload.emergencyContactRelation ||
-              null,
-          },
-        })
-      );
+      const updateDataPayload = {
+        ...payload,
+        ...updatedProfile,
+        gender: updatedProfile.gender || payload.gender,
+        dateOfBirth: updatedProfile.dateOfBirth || payload.dateOfBirth,
+        emergencyContact: {
+          name:
+            updatedProfile.emergencyContact?.name ||
+            updatedProfile.emergencyContactName ||
+            payload.emergencyContactName ||
+            null,
+          phone:
+            updatedProfile.emergencyContact?.phone ||
+            updatedProfile.emergencyContactPhone ||
+            payload.emergencyContactPhone ||
+            null,
+          relation:
+            updatedProfile.emergencyContact?.relation ||
+            updatedProfile.emergencyContactRelation ||
+            payload.emergencyContactRelation ||
+            null,
+        },
+      };
+
+      dispatch(updateUser(updateDataPayload));
+      
+      const newUserState = { ...user, ...updateDataPayload };
+      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(newUserState));
 
       Alert.alert("Success", "Profile updated successfully", [
         { text: "OK", onPress: () => handleSmartBack(navigation, "PatientTabs") },

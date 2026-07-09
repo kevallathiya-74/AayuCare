@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
@@ -22,6 +23,7 @@ import {
 import { FileText, Eye, UserPlus } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import { getScreenPadding } from '@/utils/responsive';
 import { doctorService } from '@/services';
@@ -33,6 +35,7 @@ import Routes from '@/navigation/routes';
 const PAGE_SIZE = 20;
 
 const DoctorPatientsScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -80,6 +83,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
       const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
       return loaded < (lastPage?.total || 0) ? loaded : undefined;
     },
+    enabled: !!user?.id && user?.role === "doctor",
   });
 
   const patients = (data?.pages || []).flatMap((page) => page?.items || []);
@@ -193,6 +197,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>

@@ -422,7 +422,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: getScreenPadding(),
     paddingVertical: 12,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     padding: 4,

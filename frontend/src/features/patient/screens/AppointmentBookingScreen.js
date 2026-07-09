@@ -31,7 +31,7 @@ import {
 } from '@/utils/responsive';
 import { useSelector } from "react-redux";
 import { SkeletonCardRow, EmptyState } from '@/components/common';
-import { Input, Button } from '@/components/common';
+import { Input, Button, Card } from '@/components/common';
 import { showError, logError, parseError } from '@/utils/errorHandler';
 import { useNetworkStatus } from '@/utils/offlineHandler';
 import { formatDate, formatCurrency, convertTo24Hour, convertTo12Hour } from '@/utils/helpers';
@@ -124,7 +124,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
       });
       return mapDoctorsResponse(response);
     },
-    enabled: isConnected,
+    enabled: isConnected && user?.role === "patient",
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
@@ -141,7 +141,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
       });
       return mapDoctorsResponse(response);
     },
-    enabled: isConnected,
+    enabled: isConnected && user?.role === "patient",
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });
@@ -177,7 +177,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
         : slotsPayload?.availableSlots || slotsPayload?.slots;
       return Array.isArray(apiSlots) ? apiSlots : [];
     },
-    enabled: !!selectedDoctorId && !!date && isConnected,
+    enabled: !!selectedDoctorId && !!date && isConnected && user?.role === "patient",
     staleTime: 60 * 1000,
     retry: 1,
   });
@@ -514,18 +514,11 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               />
             ) : (
               doctors.map((doctor) => (
-                <TouchableOpacity
+                <Card
                   key={doctor.id || doctor.userId || doctor.email}
-                  style={[
-                    styles.doctorCard,
-                    selectedDoctorId === doctor.id &&
-                      styles.doctorCardSelected,
-                  ]}
+                  variant={selectedDoctorId === doctor.id ? "secondary" : "standard"}
+                  style={styles.doctorCard}
                   onPress={() => setSelectedDoctor(doctor)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Choose doctor ${doctor.name}`}
-                  accessibilityState={{ selected: selectedDoctorId === doctor.id }}
                 >
                   <View style={styles.doctorAvatar}>
                     <User
@@ -565,7 +558,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                       color={healthColors.success.main}
                     />
                   )}
-                </TouchableOpacity>
+                </Card>
               ))
             )}
           </View>
@@ -579,16 +572,10 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               <Text style={styles.stepTitle}>APPOINTMENT TYPE:</Text>
             </View>
             <View style={styles.typeRow}>
-              <TouchableOpacity
-                style={[
-                  styles.typeCard,
-                  appointmentType === "in-person" && styles.typeCardSelected,
-                ]}
+              <Card
+                variant={appointmentType === "in-person" ? "secondary" : "standard"}
+                style={styles.typeCard}
                 onPress={() => setAppointmentType("in-person")}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Choose in-person appointment"
-                accessibilityState={{ selected: appointmentType === "in-person" }}
               >
                 <View
                   style={[
@@ -616,17 +603,11 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                   IN-PERSON
                 </Text>
                 <Text style={styles.typeSubtitle}>Visit Clinic</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.typeCard,
-                  appointmentType === "telemedicine" && styles.typeCardSelected,
-                ]}
+              </Card>
+              <Card
+                variant={appointmentType === "telemedicine" ? "secondary" : "standard"}
+                style={styles.typeCard}
                 onPress={() => setAppointmentType("telemedicine")}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Choose telemedicine appointment"
-                accessibilityState={{ selected: appointmentType === "telemedicine" }}
               >
                 <View
                   style={[
@@ -655,7 +636,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                   TELEMEDICINE
                 </Text>
                 <Text style={styles.typeSubtitle}>Video Call</Text>
-              </TouchableOpacity>
+              </Card>
             </View>
           </View>
 
@@ -830,6 +811,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: getScreenPadding(),
     paddingVertical: 12,
     backgroundColor: healthColors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     padding: 4,
@@ -893,17 +876,7 @@ const styles = StyleSheet.create({
   doctorCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: theme.colors.white,
-    padding: 16,
-    borderRadius: 12,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  doctorCardSelected: {
-    borderColor: healthColors.success.main,
-    borderWidth: 2,
-    backgroundColor: theme.colors.white,
   },
   doctorAvatar: {
     width: 48,
@@ -957,17 +930,7 @@ const styles = StyleSheet.create({
   },
   typeCard: {
     flex: 1,
-    backgroundColor: theme.colors.white,
-    padding: 20,
-    borderRadius: 16,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: healthColors.border.light,
-  },
-  typeCardSelected: {
-    borderColor: healthColors.primary.main,
-    borderWidth: 3,
-    backgroundColor: theme.colors.white,
   },
   typeIconBox: {
     width: 64,

@@ -5,9 +5,9 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { theme, healthColors } from '@/theme';
-import { SkeletonLoader } from '@/components/common';
+import { SkeletonLoader, Card } from '@/components/common';
 import { DynamicIcon } from '@/components/common';
 
 const STATUS_CONFIG = {
@@ -48,22 +48,18 @@ const HealthStatusCard = ({
 
   if (loadingMetrics) {
     return (
-      <View style={styles.card}>
+      <Card style={styles.card}>
         <SkeletonLoader variant="row" />
         <SkeletonLoader variant="line" style={styles.skeletonLine1} />
         <SkeletonLoader variant="line" style={styles.skeletonLine2} />
-      </View>
+      </Card>
     );
   }
 
   return (
-    <TouchableOpacity
+    <Card
       style={[styles.card, { borderColor: cfg.color + "30" }]}
       onPress={onPress}
-      activeOpacity={onPress ? 0.8 : 1}
-      accessibilityRole="button"
-      accessibilityLabel="Open health status details"
-      accessibilityState={{ disabled: !onPress }}
     >
       {/* Status row */}
       <View style={styles.statusRow}>
@@ -93,7 +89,7 @@ const HealthStatusCard = ({
         <DynamicIcon name="time-outline" size={12} color={healthColors.text.tertiary} />
         <Text style={styles.updateText}>Updated: {lastUpdated}</Text>
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 };
 
@@ -107,12 +103,7 @@ const VitalItem = ({ icon, label, value, color }) => (
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.card,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    ...theme.shadows.md,
+    // Background, border, and shadows are handled by Card component
   },
 
   // status + score

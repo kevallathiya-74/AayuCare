@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { ArrowLeft, RefreshCcw } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
 import prescriptionService from '@/services/prescription.service';
@@ -148,6 +149,7 @@ const OrderCard = ({ order }) => {
 
 
 const PharmacyManagementScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const {
@@ -160,6 +162,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
   } = useQuery({
     queryKey: queryKeys.prescriptions.list({ scope: "pharmacy-management" }),
     staleTime: 2 * 60 * 1000,
+    enabled: !!user?.id && user?.role === "admin",
     queryFn: async () => {
       const response = await prescriptionService.getAllPrescriptions();
       const data = response?.data?.prescriptions || response?.prescriptions || response?.data || response || [];

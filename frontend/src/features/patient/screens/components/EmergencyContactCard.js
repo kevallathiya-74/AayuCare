@@ -4,11 +4,12 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from "react-native";
+import { View, Text, StyleSheet, Alert, Linking } from "react-native";
 import { Phone, BriefcaseMedical } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from '@/theme';
 import { logError } from '@/utils/errorHandler';
+import { Card } from '@/components/common';
 
 const EmergencyContactCard = ({ user }) => {
   const handleEmergencyCall = () => {
@@ -33,12 +34,10 @@ const EmergencyContactCard = ({ user }) => {
   return (
     <View style={styles.container}>
       {/* Emergency Contact */}
-      <TouchableOpacity
+      <Card
         style={styles.buttonWrapper}
         onPress={handleEmergencyCall}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel="Call emergency contact"
+        padding={false}
       >
         <LinearGradient
           colors={[healthColors.error.main, healthColors.error.dark]}
@@ -52,15 +51,13 @@ const EmergencyContactCard = ({ user }) => {
           <Text style={styles.buttonTitle}>Emergency</Text>
           <Text style={styles.buttonSub}>Contact</Text>
         </LinearGradient>
-      </TouchableOpacity>
+      </Card>
 
       {/* Ambulance 108 */}
-      <TouchableOpacity
+      <Card
         style={styles.buttonWrapper}
         onPress={handleAmbulanceCall}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel="Call ambulance 108"
+        padding={false}
       >
         <LinearGradient
           colors={[healthColors.accent.coral, healthColors.error.main]}
@@ -74,7 +71,7 @@ const EmergencyContactCard = ({ user }) => {
           <Text style={styles.buttonTitle}>Ambulance</Text>
           <Text style={styles.buttonSub}>108</Text>
         </LinearGradient>
-      </TouchableOpacity>
+      </Card>
     </View>
   );
 };
@@ -86,9 +83,6 @@ const styles = StyleSheet.create({
   },
   buttonWrapper: {
     flex: 1,
-    borderRadius: 16,
-    overflow: "hidden",
-    ...theme.shadows.md,
   },
   button: {
     alignItems: "center",

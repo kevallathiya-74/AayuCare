@@ -78,24 +78,24 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const [discount] = useState(15); // Hospital pharmacy discount percentage
 
   const getDisplayPatientId = useCallback((entry) => {
-    if (!entry) return "N/A";
-
-    const preferredId =
-      entry.userId || entry.user_id || entry.formatted_user_id || null;
-
-    if (preferredId) {
-      return String(preferredId);
-    }
-
+    if (entry?.patientId) return String(entry.patientId);
+    if (entry?.userId) return String(entry.userId);
+    if (entry?.id) return String(entry.id);
     return "N/A";
   }, []);
+
+  useEffect(() => {
+    if (patientId) {
+      setSelectedPatientId(patientId);
+    }
+  }, [patientId]);
 
   const {
     data: patient,
     isLoading: loading,
   } = useQuery({
     queryKey: queryKeys.patients.detail(selectedPatientId || "none"),
-    enabled: !!selectedPatientId,
+    enabled: !!selectedPatientId && (user?.role === "doctor" || user?.role === "admin"),
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const response = await patientService.getPatientById(selectedPatientId);
@@ -111,6 +111,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   } = useQuery({
     queryKey: queryKeys.patients.list({ scope: "prescription-patient-options", doctorId: user?.id }),
     staleTime: 5 * 60 * 1000,
+    enabled: !!user?.id && (user?.role === "doctor" || user?.role === "admin"),
     queryFn: async () => {
       const isDoctor = String(user?.role || "").toLowerCase() === "doctor";
       const [doctorLinkedResult, allPatientsResult] = await Promise.allSettled([

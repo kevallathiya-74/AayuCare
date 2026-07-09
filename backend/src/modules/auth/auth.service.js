@@ -253,7 +253,9 @@ class AuthService {
   async updateProfile(userId, updates) {
     const allowedUpdates = [
       "name",
+      "email",
       "phone",
+      "preferred_language",
     ];
 
     const filteredUpdates = {};

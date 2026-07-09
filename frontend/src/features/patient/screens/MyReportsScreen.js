@@ -36,6 +36,7 @@ import {
   FilterHeaderRow,
   FilterSectionTitle,
   FilterChipGroup,
+  Card,
 } from '@/components/common';
 import { parseError } from '@/utils/errorHandler';
 import { medicalRecordService } from '@/services';
@@ -139,12 +140,9 @@ const MyReportsScreen = ({ navigation }) => {
   }
 
   const renderReport = ({ item }) => (
-    <TouchableOpacity
+    <Card
       style={styles.reportCard}
       onPress={() => setSelectedReport(item)}
-      activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Open report ${item.title}`}
     >
       {/* Removed navigation to non-existent ReportViewer screen */}
       <View style={styles.reportLeft}>
@@ -208,7 +206,7 @@ const MyReportsScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 
   return (
@@ -422,7 +420,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     backgroundColor: healthColors.background.card,
-    ...theme.shadows.md,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backButton: {
     width: 40,
@@ -452,10 +451,6 @@ const styles = StyleSheet.create({
   reportCard: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    ...theme.shadows.md,
   },
   reportLeft: {
     flexDirection: "row",

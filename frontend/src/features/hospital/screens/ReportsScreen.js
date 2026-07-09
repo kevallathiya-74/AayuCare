@@ -21,6 +21,7 @@ import {
 import { ChevronRight, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { medicalRecordService } from '@/services';
@@ -39,6 +40,7 @@ import { DynamicIcon } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
 
 const ReportsScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const [selectedRecordType, setSelectedRecordType] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [draftRecordType, setDraftRecordType] = useState("all");
@@ -67,6 +69,7 @@ const ReportsScreen = ({ navigation }) => {
   } = useQuery({
     queryKey: queryKeys.medicalRecords.list({ scope: "admin-reports" }),
     staleTime: 5 * 60 * 1000,
+    enabled: !!user?.id && user?.role === "admin",
     queryFn: async () => {
       const response = await medicalRecordService.getAllRecords({ limit: 20 });
 
@@ -239,19 +242,22 @@ const ReportsScreen = ({ navigation }) => {
       />
 
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, "AdminTabs")}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
-        </TouchableOpacity>
+        {navigation.canGoBack() ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => handleSmartBack(navigation, "AdminTabs")}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft
+              size={24}
+              color={healthColors.text.primary}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
         <Text style={styles.headerTitle}>Reports & Records</Text>
         <TouchableOpacity
           style={styles.filterButton}
@@ -347,6 +353,9 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.tertiary,
     justifyContent: "center",
     alignItems: "center",
+  },
+  placeholder: {
+    width: 40,
   },
   filterButton: {
     width: 40,

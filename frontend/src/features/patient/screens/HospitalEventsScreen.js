@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
 import {
   View,
   Text,
@@ -21,6 +22,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +40,7 @@ import { handleSmartBack } from '@/utils/navigation';
 const PAGE_SIZE = 15;
 
 const HospitalEventsScreen = ({ navigation }) => {
+  const { user } = useSelector((state) => state.auth);
   const queryClient = useQueryClient();
   const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
   const [registeringId, setRegisteringId] = useState(null);
@@ -484,7 +487,7 @@ const HospitalEventsScreen = ({ navigation }) => {
       >
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, "PatientTabs")}
+          onPress={() => handleSmartBack(navigation, user?.role === "admin" ? "AdminTabs" : "PatientTabs")}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -593,7 +596,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
     paddingBottom: theme.spacing.md,
-    backgroundColor: healthColors.background.secondary,
+    backgroundColor: healthColors.background.card,
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
@@ -601,7 +604,7 @@ const styles = StyleSheet.create({
     width: theme.touchTargets.md,
     height: theme.touchTargets.md,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: "transparent",
+    backgroundColor: healthColors.transparent,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -623,7 +626,7 @@ const styles = StyleSheet.create({
     width: theme.touchTargets.md,
     height: theme.touchTargets.md,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: "transparent",
+    backgroundColor: healthColors.transparent,
     justifyContent: "center",
     alignItems: "center",
   },

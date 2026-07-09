@@ -186,7 +186,9 @@ export const ToastProvider = ({ children }) => {
               >
                 <DynamicIcon
                   name={
-                    dialog.type === "success"
+                    dialog.icon
+                      ? dialog.icon
+                      : dialog.type === "success"
                       ? "checkmark-circle"
                       : dialog.type === "error"
                       ? "close-circle"
@@ -295,7 +297,7 @@ const styles = StyleSheet.create({
   },
   dialogOverlay: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    backgroundColor: healthColors.background.overlay,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -327,16 +329,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconSuccessBg: {
-    backgroundColor: "#F0FDFA",
+    backgroundColor: healthColors.primary[50],
   },
   iconErrorBg: {
-    backgroundColor: "#FEF2F2",
+    backgroundColor: healthColors.error[50],
   },
   iconWarningBg: {
-    backgroundColor: "#FFFBEB",
+    backgroundColor: healthColors.warning[50],
   },
   iconConfirmBg: {
-    backgroundColor: "#F0FDF4",
+    backgroundColor: healthColors.success[50],
   },
   dialogTitle: {
     fontSize: theme.typography.sizes.xl,

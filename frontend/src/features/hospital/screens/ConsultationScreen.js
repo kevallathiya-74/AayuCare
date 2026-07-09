@@ -21,7 +21,6 @@ import {
   Alert,
   BackHandler,
   KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import {
   SafeAreaView,

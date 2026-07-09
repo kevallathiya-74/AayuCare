@@ -13,13 +13,12 @@ import {
   Switch,
   StatusBar,
   Alert,
-  Linking,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, Languages, Mic, Bell, Eye, ShieldCheck, HelpCircle, Phone, Mail } from "lucide-react-native";
+import { ArrowLeft, Eye, ShieldCheck } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
 import {
   verticalScale,
@@ -28,6 +27,7 @@ import {
 import { getItem, setItem } from '@/utils/appStorage';
 import { logError } from '@/utils/errorHandler';
 import { DynamicIcon } from '@/components/common';
+
 import { handleSmartBack } from '@/utils/navigation';
 import Routes from '@/navigation/routes';
 
@@ -37,6 +37,7 @@ const FONT_SIZE_KEY = "aayucare_font_size";
 const SettingsAccessibilityScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [fontSize, setFontSize] = useState("Medium");
+
 
   const [settings, setSettings] = useState({
     voiceCommands: true,
@@ -71,15 +72,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
     })();
   }, []);
 
-  const openURL = async (url) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) await Linking.openURL(url);
-      else Alert.alert("Cannot Open", "Unable to open this link on your device.");
-    } catch (err) {
-      logError(err, "SettingsAccessibilityScreen.openURL");
-    }
-  };
+
 
   const handleFontSize = () => {
     Alert.alert(
@@ -200,139 +193,9 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
       >
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>APP SETTINGS</Text>
-        </View>
 
-        {/* Language Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Languages
-              
-              size={20}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.sectionTitle}>LANGUAGE:</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.languageRow}>
-              <Text style={styles.languageLabel}>Current: English</Text>
-              <TouchableOpacity
-                style={styles.changeButton}
-                accessibilityRole="button"
-                accessibilityLabel="Change language"
-              >
-                <Text style={styles.changeButtonText}>Change</Text>
-                <DynamicIcon
-                  name="chevron-forward"
-                  size={16}
-                  color={healthColors.primary.main}
-                />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.languageOptions}>
-              <TouchableOpacity
-                style={styles.languageChip}
-                accessibilityRole="button"
-                accessibilityLabel="Select English language"
-              >
-                <Text style={styles.languageChipText}>English</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.languageChip}
-                accessibilityRole="button"
-                accessibilityLabel="Select Hindi language"
-              >
-                <Text style={styles.languageChipText}>हिंदी</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.languageChip}
-                accessibilityRole="button"
-                accessibilityLabel="Select Gujarati language"
-              >
-                <Text style={styles.languageChipText}>ગુજરાતી</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
 
-        {/* Voice Accessibility Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Mic  size={20} color={healthColors.primary.main} />
-            <Text style={styles.sectionTitle}>VOICE ACCESSIBILITY:</Text>
-          </View>
-          <View style={styles.card}>
-            <SettingRow
-              icon="mic-outline"
-              label="Voice Commands"
-              value={settings.voiceCommands}
-              onToggle={() => toggleSetting("voiceCommands")}
-            />
-            <SettingRow
-              icon="navigate-outline"
-              label="Voice Navigation"
-              value={settings.voiceNavigation}
-              onToggle={() => toggleSetting("voiceNavigation")}
-            />
-            <SettingRow
-              icon="volume-high-outline"
-              label="Audio Descriptions"
-              value={settings.audioDescriptions}
-              onToggle={() => toggleSetting("audioDescriptions")}
-            />
-          </View>
-        </View>
 
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Bell
-              
-              size={20}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.sectionTitle}>NOTIFICATIONS:</Text>
-          </View>
-          <View style={styles.card}>
-            <SettingRow
-              icon="calendar-outline"
-              label="Appointment Reminders"
-              value={settings.appointmentReminders}
-              onToggle={() => toggleSetting("appointmentReminders")}
-              iconColor={healthColors.info.main}
-            />
-            <SettingRow
-              icon="medkit-outline"
-              label="Medicine Reminders"
-              value={settings.medicineReminders}
-              onToggle={() => toggleSetting("medicineReminders")}
-              iconColor={healthColors.success.main}
-            />
-            <SettingRow
-              icon="heart-outline"
-              label="Health Alerts"
-              value={settings.healthAlerts}
-              onToggle={() => toggleSetting("healthAlerts")}
-              iconColor={healthColors.error.main}
-            />
-            <SettingRow
-              icon="megaphone-outline"
-              label="Hospital Events"
-              value={settings.hospitalEvents}
-              onToggle={() => toggleSetting("hospitalEvents")}
-              iconColor={healthColors.warning.main}
-            />
-            <SettingRow
-              icon="water-outline"
-              label="Water Intake Reminder"
-              value={settings.waterIntakeReminder}
-              onToggle={() => toggleSetting("waterIntakeReminder")}
-              iconColor={healthColors.secondary.main}
-            />
-          </View>
-        </View>
 
         {/* Display Section */}
         <View style={styles.section}>
@@ -397,49 +260,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Help & Support Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <HelpCircle
-              
-              size={20}
-              color={healthColors.primary.main}
-            />
-            <Text style={styles.sectionTitle}>HELP & SUPPORT:</Text>
-          </View>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.supportItem}
-              activeOpacity={0.7}
-              onPress={() => openURL("tel:18001234567")}
-              accessibilityRole="button"
-              accessibilityLabel="Call support 1800 123 4567"
-            > 
-              <Phone
-                
-                size={18}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.supportText}>• Call: 1800-123-4567</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.supportItem}
-              activeOpacity={0.7}
-              onPress={() => openURL("mailto:support@aayucare.com")}
-              accessibilityRole="button"
-              accessibilityLabel="Email support"
-            > 
-              <Mail
-                
-                size={18}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.supportText}>
-                • Email: support@aayucare.com
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -474,15 +295,7 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 32,
   },
-  titleSection: {
-    padding: getScreenPadding(),
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: theme.typography.sizes.bodyLarge,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
+
   section: {
     paddingHorizontal: getScreenPadding(),
     marginBottom: verticalScale(20),
@@ -504,50 +317,7 @@ const styles = StyleSheet.create({
     padding: 16,
     ...theme.shadows.md,
   },
-  languageRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  languageLabel: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
-  changeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.06),
-    borderRadius: 8,
-  },
-  changeButtonText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.primary.main,
-  },
-  languageOptions: {
-    flexDirection: "row",
-    gap: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: healthColors.border.light,
-  },
-  languageChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: healthColors.background.secondary,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-  },
-  languageChipText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-  },
+
   settingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -574,16 +344,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: healthColors.border.light,
   },
-  supportItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 10,
-  },
-  supportText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.primary,
-  },
+
   bottomSpacer: {
     height: 80,
   },

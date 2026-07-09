@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector, useDispatch } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import { theme, healthColors } from '@/theme';
 import Routes from '@/navigation/routes';
 import { getSafeAreaEdges } from '@/utils/responsive';
@@ -71,6 +72,7 @@ const resolveEntityId = (entity) => {
 };
 
 const AdminHomeScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const notificationPermission = useSelector(
     (state) => state.permissions?.notification || {}
@@ -154,7 +156,7 @@ const AdminHomeScreen = ({ navigation }) => {
     queryKey: queryKeys.dashboardStats.admin(),
     queryFn: fetchDashboardData,
     staleTime: 60 * 1000,
-    enabled: !!user?.id,
+    enabled: !!user?.id && user?.role === "admin",
   });
 
   useFocusEffect(
@@ -172,36 +174,36 @@ const AdminHomeScreen = ({ navigation }) => {
   }, [refetchDashboard, refreshCount]);
 
   const handleLogout = useCallback(() => {
-    showConfirmation("Are you sure you want to logout?", () => dispatch(logoutUser()), () => {}, "Logout");
+    showConfirmation("Are you sure you want to logout?", () => dispatch(logoutUser()), () => {}, "Logout", "log-out-outline");
   }, [dispatch]);
 
   // ── Derived data ──
   const greeting = useMemo(() => {
     const h = new Date().getHours();
-    if (h >= 5 && h < 12) return "Good Morning";
-    if (h >= 12 && h < 17) return "Good Afternoon";
-    if (h >= 17 && h < 21) return "Good Evening";
-    return "Good Night";
-  }, []);
+    if (h >= 5 && h < 12) return t("dashboard.goodMorning", "Good Morning");
+    if (h >= 12 && h < 17) return t("dashboard.goodAfternoon", "Good Afternoon");
+    if (h >= 17 && h < 21) return t("dashboard.goodEvening", "Good Evening");
+    return t("dashboard.goodNight", "Good Night");
+  }, [t]);
 
   const statCards = useMemo(() => [
-    { title: "Appointments", value: stats.appointments.total,
-      subtitle: `${stats.appointments.today} today • ${stats.appointments.pending} pending`,
+    { title: t("dashboard.appointments", "Appointments"), value: stats.appointments.total,
+      subtitle: t("dashboard.appointmentsSubtitle", "{{today}} today • {{pending}} pending", { today: stats.appointments.today, pending: stats.appointments.pending }),
       icon: Calendar, gradient: [healthColors.primary.main, healthColors.primary.dark],
       trend: stats.appointments.trend,       screen: Routes.ADMIN_TABS.APPOINTMENTS, isTabScreen: true },
-    { title: "Total Doctors", value: stats.doctors.total,
-      subtitle: `${stats.doctors.active} active • ${stats.doctors.onDuty} on duty`,
+    { title: t("dashboard.totalDoctors", "Total Doctors"), value: stats.doctors.total,
+      subtitle: t("dashboard.doctorsSubtitle", "{{active}} active • {{onDuty}} on duty", { active: stats.doctors.active, onDuty: stats.doctors.onDuty }),
       icon: Stethoscope, gradient: [healthColors.secondary.main, healthColors.secondary.dark],
       trend: stats.doctors.trend,       screen: Routes.ADMIN.MANAGE_DOCTORS, isTabScreen: false },
-    { title: "Total Patients", value: stats.patients.total.toLocaleString(),
-      subtitle: `${stats.patients.new} new • ${stats.patients.returning} returning`,
+    { title: t("dashboard.totalPatients", "Total Patients"), value: stats.patients.total.toLocaleString(),
+      subtitle: t("dashboard.patientsSubtitle", "{{new}} new • {{returning}} returning", { new: stats.patients.new, returning: stats.patients.returning }),
       icon: Users, gradient: [healthColors.accent.coral, healthColors.accent.pink],
       trend: stats.patients.trend,       screen: Routes.ADMIN.PATIENT_MANAGEMENT, isTabScreen: false },
-    { title: "Prescriptions", value: stats.prescriptions.total,
-      subtitle: `${stats.prescriptions.today} issued today`,
+    { title: t("dashboard.prescriptions", "Prescriptions"), value: stats.prescriptions.total,
+      subtitle: t("dashboard.prescriptionsSubtitle", "{{today}} issued today", { today: stats.prescriptions.today }),
       icon: Pill, gradient: [healthColors.info.main, healthColors.info.dark],
       trend: stats.prescriptions.trend,       screen: Routes.ADMIN_TABS.REPORTS, isTabScreen: true },
-  ], [stats]);
+  ], [stats, t]);
 
   // Navigate helper
   const nav = (screen, params, isTab = false) => () => {
@@ -210,16 +212,16 @@ const AdminHomeScreen = ({ navigation }) => {
   };
 
   const quickActions = useMemo(() => [
-    { title: "Patients", icon: Users, color: healthColors.primary.main, onPress: nav(Routes.ADMIN.PATIENT_MANAGEMENT) },
-    { title: "Doctors", icon: Stethoscope, color: healthColors.secondary.main, onPress: nav(Routes.ADMIN.MANAGE_DOCTORS) },
-    { title: "Appointments", icon: Calendar, color: healthColors.accent.coral,
+    { title: t("dashboard.patients", "Patients"), icon: Users, color: healthColors.primary.main, onPress: nav(Routes.ADMIN.PATIENT_MANAGEMENT) },
+    { title: t("dashboard.doctors", "Doctors"), icon: Stethoscope, color: healthColors.secondary.main, onPress: nav(Routes.ADMIN.MANAGE_DOCTORS) },
+    { title: t("dashboard.appointments", "Appointments"), icon: Calendar, color: healthColors.accent.coral,
       badge: stats.appointments.pending || null, onPress: nav(Routes.ADMIN_TABS.APPOINTMENTS, {}, true) },
-    { title: "Reports", icon: FileText, color: healthColors.info.main, onPress: nav(Routes.ADMIN_TABS.REPORTS, {}, true) },
-    { title: "Pharmacy", icon: Pill, color: healthColors.accent.purple,
+    { title: t("dashboard.reports", "Reports"), icon: FileText, color: healthColors.info.main, onPress: nav(Routes.ADMIN_TABS.REPORTS, {}, true) },
+    { title: t("dashboard.pharmacy", "Pharmacy"), icon: Pill, color: healthColors.accent.purple,
       badge: stats.prescriptions.today > 0 ? stats.prescriptions.today : null, onPress: nav(Routes.ADMIN.PHARMACY_MANAGEMENT) },
-    { title: "Events", icon: CalendarDays, color: healthColors.accent.green,
+    { title: t("dashboard.events", "Events"), icon: CalendarDays, color: healthColors.accent.green,
       badge: upcomingEventsCount > 0 ? upcomingEventsCount : null, onPress: nav(Routes.ADMIN.HOSPITAL_EVENTS) },
-  ], [stats, upcomingEventsCount, navigation]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [stats, upcomingEventsCount, navigation, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const warmManageDoctors = useCallback(() => {
     const hospitalFilters = user?.hospitalId ? { hospitalId: user.hospitalId } : {};
@@ -305,24 +307,24 @@ const AdminHomeScreen = ({ navigation }) => {
 
   const menuSections = useMemo(() => [
     {
-      title: "SYSTEM MANAGEMENT",
+      title: t("drawer.systemManagement", "SYSTEM MANAGEMENT"),
       items: [
-        { icon: Home, iconColor: healthColors.primary.main, label: "Dashboard", onPress: navFromDrawer(Routes.ADMIN_TABS.DASHBOARD, true) },
-        { icon: Stethoscope, iconColor: healthColors.secondary.main, label: "Manage Doctors", onPress: navFromDrawer(Routes.ADMIN.MANAGE_DOCTORS) },
-        { icon: Users, iconColor: healthColors.accent.aqua, label: "Manage Patients", onPress: navFromDrawer(Routes.ADMIN.PATIENT_MANAGEMENT) },
-        { icon: Calendar, iconColor: healthColors.accent.coral, label: "Appointments", onPress: navFromDrawer(Routes.ADMIN_TABS.APPOINTMENTS, true) },
-        { icon: BarChart2, iconColor: healthColors.info.main, label: "Reports & Records", onPress: navFromDrawer(Routes.ADMIN_TABS.REPORTS, true) },
+        { icon: Home, iconColor: healthColors.primary.main, label: t("drawer.dashboard", "Dashboard"), onPress: navFromDrawer(Routes.ADMIN_TABS.DASHBOARD, true) },
+        { icon: Stethoscope, iconColor: healthColors.secondary.main, label: t("drawer.manageDoctors", "Manage Doctors"), onPress: navFromDrawer(Routes.ADMIN.MANAGE_DOCTORS) },
+        { icon: Users, iconColor: healthColors.accent.aqua, label: t("drawer.managePatients", "Manage Patients"), onPress: navFromDrawer(Routes.ADMIN.PATIENT_MANAGEMENT) },
+        { icon: Calendar, iconColor: healthColors.accent.coral, label: t("drawer.appointments", "Appointments"), onPress: navFromDrawer(Routes.ADMIN_TABS.APPOINTMENTS, true) },
+        { icon: BarChart2, iconColor: healthColors.info.main, label: t("drawer.reportsAndRecords", "Reports & Records"), onPress: navFromDrawer(Routes.ADMIN_TABS.REPORTS, true) },
       ],
     },
     {
-      title: "ACCOUNT",
+      title: t("drawer.account", "ACCOUNT"),
       items: [
-        { icon: User, iconColor: healthColors.text.secondary, label: "Profile",
+        { icon: User, iconColor: healthColors.text.secondary, label: t("drawer.profile", "Profile"),
           onPress: () => { closeMenu(); setTimeout(() => setShowProfile(true), 100); } },
-        { icon: Settings, iconColor: healthColors.text.secondary, label: "Settings", onPress: navFromDrawer(Routes.ADMIN_TABS.SETTINGS, true) },
+        { icon: Settings, iconColor: healthColors.text.secondary, label: t("drawer.settings", "Settings"), onPress: navFromDrawer(Routes.ADMIN_TABS.SETTINGS, true) },
       ],
     },
-  ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [navigation, closeMenu, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Render ──
   return (

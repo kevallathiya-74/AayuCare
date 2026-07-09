@@ -29,6 +29,7 @@ import {
 import { User, Clock, Calendar, CheckCircle, XCircle, Phone, Cross, FileText, UserCircle, ArrowLeft } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import { theme, healthColors } from '@/theme';
 import { doctorService } from '@/services';
 import { queryKeys } from '@/config/reactQueryConfig';
@@ -60,6 +61,7 @@ const STATUS_FILTERS_BY_TAB = {
 };
 
 const TodaysAppointmentsScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
   const [selectedFilter, setSelectedFilter] = useState("today");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -122,6 +124,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
   } = useQuery({
     queryKey: queryKeys.appointments.list({ scope: "doctor-home-tabs", selectedFilter }),
     staleTime: 2 * 60 * 1000,
+    enabled: !!user?.id && user?.role === "doctor",
     queryFn: async () => {
       let response;
 

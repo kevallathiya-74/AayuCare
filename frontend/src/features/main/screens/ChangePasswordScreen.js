@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -11,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useMutation } from "@tanstack/react-query";
 import { theme, healthColors } from '@/theme';
 import Routes from '@/navigation/routes';
@@ -24,6 +23,7 @@ import { getKeyboardConfig } from '@/utils/responsive';
 
 const ChangePasswordScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -119,7 +119,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, "Settings")}
+          onPress={() => handleSmartBack(navigation, user?.role === "admin" ? "AdminTabs" : "DoctorTabs")}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         > 
@@ -207,9 +207,8 @@ const ChangePasswordScreen = ({ navigation }) => {
             loading={changePasswordMutation.isPending}
             onPress={handleSubmit}
             style={styles.submitButton}
-          >
-            <Text>Change Password</Text>
-          </Button>
+            title="Change Password"
+          />
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -248,10 +247,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.md,
+    borderCurve: "continuous",
     padding: theme.spacing.lg,
     borderWidth: 1,
     borderColor: healthColors.border.light,
-    ...theme.shadows.md,
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02)",
   },
   cardTitle: {
     fontSize: theme.typography.sizes.bodyLarge,
@@ -271,12 +271,16 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.error.background,
     padding: theme.spacing.sm,
     borderRadius: theme.borderRadius.sm,
+    borderCurve: "continuous",
   },
   rulesBox: {
     backgroundColor: healthColors.background.secondary,
     borderRadius: theme.borderRadius.sm,
+    borderCurve: "continuous",
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
   },
   rulesTitle: {
     fontSize: theme.typography.sizes.caption,
@@ -293,11 +297,6 @@ const styles = StyleSheet.create({
     color: healthColors.success.main,
   },
   submitButton: {
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: healthColors.primary.main,
-    borderRadius: theme.borderRadius.sm,
     marginTop: theme.spacing.sm,
   },
 });

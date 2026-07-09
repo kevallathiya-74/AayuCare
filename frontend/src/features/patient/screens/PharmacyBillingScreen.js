@@ -12,11 +12,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft, Cross, Receipt, FileText, BriefcaseMedical, Building, CreditCard, Info } from "lucide-react-native";
 import { useSelector } from "react-redux";
@@ -209,22 +211,20 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   ) {
     return (
       <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+        <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
         <NetworkStatusIndicator />
-        <LinearGradient
-          colors={healthColors.gradients.primary}
+        <View
           style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
         >
           <TouchableOpacity
             onPress={() => handleSmartBack(navigation, "PatientTabs")}
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft  size={theme.iconSizes.lg} color={theme.colors.white} />
+            <ArrowLeft size={theme.iconSizes.lg} color={healthColors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Cross  size={theme.iconSizes.xxl} color={theme.colors.white} />
+            <Cross size={theme.iconSizes.xxl} color={healthColors.primary.main} />
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
               <Text style={styles.headerSubtitle}>
@@ -233,7 +233,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             </View>
           </View>
           <View style={styles.headerRightSpacer} />
-        </LinearGradient>
+        </View>
         <EmptyState
           icon="receipt-outline"
           title="No Active Prescription"
@@ -255,23 +255,21 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
+      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
       <NetworkStatusIndicator />
       {/* Header */}
-      <LinearGradient
-        colors={healthColors.gradients.primary}
+      <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
       >
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "PatientTabs")}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft  size={theme.iconSizes.lg} color={theme.colors.white} />
+          <ArrowLeft size={theme.iconSizes.lg} color={healthColors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Cross  size={theme.iconSizes.xxl} color={theme.colors.white} />
+          <Cross size={theme.iconSizes.xxl} color={healthColors.primary.main} />
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
             <Text style={styles.headerSubtitle}>
@@ -291,9 +289,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="View payment receipt"
         >
-          <Receipt  size={theme.iconSizes.lg} color={theme.colors.white} />
+          <Receipt size={theme.iconSizes.lg} color={healthColors.primary.main} />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={[
@@ -601,8 +599,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: getScreenPadding(),
     paddingBottom: theme.spacing.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    backgroundColor: healthColors.background.card,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   headerContent: {
     flexDirection: "row",
@@ -615,13 +614,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.h4,
+    fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
+    color: healthColors.text.primary,
   },
   headerSubtitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: theme.withOpacity(theme.colors.white, 0.9),
+    color: healthColors.text.secondary,
   },
   content: {
     padding: getScreenPadding(),

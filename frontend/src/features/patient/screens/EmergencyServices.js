@@ -26,6 +26,7 @@ import {
   Info,
   CheckCircle,
   Map,
+  Shield,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from '@/theme';
@@ -39,6 +40,34 @@ import ErrorRecovery from '@/components/common/ErrorRecovery';
 import { showError, logError, parseError } from '@/utils/errorHandler';
 import { useSelector } from "react-redux";
 import { handleSmartBack } from '@/utils/navigation';
+import { Card } from '@/components/common';
+
+const emergencyNumbers = [
+  {
+    name: "National Emergency Number",
+    number: "112",
+    Icon: Phone,
+    color: healthColors.primary.main,
+  },
+  {
+    name: "Ambulance",
+    number: "108",
+    Icon: BriefcaseMedical,
+    color: healthColors.error.main,
+  },
+  {
+    name: "Police",
+    number: "100",
+    Icon: Shield,
+    color: healthColors.secondary.main,
+  },
+  {
+    name: "Medical Helpline",
+    number: "104",
+    Icon: Info,
+    color: healthColors.warning.main,
+  },
+];
 
 const EmergencyServices = ({ navigation }) => {
   const [error, setError] = useState(null);
@@ -241,12 +270,10 @@ const EmergencyServices = ({ navigation }) => {
             {emergencyNumbers.map((item) => {
               const EmergencyIconComponent = item.Icon;
               return (
-                <TouchableOpacity
+                <Card
                   key={item.name}
                   style={styles.numberCard}
                   onPress={() => handleEmergencyCall(item.number, item.name)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Call ${item.name} ${item.number}`}
                 >
                   <View
                     style={[
@@ -258,7 +285,7 @@ const EmergencyServices = ({ navigation }) => {
                   </View>
                   <Text style={styles.numberName}>{item.name}</Text>
                   <Text style={styles.numberValue}>{item.number}</Text>
-                </TouchableOpacity>
+                </Card>
               );
             })}
           </View>
@@ -277,7 +304,7 @@ const EmergencyServices = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           {nearbyHospitals.map((hospital, index) => (
-            <View key={index} style={styles.hospitalCard}>
+            <Card key={index} style={styles.hospitalCard} padding={false}>
               <View style={styles.hospitalIcon}>
                 <BriefcaseMedical size={24} color={healthColors.primary.main} />
               </View>
@@ -313,14 +340,14 @@ const EmergencyServices = ({ navigation }) => {
                   <Phone size={20} color={healthColors.primary.main} />
                 )}
               </TouchableOpacity>
-            </View>
+            </Card>
           ))}
         </View>
 
         {/* Safety Tips */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Emergency Tips</Text>
-          <View style={styles.tipsCard}>
+          <Card style={styles.tipsCard} padding={false}>
             <View style={styles.tipItem}>
               <CheckCircle size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Stay calm and speak clearly</Text>
@@ -339,7 +366,7 @@ const EmergencyServices = ({ navigation }) => {
                 Don&#39;t hang up until told to do so
               </Text>
             </View>
-          </View>
+          </Card>
         </View>
 
         {/* Disclaimer */}
@@ -462,11 +489,8 @@ const styles = StyleSheet.create({
   },
   numberCard: {
     width: "48%",
-    backgroundColor: healthColors.background.card,
-    borderRadius: 16,
     padding: theme.spacing.md,
     alignItems: "center",
-    ...theme.shadows.md,
     marginRight: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },
@@ -492,11 +516,8 @@ const styles = StyleSheet.create({
   hospitalCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.background.card,
     padding: theme.spacing.md,
-    borderRadius: 12,
     marginBottom: theme.spacing.sm,
-    ...theme.shadows.sm,
   },
   hospitalIcon: {
     width: 48,
@@ -551,10 +572,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tipsCard: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: 12,
     padding: theme.spacing.md,
-    ...theme.shadows.sm,
   },
   tipItem: {
     flexDirection: "row",

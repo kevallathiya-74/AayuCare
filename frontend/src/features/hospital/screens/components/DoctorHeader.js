@@ -4,12 +4,22 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Menu, Bell, User, Building } from "lucide-react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from "react-native";
+import { Menu, Bell, Building } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from '@/theme';
 import LanguageSelector from '@/components/common/LanguageSelector';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DynamicIcon } from '@/components/common';
+
+const formatDoctorName = (name) => {
+  if (!name) return "Doctor";
+  const trimmed = name.trim();
+  if (trimmed.toLowerCase().startsWith("dr.") || trimmed.toLowerCase().startsWith("dr ")) {
+    return trimmed;
+  }
+  return `Dr. ${trimmed}`;
+};
 
 const DoctorHeader = ({
   user,
@@ -18,14 +28,18 @@ const DoctorHeader = ({
   notificationCount = 0,
   onMenuOpen,
   onNotificationPress,
-  onProfilePress,
-}) => (
-  <LinearGradient
-    colors={[healthColors.primary.main, healthColors.primary.dark]}
-    style={styles.container}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 1 }}
-  >
+}) => {
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === "android" ? (StatusBar.currentHeight || 24) : 20;
+  const topPadding = insets.top > 0 ? insets.top : statusBarHeight;
+
+  return (
+    <LinearGradient
+      colors={[healthColors.primary.main, healthColors.primary.dark]}
+      style={[styles.container, { paddingTop: topPadding + 12 }]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
     <View style={styles.circleLarge} pointerEvents="none" />
     <View style={styles.circleSmall} pointerEvents="none" />
 
@@ -57,15 +71,6 @@ const DoctorHeader = ({
           )}
         </TouchableOpacity>
         <LanguageSelector compact iconColor={theme.colors.text.white} />
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={onProfilePress}
-          accessibilityRole="button"
-          accessibilityLabel="Profile"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <User  size={24} color={theme.colors.text.white} />
-        </TouchableOpacity>
       </View>
     </View>
 
@@ -80,7 +85,7 @@ const DoctorHeader = ({
         />
         <View>
           <Text style={styles.greetingLabel}>{greeting}</Text>
-          <Text style={styles.userName}>Dr. {user?.name || "Doctor"}</Text>
+          <Text style={styles.userName}>{formatDoctorName(user?.name)}</Text>
         </View>
       </View>
       <View style={styles.infoCard}>
@@ -97,7 +102,8 @@ const DoctorHeader = ({
       </View>
     </View>
   </LinearGradient>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

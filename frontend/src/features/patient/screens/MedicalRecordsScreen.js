@@ -38,7 +38,7 @@ import {
   RefreshCw,
 } from "lucide-react-native";
 import { theme, healthColors } from '@/theme';
-import { EmptyState } from '@/components/common';
+import { EmptyState, Card } from '@/components/common';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import { getSafeAreaEdges } from '@/utils/responsive';
 import { getPatientMedicalRecords } from '@/services/medicalRecord.service';
@@ -146,12 +146,9 @@ const RecordCard = React.memo(({ record, onPress }) => {
   const IconComp = meta.icon;
 
   return (
-    <TouchableOpacity
-      onPress={() => onPress && onPress(record)}
+    <Card
       style={styles.card}
-      activeOpacity={0.75}
-      accessibilityRole="button"
-      accessibilityLabel={`Medical record: ${record.title || meta.label}`}
+      onPress={() => onPress && onPress(record)}
     >
       {/* Icon */}
       <View style={[styles.cardIcon, { backgroundColor: meta.bg }]}>
@@ -179,7 +176,7 @@ const RecordCard = React.memo(({ record, onPress }) => {
           {meta.label}
         </Text>
       </View>
-    </TouchableOpacity>
+    </Card>
   );
 });
 
@@ -380,8 +377,8 @@ const MedicalRecordsScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor={healthColors.primary.main}
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
       />
 
       {/* ── Header ── */}
@@ -392,7 +389,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ChevronLeft size={22} color={healthColors.text.white} />
+          <ChevronLeft size={22} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Medical Records</Text>
         <View style={styles.backBtn} />
@@ -469,10 +466,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.primary.main,
+    backgroundColor: healthColors.background.card,
     paddingHorizontal: 16,
     paddingVertical: 12,
     justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
   },
   backBtn: {
     width: 36,
@@ -480,11 +479,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 18,
+    backgroundColor: healthColors.background.tertiary,
   },
   headerTitle: {
     fontSize: theme.typography.sizes.h6,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.white,
+    color: healthColors.text.primary,
     letterSpacing: 0.3,
   },
 
@@ -538,11 +538,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.card,
-    padding: 14,
     marginBottom: 10,
-    ...theme.shadows.md,
   },
   cardIcon: {
     width: 44,

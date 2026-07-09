@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   View,
   StyleSheet,
@@ -27,6 +28,7 @@ import {
 import { handleSmartBack } from '@/utils/navigation';
 
 const ForgotPasswordScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const userType = route?.params?.userType || "user";
   const isHospital = userType === "hospital";
   const insets = useSafeAreaInsets();
@@ -55,8 +57,8 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     const newErrors = {};
     if (!email) {
       newErrors.email = isHospital
-        ? "Hospital ID or Email is required"
-        : "Email or Phone is required";
+        ? t("auth.hospitalIdRequired", "Hospital ID or Email is required")
+        : t("auth.emailOrPhoneRequired", "Email or Phone is required");
       setErrors(newErrors);
       return;
     }
@@ -64,20 +66,20 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     // Validate email or phone format
     if (!isHospital && email.includes("@")) {
       if (!validateEmail(email)) {
-        showError("Please enter a valid email address");
+        showError(t("auth.validEmailRequired", "Please enter a valid email address"));
         return;
       }
     } else if (!isHospital && !email.includes("@")) {
       if (!validatePhone(email)) {
-        showError("Please enter a valid phone number");
+        showError(t("auth.validPhoneRequired", "Please enter a valid phone number"));
         return;
       }
     }
 
     // Show success message
     showSuccess(
-      `OTP sent successfully to ${email}. Please check your ${email.includes("@") ? "email" : "phone"}.`,
-      "OTP Sent"
+      t("auth.otpSentMsg", "OTP sent successfully to {{target}}. Please check your {{type}}.", { target: email, type: email.includes("@") ? "email" : "phone" }),
+      t("auth.otpSent", "OTP Sent")
     );
     setEmailSent(true);
 
@@ -117,7 +119,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
               style={styles.backButton}
               onPress={handleBack}
               accessibilityRole="button"
-              accessibilityLabel="Go back"
+              accessibilityLabel={t("auth.backToLogin", "Back to Login")}
             >
               <ArrowLeft size={24} color={iconColor} />
             </TouchableOpacity>
@@ -138,14 +140,16 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 </LinearGradient>
               </View>
               <Text style={[styles.title, isHospital && styles.hospitalText]}>
-                Forgot Password?
+                {t("auth.forgotPasswordTitle", "Forgot Password?")}
               </Text>
               <Text
                 style={[styles.subtitle, isHospital && styles.hospitalSubtext]}
               >
                 {emailSent
-                  ? "Check your email for reset instructions"
-                  : `Enter your ${isHospital ? "Hospital ID or email" : "registered email or phone"} to reset password`}
+                  ? t("auth.checkInstructions", "Check your email for reset instructions")
+                  : isHospital
+                    ? t("auth.enterHospitalIdToReset", "Enter your Hospital ID or email to reset password")
+                    : t("auth.enterRegisteredToReset", "Enter your registered email or phone to reset password")}
               </Text>
             </View>
 
@@ -155,9 +159,9 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 <View style={styles.form}>
                   <Input
                     label={
-                      isHospital ? "Hospital ID or Email" : "Email or Phone"
+                      isHospital ? t("auth.hospitalIdOrEmail", "Hospital ID or Email") : t("auth.emailOrPhone", "Email or Phone")
                     }
-                    placeholder={isHospital ? "HOS123456" : "example@email.com"}
+                    placeholder={isHospital ? t("auth.hospitalIdPlaceholder", "HOS123456") : t("auth.emailPlaceholder", "example@email.com")}
                     value={email}
                     onChangeText={handleEmailChange}
                     error={errors.email}
@@ -167,7 +171,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                   />
 
                   <Button
-                    title="Send Reset Link"
+                    title={t("auth.sendResetLink", "Send Reset Link")}
                     variant="primary"
                     size="large"
                     onPress={handleSendOTP}
@@ -181,12 +185,12 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 {/* Back to Login */}
                 <View style={styles.backToLogin}>
                   <Text style={styles.backToLoginText}>
-                    Remember your password?
+                    {t("auth.rememberPassword", "Remember your password?")}
                   </Text>
                   <TouchableOpacity
                     onPress={handleBack}
                     accessibilityRole="button"
-                    accessibilityLabel="Back to login"
+                    accessibilityLabel={t("auth.backToLogin", "Back to Login")}
                   >
                     <Text
                       style={[
@@ -194,7 +198,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                         isHospital && styles.hospitalLink,
                       ]}
                     >
-                      Back to Login
+                      {t("auth.backToLogin", "Back to Login")}
                     </Text>
                   </TouchableOpacity>
                 </View>

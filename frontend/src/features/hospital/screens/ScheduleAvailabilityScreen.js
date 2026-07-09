@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, AlertCircle, Info, Clock, Coffee, Edit, X, Trash2, PlusCircle } from "lucide-react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 import doctorService from '@/features/hospital/api/doctor.service';
 import { queryKeys } from '@/config/reactQueryConfig';
 import { theme, healthColors } from '@/theme';
@@ -27,6 +28,7 @@ import { DynamicIcon, Input, SkeletonCardRow } from '@/components/common';
 import { handleSmartBack } from '@/utils/navigation';
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
+  const user = useSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
   const [selectedDay, setSelectedDay] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -54,6 +56,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
   } = useQuery({
     queryKey: queryKeys.schedules.doctor("me"),
     staleTime: 10 * 60 * 1000,
+    enabled: !!user?.id && user?.role === "doctor",
     queryFn: async () => {
       const response = await doctorService.getSchedule();
       const data = response.data?.schedules || response.data;

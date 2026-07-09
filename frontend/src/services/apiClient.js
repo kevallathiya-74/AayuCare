@@ -306,7 +306,7 @@ api.interceptors.response.use(
         try {
           const store = require('../store/store').default;
           const { logoutUser } = require('../store/slices/authSlice');
-          store.dispatch(logoutUser());
+          store.dispatch(logoutUser({ silent: true }));
         } catch (storeErr) {
           if (__DEV__) {
             console.warn('[API] Could not dispatch logoutUser to Redux store:', storeErr);

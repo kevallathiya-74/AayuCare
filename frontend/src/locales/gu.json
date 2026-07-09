@@ -23,7 +23,30 @@
     "forgotPassword": "પાસવર્ડ ભૂલી ગયા?",
     "loginSuccess": "લોગિન સફળ",
     "loginError": "અમાન્ય ક્રેડેન્શિયલ્સ",
-    "demoCredentials": "ડેમો ક્રેડેન્શિયલ્સ"
+    "demoCredentials": "ડેમો ક્રેડેન્શિયલ્સ",
+    "signIn": "સાઇન ઇન કરો",
+    "enterCredentials": "આગળ વધવા માટે તમારા ક્રેડેન્શિયલ્સ દાખલ કરો",
+    "emailOrUserId": "ઈમેલ અથવા વપરાશકર્તા ID",
+    "userIdPlaceholder": "દા.ત. pat1, doc1, admin@aayucare.com",
+    "passwordPlaceholder": "તમારો પાસવર્ડ દાખલ કરો",
+    "footerCompliance": "એન્ડ-ટુ-એન્ડ એન્ક્રિપ્ટેડ · HIPAA સુસંગત",
+    "forgotPasswordTitle": "પાસવર્ડ ભૂલી ગયા?",
+    "checkInstructions": "રીસેટ સૂચનાઓ માટે તમારો ઈમેલ તપાસો",
+    "enterRegisteredToReset": "પાસવર્ડ રીસેટ કરવા માટે તમારો રજીસ્ટર્ડ ઈમેલ અથવા ફોન દાખલ કરો",
+    "enterHospitalIdToReset": "પાસવર્ડ રીસેટ કરવા માટે તમારો હોસ્પિટલ આઈડી કે ઈમેલ દાખલ કરો",
+    "hospitalIdOrEmail": "હોસ્પિટલ આઈડી અથવા ઈમેલ",
+    "emailOrPhone": "ઈમેલ અથવા ફોન",
+    "hospitalIdPlaceholder": "HOS123456",
+    "emailPlaceholder": "example@email.com",
+    "sendResetLink": "રીસેટ લિંક મોકલો",
+    "rememberPassword": "તમારો પાસવર્ડ યાદ છે?",
+    "backToLogin": "લોગિન પર પાછા જાઓ",
+    "userIdRequired": "વપરાશકર્તા ID જરૂરી છે",
+    "passwordRequired": "પાસવર્ડ જરૂરી છે",
+    "hospitalIdRequired": "હોસ્પિટલ આઈડી અથવા ઈમેલ જરૂરી છે",
+    "emailOrPhoneRequired": "ઈમેલ અથવા ફોન જરૂરી છે",
+    "validEmailRequired": "કૃપા કરીને માન્ય ઈમેલ સરનામું દાખલ કરો",
+    "validPhoneRequired": "કૃપા કરીને માન્ય ફોન નંબર દાખલ કરો"
   },
   "dashboard": {
     "welcome": "સ્વાગત છે",
@@ -81,5 +104,28 @@
     "addReading": "રીડિંગ ઉમેરો",
     "setGoals": "લક્ષ્યો સેટ કરો",
     "weekTrend": "7-દિવસનો ટ્રેન્ડ"
+  },
+  "navigation": {
+    "home": "મુખ્ય",
+    "appointments": "એપોઇન્ટમેન્ટ્સ",
+    "reports": "રિપોર્ટ્સ",
+    "settings": "સેટિંગ્સ",
+    "today": "આજે",
+    "patients": "દર્દીઓ",
+    "me": "પ્રોફાઇલ",
+    "health": "આરોગ્ય",
+    "info": "માહિતી",
+    "more": "વધુ"
+  },
+  "drawer": {
+    "systemManagement": "સિસ્ટમ મેનેજમેન્ટ",
+    "dashboard": "ડેશબોર્ડ",
+    "manageDoctors": "ડોકટરો મેનેજ કરો",
+    "managePatients": "દર્દીઓ મેનેજ કરો",
+    "appointments": "એપોઇન્ટમેન્ટ્સ",
+    "reportsAndRecords": "રિપોર્ટ્સ અને રેકોર્ડ્સ",
+    "account": "ખાતું",
+    "profile": "પ્રોફાઇલ",
+    "settings": "સેટિંગ્સ"
   }
 }
