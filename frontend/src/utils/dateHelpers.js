@@ -11,21 +11,24 @@
  */
 export const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return null;
-  
+
   try {
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
-    
+
     // Validate date
     if (isNaN(birthDate.getTime())) return null;
-    
+
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
-    
+
     return age >= 0 ? age : null;
   } catch {
     return null;
@@ -39,15 +42,15 @@ export const calculateAge = (dateOfBirth) => {
  */
 export const formatDate = (date) => {
   if (!date) return "N/A";
-  
+
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-    
-    return d.toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+
+    return d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
   } catch {
     return "N/A";
@@ -61,23 +64,23 @@ export const formatDate = (date) => {
  */
 export const formatDateTime = (date) => {
   if (!date) return "N/A";
-  
+
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-    
-    const dateStr = d.toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+
+    const dateStr = d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
-    
-    const timeStr = d.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+
+    const timeStr = d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
-    
+
     return `${dateStr}, ${timeStr}`;
   } catch {
     return "N/A";
@@ -91,15 +94,15 @@ export const formatDateTime = (date) => {
  */
 export const formatTime = (date) => {
   if (!date) return "N/A";
-  
+
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-    
-    return d.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+
+    return d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   } catch {
     return "N/A";
@@ -113,24 +116,27 @@ export const formatTime = (date) => {
  */
 export const getRelativeTime = (date) => {
   if (!date) return "N/A";
-  
+
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-    
+
     const now = new Date();
     const diffMs = now - d;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    
+
     if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
-    return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`;
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+    if (diffDays < 30)
+      return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? "s" : ""} ago`;
+    if (diffDays < 365)
+      return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? "s" : ""} ago`;
+    return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? "s" : ""} ago`;
   } catch {
     return "N/A";
   }
@@ -143,14 +149,16 @@ export const getRelativeTime = (date) => {
  */
 export const isToday = (date) => {
   if (!date) return false;
-  
+
   try {
     const d = new Date(date);
     const today = new Date();
-    
-    return d.getDate() === today.getDate() &&
-           d.getMonth() === today.getMonth() &&
-           d.getFullYear() === today.getFullYear();
+
+    return (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    );
   } catch {
     return false;
   }
@@ -163,7 +171,7 @@ export const isToday = (date) => {
  */
 export const isPast = (date) => {
   if (!date) return false;
-  
+
   try {
     const d = new Date(date);
     return d < new Date();
@@ -180,18 +188,18 @@ export const isPast = (date) => {
  */
 export const formatMedicalHistoryDuration = (diagnosedDate, status) => {
   if (!diagnosedDate) return "Unknown duration";
-  
+
   try {
     const diagnosed = new Date(diagnosedDate);
     if (isNaN(diagnosed.getTime())) return "Unknown duration";
-    
-    if (status === 'resolved') {
+
+    if (status === "resolved") {
       return `Diagnosed ${formatDate(diagnosedDate)}`;
     }
-    
+
     const years = calculateAge(diagnosedDate);
     const diagnosedYear = diagnosed.getFullYear();
-    
+
     if (years === 0) return `Since ${diagnosedYear} (recent)`;
     if (years === 1) return `Since ${diagnosedYear} (1 year)`;
     return `Since ${diagnosedYear} (${years} years)`;

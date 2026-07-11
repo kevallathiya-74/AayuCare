@@ -15,7 +15,8 @@ const DATA_KEYS = [
   "metrics",
 ];
 
-const isObject = (value) => value && typeof value === "object" && !Array.isArray(value);
+const isObject = (value) =>
+  value && typeof value === "object" && !Array.isArray(value);
 
 const pickPrimaryData = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -89,8 +90,8 @@ export const normalizeServiceResponse = (payload, options = {}) => {
     typeof payload.success === "boolean"
       ? payload.success
       : payload.status != null
-      ? payload.status === "success"
-      : !payload.error;
+        ? payload.status === "success"
+        : !payload.error;
 
   return {
     success,
@@ -102,7 +103,9 @@ export const normalizeServiceResponse = (payload, options = {}) => {
 };
 
 export const extractResponseData = (payload, fallback = null) => {
-  const normalized = normalizeServiceResponse(payload, { fallbackData: fallback });
+  const normalized = normalizeServiceResponse(payload, {
+    fallbackData: fallback,
+  });
   return normalized.data ?? fallback;
 };
 

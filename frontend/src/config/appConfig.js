@@ -1,13 +1,13 @@
 /**
  * AayuCare - Global Application Configuration
  * SINGLE SOURCE OF TRUTH for all app configuration
- * 
+ *
  * This file consolidates:
  * - API configuration
  * - Environment variables
  * - Feature flags
  * - App metadata
- * 
+ *
  * Import this file ONLY using:
  * import { APP_CONFIG } from '../config/appConfig';
  * OR
@@ -18,7 +18,9 @@ import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 const normalizeEnv = (value) => {
-  const v = String(value || "").trim().toLowerCase();
+  const v = String(value || "")
+    .trim()
+    .toLowerCase();
   return v === "production" || v === "development" || v === "test" ? v : null;
 };
 
@@ -59,12 +61,11 @@ const isDevEnv = runtimeNodeEnv !== "production";
  */
 const getApiBaseUrl = () => {
   const explicitUrl = normalizeUrl(
-    getEnvVar("EXPO_PUBLIC_API_BASE_URL") ||
-    getEnvVar("API_BASE_URL")
+    getEnvVar("EXPO_PUBLIC_API_BASE_URL") || getEnvVar("API_BASE_URL"),
   );
   if (explicitUrl) {
     if (__DEV__) {
-      console.warn('[APP_CONFIG] Using explicit API URL:', explicitUrl);
+      console.warn("[APP_CONFIG] Using explicit API URL:", explicitUrl);
     }
     return explicitUrl;
   }
@@ -72,8 +73,8 @@ const getApiBaseUrl = () => {
   if (!isDevEnv) {
     const prodUrl = normalizeUrl(
       getEnvVar("EXPO_PUBLIC_API_BASE_URL_PROD") ||
-      getEnvVar("PRODUCTION_API_URL") ||
-      getEnvVar("API_BASE_URL_PROD")
+        getEnvVar("PRODUCTION_API_URL") ||
+        getEnvVar("API_BASE_URL_PROD"),
     );
 
     if (prodUrl) {
@@ -83,8 +84,8 @@ const getApiBaseUrl = () => {
 
   // No URL configured
   console.error(
-    '[APP_CONFIG] FATAL: No API base URL configured. ' +
-    'Please set EXPO_PUBLIC_API_BASE_URL in your frontend/.env file.'
+    "[APP_CONFIG] FATAL: No API base URL configured. " +
+      "Please set EXPO_PUBLIC_API_BASE_URL in your frontend/.env file.",
   );
   return "";
 };
@@ -139,9 +140,9 @@ export default APP_CONFIG;
 
 // Log configuration on initialization (only in development)
 if (__DEV__) {
-  console.warn('[APP_CONFIG] Initialized:', {
+  console.warn("[APP_CONFIG] Initialized:", {
     apiUrl: APP_CONFIG.api.baseURL,
-    environment: APP_CONFIG.env.isDevelopment ? 'Development' : 'Production',
+    environment: APP_CONFIG.env.isDevelopment ? "Development" : "Production",
     platform: APP_CONFIG.env.platform,
   });
 }

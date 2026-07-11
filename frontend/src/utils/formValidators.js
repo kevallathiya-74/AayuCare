@@ -1,4 +1,8 @@
-export { validateEmail, validatePhone, validateRequiredFields } from './errorHandler';
+export {
+  validateEmail,
+  validatePhone,
+  validateRequiredFields,
+} from "./errorHandler";
 
 /**
  * Validate that a numeric value is within [min, max].
@@ -9,16 +13,19 @@ export { validateEmail, validatePhone, validateRequiredFields } from './errorHan
  * @param {string} fieldName  Used in the returned error message.
  * @returns {{ valid: boolean, error: string|null }}
  */
-export const validateRange = (val, min, max, fieldName = 'Value') => {
+export const validateRange = (val, min, max, fieldName = "Value") => {
   const n = Number(val);
-  if (val === '' || val === null || val === undefined) {
+  if (val === "" || val === null || val === undefined) {
     return { valid: false, error: `${fieldName} is required` };
   }
   if (isNaN(n)) {
     return { valid: false, error: `${fieldName} must be a number` };
   }
   if (n < min || n > max) {
-    return { valid: false, error: `${fieldName} must be between ${min} and ${max}` };
+    return {
+      valid: false,
+      error: `${fieldName} must be between ${min} and ${max}`,
+    };
   }
   return { valid: true, error: null };
 };
@@ -31,13 +38,19 @@ export const validateRange = (val, min, max, fieldName = 'Value') => {
  * @param {string} fieldName
  * @returns {{ valid: boolean, error: string|null }}
  */
-export const validateLength = (val, min, max, fieldName = 'Field') => {
-  const str = String(val ?? '').trim();
+export const validateLength = (val, min, max, fieldName = "Field") => {
+  const str = String(val ?? "").trim();
   if (str.length < min) {
-    return { valid: false, error: `${fieldName} must be at least ${min} characters` };
+    return {
+      valid: false,
+      error: `${fieldName} must be at least ${min} characters`,
+    };
   }
   if (str.length > max) {
-    return { valid: false, error: `${fieldName} must be ${max} characters or fewer` };
+    return {
+      valid: false,
+      error: `${fieldName} must be ${max} characters or fewer`,
+    };
   }
   return { valid: true, error: null };
 };
@@ -47,7 +60,7 @@ export const validateLength = (val, min, max, fieldName = 'Field') => {
 // ---------------------------------------------------------------------------
 
 /** Valid blood group values. */
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 /**
  * Validate a blood group string.
@@ -57,7 +70,10 @@ const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 export const validateBloodGroup = (bg) => {
   if (!bg) return { valid: true, error: null }; // blood group is optional
   if (!BLOOD_GROUPS.includes(bg)) {
-    return { valid: false, error: `Blood group must be one of: ${BLOOD_GROUPS.join(', ')}` };
+    return {
+      valid: false,
+      error: `Blood group must be one of: ${BLOOD_GROUPS.join(", ")}`,
+    };
   }
   return { valid: true, error: null };
 };
@@ -69,10 +85,13 @@ export const validateBloodGroup = (bg) => {
  * @returns {{ valid: boolean, error: string|null }}
  */
 export const validateTimeHHMM = (time) => {
-  if (!time) return { valid: false, error: 'Time is required' };
+  if (!time) return { valid: false, error: "Time is required" };
   const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
   if (!HHMM.test(time)) {
-    return { valid: false, error: 'Time must be in HH:MM format (e.g. 09:00, 14:30)' };
+    return {
+      valid: false,
+      error: "Time must be in HH:MM format (e.g. 09:00, 14:30)",
+    };
   }
   return { valid: true, error: null };
 };
@@ -85,7 +104,7 @@ export const validateTimeHHMM = (time) => {
  */
 export const timeToMinutes = (time) => {
   if (!time || !/^\d{2}:\d{2}$/.test(time)) return NaN;
-  const [h, m] = time.split(':').map(Number);
+  const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 };
 
@@ -96,15 +115,15 @@ export const timeToMinutes = (time) => {
  * @returns {{ valid: boolean, error: string|null }}
  */
 export const validateAge = (ageStr) => {
-  if (!ageStr || ageStr.trim() === '') {
-    return { valid: false, error: 'Age is required' };
+  if (!ageStr || ageStr.trim() === "") {
+    return { valid: false, error: "Age is required" };
   }
   if (!/^\d+$/.test(ageStr.trim())) {
-    return { valid: false, error: 'Age must be a whole number' };
+    return { valid: false, error: "Age must be a whole number" };
   }
   const age = parseInt(ageStr.trim(), 10);
   if (age < 1 || age > 120) {
-    return { valid: false, error: 'Age must be between 1 and 120' };
+    return { valid: false, error: "Age must be between 1 and 120" };
   }
   return { valid: true, error: null };
 };
@@ -122,23 +141,33 @@ export const validateAge = (ageStr) => {
  * @param {{ bpSystolic?: string, bpDiastolic?: string, temperature?: string, pulse?: string }} vitals
  * @returns {string[]}  Array of error messages; empty array means all valid.
  */
-export const validateVitals = ({ bpSystolic, bpDiastolic, temperature, pulse } = {}) => {
+export const validateVitals = ({
+  bpSystolic,
+  bpDiastolic,
+  temperature,
+  pulse,
+} = {}) => {
   const errors = [];
 
   if (bpSystolic) {
-    const { valid, error } = validateRange(bpSystolic, 40, 250, 'Systolic BP');
+    const { valid, error } = validateRange(bpSystolic, 40, 250, "Systolic BP");
     if (!valid) errors.push(error);
   }
   if (bpDiastolic) {
-    const { valid, error } = validateRange(bpDiastolic, 20, 150, 'Diastolic BP');
+    const { valid, error } = validateRange(
+      bpDiastolic,
+      20,
+      150,
+      "Diastolic BP",
+    );
     if (!valid) errors.push(error);
   }
   if (temperature) {
-    const { valid, error } = validateRange(temperature, 35, 42, 'Temperature');
+    const { valid, error } = validateRange(temperature, 35, 42, "Temperature");
     if (!valid) errors.push(error);
   }
   if (pulse) {
-    const { valid, error } = validateRange(pulse, 20, 220, 'Pulse');
+    const { valid, error } = validateRange(pulse, 20, 220, "Pulse");
     if (!valid) errors.push(error);
   }
 
