@@ -19,17 +19,14 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { ArrowLeft, Eye, ShieldCheck } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import {
-  verticalScale,
-  getScreenPadding,
-} from '@/utils/responsive';
-import { getItem, setItem } from '@/utils/appStorage';
-import { logError } from '@/utils/errorHandler';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { verticalScale, getScreenPadding } from "@/utils/responsive";
+import { getItem, setItem } from "@/utils/appStorage";
+import { logError } from "@/utils/errorHandler";
+import { DynamicIcon } from "@/components/common";
 
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const ACCESSIBILITY_SETTINGS_KEY = "aayucare_accessibility_settings";
 const FONT_SIZE_KEY = "aayucare_font_size";
@@ -37,7 +34,6 @@ const FONT_SIZE_KEY = "aayucare_font_size";
 const SettingsAccessibilityScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [fontSize, setFontSize] = useState("Medium");
-
 
   const [settings, setSettings] = useState({
     voiceCommands: true,
@@ -72,37 +68,31 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
     })();
   }, []);
 
-
-
   const handleFontSize = () => {
-    Alert.alert(
-      "Font Size",
-      `Current size: ${fontSize}`,
-      [
-        {
-          text: "Small",
-          onPress: async () => {
-            setFontSize("Small");
-            await setItem(FONT_SIZE_KEY, "Small");
-          },
+    Alert.alert("Font Size", `Current size: ${fontSize}`, [
+      {
+        text: "Small",
+        onPress: async () => {
+          setFontSize("Small");
+          await setItem(FONT_SIZE_KEY, "Small");
         },
-        {
-          text: "Medium",
-          onPress: async () => {
-            setFontSize("Medium");
-            await setItem(FONT_SIZE_KEY, "Medium");
-          },
+      },
+      {
+        text: "Medium",
+        onPress: async () => {
+          setFontSize("Medium");
+          await setItem(FONT_SIZE_KEY, "Medium");
         },
-        {
-          text: "Large",
-          onPress: async () => {
-            setFontSize("Large");
-            await setItem(FONT_SIZE_KEY, "Large");
-          },
+      },
+      {
+        text: "Large",
+        onPress: async () => {
+          setFontSize("Large");
+          await setItem(FONT_SIZE_KEY, "Large");
         },
-        { text: "Cancel", style: "cancel" },
-      ]
-    );
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   const toggleSetting = async (key) => {
@@ -193,14 +183,10 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) }}
       >
-
-
-
-
         {/* Display Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Eye  size={20} color={healthColors.primary.main} />
+            <Eye size={20} color={healthColors.primary.main} />
             <Text style={styles.sectionTitle}>DISPLAY:</Text>
           </View>
           <View style={styles.card}>
@@ -227,11 +213,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         {/* Privacy Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <ShieldCheck
-              
-              size={20}
-              color={healthColors.primary.main}
-            />
+            <ShieldCheck size={20} color={healthColors.primary.main} />
             <Text style={styles.sectionTitle}>PRIVACY:</Text>
           </View>
           <View style={styles.card}>
@@ -253,14 +235,12 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               onPress={() =>
                 Alert.alert(
                   "Privacy Policy",
-                  "AayuCare protects your health data with encryption in transit and at rest. We use your data only for care, appointments, and platform operations, and we never sell personal medical data. You can request account-data review through support@aayucare.com."
+                  "AayuCare protects your health data with encryption in transit and at rest. We use your data only for care, appointments, and platform operations, and we never sell personal medical data. You can request account-data review through support@aayucare.com.",
                 )
               }
             />
           </View>
         </View>
-
-
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -351,6 +331,3 @@ const styles = StyleSheet.create({
 });
 
 export default SettingsAccessibilityScreen;
-
-
-

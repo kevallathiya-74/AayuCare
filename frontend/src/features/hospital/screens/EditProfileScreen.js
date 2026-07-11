@@ -15,21 +15,18 @@ import {
 } from "react-native-safe-area-context";
 import { ArrowLeft, Edit, User, Cross, Phone, Info } from "lucide-react-native";
 import { useSelector, useDispatch } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { fontFamilies } from '@/theme/typography';
-import {
-  getScreenPadding,
-  getKeyboardConfig,
-} from '@/utils/responsive';
+import { theme, healthColors } from "@/theme";
+import { fontFamilies } from "@/theme/typography";
+import { getScreenPadding, getKeyboardConfig } from "@/utils/responsive";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { doctorService, authService } from '@/services';
-import { logError } from '@/utils/errorHandler';
-import { setUser } from '@/store/slices/authSlice';
-import { Input, Button } from '@/components/common';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import appStorage from '@/utils/appStorage';
-import { STORAGE_KEYS } from '@/utils/constants';
+import { doctorService, authService } from "@/services";
+import { logError } from "@/utils/errorHandler";
+import { setUser } from "@/store/slices/authSlice";
+import { Input, Button } from "@/components/common";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import appStorage from "@/utils/appStorage";
+import { STORAGE_KEYS } from "@/utils/constants";
 
 const getInitials = (name) => {
   if (!name) return "U";
@@ -70,7 +67,7 @@ const EditProfileScreen = ({ navigation }) => {
     if (!formData.phone.trim() || formData.phone.length !== 10) {
       Alert.alert(
         "Validation Error",
-        "Valid 10-digit phone number is required"
+        "Valid 10-digit phone number is required",
       );
       return false;
     }
@@ -89,13 +86,19 @@ const EditProfileScreen = ({ navigation }) => {
       }
       const expNum = parseInt(formData.yearsOfExperience);
       if (isNaN(expNum) || expNum < 0 || expNum > 60) {
-        Alert.alert("Validation Error", "Experience must be between 0 and 60 years");
+        Alert.alert(
+          "Validation Error",
+          "Experience must be between 0 and 60 years",
+        );
         return false;
       }
       if (formData.consultationFee.trim()) {
         const fee = parseFloat(formData.consultationFee);
         if (isNaN(fee) || fee < 0) {
-          Alert.alert("Validation Error", "Consultation fee must be a positive number");
+          Alert.alert(
+            "Validation Error",
+            "Consultation fee must be a positive number",
+          );
           return false;
         }
       }
@@ -135,14 +138,21 @@ const EditProfileScreen = ({ navigation }) => {
         const updatedUser = response.data?.user || response.data;
         const newUserState = { ...user, ...updatedUser };
         dispatch(setUser(newUserState));
-        await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(newUserState));
-        
+        await appStorage.setItem(
+          STORAGE_KEYS.USER_DATA,
+          JSON.stringify(newUserState),
+        );
+
         if (isAdmin) {
-          await queryClient.invalidateQueries({ queryKey: queryKeys.doctors.list({ scope: "security-settings" }) });
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.doctors.list({ scope: "security-settings" }),
+          });
         } else {
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
-            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.doctor(user?.id || "unknown") }),
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.dashboardStats.doctor(user?.id || "unknown"),
+            }),
           ]);
         }
 
@@ -176,103 +186,103 @@ const EditProfileScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.card}
       />
-      <KeyboardAvoidingView {...getKeyboardConfig()}
-        style={styles.flex}
-      >
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => handleSmartBack(navigation, user?.role === "admin" ? "AdminTabs" : "DoctorTabs")}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
-          <Text style={styles.headerSubtitle}>Update your information</Text>
-        </View>
-        <View style={styles.headerIconContainer}>
-          <Edit
-            
-            size={24}
-            color={healthColors.primary.main}
-          />
-        </View>
-      </View>
-
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 20) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.avatarSection}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>{getInitials(user?.name || "Admin")}</Text>
+      <KeyboardAvoidingView {...getKeyboardConfig()} style={styles.flex}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() =>
+              handleSmartBack(
+                navigation,
+                user?.role === "admin" ? "AdminTabs" : "DoctorTabs",
+              )
+            }
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft size={24} color={healthColors.text.primary} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Edit Profile</Text>
+            <Text style={styles.headerSubtitle}>Update your information</Text>
           </View>
-          <Text selectable style={styles.avatarLabel}>{user?.role === "admin" ? "Admin Account" : "Doctor Account"}</Text>
-          <Text selectable style={styles.avatarEmail}>{user?.email}</Text>
+          <View style={styles.headerIconContainer}>
+            <Edit size={24} color={healthColors.primary.main} />
+          </View>
         </View>
 
-        <View style={styles.formSection}>
-          <Input
-            label="Full Name *"
-            placeholder="Enter your name"
-            value={formData.name}
-            onChangeText={(v) => handleInputChange("name", v)}
-            leftIcon={<User  size={18} color={healthColors.text.disabled} />}
-          />
-          {user?.role !== "admin" && (
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: Math.max(insets.bottom, 20) },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.avatarSection}>
+            <View style={styles.avatarContainer}>
+              <Text style={styles.avatarText}>
+                {getInitials(user?.name || "Admin")}
+              </Text>
+            </View>
+            <Text selectable style={styles.avatarLabel}>
+              {user?.role === "admin" ? "Admin Account" : "Doctor Account"}
+            </Text>
+            <Text selectable style={styles.avatarEmail}>
+              {user?.email}
+            </Text>
+          </View>
+
+          <View style={styles.formSection}>
             <Input
-              label="Specialization *"
-              placeholder="e.g., Cardiologist"
-              value={formData.specialization}
-              onChangeText={(v) => handleInputChange("specialization", v)}
-              leftIcon={<Cross  size={18} color={healthColors.text.disabled} />}
+              label="Full Name *"
+              placeholder="Enter your name"
+              value={formData.name}
+              onChangeText={(v) => handleInputChange("name", v)}
+              leftIcon={<User size={18} color={healthColors.text.disabled} />}
             />
-          )}
-          <Input
-            label="Phone Number *"
-            placeholder="10-digit mobile number"
-            value={formData.phone}
-            onChangeText={(v) => handleInputChange("phone", v.replace(/[^0-9]/g, ""))}
-            keyboardType="phone-pad"
-            maxLength={10}
-            leftIcon={<Phone  size={18} color={healthColors.text.disabled} />}
+            {user?.role !== "admin" && (
+              <Input
+                label="Specialization *"
+                placeholder="e.g., Cardiologist"
+                value={formData.specialization}
+                onChangeText={(v) => handleInputChange("specialization", v)}
+                leftIcon={
+                  <Cross size={18} color={healthColors.text.disabled} />
+                }
+              />
+            )}
+            <Input
+              label="Phone Number *"
+              placeholder="10-digit mobile number"
+              value={formData.phone}
+              onChangeText={(v) =>
+                handleInputChange("phone", v.replace(/[^0-9]/g, ""))
+              }
+              keyboardType="phone-pad"
+              maxLength={10}
+              leftIcon={<Phone size={18} color={healthColors.text.disabled} />}
+            />
+          </View>
+
+          <View style={styles.noteContainer}>
+            <Info size={14} color={healthColors.text.disabled} />
+            <Text style={styles.note}>
+              Fields marked with <Text style={styles.required}>*</Text> are
+              required
+            </Text>
+          </View>
+
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
+            gradient
+            loading={updateProfileMutation.isPending}
+            onPress={handleSave}
+            style={styles.saveButton}
+            title="Save Changes"
           />
-
-        </View>
-
-        <View style={styles.noteContainer}>
-          <Info
-            
-            size={14}
-            color={healthColors.text.disabled}
-          />
-          <Text style={styles.note}>
-            Fields marked with <Text style={styles.required}>*</Text> are
-            required
-          </Text>
-        </View>
-
-        <Button
-          variant="primary"
-          size="large"
-          fullWidth
-          gradient
-          loading={updateProfileMutation.isPending}
-          onPress={handleSave}
-          style={styles.saveButton}
-        title="Save Changes"
-        />
-      </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -392,10 +402,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 24,
   },
-
 });
 
 export default EditProfileScreen;
-
-
-

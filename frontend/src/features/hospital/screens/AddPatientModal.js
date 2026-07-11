@@ -20,14 +20,14 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { ChevronDown, X, Check, Calendar, UserPlus } from "lucide-react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import adminService from '@/services/admin.service';
-import { Button, Input } from '@/components/common';
-import logger from '@/utils/logger';
-import { DynamicIcon } from '@/components/common';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { parseError } from '@/utils/errorHandler';
-import { getKeyboardConfig } from '@/utils/responsive';
+import { theme, healthColors } from "@/theme";
+import adminService from "@/services/admin.service";
+import { Button, Input } from "@/components/common";
+import logger from "@/utils/logger";
+import { DynamicIcon } from "@/components/common";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { parseError } from "@/utils/errorHandler";
+import { getKeyboardConfig } from "@/utils/responsive";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -63,7 +63,9 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       if (response?.success === true) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.dashboardStats.admin(),
+          }),
         ]);
 
         if (onSuccess) {
@@ -79,7 +81,9 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         return;
       }
 
-      throw new Error(response?.message || "Failed to register patient. Please try again.");
+      throw new Error(
+        response?.message || "Failed to register patient. Please try again.",
+      );
     },
   });
 
@@ -109,7 +113,8 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = "Password must contain uppercase, lowercase, and a number";
+      newErrors.password =
+        "Password must contain uppercase, lowercase, and a number";
     }
 
     if (
@@ -159,14 +164,25 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       if (formData.address && formData.address.trim()) {
         patientData.address = formData.address.trim();
       }
-      if (formData.emergencyContactName && formData.emergencyContactName.trim()) {
+      if (
+        formData.emergencyContactName &&
+        formData.emergencyContactName.trim()
+      ) {
         patientData.emergencyContactName = formData.emergencyContactName.trim();
       }
-      if (formData.emergencyContactPhone && formData.emergencyContactPhone.trim()) {
-        patientData.emergencyContactPhone = formData.emergencyContactPhone.trim();
+      if (
+        formData.emergencyContactPhone &&
+        formData.emergencyContactPhone.trim()
+      ) {
+        patientData.emergencyContactPhone =
+          formData.emergencyContactPhone.trim();
       }
-      if (formData.emergencyContactRelation && formData.emergencyContactRelation.trim()) {
-        patientData.emergencyContactRelation = formData.emergencyContactRelation.trim();
+      if (
+        formData.emergencyContactRelation &&
+        formData.emergencyContactRelation.trim()
+      ) {
+        patientData.emergencyContactRelation =
+          formData.emergencyContactRelation.trim();
       }
       if (formData.allergies && formData.allergies.trim()) {
         patientData.allergies = formData.allergies
@@ -190,32 +206,39 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       let fieldError = null;
 
       // Specific handling for duplicate errors with field highlighting
-      if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
+      if (
+        errorMessage.toLowerCase().includes("email") &&
+        errorMessage.toLowerCase().includes("already exists")
+      ) {
         setErrors({ ...errors, email: "This email is already registered" });
-        errorMessage = "This email is already registered. Please use a different email.";
+        errorMessage =
+          "This email is already registered. Please use a different email.";
         fieldError = "email";
-      } else if (errorMessage.toLowerCase().includes("phone") && errorMessage.toLowerCase().includes("already exists")) {
-        setErrors({ ...errors, phone: "This phone number is already registered" });
-        errorMessage = "This phone number is already registered. Please use a different number.";
+      } else if (
+        errorMessage.toLowerCase().includes("phone") &&
+        errorMessage.toLowerCase().includes("already exists")
+      ) {
+        setErrors({
+          ...errors,
+          phone: "This phone number is already registered",
+        });
+        errorMessage =
+          "This phone number is already registered. Please use a different number.";
         fieldError = "phone";
       }
 
       // Show alert with clear message
-      Alert.alert(
-        "Registration Failed", 
-        errorMessage,
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Focus on the error field if specified
-              if (fieldError === "phone") {
-                // Phone field will show red error state
-              }
+      Alert.alert("Registration Failed", errorMessage, [
+        {
+          text: "OK",
+          onPress: () => {
+            // Focus on the error field if specified
+            if (fieldError === "phone") {
+              // Phone field will show red error state
             }
-          }
-        ]
-      );
+          },
+        },
+      ]);
     }
   };
 
@@ -243,13 +266,13 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
     }
-    
+
     if (date) {
       setSelectedDate(date);
       // Use local date formatting to avoid timezone shift
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
       setFormData({ ...formData, dateOfBirth: formattedDate });
       if (errors.dateOfBirth) {
@@ -280,7 +303,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     icon,
     keyboardType = "default",
     secureTextEntry = false,
-    multiline = false
+    multiline = false,
   ) => (
     <View style={styles.inputContainer}>
       <Input
@@ -313,7 +336,9 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           <DynamicIcon
             name={icon}
             size={20}
-            color={errors[key] ? healthColors.error.main : healthColors.text.tertiary}
+            color={
+              errors[key] ? healthColors.error.main : healthColors.text.tertiary
+            }
           />
         }
         error={errors[key]}
@@ -355,8 +380,16 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     </View>
   );
 
-  const renderPickerModal = (title, options, selectedValue, onSelect, visible, onClose) => (
-    <Modal statusBarTranslucent
+  const renderPickerModal = (
+    title,
+    options,
+    selectedValue,
+    onSelect,
+    visible,
+    onClose,
+  ) => (
+    <Modal
+      statusBarTranslucent
       visible={visible}
       transparent={true}
       animationType="slide"
@@ -377,12 +410,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               accessibilityRole="button"
               accessibilityLabel={`Close ${title} options`}
             >
-              
-              <X
-                
-                size={24}
-                color={healthColors.text.primary}
-              />
+              <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -407,11 +435,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                   {item}
                 </Text>
                 {selectedValue === item && (
-                  <Check
-                    
-                    size={20}
-                    color={healthColors.primary.main}
-                  />
+                  <Check size={20} color={healthColors.primary.main} />
                 )}
               </TouchableOpacity>
             )}
@@ -422,13 +446,15 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   );
 
   return (
-    <Modal statusBarTranslucent
+    <Modal
+      statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>
@@ -442,10 +468,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               accessibilityRole="button"
               accessibilityLabel="Close patient registration"
             >
-              <X
-                size={24}
-                color={healthColors.text.primary}
-              />
+              <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
 
@@ -461,14 +484,14 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Email Address *",
               "patient@example.com",
               "mail",
-              "email-address"
+              "email-address",
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+91 1234567890",
               "call",
-              "phone-pad"
+              "phone-pad",
             )}
             {renderInput(
               "password",
@@ -476,7 +499,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Minimum 8 characters",
               "lock-closed",
               "default",
-              true
+              true,
             )}
             {/* Date of Birth Picker */}
             <View style={styles.inputContainer}>
@@ -492,7 +515,6 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                 accessibilityLabel="Select date of birth"
               >
                 <Calendar
-                  
                   size={20}
                   color={
                     errors.dateOfBirth
@@ -511,11 +533,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
                     ? formatDisplayDate(formData.dateOfBirth)
                     : "Select date of birth..."}
                 </Text>
-                <ChevronDown
-                  
-                  size={20}
-                  color={healthColors.text.tertiary}
-                />
+                <ChevronDown size={20} color={healthColors.text.tertiary} />
               </TouchableOpacity>
               {errors.dateOfBirth && (
                 <Text style={styles.errorText}>{errors.dateOfBirth}</Text>
@@ -526,14 +544,14 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Gender *",
               "person-outline",
               GENDERS,
-              setShowGenderPicker
+              setShowGenderPicker,
             )}
             {renderPicker(
               "bloodGroup",
               "Blood Group",
               "water",
               BLOOD_GROUPS,
-              setShowBloodGroupPicker
+              setShowBloodGroupPicker,
             )}
             {renderInput(
               "address",
@@ -542,42 +560,42 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "location",
               "default",
               false,
-              true
+              true,
             )}
             {renderInput(
               "emergencyContactName",
               "Emergency Contact Name",
               "Contact person name",
               "person-add",
-              "default"
+              "default",
             )}
             {renderInput(
               "emergencyContactPhone",
               "Emergency Contact Phone",
               "+91 1234567890",
               "call",
-              "phone-pad"
+              "phone-pad",
             )}
             {renderInput(
               "emergencyContactRelation",
               "Emergency Contact Relation",
               "e.g. Father, Spouse, Friend",
               "people",
-              "default"
+              "default",
             )}
             {renderInput(
               "allergies",
               "Allergies",
               "e.g. Penicillin, Pollen",
               "warning",
-              "default"
+              "default",
             )}
             {renderInput(
               "chronicConditions",
               "Chronic Conditions",
               "e.g. Diabetes, Hypertension",
               "medkit",
-              "default"
+              "default",
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>
@@ -624,7 +642,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           setShowGenderPicker(false);
         },
         showGenderPicker,
-        () => setShowGenderPicker(false)
+        () => setShowGenderPicker(false),
       )}
 
       {renderPickerModal(
@@ -636,7 +654,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           setShowBloodGroupPicker(false);
         },
         showBloodGroupPicker,
-        () => setShowBloodGroupPicker(false)
+        () => setShowBloodGroupPicker(false),
       )}
 
       {/* Date Picker */}

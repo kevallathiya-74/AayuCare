@@ -6,23 +6,35 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Clock } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { EmptyState } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { EmptyState } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
 
-const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => (
+const AdminRecentActivity = ({
+  activities = [],
+  showAll = false,
+  onToggle,
+}) => (
   <View style={styles.section}>
     <View style={styles.headerRow}>
-      <Clock  size={20} color={healthColors.primary.main} />
+      <Clock size={20} color={healthColors.primary.main} />
       <Text style={styles.title}>Recent Activities</Text>
       <TouchableOpacity
         style={styles.viewAll}
         onPress={onToggle}
         accessibilityRole="button"
-        accessibilityLabel={showAll ? "Show less recent activities" : "View all recent activities"}
+        accessibilityLabel={
+          showAll ? "Show less recent activities" : "View all recent activities"
+        }
       >
-        <Text style={styles.toggleText}>{showAll ? "Show Less" : "View All"}</Text>
-        <DynamicIcon name="chevron-forward" size={15} color={healthColors.primary.main} />
+        <Text style={styles.toggleText}>
+          {showAll ? "Show Less" : "View All"}
+        </Text>
+        <DynamicIcon
+          name="chevron-forward"
+          size={15}
+          color={healthColors.primary.main}
+        />
       </TouchableOpacity>
     </View>
 
@@ -59,10 +71,24 @@ const AdminRecentActivity = ({ activities = [], showAll = false, onToggle }) => 
 
 const styles = StyleSheet.create({
   section: { marginHorizontal: 16, marginTop: 24 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  title: { flex: 1, fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  title: {
+    flex: 1,
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.text.primary,
+  },
   viewAll: { flexDirection: "row", alignItems: "center", gap: 2 },
-  toggleText: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.primary.main, fontWeight: "600" },
+  toggleText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.primary.main,
+    fontWeight: "600",
+  },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
@@ -71,16 +97,35 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     ...theme.shadows.sm,
   },
-  row: { flexDirection: "row", alignItems: "flex-start", padding: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: healthColors.border.light },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 14,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: healthColors.border.light,
+  },
   iconWrap: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     flexShrink: 0,
   },
   content: { flex: 1 },
-  activityText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "500", color: healthColors.text.primary, lineHeight: 18 },
-  timeText: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, marginTop: 3 },
+  activityText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: "500",
+    color: healthColors.text.primary,
+    lineHeight: 18,
+  },
+  timeText: {
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.tertiary,
+    marginTop: 3,
+  },
   compactEmpty: { flex: 0, paddingVertical: 24, paddingHorizontal: 16 },
 });
 

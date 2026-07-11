@@ -6,8 +6,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { User, ChevronRight } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { SearchField } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { SearchField } from "@/components/common";
 
 const PatientSearchBar = ({
   value,
@@ -44,15 +44,16 @@ const PatientSearchBar = ({
             accessibilityLabel={`Open ${patient.name || "patient"} profile`}
           >
             <View style={styles.resultAvatar}>
-              <User  size={16} color={healthColors.primary.main} />
+              <User size={16} color={healthColors.primary.main} />
             </View>
             <View style={styles.resultInfo}>
               <Text style={styles.resultName}>{patient.name || "Unknown"}</Text>
               <Text style={styles.resultMeta}>
-                {patient.age ? `Age ${patient.age} · ` : ""}ID: {patient.userId || "N/A"}
+                {patient.age ? `Age ${patient.age} · ` : ""}ID:{" "}
+                {patient.userId || "N/A"}
               </Text>
             </View>
-            <ChevronRight  size={16} color={healthColors.text.tertiary} />
+            <ChevronRight size={16} color={healthColors.text.tertiary} />
           </TouchableOpacity>
         ))}
       </View>
@@ -88,13 +89,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   resultAvatar: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
   },
   resultInfo: { flex: 1 },
-  resultName: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "600", color: healthColors.text.primary },
-  resultMeta: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, marginTop: 2 },
+  resultName: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: "600",
+    color: healthColors.text.primary,
+  },
+  resultMeta: {
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.tertiary,
+    marginTop: 2,
+  },
 });
 
 export default PatientSearchBar;

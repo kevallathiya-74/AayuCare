@@ -81,7 +81,7 @@ class DoctorService {
   async getTodaysAppointments(filter = "all") {
     try {
       const response = await api.get(
-        `/doctors/me/appointments/today?filter=${filter}`
+        `/doctors/me/appointments/today?filter=${filter}`,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -99,7 +99,7 @@ class DoctorService {
   async getUpcomingAppointments(page = 1, limit = 10) {
     try {
       const response = await api.get(
-        `/doctors/me/appointments/upcoming?page=${page}&limit=${limit}`
+        `/doctors/me/appointments/upcoming?page=${page}&limit=${limit}`,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -114,7 +114,7 @@ class DoctorService {
   async searchMyPatients(query) {
     try {
       const response = await api.get(
-        `/doctors/me/patients/search?q=${encodeURIComponent(query)}`
+        `/doctors/me/patients/search?q=${encodeURIComponent(query)}`,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -151,16 +151,23 @@ class DoctorService {
       }
 
       try {
-        const profileResponse = await api.get(`/patients/${patientId}/profile`, {
-          useCache: options?.forceRefresh !== true,
-          skipCache: options?.forceRefresh === true,
-          cacheTTL: options?.cacheTTL ?? PATIENT_DETAILS_TTL_MS,
-        });
-        const profileNormalized = normalizeServiceResponse(profileResponse.data, {
-          fallbackData: null,
-        });
+        const profileResponse = await api.get(
+          `/patients/${patientId}/profile`,
+          {
+            useCache: options?.forceRefresh !== true,
+            skipCache: options?.forceRefresh === true,
+            cacheTTL: options?.cacheTTL ?? PATIENT_DETAILS_TTL_MS,
+          },
+        );
+        const profileNormalized = normalizeServiceResponse(
+          profileResponse.data,
+          {
+            fallbackData: null,
+          },
+        );
 
-        const rawPatient = profileNormalized?.data?.patient || profileNormalized?.data || null;
+        const rawPatient =
+          profileNormalized?.data?.patient || profileNormalized?.data || null;
         return {
           success: profileNormalized?.success !== false,
           message: profileNormalized?.message || "Request successful",
@@ -191,15 +198,13 @@ class DoctorService {
     const uniqueIds = Array.from(
       new Set(
         (patientIds || []).filter((id) =>
-          UUID_V4_LIKE_REGEX.test(String(id || ""))
-        )
-      )
+          UUID_V4_LIKE_REGEX.test(String(id || "")),
+        ),
+      ),
     );
     if (uniqueIds.length === 0) return;
 
-    await Promise.allSettled(
-      uniqueIds.map((id) => this.getPatientDetails(id))
-    );
+    await Promise.allSettled(uniqueIds.map((id) => this.getPatientDetails(id)));
   }
 
   clearPatientDetailsCache() {
@@ -213,7 +218,7 @@ class DoctorService {
     try {
       const response = await api.patch(
         `/doctors/me/appointments/${appointmentId}/status`,
-        { status, notes }
+        { status, notes },
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -279,7 +284,7 @@ class DoctorService {
     try {
       const response = await api.post(
         "/doctors/me/walk-in-patient",
-        patientData
+        patientData,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -314,12 +319,12 @@ class DoctorService {
           }
           return acc;
         },
-        {}
+        {},
       );
 
       const params = new URLSearchParams(cleanFilters).toString();
       const response = await api.get(
-        `/doctors/me/consultation-history${params ? `?${params}` : ""}`
+        `/doctors/me/consultation-history${params ? `?${params}` : ""}`,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -348,7 +353,7 @@ class DoctorService {
     try {
       const response = await api.put(
         `/doctors/me/schedule/${dayOfWeek}`,
-        scheduleData
+        scheduleData,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -363,7 +368,7 @@ class DoctorService {
   async toggleDayAvailability(dayOfWeek) {
     try {
       const response = await api.patch(
-        `/doctors/me/schedule/${dayOfWeek}/toggle`
+        `/doctors/me/schedule/${dayOfWeek}/toggle`,
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {

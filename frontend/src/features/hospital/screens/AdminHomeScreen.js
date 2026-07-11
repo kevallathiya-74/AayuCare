@@ -17,22 +17,33 @@ import { useSelector, useDispatch } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import { theme, healthColors } from '@/theme';
-import Routes from '@/navigation/routes';
-import { getSafeAreaEdges } from '@/utils/responsive';
-import { logoutUser } from '@/store/slices/authSlice';
-import { showConfirmation, logError } from '@/utils/errorHandler';
-import { queryKeys } from '@/config/reactQueryConfig';
-import adminService from '@/services/admin.service';
-import notificationService from '@/services/notification.service';
-import eventService from '@/services/event.service';
-import doctorService from '@/features/hospital/api/doctor.service';
-import patientService from '@/features/patient/api/patient.service';
-import { Calendar, Stethoscope, Users, Pill, FileText, CalendarDays, Home, BarChart2, User, Settings } from "lucide-react-native";
-import { useAdminAppointments } from '@/context/AdminAppointmentContext';
-import { useDrawer } from '@/hooks/useDrawer';
-import { DrawerMenu } from '@/components/layout';
-import { SkeletonCardRow, SkeletonStatGrid } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import Routes from "@/navigation/routes";
+import { getSafeAreaEdges } from "@/utils/responsive";
+import { logoutUser } from "@/store/slices/authSlice";
+import { showConfirmation, logError } from "@/utils/errorHandler";
+import { queryKeys } from "@/config/reactQueryConfig";
+import adminService from "@/services/admin.service";
+import notificationService from "@/services/notification.service";
+import eventService from "@/services/event.service";
+import doctorService from "@/features/hospital/api/doctor.service";
+import patientService from "@/features/patient/api/patient.service";
+import {
+  Calendar,
+  Stethoscope,
+  Users,
+  Pill,
+  FileText,
+  CalendarDays,
+  Home,
+  BarChart2,
+  User,
+  Settings,
+} from "lucide-react-native";
+import { useAdminAppointments } from "@/context/AdminAppointmentContext";
+import { useDrawer } from "@/hooks/useDrawer";
+import { DrawerMenu } from "@/components/layout";
+import { SkeletonCardRow, SkeletonStatGrid } from "@/components/common";
 import {
   AdminHeader,
   AdminWelcomeBanner,
@@ -75,12 +86,14 @@ const AdminHomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {}
+    (state) => state.permissions?.notification || {},
   );
   const canUseNotifications =
-    !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
+    !!notificationPermission.granted &&
+    !!notificationPermission.notificationsEnabled;
   const dispatch = useDispatch();
-  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
+  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
+    useDrawer();
   const { refreshCount } = useAdminAppointments();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -102,8 +115,12 @@ const AdminHomeScreen = ({ navigation }) => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const [
-        statsRes, activitiesRes, notifRes, eventsRes,
-        doctorsRes, patientsRes,
+        statsRes,
+        activitiesRes,
+        notifRes,
+        eventsRes,
+        doctorsRes,
+        patientsRes,
       ] = await Promise.all([
         adminService.getDashboardStats().catch(() => null),
         adminService.getRecentActivities(activitiesLimit).catch(() => null),
@@ -118,21 +135,36 @@ const AdminHomeScreen = ({ navigation }) => {
       if (statsRes?.success) {
         const d = statsRes.data;
         setStats({
-          appointments: typeof d.appointments === "object"
-            ? d.appointments : { total: d.appointments || 0, today: 0, pending: 0, completed: 0, trend: 0 },
-          doctors: typeof d.doctors === "object"
-            ? d.doctors : { total: d.doctors || 0, active: 0, onDuty: 0, trend: 0 },
-          patients: typeof d.patients === "object"
-            ? d.patients : { total: d.patients || 0, new: 0, returning: 0, trend: 0 },
-          prescriptions: typeof d.prescriptions === "object"
-            ? d.prescriptions : { total: d.prescriptions || 0, today: 0, trend: 0 },
+          appointments:
+            typeof d.appointments === "object"
+              ? d.appointments
+              : {
+                  total: d.appointments || 0,
+                  today: 0,
+                  pending: 0,
+                  completed: 0,
+                  trend: 0,
+                },
+          doctors:
+            typeof d.doctors === "object"
+              ? d.doctors
+              : { total: d.doctors || 0, active: 0, onDuty: 0, trend: 0 },
+          patients:
+            typeof d.patients === "object"
+              ? d.patients
+              : { total: d.patients || 0, new: 0, returning: 0, trend: 0 },
+          prescriptions:
+            typeof d.prescriptions === "object"
+              ? d.prescriptions
+              : { total: d.prescriptions || 0, today: 0, trend: 0 },
           revenue: d.revenue || { total: 0, today: 0, trend: 0 },
         });
       }
       if (activitiesRes?.success) setRecentActivities(activitiesRes.data);
       if (notifRes?.success) setNotificationCount(notifRes.data?.count || 0);
       if (!canUseNotifications) setNotificationCount(0);
-      if (eventsRes?.success) setUpcomingEventsCount(eventsRes.data?.length || 0);
+      if (eventsRes?.success)
+        setUpcomingEventsCount(eventsRes.data?.length || 0);
       if (doctorsRes?.success) setDoctorsList(extractUsers(doctorsRes));
       if (patientsRes?.success) setPatientsList(extractUsers(patientsRes));
 
@@ -149,10 +181,7 @@ const AdminHomeScreen = ({ navigation }) => {
     }
   }, [activitiesLimit, canUseNotifications]);
 
-  const {
-    isLoading: dashboardLoading,
-    refetch: refetchDashboard,
-  } = useQuery({
+  const { isLoading: dashboardLoading, refetch: refetchDashboard } = useQuery({
     queryKey: queryKeys.dashboardStats.admin(),
     queryFn: fetchDashboardData,
     staleTime: 60 * 1000,
@@ -163,7 +192,7 @@ const AdminHomeScreen = ({ navigation }) => {
     useCallback(() => {
       refetchDashboard();
       refreshCount();
-    }, [refetchDashboard, refreshCount])
+    }, [refetchDashboard, refreshCount]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -174,57 +203,150 @@ const AdminHomeScreen = ({ navigation }) => {
   }, [refetchDashboard, refreshCount]);
 
   const handleLogout = useCallback(() => {
-    showConfirmation("Are you sure you want to logout?", () => dispatch(logoutUser()), () => {}, "Logout", "log-out-outline");
+    showConfirmation(
+      "Are you sure you want to logout?",
+      () => dispatch(logoutUser()),
+      () => {},
+      "Logout",
+      "log-out-outline",
+    );
   }, [dispatch]);
 
   // ── Derived data ──
   const greeting = useMemo(() => {
     const h = new Date().getHours();
     if (h >= 5 && h < 12) return t("dashboard.goodMorning", "Good Morning");
-    if (h >= 12 && h < 17) return t("dashboard.goodAfternoon", "Good Afternoon");
+    if (h >= 12 && h < 17)
+      return t("dashboard.goodAfternoon", "Good Afternoon");
     if (h >= 17 && h < 21) return t("dashboard.goodEvening", "Good Evening");
     return t("dashboard.goodNight", "Good Night");
   }, [t]);
 
-  const statCards = useMemo(() => [
-    { title: t("dashboard.appointments", "Appointments"), value: stats.appointments.total,
-      subtitle: t("dashboard.appointmentsSubtitle", "{{today}} today • {{pending}} pending", { today: stats.appointments.today, pending: stats.appointments.pending }),
-      icon: Calendar, gradient: [healthColors.primary.main, healthColors.primary.dark],
-      trend: stats.appointments.trend,       screen: Routes.ADMIN_TABS.APPOINTMENTS, isTabScreen: true },
-    { title: t("dashboard.totalDoctors", "Total Doctors"), value: stats.doctors.total,
-      subtitle: t("dashboard.doctorsSubtitle", "{{active}} active • {{onDuty}} on duty", { active: stats.doctors.active, onDuty: stats.doctors.onDuty }),
-      icon: Stethoscope, gradient: [healthColors.secondary.main, healthColors.secondary.dark],
-      trend: stats.doctors.trend,       screen: Routes.ADMIN.MANAGE_DOCTORS, isTabScreen: false },
-    { title: t("dashboard.totalPatients", "Total Patients"), value: stats.patients.total.toLocaleString(),
-      subtitle: t("dashboard.patientsSubtitle", "{{new}} new • {{returning}} returning", { new: stats.patients.new, returning: stats.patients.returning }),
-      icon: Users, gradient: [healthColors.accent.coral, healthColors.accent.pink],
-      trend: stats.patients.trend,       screen: Routes.ADMIN.PATIENT_MANAGEMENT, isTabScreen: false },
-    { title: t("dashboard.prescriptions", "Prescriptions"), value: stats.prescriptions.total,
-      subtitle: t("dashboard.prescriptionsSubtitle", "{{today}} issued today", { today: stats.prescriptions.today }),
-      icon: Pill, gradient: [healthColors.info.main, healthColors.info.dark],
-      trend: stats.prescriptions.trend,       screen: Routes.ADMIN_TABS.REPORTS, isTabScreen: true },
-  ], [stats, t]);
+  const statCards = useMemo(
+    () => [
+      {
+        title: t("dashboard.appointments", "Appointments"),
+        value: stats.appointments.total,
+        subtitle: t(
+          "dashboard.appointmentsSubtitle",
+          "{{today}} today • {{pending}} pending",
+          {
+            today: stats.appointments.today,
+            pending: stats.appointments.pending,
+          },
+        ),
+        icon: Calendar,
+        gradient: [healthColors.primary.main, healthColors.primary.dark],
+        trend: stats.appointments.trend,
+        screen: Routes.ADMIN_TABS.APPOINTMENTS,
+        isTabScreen: true,
+      },
+      {
+        title: t("dashboard.totalDoctors", "Total Doctors"),
+        value: stats.doctors.total,
+        subtitle: t(
+          "dashboard.doctorsSubtitle",
+          "{{active}} active • {{onDuty}} on duty",
+          { active: stats.doctors.active, onDuty: stats.doctors.onDuty },
+        ),
+        icon: Stethoscope,
+        gradient: [healthColors.secondary.main, healthColors.secondary.dark],
+        trend: stats.doctors.trend,
+        screen: Routes.ADMIN.MANAGE_DOCTORS,
+        isTabScreen: false,
+      },
+      {
+        title: t("dashboard.totalPatients", "Total Patients"),
+        value: stats.patients.total.toLocaleString(),
+        subtitle: t(
+          "dashboard.patientsSubtitle",
+          "{{new}} new • {{returning}} returning",
+          { new: stats.patients.new, returning: stats.patients.returning },
+        ),
+        icon: Users,
+        gradient: [healthColors.accent.coral, healthColors.accent.pink],
+        trend: stats.patients.trend,
+        screen: Routes.ADMIN.PATIENT_MANAGEMENT,
+        isTabScreen: false,
+      },
+      {
+        title: t("dashboard.prescriptions", "Prescriptions"),
+        value: stats.prescriptions.total,
+        subtitle: t(
+          "dashboard.prescriptionsSubtitle",
+          "{{today}} issued today",
+          { today: stats.prescriptions.today },
+        ),
+        icon: Pill,
+        gradient: [healthColors.info.main, healthColors.info.dark],
+        trend: stats.prescriptions.trend,
+        screen: Routes.ADMIN_TABS.REPORTS,
+        isTabScreen: true,
+      },
+    ],
+    [stats, t],
+  );
 
   // Navigate helper
-  const nav = (screen, params, isTab = false) => () => {
-    if (isTab) navigation.navigate(Routes.TABS.ADMIN, { screen, ...params });
-    else navigation.navigate(screen, params);
-  };
+  const nav = useCallback(
+    (screen, params, isTab = false) =>
+      () => {
+        if (isTab)
+          navigation.navigate(Routes.TABS.ADMIN, { screen, ...params });
+        else navigation.navigate(screen, params);
+      },
+    [navigation],
+  );
 
-  const quickActions = useMemo(() => [
-    { title: t("dashboard.patients", "Patients"), icon: Users, color: healthColors.primary.main, onPress: nav(Routes.ADMIN.PATIENT_MANAGEMENT) },
-    { title: t("dashboard.doctors", "Doctors"), icon: Stethoscope, color: healthColors.secondary.main, onPress: nav(Routes.ADMIN.MANAGE_DOCTORS) },
-    { title: t("dashboard.appointments", "Appointments"), icon: Calendar, color: healthColors.accent.coral,
-      badge: stats.appointments.pending || null, onPress: nav(Routes.ADMIN_TABS.APPOINTMENTS, {}, true) },
-    { title: t("dashboard.reports", "Reports"), icon: FileText, color: healthColors.info.main, onPress: nav(Routes.ADMIN_TABS.REPORTS, {}, true) },
-    { title: t("dashboard.pharmacy", "Pharmacy"), icon: Pill, color: healthColors.accent.purple,
-      badge: stats.prescriptions.today > 0 ? stats.prescriptions.today : null, onPress: nav(Routes.ADMIN.PHARMACY_MANAGEMENT) },
-    { title: t("dashboard.events", "Events"), icon: CalendarDays, color: healthColors.accent.green,
-      badge: upcomingEventsCount > 0 ? upcomingEventsCount : null, onPress: nav(Routes.ADMIN.HOSPITAL_EVENTS) },
-  ], [stats, upcomingEventsCount, navigation, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  const quickActions = useMemo(
+    () => [
+      {
+        title: t("dashboard.patients", "Patients"),
+        icon: Users,
+        color: healthColors.primary.main,
+        onPress: nav(Routes.ADMIN.PATIENT_MANAGEMENT),
+      },
+      {
+        title: t("dashboard.doctors", "Doctors"),
+        icon: Stethoscope,
+        color: healthColors.secondary.main,
+        onPress: nav(Routes.ADMIN.MANAGE_DOCTORS),
+      },
+      {
+        title: t("dashboard.appointments", "Appointments"),
+        icon: Calendar,
+        color: healthColors.accent.coral,
+        badge: stats.appointments.pending || null,
+        onPress: nav(Routes.ADMIN_TABS.APPOINTMENTS, {}, true),
+      },
+      {
+        title: t("dashboard.reports", "Reports"),
+        icon: FileText,
+        color: healthColors.info.main,
+        onPress: nav(Routes.ADMIN_TABS.REPORTS, {}, true),
+      },
+      {
+        title: t("dashboard.pharmacy", "Pharmacy"),
+        icon: Pill,
+        color: healthColors.accent.purple,
+        badge: stats.prescriptions.today > 0 ? stats.prescriptions.today : null,
+        onPress: nav(Routes.ADMIN.PHARMACY_MANAGEMENT),
+      },
+      {
+        title: t("dashboard.events", "Events"),
+        icon: CalendarDays,
+        color: healthColors.accent.green,
+        badge: upcomingEventsCount > 0 ? upcomingEventsCount : null,
+        onPress: nav(Routes.ADMIN.HOSPITAL_EVENTS),
+      },
+    ],
+    [stats, upcomingEventsCount, nav, t],
+  );
 
   const warmManageDoctors = useCallback(() => {
-    const hospitalFilters = user?.hospitalId ? { hospitalId: user.hospitalId } : {};
+    const hospitalFilters = user?.hospitalId
+      ? { hospitalId: user.hospitalId }
+      : {};
     doctorService.getAllDoctors(hospitalFilters).catch(() => {});
   }, [user?.hospitalId]);
 
@@ -244,7 +366,13 @@ const AdminHomeScreen = ({ navigation }) => {
         if (typeof navigation.preload === "function") {
           navigation.preload(
             Routes.ADMIN.MANAGE_DOCTORS,
-            id ? { doctorId: id, doctorName: doctor?.name, doctorPayload: doctor } : undefined
+            id
+              ? {
+                  doctorId: id,
+                  doctorName: doctor?.name,
+                  doctorPayload: doctor,
+                }
+              : undefined,
           );
         }
       } catch {
@@ -253,10 +381,12 @@ const AdminHomeScreen = ({ navigation }) => {
 
       navigation.navigate(
         Routes.ADMIN.MANAGE_DOCTORS,
-        id ? { doctorId: id, doctorName: doctor?.name, doctorPayload: doctor } : undefined
+        id
+          ? { doctorId: id, doctorName: doctor?.name, doctorPayload: doctor }
+          : undefined,
       );
     },
-    [navigation, warmManageDoctors]
+    [navigation, warmManageDoctors],
   );
 
   const handlePatientPress = useCallback(
@@ -271,7 +401,13 @@ const AdminHomeScreen = ({ navigation }) => {
         if (typeof navigation.preload === "function") {
           navigation.preload(
             Routes.ADMIN.PATIENT_MANAGEMENT,
-            id ? { patientId: id, patientName: patient?.name, patientPayload: patient } : undefined
+            id
+              ? {
+                  patientId: id,
+                  patientName: patient?.name,
+                  patientPayload: patient,
+                }
+              : undefined,
           );
         }
       } catch {
@@ -280,10 +416,16 @@ const AdminHomeScreen = ({ navigation }) => {
 
       navigation.navigate(
         Routes.ADMIN.PATIENT_MANAGEMENT,
-        id ? { patientId: id, patientName: patient?.name, patientPayload: patient } : undefined
+        id
+          ? {
+              patientId: id,
+              patientName: patient?.name,
+              patientPayload: patient,
+            }
+          : undefined,
       );
     },
-    [navigation, warmManagePatients]
+    [navigation, warmManagePatients],
   );
 
   const handleDoctorsSectionPress = useCallback(() => {
@@ -297,60 +439,119 @@ const AdminHomeScreen = ({ navigation }) => {
   }, [navigation, warmManagePatients]);
 
   // ── Drawer menu ──
-  const navFromDrawer = (screen, isTab = false) => () => {
-    closeMenu();
-    setTimeout(() => {
-      if (isTab) navigation.navigate(Routes.TABS.ADMIN, { screen });
-      else navigation.navigate(screen);
-    }, 100);
-  };
+  const navFromDrawer = useCallback(
+    (screen, isTab = false) =>
+      () => {
+        closeMenu();
+        setTimeout(() => {
+          if (isTab) navigation.navigate(Routes.TABS.ADMIN, { screen });
+          else navigation.navigate(screen);
+        }, 100);
+      },
+    [navigation, closeMenu],
+  );
 
-  const menuSections = useMemo(() => [
-    {
-      title: t("drawer.systemManagement", "SYSTEM MANAGEMENT"),
-      items: [
-        { icon: Home, iconColor: healthColors.primary.main, label: t("drawer.dashboard", "Dashboard"), onPress: navFromDrawer(Routes.ADMIN_TABS.DASHBOARD, true) },
-        { icon: Stethoscope, iconColor: healthColors.secondary.main, label: t("drawer.manageDoctors", "Manage Doctors"), onPress: navFromDrawer(Routes.ADMIN.MANAGE_DOCTORS) },
-        { icon: Users, iconColor: healthColors.accent.aqua, label: t("drawer.managePatients", "Manage Patients"), onPress: navFromDrawer(Routes.ADMIN.PATIENT_MANAGEMENT) },
-        { icon: Calendar, iconColor: healthColors.accent.coral, label: t("drawer.appointments", "Appointments"), onPress: navFromDrawer(Routes.ADMIN_TABS.APPOINTMENTS, true) },
-        { icon: BarChart2, iconColor: healthColors.info.main, label: t("drawer.reportsAndRecords", "Reports & Records"), onPress: navFromDrawer(Routes.ADMIN_TABS.REPORTS, true) },
-      ],
-    },
-    {
-      title: t("drawer.account", "ACCOUNT"),
-      items: [
-        { icon: User, iconColor: healthColors.text.secondary, label: t("drawer.profile", "Profile"),
-          onPress: () => { closeMenu(); setTimeout(() => setShowProfile(true), 100); } },
-        { icon: Settings, iconColor: healthColors.text.secondary, label: t("drawer.settings", "Settings"), onPress: navFromDrawer(Routes.ADMIN_TABS.SETTINGS, true) },
-      ],
-    },
-  ], [navigation, closeMenu, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  const menuSections = useMemo(
+    () => [
+      {
+        title: t("drawer.systemManagement", "SYSTEM MANAGEMENT"),
+        items: [
+          {
+            icon: Home,
+            iconColor: healthColors.primary.main,
+            label: t("drawer.dashboard", "Dashboard"),
+            onPress: navFromDrawer(Routes.ADMIN_TABS.DASHBOARD, true),
+          },
+          {
+            icon: Stethoscope,
+            iconColor: healthColors.secondary.main,
+            label: t("drawer.manageDoctors", "Manage Doctors"),
+            onPress: navFromDrawer(Routes.ADMIN.MANAGE_DOCTORS),
+          },
+          {
+            icon: Users,
+            iconColor: healthColors.accent.aqua,
+            label: t("drawer.managePatients", "Manage Patients"),
+            onPress: navFromDrawer(Routes.ADMIN.PATIENT_MANAGEMENT),
+          },
+          {
+            icon: Calendar,
+            iconColor: healthColors.accent.coral,
+            label: t("drawer.appointments", "Appointments"),
+            onPress: navFromDrawer(Routes.ADMIN_TABS.APPOINTMENTS, true),
+          },
+          {
+            icon: BarChart2,
+            iconColor: healthColors.info.main,
+            label: t("drawer.reportsAndRecords", "Reports & Records"),
+            onPress: navFromDrawer(Routes.ADMIN_TABS.REPORTS, true),
+          },
+        ],
+      },
+      {
+        title: t("drawer.account", "ACCOUNT"),
+        items: [
+          {
+            icon: User,
+            iconColor: healthColors.text.secondary,
+            label: t("drawer.profile", "Profile"),
+            onPress: () => {
+              closeMenu();
+              setTimeout(() => setShowProfile(true), 100);
+            },
+          },
+          {
+            icon: Settings,
+            iconColor: healthColors.text.secondary,
+            label: t("drawer.settings", "Settings"),
+            onPress: navFromDrawer(Routes.ADMIN_TABS.SETTINGS, true),
+          },
+        ],
+      },
+    ],
+    [navFromDrawer, closeMenu, t],
+  );
 
   // ── Render ──
   return (
-    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
+    >
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.primary}
+      />
 
       <AdminHeader
         notificationCount={notificationCount}
         showProfile={showProfile}
         onMenuOpen={openMenu}
-        onNotificationPress={() => navigation.navigate(Routes.ADMIN.NOTIFICATIONS)}
+        onNotificationPress={() =>
+          navigation.navigate(Routes.ADMIN.NOTIFICATIONS)
+        }
         onProfileToggle={() => setShowProfile((v) => !v)}
       />
 
       {showProfile ? (
         <AdminProfileView
           user={user}
-          onNavigate={(screen) => { setShowProfile(false); navigation.navigate(screen); }}
+          onNavigate={(screen) => {
+            setShowProfile(false);
+            navigation.navigate(screen);
+          }}
           onLogout={handleLogout}
         />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh}
-              colors={[healthColors.primary.main]} tintColor={healthColors.primary.main} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[healthColors.primary.main]}
+              tintColor={healthColors.primary.main}
+            />
           }
         >
           {dashboardLoading ? (
@@ -362,55 +563,63 @@ const AdminHomeScreen = ({ navigation }) => {
             </View>
           ) : (
             <>
-          {/* Welcome */}
-          <View style={styles.bannerWrap}>
-            <AdminWelcomeBanner greeting={greeting} user={user} />
-          </View>
+              {/* Welcome */}
+              <View style={styles.bannerWrap}>
+                <AdminWelcomeBanner greeting={greeting} user={user} />
+              </View>
 
-          {/* Stats */}
-          <View style={styles.sectionWrap}>
-            <AdminStatsCarousel
-              statCards={statCards}
-              onCardPress={(stat) => {
-                if (stat.isTabScreen) navigation.navigate(Routes.TABS.ADMIN, { screen: stat.screen });
-                else if (stat.screen) navigation.navigate(stat.screen);
-              }}
-            />
-          </View>
+              {/* Stats */}
+              <View style={styles.sectionWrap}>
+                <AdminStatsCarousel
+                  statCards={statCards}
+                  onCardPress={(stat) => {
+                    if (stat.isTabScreen)
+                      navigation.navigate(Routes.TABS.ADMIN, {
+                        screen: stat.screen,
+                      });
+                    else if (stat.screen) navigation.navigate(stat.screen);
+                  }}
+                />
+              </View>
 
-          {/* Quick Actions */}
-          <AdminQuickActionsGrid title="Quick Actions" actions={quickActions} />
+              {/* Quick Actions */}
+              <AdminQuickActionsGrid
+                title="Quick Actions"
+                actions={quickActions}
+              />
 
-          {/* Doctors list */}
-          <AdminUsersList
-            title="Total Doctors"
-            titleIcon={Stethoscope}
-            iconColor={healthColors.secondary.main}
-            users={doctorsList}
-            onSectionPress={handleDoctorsSectionPress}
-            onViewAll={handleDoctorsSectionPress}
-            onUserPress={handleDoctorPress}
-          />
+              {/* Doctors list */}
+              <AdminUsersList
+                title="Total Doctors"
+                titleIcon={Stethoscope}
+                iconColor={healthColors.secondary.main}
+                users={doctorsList}
+                onSectionPress={handleDoctorsSectionPress}
+                onViewAll={handleDoctorsSectionPress}
+                onUserPress={handleDoctorPress}
+              />
 
-          {/* Patients list */}
-          <AdminUsersList
-            title="Recent Patients"
-            titleIcon={Users}
-            iconColor={healthColors.accent.coral}
-            users={patientsList}
-            onSectionPress={handlePatientsSectionPress}
-            onViewAll={handlePatientsSectionPress}
-            onUserPress={handlePatientPress}
-          />
+              {/* Patients list */}
+              <AdminUsersList
+                title="Recent Patients"
+                titleIcon={Users}
+                iconColor={healthColors.accent.coral}
+                users={patientsList}
+                onSectionPress={handlePatientsSectionPress}
+                onViewAll={handlePatientsSectionPress}
+                onUserPress={handlePatientPress}
+              />
 
-          {/* Recent Activity */}
-          <AdminRecentActivity
-            activities={recentActivities}
-            showAll={activitiesLimit > 5}
-            onToggle={() => setActivitiesLimit((prev) => (prev > 5 ? 5 : 20))}
-          />
+              {/* Recent Activity */}
+              <AdminRecentActivity
+                activities={recentActivities}
+                showAll={activitiesLimit > 5}
+                onToggle={() =>
+                  setActivitiesLimit((prev) => (prev > 5 ? 5 : 20))
+                }
+              />
 
-          <View style={styles.bottomPad} />
+              <View style={styles.bottomPad} />
             </>
           )}
         </ScrollView>
@@ -438,9 +647,9 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
     gap: theme.spacing.sm + theme.spacing.xs,
   },
-  bannerWrap: { paddingBottom: 8 },
-  sectionWrap: { paddingVertical: 8 },
-  bottomPad: { height: 24 },
+  bannerWrap: { paddingBottom: theme.spacing.sm },
+  sectionWrap: { paddingVertical: theme.spacing.sm },
+  bottomPad: { height: theme.spacing.xl },
 });
 
 export default AdminHomeScreen;

@@ -24,10 +24,10 @@ import { Calendar, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { formatDate, getStatusColor } from '@/utils/helpers';
-import { useAdminAppointments } from '@/context/AdminAppointmentContext';
-import { useAppointmentsInfinite } from '@/hooks/useAppointments';
+import { theme, healthColors } from "@/theme";
+import { formatDate, getStatusColor } from "@/utils/helpers";
+import { useAdminAppointments } from "@/context/AdminAppointmentContext";
+import { useAppointmentsInfinite } from "@/hooks/useAppointments";
 import {
   EmptyState,
   SkeletonCardRow,
@@ -39,12 +39,12 @@ import {
   FilterSelectField,
   FilterDropdownList,
   FilterChipGroup,
-} from '@/components/common';
-import appointmentService from '@/services/appointment.service';
-import { EmptyStateConfig } from '@/utils/constants';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { parseError } from '@/utils/errorHandler';
-import { handleSmartBack } from '@/utils/navigation';
+} from "@/components/common";
+import appointmentService from "@/services/appointment.service";
+import { EmptyStateConfig } from "@/utils/constants";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { parseError } from "@/utils/errorHandler";
+import { handleSmartBack } from "@/utils/navigation";
 
 const AppointmentsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -70,7 +70,7 @@ const AppointmentsScreen = ({ navigation }) => {
       { key: "no_show", label: "No Show", status: "no_show" },
       { key: "cancelled", label: "Cancelled", status: "cancelled" },
     ],
-    []
+    [],
   );
 
   const dateOptions = useMemo(
@@ -79,12 +79,12 @@ const AppointmentsScreen = ({ navigation }) => {
       { key: "today", label: "Today" },
       { key: "next_7_days", label: "Next 7 Days" },
     ],
-    []
+    [],
   );
 
   const queryFilters = useMemo(() => {
     const selectedStatus = statusOptions.find(
-      (option) => option.key === appliedFilters.status
+      (option) => option.key === appliedFilters.status,
     );
 
     const filters = {
@@ -115,10 +115,7 @@ const AppointmentsScreen = ({ navigation }) => {
     return filters;
   }, [appliedFilters, statusOptions]);
 
-  const {
-    data: statsSnapshot,
-    refetch: refetchStats,
-  } = useQuery({
+  const { data: statsSnapshot, refetch: refetchStats } = useQuery({
     queryKey: queryKeys.appointments.list({ scope: "admin-stats" }),
     queryFn: async () => {
       const response = await appointmentService.getAppointmentStats();
@@ -152,10 +149,11 @@ const AppointmentsScreen = ({ navigation }) => {
         return acc;
       }, {});
 
-      const pendingCount = (byStatus.scheduled || 0) + (byStatus.confirmed || 0);
+      const pendingCount =
+        (byStatus.scheduled || 0) + (byStatus.confirmed || 0);
       const allCount = Object.values(byStatus).reduce(
         (sum, value) => sum + Number(value || 0),
-        0
+        0,
       );
 
       return {
@@ -176,23 +174,32 @@ const AppointmentsScreen = ({ navigation }) => {
     },
     staleTime: 60 * 1000,
     retry: 1,
-    enabled: !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
+    enabled:
+      !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
   });
 
-  const statusCounts = useMemo(() => statsSnapshot?.statusCounts || {
-    all: 0,
-    pending: 0,
-    in_progress: 0,
-    completed: 0,
-    no_show: 0,
-    cancelled: 0,
-  }, [statsSnapshot?.statusCounts]);
+  const statusCounts = useMemo(
+    () =>
+      statsSnapshot?.statusCounts || {
+        all: 0,
+        pending: 0,
+        in_progress: 0,
+        completed: 0,
+        no_show: 0,
+        cancelled: 0,
+      },
+    [statsSnapshot?.statusCounts],
+  );
 
-  const dateCounts = useMemo(() => statsSnapshot?.dateCounts || {
-    all: 0,
-    today: 0,
-    next_7_days: 0,
-  }, [statsSnapshot?.dateCounts]);
+  const dateCounts = useMemo(
+    () =>
+      statsSnapshot?.dateCounts || {
+        all: 0,
+        today: 0,
+        next_7_days: 0,
+      },
+    [statsSnapshot?.dateCounts],
+  );
 
   // Use infinite query hook for admin appointments with lazy loading
   const {
@@ -204,11 +211,15 @@ const AppointmentsScreen = ({ navigation }) => {
     isFetchingNextPage,
     refetch,
     isRefetching,
-  } = useAppointmentsInfinite({
-    ...queryFilters,
-  }, {
-    enabled: !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
-  });
+  } = useAppointmentsInfinite(
+    {
+      ...queryFilters,
+    },
+    {
+      enabled:
+        !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
+    },
+  );
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -221,16 +232,20 @@ const AppointmentsScreen = ({ navigation }) => {
   // Flatten paginated data
   const appointments = useMemo(() => {
     if (!data?.pages) return [];
-    const allAppointments = data.pages.flatMap((page) => page.appointments || []);
+    const allAppointments = data.pages.flatMap(
+      (page) => page.appointments || [],
+    );
 
     if (appliedFilters.sortBy === "oldest") {
       return [...allAppointments].sort(
-        (a, b) => new Date(a?.appointmentDate || 0) - new Date(b?.appointmentDate || 0)
+        (a, b) =>
+          new Date(a?.appointmentDate || 0) - new Date(b?.appointmentDate || 0),
       );
     }
 
     return [...allAppointments].sort(
-      (a, b) => new Date(b?.appointmentDate || 0) - new Date(a?.appointmentDate || 0)
+      (a, b) =>
+        new Date(b?.appointmentDate || 0) - new Date(a?.appointmentDate || 0),
     );
   }, [data, appliedFilters.sortBy]);
 
@@ -252,16 +267,13 @@ const AppointmentsScreen = ({ navigation }) => {
   }, [appointments, normalizeTypeValue]);
 
   const fallbackStatusCounts = useMemo(() => {
-    const byStatus = appointments.reduce(
-      (acc, appointment) => {
-        const normalizedStatus = String(appointment?.status || "").toLowerCase();
-        if (normalizedStatus) {
-          acc[normalizedStatus] = (acc[normalizedStatus] || 0) + 1;
-        }
-        return acc;
-      },
-      {}
-    );
+    const byStatus = appointments.reduce((acc, appointment) => {
+      const normalizedStatus = String(appointment?.status || "").toLowerCase();
+      if (normalizedStatus) {
+        acc[normalizedStatus] = (acc[normalizedStatus] || 0) + 1;
+      }
+      return acc;
+    }, {});
 
     return {
       all: appointments.length,
@@ -341,19 +353,30 @@ const AppointmentsScreen = ({ navigation }) => {
         .filter(Boolean)
         .map((value) => String(value).toLowerCase());
 
-      return searchableParts.some((value) => value.includes(debouncedSearchText));
+      return searchableParts.some((value) =>
+        value.includes(debouncedSearchText),
+      );
     });
-  }, [appointments, debouncedSearchText, appliedFilters.reservationType, normalizeTypeValue]);
+  }, [
+    appointments,
+    debouncedSearchText,
+    appliedFilters.reservationType,
+    normalizeTypeValue,
+  ]);
 
   const previewSelectedStatus = useMemo(
     () => statusOptions.find((option) => option.key === draftFilters.status),
-    [statusOptions, draftFilters.status]
+    [statusOptions, draftFilters.status],
   );
 
   const draftFilteredCount = useMemo(() => {
     const draftStatusCsv = previewSelectedStatus?.status;
     const draftStatusSet = draftStatusCsv
-      ? new Set(String(draftStatusCsv).split(",").map((entry) => entry.trim().toLowerCase()))
+      ? new Set(
+          String(draftStatusCsv)
+            .split(",")
+            .map((entry) => entry.trim().toLowerCase()),
+        )
       : null;
 
     const now = new Date();
@@ -366,7 +389,10 @@ const AppointmentsScreen = ({ navigation }) => {
     nextWeekEnd.setHours(23, 59, 59, 999);
 
     return appointments.filter((appointment) => {
-      if (draftStatusSet && !draftStatusSet.has(String(appointment?.status || "").toLowerCase())) {
+      if (
+        draftStatusSet &&
+        !draftStatusSet.has(String(appointment?.status || "").toLowerCase())
+      ) {
         return false;
       }
 
@@ -391,7 +417,8 @@ const AppointmentsScreen = ({ navigation }) => {
 
       if (
         draftFilters.reservationType !== "all" &&
-        normalizeTypeValue(appointment?.type) !== normalizeTypeValue(draftFilters.reservationType)
+        normalizeTypeValue(appointment?.type) !==
+          normalizeTypeValue(draftFilters.reservationType)
       ) {
         return false;
       }
@@ -411,9 +438,17 @@ const AppointmentsScreen = ({ navigation }) => {
         .filter(Boolean)
         .map((value) => String(value).toLowerCase());
 
-      return searchableParts.some((value) => value.includes(debouncedSearchText));
+      return searchableParts.some((value) =>
+        value.includes(debouncedSearchText),
+      );
     }).length;
-  }, [appointments, draftFilters, debouncedSearchText, previewSelectedStatus, normalizeTypeValue]);
+  }, [
+    appointments,
+    draftFilters,
+    debouncedSearchText,
+    previewSelectedStatus,
+    normalizeTypeValue,
+  ]);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -421,7 +456,7 @@ const AppointmentsScreen = ({ navigation }) => {
       refetch();
       refreshCount();
       refetchStats();
-    }, [refetch, refreshCount, refetchStats])
+    }, [refetch, refreshCount, refetchStats]),
   );
 
   // Handle pull to refresh
@@ -460,8 +495,6 @@ const AppointmentsScreen = ({ navigation }) => {
     setIsStatusDropdownOpen(false);
   }, []);
 
-  
-
   const formatStatusLabel = (status) => {
     if (!status) return "Unknown";
     return status.replace(/_/g, " ");
@@ -479,10 +512,12 @@ const AppointmentsScreen = ({ navigation }) => {
         `Status: ${status}`,
         appointment?.reason ? `Reason: ${appointment.reason}` : null,
         appointment?.type ? `Type: ${appointment.type}` : null,
-        appointment?.chiefComplaint ? `Chief Complaint: ${appointment.chiefComplaint}` : null,
+        appointment?.chiefComplaint
+          ? `Chief Complaint: ${appointment.chiefComplaint}`
+          : null,
       ]
         .filter(Boolean)
-        .join("\n")
+        .join("\n"),
     );
   }, []);
 
@@ -496,11 +531,7 @@ const AppointmentsScreen = ({ navigation }) => {
       >
         <View style={styles.appointmentHeader}>
           <View style={styles.avatarContainer}>
-            <Calendar
-              
-              size={24}
-              color={healthColors.primary.main}
-            />
+            <Calendar size={24} color={healthColors.primary.main} />
           </View>
           <View style={styles.appointmentInfo}>
             <Text style={styles.doctorName}>
@@ -516,7 +547,12 @@ const AppointmentsScreen = ({ navigation }) => {
           <View
             style={[
               styles.statusBadge,
-              { backgroundColor: getStatusColor(item.status) + "20" },
+              {
+                backgroundColor: theme.withOpacity(
+                  getStatusColor(item.status),
+                  0.12,
+                ),
+              },
             ]}
           >
             <Text
@@ -536,7 +572,7 @@ const AppointmentsScreen = ({ navigation }) => {
         )}
       </TouchableOpacity>
     ),
-    [handleAppointmentPress]
+    [handleAppointmentPress],
   );
 
   const renderEmptyState = () => {
@@ -554,7 +590,9 @@ const AppointmentsScreen = ({ navigation }) => {
       <EmptyState
         icon={EmptyStateConfig.APPOINTMENTS.icon}
         title={EmptyStateConfig.APPOINTMENTS.title}
-        message={error ? parseError(error) : EmptyStateConfig.APPOINTMENTS.message}
+        message={
+          error ? parseError(error) : EmptyStateConfig.APPOINTMENTS.message
+        }
         actionLabel={error ? "Retry" : undefined}
         onActionPress={error ? refetch : undefined}
       />
@@ -577,10 +615,7 @@ const AppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -610,7 +645,9 @@ const AppointmentsScreen = ({ navigation }) => {
 
       {isLoading ? (
         <View style={styles.loadingSkeletonWrap}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
@@ -627,7 +664,6 @@ const AppointmentsScreen = ({ navigation }) => {
           maxToRenderPerBatch={10}
           windowSize={10}
           initialNumToRender={10}
-
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -661,18 +697,25 @@ const AppointmentsScreen = ({ navigation }) => {
 
         <FilterSectionTitle title="Sort by" />
         <View style={styles.filterOptionRow}>
-          {[{ key: "newest", label: "Newest first" }, { key: "oldest", label: "Oldest first" }].map((option) => {
+          {[
+            { key: "newest", label: "Newest first" },
+            { key: "oldest", label: "Oldest first" },
+          ].map((option) => {
             const active = draftFilters.sortBy === option.key;
             return (
               <TouchableOpacity
                 key={option.key}
                 style={[styles.radioOption, active && styles.radioOptionActive]}
-                onPress={() => setDraftFilters((prev) => ({ ...prev, sortBy: option.key }))}
+                onPress={() =>
+                  setDraftFilters((prev) => ({ ...prev, sortBy: option.key }))
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Sort by ${option.label}`}
                 accessibilityState={{ selected: active }}
               >
-                <View style={[styles.radioDot, active && styles.radioDotActive]} />
+                <View
+                  style={[styles.radioDot, active && styles.radioDotActive]}
+                />
                 <Text style={styles.radioLabel}>{option.label}</Text>
               </TouchableOpacity>
             );
@@ -681,7 +724,10 @@ const AppointmentsScreen = ({ navigation }) => {
 
         <FilterSectionTitle title="Status" />
         <FilterSelectField
-          label={statusOptions.find((s) => s.key === draftFilters.status)?.label || "Pending"}
+          label={
+            statusOptions.find((s) => s.key === draftFilters.status)?.label ||
+            "Pending"
+          }
           onPress={() => setIsStatusDropdownOpen((prev) => !prev)}
           isOpen={isStatusDropdownOpen}
           accessibilityLabel="Open status dropdown"
@@ -721,7 +767,10 @@ const AppointmentsScreen = ({ navigation }) => {
               ? "All"
               : type
                   .split("-")
-                  .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+                  .map(
+                    (segment) =>
+                      segment.charAt(0).toUpperCase() + segment.slice(1),
+                  )
                   .join(" ")
           }
         />

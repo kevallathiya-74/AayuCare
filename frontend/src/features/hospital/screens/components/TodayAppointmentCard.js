@@ -6,7 +6,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Clock, Video } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 const STATUS_COLOR = {
   completed: healthColors.success.main,
@@ -27,20 +27,27 @@ const STATUS_LABEL = {
 };
 
 const normalizeStatus = (s) =>
-  String(s || "scheduled").toLowerCase().replace(/-/g, "_");
+  String(s || "scheduled")
+    .toLowerCase()
+    .replace(/-/g, "_");
 
-const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation }) => {
+const TodayAppointmentCard = ({
+  appointment,
+  onViewHistory,
+  onStartConsultation,
+}) => {
   const ns = normalizeStatus(appointment?.status);
   const color = STATUS_COLOR[ns] || healthColors.warning.main;
   const label = STATUS_LABEL[ns] || "Pending";
-  const isActive = ns === "scheduled" || ns === "confirmed" || ns === "in_progress";
+  const isActive =
+    ns === "scheduled" || ns === "confirmed" || ns === "in_progress";
 
   return (
     <View style={styles.card}>
       {/* Header row */}
       <View style={styles.headerRow}>
         <View style={styles.timeChip}>
-          <Clock  size={theme.iconSizes.xs} color={healthColors.primary.main} />
+          <Clock size={theme.iconSizes.xs} color={healthColors.primary.main} />
           <Text style={styles.timeText}>{appointment.time || "--:--"}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: color + "1A" }]}>
@@ -48,7 +55,7 @@ const TodayAppointmentCard = ({ appointment, onViewHistory, onStartConsultation 
         </View>
         {appointment.type === "telemedicine" && (
           <View style={styles.typeBadge}>
-            <Video  size={13} color={healthColors.info.main} />
+            <Video size={13} color={healthColors.info.main} />
           </View>
         )}
       </View>
@@ -118,33 +125,64 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
   },
-  timeText: { fontSize: theme.typography.sizes.bodySmall, fontWeight: "700", color: healthColors.primary.main },
-  statusBadge: { paddingHorizontal: theme.spacing.sm, paddingVertical: theme.spacing.xs, borderRadius: theme.borderRadius.sm },
+  timeText: {
+    fontSize: theme.typography.sizes.bodySmall,
+    fontWeight: "700",
+    color: healthColors.primary.main,
+  },
+  statusBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+  },
   statusText: { fontSize: theme.typography.sizes.caption, fontWeight: "600" },
   typeBadge: {
-    width: 26, height: 26, borderRadius: 13,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: theme.withOpacity(healthColors.info.main, 0.08),
-    justifyContent: "center", alignItems: "center",
-  },
-  patientName: {
-    fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary, marginBottom: theme.spacing.xs,
-  },
-  patientMeta: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, marginBottom: 12 },
-    actions: { flexDirection: "row", gap: theme.spacing.sm },
-  secondaryBtn: {
-    flex: 1, paddingVertical: 9, borderRadius: theme.borderRadius.input,
-    borderWidth: 1.5, borderColor: healthColors.primary.main,
+    justifyContent: "center",
     alignItems: "center",
   },
-  secondaryBtnText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "600", color: healthColors.primary.main },
+  patientName: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  patientMeta: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
+    marginBottom: 12,
+  },
+  actions: { flexDirection: "row", gap: theme.spacing.sm },
+  secondaryBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: theme.borderRadius.input,
+    borderWidth: 1.5,
+    borderColor: healthColors.primary.main,
+    alignItems: "center",
+  },
+  secondaryBtnText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: "600",
+    color: healthColors.primary.main,
+  },
   primaryBtn: {
-    flex: 1, paddingVertical: 9, borderRadius: theme.borderRadius.input,
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: theme.borderRadius.input,
     backgroundColor: healthColors.primary.main,
     alignItems: "center",
     ...theme.shadows.sm,
   },
   primaryBtnDisabled: { opacity: 0.4 },
-  primaryBtnText: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "700", color: theme.colors.text.white },
+  primaryBtnText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: "700",
+    color: theme.colors.text.white,
+  },
 });
 
 export default MemoizedTodayAppointmentCard;

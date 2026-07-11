@@ -26,19 +26,27 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ChevronLeft, Clock, User, Calendar, Cross, FileText, UserCircle, Activity, Clipboard, Edit } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
 import {
-  getScreenPadding,
-  getKeyboardConfig,
-} from '@/utils/responsive';
+  ChevronLeft,
+  Clock,
+  User,
+  Calendar,
+  Cross,
+  FileText,
+  UserCircle,
+  Activity,
+  Clipboard,
+  Edit,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding, getKeyboardConfig } from "@/utils/responsive";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { doctorService } from '@/services';
-import { logError } from '@/utils/errorHandler';
-import { Button, Input } from '@/components/common';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { doctorService } from "@/services";
+import { logError } from "@/utils/errorHandler";
+import { Button, Input } from "@/components/common";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,12 +108,19 @@ const ConsultationScreen = ({ navigation, route }) => {
   // Appointment fields — tolerate both camelCase and snake_case field names
   const appointmentId = appointment.id || appointment.appointmentId;
   const patientName = appointment.patientName || "Unknown Patient";
-  const patientShortId = appointment.patientUserId || appointment.patientId || "";
+  const patientShortId =
+    appointment.patientUserId || appointment.patientId || "";
   const patientUUID = appointment.patientUUID || appointment.patientId || "";
   const patientAge = appointment.age || appointment.patientAge || "";
-  const reason = appointment.reason || appointment.chiefComplaint || appointment.chief_complaint || "";
-  const appointmentDate = appointment.appointmentDate || appointment.appointment_date || "";
-  const appointmentTime = appointment.appointmentTime || appointment.appointment_time || "";
+  const reason =
+    appointment.reason ||
+    appointment.chiefComplaint ||
+    appointment.chief_complaint ||
+    "";
+  const appointmentDate =
+    appointment.appointmentDate || appointment.appointment_date || "";
+  const appointmentTime =
+    appointment.appointmentTime || appointment.appointment_time || "";
   // Timer
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef(null);
@@ -124,22 +139,36 @@ const ConsultationScreen = ({ navigation, route }) => {
 
   const completeConsultationMutation = useMutation({
     mutationFn: async ({ apptId, formattedNotes }) => {
-      await doctorService.updateAppointmentStatus(apptId, "completed", formattedNotes);
+      await doctorService.updateAppointmentStatus(
+        apptId,
+        "completed",
+        formattedNotes,
+      );
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.appointments.all,
+      });
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
       Alert.alert(
         "Consultation Completed",
         `${patientName}'s consultation has been marked as completed.`,
-        [{ text: "OK", onPress: () => handleSmartBack(navigation, "DoctorTabs") }]
+        [
+          {
+            text: "OK",
+            onPress: () => handleSmartBack(navigation, "DoctorTabs"),
+          },
+        ],
       );
     },
     onError: (err) => {
       logError(err, { context: "ConsultationScreen.handleComplete" });
-      Alert.alert("Error", "Failed to complete consultation. Please try again.");
+      Alert.alert(
+        "Error",
+        "Failed to complete consultation. Please try again.",
+      );
     },
   });
 
@@ -180,7 +209,7 @@ const ConsultationScreen = ({ navigation, route }) => {
               style: "destructive",
               onPress: () => handleSmartBack(navigation, "DoctorTabs"),
             },
-          ]
+          ],
         );
         return true; // prevent default back
       }
@@ -209,7 +238,7 @@ const ConsultationScreen = ({ navigation, route }) => {
                     style: "destructive",
                     onPress: () => handleSmartBack(navigation, "DoctorTabs"),
                   },
-                ]
+                ],
               );
             } else {
               handleSmartBack(navigation, "DoctorTabs");
@@ -219,18 +248,14 @@ const ConsultationScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ChevronLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ChevronLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       ),
       headerTitle: () => (
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Active Consultation</Text>
           <View style={styles.timerBadge}>
-            <Clock  size={12} color={healthColors.warning.dark} />
+            <Clock size={12} color={healthColors.warning.dark} />
             <Text style={styles.timerText}>{formatElapsed(elapsed)}</Text>
           </View>
         </View>
@@ -263,7 +288,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             });
           },
         },
-      ]
+      ],
     );
   }, [appointmentId, vitals, diagnosis, notes, completeConsultationMutation]);
 
@@ -302,18 +327,16 @@ const ConsultationScreen = ({ navigation, route }) => {
   const screenPadding = getScreenPadding();
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["bottom", "left", "right"]}
-    >
-      <KeyboardAvoidingView {...getKeyboardConfig()}
-        style={styles.flex}
-      >
+    <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
+      <KeyboardAvoidingView {...getKeyboardConfig()} style={styles.flex}>
         <ScrollView
           style={styles.flex}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingHorizontal: screenPadding, paddingBottom: insets.bottom + 24 },
+            {
+              paddingHorizontal: screenPadding,
+              paddingBottom: insets.bottom + 24,
+            },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -323,7 +346,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             <View style={styles.statusDot} />
             <Text style={styles.statusBannerText}>In Progress</Text>
             <View style={styles.flex} />
-            <Clock  size={14} color={healthColors.warning.dark} />
+            <Clock size={14} color={healthColors.warning.dark} />
             <Text style={styles.bannerTimer}>{formatElapsed(elapsed)}</Text>
           </View>
 
@@ -331,11 +354,7 @@ const ConsultationScreen = ({ navigation, route }) => {
           <View style={styles.patientCard}>
             <View style={styles.patientCardHeader}>
               <View style={styles.avatarCircle}>
-                <User
-                  
-                  size={28}
-                  color={healthColors.primary.main}
-                />
+                <User size={28} color={healthColors.primary.main} />
               </View>
               <View style={styles.patientMeta}>
                 <Text style={styles.patientName}>{patientName}</Text>
@@ -352,21 +371,13 @@ const ConsultationScreen = ({ navigation, route }) => {
             <View style={styles.apptInfoRow}>
               {appointmentDate ? (
                 <View style={styles.apptInfoItem}>
-                  <Calendar
-                    
-                    size={14}
-                    color={healthColors.text.secondary}
-                  />
+                  <Calendar size={14} color={healthColors.text.secondary} />
                   <Text style={styles.apptInfoText}>{appointmentDate}</Text>
                 </View>
               ) : null}
               {appointmentTime ? (
                 <View style={styles.apptInfoItem}>
-                  <Clock
-                    
-                    size={14}
-                    color={healthColors.text.secondary}
-                  />
+                  <Clock size={14} color={healthColors.text.secondary} />
                   <Text style={styles.apptInfoText}>{appointmentTime}</Text>
                 </View>
               ) : null}
@@ -375,11 +386,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             {/* Reason / chief complaint */}
             {reason ? (
               <View style={styles.reasonRow}>
-                <Cross
-                  
-                  size={14}
-                  color={healthColors.primary.main}
-                />
+                <Cross size={14} color={healthColors.primary.main} />
                 <Text style={styles.reasonText}>{reason}</Text>
               </View>
             ) : null}
@@ -394,12 +401,13 @@ const ConsultationScreen = ({ navigation, route }) => {
                 accessibilityHint="Opens prescription creation for this patient"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <FileText
-                  
-                  size={16}
-                  color={healthColors.accent.coral}
-                />
-                <Text style={[styles.quickActionText, { color: healthColors.accent.coral }]}>
+                <FileText size={16} color={healthColors.accent.coral} />
+                <Text
+                  style={[
+                    styles.quickActionText,
+                    { color: healthColors.accent.coral },
+                  ]}
+                >
                   Prescription
                 </Text>
               </TouchableOpacity>
@@ -412,12 +420,13 @@ const ConsultationScreen = ({ navigation, route }) => {
                 accessibilityHint="Opens this patient history"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <UserCircle
-                  
-                  size={16}
-                  color={healthColors.primary.main}
-                />
-                <Text style={[styles.quickActionText, { color: healthColors.primary.main }]}>
+                <UserCircle size={16} color={healthColors.primary.main} />
+                <Text
+                  style={[
+                    styles.quickActionText,
+                    { color: healthColors.primary.main },
+                  ]}
+                >
                   History
                 </Text>
               </TouchableOpacity>
@@ -427,11 +436,7 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── Vitals section ── */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Activity
-                
-                size={18}
-                color={healthColors.primary.main}
-              />
+              <Activity size={18} color={healthColors.primary.main} />
               <Text style={styles.sectionTitle}>Vitals</Text>
               <Text style={styles.sectionOptional}>(optional)</Text>
             </View>
@@ -503,11 +508,7 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── Diagnosis section ── */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Clipboard
-                
-                size={18}
-                color={healthColors.primary.main}
-              />
+              <Clipboard size={18} color={healthColors.primary.main} />
               <Text style={styles.sectionTitle}>Diagnosis</Text>
               <Text style={styles.sectionOptional}>(optional)</Text>
             </View>
@@ -526,11 +527,7 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── Consultation notes section ── */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Edit
-                
-                size={18}
-                color={healthColors.primary.main}
-              />
+              <Edit size={18} color={healthColors.primary.main} />
               <Text style={styles.sectionTitle}>Consultation Notes</Text>
               <Text style={styles.sectionOptional}>(optional)</Text>
             </View>
@@ -562,7 +559,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             accessibilityRole="button"
             accessibilityLabel="Complete consultation"
             accessibilityHint="Marks this consultation as completed"
-          title="Complete Consultation"
+            title="Complete Consultation"
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -863,7 +860,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-
 });
 
 export default ConsultationScreen;

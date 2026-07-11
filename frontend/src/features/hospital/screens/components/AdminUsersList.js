@@ -6,8 +6,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { ChevronRight, User } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { DynamicIcon } from "@/components/common";
 
 const AdminUserRow = React.memo(
   ({ user, iconColor, onUserPress, renderRight, showDivider }) => (
@@ -19,13 +19,17 @@ const AdminUserRow = React.memo(
         disabled={!onUserPress}
         activeOpacity={0.7}
         accessibilityRole={onUserPress ? "button" : undefined}
-        accessibilityLabel={onUserPress ? `Open details for ${user?.name || "user"}` : undefined}
+        accessibilityLabel={
+          onUserPress ? `Open details for ${user?.name || "user"}` : undefined
+        }
       >
         <View style={[styles.avatar, { backgroundColor: iconColor + "18" }]}>
           <User size={22} color={iconColor} />
         </View>
         <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={1}>{user.name}</Text>
+          <Text style={styles.name} numberOfLines={1}>
+            {user.name}
+          </Text>
           <Text style={styles.sub} numberOfLines={1}>
             {user.specialization
               ? user.specialization
@@ -34,10 +38,14 @@ const AdminUserRow = React.memo(
                 : user.email || "Patient"}
           </Text>
         </View>
-        {renderRight ? renderRight(user) : <ChevronRight size={18} color={healthColors.text.tertiary} />}
+        {renderRight ? (
+          renderRight(user)
+        ) : (
+          <ChevronRight size={18} color={healthColors.text.tertiary} />
+        )}
       </TouchableOpacity>
     </>
-  )
+  ),
 );
 
 const AdminUsersList = ({
@@ -79,7 +87,11 @@ const AdminUsersList = ({
             accessibilityLabel={`View all ${title}`}
           >
             <Text style={styles.viewAllText}>View All</Text>
-            <DynamicIcon name="chevron-forward" size={15} color={healthColors.primary.main} />
+            <DynamicIcon
+              name="chevron-forward"
+              size={15}
+              color={healthColors.primary.main}
+            />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -88,7 +100,14 @@ const AdminUsersList = ({
       <View style={styles.card}>
         {safeUsers.map((user, i) => (
           <AdminUserRow
-            key={user.id || user.userId || user.user_id || user.doctorId || user.patientId || i}
+            key={
+              user.id ||
+              user.userId ||
+              user.user_id ||
+              user.doctorId ||
+              user.patientId ||
+              i
+            }
             user={user}
             iconColor={iconColor}
             onUserPress={onUserPress}
@@ -103,11 +122,31 @@ const AdminUsersList = ({
 
 const styles = StyleSheet.create({
   section: { marginHorizontal: 16, marginTop: 24 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-  headerTitleWrap: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8, minHeight: 32 },
-  title: { flex: 1, fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  headerTitleWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 32,
+  },
+  title: {
+    flex: 1,
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.text.primary,
+  },
   viewAll: { flexDirection: "row", alignItems: "center", gap: 2 },
-  viewAllText: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.primary.main, fontWeight: "600" },
+  viewAllText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.primary.main,
+    fontWeight: "600",
+  },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
@@ -117,14 +156,29 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   row: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
-  divider: { height: 1, backgroundColor: healthColors.border.light, marginLeft: 60 },
+  divider: {
+    height: 1,
+    backgroundColor: healthColors.border.light,
+    marginLeft: 60,
+  },
   avatar: {
-    width: 44, height: 44, borderRadius: 22,
-    justifyContent: "center", alignItems: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
   },
   info: { flex: 1 },
-  name: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "600", color: healthColors.text.primary },
-  sub: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, marginTop: 2 },
+  name: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: "600",
+    color: healthColors.text.primary,
+  },
+  sub: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
+    marginTop: 2,
+  },
 });
 
 export default AdminUsersList;

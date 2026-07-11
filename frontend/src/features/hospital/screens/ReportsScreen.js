@@ -22,11 +22,11 @@ import { ChevronRight, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { medicalRecordService } from '@/services';
-import { parseError } from '@/utils/errorHandler';
-import { formatDate } from '@/utils/helpers';
+import { theme, healthColors } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { medicalRecordService } from "@/services";
+import { parseError } from "@/utils/errorHandler";
+import { formatDate } from "@/utils/helpers";
 import {
   EmptyState,
   SkeletonCardRow,
@@ -35,9 +35,9 @@ import {
   FilterHeaderRow,
   FilterSectionTitle,
   FilterChipGroup,
-} from '@/components/common';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+} from "@/components/common";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
 
 const ReportsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -75,14 +75,17 @@ const ReportsScreen = ({ navigation }) => {
 
       const responseData = response?.data;
       const rawReports =
-        (Array.isArray(responseData?.medicalRecords) && responseData.medicalRecords) ||
+        (Array.isArray(responseData?.medicalRecords) &&
+          responseData.medicalRecords) ||
         (Array.isArray(responseData?.records) && responseData.records) ||
         (Array.isArray(responseData?.items) && responseData.items) ||
         (Array.isArray(responseData) && responseData) ||
         [];
 
       return rawReports.map((report, index) => {
-        const recordType = String(report?.recordType || report?.type || "other").toLowerCase();
+        const recordType = String(
+          report?.recordType || report?.type || "other",
+        ).toLowerCase();
         return {
           ...report,
           id: report?.id || `record-${index}`,
@@ -103,7 +106,7 @@ const ReportsScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 
   const availableRecordTypes = useMemo(
@@ -112,15 +115,15 @@ const ReportsScreen = ({ navigation }) => {
         new Set(
           reports
             .map((report) => report.recordType)
-            .filter((recordType) => !!recordType)
-        )
+            .filter((recordType) => !!recordType),
+        ),
       ),
-    [reports]
+    [reports],
   );
 
   const filterTypeOptions = useMemo(
     () => ["all", ...availableRecordTypes],
-    [availableRecordTypes]
+    [availableRecordTypes],
   );
 
   const filteredReports =
@@ -129,7 +132,7 @@ const ReportsScreen = ({ navigation }) => {
       : reports.filter(
           (report) =>
             (report.recordType || "").toLowerCase() ===
-            selectedRecordType.toLowerCase()
+            selectedRecordType.toLowerCase(),
         );
 
   const draftFilteredCount =
@@ -137,7 +140,8 @@ const ReportsScreen = ({ navigation }) => {
       ? reports.length
       : reports.filter(
           (report) =>
-            (report.recordType || "").toLowerCase() === draftRecordType.toLowerCase()
+            (report.recordType || "").toLowerCase() ===
+            draftRecordType.toLowerCase(),
         ).length;
 
   const onRefresh = useCallback(() => {
@@ -160,7 +164,7 @@ const ReportsScreen = ({ navigation }) => {
     Alert.alert(
       "Report Details",
       `Type: ${report.recordTypeLabel || "N/A"}\nPatient: ${report.patientName || "N/A"}\nDate: ${formatDate(report.createdAt)}`,
-      [{ text: "OK" }]
+      [{ text: "OK" }],
     );
   };
 
@@ -203,10 +207,7 @@ const ReportsScreen = ({ navigation }) => {
             </Text>
             <Text style={styles.reportDate}>{formatDate(item.createdAt)}</Text>
           </View>
-          <ChevronRight
-            size={20}
-            color={healthColors.text.tertiary}
-          />
+          <ChevronRight size={20} color={healthColors.text.tertiary} />
         </View>
         {item.description && (
           <Text style={styles.description} numberOfLines={2}>
@@ -215,7 +216,7 @@ const ReportsScreen = ({ navigation }) => {
         )}
       </TouchableOpacity>
     ),
-    []
+    [],
   );
 
   const renderEmptyState = () => (
@@ -250,10 +251,7 @@ const ReportsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -265,19 +263,25 @@ const ReportsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Filter reports"
         >
-          <Filter  size={24} color={healthColors.text.primary} />
+          <Filter size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.selectedFilterRow}>
         <Text style={styles.selectedFilterLabel}>Selected:</Text>
         <Text style={styles.selectedFilterValue}>
-          {selectedRecordType === "all" ? "All Types" : formatRecordTypeLabel(selectedRecordType)}
+          {selectedRecordType === "all"
+            ? "All Types"
+            : formatRecordTypeLabel(selectedRecordType)}
         </Text>
       </View>
 
       {loading ? (
-        <View style={styles.skeletonContainer}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={filteredReports}
@@ -313,7 +317,9 @@ const ReportsScreen = ({ navigation }) => {
           selectedKey={draftRecordType}
           onSelect={(type) => setDraftRecordType(type)}
           getKey={(type) => type}
-          getLabel={(type) => (type === "all" ? "All Types" : formatRecordTypeLabel(type))}
+          getLabel={(type) =>
+            type === "all" ? "All Types" : formatRecordTypeLabel(type)
+          }
           getCount={(type) =>
             type === "all"
               ? reports.length
@@ -450,5 +456,3 @@ const styles = StyleSheet.create({
 });
 
 export default ReportsScreen;
-
-

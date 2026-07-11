@@ -20,22 +20,27 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { CheckCircle, ArrowLeft, Save, XCircle, PlusCircle, Calendar, ChevronRight } from "lucide-react-native";
+import {
+  CheckCircle,
+  ArrowLeft,
+  Save,
+  XCircle,
+  PlusCircle,
+  Calendar,
+  ChevronRight,
+} from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import {
-  verticalScale,
-  getScreenPadding,
-} from '@/utils/responsive';
-import { prescriptionService, patientService, doctorService } from '@/services';
-import { logError } from '@/utils/errorHandler';
-import { formatCurrency } from '@/utils/helpers';
-import { SkeletonCardRow, Input, EmptyState } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+import { theme, healthColors } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { verticalScale, getScreenPadding } from "@/utils/responsive";
+import { prescriptionService, patientService, doctorService } from "@/services";
+import { logError } from "@/utils/errorHandler";
+import { formatCurrency } from "@/utils/helpers";
+import { SkeletonCardRow, Input, EmptyState } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { user } = useSelector((state) => state.auth);
@@ -49,7 +54,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       day: "numeric",
       month: "short",
       year: "numeric",
-    })
+    }),
   );
   const [medications, setMedications] = useState([]);
   const [diagnosis, setDiagnosis] = useState("");
@@ -90,12 +95,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     }
   }, [patientId]);
 
-  const {
-    data: patient,
-    isLoading: loading,
-  } = useQuery({
+  const { data: patient, isLoading: loading } = useQuery({
     queryKey: queryKeys.patients.detail(selectedPatientId || "none"),
-    enabled: !!selectedPatientId && (user?.role === "doctor" || user?.role === "admin"),
+    enabled:
+      !!selectedPatientId &&
+      (user?.role === "doctor" || user?.role === "admin"),
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const response = await patientService.getPatientById(selectedPatientId);
@@ -109,7 +113,10 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     isLoading: loadingPatients,
     refetch: refetchPatientOptions,
   } = useQuery({
-    queryKey: queryKeys.patients.list({ scope: "prescription-patient-options", doctorId: user?.id }),
+    queryKey: queryKeys.patients.list({
+      scope: "prescription-patient-options",
+      doctorId: user?.id,
+    }),
     staleTime: 5 * 60 * 1000,
     enabled: !!user?.id && (user?.role === "doctor" || user?.role === "admin"),
     queryFn: async () => {
@@ -119,19 +126,31 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         patientService.getAllPatients({}),
       ]);
 
-      const doctorLinkedVal = doctorLinkedResult.status === "fulfilled" ? doctorLinkedResult.value : null;
+      const doctorLinkedVal =
+        doctorLinkedResult.status === "fulfilled"
+          ? doctorLinkedResult.value
+          : null;
       const doctorLinkedPatients = Array.isArray(doctorLinkedVal)
         ? doctorLinkedVal
-        : (Array.isArray(doctorLinkedVal?.data)
-            ? doctorLinkedVal.data
-            : (doctorLinkedVal?.data?.patients || doctorLinkedVal?.data?.data || doctorLinkedVal?.patients || []));
+        : Array.isArray(doctorLinkedVal?.data)
+          ? doctorLinkedVal.data
+          : doctorLinkedVal?.data?.patients ||
+            doctorLinkedVal?.data?.data ||
+            doctorLinkedVal?.patients ||
+            [];
 
-      const allPatientsVal = allPatientsResult.status === "fulfilled" ? allPatientsResult.value : null;
+      const allPatientsVal =
+        allPatientsResult.status === "fulfilled"
+          ? allPatientsResult.value
+          : null;
       const allPatients = Array.isArray(allPatientsVal)
         ? allPatientsVal
-        : (Array.isArray(allPatientsVal?.data)
-            ? allPatientsVal.data
-            : (allPatientsVal?.data?.patients || allPatientsVal?.data?.data || allPatientsVal?.patients || []));
+        : Array.isArray(allPatientsVal?.data)
+          ? allPatientsVal.data
+          : allPatientsVal?.data?.patients ||
+            allPatientsVal?.data?.data ||
+            allPatientsVal?.patients ||
+            [];
 
       const merged = [...doctorLinkedPatients, ...allPatients].filter(Boolean);
       const uniquePatients = Array.from(
@@ -139,8 +158,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           merged.map((entry) => {
             const uniqueId = entry?.id || entry?.userId;
             return [uniqueId, entry];
-          })
-        ).values()
+          }),
+        ).values(),
       );
 
       return uniquePatients.filter((entry) => entry?.id || entry?.userId);
@@ -189,8 +208,15 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const handleAddMedicine = () => setShowAddMedicine(true);
 
   const handleSaveMedicine = () => {
-    if (!medicineForm.name.trim() || !medicineForm.dosage.trim() || !medicineForm.duration.trim()) {
-      Alert.alert("Missing details", "Please enter medicine name, dosage, and duration.");
+    if (
+      !medicineForm.name.trim() ||
+      !medicineForm.dosage.trim() ||
+      !medicineForm.duration.trim()
+    ) {
+      Alert.alert(
+        "Missing details",
+        "Please enter medicine name, dosage, and duration.",
+      );
       return;
     }
 
@@ -201,7 +227,10 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     };
 
     if (!timings.morning && !timings.afternoon && !timings.evening) {
-      Alert.alert("Missing timing", "Please select at least one medicine timing.");
+      Alert.alert(
+        "Missing timing",
+        "Please select at least one medicine timing.",
+      );
       return;
     }
 
@@ -260,13 +289,13 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         [
           {
             text: "Select Patient",
-              onPress: () => refetchPatientOptions(),
+            onPress: () => refetchPatientOptions(),
           },
           {
             text: "Cancel",
             style: "cancel",
           },
-        ]
+        ],
       );
       return;
     }
@@ -274,7 +303,10 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     if (nextVisit) {
       const isValidFollowUpDate = /^\d{4}-\d{2}-\d{2}$/.test(nextVisit);
       if (!isValidFollowUpDate) {
-        Alert.alert("Invalid Date", "Next visit date is invalid. Please pick a date using the calendar.");
+        Alert.alert(
+          "Invalid Date",
+          "Next visit date is invalid. Please pick a date using the calendar.",
+        );
         return;
       }
       // Follow-up date must be in the future
@@ -282,7 +314,10 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (followUp < today) {
-        Alert.alert("Invalid Date", "Next visit date must be today or a future date.");
+        Alert.alert(
+          "Invalid Date",
+          "Next visit date must be today or a future date.",
+        );
         return;
       }
     }
@@ -319,16 +354,18 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               text: "OK",
               onPress: () => handleSmartBack(navigation, "DoctorTabs"),
             },
-          ]
+          ],
         );
       } else {
         Alert.alert(
           "Error",
-          response?.message || "Failed to save prescription"
+          response?.message || "Failed to save prescription",
         );
       }
     } catch (err) {
-      logError(err, { context: "EnhancedPrescriptionScreen.handleSavePrescription" });
+      logError(err, {
+        context: "EnhancedPrescriptionScreen.handleSavePrescription",
+      });
       Alert.alert("Error", "Unable to save prescription. Please try again.");
     } finally {
       setSaving(false);
@@ -364,18 +401,25 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           return (
             <TouchableOpacity
               key={itemId || item.userId}
-              style={[styles.patientListItem, isSelected && styles.patientListItemSelected]}
+              style={[
+                styles.patientListItem,
+                isSelected && styles.patientListItemSelected,
+              ]}
               onPress={() => setSelectedPatientId(itemId)}
               accessibilityRole="button"
               accessibilityLabel={`Select patient ${item.name || "Unknown"}`}
               accessibilityState={{ selected: isSelected }}
             >
               <View>
-                <Text style={styles.patientListName}>{item.name || "Unknown"}</Text>
-                <Text style={styles.patientListSubtext}>{item.userId || "N/A"}</Text>
+                <Text style={styles.patientListName}>
+                  {item.name || "Unknown"}
+                </Text>
+                <Text style={styles.patientListSubtext}>
+                  {item.userId || "N/A"}
+                </Text>
               </View>
               {isSelected ? (
-                <CheckCircle  size={20} color={healthColors.primary.main} />
+                <CheckCircle size={20} color={healthColors.primary.main} />
               ) : null}
             </TouchableOpacity>
           );
@@ -388,7 +432,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.skeletonContainer}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );
@@ -409,11 +455,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Prescription</Text>
         <TouchableOpacity
@@ -426,7 +468,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           {saving ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <Save  size={24} color={healthColors.primary.main} />
+            <Save size={24} color={healthColors.primary.main} />
           )}
         </TouchableOpacity>
       </View>
@@ -473,8 +515,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Patient:</Text>
                   <Text style={styles.infoValue}>
-                    {patient?.name || "N/A"} ({getDisplayPatientId(patient)}
-                    )
+                    {patient?.name || "N/A"} ({getDisplayPatientId(patient)})
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
@@ -499,7 +540,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   {medications.map((med, index) => (
                     <View key={med.id} style={styles.medicationItem}>
                       <View style={styles.medicationHeader}>
-                        <Text style={styles.medicationNumber}>{index + 1}.</Text>
+                        <Text style={styles.medicationNumber}>
+                          {index + 1}.
+                        </Text>
                         <View style={styles.medicationInfo}>
                           <Text style={styles.medicationName}>{med.name}</Text>
                           <Text style={styles.medicationDosage}>
@@ -529,11 +572,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                           accessibilityRole="button"
                           accessibilityLabel={`Remove ${med.name}`}
                         >
-                          <XCircle
-                            
-                            size={24}
-                            color={healthColors.error.main}
-                          />
+                          <XCircle size={24} color={healthColors.error.main} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -541,7 +580,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 </View>
               ) : (
                 <View style={styles.emptyMedications}>
-                  <Text style={styles.emptyMedicationsText}>No medications added yet.</Text>
+                  <Text style={styles.emptyMedicationsText}>
+                    No medications added yet.
+                  </Text>
                 </View>
               )}
 
@@ -551,11 +592,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Add medicine"
               >
-                <PlusCircle
-                  
-                  size={20}
-                  color={healthColors.primary.main}
-                />
+                <PlusCircle size={20} color={healthColors.primary.main} />
                 <Text style={styles.addMedicineText}>Add Medicine</Text>
               </TouchableOpacity>
             </View>
@@ -592,18 +629,16 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Pick next visit date"
               >
-                <Calendar
-                  
-                  size={20}
-                  color={healthColors.primary.main}
-                />
+                <Calendar size={20} color={healthColors.primary.main} />
                 <Text
                   style={[
                     styles.dateText,
                     !nextVisitDate && { color: healthColors.text.disabled },
                   ]}
                 >
-                  {nextVisitDate ? formatDateDisplay(nextVisitDate) : "Tap to select date"}
+                  {nextVisitDate
+                    ? formatDateDisplay(nextVisitDate)
+                    : "Tap to select date"}
                 </Text>
                 {nextVisitDate ? (
                   <TouchableOpacity
@@ -615,25 +650,18 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     accessibilityRole="button"
                     accessibilityLabel="Clear next visit date"
                   >
-                    <XCircle
-                      
-                      size={18}
-                      color={healthColors.text.secondary}
-                    />
+                    <XCircle size={18} color={healthColors.text.secondary} />
                   </TouchableOpacity>
                 ) : (
-                  <ChevronRight
-                    
-                    size={18}
-                    color={healthColors.text.secondary}
-                  />
+                  <ChevronRight size={18} color={healthColors.text.secondary} />
                 )}
               </TouchableOpacity>
 
               {/* iOS inline picker shown in a modal; Android shown as dialog */}
-              {showDatePicker && (
-                Platform.OS === "ios" ? (
-                  <Modal statusBarTranslucent
+              {showDatePicker &&
+                (Platform.OS === "ios" ? (
+                  <Modal
+                    statusBarTranslucent
                     transparent
                     animationType="slide"
                     onRequestClose={() => setShowDatePicker(false)}
@@ -648,7 +676,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                           >
                             <Text style={styles.datePickerCancel}>Cancel</Text>
                           </TouchableOpacity>
-                          <Text style={styles.datePickerTitle}>Next Visit Date</Text>
+                          <Text style={styles.datePickerTitle}>
+                            Next Visit Date
+                          </Text>
                           <TouchableOpacity
                             onPress={() => setShowDatePicker(false)}
                             accessibilityRole="button"
@@ -663,12 +693,12 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                           display="spinner"
                           minimumDate={new Date()}
                           onChange={handleDatePickerChange}
-                           style={styles.datePicker}
-                         />
-                       </View>
-                     </View>
-                   </Modal>
-                 ) : (
+                          style={styles.datePicker}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                ) : (
                   <DateTimePicker
                     value={nextVisitDate || new Date()}
                     mode="date"
@@ -676,18 +706,13 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     minimumDate={new Date()}
                     onChange={handleDatePickerChange}
                   />
-                )
-              )}
+                ))}
             </View>
 
             {/* Send Options */}
             <View style={styles.section}>
               <View style={styles.sendOptionsHeader}>
-                <CheckCircle
-                  
-                  size={20}
-                  color={healthColors.success.main}
-                />
+                <CheckCircle size={20} color={healthColors.success.main} />
                 <Text style={styles.sectionTitle}>SEND TO OPTIONS:</Text>
               </View>
               <View style={styles.sendOptionsCard}>
@@ -718,7 +743,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   onPress={() => toggleSendOption("hospitalPharmacy")}
                   accessibilityRole="button"
                   accessibilityLabel="Toggle send to hospital pharmacy"
-                  accessibilityState={{ selected: sendOptions.hospitalPharmacy }}
+                  accessibilityState={{
+                    selected: sendOptions.hospitalPharmacy,
+                  }}
                 >
                   <DynamicIcon
                     name={
@@ -740,7 +767,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                   onPress={() => toggleSendOption("externalPharmacy")}
                   accessibilityRole="button"
                   accessibilityLabel="Toggle send to external pharmacy"
-                  accessibilityState={{ selected: sendOptions.externalPharmacy }}
+                  accessibilityState={{
+                    selected: sendOptions.externalPharmacy,
+                  }}
                 >
                   <DynamicIcon
                     name={
@@ -767,7 +796,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               <View style={styles.costCard}>
                 <View style={styles.costRow}>
                   <Text style={styles.costLabel}>Estimated Cost:</Text>
-                  <Text style={styles.costValue}>{formatCurrency(estimatedCost)}</Text>
+                  <Text style={styles.costValue}>
+                    {formatCurrency(estimatedCost)}
+                  </Text>
                 </View>
                 <View style={styles.costRow}>
                   <Text style={styles.costLabel}>
@@ -778,7 +809,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 <View style={styles.divider} />
                 <View style={styles.costRow}>
                   <Text style={styles.finalCostLabel}>Final Amount:</Text>
-                  <Text style={styles.finalCostValue}>{formatCurrency(finalCost)}</Text>
+                  <Text style={styles.finalCostValue}>
+                    {formatCurrency(finalCost)}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -802,7 +835,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      <Modal statusBarTranslucent
+      <Modal
+        statusBarTranslucent
         visible={showAddMedicine}
         transparent
         animationType="slide"
@@ -858,13 +892,25 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               ].map(([key, label]) => (
                 <TouchableOpacity
                   key={key}
-                  style={[styles.timingToggleChip, medicineForm[key] && styles.timingToggleChipActive]}
-                  onPress={() => setMedicineForm((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  style={[
+                    styles.timingToggleChip,
+                    medicineForm[key] && styles.timingToggleChipActive,
+                  ]}
+                  onPress={() =>
+                    setMedicineForm((prev) => ({ ...prev, [key]: !prev[key] }))
+                  }
                   accessibilityRole="button"
                   accessibilityLabel={`Toggle ${label} timing`}
                   accessibilityState={{ selected: !!medicineForm[key] }}
                 >
-                  <Text style={[styles.timingToggleText, medicineForm[key] && styles.timingToggleTextActive]}>{label}</Text>
+                  <Text
+                    style={[
+                      styles.timingToggleText,
+                      medicineForm[key] && styles.timingToggleTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -1311,6 +1357,3 @@ const styles = StyleSheet.create({
 });
 
 export default EnhancedPrescriptionScreen;
-
-
-

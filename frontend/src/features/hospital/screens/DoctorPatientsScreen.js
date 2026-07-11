@@ -24,13 +24,13 @@ import { FileText, Eye, UserPlus } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { getScreenPadding } from '@/utils/responsive';
-import { doctorService } from '@/services';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { parseError } from '@/utils/errorHandler';
-import { SkeletonCardRow, EmptyState, SearchField } from '@/components/common';
-import Routes from '@/navigation/routes';
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding } from "@/utils/responsive";
+import { doctorService } from "@/services";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { parseError } from "@/utils/errorHandler";
+import { SkeletonCardRow, EmptyState, SearchField } from "@/components/common";
+import Routes from "@/navigation/routes";
 
 const PAGE_SIZE = 20;
 
@@ -52,17 +52,24 @@ const DoctorPatientsScreen = ({ navigation }) => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.patients.infinite({ doctor: true, search: debouncedSearch }),
+    queryKey: queryKeys.patients.infinite({
+      doctor: true,
+      search: debouncedSearch,
+    }),
     initialPageParam: 0,
     staleTime: 2 * 60 * 1000,
     queryFn: async ({ pageParam = 0 }) => {
-      const response = await doctorService.searchMyPatients(debouncedSearch || "");
+      const response = await doctorService.searchMyPatients(
+        debouncedSearch || "",
+      );
 
       let list = [];
       if (Array.isArray(response)) {
         list = response;
       } else if (response?.data) {
-        list = Array.isArray(response.data) ? response.data : (response.data.patients || []);
+        list = Array.isArray(response.data)
+          ? response.data
+          : response.data.patients || [];
       } else if (response?.patients) {
         list = response.patients;
       }
@@ -80,7 +87,10 @@ const DoctorPatientsScreen = ({ navigation }) => {
       };
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      const loaded = allPages.reduce(
+        (sum, page) => sum + (page?.items?.length || 0),
+        0,
+      );
       return loaded < (lastPage?.total || 0) ? loaded : undefined;
     },
     enabled: !!user?.id && user?.role === "doctor",
@@ -92,7 +102,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 
   // Debounced search
@@ -123,7 +133,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
       }
       navigation.navigate(Routes.DOCTOR.CREATE_PRESCRIPTION, { patientId });
     },
-    [navigation]
+    [navigation],
   );
 
   const handleViewHistory = useCallback(
@@ -134,7 +144,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
         patientName: patient.name,
       });
     },
-    [navigation]
+    [navigation],
   );
 
   const renderPatientCard = ({ item }) => {
@@ -170,11 +180,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             accessibilityLabel={`Write prescription for ${item.name}`}
           >
-            <FileText
-              
-              size={14}
-              color={healthColors.text.white}
-            />
+            <FileText size={14} color={healthColors.text.white} />
             <Text style={styles.rxButtonText}>Write Rx</Text>
           </TouchableOpacity>
 
@@ -184,11 +190,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             accessibilityLabel={`View details for ${item.name}`}
           >
-            <Eye
-              
-              size={18}
-              color={healthColors.primary.main}
-            />
+            <Eye size={18} color={healthColors.primary.main} />
           </TouchableOpacity>
         </View>
       </View>
@@ -197,7 +199,10 @@ const DoctorPatientsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.primary} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.primary}
+      />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -215,7 +220,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Register walk-in patient"
         >
-          <UserPlus  size={20} color={healthColors.primary.main} />
+          <UserPlus size={20} color={healthColors.primary.main} />
         </TouchableOpacity>
       </View>
 
@@ -234,20 +239,25 @@ const DoctorPatientsScreen = ({ navigation }) => {
       {/* List */}
       {loading ? (
         <View style={styles.loadingSkeletonWrap}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
           data={patients}
           renderItem={renderPatientCard}
-          keyExtractor={(item, index) => String(item.id || item.userId || item.patientId || `patient-${index}`)}
+          keyExtractor={(item, index) =>
+            String(
+              item.id || item.userId || item.patientId || `patient-${index}`,
+            )
+          }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
           initialNumToRender={10}
-
           contentContainerStyle={[
             styles.listContent,
             patients.length === 0 && styles.listContentEmpty,
@@ -263,7 +273,10 @@ const DoctorPatientsScreen = ({ navigation }) => {
           ListFooterComponent={
             isFetchingNextPage ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
               </View>
             ) : null
           }
@@ -286,7 +299,11 @@ const DoctorPatientsScreen = ({ navigation }) => {
                     : "Patients who have consulted you will appear here. Register a walk-in patient to get started."
                 }
                 actionLabel={searchQuery ? undefined : "Register Walk-In"}
-                onActionPress={searchQuery ? undefined : () => navigation.navigate(Routes.DOCTOR.WALK_IN_PATIENT)}
+                onActionPress={
+                  searchQuery
+                    ? undefined
+                    : () => navigation.navigate(Routes.DOCTOR.WALK_IN_PATIENT)
+                }
               />
             )
           }

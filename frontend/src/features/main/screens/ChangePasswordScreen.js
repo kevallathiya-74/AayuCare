@@ -12,14 +12,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useMutation } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import Routes from '@/navigation/routes';
-import authService from '@/features/auth/api/auth.service';
-import { logoutUser } from '@/store/slices/authSlice';
-import { logError, parseError } from '@/utils/errorHandler';
-import { Input, Button } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
-import { getKeyboardConfig } from '@/utils/responsive';
+import { theme, healthColors } from "@/theme";
+import Routes from "@/navigation/routes";
+import authService from "@/features/auth/api/auth.service";
+import { logoutUser } from "@/store/slices/authSlice";
+import { logError, parseError } from "@/utils/errorHandler";
+import { Input, Button } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
+import { getKeyboardConfig } from "@/utils/responsive";
 
 const ChangePasswordScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -43,7 +43,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       hasLower: /[a-z]/.test(newPassword),
       hasNumber: /\d/.test(newPassword),
     }),
-    [newPassword]
+    [newPassword],
   );
 
   const isStrongPassword =
@@ -83,7 +83,10 @@ const ChangePasswordScreen = ({ navigation }) => {
     }
 
     try {
-      await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
+      await changePasswordMutation.mutateAsync({
+        currentPassword,
+        newPassword,
+      });
       await dispatch(logoutUser()).unwrap();
       navigation.reset({ index: 0, routes: [{ name: Routes.AUTH.LOGIN }] });
     } catch (error) {
@@ -113,104 +116,139 @@ const ChangePasswordScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, user?.role === "admin" ? "AdminTabs" : "DoctorTabs")}
+          onPress={() =>
+            handleSmartBack(
+              navigation,
+              user?.role === "admin" ? "AdminTabs" : "DoctorTabs",
+            )
+          }
           accessibilityRole="button"
           accessibilityLabel="Go back"
-        > 
-          <ArrowLeft  size={24} color={healthColors.text.primary} />
+        >
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>
         <View style={styles.backButton} />
       </View>
 
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.keyboardView}
       >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Update Your Password</Text>
-          <Text style={styles.cardSubtitle}>
-            For account security, use a strong password and do not reuse old passwords.
-          </Text>
-
-          {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
-
-          {renderPasswordInput({
-            label: "Current Password",
-            value: currentPassword,
-            onChangeText: (text) => {
-              setCurrentPassword(text);
-              if (fieldErrors.currentPassword) {
-                setFieldErrors((prev) => ({ ...prev, currentPassword: "" }));
-              }
-            },
-            secure: true,
-            placeholder: "Enter current password",
-            error: fieldErrors.currentPassword,
-          })}
-
-          {renderPasswordInput({
-            label: "New Password",
-            value: newPassword,
-            onChangeText: (text) => {
-              setNewPassword(text);
-              if (fieldErrors.newPassword) {
-                setFieldErrors((prev) => ({ ...prev, newPassword: "" }));
-              }
-            },
-            secure: true,
-            placeholder: "Enter new password",
-            error: fieldErrors.newPassword,
-          })}
-
-          <View style={styles.rulesBox}>
-            <Text style={styles.rulesTitle}>Password must include:</Text>
-            <Text style={[styles.ruleText, rules.minLength && styles.ruleTextValid]}>
-              • At least 8 characters
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Update Your Password</Text>
+            <Text style={styles.cardSubtitle}>
+              For account security, use a strong password and do not reuse old
+              passwords.
             </Text>
-            <Text style={[styles.ruleText, rules.hasUpper && styles.ruleTextValid]}>
-              • One uppercase letter
-            </Text>
-            <Text style={[styles.ruleText, rules.hasLower && styles.ruleTextValid]}>
-              • One lowercase letter
-            </Text>
-            <Text style={[styles.ruleText, rules.hasNumber && styles.ruleTextValid]}>
-              • One number
-            </Text>
+
+            {submitError ? (
+              <Text style={styles.submitError}>{submitError}</Text>
+            ) : null}
+
+            {renderPasswordInput({
+              label: "Current Password",
+              value: currentPassword,
+              onChangeText: (text) => {
+                setCurrentPassword(text);
+                if (fieldErrors.currentPassword) {
+                  setFieldErrors((prev) => ({ ...prev, currentPassword: "" }));
+                }
+              },
+              secure: true,
+              placeholder: "Enter current password",
+              error: fieldErrors.currentPassword,
+            })}
+
+            {renderPasswordInput({
+              label: "New Password",
+              value: newPassword,
+              onChangeText: (text) => {
+                setNewPassword(text);
+                if (fieldErrors.newPassword) {
+                  setFieldErrors((prev) => ({ ...prev, newPassword: "" }));
+                }
+              },
+              secure: true,
+              placeholder: "Enter new password",
+              error: fieldErrors.newPassword,
+            })}
+
+            <View style={styles.rulesBox}>
+              <Text style={styles.rulesTitle}>Password must include:</Text>
+              <Text
+                style={[
+                  styles.ruleText,
+                  rules.minLength && styles.ruleTextValid,
+                ]}
+              >
+                • At least 8 characters
+              </Text>
+              <Text
+                style={[
+                  styles.ruleText,
+                  rules.hasUpper && styles.ruleTextValid,
+                ]}
+              >
+                • One uppercase letter
+              </Text>
+              <Text
+                style={[
+                  styles.ruleText,
+                  rules.hasLower && styles.ruleTextValid,
+                ]}
+              >
+                • One lowercase letter
+              </Text>
+              <Text
+                style={[
+                  styles.ruleText,
+                  rules.hasNumber && styles.ruleTextValid,
+                ]}
+              >
+                • One number
+              </Text>
+            </View>
+
+            {renderPasswordInput({
+              label: "Confirm New Password",
+              value: confirmPassword,
+              onChangeText: (text) => {
+                setConfirmPassword(text);
+                if (fieldErrors.confirmPassword) {
+                  setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                }
+              },
+              secure: true,
+              placeholder: "Confirm new password",
+              error: fieldErrors.confirmPassword,
+            })}
+
+            <Button
+              variant="primary"
+              size="large"
+              fullWidth
+              gradient
+              loading={changePasswordMutation.isPending}
+              onPress={handleSubmit}
+              style={styles.submitButton}
+              title="Change Password"
+            />
           </View>
-
-          {renderPasswordInput({
-            label: "Confirm New Password",
-            value: confirmPassword,
-            onChangeText: (text) => {
-              setConfirmPassword(text);
-              if (fieldErrors.confirmPassword) {
-                setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
-              }
-            },
-            secure: true,
-            placeholder: "Confirm new password",
-            error: fieldErrors.confirmPassword,
-          })}
-
-          <Button
-            variant="primary"
-            size="large"
-            fullWidth
-            gradient
-            loading={changePasswordMutation.isPending}
-            onPress={handleSubmit}
-            style={styles.submitButton}
-            title="Change Password"
-          />
-        </View>
-      </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
