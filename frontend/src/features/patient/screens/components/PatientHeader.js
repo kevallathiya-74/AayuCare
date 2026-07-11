@@ -11,8 +11,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Platform,
-  StatusBar,
 } from "react-native";
 import { Menu, Bell, User } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
