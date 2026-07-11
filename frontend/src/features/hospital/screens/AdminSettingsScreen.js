@@ -27,13 +27,13 @@ const getInitials = (name) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 import { useDispatch, useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import Routes from '@/navigation/routes';
-import { logoutUser } from '@/store/slices/authSlice';
-import { logError } from '@/utils/errorHandler';
-import { ModalSheet, Button } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+import { theme, healthColors } from "@/theme";
+import Routes from "@/navigation/routes";
+import { logoutUser } from "@/store/slices/authSlice";
+import { logError } from "@/utils/errorHandler";
+import { ModalSheet, Button } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
 
 const AdminSettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -116,14 +116,14 @@ const AdminSettingsScreen = ({ navigation }) => {
             action: () =>
               Alert.alert(
                 "AayuCare",
-                "Version 1.0.0\nHealthcare Management System"
+                "Version 1.0.0\nHealthcare Management System",
               ),
             color: healthColors.info.main,
           },
         ],
       },
     ],
-    []
+    [],
   );
 
   const handleSettingPress = useCallback(
@@ -139,7 +139,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         item.action();
       }
     },
-    [navigation]
+    [navigation],
   );
 
   const renderSettingItem = useCallback(
@@ -152,7 +152,10 @@ const AdminSettingsScreen = ({ navigation }) => {
         accessibilityLabel={item.label}
       >
         <View
-          style={[styles.settingIcon, { backgroundColor: item.color + "15" }]}
+          style={[
+            styles.settingIcon,
+            { backgroundColor: theme.withOpacity(item.color, 0.15) },
+          ]}
         >
           <DynamicIcon name={item.icon} size={22} color={item.color} />
         </View>
@@ -164,7 +167,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         />
       </TouchableOpacity>
     ),
-    [handleSettingPress]
+    [handleSettingPress],
   );
 
   return (
@@ -183,10 +186,7 @@ const AdminSettingsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholder} />
@@ -205,7 +205,9 @@ const AdminSettingsScreen = ({ navigation }) => {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <Text style={styles.avatarText}>{getInitials(user?.name || "Admin")}</Text>
+            <Text style={styles.avatarText}>
+              {getInitials(user?.name || "Admin")}
+            </Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{user?.name || "Admin"}</Text>
@@ -213,9 +215,7 @@ const AdminSettingsScreen = ({ navigation }) => {
             <Text style={styles.profileEmail}>
               {user?.email || "admin@aayucare.com"}
             </Text>
-            <Text style={styles.profileEmail}>
-              ID: {user?.userId || "—"}
-            </Text>
+            <Text style={styles.profileEmail}>ID: {user?.userId || "—"}</Text>
           </View>
         </View>
 
@@ -249,11 +249,7 @@ const AdminSettingsScreen = ({ navigation }) => {
             <ActivityIndicator size="small" color={healthColors.error.main} />
           ) : (
             <>
-              <LogOut
-                
-                size={22}
-                color={healthColors.error.main}
-              />
+              <LogOut size={22} color={healthColors.error.main} />
               <Text style={styles.logoutText}>Logout</Text>
             </>
           )}
@@ -272,17 +268,23 @@ const AdminSettingsScreen = ({ navigation }) => {
           Are you sure you want to log out of your account?
         </Text>
         <View style={styles.modalActions}>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onPress={() => setShowLogoutModal(false)}
             style={styles.modalButton}
             disabled={loggingOut}
             title="Cancel"
           />
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onPress={confirmLogout}
-            style={[styles.modalButton, { backgroundColor: healthColors.error.main, borderColor: healthColors.error.main }]}
+            style={[
+              styles.modalButton,
+              {
+                backgroundColor: healthColors.error.main,
+                borderColor: healthColors.error.main,
+              },
+            ]}
             textStyle={{ color: healthColors.neutral.white }}
             loading={loggingOut}
             title="Logout"
@@ -443,4 +445,3 @@ const styles = StyleSheet.create({
 });
 
 export default AdminSettingsScreen;
-

@@ -6,8 +6,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Menu, Bell, User, X } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import LanguageSelector from '@/components/common/LanguageSelector';
+import { theme, healthColors } from "@/theme";
+import LanguageSelector from "@/components/common/LanguageSelector";
 
 const AdminHeader = ({
   notificationCount = 0,
@@ -50,7 +50,11 @@ const AdminHeader = ({
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.iconBtn, styles.profileBtn, showProfile && styles.profileBtnActive]}
+        style={[
+          styles.iconBtn,
+          styles.profileBtn,
+          showProfile && styles.profileBtnActive,
+        ]}
         onPress={onProfileToggle}
         accessibilityRole="button"
         accessibilityLabel="Profile"
@@ -128,4 +132,3 @@ const styles = StyleSheet.create({
 });
 
 export default AdminHeader;
-

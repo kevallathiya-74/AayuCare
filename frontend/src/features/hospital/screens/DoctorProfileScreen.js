@@ -15,29 +15,27 @@ import {
   RefreshControl,
   Linking,
 } from "react-native";
-import {
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreditCard, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { theme, healthColors, textStyles, spacing } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import {
-  getScreenPadding,
-  verticalScale,
-} from '@/utils/responsive';
-import Avatar from '@/components/common/Avatar';
-import { logoutUser } from '@/store/slices/authSlice';
-import { doctorService } from '@/services';
-import { DynamicIcon } from '@/components/common';
-import Routes from '@/navigation/routes';
+import { theme, healthColors, textStyles, spacing } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { getScreenPadding, verticalScale } from "@/utils/responsive";
+import Avatar from "@/components/common/Avatar";
+import { logoutUser } from "@/store/slices/authSlice";
+import { doctorService } from "@/services";
+import { DynamicIcon } from "@/components/common";
+import Routes from "@/navigation/routes";
 
 const formatDoctorName = (name) => {
   if (!name) return "Doctor";
   const trimmed = name.trim();
-  if (trimmed.toLowerCase().startsWith("dr.") || trimmed.toLowerCase().startsWith("dr ")) {
+  if (
+    trimmed.toLowerCase().startsWith("dr.") ||
+    trimmed.toLowerCase().startsWith("dr ")
+  ) {
     return trimmed;
   }
   return `Dr. ${trimmed}`;
@@ -47,7 +45,12 @@ const DoctorProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { data: stats = { totalPatients: 0, rating: null, yearsExperience: 0 }, isLoading: loading, isRefetching, refetch } = useQuery({
+  const {
+    data: stats = { totalPatients: 0, rating: null, yearsExperience: 0 },
+    isLoading: loading,
+    isRefetching,
+    refetch,
+  } = useQuery({
     queryKey: queryKeys.doctors.detail(user?.id || "me"),
     enabled: !!user && user?.role === "doctor",
     staleTime: 10 * 60 * 1000,
@@ -154,12 +157,17 @@ const DoctorProfileScreen = ({ navigation }) => {
             textColor={theme.colors.white}
             style={styles.avatarBorder}
           />
-          <Text style={styles.doctorNameHero}>{formatDoctorName(user?.name)}</Text>
+          <Text style={styles.doctorNameHero}>
+            {formatDoctorName(user?.name)}
+          </Text>
           <Text style={styles.specializationHero}>
             {user?.specialization || "Specialist"} · {user?.department || "OPD"}
           </Text>
           <View style={styles.idBadge}>
-            <CreditCard  size={13} color={theme.withOpacity(healthColors.text.white, 0.85)} />
+            <CreditCard
+              size={13}
+              color={theme.withOpacity(healthColors.text.white, 0.85)}
+            />
             <Text style={styles.idBadgeText}>ID: {user?.userId || "—"}</Text>
           </View>
 
@@ -174,7 +182,11 @@ const DoctorProfileScreen = ({ navigation }) => {
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
               <Text style={styles.heroStatValue}>
-                {loading ? "--" : (stats.rating != null ? stats.rating.toFixed(1) : "N/A")}
+                {loading
+                  ? "--"
+                  : stats.rating != null
+                    ? stats.rating.toFixed(1)
+                    : "N/A"}
               </Text>
               <Text style={styles.heroStatLabel}>Rating</Text>
             </View>
@@ -230,11 +242,7 @@ const DoctorProfileScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Logout from the app"
           >
-            <LogOut
-              
-              size={22}
-              color={healthColors.error.main}
-            />
+            <LogOut size={22} color={healthColors.error.main} />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -381,6 +389,3 @@ const styles = StyleSheet.create({
 });
 
 export default DoctorProfileScreen;
-
-
-

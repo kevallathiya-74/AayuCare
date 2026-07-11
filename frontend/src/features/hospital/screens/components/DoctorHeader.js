@@ -4,18 +4,28 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  StatusBar,
+} from "react-native";
 import { Menu, Bell, Building } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
-import LanguageSelector from '@/components/common/LanguageSelector';
+import { theme, healthColors } from "@/theme";
+import LanguageSelector from "@/components/common/LanguageSelector";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DynamicIcon } from '@/components/common';
+import { DynamicIcon } from "@/components/common";
 
 const formatDoctorName = (name) => {
   if (!name) return "Doctor";
   const trimmed = name.trim();
-  if (trimmed.toLowerCase().startsWith("dr.") || trimmed.toLowerCase().startsWith("dr ")) {
+  if (
+    trimmed.toLowerCase().startsWith("dr.") ||
+    trimmed.toLowerCase().startsWith("dr ")
+  ) {
     return trimmed;
   }
   return `Dr. ${trimmed}`;
@@ -30,7 +40,8 @@ const DoctorHeader = ({
   onNotificationPress,
 }) => {
   const insets = useSafeAreaInsets();
-  const statusBarHeight = Platform.OS === "android" ? (StatusBar.currentHeight || 24) : 20;
+  const statusBarHeight =
+    Platform.OS === "android" ? StatusBar.currentHeight || 24 : 20;
   const topPadding = insets.top > 0 ? insets.top : statusBarHeight;
 
   return (
@@ -40,68 +51,78 @@ const DoctorHeader = ({
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-    <View style={styles.circleLarge} pointerEvents="none" />
-    <View style={styles.circleSmall} pointerEvents="none" />
+      <View style={styles.circleLarge} pointerEvents="none" />
+      <View style={styles.circleSmall} pointerEvents="none" />
 
-    {/* ── Top row ── */}
-    <View style={styles.topRow}>
-      <TouchableOpacity
-        style={styles.iconBtn}
-        onPress={onMenuOpen}
-        accessibilityRole="button"
-        accessibilityLabel="Open menu"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Menu  size={24} color={theme.colors.text.white} />
-      </TouchableOpacity>
-
-      <View style={styles.rightIcons}>
+      {/* ── Top row ── */}
+      <View style={styles.topRow}>
         <TouchableOpacity
           style={styles.iconBtn}
-          onPress={onNotificationPress}
+          onPress={onMenuOpen}
           accessibilityRole="button"
-          accessibilityLabel={notificationCount > 0 ? `${notificationCount} pending` : "Notifications"}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityLabel="Open menu"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Bell  size={24} color={theme.colors.text.white} />
-          {notificationCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{String(notificationCount)}</Text>
-            </View>
-          )}
+          <Menu size={24} color={theme.colors.text.white} />
         </TouchableOpacity>
-        <LanguageSelector compact iconColor={theme.colors.text.white} />
-      </View>
-    </View>
 
-    {/* ── Greeting ── */}
-    <View style={styles.greetingSection}>
-      <View style={styles.greetingRow}>
-        <DynamicIcon
-          name={greetingIcon}
-          size={26}
-          color={theme.colors.text.white}
-          style={styles.greetingIcon}
-        />
-        <View>
-          <Text style={styles.greetingLabel}>{greeting}</Text>
-          <Text style={styles.userName}>{formatDoctorName(user?.name)}</Text>
+        <View style={styles.rightIcons}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={onNotificationPress}
+            accessibilityRole="button"
+            accessibilityLabel={
+              notificationCount > 0
+                ? `${notificationCount} pending`
+                : "Notifications"
+            }
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Bell size={24} color={theme.colors.text.white} />
+            {notificationCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {String(notificationCount)}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <LanguageSelector compact iconColor={theme.colors.text.white} />
         </View>
       </View>
-      <View style={styles.infoCard}>
-        <View style={styles.infoRow}>
-          <DynamicIcon name="stethoscope" size={15} color={theme.colors.text.white} />
-          <Text style={styles.infoText}>
-            {user?.specialization || "General Physician"}
-          </Text>
+
+      {/* ── Greeting ── */}
+      <View style={styles.greetingSection}>
+        <View style={styles.greetingRow}>
+          <DynamicIcon
+            name={greetingIcon}
+            size={26}
+            color={theme.colors.text.white}
+            style={styles.greetingIcon}
+          />
+          <View>
+            <Text style={styles.greetingLabel}>{greeting}</Text>
+            <Text style={styles.userName}>{formatDoctorName(user?.name)}</Text>
+          </View>
         </View>
-        <View style={styles.infoRow}>
-          <Building  size={15} color={theme.colors.text.white} />
-          <Text style={styles.infoText}>{user?.department || "OPD"}</Text>
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <DynamicIcon
+              name="stethoscope"
+              size={15}
+              color={theme.colors.text.white}
+            />
+            <Text style={styles.infoText}>
+              {user?.specialization || "General Physician"}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Building size={15} color={theme.colors.text.white} />
+            <Text style={styles.infoText}>{user?.department || "OPD"}</Text>
+          </View>
         </View>
       </View>
-    </View>
-  </LinearGradient>
+    </LinearGradient>
   );
 };
 
@@ -113,13 +134,21 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   circleLarge: {
-    position: "absolute", top: -40, right: -40,
-    width: 160, height: 160, borderRadius: 80,
+    position: "absolute",
+    top: -40,
+    right: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.06),
   },
   circleSmall: {
-    position: "absolute", bottom: -20, left: -20,
-    width: 100, height: 100, borderRadius: 50,
+    position: "absolute",
+    bottom: -20,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.04),
   },
   topRow: {
@@ -130,31 +159,58 @@ const styles = StyleSheet.create({
   },
   rightIcons: { flexDirection: "row", alignItems: "center", gap: 4 },
   iconBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.12),
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
   },
   badge: {
-    position: "absolute", top: 4, right: 4,
-    minWidth: 16, height: 16, borderRadius: 8,
+    position: "absolute",
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: healthColors.accent.coral,
-    justifyContent: "center", alignItems: "center", paddingHorizontal: 3,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 3,
   },
-  badgeText: { fontSize: theme.typography.sizes.overline, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
+  badgeText: {
+    fontSize: theme.typography.sizes.overline,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+  },
 
   greetingSection: { paddingTop: 4 },
   greetingRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
   greetingIcon: { marginRight: 10 },
   greetingLabel: {
-    fontSize: theme.typography.sizes.bodyMedium, color: theme.withOpacity(theme.colors.text.white, 0.85), marginBottom: 2,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: theme.withOpacity(theme.colors.text.white, 0.85),
+    marginBottom: 2,
   },
-  userName: { fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white, letterSpacing: 0.3 },
+  userName: {
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+    letterSpacing: 0.3,
+  },
   infoCard: {
     backgroundColor: theme.withOpacity(theme.colors.text.white, 0.12),
-    borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, gap: 6,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 6,
   },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  infoText: { fontSize: theme.typography.sizes.bodyMedium, color: theme.colors.text.white, fontWeight: "500" },
+  infoText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: theme.colors.text.white,
+    fontWeight: "500",
+  },
 });
 
 export default DoctorHeader;

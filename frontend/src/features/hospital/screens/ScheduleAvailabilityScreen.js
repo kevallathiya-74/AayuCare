@@ -16,16 +16,26 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, AlertCircle, Info, Clock, Coffee, Edit, X, Trash2, PlusCircle } from "lucide-react-native";
+import {
+  ArrowLeft,
+  AlertCircle,
+  Info,
+  Clock,
+  Coffee,
+  Edit,
+  X,
+  Trash2,
+  PlusCircle,
+} from "lucide-react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import doctorService from '@/features/hospital/api/doctor.service';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { theme, healthColors } from '@/theme';
-import { convertTo12Hour } from '@/utils/helpers';
-import { parseError } from '@/utils/errorHandler';
-import { DynamicIcon, Input, SkeletonCardRow } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+import doctorService from "@/features/hospital/api/doctor.service";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { theme, healthColors } from "@/theme";
+import { convertTo12Hour } from "@/utils/helpers";
+import { parseError } from "@/utils/errorHandler";
+import { DynamicIcon, Input, SkeletonCardRow } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -67,14 +77,19 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
   const toggleAvailabilityMutation = useMutation({
     mutationFn: (dayOfWeek) => doctorService.toggleDayAvailability(dayOfWeek),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.schedules.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.schedules.all,
+      });
     },
   });
 
   const updateScheduleMutation = useMutation({
-    mutationFn: ({ dayId, scheduleData }) => doctorService.updateSchedule(dayId, scheduleData),
+    mutationFn: ({ dayId, scheduleData }) =>
+      doctorService.updateSchedule(dayId, scheduleData),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.schedules.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.schedules.all,
+      });
     },
   });
 
@@ -120,14 +135,17 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
 
       // Validate notes length
       if (notes.length > 500) {
-        Alert.alert("Validation Error", "Notes must be 500 characters or fewer");
+        Alert.alert(
+          "Validation Error",
+          "Notes must be 500 characters or fewer",
+        );
         setSaving(false);
         return;
       }
 
       // Helper: convert HH:MM to minutes for correct numeric comparison
       const toMinutes = (t) => {
-        const [h, m] = t.split(':').map(Number);
+        const [h, m] = t.split(":").map(Number);
         return h * 60 + m;
       };
       // Regex to validate HH:MM 24-hour format
@@ -138,13 +156,16 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         if (!slot.startTime || !slot.endTime) {
           Alert.alert(
             "Validation Error",
-            "All time slots must have start and end times"
+            "All time slots must have start and end times",
           );
           setSaving(false);
           return;
         }
         if (!HHMM.test(slot.startTime) || !HHMM.test(slot.endTime)) {
-          Alert.alert("Validation Error", "Time slots must be in HH:MM format (e.g. 09:00)");
+          Alert.alert(
+            "Validation Error",
+            "Time slots must be in HH:MM format (e.g. 09:00)",
+          );
           setSaving(false);
           return;
         }
@@ -192,17 +213,15 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             accessibilityLabel="Go back"
             accessibilityHint="Returns to doctor dashboard"
           >
-            <ArrowLeft
-              
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Schedule & Availability</Text>
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.loadingSkeletonWrap}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );
@@ -219,21 +238,15 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             accessibilityLabel="Go back"
             accessibilityHint="Returns to doctor dashboard"
           >
-            <ArrowLeft
-              
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Schedule & Availability</Text>
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.errorContainer}>
-          <AlertCircle  size={48} color={healthColors.error.main} />
+          <AlertCircle size={48} color={healthColors.error.main} />
           <Text style={styles.errorTitle}>Failed to load schedule</Text>
-          <Text style={styles.errorMessage}>
-            {parseError(error)}
-          </Text>
+          <Text style={styles.errorMessage}>{parseError(error)}</Text>
           <TouchableOpacity
             style={styles.retryButton}
             onPress={refetch}
@@ -258,11 +271,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to doctor dashboard"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Schedule & Availability</Text>
         <View style={styles.headerRightSpacer} />
@@ -274,11 +283,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       >
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Info
-            
-            size={24}
-            color={healthColors.primary.main}
-          />
+          <Info size={24} color={healthColors.primary.main} />
           <Text style={styles.infoText}>
             Manage your weekly schedule and availability. Patients can only book
             during available time slots.
@@ -344,7 +349,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                           color={healthColors.primary.main}
                         />
                         <Text style={styles.timeSlotText}>
-                          {convertTo12Hour(slot.startTime)} - {convertTo12Hour(slot.endTime)}
+                          {convertTo12Hour(slot.startTime)} -{" "}
+                          {convertTo12Hour(slot.endTime)}
                         </Text>
                       </View>
                     ))}
@@ -354,11 +360,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 {/* Break Time */}
                 {isAvailable && schedule?.breakTime && (
                   <View style={styles.breakTimeContainer}>
-                    <Coffee
-                      
-                      size={14}
-                      color={healthColors.warning.main}
-                    />
+                    <Coffee size={14} color={healthColors.warning.main} />
                     <Text style={styles.breakTimeText}>
                       Break: {convertTo12Hour(schedule.breakTime.startTime)} -{" "}
                       {convertTo12Hour(schedule.breakTime.endTime)}
@@ -373,11 +375,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   accessibilityRole="button"
                   accessibilityLabel={`Edit ${day.label} schedule`}
                 >
-                  <Edit
-                    
-                    size={18}
-                    color={healthColors.primary.main}
-                  />
+                  <Edit size={18} color={healthColors.primary.main} />
                   <Text style={styles.editButtonText}>Edit Schedule</Text>
                 </TouchableOpacity>
               </View>
@@ -387,7 +385,8 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Edit Modal */}
-      <Modal statusBarTranslucent
+      <Modal
+        statusBarTranslucent
         visible={modalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
@@ -401,11 +400,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Close edit schedule"
             >
-              <X
-                
-                size={24}
-                color={healthColors.text.primary}
-              />
+              <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Edit {selectedDay?.label}</Text>
             <TouchableOpacity
@@ -470,11 +465,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                     accessibilityRole="button"
                     accessibilityLabel={`Remove time slot ${index + 1}`}
                   >
-                    <Trash2
-                      
-                      size={20}
-                      color={healthColors.error.main}
-                    />
+                    <Trash2 size={20} color={healthColors.error.main} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -484,11 +475,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Add time slot"
               >
-                <PlusCircle
-                  
-                  size={20}
-                  color={healthColors.primary.main}
-                />
+                <PlusCircle size={20} color={healthColors.primary.main} />
                 <Text style={styles.addButtonText}>Add Time Slot</Text>
               </TouchableOpacity>
             </View>
@@ -818,5 +805,3 @@ const styles = StyleSheet.create({
 });
 
 export default ScheduleAvailabilityScreen;
-
-

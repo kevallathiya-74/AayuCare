@@ -4,51 +4,96 @@
  * All data logic stays here.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   RefreshControl,
   Alert,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
-import { AlertTriangle, Calendar, Users, FileText, UserPlus, Home, User, Settings } from "lucide-react-native";
+import {
+  AlertTriangle,
+  Calendar,
+  Users,
+  FileText,
+  UserPlus,
+  Home,
+  User,
+  Settings,
+} from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { useFocusEffect } from "@react-navigation/native";
-import { theme, healthColors } from '@/theme';
-import { getScreenPadding } from '@/utils/responsive';
-import { logoutUser } from '@/store/slices/authSlice';
-import { logError, parseError } from '@/utils/errorHandler';
-import { doctorService } from '@/services';
-import { useDoctorAppointments } from '@/context/DoctorAppointmentContext';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { EmptyState, SectionHeader, ModalSheet, Button, SkeletonCardRow, SkeletonStatGrid } from '@/components/common';
-import { useDrawer } from '@/hooks/useDrawer';
-import { DrawerMenu } from '@/components/layout';
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding } from "@/utils/responsive";
+import { logoutUser } from "@/store/slices/authSlice";
+import { logError, parseError } from "@/utils/errorHandler";
+import { doctorService } from "@/services";
+import { useDoctorAppointments } from "@/context/DoctorAppointmentContext";
+import { queryKeys } from "@/config/reactQueryConfig";
+import {
+  EmptyState,
+  SectionHeader,
+  ModalSheet,
+  Button,
+  SkeletonCardRow,
+  SkeletonStatGrid,
+} from "@/components/common";
+import { useDrawer } from "@/hooks/useDrawer";
+import { DrawerMenu } from "@/components/layout";
 import {
   DoctorHeader,
   ScheduleStatsCard,
   PatientSearchBar,
   TodayAppointmentCard,
 } from "./components";
-import Routes from '@/navigation/routes';
+import Routes from "@/navigation/routes";
 
 const QUICK_ACTIONS = [
-  { icon: Calendar, color: healthColors.primary.main, label: "Today's\nAppointments", screen: "DoctorTabs", params: { screen: "TodaysAppointments" } },
-  { icon: Users, color: healthColors.secondary.main, label: "Patient\nManagement", screen: "PatientManagement" },
-  { icon: FileText, color: healthColors.accent.coral, label: "Create\nPrescription", screen: "CreatePrescription" },
-  { icon: UserPlus, color: healthColors.accent.green, label: "Walk-in\nPatient", screen: "WalkInPatient" },
+  {
+    icon: Calendar,
+    color: healthColors.primary.main,
+    label: "Today's\nAppointments",
+    screen: "DoctorTabs",
+    params: { screen: "TodaysAppointments" },
+  },
+  {
+    icon: Users,
+    color: healthColors.secondary.main,
+    label: "Patient\nManagement",
+    screen: "PatientManagement",
+  },
+  {
+    icon: FileText,
+    color: healthColors.accent.coral,
+    label: "Create\nPrescription",
+    screen: "CreatePrescription",
+  },
+  {
+    icon: UserPlus,
+    color: healthColors.accent.green,
+    label: "Walk-in\nPatient",
+    screen: "WalkInPatient",
+  },
 ];
 
 const DoctorHomeScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } = useDrawer();
+  const isFocused = useIsFocused();
+  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
+    useDrawer();
 
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,24 +117,28 @@ const DoctorHomeScreen = ({ navigation }) => {
     },
   });
 
-  const schedule = useMemo(() => ({
-    totalAppointments: dashboardData?.schedule?.totalAppointments || 0,
-    completed: dashboardData?.schedule?.completed || 0,
-    pending: dashboardData?.schedule?.pending || 0,
-    nextPatient: dashboardData?.schedule?.nextPatient || "No upcoming patients",
-    nextTime: dashboardData?.schedule?.nextTime || "--:--",
-  }), [dashboardData]);
+  const schedule = useMemo(
+    () => ({
+      totalAppointments: dashboardData?.schedule?.totalAppointments || 0,
+      completed: dashboardData?.schedule?.completed || 0,
+      pending: dashboardData?.schedule?.pending || 0,
+      nextPatient:
+        dashboardData?.schedule?.nextPatient || "No upcoming patients",
+      nextTime: dashboardData?.schedule?.nextTime || "--:--",
+    }),
+    [dashboardData],
+  );
 
   const todaysAppointments = useMemo(
     () => dashboardData?.todaysAppointments || [],
-    [dashboardData]
+    [dashboardData],
   );
 
   useFocusEffect(
     useCallback(() => {
       refetchDashboard();
       refreshCount();
-    }, [refetchDashboard, refreshCount])
+    }, [refetchDashboard, refreshCount]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -142,26 +191,35 @@ const DoctorHomeScreen = ({ navigation }) => {
     }
   };
 
-  const handleStartConsultation = useCallback(async (appointment) => {
-    try {
-      const id = appointment.id;
-      if (!id) { Alert.alert("Error", "Invalid appointment ID"); return; }
-      await doctorService.updateAppointmentStatus(id, "in_progress");
-      refetchDashboard();
-      refreshCount();
-navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
+  const handleStartConsultation = useCallback(
+    async (appointment) => {
+      try {
+        const id = appointment.id;
+        if (!id) {
+          Alert.alert("Error", "Invalid appointment ID");
+          return;
+        }
+        await doctorService.updateAppointmentStatus(id, "in_progress");
+        refetchDashboard();
+        refreshCount();
+        navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
       } catch (err) {
         logError(err, { context: "DoctorHomeScreen.startConsultation" });
-      Alert.alert("Error", "Failed to start consultation. Please try again.");
-    }
-  }, [refetchDashboard, refreshCount, navigation]);
+        Alert.alert("Error", "Failed to start consultation. Please try again.");
+      }
+    },
+    [refetchDashboard, refreshCount, navigation],
+  );
 
-  const handleViewHistory = useCallback((appointment) => {
-    navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
-      patientId: appointment.patientId,
-      patientName: appointment.patientName,
-    });
-  }, [navigation]);
+  const handleViewHistory = useCallback(
+    (appointment) => {
+      navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
+        patientId: appointment.patientId,
+        patientName: appointment.patientName,
+      });
+    },
+    [navigation],
+  );
 
   // ── Greeting helpers ──
   const getGreeting = useCallback(() => {
@@ -181,49 +239,106 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
   }, []);
 
   // ── Visible appointments ──
-  const visibleAppointments = useMemo(() => (todaysAppointments || []).filter((a) => {
-    const s = String(a?.status || "").toLowerCase().replace(/-/g, "_");
-    return s === "scheduled" || s === "confirmed" || s === "in_progress";
-  }), [todaysAppointments]);
+  const visibleAppointments = useMemo(
+    () =>
+      (todaysAppointments || []).filter((a) => {
+        const s = String(a?.status || "")
+          .toLowerCase()
+          .replace(/-/g, "_")
+          .replace(/\s+/g, "_");
+        return s === "scheduled" || s === "confirmed" || s === "in_progress";
+      }),
+    [todaysAppointments],
+  );
 
   // ── Drawer menu ──
-  const nav = (screen, params) => () => { closeMenu(); setTimeout(() => navigation.navigate(screen, params), 100); };
-  const menuSections = useMemo(() => [
-    {
-      title: "NAVIGATION",
-      items: [
-        { icon: Home, iconColor: healthColors.primary.main, label: "Dashboard", onPress: nav("DoctorTabs", { screen: "Dashboard" }) },
-        { icon: Calendar, iconColor: healthColors.secondary.main, label: "My Appointments", onPress: nav("DoctorTabs", { screen: "TodaysAppointments" }) },
-        { icon: Users, iconColor: healthColors.accent.aqua, label: "Patient Management", onPress: nav("PatientManagement") },
-        { icon: FileText, iconColor: healthColors.accent.coral, label: "Create Prescription", onPress: nav("CreatePrescription") },
-        { icon: UserPlus, iconColor: healthColors.accent.green, label: "Walk-in Patient", onPress: nav("WalkInPatient") },
-      ],
+  const nav = useCallback(
+    (screen, params) => () => {
+      closeMenu();
+      setTimeout(() => navigation.navigate(screen, params), 100);
     },
-    {
-      title: "ACCOUNT",
-      items: [
-        { icon: User, iconColor: healthColors.text.secondary, label: "My Profile", onPress: nav("DoctorTabs", { screen: "Profile" }) },
-        { icon: Settings, iconColor: healthColors.text.secondary, label: "Settings", onPress: nav("Settings") },
-      ],
-    },
-  ], [navigation, closeMenu]); // eslint-disable-line react-hooks/exhaustive-deps
+    [navigation, closeMenu],
+  );
+  const menuSections = useMemo(
+    () => [
+      {
+        title: "NAVIGATION",
+        items: [
+          {
+            icon: Home,
+            iconColor: healthColors.primary.main,
+            label: "Dashboard",
+            onPress: nav("DoctorTabs", { screen: "Dashboard" }),
+          },
+          {
+            icon: Calendar,
+            iconColor: healthColors.secondary.main,
+            label: "My Appointments",
+            onPress: nav("DoctorTabs", { screen: "TodaysAppointments" }),
+          },
+          {
+            icon: Users,
+            iconColor: healthColors.accent.aqua,
+            label: "Patient Management",
+            onPress: nav("PatientManagement"),
+          },
+          {
+            icon: FileText,
+            iconColor: healthColors.accent.coral,
+            label: "Create Prescription",
+            onPress: nav("CreatePrescription"),
+          },
+          {
+            icon: UserPlus,
+            iconColor: healthColors.accent.green,
+            label: "Walk-in Patient",
+            onPress: nav("WalkInPatient"),
+          },
+        ],
+      },
+      {
+        title: "ACCOUNT",
+        items: [
+          {
+            icon: User,
+            iconColor: healthColors.text.secondary,
+            label: "My Profile",
+            onPress: nav("DoctorTabs", { screen: "Profile" }),
+          },
+          {
+            icon: Settings,
+            iconColor: healthColors.text.secondary,
+            label: "Settings",
+            onPress: nav("Settings"),
+          },
+        ],
+      },
+    ],
+    [nav],
+  );
 
   // ── Render ──
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={healthColors.primary.main} />
+      {isFocused && (
+        <StatusBar style="light" backgroundColor="transparent" translucent />
+      )}
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh}
-            colors={[healthColors.primary.main]} tintColor={healthColors.primary.main} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[healthColors.primary.main]}
+            tintColor={healthColors.primary.main}
+          />
         }
       >
         {/* Error banner */}
         {error && (
           <View style={styles.errorBanner}>
-            <AlertTriangle  size={18} color={healthColors.error.main} />
+            <AlertTriangle size={18} color={healthColors.error.main} />
             <Text style={styles.errorText}>{parseError(error)}</Text>
             <TouchableOpacity
               onPress={refetchDashboard}
@@ -242,7 +357,9 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
           greetingIcon={getGreetingIcon()}
           notificationCount={schedule.pending}
           onMenuOpen={openMenu}
-          onNotificationPress={() => navigation.navigate(Routes.DOCTOR.NOTIFICATIONS)}
+          onNotificationPress={() =>
+            navigation.navigate(Routes.DOCTOR.NOTIFICATIONS)
+          }
         />
 
         <View style={styles.body}>
@@ -255,62 +372,81 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
             </View>
           ) : (
             <>
-          {/* ── Schedule Stats ── */}
-          <ScheduleStatsCard schedule={schedule} />
+              {/* ── Schedule Stats ── */}
+              <ScheduleStatsCard schedule={schedule} />
 
-          {/* ── Patient Search ── */}
-          <SectionHeader title="Patient Search" style={styles.sectionHeader} />
-          <PatientSearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            searching={searching}
-            results={searchResults}
-            onClear={() => { setSearchQuery(""); setSearchResults([]); }}
-            onSelectPatient={(p) =>
-              navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
-                patientId: p.userId,
-              })
-            }
-          />
-
-          {/* ── Today's Appointments ── */}
-          <SectionHeader title="Today's Appointments" style={styles.sectionHeader} />
-          {visibleAppointments.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title="No Appointments Today"
-              message="You have no scheduled or confirmed appointments right now."
-            />
-          ) : (
-            visibleAppointments.map((appt) => (
-              <TodayAppointmentCard
-                key={appt.id}
-                appointment={appt}
-                onViewHistory={handleViewHistory}
-                onStartConsultation={handleStartConsultation}
+              {/* ── Patient Search ── */}
+              <SectionHeader
+                title="Patient Search"
+                style={styles.sectionHeader}
               />
-            ))
-          )}
+              <PatientSearchBar
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                searching={searching}
+                results={searchResults}
+                onClear={() => {
+                  setSearchQuery("");
+                  setSearchResults([]);
+                }}
+                onSelectPatient={(p) =>
+                  navigation.navigate(Routes.DOCTOR.PATIENT_MANAGEMENT, {
+                    patientId: p.userId,
+                  })
+                }
+              />
 
-          {/* ── Quick Actions ── */}
-          <SectionHeader title="Quick Actions" style={styles.sectionHeader} />
-          <View style={styles.quickGrid}>
-            {QUICK_ACTIONS.map(({ icon: Icon, color, label, screen, params }) => (
-              <TouchableOpacity
-                key={label}
-                style={styles.quickCard}
-                onPress={() => navigation.navigate(screen, params)}
-                activeOpacity={0.75}
-                accessibilityRole="button"
-                accessibilityLabel={label.replace("\n", " ")}
-              >
-                <View style={[styles.quickIcon, { backgroundColor: color + "18" }]}>
-                  {Icon ? <Icon size={26} color={color} /> : null}
-                </View>
-                <Text style={styles.quickLabel}>{label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+              {/* ── Today's Appointments ── */}
+              <SectionHeader
+                title="Today's Appointments"
+                style={styles.sectionHeader}
+              />
+              {visibleAppointments.length === 0 ? (
+                <EmptyState
+                  icon={Calendar}
+                  title="No Appointments Today"
+                  message="You have no scheduled or confirmed appointments right now."
+                />
+              ) : (
+                visibleAppointments.map((appt) => (
+                  <TodayAppointmentCard
+                    key={appt.id}
+                    appointment={appt}
+                    onViewHistory={handleViewHistory}
+                    onStartConsultation={handleStartConsultation}
+                  />
+                ))
+              )}
+
+              {/* ── Quick Actions ── */}
+              <SectionHeader
+                title="Quick Actions"
+                style={styles.sectionHeader}
+              />
+              <View style={styles.quickGrid}>
+                {QUICK_ACTIONS.map(
+                  ({ icon: Icon, color, label, screen, params }) => (
+                    <TouchableOpacity
+                      key={label}
+                      style={styles.quickCard}
+                      onPress={() => navigation.navigate(screen, params)}
+                      activeOpacity={0.75}
+                      accessibilityRole="button"
+                      accessibilityLabel={label.replace("\n", " ")}
+                    >
+                      <View
+                        style={[
+                          styles.quickIcon,
+                          { backgroundColor: theme.withOpacity(color, 0.18) },
+                        ]}
+                      >
+                        {Icon ? <Icon size={26} color={color} /> : null}
+                      </View>
+                      <Text style={styles.quickLabel}>{label}</Text>
+                    </TouchableOpacity>
+                  ),
+                )}
+              </View>
             </>
           )}
         </View>
@@ -339,17 +475,23 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
           Are you sure you want to log out of your account?
         </Text>
         <View style={styles.modalActions}>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onPress={() => setShowLogoutModal(false)}
             style={styles.modalButton}
             disabled={loggingOut}
             title="Cancel"
           />
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onPress={confirmLogout}
-            style={[styles.modalButton, { backgroundColor: healthColors.error.main, borderColor: healthColors.error.main }]}
+            style={[
+              styles.modalButton,
+              {
+                backgroundColor: healthColors.error.main,
+                borderColor: healthColors.error.main,
+              },
+            ]}
             textStyle={{ color: healthColors.neutral.white }}
             loading={loggingOut}
             title="Logout"
@@ -362,17 +504,35 @@ navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: healthColors.background.secondary },
-  body: { paddingHorizontal: getScreenPadding(), paddingTop: 20, paddingBottom: 24 },
+  body: {
+    paddingHorizontal: getScreenPadding(),
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+  },
   loadingSkeletonWrap: { gap: theme.spacing.sm + theme.spacing.xs },
-  sectionHeader: { marginTop: 24, marginBottom: 12 },
+  sectionHeader: {
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.sm + theme.spacing.xs,
+  },
 
   errorBanner: {
-    flexDirection: "row", alignItems: "center", gap: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     backgroundColor: healthColors.error.background,
-    paddingHorizontal: 16, paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  errorText: { flex: 1, fontSize: theme.typography.sizes.bodyMedium, color: healthColors.error.main },
-  retryText: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.primary.main, fontWeight: "600" },
+  errorText: {
+    flex: 1,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.error.main,
+  },
+  retryText: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.primary.main,
+    fontWeight: "600",
+  },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   quickCard: {
@@ -386,12 +546,19 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   quickIcon: {
-    width: 52, height: 52, borderRadius: 26,
-    justifyContent: "center", alignItems: "center", marginBottom: 10,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
   },
   quickLabel: {
-    fontSize: theme.typography.sizes.bodySmall, fontWeight: "700", color: healthColors.text.primary,
-    textAlign: "center", lineHeight: 17,
+    fontSize: theme.typography.sizes.bodySmall,
+    fontWeight: "700",
+    color: healthColors.text.primary,
+    textAlign: "center",
+    lineHeight: 17,
   },
   modalText: {
     fontSize: theme.typography.sizes.bodyLarge,

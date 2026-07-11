@@ -19,4 +19,3 @@ export { default as WalkInPatientScreen } from "./WalkInPatientScreen";
 export { default as EditProfileScreen } from "./EditProfileScreen";
 export { default as ConsultationHistoryScreen } from "./ConsultationHistoryScreen";
 export { default as ScheduleAvailabilityScreen } from "./ScheduleAvailabilityScreen";
-

@@ -18,22 +18,28 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, UserPlus, User, Calendar, Droplet, MapPin, Cross, Info } from "lucide-react-native";
-import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
 import {
-  getScreenPadding,
-  getKeyboardConfig,
-} from '@/utils/responsive';
+  ArrowLeft,
+  UserPlus,
+  User,
+  Calendar,
+  Droplet,
+  MapPin,
+  Cross,
+  Info,
+} from "lucide-react-native";
+import { useSelector } from "react-redux";
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding, getKeyboardConfig } from "@/utils/responsive";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { showError, logError } from '@/utils/errorHandler';
-import { validateAge, validateBloodGroup } from '@/utils/formValidators';
-import { doctorService } from '@/services';
-import { Input, Button } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { showError, logError } from "@/utils/errorHandler";
+import { validateAge, validateBloodGroup } from "@/utils/formValidators";
+import { doctorService } from "@/services";
+import { Input, Button } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -53,9 +59,12 @@ const WalkInPatientScreen = ({ navigation }) => {
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   const registerWalkInMutation = useMutation({
-    mutationFn: (patientData) => doctorService.registerWalkInPatient(patientData),
+    mutationFn: (patientData) =>
+      doctorService.registerWalkInPatient(patientData),
     onSuccess: async (response) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.appointments.all,
+      });
       const { data, isExisting } = response || {};
 
       Alert.alert(
@@ -68,7 +77,9 @@ const WalkInPatientScreen = ({ navigation }) => {
             text: "View Queue",
             style: "default",
             onPress: () => {
-              navigation.navigate(Routes.TABS.DOCTOR, { screen: Routes.DOCTOR_TABS.TODAYS_APPOINTMENTS });
+              navigation.navigate(Routes.TABS.DOCTOR, {
+                screen: Routes.DOCTOR_TABS.TODAYS_APPOINTMENTS,
+              });
             },
           },
           {
@@ -86,7 +97,7 @@ const WalkInPatientScreen = ({ navigation }) => {
               });
             },
           },
-        ]
+        ],
       );
     },
     onError: (err) => {
@@ -95,20 +106,25 @@ const WalkInPatientScreen = ({ navigation }) => {
       let errorMessage = "Failed to register patient. Please try again.";
 
       if (err.response?.status === 400) {
-        errorMessage = "Invalid patient data. Please check all fields and try again.";
+        errorMessage =
+          "Invalid patient data. Please check all fields and try again.";
       } else if (err.response?.status === 401) {
         errorMessage = "Authentication error. Please login again.";
       } else if (err.response?.status === 403) {
         errorMessage = "You don't have permission to register patients.";
       } else if (err.response?.status >= 500) {
         errorMessage = "Server error. Please try again in a moment.";
-      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
-        errorMessage = "Network error. Please check your connection and try again.";
+      } else if (err.code === "NETWORK_ERROR" || !err.response) {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
       }
 
       showError(errorMessage);
     },
-    retry: 1,
+    retry: (failureCount, err) => {
+      if (failureCount >= 1) return false;
+      return err.code === "NETWORK_ERROR" || !err.response;
+    },
   });
 
   const handleInputChange = (field, value) => {
@@ -131,24 +147,24 @@ const WalkInPatientScreen = ({ navigation }) => {
       showError(bgValidation.error);
       return false;
     }
-    
+
     // Enhanced phone validation
-    const phonePattern = /^\+?[0-9]{7,15}$/;
+    const phonePattern = /^\+?[0-9]{10}$/;
     if (!formData.phone.trim() || !phonePattern.test(formData.phone.trim())) {
       showError("Please enter valid 10-digit phone number");
       return false;
     }
-    
+
     if (!formData.chiefComplaint.trim()) {
       showError("Please enter chief complaint/symptoms");
       return false;
     }
-    
+
     if (formData.chiefComplaint.trim().length < 2) {
       showError("Chief complaint must be at least 2 characters");
       return false;
     }
-    
+
     return true;
   };
 
@@ -171,242 +187,240 @@ const WalkInPatientScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
       <KeyboardAvoidingView {...getKeyboardConfig()} style={styles.flex}>
         {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Walk-in Patient</Text>
-          <Text style={styles.headerSubtitle}>Quick Registration</Text>
-        </View>
-        <View style={styles.headerIconContainer}>
-          <UserPlus
-            
-            size={24}
-            color={healthColors.primary.main}
-          />
-        </View>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 20) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Basic Information Section */}
-        <View style={styles.formSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconContainer}>
-              <User
-                
-                size={20}
-                color={healthColors.primary.main}
-              />
-            </View>
-            <Text style={styles.sectionTitle}>Basic Information</Text>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => handleSmartBack(navigation, "DoctorTabs")}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft size={24} color={healthColors.text.primary} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Walk-in Patient</Text>
+            <Text style={styles.headerSubtitle}>Quick Registration</Text>
           </View>
+          <View style={styles.headerIconContainer}>
+            <UserPlus size={24} color={healthColors.primary.main} />
+          </View>
+        </View>
 
-          {/* Name */}
-          <Input
-            label="Patient Name *"
-            placeholder="Enter full name"
-            value={formData.name}
-            onChangeText={(value) => handleInputChange("name", value)}
-            leftIcon={<User  size={18} color={healthColors.text.disabled} />}
-          />
-
-          {/* Age & Gender */}
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Input
-                label="Age *"
-                placeholder="Age"
-                value={formData.age}
-                onChangeText={(value) =>
-                  handleInputChange("age", value.replace(/[^0-9]/g, ""))
-                }
-                keyboardType="numeric"
-                maxLength={3}
-                leftIcon={<Calendar  size={18} color={healthColors.text.disabled} />}
-              />
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: Math.max(insets.bottom, 20) },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Basic Information Section */}
+          <View style={styles.formSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <User size={20} color={healthColors.primary.main} />
+              </View>
+              <Text style={styles.sectionTitle}>Basic Information</Text>
             </View>
 
-            <View style={[styles.inputGroup, styles.halfWidth]}>
-              <View style={styles.genderContainer}>
-                <Text style={styles.genderLabel}>
-                  Gender <Text style={styles.required}>*</Text>
-                </Text>
-                <View style={styles.genderRow}>
-                  {genderOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option}
-                      style={[
-                        styles.genderButton,
-                        formData.gender === option && styles.genderButtonActive,
-                      ]}
-                      onPress={() => handleInputChange("gender", option)}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select ${option} gender`}
-                      accessibilityState={{ selected: formData.gender === option }}
-                    >
-                      <DynamicIcon
-                        name={
-                          option === "male"
-                            ? "male"
-                            : option === "female"
-                              ? "female"
-                              : "male-female"
-                        }
-                        size={14}
-                        color={
-                          formData.gender === option
-                            ? theme.colors.white
-                            : healthColors.text.secondary
-                        }
-                      />
-                      <Text
+            {/* Name */}
+            <Input
+              label="Patient Name *"
+              placeholder="Enter full name"
+              value={formData.name}
+              onChangeText={(value) => handleInputChange("name", value)}
+              leftIcon={<User size={18} color={healthColors.text.disabled} />}
+            />
+
+            {/* Age & Gender */}
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, styles.halfWidth]}>
+                <Input
+                  label="Age *"
+                  placeholder="Age"
+                  value={formData.age}
+                  onChangeText={(value) =>
+                    handleInputChange("age", value.replace(/[^0-9]/g, ""))
+                  }
+                  keyboardType="numeric"
+                  maxLength={3}
+                  leftIcon={
+                    <Calendar size={18} color={healthColors.text.disabled} />
+                  }
+                />
+              </View>
+
+              <View style={[styles.inputGroup, styles.halfWidth]}>
+                <View style={styles.genderContainer}>
+                  <Text style={styles.genderLabel}>
+                    Gender <Text style={styles.required}>*</Text>
+                  </Text>
+                  <View style={styles.genderRow}>
+                    {genderOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option}
                         style={[
-                          styles.genderText,
-                          formData.gender === option && styles.genderTextActive,
+                          styles.genderButton,
+                          formData.gender === option &&
+                            styles.genderButtonActive,
                         ]}
+                        onPress={() => handleInputChange("gender", option)}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Select ${option} gender`}
+                        accessibilityState={{
+                          selected: formData.gender === option,
+                        }}
                       >
-                        {option.charAt(0).toUpperCase()}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <DynamicIcon
+                          name={
+                            option === "male"
+                              ? "male"
+                              : option === "female"
+                                ? "female"
+                                : "male-female"
+                          }
+                          size={14}
+                          color={
+                            formData.gender === option
+                              ? theme.colors.white
+                              : healthColors.text.secondary
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.genderText,
+                            formData.gender === option &&
+                              styles.genderTextActive,
+                          ]}
+                        >
+                          {option.charAt(0).toUpperCase()}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          {/* Phone */}
-          <Input
-            label="Phone Number *"
-            placeholder="mobile number"
-            value={formData.phone}
-            onChangeText={(value) =>
-              handleInputChange("phone", value.replace(/[^0-9]/g, ""))
-            }
-            keyboardType="phone-pad"
-            maxLength={10}
-            leftIcon={<DynamicIcon name="phone-portrait" size={18} color={healthColors.text.disabled} />}
-          />
+            {/* Phone */}
+            <Input
+              label="Phone Number *"
+              placeholder="mobile number"
+              value={formData.phone}
+              onChangeText={(value) =>
+                handleInputChange("phone", value.replace(/[^0-9]/g, ""))
+              }
+              keyboardType="phone-pad"
+              maxLength={10}
+              leftIcon={
+                <DynamicIcon
+                  name="phone-portrait"
+                  size={18}
+                  color={healthColors.text.disabled}
+                />
+              }
+            />
 
-          {/* Blood Group */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Blood Group</Text>
-            <View style={styles.bloodGroupContainer}>
-              {bloodGroups.map((group) => (
-                <TouchableOpacity
-                  key={group}
-                  style={[
-                    styles.bloodGroupButton,
-                    formData.bloodGroup === group &&
-                      styles.bloodGroupButtonActive,
-                  ]}
-                  onPress={() => handleInputChange("bloodGroup", group)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select blood group ${group}`}
-                  accessibilityState={{ selected: formData.bloodGroup === group }}
-                >
-                  <Droplet
-                    
-                    size={14}
-                    color={
-                      formData.bloodGroup === group
-                        ? theme.colors.white
-                        : healthColors.error.main
-                    }
-                  />
-                  <Text
+            {/* Blood Group */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Blood Group</Text>
+              <View style={styles.bloodGroupContainer}>
+                {bloodGroups.map((group) => (
+                  <TouchableOpacity
+                    key={group}
                     style={[
-                      styles.bloodGroupText,
+                      styles.bloodGroupButton,
                       formData.bloodGroup === group &&
-                        styles.bloodGroupTextActive,
+                        styles.bloodGroupButtonActive,
                     ]}
+                    onPress={() => handleInputChange("bloodGroup", group)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select blood group ${group}`}
+                    accessibilityState={{
+                      selected: formData.bloodGroup === group,
+                    }}
                   >
-                    {group}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Droplet
+                      size={14}
+                      color={
+                        formData.bloodGroup === group
+                          ? theme.colors.white
+                          : healthColors.error.main
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.bloodGroupText,
+                        formData.bloodGroup === group &&
+                          styles.bloodGroupTextActive,
+                      ]}
+                    >
+                      {group}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
+
+            {/* Address */}
+            <Input
+              label="Address (Optional)"
+              placeholder="Patient's home address"
+              value={formData.address}
+              onChangeText={(value) => handleInputChange("address", value)}
+              leftIcon={<MapPin size={18} color={healthColors.text.disabled} />}
+            />
           </View>
 
-          {/* Address */}
-          <Input
-            label="Address (Optional)"
-            placeholder="Patient's home address"
-            value={formData.address}
-            onChangeText={(value) => handleInputChange("address", value)}
-            leftIcon={<MapPin  size={18} color={healthColors.text.disabled} />}
-          />
-        </View>
-
-        {/* Medical Information Section */}
-        <View style={styles.formSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconContainer}>
-              <Cross
-                
-                size={20}
-                color={healthColors.primary.main}
-              />
+          {/* Medical Information Section */}
+          <View style={styles.formSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconContainer}>
+                <Cross size={20} color={healthColors.primary.main} />
+              </View>
+              <Text style={styles.sectionTitle}>Medical Information</Text>
             </View>
-            <Text style={styles.sectionTitle}>Medical Information</Text>
+
+            {/* Chief Complaint */}
+            <Input
+              label="Chief Complaint / Symptoms *"
+              placeholder="Describe the symptoms or reason for visit"
+              value={formData.chiefComplaint}
+              onChangeText={(value) =>
+                handleInputChange("chiefComplaint", value)
+              }
+              multiline
+              numberOfLines={4}
+            />
           </View>
 
-          {/* Chief Complaint */}
-          <Input
-            label="Chief Complaint / Symptoms *"
-            placeholder="Describe the symptoms or reason for visit"
-            value={formData.chiefComplaint}
-            onChangeText={(value) => handleInputChange("chiefComplaint", value)}
-            multiline
-            numberOfLines={4}
-          />
-        </View>
+          <View style={styles.noteContainer}>
+            <Info size={14} color={healthColors.text.disabled} />
+            <Text style={styles.note}>
+              Fields marked with <Text style={styles.required}>*</Text> are
+              required
+            </Text>
+          </View>
 
-        <View style={styles.noteContainer}>
-          <Info
-            
-            size={14}
-            color={healthColors.text.disabled}
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
+            gradient
+            loading={registerWalkInMutation.isPending}
+            onPress={handleRegister}
+            style={styles.registerButton}
+            title="Register Patient"
           />
-          <Text style={styles.note}>
-            Fields marked with <Text style={styles.required}>*</Text> are
-            required
-          </Text>
-        </View>
-
-        <Button
-          variant="primary"
-          size="large"
-          fullWidth
-          gradient
-          loading={registerWalkInMutation.isPending}
-          onPress={handleRegister}
-          style={styles.registerButton}
-          title="Register Patient"
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -603,10 +617,6 @@ const styles = StyleSheet.create({
   registerButton: {
     marginBottom: 24,
   },
-
 });
 
 export default WalkInPatientScreen;
-
-
-

@@ -6,18 +6,24 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Calendar, UserCircle } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { DynamicIcon } from "@/components/common";
 
 const ScheduleStatsCard = ({ schedule }) => {
-  const { totalAppointments = 0, completed = 0, pending = 0, nextPatient = "—", nextTime = "--:--" } = schedule || {};
+  const {
+    totalAppointments = 0,
+    completed = 0,
+    pending = 0,
+    nextPatient = "—",
+    nextTime = "--:--",
+  } = schedule || {};
   const progress = totalAppointments > 0 ? completed / totalAppointments : 0;
 
   return (
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <Calendar  size={20} color={healthColors.primary.main} />
+        <Calendar size={20} color={healthColors.primary.main} />
         <Text style={styles.title}>TODAY'S SCHEDULE</Text>
       </View>
       <View style={styles.divider} />
@@ -53,16 +59,25 @@ const ScheduleStatsCard = ({ schedule }) => {
       {/* Progress bar */}
       <View style={styles.progressSection}>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${Math.round(progress * 100)}%` },
+            ]}
+          />
         </View>
-        <Text style={styles.progressLabel}>{Math.round(progress * 100)}% complete</Text>
+        <Text style={styles.progressLabel}>
+          {Math.round(progress * 100)}% complete
+        </Text>
       </View>
 
       {/* Next patient */}
       <View style={styles.nextPatientRow}>
-        <UserCircle  size={18} color={healthColors.primary.main} />
+        <UserCircle size={18} color={healthColors.primary.main} />
         <Text style={styles.nextPatientLabel}>Next: </Text>
-        <Text style={styles.nextPatientName} numberOfLines={1}>{nextPatient}</Text>
+        <Text style={styles.nextPatientName} numberOfLines={1}>
+          {nextPatient}
+        </Text>
       </View>
     </View>
   );
@@ -70,7 +85,9 @@ const ScheduleStatsCard = ({ schedule }) => {
 
 const StatItem = ({ icon, iconColor, value, label }) => (
   <View style={styles.statItem}>
-    <View style={[styles.statIconCircle, { backgroundColor: iconColor + "15" }]}>
+    <View
+      style={[styles.statIconCircle, { backgroundColor: iconColor + "15" }]}
+    >
       <DynamicIcon name={icon} size={22} color={iconColor} />
     </View>
     <Text style={styles.statValue}>{value}</Text>
@@ -112,12 +129,24 @@ const styles = StyleSheet.create({
   },
   statItem: { flex: 1, alignItems: "center", gap: 4 },
   statIconCircle: {
-    width: 44, height: 44, borderRadius: 22,
-    justifyContent: "center", alignItems: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 4,
   },
-  statValue: { fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary },
-  statLabel: { fontSize: theme.typography.sizes.overline, color: healthColors.text.tertiary, fontWeight: "600", textTransform: "uppercase" },
+  statValue: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.text.primary,
+  },
+  statLabel: {
+    fontSize: theme.typography.sizes.overline,
+    color: healthColors.text.tertiary,
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
 
   // progress
   progressSection: { marginBottom: 14 },
@@ -133,7 +162,11 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.success.main,
     borderRadius: 3,
   },
-  progressLabel: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, textAlign: "right" },
+  progressLabel: {
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.tertiary,
+    textAlign: "right",
+  },
 
   // next patient
   nextPatientRow: {
@@ -145,8 +178,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 4,
   },
-  nextPatientLabel: { fontSize: theme.typography.sizes.bodySmall, color: healthColors.text.secondary, fontWeight: "600" },
-  nextPatientName: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.text.primary, fontWeight: "700", flex: 1 },
+  nextPatientLabel: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: healthColors.text.secondary,
+    fontWeight: "600",
+  },
+  nextPatientName: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    fontWeight: "700",
+    flex: 1,
+  },
 });
 
 export default ScheduleStatsCard;

@@ -15,10 +15,9 @@ import {
   Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme } from '@/theme';
+import { theme } from "@/theme";
 
-
-import { DynamicIcon } from '@/components/common';
+import { DynamicIcon } from "@/components/common";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = Math.min(Math.max(width * 0.42, 164), 220);
@@ -51,7 +50,11 @@ const AdminStatsCarousel = ({ statCards = [], onCardPress }) => (
         >
           <View style={styles.cardTop}>
             <View style={styles.iconWrap}>
-              <DynamicIcon name={stat.icon} size={22} color={theme.colors.text.white} />
+              <DynamicIcon
+                name={stat.icon}
+                size={22}
+                color={theme.colors.text.white}
+              />
             </View>
             {stat.trend !== 0 && (
               <View style={styles.trend}>
@@ -82,15 +85,39 @@ const styles = StyleSheet.create({
   cardWrapper: { width: CARD_WIDTH, marginRight: 12 },
   cardWrapperLast: { marginRight: 0 },
   card: { borderRadius: 14, padding: 16, minHeight: 138 },
-  cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  iconWrap: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.22),
-    justifyContent: "center", alignItems: "center",
+  cardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
   },
-  trend: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: theme.withOpacity(theme.colors.black, 0.15), borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 },
-  trendText: { color: theme.colors.text.white, fontSize: theme.typography.sizes.caption, fontWeight: theme.typography.weights.bold },
-  value: { fontSize: theme.typography.sizes.h2, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.22),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  trend: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: theme.withOpacity(theme.colors.black, 0.15),
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  trendText: {
+    color: theme.colors.text.white,
+    fontSize: theme.typography.sizes.caption,
+    fontWeight: theme.typography.weights.bold,
+  },
+  value: {
+    fontSize: theme.typography.sizes.h2,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+  },
   title: {
     fontSize: theme.typography.sizes.bodySmall,
     color: theme.withOpacity(theme.colors.text.white, 0.92),

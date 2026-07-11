@@ -6,7 +6,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 const AdminWelcomeBanner = ({ greeting, user }) => (
   <LinearGradient
@@ -25,7 +25,9 @@ const AdminWelcomeBanner = ({ greeting, user }) => (
         Welcome{user?.name ? `, ${user.name}` : ""}
       </Text>
       <View style={styles.rolePill}>
-        <Text style={styles.roleText}>{user?.role?.toUpperCase() || "ADMIN"}</Text>
+        <Text style={styles.roleText}>
+          {user?.role?.toUpperCase() || "ADMIN"}
+        </Text>
       </View>
     </View>
   </LinearGradient>
@@ -47,8 +49,15 @@ const styles = StyleSheet.create({
   circle1: { width: 140, height: 140, top: -40, right: -20 },
   circle2: { width: 90, height: 90, bottom: -30, right: 70 },
   content: { gap: 4 },
-  greetingText: { fontSize: theme.typography.sizes.bodySmall, color: theme.withOpacity(healthColors.text.white, 0.85) },
-  nameText: { fontSize: theme.typography.sizes.h3, fontWeight: "700", color: healthColors.white },
+  greetingText: {
+    fontSize: theme.typography.sizes.bodySmall,
+    color: theme.withOpacity(healthColors.text.white, 0.85),
+  },
+  nameText: {
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: "700",
+    color: healthColors.white,
+  },
   rolePill: {
     marginTop: 8,
     alignSelf: "flex-start",
@@ -57,8 +66,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
-  roleText: { fontSize: theme.typography.sizes.overline, fontWeight: "700", color: healthColors.white, letterSpacing: 0.5 },
+  roleText: {
+    fontSize: theme.typography.sizes.overline,
+    fontWeight: "700",
+    color: healthColors.white,
+    letterSpacing: 0.5,
+  },
 });
 
 export default AdminWelcomeBanner;
-

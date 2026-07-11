@@ -4,12 +4,18 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ShieldCheck, LogOut } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from '@/theme';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { DynamicIcon } from "@/components/common";
 
 const getInitials = (name) => {
   if (!name) return "U";
@@ -41,7 +47,11 @@ const ActionRow = ({ icon, label, onPress, last }) => (
     >
       <DynamicIcon name={icon} size={22} color={healthColors.text.primary} />
       <Text style={styles.actionLabel}>{label}</Text>
-      <DynamicIcon name="chevron-forward" size={20} color={healthColors.text.tertiary} />
+      <DynamicIcon
+        name="chevron-forward"
+        size={20}
+        color={healthColors.text.tertiary}
+      />
     </TouchableOpacity>
     {!last && <View style={styles.divider} />}
   </>
@@ -65,14 +75,20 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
       >
         <View style={styles.avatarWrap}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials(user?.name || "Admin User")}</Text>
+            <Text style={styles.avatarText}>
+              {getInitials(user?.name || "Admin User")}
+            </Text>
           </View>
         </View>
         <Text style={styles.heroName}>{user?.name || "Admin User"}</Text>
-        <Text style={styles.heroEmail}>{user?.email || "admin@aayucare.com"}</Text>
+        <Text style={styles.heroEmail}>
+          {user?.email || "admin@aayucare.com"}
+        </Text>
         <View style={styles.rolePill}>
-          <ShieldCheck  size={14} color={theme.colors.text.white} />
-          <Text style={styles.roleText}>{user?.role?.toUpperCase() || "ADMIN"}</Text>
+          <ShieldCheck size={14} color={theme.colors.text.white} />
+          <Text style={styles.roleText}>
+            {user?.role?.toUpperCase() || "ADMIN"}
+          </Text>
         </View>
       </LinearGradient>
 
@@ -80,15 +96,39 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
         <View style={styles.card}>
-          <InfoRow icon="id-card-outline" label="Admin ID" value={user?.userId || "ADMIN"} />
-          <InfoRow icon="person-outline" label="Full Name" value={user?.name || "Admin User"} />
-          <InfoRow icon="mail-outline" label="Email Address" value={user?.email || "admin@aayucare.com"} />
-          <InfoRow icon="call-outline" label="Phone Number" value={user?.phone || "+91 XXXXXXXXXX"} />
-          <InfoRow icon="briefcase-outline" label="Role" value={user?.role || "admin"} />
+          <InfoRow
+            icon="id-card-outline"
+            label="Admin ID"
+            value={user?.userId || "ADMIN"}
+          />
+          <InfoRow
+            icon="person-outline"
+            label="Full Name"
+            value={user?.name || "Admin User"}
+          />
+          <InfoRow
+            icon="mail-outline"
+            label="Email Address"
+            value={user?.email || "admin@aayucare.com"}
+          />
+          <InfoRow
+            icon="call-outline"
+            label="Phone Number"
+            value={user?.phone || "+91 XXXXXXXXXX"}
+          />
+          <InfoRow
+            icon="briefcase-outline"
+            label="Role"
+            value={user?.role || "admin"}
+          />
           <InfoRow
             icon="calendar-outline"
             label="Member Since"
-            value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "January 2025"}
+            value={
+              user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString()
+                : "January 2025"
+            }
             last
           />
         </View>
@@ -98,10 +138,27 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account Settings</Text>
         <View style={styles.card}>
-          <ActionRow icon="settings-outline" label="Settings" onPress={() => onNavigate("AdminSettings")} />
-          <ActionRow icon="create-outline" label="Edit Profile" onPress={() => onNavigate("EditProfile")} />
-          <ActionRow icon="key-outline" label="Change Password" onPress={() => onNavigate("ChangePassword")} />
-          <ActionRow icon="shield-outline" label="Privacy & Security" onPress={() => onNavigate("SecuritySettings")} last />
+          <ActionRow
+            icon="settings-outline"
+            label="Settings"
+            onPress={() => onNavigate("AdminSettings")}
+          />
+          <ActionRow
+            icon="create-outline"
+            label="Edit Profile"
+            onPress={() => onNavigate("EditProfile")}
+          />
+          <ActionRow
+            icon="key-outline"
+            label="Change Password"
+            onPress={() => onNavigate("ChangePassword")}
+          />
+          <ActionRow
+            icon="shield-outline"
+            label="Privacy & Security"
+            onPress={() => onNavigate("SecuritySettings")}
+            last
+          />
         </View>
       </View>
 
@@ -113,7 +170,7 @@ const AdminProfileView = ({ user, onNavigate, onLogout }) => {
           accessibilityRole="button"
           accessibilityLabel="Logout"
         >
-          <LogOut  size={22} color={healthColors.error.main} />
+          <LogOut size={22} color={healthColors.error.main} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -125,14 +182,19 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: healthColors.background.secondary },
   hero: {
     alignItems: "center",
-    paddingTop: 32, paddingBottom: 28, paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
     gap: 4,
   },
   avatarWrap: { marginBottom: 12 },
   avatar: {
-    width: 96, height: 96, borderRadius: 48,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: healthColors.white,
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     ...theme.shadows.md,
   },
   avatarText: {
@@ -140,39 +202,94 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: healthColors.primary.main,
   },
-  heroName: { fontSize: theme.typography.sizes.h3, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
-  heroEmail: { fontSize: theme.typography.sizes.bodyMedium, color: theme.withOpacity(theme.colors.text.white, 0.75) },
-  rolePill: {
-    marginTop: 8, flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
-    borderRadius: 14, paddingHorizontal: 12, paddingVertical: 5,
+  heroName: {
+    fontSize: theme.typography.sizes.h3,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
   },
-  roleText: { fontSize: theme.typography.sizes.bodySmall, fontWeight: theme.typography.weights.bold, color: theme.colors.text.white },
+  heroEmail: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: theme.withOpacity(theme.colors.text.white, 0.75),
+  },
+  rolePill: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: theme.withOpacity(theme.colors.text.white, 0.2),
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  roleText: {
+    fontSize: theme.typography.sizes.bodySmall,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text.white,
+  },
 
   section: { marginHorizontal: 16, marginTop: 24 },
-  sectionTitle: { fontSize: theme.typography.sizes.bodyMedium, fontWeight: "700", color: healthColors.text.secondary, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
+  sectionTitle: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    fontWeight: "700",
+    color: healthColors.text.secondary,
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.card,
-    borderWidth: 1, borderColor: healthColors.border.light,
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
     overflow: "hidden",
     ...theme.shadows.sm,
   },
-  divider: { height: 1, backgroundColor: healthColors.border.light, marginLeft: 48 },
+  divider: {
+    height: 1,
+    backgroundColor: healthColors.border.light,
+    marginLeft: 48,
+  },
   infoRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
   infoContent: { flex: 1 },
-  infoLabel: { fontSize: theme.typography.sizes.caption, color: healthColors.text.tertiary, fontWeight: "500" },
-  infoValue: { fontSize: theme.typography.sizes.bodyMedium, color: healthColors.text.primary, fontWeight: "600", marginTop: 2 },
-  actionRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
-  actionLabel: { flex: 1, fontSize: theme.typography.sizes.bodyMedium, color: healthColors.text.primary, fontWeight: "500" },
+  infoLabel: {
+    fontSize: theme.typography.sizes.caption,
+    color: healthColors.text.tertiary,
+    fontWeight: "500",
+  },
+  infoValue: {
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    gap: 12,
+  },
+  actionLabel: {
+    flex: 1,
+    fontSize: theme.typography.sizes.bodyMedium,
+    color: healthColors.text.primary,
+    fontWeight: "500",
+  },
   logoutBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
     backgroundColor: healthColors.error.background,
     borderRadius: theme.borderRadius.card,
     padding: 16,
-    borderWidth: 1, borderColor: theme.withOpacity(healthColors.error.main, 0.19),
+    borderWidth: 1,
+    borderColor: theme.withOpacity(healthColors.error.main, 0.19),
   },
-  logoutText: { fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.error.main },
+  logoutText: {
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.error.main,
+  },
 });
 
 export default AdminProfileView;

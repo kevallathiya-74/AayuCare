@@ -19,14 +19,14 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ChevronDown, X, Check, Calendar } from "lucide-react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import adminService from '@/services/admin.service';
-import { Button, Input } from '@/components/common';
-import logger from '@/utils/logger';
-import { DynamicIcon } from '@/components/common';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { parseError } from '@/utils/errorHandler';
-import { getKeyboardConfig } from '@/utils/responsive';
+import { theme, healthColors } from "@/theme";
+import adminService from "@/services/admin.service";
+import { Button, Input } from "@/components/common";
+import logger from "@/utils/logger";
+import { DynamicIcon } from "@/components/common";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { parseError } from "@/utils/errorHandler";
+import { getKeyboardConfig } from "@/utils/responsive";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
@@ -55,12 +55,15 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   const queryClient = useQueryClient();
 
   const updatePatientMutation = useMutation({
-    mutationFn: ({ userId, updateData }) => adminService.updateUserProfile(userId, updateData),
+    mutationFn: ({ userId, updateData }) =>
+      adminService.updateUserProfile(userId, updateData),
     onSuccess: async (response) => {
       if (response?.success === true) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.admin() }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.dashboardStats.admin(),
+          }),
         ]);
 
         if (onSuccess) {
@@ -76,7 +79,10 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         return;
       }
 
-      throw new Error(response?.message || "Failed to update patient profile. Please try again.");
+      throw new Error(
+        response?.message ||
+          "Failed to update patient profile. Please try again.",
+      );
     },
   });
 
@@ -84,17 +90,17 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   useEffect(() => {
     if (patient && visible) {
       logger.debug("EditPatientModal", "Pre-filling form", patient);
-      
+
       // Format date if it's a Date object
       let dobString = "";
       let dateObj = new Date(2000, 0, 1);
-      
+
       if (patient.dateOfBirth) {
         const dob = new Date(patient.dateOfBirth);
         // Use local date formatting to avoid timezone shift
         const year = dob.getFullYear();
-        const month = String(dob.getMonth() + 1).padStart(2, '0');
-        const day = String(dob.getDate()).padStart(2, '0');
+        const month = String(dob.getMonth() + 1).padStart(2, "0");
+        const day = String(dob.getDate()).padStart(2, "0");
         dobString = `${year}-${month}-${day}`; // YYYY-MM-DD
         dateObj = dob;
       }
@@ -120,7 +126,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           ? patient.chronicConditions.join(", ")
           : "",
       };
-      
+
       logger.debug("EditPatientModal", "Derived form values", formValues);
       setFormData(formValues);
       setSelectedDate(dateObj);
@@ -192,14 +198,25 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       if (formData.address && formData.address.trim()) {
         updateData.address = formData.address.trim();
       }
-      if (formData.emergencyContactName && formData.emergencyContactName.trim()) {
+      if (
+        formData.emergencyContactName &&
+        formData.emergencyContactName.trim()
+      ) {
         updateData.emergencyContactName = formData.emergencyContactName.trim();
       }
-      if (formData.emergencyContactPhone && formData.emergencyContactPhone.trim()) {
-        updateData.emergencyContactPhone = formData.emergencyContactPhone.trim();
+      if (
+        formData.emergencyContactPhone &&
+        formData.emergencyContactPhone.trim()
+      ) {
+        updateData.emergencyContactPhone =
+          formData.emergencyContactPhone.trim();
       }
-      if (formData.emergencyContactRelation && formData.emergencyContactRelation.trim()) {
-        updateData.emergencyContactRelation = formData.emergencyContactRelation.trim();
+      if (
+        formData.emergencyContactRelation &&
+        formData.emergencyContactRelation.trim()
+      ) {
+        updateData.emergencyContactRelation =
+          formData.emergencyContactRelation.trim();
       }
       if (formData.allergies && formData.allergies.trim()) {
         updateData.allergies = formData.allergies
@@ -225,27 +242,34 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
       let errorMessage = parseError(error);
 
       // Specific handling for duplicate errors with field highlighting
-      if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already exists")) {
+      if (
+        errorMessage.toLowerCase().includes("email") &&
+        errorMessage.toLowerCase().includes("already exists")
+      ) {
         setErrors({ ...errors, email: "This email is already registered" });
-        errorMessage = "This email is already in use. Please use a different email.";
-      } else if (errorMessage.toLowerCase().includes("phone") && errorMessage.toLowerCase().includes("already exists")) {
-        setErrors({ ...errors, phone: "This phone number is already registered" });
-        errorMessage = "This phone number is already in use. Please use a different number.";
+        errorMessage =
+          "This email is already in use. Please use a different email.";
+      } else if (
+        errorMessage.toLowerCase().includes("phone") &&
+        errorMessage.toLowerCase().includes("already exists")
+      ) {
+        setErrors({
+          ...errors,
+          phone: "This phone number is already registered",
+        });
+        errorMessage =
+          "This phone number is already in use. Please use a different number.";
       }
 
       // Show alert with clear message
-      Alert.alert(
-        "Update Failed",
-        errorMessage,
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Field will show red error state
-            }
-          }
-        ]
-      );
+      Alert.alert("Update Failed", errorMessage, [
+        {
+          text: "OK",
+          onPress: () => {
+            // Field will show red error state
+          },
+        },
+      ]);
     }
   };
 
@@ -272,13 +296,13 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
     }
-    
+
     if (date) {
       setSelectedDate(date);
       // Use local date formatting to avoid timezone shift
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       const formattedDate = `${year}-${month}-${day}`;
       setFormData({ ...formData, dateOfBirth: formattedDate });
       if (errors.dateOfBirth) {
@@ -308,7 +332,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     placeholder,
     icon,
     keyboardType = "default",
-    multiline = false
+    multiline = false,
   ) => (
     <View style={styles.inputContainer}>
       <Input
@@ -330,7 +354,9 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           <DynamicIcon
             name={icon}
             size={20}
-            color={errors[key] ? healthColors.error.main : healthColors.text.tertiary}
+            color={
+              errors[key] ? healthColors.error.main : healthColors.text.tertiary
+            }
           />
         }
         error={errors[key]}
@@ -378,9 +404,10 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     selectedValue,
     onSelect,
     visible,
-    onClose
+    onClose,
   ) => (
-    <Modal statusBarTranslucent
+    <Modal
+      statusBarTranslucent
       visible={visible}
       transparent={true}
       animationType="slide"
@@ -399,11 +426,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               accessibilityRole="button"
               accessibilityLabel="Close selection"
             >
-              <X
-                
-                size={24}
-                color={healthColors.text.primary}
-              />
+              <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -428,11 +451,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                   {item}
                 </Text>
                 {selectedValue === item && (
-                  <Check
-                    
-                    size={20}
-                    color={healthColors.primary.main}
-                  />
+                  <Check size={20} color={healthColors.primary.main} />
                 )}
               </TouchableOpacity>
             )}
@@ -443,13 +462,15 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   );
 
   return (
-    <Modal statusBarTranslucent
+    <Modal
+      statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>
@@ -463,11 +484,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               accessibilityRole="button"
               accessibilityLabel="Close patient profile editor"
             >
-              <X
-                
-                size={24}
-                color={healthColors.text.primary}
-              />
+              <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
 
@@ -483,14 +500,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Email Address *",
               "patient@example.com",
               "mail",
-              "email-address"
+              "email-address",
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+911234567890",
               "call",
-              "phone-pad"
+              "phone-pad",
             )}
             {/* Date of Birth Picker */}
             <View style={styles.inputContainer}>
@@ -506,7 +523,6 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                 accessibilityLabel="Select date of birth"
               >
                 <Calendar
-                  
                   size={20}
                   color={
                     errors.dateOfBirth
@@ -525,11 +541,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
                     ? formatDisplayDate(formData.dateOfBirth)
                     : "Select date of birth..."}
                 </Text>
-                <ChevronDown
-                  
-                  size={20}
-                  color={healthColors.text.tertiary}
-                />
+                <ChevronDown size={20} color={healthColors.text.tertiary} />
               </TouchableOpacity>
               {errors.dateOfBirth && (
                 <Text style={styles.errorText}>{errors.dateOfBirth}</Text>
@@ -540,14 +552,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Gender",
               "person-outline",
               GENDERS,
-              setShowGenderPicker
+              setShowGenderPicker,
             )}
             {renderPicker(
               "bloodGroup",
               "Blood Group",
               "water",
               BLOOD_GROUPS,
-              setShowBloodGroupPicker
+              setShowBloodGroupPicker,
             )}
             {renderInput(
               "address",
@@ -555,40 +567,40 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Full address",
               "location",
               "default",
-              true
+              true,
             )}
             {renderInput(
               "emergencyContactName",
               "Emergency Contact Name",
               "Contact person name",
-              "person-add"
+              "person-add",
             )}
             {renderInput(
               "emergencyContactPhone",
               "Emergency Contact Phone",
               "+911234567890",
               "call",
-              "phone-pad"
+              "phone-pad",
             )}
             {renderInput(
               "emergencyContactRelation",
               "Emergency Contact Relation",
               "e.g. Father, Spouse, Friend",
-              "people"
+              "people",
             )}
             {renderInput(
               "allergies",
               "Allergies",
               "e.g. Penicillin, Pollen",
               "warning",
-              "default"
+              "default",
             )}
             {renderInput(
               "chronicConditions",
               "Chronic Conditions",
               "e.g. Diabetes, Hypertension",
               "medkit",
-              "default"
+              "default",
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>
@@ -627,7 +639,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           setShowGenderPicker(false);
         },
         showGenderPicker,
-        () => setShowGenderPicker(false)
+        () => setShowGenderPicker(false),
       )}
 
       {renderPickerModal(
@@ -639,7 +651,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           setShowBloodGroupPicker(false);
         },
         showBloodGroupPicker,
-        () => setShowBloodGroupPicker(false)
+        () => setShowBloodGroupPicker(false),
       )}
 
       {/* Date Picker */}
@@ -794,7 +806,6 @@ const styles = StyleSheet.create({
   flexButton: {
     flex: 1,
   },
-
 });
 
 export default EditPatientModal;

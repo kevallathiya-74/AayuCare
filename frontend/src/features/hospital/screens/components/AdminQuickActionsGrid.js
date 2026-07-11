@@ -5,8 +5,8 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { theme, healthColors } from '@/theme';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { DynamicIcon } from "@/components/common";
 
 const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
   <View style={styles.wrapper}>
@@ -21,7 +21,9 @@ const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
           accessibilityRole="button"
           accessibilityLabel={action.title || `Quick action ${i + 1}`}
         >
-          <View style={[styles.iconWrap, { backgroundColor: action.color + "15" }]}>
+          <View
+            style={[styles.iconWrap, { backgroundColor: action.color + "15" }]}
+          >
             <DynamicIcon name={action.icon} size={24} color={action.color} />
             {action.badge ? (
               <View style={styles.badge}>
@@ -41,7 +43,9 @@ const AdminQuickActionsGrid = ({ title = "Quick Actions", actions = [] }) => (
 const styles = StyleSheet.create({
   wrapper: { marginHorizontal: 16, marginTop: 24 },
   sectionTitle: {
-    fontSize: theme.typography.sizes.bodyLarge, fontWeight: "700", color: healthColors.text.primary,
+    fontSize: theme.typography.sizes.bodyLarge,
+    fontWeight: "700",
+    color: healthColors.text.primary,
     marginBottom: 12,
   },
   grid: {
@@ -64,19 +68,33 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   iconWrap: {
-    width: 48, height: 48, borderRadius: 24,
-    justifyContent: "center", alignItems: "center",
-    marginBottom: 8, position: "relative",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    position: "relative",
   },
   badge: {
-    position: "absolute", top: -4, right: -4,
-    minWidth: 18, height: 18, borderRadius: 9,
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: healthColors.error.main,
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 4,
-    borderWidth: 1.5, borderColor: healthColors.text.white,
+    borderWidth: 1.5,
+    borderColor: healthColors.text.white,
   },
-  badgeText: { color: healthColors.text.white, fontSize: theme.typography.sizes.overline, fontWeight: "700" },
+  badgeText: {
+    color: healthColors.text.white,
+    fontSize: theme.typography.sizes.overline,
+    fontWeight: "700",
+  },
   label: {
     fontSize: theme.typography.sizes.bodySmall,
     fontWeight: "700",

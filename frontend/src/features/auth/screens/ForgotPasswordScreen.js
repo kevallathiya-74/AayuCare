@@ -14,18 +14,25 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft, Key, Mail, CheckCircle, ShieldCheck, Shield } from "lucide-react-native";
-import Input from '@/components/common/Input';
-import Button from '@/components/common/Button';
-import { theme, healthColors } from '@/theme';
-import Routes from '@/navigation/routes';
+import {
+  ArrowLeft,
+  Key,
+  Mail,
+  CheckCircle,
+  ShieldCheck,
+  Shield,
+} from "lucide-react-native";
+import Input from "@/components/common/Input";
+import Button from "@/components/common/Button";
+import { theme, healthColors } from "@/theme";
+import Routes from "@/navigation/routes";
 import {
   showError,
   showSuccess,
   validateEmail,
   validatePhone,
-} from '@/utils/errorHandler';
-import { handleSmartBack } from '@/utils/navigation';
+} from "@/utils/errorHandler";
+import { handleSmartBack } from "@/utils/navigation";
 
 const ForgotPasswordScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
@@ -49,7 +56,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
 
   const handleEmailChange = useCallback((text) => {
     setEmail(text);
-    setErrors(prev => prev.email ? { ...prev, email: "" } : prev);
+    setErrors((prev) => (prev.email ? { ...prev, email: "" } : prev));
   }, []);
 
   const handleSendOTP = () => {
@@ -66,20 +73,28 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     // Validate email or phone format
     if (!isHospital && email.includes("@")) {
       if (!validateEmail(email)) {
-        showError(t("auth.validEmailRequired", "Please enter a valid email address"));
+        showError(
+          t("auth.validEmailRequired", "Please enter a valid email address"),
+        );
         return;
       }
     } else if (!isHospital && !email.includes("@")) {
       if (!validatePhone(email)) {
-        showError(t("auth.validPhoneRequired", "Please enter a valid phone number"));
+        showError(
+          t("auth.validPhoneRequired", "Please enter a valid phone number"),
+        );
         return;
       }
     }
 
     // Show success message
     showSuccess(
-      t("auth.otpSentMsg", "OTP sent successfully to {{target}}. Please check your {{type}}.", { target: email, type: email.includes("@") ? "email" : "phone" }),
-      t("auth.otpSent", "OTP Sent")
+      t(
+        "auth.otpSentMsg",
+        "OTP sent successfully to {{target}}. Please check your {{type}}.",
+        { target: email, type: email.includes("@") ? "email" : "phone" },
+      ),
+      t("auth.otpSent", "OTP Sent"),
     );
     setEmailSent(true);
 
@@ -94,7 +109,10 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -133,10 +151,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                   end={{ x: 1, y: 1 }}
                   style={styles.iconGradient}
                 >
-                  <Key
-                    size={36}
-                    color={theme.colors.text.white}
-                  />
+                  <Key size={36} color={theme.colors.text.white} />
                 </LinearGradient>
               </View>
               <Text style={[styles.title, isHospital && styles.hospitalText]}>
@@ -146,10 +161,19 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 style={[styles.subtitle, isHospital && styles.hospitalSubtext]}
               >
                 {emailSent
-                  ? t("auth.checkInstructions", "Check your email for reset instructions")
+                  ? t(
+                      "auth.checkInstructions",
+                      "Check your email for reset instructions",
+                    )
                   : isHospital
-                    ? t("auth.enterHospitalIdToReset", "Enter your Hospital ID or email to reset password")
-                    : t("auth.enterRegisteredToReset", "Enter your registered email or phone to reset password")}
+                    ? t(
+                        "auth.enterHospitalIdToReset",
+                        "Enter your Hospital ID or email to reset password",
+                      )
+                    : t(
+                        "auth.enterRegisteredToReset",
+                        "Enter your registered email or phone to reset password",
+                      )}
               </Text>
             </View>
 
@@ -159,9 +183,15 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 <View style={styles.form}>
                   <Input
                     label={
-                      isHospital ? t("auth.hospitalIdOrEmail", "Hospital ID or Email") : t("auth.emailOrPhone", "Email or Phone")
+                      isHospital
+                        ? t("auth.hospitalIdOrEmail", "Hospital ID or Email")
+                        : t("auth.emailOrPhone", "Email or Phone")
                     }
-                    placeholder={isHospital ? t("auth.hospitalIdPlaceholder", "HOS123456") : t("auth.emailPlaceholder", "example@email.com")}
+                    placeholder={
+                      isHospital
+                        ? t("auth.hospitalIdPlaceholder", "HOS123456")
+                        : t("auth.emailPlaceholder", "example@email.com")
+                    }
                     value={email}
                     onChangeText={handleEmailChange}
                     error={errors.email}
@@ -218,15 +248,9 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
             {/* Footer Info */}
             <View style={styles.footer}>
               {isHospital ? (
-                <ShieldCheck
-                  size={20}
-                  color={theme.colors.success.dark}
-                />
+                <ShieldCheck size={20} color={theme.colors.success.dark} />
               ) : (
-                <Shield
-                  size={16}
-                  color={healthColors.text.secondary}
-                />
+                <Shield size={16} color={healthColors.text.secondary} />
               )}
               <Text
                 style={[styles.footerText, isHospital && styles.hospitalFooter]}

@@ -12,20 +12,25 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { User, Calendar, Clock, FileText, Phone, ArrowLeft } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
 import {
-  getScreenPadding,
-} from '@/utils/responsive';
+  User,
+  Calendar,
+  Clock,
+  FileText,
+  Phone,
+  ArrowLeft,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding } from "@/utils/responsive";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { queryKeys } from '@/config/reactQueryConfig';
-import { doctorService } from '@/services';
-import { parseError } from '@/utils/errorHandler';
-import { convertTo12Hour, getStatusColor } from '@/utils/helpers';
-import { SkeletonCardRow, EmptyState } from '@/components/common';
-import { EmptyStateConfig } from '@/utils/constants';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { queryKeys } from "@/config/reactQueryConfig";
+import { doctorService } from "@/services";
+import { parseError } from "@/utils/errorHandler";
+import { convertTo12Hour, getStatusColor } from "@/utils/helpers";
+import { SkeletonCardRow, EmptyState } from "@/components/common";
+import { EmptyStateConfig } from "@/utils/constants";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const PAGE_SIZE = 20;
 
@@ -43,7 +48,10 @@ const ConsultationHistoryScreen = ({ navigation }) => {
     isError,
     error,
   } = useInfiniteQuery({
-    queryKey: queryKeys.appointments.infinite({ scope: "consultation-history", filter }),
+    queryKey: queryKeys.appointments.infinite({
+      scope: "consultation-history",
+      filter,
+    }),
     initialPageParam: 1,
     staleTime: 2 * 60 * 1000,
     queryFn: async ({ pageParam = 1 }) => {
@@ -71,7 +79,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
 
   const consultations = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.consultations || []),
-    [data]
+    [data],
   );
 
   const handleRefresh = useCallback(() => {
@@ -83,8 +91,6 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  
 
   const getStatusText = (status) => {
     switch (status) {
@@ -117,11 +123,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       <View style={styles.consultationHeader}>
         <View style={styles.patientInfo}>
           <View style={styles.avatarContainer}>
-            <User
-              
-              size={24}
-              color={healthColors.primary.main}
-            />
+            <User size={24} color={healthColors.primary.main} />
           </View>
           <View style={styles.patientDetails}>
             <Text style={styles.patientName}>
@@ -148,32 +150,22 @@ const ConsultationHistoryScreen = ({ navigation }) => {
 
       <View style={styles.consultationDetails}>
         <View style={styles.detailRow}>
-          <Calendar
-            
-            size={16}
-            color={healthColors.text.secondary}
-          />
+          <Calendar size={16} color={healthColors.text.secondary} />
           <Text style={styles.detailText}>
             {new Date(item.appointmentDate).toLocaleDateString("en-IN")}
           </Text>
         </View>
         {item.appointmentTime && (
           <View style={styles.detailRow}>
-            <Clock
-              
-              size={16}
-              color={healthColors.text.secondary}
-            />
-            <Text style={styles.detailText}>{convertTo12Hour(item.appointmentTime)}</Text>
+            <Clock size={16} color={healthColors.text.secondary} />
+            <Text style={styles.detailText}>
+              {convertTo12Hour(item.appointmentTime)}
+            </Text>
           </View>
         )}
         {item.reason && (
           <View style={styles.detailRow}>
-            <FileText
-              
-              size={16}
-              color={healthColors.text.secondary}
-            />
+            <FileText size={16} color={healthColors.text.secondary} />
             <Text style={styles.detailText} numberOfLines={1}>
               {item.reason}
             </Text>
@@ -183,11 +175,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
 
       {item.patientPhone && (
         <View style={styles.contactRow}>
-          <Phone
-            
-            size={14}
-            color={healthColors.text.disabled}
-          />
+          <Phone size={14} color={healthColors.text.disabled} />
           <Text style={styles.contactText}>{item.patientPhone}</Text>
         </View>
       )}
@@ -228,11 +216,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Consultation History</Text>
@@ -241,11 +225,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           </Text>
         </View>
         <View style={styles.headerIconContainer}>
-          <Clock
-            
-            size={24}
-            color={healthColors.primary.main}
-          />
+          <Clock size={24} color={healthColors.primary.main} />
         </View>
       </View>
 
@@ -278,29 +258,31 @@ const ConsultationHistoryScreen = ({ navigation }) => {
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={10}
-
         ListEmptyComponent={
-          !loading && (
-            isError ? (
-              <EmptyState
-                icon={EmptyStateConfig.CONSULTATIONS.icon}
-                title="Error Loading Data"
-                message={parseError(error)}
-                actionLabel="Try Again"
-                onActionPress={handleRefresh}
-              />
-            ) : (
-              <EmptyState
-                icon={EmptyStateConfig.CONSULTATIONS.icon}
-                title={filter === "all" ? EmptyStateConfig.CONSULTATIONS.title : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Consultations`}
-                message={
-                  filter === "all"
-                    ? EmptyStateConfig.CONSULTATIONS.message
-                    : `No ${filter} consultations found. Try the All tab to see everything.`
-                }
-              />
-            )
-          )
+          !loading &&
+          (isError ? (
+            <EmptyState
+              icon={EmptyStateConfig.CONSULTATIONS.icon}
+              title="Error Loading Data"
+              message={parseError(error)}
+              actionLabel="Try Again"
+              onActionPress={handleRefresh}
+            />
+          ) : (
+            <EmptyState
+              icon={EmptyStateConfig.CONSULTATIONS.icon}
+              title={
+                filter === "all"
+                  ? EmptyStateConfig.CONSULTATIONS.title
+                  : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Consultations`
+              }
+              message={
+                filter === "all"
+                  ? EmptyStateConfig.CONSULTATIONS.message
+                  : `No ${filter} consultations found. Try the All tab to see everything.`
+              }
+            />
+          ))
         }
         ListFooterComponent={
           isFetchingNextPage &&
@@ -315,7 +297,11 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       />
 
       {loading && consultations.length === 0 && (
-        <View style={styles.skeletonContainer}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
+        </View>
       )}
     </SafeAreaView>
   );
@@ -480,7 +466,3 @@ const styles = StyleSheet.create({
 });
 
 export default ConsultationHistoryScreen;
-
-
-
-

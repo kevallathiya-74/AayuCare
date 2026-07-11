@@ -7,15 +7,17 @@ import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import { APP_CONFIG } from "@/config/appConfig";
 import api from "@/services/apiClient";
-import logger from '@/utils/logger';
-import appStorage from '@/utils/appStorage';
-import { STORAGE_KEYS } from '@/utils/constants';
+import logger from "@/utils/logger";
+import appStorage from "@/utils/appStorage";
+import { STORAGE_KEYS } from "@/utils/constants";
 
 // Better Auth expects base URL WITHOUT /api suffix
 const getAuthBaseURL = () => {
   const baseURL = String(APP_CONFIG?.api?.baseURL ?? "").trim();
   if (!baseURL) {
-    throw new Error('CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.');
+    throw new Error(
+      "CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.",
+    );
   }
   return baseURL.replace(/\/api\/?$/, "");
 };
@@ -32,22 +34,22 @@ export const authClient = createAuthClient({
           try {
             return appStorage.getItemSync(key);
           } catch (error) {
-            console.error('[Auth] Storage getItem error:', error);
+            if (__DEV__) logger.error("[Auth] Storage getItem error:", error);
             return null;
           }
         },
         setItem: async (key, value) => {
           try {
-             await appStorage.setItem(key, value);
+            await appStorage.setItem(key, value);
           } catch (error) {
-             console.error('[Auth] Storage setItem error:', error);
+            if (__DEV__) logger.error("[Auth] Storage setItem error:", error);
           }
         },
         removeItem: async (key) => {
           try {
-             await appStorage.deleteItem(key);
+            await appStorage.deleteItem(key);
           } catch (error) {
-             console.error('[Auth] Storage removeItem error:', error);
+            if (__DEV__) logger.error("[Auth] Storage removeItem error:", error);
           }
         },
       },
@@ -89,7 +91,8 @@ const normalizeUserProfile = (profile = {}) => {
       false,
     dateOfBirth: profile.dateOfBirth || profile.date_of_birth || null,
     bloodGroup: profile.bloodGroup || profile.blood_group || null,
-    chronicConditions: profile.chronicConditions || profile.chronic_conditions || [],
+    chronicConditions:
+      profile.chronicConditions || profile.chronic_conditions || [],
     allergies: profile.allergies || [],
     emergencyContactName: emergencyName,
     emergencyContactPhone: emergencyPhone,
@@ -115,7 +118,7 @@ const normalizeUserProfile = (profile = {}) => {
 const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -125,8 +128,8 @@ const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error('Request timeout. Server is not responding.');
+    if (error.name === "AbortError") {
+      throw new Error("Request timeout. Server is not responding.");
     }
     throw error;
   }
@@ -136,118 +139,175 @@ const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
 export const login = async (credentials) => {
   try {
     const userInput = credentials.userId || credentials.email;
-    if (__DEV__) { logger.debug('[auth.service] Login attempt with:', isEmail(userInput) ? 'email' : 'userId'); }
-    
+    if (__DEV__) {
+      logger.debug(
+        "[auth.service] Login attempt with:",
+        isEmail(userInput) ? "email" : "userId",
+      );
+    }
+
     // Validate credentials
     if (!userInput || !credentials.password) {
-      throw new Error('Please enter User ID/Email and password exactly as provided.');
+      throw new Error(
+        "Please enter User ID/Email and password exactly as provided.",
+      );
     }
     let email = userInput;
 
     // If input is not an email, convert userId to email
     if (!isEmail(email)) {
-      if (__DEV__) { logger.debug('[auth.service] Converting userId to email...'); }
-      if (__DEV__) { logger.debug('[auth.service] API URL:', `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`); }
-      
+      if (__DEV__) {
+        logger.debug("[auth.service] Converting userId to email...");
+      }
+      if (__DEV__) {
+        logger.debug(
+          "[auth.service] API URL:",
+          `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`,
+        );
+      }
+
       const emailResponse = await fetchWithTimeout(
         `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ userId: email }),
         },
-        10000 // 10 second timeout
+        10000, // 10 second timeout
       );
 
-      if (__DEV__) { logger.debug('[auth.service] Email lookup response status:', emailResponse.status); }
+      if (__DEV__) {
+        logger.debug(
+          "[auth.service] Email lookup response status:",
+          emailResponse.status,
+        );
+      }
 
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json().catch(() => ({}));
-        if (__DEV__) { console.error('[auth.service] Email lookup failed:', errorData); }
-        if (emailResponse.status === 404) {
-          throw new Error('Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).');
-        } else if (emailResponse.status === 503) {
-          throw new Error('Service temporarily unavailable. Please try again.');
+        if (__DEV__) {
+          console.error("[auth.service] Email lookup failed:", errorData);
         }
-        
-        throw new Error(errorData.message || 'Unable to connect to server');
+        if (emailResponse.status === 404) {
+          throw new Error(
+            "Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).",
+          );
+        } else if (emailResponse.status === 503) {
+          throw new Error("Service temporarily unavailable. Please try again.");
+        }
+
+        throw new Error(errorData.message || "Unable to connect to server");
       }
 
       const emailData = await emailResponse.json();
       email = emailData.email || emailData.data?.email;
-      
+
       if (!email) {
-        throw new Error('Invalid server response. Please try again.');
+        throw new Error("Invalid server response. Please try again.");
       }
 
-      if (__DEV__) { logger.debug('[auth.service] Email found for userId'); }
+      if (__DEV__) {
+        logger.debug("[auth.service] Email found for userId");
+      }
     } else {
-      if (__DEV__) { logger.debug('[auth.service] Using email directly for login'); }
+      if (__DEV__) {
+        logger.debug("[auth.service] Using email directly for login");
+      }
     }
 
     // Sign in using Better Auth with email and password
-    if (__DEV__) { logger.debug('[auth.service] Attempting Better Auth sign-in...'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Attempting Better Auth sign-in...");
+    }
     const result = await signIn.email({
       email: email,
       password: credentials.password,
     });
 
-    if (__DEV__) { logger.debug('[auth.service] Better Auth sign-in completed'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Better Auth sign-in completed");
+    }
     if (!result.data?.user) {
-      throw new Error('Invalid credentials. Please enter the exact User ID and password.');
+      throw new Error(
+        "Invalid credentials. Please enter the exact User ID and password.",
+      );
     }
 
     const betterAuthUserId = result.data.user.id;
 
     // Better Auth sign-in payload token shape may differ from the DB session token
     // used by backend Bearer protection. Use it only as temporary fallback.
-    let sessionToken = result.data?.session?.token || result.data?.token || null;
-    if (__DEV__) { logger.debug('[auth.service] Session token from sign-in:', sessionToken ? 'exists' : 'missing'); }
+    let sessionToken =
+      result.data?.session?.token || result.data?.token || null;
+    if (__DEV__) {
+      logger.debug(
+        "[auth.service] Session token from sign-in:",
+        sessionToken ? "exists" : "missing",
+      );
+    }
 
     // Build auth headers for subsequent protected requests
     const authHeaders = {
-      'Content-Type': 'application/json',
-      ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {}),
+      "Content-Type": "application/json",
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
     };
 
     // Fetch full user profile with user-friendly data
-    if (__DEV__) { logger.debug('[auth.service] Fetching full user profile...'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Fetching full user profile...");
+    }
     const profileResponse = await fetchWithTimeout(
       `${APP_CONFIG.api.baseURL}/v1/user/profile-by-email`,
       {
-        method: 'POST',
+        method: "POST",
         headers: authHeaders,
         body: JSON.stringify({ email: email }),
       },
-      10000
+      10000,
     );
 
     if (!profileResponse.ok) {
-      if (__DEV__) { console.error('[auth.service] Profile fetch failed', profileResponse.status); }
-      throw new Error('Failed to fetch user profile');
+      if (__DEV__) {
+        console.error(
+          "[auth.service] Profile fetch failed",
+          profileResponse.status,
+        );
+      }
+      throw new Error("Failed to fetch user profile");
     }
 
     const profileData = await profileResponse.json();
     const normalizedUser = normalizeUserProfile(profileData.data || {});
-    if (__DEV__) { logger.debug('[auth.service] Profile fetched for role:', normalizedUser.role); }
+    if (__DEV__) {
+      logger.debug(
+        "[auth.service] Profile fetched for role:",
+        normalizedUser.role,
+      );
+    }
 
     // BLocker: Do not allow deactivated users to login
     if (normalizedUser.isActive === false) {
       await signOut().catch(() => {});
-      throw new Error('Your account has been deactivated. Please contact support.');
+      throw new Error(
+        "Your account has been deactivated. Please contact support.",
+      );
     }
 
     // Always exchange credentials for authoritative session token used by protected API middleware
-    if (__DEV__) { logger.debug('[auth.service] Exchanging credentials for session token...'); }
+    if (__DEV__) {
+      logger.debug(
+        "[auth.service] Exchanging credentials for session token...",
+      );
+    }
     try {
       const sessionResponse = await fetchWithTimeout(
         `${APP_CONFIG.api.baseURL}/v1/user/session-token`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             email,
@@ -255,56 +315,114 @@ export const login = async (credentials) => {
             userId: betterAuthUserId,
           }),
         },
-        8000
+        8000,
       );
 
       if (sessionResponse.ok) {
         const sessionData = await sessionResponse.json();
-        sessionToken = sessionData.data?.token || sessionData.token || sessionToken;
-        if (__DEV__) { logger.debug('[auth.service] Session token exchange successful:', sessionToken ? 'exists' : 'missing'); }
-      } else {
-        if (__DEV__) { console.warn('[auth.service] Session token exchange returned error status:', sessionResponse.status); }
-        if (!sessionToken) {
-          throw new Error('Login failed. Please check your exact User ID and password.');
+        sessionToken =
+          sessionData.data?.token || sessionData.token || sessionToken;
+        if (__DEV__) {
+          logger.debug(
+            "[auth.service] Session token exchange successful:",
+            sessionToken ? "exists" : "missing",
+          );
         }
-        if (__DEV__) { logger.debug('[auth.service] Using client-side session token fallback'); }
+      } else {
+        if (__DEV__) {
+          console.warn(
+            "[auth.service] Session token exchange returned error status:",
+            sessionResponse.status,
+          );
+        }
+        if (!sessionToken) {
+          throw new Error(
+            "Login failed. Please check your exact User ID and password.",
+          );
+        }
+        if (__DEV__) {
+          logger.debug(
+            "[auth.service] Using client-side session token fallback",
+          );
+        }
       }
     } catch (sessionError) {
-      if (__DEV__) { console.error('[auth.service] Error during session token exchange:', sessionError); }
+      if (__DEV__) {
+        console.error(
+          "[auth.service] Error during session token exchange:",
+          sessionError,
+        );
+      }
       if (!sessionToken) {
         throw sessionError;
       }
-      if (__DEV__) { logger.debug('[auth.service] Using client-side session token fallback after exception'); }
+      if (__DEV__) {
+        logger.debug(
+          "[auth.service] Using client-side session token fallback after exception",
+        );
+      }
     }
 
     // Store session token and user data in appStorage for API interceptor and fast boot
     if (sessionToken) {
       await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
-      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
-      if (__DEV__) { logger.debug('[auth.service] Session token and user data stored in appStorage'); }
+      await appStorage.setItem(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(normalizedUser),
+      );
+      if (__DEV__) {
+        logger.debug(
+          "[auth.service] Session token and user data stored in appStorage",
+        );
+      }
     } else {
-      if (__DEV__) { console.warn('[auth.service] No session token available - API calls may fail'); }
+      if (__DEV__) {
+        console.warn(
+          "[auth.service] No session token available - API calls may fail",
+        );
+      }
+      throw new Error(
+        "Login failed. Unable to establish a valid session. Please try again.",
+      );
     }
-
-    if (__DEV__) { logger.debug('[auth.service] Login successful for role:', profileData.data.role); }
+    if (__DEV__) {
+      logger.debug(
+        "[auth.service] Login successful for role:",
+        profileData.data.role,
+      );
+    }
 
     return {
       user: normalizedUser,
       token: sessionToken,
     };
   } catch (error) {
-    if (__DEV__) { console.error('[auth.service] Login error:', error.message); }
-    if (__DEV__) { console.error('[auth.service] Error details:', error); }
-    
+    if (__DEV__) {
+      console.error("[auth.service] Login error:", error.message);
+    }
+    if (__DEV__) {
+      console.error("[auth.service] Error details:", error);
+    }
+
     // Re-throw with user-friendly message
-    if (error.message.includes('fetch failed') || error.message.includes('Network request failed')) {
-      throw new Error('Cannot connect to server. Please ensure:\n1. You have internet connection\n2. Backend server is running');
+    if (
+      error.message.includes("fetch failed") ||
+      error.message.includes("Network request failed")
+    ) {
+      throw new Error(
+        "Cannot connect to server. Please ensure:\n1. You have internet connection\n2. Backend server is running",
+      );
     }
-    
-    if (error.message.includes('timeout') || error.message.includes('not responding')) {
-      throw new Error('Server is not responding. Please check if the backend is running on Render.');
+
+    if (
+      error.message.includes("timeout") ||
+      error.message.includes("not responding")
+    ) {
+      throw new Error(
+        "Server is not responding. Please check if the backend is running on Render.",
+      );
     }
-    
+
     throw error;
   }
 };
@@ -312,13 +430,13 @@ export const login = async (credentials) => {
 export const register = async (userData) => {
   // Validate required fields before calling API
   if (!userData.email || !userData.email.trim()) {
-    throw new Error('Email is required');
+    throw new Error("Email is required");
   }
   if (!userData.password || userData.password.length < 6) {
-    throw new Error('Password must be at least 6 characters');
+    throw new Error("Password must be at least 6 characters");
   }
   if (!userData.name || !userData.name.trim()) {
-    throw new Error('Name is required');
+    throw new Error("Name is required");
   }
 
   const result = await signUp.email({
@@ -337,9 +455,14 @@ export const register = async (userData) => {
   if (sessionToken) {
     await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
     if (normalizedUser) {
-      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+      await appStorage.setItem(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(normalizedUser),
+      );
     }
-    if (__DEV__) { logger.debug('[auth.service] Registration token and user data stored'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Registration token and user data stored");
+    }
   }
 
   return {
@@ -354,32 +477,47 @@ export const logout = async () => {
     // Clear token from appStorage
     await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
     await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-    if (__DEV__) { logger.debug('[auth.service] Storage cleared'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Storage cleared");
+    }
 
     // Sign out from Better Auth
     await signOut();
-    if (__DEV__) { logger.debug('[auth.service] Logout complete'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Logout complete");
+    }
   } catch (error) {
-    if (__DEV__) { console.error('[auth.service] Logout error:', error); }
+    if (__DEV__) {
+      console.error("[auth.service] Logout error:", error);
+    }
     // Continue even if error - best effort logout
   }
 };
 
 const getStartupTimeout = () => {
-  const customTimeout = APP_CONFIG.api.timeoutStart || process.env.EXPO_PUBLIC_AUTH_STARTUP_TIMEOUT || process.env.AUTH_STARTUP_TIMEOUT;
+  const customTimeout =
+    APP_CONFIG.api.timeoutStart ||
+    process.env.EXPO_PUBLIC_AUTH_STARTUP_TIMEOUT ||
+    process.env.AUTH_STARTUP_TIMEOUT;
   if (customTimeout) return parseInt(customTimeout, 10);
   return __DEV__ ? 3000 : 5000;
 };
 
 export const getSession = async () => {
   try {
-    if (__DEV__) { logger.debug('[auth.service] Checking for active session...'); }
+    if (__DEV__) {
+      logger.debug("[auth.service] Checking for active session...");
+    }
 
     // Read the session token we stored in AsyncStorage at login time
     const storedToken = await appStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 
     if (!storedToken) {
-      if (__DEV__) { logger.debug('[auth.service] No token in AsyncStorage - user must log in'); }
+      if (__DEV__) {
+        logger.debug(
+          "[auth.service] No token in AsyncStorage - user must log in",
+        );
+      }
       return null;
     }
 
@@ -390,7 +528,9 @@ export const getSession = async () => {
       try {
         cachedUser = JSON.parse(cachedUserJson);
       } catch (e) {
-        if (__DEV__) { console.error('[auth.service] Error parsing cached user profile:', e); }
+        if (__DEV__) {
+          console.error("[auth.service] Error parsing cached user profile:", e);
+        }
       }
     }
 
@@ -402,19 +542,26 @@ export const getSession = async () => {
       const validateResponse = await fetchWithTimeout(
         `${APP_CONFIG.api.baseURL}/v1/user/me`,
         {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: `Bearer ${storedToken}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         },
-        timeout
+        timeout,
       );
 
       if (!validateResponse.ok) {
         // ONLY clear session if the server explicitly rejects the token (401 or 403)
-        if (validateResponse.status === 401 || validateResponse.status === 403) {
-          if (__DEV__) { logger.debug('[auth.service] Stored token is invalid/expired (401/403), clearing storage'); }
+        if (
+          validateResponse.status === 401 ||
+          validateResponse.status === 403
+        ) {
+          if (__DEV__) {
+            logger.debug(
+              "[auth.service] Stored token is invalid/expired (401/403), clearing storage",
+            );
+          }
           await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
           await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
           return null;
@@ -422,7 +569,11 @@ export const getSession = async () => {
 
         // For other server errors (5xx), fallback to cached user profile if available
         if (cachedUser) {
-          if (__DEV__) { logger.debug('[auth.service] Server error, falling back to cached user'); }
+          if (__DEV__) {
+            logger.debug(
+              "[auth.service] Server error, falling back to cached user",
+            );
+          }
           return { user: cachedUser, token: storedToken, isOffline: true };
         }
         return null;
@@ -432,35 +583,66 @@ export const getSession = async () => {
       const userProfile = sessionData.data?.user || sessionData.user || null;
 
       if (!userProfile) {
-        if (__DEV__) { logger.debug('[auth.service] Session valid but no user data returned'); }
+        if (__DEV__) {
+          logger.debug(
+            "[auth.service] Session valid but no user data returned",
+          );
+        }
         return null;
       }
 
       const normalizedUser = normalizeUserProfile(userProfile);
 
       // Cache the valid user profile
-      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+      await appStorage.setItem(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(normalizedUser),
+      );
 
-      if (__DEV__) { logger.debug('[auth.service] Session restored and cached for:', normalizedUser.role, normalizedUser.email); }
+      if (__DEV__) {
+        logger.debug(
+          "[auth.service] Session restored and cached for role:",
+          normalizedUser.role,
+        );
+      }
       return { user: normalizedUser, token: storedToken };
     } catch (networkError) {
       // Catch network error or timeout
-      const isTimeout = networkError.message?.includes('timeout') || networkError.message?.includes('not responding');
+      const isTimeout =
+        networkError.message?.includes("timeout") ||
+        networkError.message?.includes("not responding");
 
       if (__DEV__) {
-        console.warn(`[auth.service] Network error during session validation (Timeout: ${isTimeout}):`, networkError.message);
+        console.warn(
+          `[auth.service] Network error during session validation (Timeout: ${isTimeout}):`,
+          networkError.message,
+        );
       }
 
       // If we have a cached user profile, return it as a fallback instead of forcing user to log out
       if (cachedUser) {
-        if (__DEV__) { logger.debug('[auth.service] Network unreachable, falling back to cached user'); }
-        return { user: cachedUser, token: storedToken, isOffline: true, isTimeout };
+        if (__DEV__) {
+          logger.debug(
+            "[auth.service] Network unreachable, falling back to cached user",
+          );
+        }
+        return {
+          user: cachedUser,
+          token: storedToken,
+          isOffline: true,
+          isTimeout,
+        };
       }
 
       return null;
     }
   } catch (error) {
-    if (__DEV__) { console.error('[auth.service] getSession critical error:', error?.message || error); }
+    if (__DEV__) {
+      console.error(
+        "[auth.service] getSession critical error:",
+        error?.message || error,
+      );
+    }
     return null;
   }
 };
@@ -469,16 +651,22 @@ export const updateProfile = async (profileData) => {
   const response = await api.put("/user/profile", profileData);
   const responseData = response.data;
   const userProfile = responseData?.data?.user || responseData?.user;
-  
+
   if (userProfile) {
     const normalizedUser = normalizeUserProfile(userProfile);
-    await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(normalizedUser));
+    try {
+      await appStorage.setItem(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(normalizedUser),
+      );
+    } catch (err) {
+      if (__DEV__) logger.error("[auth.service] Failed to cache profile:", err);
+    }
     return {
       success: true,
       data: normalizedUser,
     };
   }
-  
   return {
     success: false,
     message: responseData?.message || "Failed to update profile",
@@ -507,4 +695,3 @@ export default {
   updateProfile,
   authClient,
 };
-

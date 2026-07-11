@@ -17,18 +17,30 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, RefreshCw, ShieldCheck, Clock, Calendar, Lock, Smartphone, ChevronRight, LogOut, X } from "lucide-react-native";
+import {
+  ArrowLeft,
+  RefreshCw,
+  ShieldCheck,
+  Clock,
+  Calendar,
+  Lock,
+  Smartphone,
+  ChevronRight,
+  LogOut,
+  X,
+} from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { showError, logError, parseError } from '@/utils/errorHandler';
-import { formatDate } from '@/utils/helpers';
-import adminService from '@/services/admin.service';
-import { logoutUser } from '@/store/slices/authSlice';
-import { SkeletonCardRow, Input } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+import { theme, healthColors } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { showError, logError, parseError } from "@/utils/errorHandler";
+import { formatDate } from "@/utils/helpers";
+import adminService from "@/services/admin.service";
+import { logoutUser } from "@/store/slices/authSlice";
+import { SkeletonCardRow, Input } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -83,7 +95,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
     } finally {
       navigation.reset({
         index: 0,
-        routes: [{ name: "Login" }],
+        routes: [{ name: Routes.AUTH.LOGIN }],
       });
     }
   };
@@ -154,7 +166,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     text: "OK",
                     onPress: forceLogoutToLogin,
                   },
-                ]
+                ],
               );
               closePasswordModal();
             } catch (error) {
@@ -168,7 +180,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -193,7 +205,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     text: "OK",
                     onPress: forceLogoutToLogin,
                   },
-                ]
+                ],
               );
             } catch (error) {
               showError("Failed to logout from all devices");
@@ -205,14 +217,17 @@ const SecuritySettingsScreen = ({ navigation }) => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const renderStatCard = (title, value, icon, color) => (
     <View style={[styles.statCard, { borderLeftColor: color }]}>
       <View
-        style={[styles.statIconContainer, { backgroundColor: color + "15" }]}
+        style={[
+          styles.statIconContainer,
+          { backgroundColor: theme.withOpacity(color, 0.15) },
+        ]}
       >
         <DynamicIcon name={icon} size={24} color={color} />
       </View>
@@ -244,7 +259,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <View style={styles.backButton} />
         </View>
         <View style={styles.skeletonContainer}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );
@@ -262,11 +279,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Security Settings</Text>
         <TouchableOpacity
@@ -280,11 +293,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
           {isRefetching ? (
             <ActivityIndicator size="small" color={healthColors.primary.main} />
           ) : (
-            <RefreshCw
-              
-              size={24}
-              color={healthColors.primary.main}
-            />
+            <RefreshCw size={24} color={healthColors.primary.main} />
           )}
         </TouchableOpacity>
       </View>
@@ -308,14 +317,15 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <View
                 style={[
                   styles.statusIcon,
-                  { backgroundColor: theme.withOpacity(healthColors.success.main, 0.08) },
+                  {
+                    backgroundColor: theme.withOpacity(
+                      healthColors.success.main,
+                      0.08,
+                    ),
+                  },
                 ]}
               >
-                <ShieldCheck
-                  
-                  size={32}
-                  color={healthColors.success.main}
-                />
+                <ShieldCheck size={32} color={healthColors.success.main} />
               </View>
               <View style={styles.statusContent}>
                 <Text style={styles.statusTitle}>Account Status</Text>
@@ -328,33 +338,21 @@ const SecuritySettingsScreen = ({ navigation }) => {
             </View>
             <View style={styles.statusDetails}>
               <View style={styles.statusRow}>
-                <Clock
-                  
-                  size={18}
-                  color={healthColors.text.secondary}
-                />
+                <Clock size={18} color={healthColors.text.secondary} />
                 <Text style={styles.statusLabel}>Last Login:</Text>
                 <Text style={styles.statusValue}>
                   {securityData?.lastActivity}
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Calendar
-                  
-                  size={18}
-                  color={healthColors.text.secondary}
-                />
+                <Calendar size={18} color={healthColors.text.secondary} />
                 <Text style={styles.statusLabel}>Account Created:</Text>
                 <Text style={styles.statusValue}>
                   {formatDate(securityData?.user?.accountCreated)}
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Lock
-                  
-                  size={18}
-                  color={healthColors.text.secondary}
-                />
+                <Lock size={18} color={healthColors.text.secondary} />
                 <Text style={styles.statusLabel}>Password Updated:</Text>
                 <Text style={styles.statusValue}>
                   {securityData?.user?.lastPasswordChange
@@ -363,11 +361,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 </Text>
               </View>
               <View style={styles.statusRow}>
-                <Smartphone
-                  
-                  size={18}
-                  color={healthColors.text.secondary}
-                />
+                <Smartphone size={18} color={healthColors.text.secondary} />
                 <Text style={styles.statusLabel}>My Active Sessions:</Text>
                 <Text style={styles.statusValue}>
                   {securityData?.user?.myActiveSessions ?? 0}
@@ -385,25 +379,25 @@ const SecuritySettingsScreen = ({ navigation }) => {
               "Active Sessions",
               securityData?.statistics?.activeSessions || 0,
               "people",
-              healthColors.success.main
+              healthColors.success.main,
             )}
             {renderStatCard(
               "Recent Logins",
               securityData?.statistics?.recentLogins || 0,
               "log-in",
-              healthColors.info.main
+              healthColors.info.main,
             )}
             {renderStatCard(
               "Verified Users",
               securityData?.statistics?.verifiedUsers || 0,
               "checkmark-circle",
-              healthColors.primary.main
+              healthColors.primary.main,
             )}
             {renderStatCard(
               "Active Users (7d)",
               securityData?.statistics?.activeUsers7d || 0,
               "pulse",
-              healthColors.warning.main
+              healthColors.warning.main,
             )}
           </View>
         </View>
@@ -422,14 +416,15 @@ const SecuritySettingsScreen = ({ navigation }) => {
             <View
               style={[
                 styles.actionIcon,
-                { backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08) },
+                {
+                  backgroundColor: theme.withOpacity(
+                    healthColors.primary.main,
+                    0.08,
+                  ),
+                },
               ]}
             >
-              <Lock
-                
-                size={24}
-                color={healthColors.primary.main}
-              />
+              <Lock size={24} color={healthColors.primary.main} />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Change Password</Text>
@@ -437,11 +432,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 Update your account password
               </Text>
             </View>
-            <ChevronRight
-              
-              size={24}
-              color={healthColors.text.tertiary}
-            />
+            <ChevronRight size={24} color={healthColors.text.tertiary} />
           </TouchableOpacity>
 
           {/* Logout All Devices */}
@@ -455,14 +446,15 @@ const SecuritySettingsScreen = ({ navigation }) => {
             <View
               style={[
                 styles.actionIcon,
-                { backgroundColor: theme.withOpacity(healthColors.error.main, 0.08) },
+                {
+                  backgroundColor: theme.withOpacity(
+                    healthColors.error.main,
+                    0.08,
+                  ),
+                },
               ]}
             >
-              <LogOut
-                
-                size={24}
-                color={healthColors.error.main}
-              />
+              <LogOut size={24} color={healthColors.error.main} />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Logout All Devices</Text>
@@ -471,17 +463,14 @@ const SecuritySettingsScreen = ({ navigation }) => {
             {actionLoading ? (
               <ActivityIndicator size="small" color={healthColors.error.main} />
             ) : (
-              <ChevronRight
-                
-                size={24}
-                color={healthColors.text.tertiary}
-              />
+              <ChevronRight size={24} color={healthColors.text.tertiary} />
             )}
           </TouchableOpacity>
         </View>
 
         {/* Password Change Modal */}
-        <Modal statusBarTranslucent
+        <Modal
+          statusBarTranslucent
           visible={showPasswordModal}
           transparent
           animationType="fade"
@@ -496,16 +485,14 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   accessibilityRole="button"
                   accessibilityLabel="Close password modal"
                 >
-                  <X
-                    
-                    size={24}
-                    color={healthColors.text.primary}
-                  />
+                  <X size={24} color={healthColors.text.primary} />
                 </TouchableOpacity>
               </View>
 
               {!!passwordSubmitError && (
-                <Text style={styles.passwordSubmitError}>{passwordSubmitError}</Text>
+                <Text style={styles.passwordSubmitError}>
+                  {passwordSubmitError}
+                </Text>
               )}
 
               <Input
@@ -576,7 +563,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
               )}
 
               <View style={styles.passwordRulesContainer}>
-                <Text style={styles.passwordRulesTitle}>Password must include:</Text>
+                <Text style={styles.passwordRulesTitle}>
+                  Password must include:
+                </Text>
                 <Text
                   style={[
                     styles.passwordRule,
@@ -648,7 +637,10 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   accessibilityState={{ disabled: !canSubmitPassword }}
                 >
                   {passwordLoading ? (
-                    <ActivityIndicator size="small" color={theme.colors.white} />
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.white}
+                    />
                   ) : (
                     <Text style={styles.submitButtonText}>Change Password</Text>
                   )}
@@ -918,11 +910,8 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
+    color: healthColors.white,
   },
 });
 
 export default SecuritySettingsScreen;
-
-
-

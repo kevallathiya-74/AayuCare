@@ -4,7 +4,14 @@
  * Supports: Admin, Doctor, Patient roles
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import {
   View,
   Text,
@@ -62,12 +69,15 @@ const LoginScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
-  const backButtonStyle = useMemo(() => [
-    styles.backButton,
-    {
-      top: Math.max(insets.top + theme.spacing.sm, 16),
-    }
-  ], [insets.top]);
+  const backButtonStyle = useMemo(
+    () => [
+      styles.backButton,
+      {
+        top: Math.max(insets.top + theme.spacing.sm, 16),
+      },
+    ],
+    [insets.top],
+  );
 
   useEffect(() => {
     Animated.parallel([
@@ -89,8 +99,10 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss();
 
     const newErrors = { userId: "", password: "" };
-    if (!userId.trim()) newErrors.userId = t("auth.userIdRequired", "User ID is required");
-    if (!password) newErrors.password = t("auth.passwordRequired", "Password is required");
+    if (!userId.trim())
+      newErrors.userId = t("auth.userIdRequired", "User ID is required");
+    if (!password)
+      newErrors.password = t("auth.passwordRequired", "Password is required");
 
     if (newErrors.userId || newErrors.password) {
       setFieldErrors(newErrors);
@@ -115,7 +127,10 @@ const LoginScreen = ({ navigation }) => {
     try {
       await dispatch(loginUser({ userId, password })).unwrap();
     } catch (error) {
-      setFormError(error?.message || t("auth.loginError", "Invalid credentials. Please try again."));
+      setFormError(
+        error?.message ||
+          t("auth.loginError", "Invalid credentials. Please try again."),
+      );
     }
   }, [userId, password, dispatch, scaleAnim, t]);
 
@@ -134,10 +149,7 @@ const LoginScreen = ({ navigation }) => {
   }, []);
 
   return (
-    <SafeAreaView 
-      style={styles.container} 
-      edges={["top", "left", "right"]}
-    >
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={healthColors.primary.dark}
@@ -213,15 +225,18 @@ const LoginForm = memo(
       passwordInputRef.current?.focus();
     }, [passwordInputRef]);
 
-    const handleInputFocus = useCallback((yOffset) => {
-      setTimeout(() => {
-        if (yOffset === 'end') {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        } else {
-          scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
-        }
-      }, 150);
-    }, [scrollViewRef]);
+    const handleInputFocus = useCallback(
+      (yOffset) => {
+        setTimeout(() => {
+          if (yOffset === "end") {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          } else {
+            scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
+          }
+        }, 150);
+      },
+      [scrollViewRef],
+    );
 
     return (
       <ScrollView
@@ -267,7 +282,9 @@ const LoginForm = memo(
             <Text style={styles.appName} accessibilityRole="header">
               {t("common.appName", "AayuCare")}
             </Text>
-            <Text style={styles.tagline}>{t("common.tagline", "Elevating Healthcare Together")}</Text>
+            <Text style={styles.tagline}>
+              {t("common.tagline", "Elevating Healthcare Together")}
+            </Text>
           </Animated.View>
         </LinearGradient>
 
@@ -283,7 +300,9 @@ const LoginForm = memo(
           ]}
         >
           <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeText}>{t("auth.signIn", "Sign In")}</Text>
+            <Text style={styles.welcomeText}>
+              {t("auth.signIn", "Sign In")}
+            </Text>
             <Text style={styles.subtitleText}>
               {t("auth.enterCredentials", "Enter your credentials to continue")}
             </Text>
@@ -292,9 +311,16 @@ const LoginForm = memo(
           <View
             style={styles.rolePills}
             accessible={true}
-            accessibilityLabel={t("auth.rolesAvailable", "Roles available: Admin, Doctor, Patient")}
+            accessibilityLabel={t(
+              "auth.rolesAvailable",
+              "Roles available: Admin, Doctor, Patient",
+            )}
           >
-            {[t("auth.admin", "Admin"), t("auth.doctor", "Doctor"), t("auth.patient", "Patient")].map((role, idx) => (
+            {[
+              t("auth.admin", "Admin"),
+              t("auth.doctor", "Doctor"),
+              t("auth.patient", "Patient"),
+            ].map((role, idx) => (
               <View key={role} style={styles.roleBadge}>
                 <View
                   style={[
@@ -319,7 +345,10 @@ const LoginForm = memo(
               label={t("auth.emailOrUserId", "Email or User ID")}
               value={userId}
               onChangeText={onUserIdChange}
-              placeholder={t("auth.userIdPlaceholder", "e.g. pat1, doc1, admin@aayucare.com")}
+              placeholder={t(
+                "auth.userIdPlaceholder",
+                "e.g. pat1, doc1, admin@aayucare.com",
+              )}
               leftIcon={emailIcon}
               error={fieldErrors.userId}
               autoCapitalize="none"
@@ -348,7 +377,7 @@ const LoginForm = memo(
               editable={!isLoading}
               style={styles.inputSpacing}
               accessibilityLabel="Password Input"
-              onFocus={() => handleInputFocus('end')}
+              onFocus={() => handleInputFocus("end")}
             />
           </View>
 
@@ -370,7 +399,9 @@ const LoginForm = memo(
             accessibilityRole="button"
             accessibilityLabel={t("auth.forgotPassword", "Forgot Password?")}
           >
-            <Text style={styles.forgotPasswordText}>{t("auth.forgotPassword", "Forgot Password?")}</Text>
+            <Text style={styles.forgotPasswordText}>
+              {t("auth.forgotPassword", "Forgot Password?")}
+            </Text>
           </TouchableOpacity>
 
           <Animated.View
@@ -410,7 +441,10 @@ const LoginForm = memo(
             color={healthColors.primary.main}
           />
           <Text style={styles.footerText}>
-            {t("auth.footerCompliance", "End-to-end encrypted · HIPAA Compliant")}
+            {t(
+              "auth.footerCompliance",
+              "End-to-end encrypted · HIPAA Compliant",
+            )}
           </Text>
         </View>
       </ScrollView>

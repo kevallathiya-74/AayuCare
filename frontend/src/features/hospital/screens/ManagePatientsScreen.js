@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from '@/config/reactQueryConfig';
+import { queryKeys } from "@/config/reactQueryConfig";
 import {
   View,
   Text,
@@ -18,24 +18,32 @@ import {
   Switch,
   RefreshControl,
 } from "react-native";
-import {
-  SafeAreaView,
-} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { User, Droplet, Mail, Phone, FileText, Edit, Trash2, ArrowLeft, Plus } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { patientService, adminService, doctorService } from '@/services';
-import { logError, parseError } from '@/utils/errorHandler';
-import { calculateAge } from '@/utils/dateHelpers';
-import logger from '@/utils/logger';
-import { EmptyState, SearchField, SkeletonCardRow } from '@/components/common';
-import { EmptyStateConfig } from '@/utils/constants';
+import {
+  User,
+  Droplet,
+  Mail,
+  Phone,
+  FileText,
+  Edit,
+  Trash2,
+  ArrowLeft,
+  Plus,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import { patientService, adminService, doctorService } from "@/services";
+import { logError, parseError } from "@/utils/errorHandler";
+import { calculateAge } from "@/utils/dateHelpers";
+import logger from "@/utils/logger";
+import { EmptyState, SearchField, SkeletonCardRow } from "@/components/common";
+import { EmptyStateConfig } from "@/utils/constants";
 import AddPatientModal from "./AddPatientModal";
 import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const UUID_V4_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -55,7 +63,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const selectedPatientId = selectedPatient?.id || selectedPatient?.userId;
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  
+
   const patientIdFromRoute = route?.params?.patientId;
   const patientPayloadFromRoute = route?.params?.patientPayload;
 
@@ -78,46 +86,61 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: queryKeys.patients.infinite({ search: debouncedSearch, role: normalizedUserRole }),
+    queryKey: queryKeys.patients.infinite({
+      search: debouncedSearch,
+      role: normalizedUserRole,
+    }),
     queryFn: async ({ pageParam = 0 }) => {
       const isDoctorUser = normalizedUserRole === "doctor";
       const response = isDoctorUser
         ? await doctorService.searchMyPatients(debouncedSearch)
         : await patientService.getAllPatients(
             debouncedSearch
-              ? { q: debouncedSearch, page: Math.floor(pageParam / PAGE_SIZE) + 1, limit: PAGE_SIZE }
-              : { page: Math.floor(pageParam / PAGE_SIZE) + 1, limit: PAGE_SIZE }
+              ? {
+                  q: debouncedSearch,
+                  page: Math.floor(pageParam / PAGE_SIZE) + 1,
+                  limit: PAGE_SIZE,
+                }
+              : {
+                  page: Math.floor(pageParam / PAGE_SIZE) + 1,
+                  limit: PAGE_SIZE,
+                },
           );
 
       const patientsList = Array.isArray(response)
         ? response
-        : (Array.isArray(response?.data)
-            ? response.data
-            : (response?.data?.patients || response?.data?.data || []));
+        : Array.isArray(response?.data)
+          ? response.data
+          : response?.data?.patients || response?.data?.data || [];
 
-      const items = (Array.isArray(patientsList) ? patientsList : []).map((patient) => ({
-        ...patient,
-        id: patient?.id || patient?.userId,
-        userId: patient?.userId || patient?.user_id,
-        isActive:
-          typeof patient?.isActive === "boolean"
-            ? patient.isActive
-            : typeof patient?.is_active === "boolean"
-              ? patient.is_active
-              : !!patient?.is_active,
-      }));
+      const items = (Array.isArray(patientsList) ? patientsList : []).map(
+        (patient) => ({
+          ...patient,
+          id: patient?.id || patient?.userId,
+          userId: patient?.userId || patient?.user_id,
+          isActive:
+            typeof patient?.isActive === "boolean"
+              ? patient.isActive
+              : typeof patient?.is_active === "boolean"
+                ? patient.is_active
+                : !!patient?.is_active,
+        }),
+      );
 
       const total = Number(
         response?.total ||
-        response?.data?.total ||
-        response?.pagination?.total ||
-        (Array.isArray(patientsList) ? patientsList.length : 0)
+          response?.data?.total ||
+          response?.pagination?.total ||
+          (Array.isArray(patientsList) ? patientsList.length : 0),
       );
 
       return { items, total };
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      const loaded = allPages.reduce(
+        (sum, page) => sum + (page?.items?.length || 0),
+        0,
+      );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
       }
@@ -148,14 +171,16 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     }
 
     Promise.allSettled(
-      idsToPrefetch.map((id) => patientService.getPatientById(id, { useCache: true, cacheTTL: 45000 }))
+      idsToPrefetch.map((id) =>
+        patientService.getPatientById(id, { useCache: true, cacheTTL: 45000 }),
+      ),
     ).catch(() => {});
   }, [patients, normalizedUserRole]);
 
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 
   const onRefresh = useCallback(() => {
@@ -168,59 +193,64 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleToggleStatus = useCallback(async (patient) => {
-    if (!canManageUsers) {
-      Alert.alert("Access Denied", "Only admins can change patient status.");
-      return;
-    }
+  const handleToggleStatus = useCallback(
+    async (patient) => {
+      if (!canManageUsers) {
+        Alert.alert("Access Denied", "Only admins can change patient status.");
+        return;
+      }
 
-    const newStatus = !patient.isActive;
-    logger.debug("ManagePatientsScreen", "Updating patient status", {
-      patientId: patient.id,
-      userId: patient.userId,
-      currentStatus: patient.isActive,
-      requestedStatus: newStatus,
-    });
+      const newStatus = !patient.isActive;
+      logger.debug("ManagePatientsScreen", "Updating patient status", {
+        patientId: patient.id,
+        userId: patient.userId,
+        currentStatus: patient.isActive,
+        requestedStatus: newStatus,
+      });
 
-    Alert.alert(
-      newStatus ? "Activate Patient" : "Deactivate Patient",
-      `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${patient.name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: async () => {
-    setUpdatingId(patient.id || patient.userId);
-            try {
-              const response = await adminService.updateUserStatus(
-                patient.userId,
-                newStatus
-              );
+      Alert.alert(
+        newStatus ? "Activate Patient" : "Deactivate Patient",
+        `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${patient.name}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Confirm",
+            onPress: async () => {
+              setUpdatingId(patient.id || patient.userId);
+              try {
+                const response = await adminService.updateUserStatus(
+                  patient.userId,
+                  newStatus,
+                );
 
-              logger.debug("ManagePatientsScreen", "Status update response", {
-                success: response.success,
-                updatedStatus: response.data?.isActive,
-              });
+                logger.debug("ManagePatientsScreen", "Status update response", {
+                  success: response.success,
+                  updatedStatus: response.data?.isActive,
+                });
 
-              queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.patients.all,
+                });
 
-              Alert.alert(
-                "Success",
-                `Patient ${newStatus ? "activated" : "deactivated"} successfully`
-              );
-            } catch (err) {
-              logError(err, {
-                context: "ManagePatientsScreen.handleToggleStatus",
-              });
-              Alert.alert("Error", "Failed to update patient status");
-            } finally {
-              setUpdatingId(null);
-            }
+                Alert.alert(
+                  "Success",
+                  `Patient ${newStatus ? "activated" : "deactivated"} successfully`,
+                );
+              } catch (err) {
+                logError(err, {
+                  context: "ManagePatientsScreen.handleToggleStatus",
+                });
+                Alert.alert("Error", "Failed to update patient status");
+              } finally {
+                setUpdatingId(null);
+              }
+            },
           },
-        },
-      ]
-    );
-  }, [canManageUsers, queryClient]);
+        ],
+      );
+    },
+    [canManageUsers, queryClient],
+  );
 
   const handleEditPatient = useCallback((patient) => {
     setSelectedPatient(patient);
@@ -235,113 +265,132 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
   }, [queryClient]);
 
-  const handleSoftDeletePatient = useCallback(async (patient) => {
-    setUpdatingId(patient.id || patient.userId);
-    try {
-      await adminService.deleteUser(patient.userId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+  const handleSoftDeletePatient = useCallback(
+    async (patient) => {
+      setUpdatingId(patient.id || patient.userId);
+      try {
+        await adminService.deleteUser(patient.userId);
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+        Alert.alert(
+          "Patient Deactivated",
+          `${patient.name} has been deactivated. Patient data is retained for compliance and can be reactivated later.`,
+        );
+      } catch (err) {
+        logError(err, {
+          context: "ManagePatientsScreen.handleSoftDeletePatient",
+        });
+
+        let errorMessage = "Failed to deactivate patient";
+        errorMessage = parseError(err);
+        Alert.alert("Error", errorMessage);
+      } finally {
+        setUpdatingId(null);
+      }
+    },
+    [queryClient],
+  );
+
+  const handlePermanentDeletePatient = useCallback(
+    async (patient) => {
+      if (!isSuperAdmin) {
+        Alert.alert(
+          "Access Denied",
+          "Permanent deletion is restricted to super admin.",
+        );
+        return;
+      }
+
       Alert.alert(
-        "Patient Deactivated",
-        `${patient.name} has been deactivated. Patient data is retained for compliance and can be reactivated later.`
-      );
-    } catch (err) {
-      logError(err, {
-        context: "ManagePatientsScreen.handleSoftDeletePatient",
-      });
-
-      let errorMessage = "Failed to deactivate patient";
-      errorMessage = parseError(err);
-      Alert.alert("Error", errorMessage);
-    } finally {
-      setUpdatingId(null);
-    }
-  }, [queryClient]);
-
-  const handleDeletePatient = useCallback(async (patient) => {
-    if (!canManageUsers) {
-      Alert.alert("Access Denied", "Only admins can delete patients.");
-      return;
-    }
-
-    if (!isSuperAdmin) {
-      Alert.alert(
-        "Deactivate Patient",
-        `Delete permanently is restricted to super admin.\n\nDeactivate ${patient.name} instead?`,
+        "⚠️ PERMANENT DELETE WARNING",
+        `This will PERMANENTLY DELETE all data for ${patient.name}:\n\n` +
+          `• Personal information\n` +
+          `• Medical records\n` +
+          `• Appointment history\n` +
+          `• Prescriptions\n` +
+          `• Health metrics\n\n` +
+          `⚠️ This action CANNOT be undone!\n` +
+          `⚠️ This may VIOLATE healthcare compliance regulations!\n\n` +
+          `Are you absolutely sure?`,
         [
           { text: "Cancel", style: "cancel" },
           {
-            text: "Deactivate",
+            text: "YES, DELETE PERMANENTLY",
             style: "destructive",
-            onPress: () => handleSoftDeletePatient(patient),
+            onPress: async () => {
+              setUpdatingId(patient.id);
+              try {
+                await adminService.permanentDeleteUser(patient.userId);
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.patients.all,
+                });
+                Alert.alert(
+                  "Permanently Deleted",
+                  `${patient.name} has been permanently removed from the system. This action was logged for audit purposes.`,
+                );
+              } catch (err) {
+                logError(err, {
+                  context: "ManagePatientsScreen.handlePermanentDeletePatient",
+                });
+
+                // Better error handling
+                let errorMessage = "Failed to permanently delete patient";
+                errorMessage = parseError(err);
+
+                Alert.alert("Error", errorMessage);
+              } finally {
+                setUpdatingId(null);
+              }
+            },
           },
-        ]
+        ],
       );
-      return;
-    }
+    },
+    [isSuperAdmin, queryClient],
+  );
 
-    Alert.alert(
-      "Delete Patient",
-      `Are you sure you want to permanently delete ${patient.name}? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Permanently",
-          style: "destructive",
-          onPress: () => handlePermanentDeletePatient(patient),
-        },
-      ]
-    );
-  }, [canManageUsers, isSuperAdmin, handleSoftDeletePatient, handlePermanentDeletePatient]);
+  const handleDeletePatient = useCallback(
+    async (patient) => {
+      if (!canManageUsers) {
+        Alert.alert("Access Denied", "Only admins can delete patients.");
+        return;
+      }
 
-  const handlePermanentDeletePatient = useCallback(async (patient) => {
-    if (!isSuperAdmin) {
-      Alert.alert("Access Denied", "Permanent deletion is restricted to super admin.");
-      return;
-    }
+      if (!isSuperAdmin) {
+        Alert.alert(
+          "Deactivate Patient",
+          `Delete permanently is restricted to super admin.\n\nDeactivate ${patient.name} instead?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Deactivate",
+              style: "destructive",
+              onPress: () => handleSoftDeletePatient(patient),
+            },
+          ],
+        );
+        return;
+      }
 
-    Alert.alert(
-      "⚠️ PERMANENT DELETE WARNING",
-      `This will PERMANENTLY DELETE all data for ${patient.name}:\n\n` +
-      `• Personal information\n` +
-      `• Medical records\n` +
-      `• Appointment history\n` +
-      `• Prescriptions\n` +
-      `• Health metrics\n\n` +
-      `⚠️ This action CANNOT be undone!\n` +
-      `⚠️ This may VIOLATE healthcare compliance regulations!\n\n` +
-      `Are you absolutely sure?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "YES, DELETE PERMANENTLY",
-          style: "destructive",
-          onPress: async () => {
-            setUpdatingId(patient.id);
-            try {
-              await adminService.permanentDeleteUser(patient.userId);
-              queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
-              Alert.alert(
-                "Permanently Deleted",
-                `${patient.name} has been permanently removed from the system. This action was logged for audit purposes.`
-              );
-            } catch (err) {
-              logError(err, {
-                context: "ManagePatientsScreen.handlePermanentDeletePatient",
-              });
-
-              // Better error handling
-              let errorMessage = "Failed to permanently delete patient";
-              errorMessage = parseError(err);
-
-              Alert.alert("Error", errorMessage);
-            } finally {
-              setUpdatingId(null);
-            }
+      Alert.alert(
+        "Delete Patient",
+        `Are you sure you want to permanently delete ${patient.name}? This action cannot be undone.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete Permanently",
+            style: "destructive",
+            onPress: () => handlePermanentDeletePatient(patient),
           },
-        },
-      ]
-    );
-  }, [isSuperAdmin, queryClient]);
+        ],
+      );
+    },
+    [
+      canManageUsers,
+      isSuperAdmin,
+      handleSoftDeletePatient,
+      handlePermanentDeletePatient,
+    ],
+  );
 
   const handlePatientPress = (patient) => {
     setSelectedPatient(patient);
@@ -352,7 +401,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     (patient) => {
       const resolvedPatientId = patient?.id || patient?.userId;
       if (!resolvedPatientId) {
-        Alert.alert("Patient Missing", "Unable to identify this patient for prescription.");
+        Alert.alert(
+          "Patient Missing",
+          "Unable to identify this patient for prescription.",
+        );
         return;
       }
 
@@ -361,14 +413,18 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         patientName: patient?.name,
       });
     },
-    [navigation]
+    [navigation],
   );
 
   useEffect(() => {
     if (!patientIdFromRoute && !patientPayloadFromRoute) return;
 
     // Clear route param immediately to prevent re-trigger on re-renders.
-    navigation.setParams({ patientId: undefined, patientName: undefined, patientPayload: undefined });
+    navigation.setParams({
+      patientId: undefined,
+      patientName: undefined,
+      patientPayload: undefined,
+    });
 
     if (patientPayloadFromRoute) {
       handlePatientPress(patientPayloadFromRoute);
@@ -382,11 +438,13 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       return ids.includes(patientIdFromRoute);
     });
 
-    handlePatientPress(matchedPatient || {
-      id: patientIdFromRoute,
-      userId: patientIdFromRoute,
-      name: route?.params?.patientName || "",
-    });
+    handlePatientPress(
+      matchedPatient || {
+        id: patientIdFromRoute,
+        userId: patientIdFromRoute,
+        name: route?.params?.patientName || "",
+      },
+    );
   }, [patientIdFromRoute, patientPayloadFromRoute]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderPatient = useCallback(
@@ -409,7 +467,6 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               ]}
             >
               <User
-                
                 size={28}
                 color={
                   item.isActive
@@ -468,27 +525,15 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.patientDetails}>
             <View style={styles.detailItem}>
-              <Droplet
-                
-                size={14}
-                color={healthColors.text.tertiary}
-              />
+              <Droplet size={14} color={healthColors.text.tertiary} />
               <Text style={styles.detailText}>{item.bloodGroup || "N/A"}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Mail
-                
-                size={14}
-                color={healthColors.text.tertiary}
-              />
+              <Mail size={14} color={healthColors.text.tertiary} />
               <Text style={styles.detailText}>{item.email || "N/A"}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Phone
-                
-                size={14}
-                color={healthColors.text.tertiary}
-              />
+              <Phone size={14} color={healthColors.text.tertiary} />
               <Text style={styles.detailText}>{item.phone || "N/A"}</Text>
             </View>
           </View>
@@ -504,11 +549,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               accessibilityRole="button"
               accessibilityLabel={`Create prescription for ${item.name}`}
             >
-              <FileText
-                
-                size={18}
-                color={healthColors.accent.coral}
-              />
+              <FileText size={18} color={healthColors.accent.coral} />
               <Text style={styles.prescriptionButtonText} numberOfLines={1}>
                 Prescription
               </Text>
@@ -516,38 +557,34 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
             {canManageUsers && (
               <>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.editButton]}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleEditPatient(item);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`Edit ${item.name}`}
-              >
-                <Edit
-                  
-                  size={18}
-                  color={healthColors.primary.main}
-                />
-                <Text style={styles.editButtonText} numberOfLines={1}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.deleteButton]}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleDeletePatient(item);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`Delete ${item.name}`}
-              >
-                <Trash2
-                  
-                  size={18}
-                  color={healthColors.error.main}
-                />
-                <Text style={styles.deleteButtonText} numberOfLines={1}>Delete</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.editButton]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleEditPatient(item);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${item.name}`}
+                >
+                  <Edit size={18} color={healthColors.primary.main} />
+                  <Text style={styles.editButtonText} numberOfLines={1}>
+                    Edit
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.deleteButton]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDeletePatient(item);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${item.name}`}
+                >
+                  <Trash2 size={18} color={healthColors.error.main} />
+                  <Text style={styles.deleteButtonText} numberOfLines={1}>
+                    Delete
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
@@ -561,7 +598,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       handleDeletePatient,
       handleCreatePrescription,
       updatingId,
-    ]
+    ],
   );
 
   const renderEmptyState = () => (
@@ -590,10 +627,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           accessibilityLabel="Go back"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ArrowLeft
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Manage Patients</Text>
         {canManageUsers ? (
@@ -605,7 +639,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             accessibilityLabel="Add new patient"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Plus size={24} color={theme.colors.white} />
+            <Plus size={24} color={healthColors.white} />
           </TouchableOpacity>
         ) : (
           <View style={styles.addButtonPlaceholder} />
@@ -633,7 +667,11 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       {/* Patients List */}
       {loading ? (
-        <View style={styles.loadingSkeletonWrap}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.loadingSkeletonWrap}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={patients}
@@ -657,7 +695,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
           ListFooterComponent={
             isFetchingNextPage ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
               </View>
             ) : null
           }
@@ -894,4 +935,3 @@ const styles = StyleSheet.create({
 });
 
 export default ManagePatientsScreen;
-

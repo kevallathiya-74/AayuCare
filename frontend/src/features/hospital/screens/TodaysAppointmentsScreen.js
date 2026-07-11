@@ -26,19 +26,35 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { User, Clock, Calendar, CheckCircle, XCircle, Phone, Cross, FileText, UserCircle, ArrowLeft } from "lucide-react-native";
+import {
+  User,
+  Clock,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Phone,
+  Cross,
+  FileText,
+  UserCircle,
+  ArrowLeft,
+} from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { doctorService } from '@/services';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { logError, parseError } from '@/utils/errorHandler';
-import { getStatusColor } from '@/utils/helpers';
-import { useDoctorAppointments } from '@/context/DoctorAppointmentContext';
-import { EmptyState, SkeletonCardRow, DynamicIcon, SearchField } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { theme, healthColors } from "@/theme";
+import { doctorService } from "@/services";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { logError, parseError } from "@/utils/errorHandler";
+import { getStatusColor } from "@/utils/helpers";
+import { useDoctorAppointments } from "@/context/DoctorAppointmentContext";
+import {
+  EmptyState,
+  SkeletonCardRow,
+  DynamicIcon,
+  SearchField,
+} from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const STATUS_FILTERS_BY_TAB = {
   today: [
@@ -86,12 +102,12 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         .trim()
         .replace(/-/g, "_")
         .replace(/\s+/g, "_"),
-    []
+    [],
   );
 
   const visibleStatusFilters = useMemo(
     () => STATUS_FILTERS_BY_TAB[selectedFilter] || STATUS_FILTERS_BY_TAB.today,
-    [selectedFilter]
+    [selectedFilter],
   );
 
   const extractAppointments = useCallback((response) => {
@@ -122,7 +138,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     error,
     refetch,
   } = useQuery({
-    queryKey: queryKeys.appointments.list({ scope: "doctor-home-tabs", selectedFilter }),
+    queryKey: queryKeys.appointments.list({
+      scope: "doctor-home-tabs",
+      selectedFilter,
+    }),
     staleTime: 2 * 60 * 1000,
     enabled: !!user?.id && user?.role === "doctor",
     queryFn: async () => {
@@ -149,7 +168,9 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     mutationFn: ({ appointmentId, nextStatus }) =>
       doctorService.updateAppointmentStatus(appointmentId, nextStatus),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.appointments.all,
+      });
     },
   });
 
@@ -183,7 +204,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       setStatusFilter("all");
       setSearchQuery("");
     },
-    [selectedFilter]
+    [selectedFilter],
   );
 
   const handleRefresh = useCallback(() => {
@@ -218,7 +239,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       if (!allowedNext.includes(nextStatus)) {
         Alert.alert(
           "Invalid Action",
-          "This appointment status cannot be changed with the selected action."
+          "This appointment status cannot be changed with the selected action.",
         );
         return;
       }
@@ -230,12 +251,15 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         refreshCount();
       } catch (err) {
         logError(err, "TodaysAppointmentsScreen.handleStatusUpdate");
-        Alert.alert("Error", "Unable to update appointment status. Please try again.");
+        Alert.alert(
+          "Error",
+          "Unable to update appointment status. Please try again.",
+        );
       } finally {
         setUpdatingAppointmentId(null);
       }
     },
-    [updateStatusMutation, normalizeStatus, refetch, refreshCount]
+    [updateStatusMutation, normalizeStatus, refetch, refreshCount],
   );
 
   // Derived filtered & searched appointments (local, instant)
@@ -257,7 +281,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         (apt) =>
           (apt.patientName || "").toLowerCase().includes(q) ||
           (apt.reasonForVisit || apt.reason || "").toLowerCase().includes(q) ||
-          (apt.timeSlot || apt.time || "").toLowerCase().includes(q)
+          (apt.timeSlot || apt.time || "").toLowerCase().includes(q),
       );
     }
 
@@ -268,7 +292,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     useCallback(() => {
       refetch();
       refreshCount();
-    }, [refetch, refreshCount])
+    }, [refetch, refreshCount]),
   );
 
   const handleStartConsultation = useCallback(
@@ -283,7 +307,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
 
       try {
         setUpdatingAppointmentId(appointmentId);
-        await doctorService.updateAppointmentStatus(appointmentId, "in_progress");
+        await doctorService.updateAppointmentStatus(
+          appointmentId,
+          "in_progress",
+        );
         refreshCount();
         navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
       } catch (err) {
@@ -293,22 +320,31 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         setUpdatingAppointmentId(null);
       }
     },
-    [navigation, refreshCount, updatingAppointmentId]
+    [navigation, refreshCount, updatingAppointmentId],
   );
 
-
-  const getStatusLabel = useCallback((status) => {
-    const s = normalizeStatus(status);
-    switch (s) {
-      case "confirmed": return "Confirmed";
-      case "completed": return "Completed";
-      case "cancelled": return "Cancelled";
-      case "in_progress": return "In Progress";
-      case "no_show": return "No Show";
-      case "scheduled": return "Scheduled";
-      default: return "Pending";
-    }
-  }, [normalizeStatus]);
+  const getStatusLabel = useCallback(
+    (status) => {
+      const s = normalizeStatus(status);
+      switch (s) {
+        case "confirmed":
+          return "Confirmed";
+        case "completed":
+          return "Completed";
+        case "cancelled":
+          return "Cancelled";
+        case "in_progress":
+          return "In Progress";
+        case "no_show":
+          return "No Show";
+        case "scheduled":
+          return "Scheduled";
+        default:
+          return "Pending";
+      }
+    },
+    [normalizeStatus],
+  );
 
   const handleCreatePrescription = useCallback(
     (appointment) => {
@@ -320,7 +356,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       const resolvedAppointmentId = appointment?.id;
 
       if (!resolvedPatientId) {
-        Alert.alert("Patient Missing", "Unable to identify patient for this appointment.");
+        Alert.alert(
+          "Patient Missing",
+          "Unable to identify patient for this appointment.",
+        );
         return;
       }
 
@@ -329,7 +368,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         appointmentId: resolvedAppointmentId,
       });
     },
-    [navigation]
+    [navigation],
   );
 
   const renderAppointmentCard = useCallback(
@@ -340,7 +379,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           Alert.alert(
             "Appointment Details",
             `Patient: ${item.patientName || "Unknown"}\nTime: ${item.timeSlot || item.time || "N/A"}\nReason: ${item.reasonForVisit || item.reason || "N/A"}\nStatus: ${getStatusLabel(item.status)}\nPhone: ${item.phone || "N/A"}`,
-            [{ text: "OK" }]
+            [{ text: "OK" }],
           );
         }}
         activeOpacity={0.7}
@@ -350,7 +389,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       >
         <View style={styles.cardLeft}>
           <View style={styles.avatar}>
-            <User  size={24} color={healthColors.primary.main} />
+            <User size={24} color={healthColors.primary.main} />
           </View>
           <View style={styles.patientInfo}>
             <Text style={styles.patientName} numberOfLines={1}>
@@ -360,24 +399,25 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               {item.reasonForVisit || item.reason || "Consultation"}
             </Text>
             <View style={styles.timeContainer}>
-              <Clock
-                
-                size={14}
-                color={healthColors.text.secondary}
-              />
-              <Text style={styles.time}>{item.timeSlot || item.time || "N/A"}</Text>
+              <Clock size={14} color={healthColors.text.secondary} />
+              <Text style={styles.time}>
+                {item.timeSlot || item.time || "N/A"}
+              </Text>
               {item.appointmentDate && selectedFilter === "upcoming" && (
                 <>
                   <Calendar
-                    
                     size={14}
                     color={healthColors.text.secondary}
                     style={styles.calendarIconMargin}
                   />
                   <Text style={styles.time}>
-                    {new Date(item.appointmentDate).toLocaleDateString("en-IN", {
-                      day: "numeric", month: "short",
-                    })}
+                    {new Date(item.appointmentDate).toLocaleDateString(
+                      "en-IN",
+                      {
+                        day: "numeric",
+                        month: "short",
+                      },
+                    )}
                   </Text>
                 </>
               )}
@@ -386,7 +426,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               const normalizedStatus = normalizeStatus(item.status);
               const canConfirm = normalizedStatus === "scheduled";
               const canCancel =
-                normalizedStatus === "scheduled" || normalizedStatus === "confirmed";
+                normalizedStatus === "scheduled" ||
+                normalizedStatus === "confirmed";
               const isBusy = updatingAppointmentId === item.id;
 
               if (!canConfirm && !canCancel) {
@@ -409,15 +450,19 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                       accessibilityLabel="Confirm appointment"
                     >
                       {isBusy ? (
-                        <ActivityIndicator size="small" color={healthColors.text.white} />
+                        <ActivityIndicator
+                          size="small"
+                          color={healthColors.text.white}
+                        />
                       ) : (
                         <>
                           <CheckCircle
-                            
                             size={16}
                             color={healthColors.text.white}
                           />
-                          <Text style={styles.statusActionButtonText}>Confirm</Text>
+                          <Text style={styles.statusActionButtonText}>
+                            Confirm
+                          </Text>
                         </>
                       )}
                     </TouchableOpacity>
@@ -440,24 +485,26 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                             {
                               text: "Yes, Cancel",
                               style: "destructive",
-                              onPress: () => handleStatusUpdate(item, "cancelled"),
+                              onPress: () =>
+                                handleStatusUpdate(item, "cancelled"),
                             },
-                          ]
+                          ],
                         );
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Cancel appointment"
                     >
                       {isBusy ? (
-                        <ActivityIndicator size="small" color={healthColors.text.white} />
+                        <ActivityIndicator
+                          size="small"
+                          color={healthColors.text.white}
+                        />
                       ) : (
                         <>
-                          <XCircle
-                            
-                            size={16}
-                            color={healthColors.text.white}
-                          />
-                          <Text style={styles.statusActionButtonText}>Cancel</Text>
+                          <XCircle size={16} color={healthColors.text.white} />
+                          <Text style={styles.statusActionButtonText}>
+                            Cancel
+                          </Text>
                         </>
                       )}
                     </TouchableOpacity>
@@ -473,7 +520,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             activeOpacity={0.7}
             onPress={async () => {
               if (!item.phone || item.phone === "N/A") {
-                Alert.alert("Call Unavailable", "Patient phone number is not available.");
+                Alert.alert(
+                  "Call Unavailable",
+                  "Patient phone number is not available.",
+                );
                 return;
               }
               const phoneUrl = `tel:${item.phone}`;
@@ -487,22 +537,26 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Call patient"
           >
-            <Phone  size={20} color={healthColors.primary.main} />
+            <Phone size={20} color={healthColors.primary.main} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.actionButton,
               !["scheduled", "confirmed", "in_progress"].includes(
-                normalizeStatus(item.status)
+                normalizeStatus(item.status),
               ) && styles.actionButtonDisabled,
             ]}
             activeOpacity={0.7}
             onPress={() => {
               const normalizedStatus = normalizeStatus(item.status);
-              if (!["scheduled", "confirmed", "in_progress"].includes(normalizedStatus)) {
+              if (
+                !["scheduled", "confirmed", "in_progress"].includes(
+                  normalizedStatus,
+                )
+              ) {
                 Alert.alert(
                   "Unavailable",
-                  "Consultation can only be started for scheduled, confirmed, or in-progress appointments."
+                  "Consultation can only be started for scheduled, confirmed, or in-progress appointments.",
                 );
                 return;
               }
@@ -511,7 +565,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Start consultation"
           >
-            <Cross  size={20} color={healthColors.success.main} />
+            <Cross size={20} color={healthColors.success.main} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
@@ -520,11 +574,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Create prescription"
           >
-            <FileText
-              
-              size={20}
-              color={healthColors.accent.coral}
-            />
+            <FileText size={20} color={healthColors.accent.coral} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
@@ -539,11 +589,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityLabel={`View history for ${item.patientName}`}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <UserCircle
-              
-              size={20}
-              color={healthColors.info.main}
-            />
+            <UserCircle size={20} color={healthColors.info.main} />
           </TouchableOpacity>
           <View
             style={[
@@ -552,7 +598,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             ]}
           >
             <Text
-              style={[styles.statusText, { color: getStatusColor(item.status) }]}
+              style={[
+                styles.statusText,
+                { color: getStatusColor(item.status) },
+              ]}
             >
               {getStatusLabel(item.status)}
             </Text>
@@ -569,7 +618,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       navigation,
       normalizeStatus,
       updatingAppointmentId,
-    ]
+    ],
   );
 
   const renderEmptyState = useCallback(() => {
@@ -630,22 +679,31 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft  size={24} color={healthColors.text.primary} />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Appointments</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={[styles.headerIconBtn, showSearch && styles.headerIconBtnActive]}
+            style={[
+              styles.headerIconBtn,
+              showSearch && styles.headerIconBtnActive,
+            ]}
             onPress={toggleSearch}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={showSearch ? "Close search" : "Search appointments"}
+            accessibilityLabel={
+              showSearch ? "Close search" : "Search appointments"
+            }
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <DynamicIcon
               name={showSearch ? "X" : "Search"}
               size={22}
-              color={showSearch ? healthColors.primary.main : healthColors.text.primary}
+              color={
+                showSearch
+                  ? healthColors.primary.main
+                  : healthColors.text.primary
+              }
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -656,13 +714,23 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityLabel="Refresh"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <DynamicIcon name="refresh-cw" size={22} color={healthColors.text.primary} />
+            <DynamicIcon
+              name="refresh-cw"
+              size={22}
+              color={healthColors.text.primary}
+            />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Animated Search Bar */}
-      <Animated.View style={[styles.searchBarWrapper, styles.searchBarHidden, { height: searchBarHeight }]}>
+      <Animated.View
+        style={[
+          styles.searchBarWrapper,
+          styles.searchBarHidden,
+          { height: searchBarHeight },
+        ]}
+      >
         <View style={styles.searchBarContainer}>
           <SearchField
             value={searchQuery}
@@ -685,14 +753,22 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabButton, selectedFilter === tab.key && styles.tabButtonActive]}
+            style={[
+              styles.tabButton,
+              selectedFilter === tab.key && styles.tabButtonActive,
+            ]}
             onPress={() => handleFilterChange(tab.key)}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={`Show ${tab.label} appointments`}
             accessibilityState={{ selected: selectedFilter === tab.key }}
           >
-            <Text style={[styles.tabText, selectedFilter === tab.key && styles.tabTextActive]}>
+            <Text
+              style={[
+                styles.tabText,
+                selectedFilter === tab.key && styles.tabTextActive,
+              ]}
+            >
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -736,12 +812,18 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       {(searchQuery.trim().length > 0 || statusFilter !== "all") && (
         <View style={styles.resultInfo}>
           <Text style={styles.resultInfoText}>
-            {filteredAppointments.length} result{filteredAppointments.length !== 1 ? "s" : ""}
+            {filteredAppointments.length} result
+            {filteredAppointments.length !== 1 ? "s" : ""}
             {searchQuery.trim().length > 0 ? ` for "${searchQuery}"` : ""}
-            {statusFilter !== "all" ? ` · ${visibleStatusFilters.find((s) => s.key === statusFilter)?.label || statusFilter}` : ""}
+            {statusFilter !== "all"
+              ? ` · ${visibleStatusFilters.find((s) => s.key === statusFilter)?.label || statusFilter}`
+              : ""}
           </Text>
           <TouchableOpacity
-            onPress={() => { setSearchQuery(""); setStatusFilter("all"); }}
+            onPress={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+            }}
             accessibilityRole="button"
             accessibilityLabel="Clear filters"
           >
@@ -787,7 +869,6 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={10}
-
       />
     </SafeAreaView>
   );
@@ -1075,4 +1156,3 @@ const styles = StyleSheet.create({
 });
 
 export default TodaysAppointmentsScreen;
-

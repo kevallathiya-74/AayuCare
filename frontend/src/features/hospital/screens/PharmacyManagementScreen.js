@@ -19,48 +19,46 @@ import { useFocusEffect } from "@react-navigation/native";
 import { ArrowLeft, RefreshCcw } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import prescriptionService from '@/services/prescription.service';
-import { formatDate } from '@/utils/helpers';
-import { parseError } from '@/utils/errorHandler';
-import { SkeletonCardRow, EmptyState, SearchField } from '@/components/common';
-import { EmptyStateConfig } from '@/utils/constants';
-import { handleSmartBack } from '@/utils/navigation';
+import { theme, healthColors } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import prescriptionService from "@/services/prescription.service";
+import { formatDate } from "@/utils/helpers";
+import { parseError } from "@/utils/errorHandler";
+import { SkeletonCardRow, EmptyState, SearchField } from "@/components/common";
+import { EmptyStateConfig } from "@/utils/constants";
+import { handleSmartBack } from "@/utils/navigation";
 
 const FILTERS = ["all", "pending", "preparing", "ready", "dispensed"];
-
-
 
 const STATUS_CONFIG = {
   all: {
     label: "All",
-    activeBackground: theme.colors.primary,
-    activeText: theme.colors.text.white,
+    activeBackground: healthColors.primary.main,
+    activeText: healthColors.white,
   },
   pending: {
     label: "Pending",
     badgeBackground: healthColors.warning.main,
     activeBackground: healthColors.warning.main,
-    activeText: theme.colors.text.white,
+    activeText: healthColors.white,
   },
   preparing: {
     label: "Preparing",
     badgeBackground: healthColors.info.dark,
     activeBackground: healthColors.info.dark,
-    activeText: theme.colors.text.white,
+    activeText: healthColors.white,
   },
   ready: {
     label: "Ready",
     badgeBackground: healthColors.success.main,
     activeBackground: healthColors.success.main,
-    activeText: theme.colors.text.white,
+    activeText: healthColors.white,
   },
   dispensed: {
     label: "Dispensed",
     badgeBackground: healthColors.neutral.gray500,
     activeBackground: healthColors.neutral.gray600,
-    activeText: theme.colors.text.white,
+    activeText: healthColors.white,
   },
 };
 
@@ -86,7 +84,10 @@ const getMedicinesSummary = (medicines) => {
 
 const getSearchableText = (item) => {
   const medicineNames = Array.isArray(item.medicines)
-    ? item.medicines.map((m) => m?.name).filter(Boolean).join(" ")
+    ? item.medicines
+        .map((m) => m?.name)
+        .filter(Boolean)
+        .join(" ")
     : "";
 
   return `${item.patientName || ""} ${item.doctorName || ""} ${medicineNames}`.toLowerCase();
@@ -97,15 +98,28 @@ const StatusChip = ({ label, count, isActive, onPress }) => {
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
-      style={[styles.chipBase, isActive ? styles.chipActive : styles.chipInactive]}
+      style={[
+        styles.chipBase,
+        isActive ? styles.chipActive : styles.chipInactive,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={`Filter ${label}`}
       accessibilityHint="Shows pharmacy orders with this status"
     >
-      <Text style={[styles.chipLabel, isActive ? styles.chipLabelActive : styles.chipLabelInactive]}>
+      <Text
+        style={[
+          styles.chipLabel,
+          isActive ? styles.chipLabelActive : styles.chipLabelInactive,
+        ]}
+      >
         {label}
       </Text>
-      <Text style={[styles.chipCount, isActive ? styles.chipCountActive : styles.chipCountInactive]}>
+      <Text
+        style={[
+          styles.chipCount,
+          isActive ? styles.chipCountActive : styles.chipCountInactive,
+        ]}
+      >
         {count}
       </Text>
     </TouchableOpacity>
@@ -130,14 +144,20 @@ const OrderCard = ({ order }) => {
             {getMedicinesSummary(order.medicines)}
           </Text>
           <Text style={styles.orderCreatedTime}>
-            {formatDate(order.createdAt || order.prescriptionDate || new Date())}
+            {formatDate(
+              order.createdAt || order.prescriptionDate || new Date(),
+            )}
           </Text>
         </View>
 
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: STATUS_CONFIG[status]?.badgeBackground || healthColors.warning.main },
+            {
+              backgroundColor:
+                STATUS_CONFIG[status]?.badgeBackground ||
+                healthColors.warning.main,
+            },
           ]}
         >
           <Text style={styles.statusBadgeText}>{statusLabel}</Text>
@@ -146,7 +166,6 @@ const OrderCard = ({ order }) => {
     </View>
   );
 };
-
 
 const PharmacyManagementScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
@@ -165,7 +184,12 @@ const PharmacyManagementScreen = ({ navigation }) => {
     enabled: !!user?.id && user?.role === "admin",
     queryFn: async () => {
       const response = await prescriptionService.getAllPrescriptions();
-      const data = response?.data?.prescriptions || response?.prescriptions || response?.data || response || [];
+      const data =
+        response?.data?.prescriptions ||
+        response?.prescriptions ||
+        response?.data ||
+        response ||
+        [];
       return Array.isArray(data) ? data : [];
     },
   });
@@ -173,7 +197,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch])
+    }, [refetch]),
   );
 
   const onRefresh = useCallback(() => {
@@ -204,7 +228,8 @@ const PharmacyManagementScreen = ({ navigation }) => {
 
     return prescriptions.filter((item) => {
       const normalized = item.pharmacyStatus || "pending";
-      const statusMatch = selectedFilter === "all" || normalized === selectedFilter;
+      const statusMatch =
+        selectedFilter === "all" || normalized === selectedFilter;
       const searchMatch = !query || getSearchableText(item).includes(query);
 
       return statusMatch && searchMatch;
@@ -222,7 +247,10 @@ const PharmacyManagementScreen = ({ navigation }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={healthColors.background.card}
+        />
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.headerIconBtn}
@@ -230,13 +258,18 @@ const PharmacyManagementScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+            <ArrowLeft
+              size={theme.iconSizes.md}
+              color={healthColors.text.primary}
+            />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pharmacy Management</Text>
           <View style={styles.headerIconBtn} />
         </View>
         <View style={styles.loadingListWrapper}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );
@@ -244,7 +277,10 @@ const PharmacyManagementScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
 
       <View style={styles.header}>
         <TouchableOpacity
@@ -253,7 +289,10 @@ const PharmacyManagementScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+          <ArrowLeft
+            size={theme.iconSizes.md}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Pharmacy Management</Text>
@@ -266,7 +305,11 @@ const PharmacyManagementScreen = ({ navigation }) => {
         >
           <RefreshCcw
             size={theme.iconSizes.md}
-            color={isRefetching ? healthColors.text.tertiary : healthColors.text.primary}
+            color={
+              isRefetching
+                ? healthColors.text.tertiary
+                : healthColors.text.primary
+            }
           />
         </TouchableOpacity>
       </View>
@@ -281,8 +324,8 @@ const PharmacyManagementScreen = ({ navigation }) => {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
+            colors={[healthColors.primary.main]}
+            tintColor={healthColors.primary.main}
           />
         }
         ListHeaderComponent={
@@ -330,20 +373,32 @@ const PharmacyManagementScreen = ({ navigation }) => {
               </View>
             </View>
 
-            {isError ? <Text style={styles.errorText}>{parseError(error)}</Text> : null}
+            {isError ? (
+              <Text style={styles.errorText}>{parseError(error)}</Text>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
           <EmptyState
             icon={EmptyStateConfig.PHARMACY.icon}
-            title={selectedFilter === "all" ? EmptyStateConfig.PHARMACY.title : `No ${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Orders`}
+            title={
+              selectedFilter === "all"
+                ? EmptyStateConfig.PHARMACY.title
+                : `No ${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Orders`
+            }
             message={
               selectedFilter === "all"
                 ? EmptyStateConfig.PHARMACY.message
                 : "No orders match this filter. Try viewing all orders."
             }
-            actionLabel={selectedFilter !== "all" ? "View All Orders" : undefined}
-            onActionPress={selectedFilter !== "all" ? () => setSelectedFilter("all") : undefined}
+            actionLabel={
+              selectedFilter !== "all" ? "View All Orders" : undefined
+            }
+            onActionPress={
+              selectedFilter !== "all"
+                ? () => setSelectedFilter("all")
+                : undefined
+            }
           />
         }
       />
@@ -412,8 +467,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    backgroundColor: healthColors.primary.main,
+    borderColor: healthColors.primary.main,
   },
   chipInactive: {
     backgroundColor: healthColors.background.card,
@@ -424,7 +479,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.medium,
   },
   chipLabelActive: {
-    color: theme.colors.text.white,
+    color: healthColors.white,
   },
   chipLabelInactive: {
     color: healthColors.text.secondary,
@@ -434,7 +489,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
   },
   chipCountActive: {
-    color: theme.colors.text.white,
+    color: healthColors.white,
   },
   chipCountInactive: {
     color: healthColors.text.tertiary,
@@ -522,10 +577,8 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: theme.typography.fontSizes.caption,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
+    color: healthColors.white,
   },
-
-
 });
 
 export default PharmacyManagementScreen;

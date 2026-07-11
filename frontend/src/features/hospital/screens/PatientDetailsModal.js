@@ -12,16 +12,24 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { AlertTriangle, Cross, FileText, Calendar, Clock, X, AlertCircle } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { doctorService } from '@/services';
-import { logError, parseError } from '@/utils/errorHandler';
-import { calculateAge } from '@/utils/dateHelpers';
-import { SkeletonCardRow, EmptyState } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
+import {
+  AlertTriangle,
+  Cross,
+  FileText,
+  Calendar,
+  Clock,
+  X,
+  AlertCircle,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import { doctorService } from "@/services";
+import { logError, parseError } from "@/utils/errorHandler";
+import { calculateAge } from "@/utils/dateHelpers";
+import { SkeletonCardRow, EmptyState } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { queryKeys } from '@/config/reactQueryConfig';
+import { queryKeys } from "@/config/reactQueryConfig";
 
 const PATIENT_DETAILS_MODAL_CACHE_TTL_MS = 60 * 1000;
 const patientDetailsModalCache = new Map();
@@ -45,7 +53,13 @@ const setCachedPatientDetails = (patientId, value) => {
   });
 };
 
-const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initialPatient }) => {
+const PatientDetailsModal = ({
+  visible,
+  onClose,
+  patientId,
+  patientName,
+  initialPatient,
+}) => {
   const user = useSelector((state) => state.auth.user);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -87,13 +101,21 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           ? responseData.data
           : null;
 
-      if ((response?.success || responseData?.success !== false) && normalizedData) {
+      if (
+        (response?.success || responseData?.success !== false) &&
+        normalizedData
+      ) {
         return normalizedData;
       }
 
       throw new Error("Failed to load patient details");
     },
-    enabled: visible && !!patientId && (user?.role === "doctor" || user?.role === "admin" || user?.role === "receptionist"),
+    enabled:
+      visible &&
+      !!patientId &&
+      (user?.role === "doctor" ||
+        user?.role === "admin" ||
+        user?.role === "receptionist"),
     staleTime: PATIENT_DETAILS_MODAL_CACHE_TTL_MS,
     retry: 1,
     initialData: seededPatientData,
@@ -219,11 +241,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           {patient.allergies && patient.allergies.length > 0 && (
             <View style={styles.medicalItem}>
               <View style={styles.medicalItemHeader}>
-                <AlertTriangle
-                  
-                  size={18}
-                  color={healthColors.warning.main}
-                />
+                <AlertTriangle size={18} color={healthColors.warning.main} />
                 <Text style={styles.medicalItemTitle}>Allergies</Text>
               </View>
               <View style={styles.chipContainer}>
@@ -240,11 +258,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
             patient.currentMedications.length > 0 && (
               <View style={styles.medicalItem}>
                 <View style={styles.medicalItemHeader}>
-                  <Cross
-                    
-                    size={18}
-                    color={healthColors.primary.main}
-                  />
+                  <Cross size={18} color={healthColors.primary.main} />
                   <Text style={styles.medicalItemTitle}>
                     Current Medications
                   </Text>
@@ -265,11 +279,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           {patient.medicalHistory && patient.medicalHistory.length > 0 && (
             <View style={styles.medicalItem}>
               <View style={styles.medicalItemHeader}>
-                <FileText
-                  
-                  size={18}
-                  color={healthColors.info.main}
-                />
+                <FileText size={18} color={healthColors.info.main} />
                 <Text style={styles.medicalItemTitle}>Medical History</Text>
               </View>
               {patient.medicalHistory.map((history) => (
@@ -331,7 +341,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
         />
       );
     }
-    
+
     return (
       <View style={styles.tabContent}>
         {appointments.map((appointment, index) => {
@@ -342,61 +352,57 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           const appointmentStatus = appointment.status || "scheduled";
 
           return (
-          <View
-            key={appointment.id || appointment.appointmentId || index}
-            style={styles.appointmentCard}
-          >
-            <View style={styles.appointmentHeader}>
-              <View style={styles.appointmentDateContainer}>
-                <Calendar
-                  
-                  size={16}
-                  color={healthColors.primary.main}
-                />
-                <Text style={styles.appointmentDate}>
-                  {appointmentDate
-                    ? new Date(appointmentDate).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "N/A"}
-                </Text>
+            <View
+              key={appointment.id || appointment.appointmentId || index}
+              style={styles.appointmentCard}
+            >
+              <View style={styles.appointmentHeader}>
+                <View style={styles.appointmentDateContainer}>
+                  <Calendar size={16} color={healthColors.primary.main} />
+                  <Text style={styles.appointmentDate}>
+                    {appointmentDate
+                      ? new Date(appointmentDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "N/A"}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    getStatusStyle(appointmentStatus),
+                  ]}
+                >
+                  <Text style={styles.statusBadgeText}>
+                    {appointmentStatus}
+                  </Text>
+                </View>
               </View>
-              <View
-                style={[styles.statusBadge, getStatusStyle(appointmentStatus)]}
-              >
-                <Text style={styles.statusBadgeText}>{appointmentStatus}</Text>
-              </View>
-            </View>
-            <Text style={styles.appointmentReason}>
-              {appointment.chiefComplaint ||
-                appointment.reason ||
-                "General Consultation"}
-            </Text>
-            <View style={styles.appointmentFooter}>
-              <View style={styles.appointmentInfo}>
-                <Clock
-                  
-                  size={14}
-                  color={healthColors.text.tertiary}
-                />
-                <Text style={styles.appointmentInfoText}>
-                  {appointment.appointmentTime || appointment.appointment_time || appointment.time || "N/A"}
-                </Text>
-              </View>
-              <View style={styles.appointmentInfo}>
-                <Cross
-                  
-                  size={14}
-                  color={healthColors.text.tertiary}
-                />
-                <Text style={styles.appointmentInfoText}>
-                  {appointment.type || "in-person"}
-                </Text>
+              <Text style={styles.appointmentReason}>
+                {appointment.chiefComplaint ||
+                  appointment.reason ||
+                  "General Consultation"}
+              </Text>
+              <View style={styles.appointmentFooter}>
+                <View style={styles.appointmentInfo}>
+                  <Clock size={14} color={healthColors.text.tertiary} />
+                  <Text style={styles.appointmentInfoText}>
+                    {appointment.appointmentTime ||
+                      appointment.appointment_time ||
+                      appointment.time ||
+                      "N/A"}
+                  </Text>
+                </View>
+                <View style={styles.appointmentInfo}>
+                  <Cross size={14} color={healthColors.text.tertiary} />
+                  <Text style={styles.appointmentInfoText}>
+                    {appointment.type || "in-person"}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
           );
         })}
       </View>
@@ -418,42 +424,43 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
         />
       );
     }
-    
+
     return (
       <View style={styles.tabContent}>
         {records.map((record, index) => {
           const recordType = record.recordType || record.record_type || "other";
           const recordTitle = record.title || recordType.replace(/_/g, " ");
-          const recordDate = record.date || record.createdAt || record.created_at;
+          const recordDate =
+            record.date || record.createdAt || record.created_at;
 
           return (
-          <View key={record.id || index} style={styles.recordCard}>
-            <View style={styles.recordHeader}>
-              <DynamicIcon
-                name={getRecordIcon(recordType)}
-                size={20}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.recordTitle}>{recordTitle}</Text>
-            </View>
-            <Text style={styles.recordType}>
-              {formatRecordType(recordType)}
-            </Text>
-            {record.diagnosis && (
-              <Text style={styles.recordDiagnosis}>
-                Diagnosis: {record.diagnosis}
+            <View key={record.id || index} style={styles.recordCard}>
+              <View style={styles.recordHeader}>
+                <DynamicIcon
+                  name={getRecordIcon(recordType)}
+                  size={20}
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.recordTitle}>{recordTitle}</Text>
+              </View>
+              <Text style={styles.recordType}>
+                {formatRecordType(recordType)}
               </Text>
-            )}
-            <Text style={styles.recordDate}>
-              {recordDate
-                ? new Date(recordDate).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })
-                : "N/A"}
-            </Text>
-          </View>
+              {record.diagnosis && (
+                <Text style={styles.recordDiagnosis}>
+                  Diagnosis: {record.diagnosis}
+                </Text>
+              )}
+              <Text style={styles.recordDate}>
+                {recordDate
+                  ? new Date(recordDate).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "N/A"}
+              </Text>
+            </View>
           );
         })}
       </View>
@@ -475,7 +482,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
         />
       );
     }
-    
+
     return (
       <View style={styles.tabContent}>
         {prescriptions.map((prescription, index) => {
@@ -485,41 +492,44 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
             prescription.created_at;
 
           return (
-          <View
-            key={prescription.id || prescription.prescriptionId || index}
-            style={styles.prescriptionCard}
-          >
-            <View style={styles.prescriptionHeader}>
-              <Text style={styles.prescriptionDate}>
-                {prescriptionDate
-                  ? new Date(prescriptionDate).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "N/A"}
-              </Text>
-            </View>
-            {prescription.diagnosis && (
-              <Text style={styles.prescriptionDiagnosis}>
-                {prescription.diagnosis}
-              </Text>
-            )}
-            {Array.isArray(prescription.medicines) && prescription.medicines.length > 0 && (
-              <View style={styles.medicinesContainer}>
-                <Text style={styles.medicinesTitle}>Medicines:</Text>
-                {prescription.medicines.map((medicine) => (
-                  <View key={medicine.name} style={styles.medicineItem}>
-                    <Text style={styles.medicineName}>• {medicine.name}</Text>
-                    <Text style={styles.medicineDetails}>
-                      {medicine.dosage} - {medicine.frequency} -{" "}
-                      {medicine.duration}
-                    </Text>
-                  </View>
-                ))}
+            <View
+              key={prescription.id || prescription.prescriptionId || index}
+              style={styles.prescriptionCard}
+            >
+              <View style={styles.prescriptionHeader}>
+                <Text style={styles.prescriptionDate}>
+                  {prescriptionDate
+                    ? new Date(prescriptionDate).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "N/A"}
+                </Text>
               </View>
-            )}
-          </View>
+              {prescription.diagnosis && (
+                <Text style={styles.prescriptionDiagnosis}>
+                  {prescription.diagnosis}
+                </Text>
+              )}
+              {Array.isArray(prescription.medicines) &&
+                prescription.medicines.length > 0 && (
+                  <View style={styles.medicinesContainer}>
+                    <Text style={styles.medicinesTitle}>Medicines:</Text>
+                    {prescription.medicines.map((medicine) => (
+                      <View key={medicine.name} style={styles.medicineItem}>
+                        <Text style={styles.medicineName}>
+                          • {medicine.name}
+                        </Text>
+                        <Text style={styles.medicineDetails}>
+                          {medicine.dosage} - {medicine.frequency} -{" "}
+                          {medicine.duration}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+            </View>
           );
         })}
       </View>
@@ -569,7 +579,8 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
   };
 
   return (
-    <Modal statusBarTranslucent
+    <Modal
+      statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
@@ -595,11 +606,7 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <X
-                
-                size={28}
-                color={healthColors.text.primary}
-              />
+              <X size={28} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
 
@@ -634,15 +641,13 @@ const PatientDetailsModal = ({ visible, onClose, patientId, patientName, initial
           {/* Content */}
           {loading ? (
             <View style={styles.skeletonContainer}>
-              {[1, 2, 3].map((i) => (<SkeletonCardRow key={i} />))}
+              {[1, 2, 3].map((i) => (
+                <SkeletonCardRow key={i} />
+              ))}
             </View>
           ) : errorMessage ? (
             <View style={styles.errorContainer}>
-              <AlertCircle
-                
-                size={60}
-                color={healthColors.error.main}
-              />
+              <AlertCircle size={60} color={healthColors.error.main} />
               <Text style={styles.errorText}>{errorMessage}</Text>
               <TouchableOpacity
                 style={styles.retryButton}
@@ -1062,7 +1067,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: theme.colors.white,
   },
-
 });
 
 export default PatientDetailsModal;

@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import useDoctorForm from '@/hooks/useDoctorForm';
+import useDoctorForm from "@/hooks/useDoctorForm";
 import {
   Modal,
   View,
@@ -15,9 +15,9 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { X } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { Button } from '@/components/common';
-import { getKeyboardConfig } from '@/utils/responsive';
+import { theme, healthColors } from "@/theme";
+import { Button } from "@/components/common";
+import { getKeyboardConfig } from "@/utils/responsive";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -48,13 +48,15 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
   } = useDoctorForm({ mode: "edit", doctor, onClose, onSuccess });
 
   return (
-    <Modal statusBarTranslucent
+    <Modal
+      statusBarTranslucent
       visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>
@@ -68,11 +70,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               accessibilityRole="button"
               accessibilityLabel="Close edit doctor form"
             >
-              <X
-                
-                size={24}
-                color={healthColors.text.primary}
-              />
+              <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
 
@@ -88,33 +86,33 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "Email Address *",
               "doctor@example.com",
               "mail",
-              "email-address"
+              "email-address",
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+911234567890",
               "call",
-              "phone-pad"
+              "phone-pad",
             )}
             {renderPicker(
               "specialization",
               "Specialization *",
               "medical",
-              SPECIALIZATIONS
+              SPECIALIZATIONS,
             )}
             {renderInput(
               "qualification",
               "Qualification *",
               "MBBS, MD",
-              "school"
+              "school",
             )}
             {renderInput(
               "experience",
               "Years of Experience *",
               "5",
               "time",
-              "numeric"
+              "numeric",
             )}
             {renderInput("department", "Department", "Cardiology", "business")}
             {renderInput(
@@ -122,13 +120,13 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "Consultation Fee",
               "500",
               "cash",
-              "numeric"
+              "numeric",
             )}
             {renderInput(
               "licenseNumber",
               "License Number *",
               "MH/12345/2010",
-              "id-card"
+              "id-card",
             )}
             {renderInput(
               "bio",
@@ -137,7 +135,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "information-circle",
               "default",
               false,
-              true
+              true,
             )}
             {renderAvailabilityPicker()}
 
@@ -218,8 +216,6 @@ const styles = StyleSheet.create({
   flexButton: {
     flex: 1,
   },
-
 });
 
 export default EditDoctorModal;
- 
