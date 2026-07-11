@@ -10,11 +10,7 @@
  *  - Full error state with retry
  */
 
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -37,15 +33,15 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { EmptyState, Card } from '@/components/common';
-import SkeletonLoader from '@/components/ui/SkeletonLoader';
-import { getSafeAreaEdges } from '@/utils/responsive';
-import { getPatientMedicalRecords } from '@/services/medicalRecord.service';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { parseError } from '@/utils/errorHandler';
+import { theme, healthColors } from "@/theme";
+import { EmptyState, Card } from "@/components/common";
+import SkeletonLoader from "@/components/ui/SkeletonLoader";
+import { getSafeAreaEdges } from "@/utils/responsive";
+import { getPatientMedicalRecords } from "@/services/medicalRecord.service";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { parseError } from "@/utils/errorHandler";
 import { format, parseISO } from "date-fns";
-import { handleSmartBack } from '@/utils/navigation';
+import { handleSmartBack } from "@/utils/navigation";
 
 // ─────────────────────────────────────────────
 // Constants
@@ -60,7 +56,9 @@ const RECORD_TYPE_ALIASES = {
 };
 
 const normalizeRecordType = (type = "") => {
-  const normalized = String(type || "").toLowerCase().trim();
+  const normalized = String(type || "")
+    .toLowerCase()
+    .trim();
   return RECORD_TYPE_ALIASES[normalized] || normalized;
 };
 
@@ -146,10 +144,7 @@ const RecordCard = React.memo(({ record, onPress }) => {
   const IconComp = meta.icon;
 
   return (
-    <Card
-      style={styles.card}
-      onPress={() => onPress && onPress(record)}
-    >
+    <Card style={styles.card} onPress={() => onPress && onPress(record)}>
       {/* Icon */}
       <View style={[styles.cardIcon, { backgroundColor: meta.bg }]}>
         <IconComp size={20} color={meta.color} />
@@ -197,7 +192,9 @@ const FilterPill = React.memo(({ filter, isActive, onPress }) => {
       {IconComp ? (
         <IconComp
           size={13}
-          color={isActive ? healthColors.text.white : healthColors.text.secondary}
+          color={
+            isActive ? healthColors.text.white : healthColors.text.secondary
+          }
           style={styles.filterIcon}
         />
       ) : null}
@@ -238,7 +235,9 @@ const ErrorView = ({ message, onRetry }) => (
   <View style={styles.errorContainer}>
     <AlertCircle size={40} color={healthColors.error.main} />
     <Text style={styles.errorTitle}>Could not load records</Text>
-    <Text style={styles.errorMsg}>{message || "An unexpected error occurred."}</Text>
+    <Text style={styles.errorMsg}>
+      {message || "An unexpected error occurred."}
+    </Text>
     <TouchableOpacity
       onPress={onRetry}
       style={styles.retryBtn}
@@ -246,7 +245,11 @@ const ErrorView = ({ message, onRetry }) => (
       accessibilityRole="button"
       accessibilityLabel="Retry loading medical records"
     >
-      <RefreshCw size={15} color={healthColors.text.white} style={styles.retryIcon} />
+      <RefreshCw
+        size={15}
+        color={healthColors.text.white}
+        style={styles.retryIcon}
+      />
       <Text style={styles.retryText}>Try Again</Text>
     </TouchableOpacity>
   </View>
@@ -294,7 +297,10 @@ const MedicalRecordsScreen = ({ navigation }) => {
       };
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + (page?.records?.length || 0), 0);
+      const loaded = allPages.reduce(
+        (sum, page) => sum + (page?.records?.length || 0),
+        0,
+      );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
       }
@@ -304,7 +310,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
   const records = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.records || []),
-    [data]
+    [data],
   );
 
   // ── Handlers ───────────────────────────────
@@ -314,7 +320,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
       if (key === activeFilter) return;
       setActiveFilter(key);
     },
-    [activeFilter]
+    [activeFilter],
   );
 
   const handleRefresh = useCallback(() => {
@@ -333,7 +339,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
         navigation.navigate("RecordDetail", { record });
       }
     },
-    [navigation]
+    [navigation],
   );
 
   // ── Render helpers ─────────────────────────
@@ -351,7 +357,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
         ))}
       </View>
     ),
-    [activeFilter, handleFilterChange]
+    [activeFilter, handleFilterChange],
   );
 
   const ListFooter = isFetchingNextPage ? (
@@ -362,20 +368,20 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
   const renderItem = useCallback(
     ({ item }) => <RecordCard record={item} onPress={handleRecordPress} />,
-    [handleRecordPress]
+    [handleRecordPress],
   );
 
-  const keyExtractor = useCallback(
-    (item, idx) => item.id || String(idx),
-    []
-  );
+  const keyExtractor = useCallback((item, idx) => item.id || String(idx), []);
 
   // ─────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
+    >
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.card}
@@ -411,9 +417,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
           contentContainerStyle={
-            records.length === 0
-              ? styles.emptyListContent
-              : styles.listContent
+            records.length === 0 ? styles.emptyListContent : styles.listContent
           }
           ListEmptyComponent={
             <EmptyState

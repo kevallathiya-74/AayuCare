@@ -4,26 +4,53 @@
  */
 
 import React, { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, Banknote, BriefcaseMedical, CalendarClock, Star, User, Video } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { Card, Button, NetworkStatusIndicator, SectionHeader } from '@/components/common';
-import { getScreenPadding } from '@/utils/responsive';
-import { formatCurrency } from '@/utils/helpers';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  ArrowLeft,
+  Banknote,
+  BriefcaseMedical,
+  CalendarClock,
+  Star,
+  User,
+  Video,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import {
+  Card,
+  Button,
+  NetworkStatusIndicator,
+  SectionHeader,
+} from "@/components/common";
+import { getScreenPadding } from "@/utils/responsive";
+import { formatCurrency } from "@/utils/helpers";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const asText = (value, fallback = "N/A") => {
   if (value == null) return fallback;
   if (typeof value === "string") return value.trim() || fallback;
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : fallback;
+  if (typeof value === "number")
+    return Number.isFinite(value) ? String(value) : fallback;
   if (Array.isArray(value)) {
-    const items = value.map((item) => String(item || "").trim()).filter(Boolean);
+    const items = value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
     return items.length ? items.join(", ") : fallback;
   }
   if (typeof value === "object") {
-    const items = Object.values(value).map((item) => String(item || "").trim()).filter(Boolean);
+    const items = Object.values(value)
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
     return items.length ? items.join(", ") : fallback;
   }
   return fallback;
@@ -37,8 +64,9 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
   const doctorId = doctor?.id;
 
   const specialty = useMemo(
-    () => asText(doctor?.specialization || doctor?.specialty, "General Medicine"),
-    [doctor]
+    () =>
+      asText(doctor?.specialization || doctor?.specialty, "General Medicine"),
+    [doctor],
   );
 
   const experience = useMemo(() => {
@@ -52,16 +80,23 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <NetworkStatusIndicator />
 
-      <View style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}>
+      <View
+        style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
+      >
         <TouchableOpacity
           onPress={() => handleSmartBack(navigation, "SpecialistCareFinder")}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+          <ArrowLeft
+            size={theme.iconSizes.md}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>Doctor Profile</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          Doctor Profile
+        </Text>
         <View style={styles.backButton} />
       </View>
 
@@ -70,8 +105,12 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
           <View style={styles.avatarWrap}>
             <User size={theme.iconSizes.lg} color={healthColors.primary.main} />
           </View>
-          <Text style={styles.nameText} numberOfLines={2}>{asText(doctor?.name, "Doctor")}</Text>
-          <Text style={styles.subText} numberOfLines={1}>{specialty}</Text>
+          <Text style={styles.nameText} numberOfLines={2}>
+            {asText(doctor?.name, "Doctor")}
+          </Text>
+          <Text style={styles.subText} numberOfLines={1}>
+            {specialty}
+          </Text>
         </Card>
 
         <Card>
@@ -84,23 +123,37 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
           <View style={styles.infoRow}>
             <Star size={18} color={theme.colors.warning.main} />
             <Text style={styles.infoLabel}>Rating</Text>
-            <Text style={styles.infoValue}>{asText(doctor?.rating, "N/A")}</Text>
+            <Text style={styles.infoValue}>
+              {asText(doctor?.rating, "N/A")}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Banknote size={18} color={healthColors.success.main} />
             <Text style={styles.infoLabel}>Consultation Fee</Text>
-            <Text style={styles.infoValue}>{formatCurrency(doctor?.consultationFee || doctor?.fee || 0)}</Text>
+            <Text style={styles.infoValue}>
+              {formatCurrency(doctor?.consultationFee || doctor?.fee || 0)}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Video size={18} color={healthColors.info.main} />
             <Text style={styles.infoLabel}>Telemedicine</Text>
-            <Text style={styles.infoValue}>{doctor?.telemedicine || doctor?.hasTelemedicine ? "Available" : "Not available"}</Text>
+            <Text style={styles.infoValue}>
+              {doctor?.telemedicine || doctor?.hasTelemedicine
+                ? "Available"
+                : "Not available"}
+            </Text>
           </View>
         </Card>
 
         <Button
           title="Book Appointment"
-          onPress={() => navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING, { doctorId, doctorName: doctor?.name, specialization: specialty })}
+          onPress={() =>
+            navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING, {
+              doctorId,
+              doctorName: doctor?.name,
+              specialization: specialty,
+            })
+          }
           style={styles.bookButton}
           icon={<CalendarClock size={16} color={healthColors.text.white} />}
         />
@@ -153,7 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: `${healthColors.primary.main}15`,
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.15),
   },
   nameText: {
     textAlign: "center",

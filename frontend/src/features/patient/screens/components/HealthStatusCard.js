@@ -6,9 +6,9 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { theme, healthColors } from '@/theme';
-import { SkeletonLoader, Card } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { SkeletonLoader, Card } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
 
 const STATUS_CONFIG = {
   HEALTHY: {
@@ -65,7 +65,9 @@ const HealthStatusCard = ({
       <View style={styles.statusRow}>
         <View style={[styles.statusBadge, { backgroundColor: cfg.bg }]}>
           <DynamicIcon name={cfg.icon} size={18} color={cfg.color} />
-          <Text style={[styles.statusText, { color: cfg.color }]}>{status}</Text>
+          <Text style={[styles.statusText, { color: cfg.color }]}>
+            {status}
+          </Text>
         </View>
         <View style={styles.scoreChip}>
           <Text style={styles.scoreLabel}>Risk</Text>
@@ -77,16 +79,35 @@ const HealthStatusCard = ({
 
       {/* Vitals row */}
       <View style={styles.vitalsRow}>
-        <VitalItem icon="pulse" label="BP" value={bp} color={healthColors.info.main} />
+        <VitalItem
+          icon="pulse"
+          label="BP"
+          value={bp}
+          color={healthColors.info.main}
+        />
         <View style={styles.vitalDivider} />
-        <VitalItem icon="water" label="Sugar" value={sugar} color={healthColors.warning.main} />
+        <VitalItem
+          icon="water"
+          label="Sugar"
+          value={sugar}
+          color={healthColors.warning.main}
+        />
         <View style={styles.vitalDivider} />
-        <VitalItem icon="thermometer" label="Temp" value={temp} color={healthColors.error.main} />
+        <VitalItem
+          icon="thermometer"
+          label="Temp"
+          value={temp}
+          color={healthColors.error.main}
+        />
       </View>
 
       {/* Last update */}
       <View style={styles.updateRow}>
-        <DynamicIcon name="time-outline" size={12} color={healthColors.text.tertiary} />
+        <DynamicIcon
+          name="time-outline"
+          size={12}
+          color={healthColors.text.tertiary}
+        />
         <Text style={styles.updateText}>Updated: {lastUpdated}</Text>
       </View>
     </Card>

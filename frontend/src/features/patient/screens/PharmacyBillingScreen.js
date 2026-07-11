@@ -20,20 +20,38 @@ import {
 } from "react-native-safe-area-context";
 
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft, Cross, Receipt, FileText, BriefcaseMedical, Building, CreditCard, Info } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Cross,
+  Receipt,
+  FileText,
+  BriefcaseMedical,
+  Building,
+  CreditCard,
+  Info,
+} from "lucide-react-native";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
-import { getScreenPadding } from '@/utils/responsive';
-import { SkeletonCardRow, NetworkStatusIndicator, ErrorRecovery, EmptyState } from '@/components/common';
-import { showError, logError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import { formatCurrency } from '@/utils/helpers';
-import { prescriptionService, paymentService, appointmentService } from '@/services';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding } from "@/utils/responsive";
+import {
+  SkeletonCardRow,
+  NetworkStatusIndicator,
+  ErrorRecovery,
+  EmptyState,
+} from "@/components/common";
+import { showError, logError } from "@/utils/errorHandler";
+import { useNetworkStatus } from "@/utils/offlineHandler";
+import { formatCurrency } from "@/utils/helpers";
+import {
+  prescriptionService,
+  paymentService,
+  appointmentService,
+} from "@/services";
+import { DynamicIcon } from "@/components/common";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
   const [paymentResult, setPaymentResult] = useState(null);
@@ -54,12 +72,15 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   } = useQuery({
     queryKey: queryKeys.prescriptions.patient(user?.id || "unknown"),
     queryFn: async () => {
-      const response = await prescriptionService.getPatientPrescriptions(user.id);
+      const response = await prescriptionService.getPatientPrescriptions(
+        user.id,
+      );
       if (!response?.success) {
         return null;
       }
 
-      const prescriptions = response?.data?.prescriptions || response?.data || [];
+      const prescriptions =
+        response?.data?.prescriptions || response?.data || [];
       if (!Array.isArray(prescriptions) || prescriptions.length === 0) {
         return null;
       }
@@ -67,22 +88,23 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       const latest = prescriptions[0];
       return {
         id: latest.id,
-        date: new Date(latest.prescriptionDate || latest.createdAt).toLocaleDateString(
-          "en-IN",
-          {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          }
-        ),
+        date: new Date(
+          latest.prescriptionDate || latest.createdAt,
+        ).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
         doctor: latest.doctorName || "Doctor",
-        medicines: (latest.medicines || latest.medications || []).map((med) => ({
-          name: med.name || med.medicine || "Medication",
-          dosage: med.dosage || med.frequency || "As directed",
-          duration: med.duration || "7 days",
-          price: med.price || 50,
-          qty: med.quantity || 1,
-        })),
+        medicines: (latest.medicines || latest.medications || []).map(
+          (med) => ({
+            name: med.name || med.medicine || "Medication",
+            dosage: med.dosage || med.frequency || "As directed",
+            duration: med.duration || "7 days",
+            price: med.price || 50,
+            qty: med.quantity || 1,
+          }),
+        ),
       };
     },
     enabled: !!user?.id && !routePrescription,
@@ -118,15 +140,30 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   });
 
   const subtotal =
-    prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0), 0) ||
+    prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0) * (med.qty || 1), 0) ||
     0;
   const discount = selectedPurchase === "hospital" ? subtotal * 0.15 : 0;
   const total = subtotal - discount;
 
   const paymentMethods = [
-    { id: "card", icon: "card", name: "Card Payment", color: theme.colors.info.main },
-    { id: "upi", icon: "phone-portrait", name: "UPI", color: theme.colors.success.main },
-    { id: "cash", icon: "cash", name: "Cash", color: theme.colors.warning.main },
+    {
+      id: "card",
+      icon: "card",
+      name: "Card Payment",
+      color: theme.colors.info.main,
+    },
+    {
+      id: "upi",
+      icon: "phone-portrait",
+      name: "UPI",
+      color: theme.colors.success.main,
+    },
+    {
+      id: "cash",
+      icon: "cash",
+      name: "Cash",
+      color: theme.colors.warning.main,
+    },
   ];
 
   const paymentMutation = useMutation({
@@ -137,7 +174,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         Alert.alert(
           "Payment Successful",
           `Payment of ${formatCurrency(total)} via ${selectedPayment.toUpperCase()} processed successfully!\nPayment ID: ${response.data?.payment_id || "N/A"}`,
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         return;
       }
@@ -197,7 +234,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <NetworkStatusIndicator />
         <View style={styles.loadingListWrapper}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );
@@ -210,8 +249,14 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     prescription.medicines.length === 0
   ) {
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <SafeAreaView
+        style={styles.container}
+        edges={["left", "right", "bottom"]}
+      >
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={healthColors.background.card}
+        />
         <NetworkStatusIndicator />
         <View
           style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
@@ -221,10 +266,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={theme.iconSizes.lg} color={healthColors.text.primary} />
+            <ArrowLeft
+              size={theme.iconSizes.lg}
+              color={healthColors.text.primary}
+            />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Cross size={theme.iconSizes.xxl} color={healthColors.primary.main} />
+            <Cross
+              size={theme.iconSizes.xxl}
+              color={healthColors.primary.main}
+            />
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
               <Text style={styles.headerSubtitle}>
@@ -242,7 +293,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               ? "You already have an upcoming appointment. Your prescription will appear here after doctor consultation."
               : "You need a valid prescription to purchase medicines. Please book an appointment and consult a doctor first."
           }
-          actionLabel={hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"}
+          actionLabel={
+            hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"
+          }
           onActionPress={() =>
             hasUpcomingAppointment
               ? navigation.navigate(Routes.PATIENT.MY_APPOINTMENTS)
@@ -255,7 +308,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
       <NetworkStatusIndicator />
       {/* Header */}
       <View
@@ -266,7 +322,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={theme.iconSizes.lg} color={healthColors.text.primary} />
+          <ArrowLeft
+            size={theme.iconSizes.lg}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Cross size={theme.iconSizes.xxl} color={healthColors.primary.main} />
@@ -282,14 +341,20 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             paymentResult
               ? Alert.alert(
                   "Payment Receipt",
-                  `Payment ID: ${paymentResult.payment_id}\nAmount: ${formatCurrency(total)}\nMethod: ${selectedPayment.toUpperCase()}\nStatus: ${paymentResult.status || "completed"}`
+                  `Payment ID: ${paymentResult.payment_id}\nAmount: ${formatCurrency(total)}\nMethod: ${selectedPayment.toUpperCase()}\nStatus: ${paymentResult.status || "completed"}`,
                 )
-              : Alert.alert("No Receipt", "Complete a payment to view the receipt.")
+              : Alert.alert(
+                  "No Receipt",
+                  "Complete a payment to view the receipt.",
+                )
           }
           accessibilityRole="button"
           accessibilityLabel="View payment receipt"
         >
-          <Receipt size={theme.iconSizes.lg} color={healthColors.primary.main} />
+          <Receipt
+            size={theme.iconSizes.lg}
+            color={healthColors.primary.main}
+          />
         </TouchableOpacity>
       </View>
 
@@ -303,7 +368,6 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <FileText
-              
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
@@ -330,7 +394,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         {/* Medicines List */}
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
-            <BriefcaseMedical size={theme.iconSizes.md} color={healthColors.primary.main} />
+            <BriefcaseMedical
+              size={theme.iconSizes.md}
+              color={healthColors.primary.main}
+            />
             <Text style={styles.sectionTitle}>
               MEDICINES ({prescription.medicines.length})
             </Text>
@@ -355,7 +422,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   </Text>
                 </View>
                 <View style={styles.medicinePrice}>
-                  <Text style={styles.priceText}>{formatCurrency(medicine.price)}</Text>
+                  <Text style={styles.priceText}>
+                    {formatCurrency(medicine.price)}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -366,7 +435,6 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <Building
-              
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
@@ -465,7 +533,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           <View style={styles.card}>
             <View style={styles.billingRow}>
               <Text style={styles.billingLabel}>Subtotal:</Text>
-              <Text style={styles.billingValue}>{formatCurrency(subtotal)}</Text>
+              <Text style={styles.billingValue}>
+                {formatCurrency(subtotal)}
+              </Text>
             </View>
             <View style={styles.billingRow}>
               <View style={styles.billingLabelWithIcon}>
@@ -482,13 +552,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   discount > 0 && styles.discountValue,
                 ]}
               >
-                {discount > 0 ? "-" : ""}{formatCurrency(discount)}
+                {discount > 0 ? "-" : ""}
+                {formatCurrency(discount)}
               </Text>
             </View>
             <View style={styles.billingDivider} />
             <View style={styles.billingRow}>
               <Text style={styles.billingTotal}>Total Amount:</Text>
-              <Text style={styles.billingTotalValue}>{formatCurrency(total)}</Text>
+              <Text style={styles.billingTotalValue}>
+                {formatCurrency(total)}
+              </Text>
             </View>
           </View>
         </View>
@@ -497,7 +570,6 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.section}>
           <View style={styles.sectionTitleContainer}>
             <CreditCard
-              
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
@@ -522,7 +594,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                     { backgroundColor: method.color + "20" },
                   ]}
                 >
-                  <DynamicIcon name={method.icon} size={theme.iconSizes.lg} color={method.color} />
+                  <DynamicIcon
+                    name={method.icon}
+                    size={theme.iconSizes.lg}
+                    color={method.color}
+                  />
                 </View>
                 <Text style={styles.paymentName}>{method.name}</Text>
                 <DynamicIcon
@@ -531,12 +607,12 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                       ? "checkmark-circle"
                       : "circle"
                   }
-                   size={theme.iconSizes.lg}
-                   color={
-                     selectedPayment === method.id
-                       ? method.color
-                       : healthColors.text.tertiary
-                   }
+                  size={theme.iconSizes.lg}
+                  color={
+                    selectedPayment === method.id
+                      ? method.color
+                      : healthColors.text.tertiary
+                  }
                 />
               </TouchableOpacity>
             ))}
@@ -553,7 +629,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           accessibilityState={{ disabled: paymentMutation.isPending }}
         >
           <LinearGradient
-            colors={[theme.colors.healthcare.teal, theme.colors.healthcare.teal]}
+            colors={[
+              theme.colors.healthcare.teal,
+              theme.colors.healthcare.teal,
+            ]}
             style={styles.payGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
@@ -562,7 +641,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               <ActivityIndicator size="small" color={theme.colors.white} />
             ) : (
               <>
-                <DynamicIcon name="card" size={theme.iconSizes.lg} color={theme.colors.white} />
+                <DynamicIcon
+                  name="card"
+                  size={theme.iconSizes.lg}
+                  color={theme.colors.white}
+                />
                 <Text style={styles.payButtonText}>
                   Pay {formatCurrency(total)}
                 </Text>
@@ -573,7 +656,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
         {/* Info Box */}
         <View style={styles.infoBox}>
-          <Info  size={theme.iconSizes.md} color={theme.colors.info.main} />
+          <Info size={theme.iconSizes.md} color={theme.colors.info.main} />
           <Text style={styles.infoText}>
             Medicine will be dispensed after successful payment verification
           </Text>
@@ -877,6 +960,3 @@ const styles = StyleSheet.create({
 });
 
 export default PharmacyBillingScreen;
-
-
-

@@ -7,19 +7,29 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { AlertCircle } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { formatMedicalHistoryDuration } from '@/utils/dateHelpers';
-import { DynamicIcon, Card } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import { formatMedicalHistoryDuration } from "@/utils/dateHelpers";
+import { DynamicIcon, Card } from "@/components/common";
 
-const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedications = [] }) => {
+const MedicalHistoryCard = ({
+  medicalHistory = [],
+  allergies = [],
+  currentMedications = [],
+}) => {
   const hasData =
-    medicalHistory.length > 0 || allergies.length > 0 || currentMedications.length > 0;
+    medicalHistory.length > 0 ||
+    allergies.length > 0 ||
+    currentMedications.length > 0;
   if (!hasData) return null;
 
   return (
     <Card style={styles.card}>
       {medicalHistory.length > 0 && (
-        <Group icon="medical" iconColor={healthColors.error.main} title="Conditions">
+        <Group
+          icon="medical"
+          iconColor={healthColors.error.main}
+          title="Conditions"
+        >
           {medicalHistory.map((item, index) => {
             const condition =
               typeof item === "string" ? item : item.condition || "Unknown";
@@ -36,7 +46,9 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
                   <Text style={styles.conditionDuration}>{duration}</Text>
                 )}
                 {status && (
-                  <View style={[styles.statusBadge, styles[`status_${status}`]]}>
+                  <View
+                    style={[styles.statusBadge, styles[`status_${status}`]]}
+                  >
                     <Text style={styles.statusText}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </Text>
@@ -49,11 +61,15 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
       )}
 
       {allergies.length > 0 && (
-        <Group icon="warning" iconColor={healthColors.warning.main} title="Allergies">
+        <Group
+          icon="warning"
+          iconColor={healthColors.warning.main}
+          title="Allergies"
+        >
           <View style={styles.chipsRow}>
             {allergies.map((allergy, index) => (
               <View key={index} style={styles.allergyChip}>
-                <AlertCircle  size={11} color={healthColors.warning.main} />
+                <AlertCircle size={11} color={healthColors.warning.main} />
                 <Text style={styles.allergyText}>{allergy}</Text>
               </View>
             ))}
@@ -62,7 +78,11 @@ const MedicalHistoryCard = ({ medicalHistory = [], allergies = [], currentMedica
       )}
 
       {currentMedications.length > 0 && (
-        <Group icon="medkit" iconColor={healthColors.primary.main} title="Current Medications">
+        <Group
+          icon="medkit"
+          iconColor={healthColors.primary.main}
+          title="Current Medications"
+        >
           {currentMedications.map((med, index) => (
             <View key={index} style={styles.medicationRow}>
               <View style={styles.bullet} />

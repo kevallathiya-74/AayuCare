@@ -13,7 +13,10 @@ import {
   RefreshControl,
   StatusBar,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,12 +33,11 @@ import {
   Scale,
   Thermometer,
 } from "lucide-react-native";
-import { theme, healthColors, textStyles, spacing } from '@/theme';
-import { getScreenPadding, verticalScale } from '@/utils/responsive';
+import { theme, healthColors, textStyles, spacing } from "@/theme";
+import { getScreenPadding, verticalScale } from "@/utils/responsive";
 import {
   Button,
   Card,
-  EmptyState,
   ErrorRecovery,
   Input,
   ModalSheet,
@@ -43,13 +45,18 @@ import {
   SectionHeader,
   SkeletonCardRow,
   SkeletonStatGrid,
-} from '@/components/common';
-import { showError, showSuccess, logError, parseError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { healthMetricsService } from '@/services';
-import { handleSmartBack } from '@/utils/navigation';
-import { fetchHealthMetrics } from '@/store/slices/healthSlice';
+} from "@/components/common";
+import {
+  showError,
+  showSuccess,
+  logError,
+  parseError,
+} from "@/utils/errorHandler";
+import { useNetworkStatus } from "@/utils/offlineHandler";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { healthMetricsService } from "@/services";
+import { handleSmartBack } from "@/utils/navigation";
+import { fetchHealthMetrics } from "@/store/slices/healthSlice";
 
 const METRIC_TYPES = [
   {
@@ -58,8 +65,18 @@ const METRIC_TYPES = [
     icon: Heart,
     unit: "mmHg",
     fields: [
-      { key: "systolic", label: "Systolic", placeholder: "120", keyboardType: "numeric" },
-      { key: "diastolic", label: "Diastolic", placeholder: "80", keyboardType: "numeric" },
+      {
+        key: "systolic",
+        label: "Systolic",
+        placeholder: "120",
+        keyboardType: "numeric",
+      },
+      {
+        key: "diastolic",
+        label: "Diastolic",
+        placeholder: "80",
+        keyboardType: "numeric",
+      },
     ],
     format: (metric) =>
       metric?.value?.systolic && metric?.value?.diastolic
@@ -72,8 +89,16 @@ const METRIC_TYPES = [
     label: "Blood Sugar",
     icon: Droplets,
     unit: "mg/dL",
-    fields: [{ key: "value", label: "Glucose", placeholder: "95", keyboardType: "numeric" }],
-    format: (metric) => (metric?.value != null ? `${metric.value}` : "No data available"),
+    fields: [
+      {
+        key: "value",
+        label: "Glucose",
+        placeholder: "95",
+        keyboardType: "numeric",
+      },
+    ],
+    format: (metric) =>
+      metric?.value != null ? `${metric.value}` : "No data available",
     normalRange: "70 - 99 fasting",
   },
   {
@@ -81,8 +106,16 @@ const METRIC_TYPES = [
     label: "Temperature",
     icon: Thermometer,
     unit: "F",
-    fields: [{ key: "value", label: "Temperature", placeholder: "98.6", keyboardType: "decimal-pad" }],
-    format: (metric) => (metric?.value != null ? `${metric.value} F` : "No data available"),
+    fields: [
+      {
+        key: "value",
+        label: "Temperature",
+        placeholder: "98.6",
+        keyboardType: "decimal-pad",
+      },
+    ],
+    format: (metric) =>
+      metric?.value != null ? `${metric.value} F` : "No data available",
     normalRange: "97.8 - 99.1 F",
   },
   {
@@ -90,8 +123,16 @@ const METRIC_TYPES = [
     label: "Weight",
     icon: Scale,
     unit: "kg",
-    fields: [{ key: "value", label: "Weight", placeholder: "70", keyboardType: "decimal-pad" }],
-    format: (metric) => (metric?.value != null ? `${metric.value} kg` : "No data available"),
+    fields: [
+      {
+        key: "value",
+        label: "Weight",
+        placeholder: "70",
+        keyboardType: "decimal-pad",
+      },
+    ],
+    format: (metric) =>
+      metric?.value != null ? `${metric.value} kg` : "No data available",
     normalRange: "BMI dependent",
   },
   {
@@ -99,51 +140,132 @@ const METRIC_TYPES = [
     label: "BMI",
     icon: Activity,
     unit: "",
-    fields: [{ key: "value", label: "BMI", placeholder: "22.5", keyboardType: "decimal-pad" }],
-    format: (metric) => (metric?.value != null ? `${Number(metric.value).toFixed(1)}` : "No data available"),
+    fields: [
+      {
+        key: "value",
+        label: "BMI",
+        placeholder: "22.5",
+        keyboardType: "decimal-pad",
+      },
+    ],
+    format: (metric) =>
+      metric?.value != null
+        ? `${Number(metric.value).toFixed(1)}`
+        : "No data available",
     normalRange: "18.5 - 24.9",
   },
 ];
 
 const getStatusBadge = (metricKey, value) => {
   if (!value) {
-    return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
+    return {
+      label: "No Data",
+      color: healthColors.text.tertiary,
+      icon: AlertCircle,
+    };
   }
 
   if (metricKey === "bp") {
     const { systolic, diastolic } = value || {};
     if (!systolic || !diastolic) {
-      return { label: "No Data", color: healthColors.text.tertiary, icon: AlertCircle };
+      return {
+        label: "No Data",
+        color: healthColors.text.tertiary,
+        icon: AlertCircle,
+      };
     }
     if (systolic > 140 || diastolic > 90) {
-      return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
+      return {
+        label: "High",
+        color: healthColors.error.main,
+        icon: AlertTriangle,
+      };
     }
     if (systolic < 90 || diastolic < 60) {
-      return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
+      return {
+        label: "Low",
+        color: healthColors.warning.main,
+        icon: AlertTriangle,
+      };
     }
-    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
+    return {
+      label: "Normal",
+      color: healthColors.success.main,
+      icon: CheckCircle2,
+    };
   }
 
   if (metricKey === "sugar") {
-    if (value > 140) return { label: "High", color: healthColors.error.main, icon: AlertTriangle };
-    if (value < 70) return { label: "Low", color: healthColors.warning.main, icon: AlertTriangle };
-    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
+    if (value > 140)
+      return {
+        label: "High",
+        color: healthColors.error.main,
+        icon: AlertTriangle,
+      };
+    if (value < 70)
+      return {
+        label: "Low",
+        color: healthColors.warning.main,
+        icon: AlertTriangle,
+      };
+    return {
+      label: "Normal",
+      color: healthColors.success.main,
+      icon: CheckCircle2,
+    };
   }
 
   if (metricKey === "temperature") {
-    if (value > 100.4) return { label: "Fever", color: healthColors.error.main, icon: AlertTriangle };
-    if (value < 96.8) return { label: "Low", color: healthColors.info.main, icon: AlertTriangle };
-    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
+    if (value > 100.4)
+      return {
+        label: "Fever",
+        color: healthColors.error.main,
+        icon: AlertTriangle,
+      };
+    if (value < 96.8)
+      return {
+        label: "Low",
+        color: healthColors.info.main,
+        icon: AlertTriangle,
+      };
+    return {
+      label: "Normal",
+      color: healthColors.success.main,
+      icon: CheckCircle2,
+    };
   }
 
   if (metricKey === "bmi") {
-    if (value < 18.5) return { label: "Under", color: healthColors.warning.main, icon: AlertTriangle };
-    if (value > 30) return { label: "Obese", color: healthColors.error.main, icon: AlertTriangle };
-    if (value > 25) return { label: "Over", color: healthColors.warning.main, icon: AlertTriangle };
-    return { label: "Normal", color: healthColors.success.main, icon: CheckCircle2 };
+    if (value < 18.5)
+      return {
+        label: "Under",
+        color: healthColors.warning.main,
+        icon: AlertTriangle,
+      };
+    if (value > 30)
+      return {
+        label: "Obese",
+        color: healthColors.error.main,
+        icon: AlertTriangle,
+      };
+    if (value > 25)
+      return {
+        label: "Over",
+        color: healthColors.warning.main,
+        icon: AlertTriangle,
+      };
+    return {
+      label: "Normal",
+      color: healthColors.success.main,
+      icon: CheckCircle2,
+    };
   }
 
-  return { label: "Logged", color: healthColors.success.main, icon: CheckCircle2 };
+  return {
+    label: "Logged",
+    color: healthColors.success.main,
+    icon: CheckCircle2,
+  };
 };
 
 const formatTimestamp = (timestamp) => {
@@ -169,7 +291,9 @@ const normalizeMetricRecord = (record) => {
 
   return {
     ...record,
-    id: record.id || `${record.type || "metric"}-${record.timestamp || Date.now()}`,
+    id:
+      record.id ||
+      `${record.type || "metric"}-${record.timestamp || Date.now()}`,
     type: record.type,
     value: record.value,
     timestamp: record.timestamp || record.createdAt || new Date().toISOString(),
@@ -187,39 +311,65 @@ const MetricCard = React.memo(({ config, latestMetric, onAddPress }) => {
     <Card elevation="small" padding={false} style={styles.metricCard}>
       <View style={styles.metricAccent} />
       <View style={styles.metricContentRow}>
-        <View style={[styles.metricIconCircle, { backgroundColor: `${accentColor}14` }]}>
+        <View
+          style={[
+            styles.metricIconCircle,
+            { backgroundColor: theme.withOpacity(accentColor, 0.08) },
+          ]}
+        >
           <IconComponent size={theme.iconSizes.md} color={accentColor} />
         </View>
 
         <View style={styles.metricBody}>
           <View style={styles.metricTitleRow}>
             <Text style={styles.metricTitle}>{config.label}</Text>
-            {!!config.unit && <Text style={styles.metricUnit}>{config.unit}</Text>}
+            {!!config.unit && (
+              <Text style={styles.metricUnit}>{config.unit}</Text>
+            )}
           </View>
 
           <View style={styles.metricValueRow}>
-            <Text style={[styles.metricValue, !hasData && styles.metricValueEmpty]}>
+            <Text
+              style={[styles.metricValue, !hasData && styles.metricValueEmpty]}
+            >
               {config.format(latestMetric)}
             </Text>
-            <View style={[styles.statusBadge, { backgroundColor: `${badge.color}16` }]}>
-              <StatusIcon size={theme.iconSizes.xs} color={badge.color} />
-              <Text style={[styles.statusBadgeText, { color: badge.color }]}>{badge.label}</Text>
-            </View>
+            {hasData && (
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: theme.withOpacity(badge.color, 0.09) },
+                ]}
+              >
+                <StatusIcon size={theme.iconSizes.xs} color={badge.color} />
+                <Text style={[styles.statusBadgeText, { color: badge.color }]}>
+                  {badge.label}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.metricFooter}>
             <Text style={styles.metricRange}>Normal: {config.normalRange}</Text>
             {!!latestMetric?.timestamp && (
               <View style={styles.metricTimeWrap}>
-                <Clock size={theme.iconSizes.xs} color={healthColors.text.tertiary} />
-                <Text style={styles.metricTime}>{formatTimestamp(latestMetric.timestamp)}</Text>
+                <Clock
+                  size={theme.iconSizes.xs}
+                  color={healthColors.text.tertiary}
+                />
+                <Text style={styles.metricTime}>
+                  {formatTimestamp(latestMetric.timestamp)}
+                </Text>
               </View>
             )}
           </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.addMetricButton, { borderColor: `${accentColor}33` }]}
+          style={[
+            styles.addMetricButton,
+            { borderColor: theme.withOpacity(accentColor, 0.2) },
+          ]}
           onPress={() => onAddPress(config)}
           activeOpacity={0.8}
           accessibilityRole="button"
@@ -272,7 +422,10 @@ const HealthMetricsScreen = ({ navigation }) => {
       const type = normalizedMetric?.type;
       if (!type) return;
       const previous = map[type];
-      if (!previous || new Date(normalizedMetric.timestamp) > new Date(previous.timestamp)) {
+      if (
+        !previous ||
+        new Date(normalizedMetric.timestamp) > new Date(previous.timestamp)
+      ) {
         map[type] = normalizedMetric;
       }
     });
@@ -282,16 +435,25 @@ const HealthMetricsScreen = ({ navigation }) => {
   const addMetricMutation = useMutation({
     mutationFn: (payload) => healthMetricsService.addMetric(user.id, payload),
     onSuccess: async (response, variables) => {
-      const createdMetric = normalizeMetricRecord(response?.data?.metric || response?.data || variables);
+      const createdMetric = normalizeMetricRecord(
+        response?.data?.metric || response?.data || variables,
+      );
 
-      queryClient.setQueryData(queryKeys.healthMetrics.patient(user?.id), (current = []) => {
-        const list = Array.isArray(current) ? current : [];
-        return createdMetric ? [createdMetric, ...list] : list;
-      });
+      queryClient.setQueryData(
+        queryKeys.healthMetrics.patient(user?.id),
+        (current = []) => {
+          const list = Array.isArray(current) ? current : [];
+          return createdMetric ? [createdMetric, ...list] : list;
+        },
+      );
 
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.healthMetrics.patient(user?.id) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.healthMetrics.latest(user?.id) }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.healthMetrics.patient(user?.id),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.healthMetrics.latest(user?.id),
+        }),
       ]);
 
       dispatch(fetchHealthMetrics(user.id));
@@ -354,7 +516,9 @@ const HealthMetricsScreen = ({ navigation }) => {
       showSuccess(`${selectedType.label} logged successfully.`);
       closeModal();
     } catch (mutationError) {
-      logError(mutationError, { context: "HealthMetricsScreen.handleSaveMetric" });
+      logError(mutationError, {
+        context: "HealthMetricsScreen.handleSaveMetric",
+      });
       showError("Unable to save metric right now. Please try again.");
     }
   }, [selectedType, user?.id, inputValues, addMetricMutation, closeModal]);
@@ -367,13 +531,19 @@ const HealthMetricsScreen = ({ navigation }) => {
         onAddPress={openAddModal}
       />
     ),
-    [latestMetricMap, openAddModal]
+    [latestMetricMap, openAddModal],
   );
 
   if (isLoading && !isRefetching) {
     return (
-      <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <SafeAreaView
+        style={styles.container}
+        edges={["left", "right", "bottom"]}
+      >
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={healthColors.background.card}
+        />
         <View
           style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
         >
@@ -383,10 +553,15 @@ const HealthMetricsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+            <ArrowLeft
+              size={theme.iconSizes.md}
+              color={healthColors.text.primary}
+            />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
-            <Text style={styles.headerTitle} numberOfLines={1}>Health Metrics</Text>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              Health Metrics
+            </Text>
           </View>
           <View style={styles.headerPlaceholder} />
         </View>
@@ -404,7 +579,10 @@ const HealthMetricsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
       <NetworkStatusIndicator />
 
       <View
@@ -416,10 +594,15 @@ const HealthMetricsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+          <ArrowLeft
+            size={theme.iconSizes.md}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap} pointerEvents="none">
-          <Text style={styles.headerTitle} numberOfLines={1}>Health Metrics</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            Health Metrics
+          </Text>
         </View>
         <View style={styles.headerPlaceholder} />
       </View>
@@ -437,7 +620,10 @@ const HealthMetricsScreen = ({ navigation }) => {
           renderItem={renderMetricItem}
           contentContainerStyle={[
             styles.listContent,
-            { paddingHorizontal: horizontalPadding, paddingBottom: verticalScale(24) },
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingBottom: verticalScale(24),
+            },
           ]}
           refreshControl={
             <RefreshControl
@@ -449,28 +635,34 @@ const HealthMetricsScreen = ({ navigation }) => {
           }
           ListHeaderComponent={
             <View style={styles.headerSectionWrap}>
-              <SectionHeader title="Vitals Overview" style={styles.sectionHeader} />
+              <SectionHeader
+                title="Vitals Overview"
+                style={styles.sectionHeader}
+              />
               <Card elevation="small" style={styles.hintCard}>
                 <View style={styles.hintRow}>
-                  <PlusCircle size={theme.iconSizes.sm} color={healthColors.primary.main} />
-                  <Text style={styles.hintText}>Tap the + button on any card to log a new reading.</Text>
+                  <PlusCircle
+                    size={theme.iconSizes.sm}
+                    color={healthColors.primary.main}
+                  />
+                  <Text style={styles.hintText}>
+                    Tap the + button on any card to log a new reading.
+                  </Text>
                 </View>
               </Card>
-              {metrics.length === 0 ? (
-                <EmptyState
-                  icon="pulse"
-                  title="Start Tracking Your Vitals"
-                  message="No readings found yet. Add your first metric to begin personalized monitoring."
-                />
-              ) : null}
             </View>
           }
           ListFooterComponent={
             <>
               {metrics.length > 0 ? (
                 <View style={styles.historyWrap}>
-                  <Clock size={theme.iconSizes.xs} color={healthColors.text.tertiary} />
-                  <Text style={styles.historyText}>{metrics.length} total readings recorded</Text>
+                  <Clock
+                    size={theme.iconSizes.xs}
+                    color={healthColors.text.tertiary}
+                  />
+                  <Text style={styles.historyText}>
+                    {metrics.length} total readings recorded
+                  </Text>
                 </View>
               ) : null}
             </>
@@ -588,8 +780,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     paddingVertical: theme.spacing.sm + theme.spacing.xs,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: healthColors.primary.lightest,
-    borderColor: `${healthColors.primary.main}30`,
+    backgroundColor: healthColors.primary.surface,
+    borderColor: theme.withOpacity(healthColors.primary.main, 0.19),
   },
   hintRow: {
     flexDirection: "row",
@@ -613,7 +805,7 @@ const styles = StyleSheet.create({
     top: 0,
     width: "100%",
     height: 2,
-    backgroundColor: `${healthColors.primary.main}33`,
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.2),
   },
   metricContentRow: {
     flexDirection: "row",

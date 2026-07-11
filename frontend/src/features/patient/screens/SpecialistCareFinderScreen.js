@@ -19,22 +19,40 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { User, Star, Banknote, Clock, Building, Video, CheckCircle, ArrowLeft, Search, BriefcaseMedical, Cross, ChevronDown, Calendar } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
 import {
-  verticalScale,
-  getScreenPadding,
-} from '@/utils/responsive';
-import { ErrorRecovery, NetworkStatusIndicator, SkeletonCardRow, EmptyState, Card } from '@/components/common';
-import { parseError } from '@/utils/errorHandler';
-import { formatCurrency } from '@/utils/helpers';
-import { doctorService } from '@/services';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+  User,
+  Star,
+  Banknote,
+  Clock,
+  Building,
+  Video,
+  CheckCircle,
+  ArrowLeft,
+  Search,
+  BriefcaseMedical,
+  Cross,
+  ChevronDown,
+  Calendar,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import { verticalScale, getScreenPadding } from "@/utils/responsive";
+import {
+  ErrorRecovery,
+  NetworkStatusIndicator,
+  SkeletonCardRow,
+  EmptyState,
+  Card,
+} from "@/components/common";
+import { parseError } from "@/utils/errorHandler";
+import { formatCurrency } from "@/utils/helpers";
+import { doctorService } from "@/services";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
-const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+const isPlainObject = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
 
 const toDisplayText = (value, fallback = "N/A") => {
   if (value == null) return fallback;
@@ -46,7 +64,9 @@ const toDisplayText = (value, fallback = "N/A") => {
     return Number.isFinite(value) ? String(value) : fallback;
   }
   if (Array.isArray(value)) {
-    const items = value.map((item) => String(item || "").trim()).filter(Boolean);
+    const items = value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
     return items.length ? items.join(", ") : fallback;
   }
   if (isPlainObject(value)) {
@@ -59,7 +79,10 @@ const toDisplayText = (value, fallback = "N/A") => {
 };
 
 const getDoctorSpecialtyText = (doctor) =>
-  toDisplayText(doctor?.specialization || doctor?.specialty, "General Medicine");
+  toDisplayText(
+    doctor?.specialization || doctor?.specialty,
+    "General Medicine",
+  );
 
 const getDoctorExperienceText = (doctor) => {
   const raw = doctor?.experience;
@@ -67,7 +90,9 @@ const getDoctorExperienceText = (doctor) => {
     return `${raw} years exp`;
   }
   if (typeof raw === "string" && raw.trim()) {
-    return raw.toLowerCase().includes("year") ? raw.trim() : `${raw.trim()} years exp`;
+    return raw.toLowerCase().includes("year")
+      ? raw.trim()
+      : `${raw.trim()} years exp`;
   }
   return "Experience unavailable";
 };
@@ -86,7 +111,10 @@ const getDoctorAvailabilityText = (doctor) => {
     };
     const openDays = Object.entries(availability)
       .filter(([, enabled]) => Boolean(enabled))
-      .map(([day]) => dayShort[String(day).toLowerCase()] || String(day).slice(0, 3));
+      .map(
+        ([day]) =>
+          dayShort[String(day).toLowerCase()] || String(day).slice(0, 3),
+      );
     if (!openDays.length) return "Check availability";
     if (openDays.length > 3) {
       return `${openDays.slice(0, 3).join(", ")} +${openDays.length - 3}`;
@@ -143,7 +171,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
       if (feeRange && feeRange.length === 2) {
         filteredDoctors = filteredDoctors.filter(
-          (doc) => doc.consultationFee >= feeRange[0] && doc.consultationFee <= feeRange[1]
+          (doc) =>
+            doc.consultationFee >= feeRange[0] &&
+            doc.consultationFee <= feeRange[1],
         );
       }
 
@@ -163,7 +193,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     <Card key={doctor.id} style={styles.doctorCard}>
       <View style={styles.doctorHeader}>
         <View style={styles.doctorAvatar}>
-          <User  size={32} color={healthColors.primary.main} />
+          <User size={32} color={healthColors.primary.main} />
         </View>
         <View style={styles.doctorInfo}>
           <Text style={styles.doctorName}>{doctor.name}</Text>
@@ -171,29 +201,25 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             {getDoctorSpecialtyText(doctor)} • {getDoctorExperienceText(doctor)}
           </Text>
           <View style={styles.ratingContainer}>
-            <Star  size={16} color={theme.colors.warning.main} />
+            <Star size={16} color={theme.colors.warning.main} />
             <Text style={styles.ratingText}>
               {doctor.rating || "N/A"} ({doctor.reviews || 0} reviews)
             </Text>
           </View>
           <View style={styles.doctorDetails}>
             <View style={styles.detailItem}>
-              <Banknote
-                
-                size={14}
-                color={healthColors.success.main}
-              />
+              <Banknote size={14} color={healthColors.success.main} />
               <Text style={styles.feeText}>
                 {formatCurrency(doctor.consultationFee || doctor.fee)}
               </Text>
             </View>
             <View style={styles.detailItem}>
-              <Clock
-                
-                size={14}
-                color={healthColors.primary.main}
-              />
-              <Text style={styles.availabilityText} numberOfLines={1} ellipsizeMode="tail">
+              <Clock size={14} color={healthColors.primary.main} />
+              <Text
+                style={styles.availabilityText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {getDoctorAvailabilityText(doctor)}
               </Text>
             </View>
@@ -210,7 +236,6 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           ]}
         >
           <Building
-            
             size={18}
             color={
               doctor.availability || doctor.schedule || doctor.hasClinic
@@ -236,7 +261,6 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           ]}
         >
           <Video
-            
             size={18}
             color={
               doctor.telemedicine || doctor.hasTelemedicine
@@ -254,11 +278,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             TELEMEDICINE
           </Text>
           {(doctor.telemedicine || doctor.hasTelemedicine) && (
-            <CheckCircle
-              
-              size={16}
-              color={healthColors.success.main}
-            />
+            <CheckCircle size={16} color={healthColors.success.main} />
           )}
         </View>
       </View>
@@ -327,11 +347,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Specialist</Text>
         <TouchableOpacity
@@ -339,7 +355,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Search specialists"
         >
-          <Search  size={24} color={healthColors.text.primary} />
+          <Search size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
@@ -357,11 +373,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
       >
         {/* Title */}
         <View style={styles.titleSection}>
-          <BriefcaseMedical
-            
-            size={20}
-            color={healthColors.primary.main}
-          />
+          <BriefcaseMedical size={20} color={healthColors.primary.main} />
           <Text style={styles.title}>FIND YOUR SPECIALIST</Text>
         </View>
 
@@ -370,11 +382,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           <View style={styles.filterCard}>
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
-                <Cross
-                  
-                  size={18}
-                  color={healthColors.primary.main}
-                />
+                <Cross size={18} color={healthColors.primary.main} />
                 <Text style={styles.filterLabel}>Specialty:</Text>
               </View>
               <TouchableOpacity
@@ -383,20 +391,12 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 accessibilityLabel="Specialty filter"
               >
                 <Text style={styles.filterValue}>{selectedSpecialty}</Text>
-                <ChevronDown
-                  
-                  size={20}
-                  color={healthColors.text.secondary}
-                />
+                <ChevronDown size={20} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
-                <Calendar
-                  
-                  size={18}
-                  color={healthColors.primary.main}
-                />
+                <Calendar size={18} color={healthColors.primary.main} />
                 <Text style={styles.filterLabel}>Availability:</Text>
               </View>
               <TouchableOpacity
@@ -405,20 +405,12 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 accessibilityLabel="Availability filter"
               >
                 <Text style={styles.filterValue}>{selectedAvailability}</Text>
-                <ChevronDown
-                  
-                  size={20}
-                  color={healthColors.text.secondary}
-                />
+                <ChevronDown size={20} color={healthColors.text.secondary} />
               </TouchableOpacity>
             </View>
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
-                <Banknote
-                  
-                  size={18}
-                  color={healthColors.primary.main}
-                />
+                <Banknote size={18} color={healthColors.primary.main} />
                 <Text style={styles.filterLabel}>Fee Range:</Text>
               </View>
               <Text style={styles.feeRangeText}>
@@ -443,7 +435,9 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 activeOpacity={0.7}
                 accessibilityRole="button"
                 accessibilityLabel={`Filter by ${specialty.name}`}
-                accessibilityState={{ selected: selectedSpecialty === specialty.name }}
+                accessibilityState={{
+                  selected: selectedSpecialty === specialty.name,
+                }}
               >
                 <DynamicIcon
                   name={specialty.icon}
@@ -751,6 +745,3 @@ const styles = StyleSheet.create({
 });
 
 export default SpecialistCareFinderScreen;
-
-
-

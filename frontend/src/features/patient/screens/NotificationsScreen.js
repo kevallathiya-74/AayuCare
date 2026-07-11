@@ -22,27 +22,37 @@ import {
 } from "react-native-safe-area-context";
 import { Trash2, ArrowLeft, CheckCheck } from "lucide-react-native";
 import { useSelector } from "react-redux";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState } from '@/components/common';
-import { showError, logError, parseError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import { adminService, notificationService } from '@/services';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { theme, healthColors } from "@/theme";
+import {
+  SkeletonCardRow,
+  ErrorRecovery,
+  NetworkStatusIndicator,
+  EmptyState,
+} from "@/components/common";
+import { showError, logError, parseError } from "@/utils/errorHandler";
+import { useNetworkStatus } from "@/utils/offlineHandler";
+import { adminService, notificationService } from "@/services";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const PAGE_SIZE = 20;
 
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {}
+    (state) => state.permissions?.notification || {},
   );
   const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
   const canUseNotifications =
-    !!notificationPermission.granted && !!notificationPermission.notificationsEnabled;
+    !!notificationPermission.granted &&
+    !!notificationPermission.notificationsEnabled;
 
   const { isConnected } = useNetworkStatus();
   const queryClient = useQueryClient();
@@ -66,19 +76,27 @@ const NotificationsScreen = ({ navigation }) => {
     queryFn: async ({ pageParam = 0 }) => {
       const page = Math.floor(pageParam / PAGE_SIZE) + 1;
       const response = isAdminUser
-        ? await adminService.getNotificationsManagement({ page, limit: PAGE_SIZE })
+        ? await adminService.getNotificationsManagement({
+            page,
+            limit: PAGE_SIZE,
+          })
         : await notificationService.getNotifications(page, PAGE_SIZE);
       const items = isAdminUser
         ? response?.data?.notifications || []
         : response?.data || [];
-      const total = Number(response?.data?.total || response?.pagination?.total || 0);
+      const total = Number(
+        response?.data?.total || response?.pagination?.total || 0,
+      );
       const unread = isAdminUser
         ? Number(response?.data?.stats?.unreadCount || 0)
         : Number(response?.unreadCount || response?.data?.unreadCount || 0);
       return { items: Array.isArray(items) ? items : [], total, unread };
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      const loaded = allPages.reduce(
+        (sum, page) => sum + (page?.items?.length || 0),
+        0,
+      );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
       }
@@ -88,7 +106,7 @@ const NotificationsScreen = ({ navigation }) => {
 
   const notifications = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.items || []),
-    [data]
+    [data],
   );
 
   const { data: unreadCount = 0, refetch: refetchUnread } = useQuery({
@@ -103,7 +121,7 @@ const NotificationsScreen = ({ navigation }) => {
 
   const adminUnreadCount = useMemo(
     () => Number((data?.pages || [])[0]?.unread || 0),
-    [data]
+    [data],
   );
 
   const effectiveUnreadCount = isAdminUser ? adminUnreadCount : unreadCount;
@@ -137,20 +155,25 @@ const NotificationsScreen = ({ navigation }) => {
           await notificationService.markAsRead(notification.id);
 
           // Update local state
-          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.notifications.all,
+          });
           refetchUnread();
         }
 
         // Navigate based on notification actionUrl
         const ACTION_ROUTE_MAP = {
-          '/appointments': isAdminUser ? 'Appointments' : 'MyAppointments',
-          '/prescriptions': 'MyPrescriptions',
-          '/medical-records': 'MedicalRecords',
-          '/profile': isAdminUser ? 'ManageDoctors' : 'Profile',
-          '/events': isAdminUser ? 'HospitalEventsScreen' : 'HospitalEvents',
-          '/emergency': 'Emergency',
+          "/appointments": isAdminUser ? "Appointments" : "MyAppointments",
+          "/prescriptions": "MyPrescriptions",
+          "/medical-records": "MedicalRecords",
+          "/profile": isAdminUser ? "ManageDoctors" : "Profile",
+          "/events": isAdminUser ? "HospitalEventsScreen" : "HospitalEvents",
+          "/emergency": "Emergency",
         };
-        if (notification.actionUrl && typeof notification.actionUrl === 'string') {
+        if (
+          notification.actionUrl &&
+          typeof notification.actionUrl === "string"
+        ) {
           try {
             // Map URL-style paths to registered RN route names
             const routeName = ACTION_ROUTE_MAP[notification.actionUrl];
@@ -168,7 +191,7 @@ const NotificationsScreen = ({ navigation }) => {
         });
       }
     },
-    [navigation, isAdminUser, canUseNotifications, queryClient, refetchUnread]
+    [navigation, isAdminUser, canUseNotifications, queryClient, refetchUnread],
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
@@ -176,7 +199,9 @@ const NotificationsScreen = ({ navigation }) => {
       return;
     }
     if (isAdminUser) {
-      showError("Mark all as read is only available for your own notifications");
+      showError(
+        "Mark all as read is only available for your own notifications",
+      );
       return;
     }
 
@@ -212,7 +237,9 @@ const NotificationsScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               await notificationService.clearAllNotifications();
-              queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.notifications.all,
+              });
               refetchUnread();
               Alert.alert("Success", "All notifications cleared");
             } catch (err) {
@@ -221,43 +248,48 @@ const NotificationsScreen = ({ navigation }) => {
             }
           },
         },
-      ]
+      ],
     );
   }, [isAdminUser, queryClient, refetchUnread, canUseNotifications]);
 
-  const handleDeleteNotification = useCallback((notificationId, isRead) => {
-    if (!canUseNotifications) {
-      return;
-    }
-    if (isAdminUser) {
-      showError("Delete is only available for your own notifications");
-      return;
-    }
+  const handleDeleteNotification = useCallback(
+    (notificationId, isRead) => {
+      if (!canUseNotifications) {
+        return;
+      }
+      if (isAdminUser) {
+        showError("Delete is only available for your own notifications");
+        return;
+      }
 
-    Alert.alert(
-      "Delete Notification",
-      "Are you sure you want to delete this notification?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await notificationService.deleteNotification(notificationId);
-              queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
-              if (!isRead) refetchUnread();
-            } catch (err) {
-              logError(err, {
-                context: "NotificationsScreen.handleDeleteNotification",
-              });
-              showError("Failed to delete notification");
-            }
+      Alert.alert(
+        "Delete Notification",
+        "Are you sure you want to delete this notification?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await notificationService.deleteNotification(notificationId);
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.notifications.all,
+                });
+                if (!isRead) refetchUnread();
+              } catch (err) {
+                logError(err, {
+                  context: "NotificationsScreen.handleDeleteNotification",
+                });
+                showError("Failed to delete notification");
+              }
+            },
           },
-        },
-      ]
-    );
-  }, [isAdminUser, queryClient, refetchUnread, canUseNotifications]);
+        ],
+      );
+    },
+    [isAdminUser, queryClient, refetchUnread, canUseNotifications],
+  );
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -314,57 +346,57 @@ const NotificationsScreen = ({ navigation }) => {
     const isRead = item.read ?? item.isRead ?? false;
 
     return (
-    <TouchableOpacity
-      style={[styles.notificationCard, !isRead && styles.unreadCard]}
-      onPress={() => handleNotificationPress(item)}
-      activeOpacity={0.7}
-      accessibilityRole="button"
-      accessibilityLabel={`Open notification ${item.title}`}
-    >
-      <View style={styles.notificationContent}>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: getNotificationColor(item.priority) + "20" },
-          ]}
-        >
-          <DynamicIcon
-            name={getNotificationIcon(item.type)}
-            size={theme.iconSizes.lg}
-            color={getNotificationColor(item.priority)}
-          />
-        </View>
-
-        <View style={styles.textContainer}>
-          <View style={styles.headerRow}>
-            <Text style={[styles.title, !isRead && styles.unreadTitle]}>
-              {item.title}
-            </Text>
-            {!isRead && <View style={styles.unreadDot} />}
+      <TouchableOpacity
+        style={[styles.notificationCard, !isRead && styles.unreadCard]}
+        onPress={() => handleNotificationPress(item)}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Open notification ${item.title}`}
+      >
+        <View style={styles.notificationContent}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: getNotificationColor(item.priority) + "20" },
+            ]}
+          >
+            <DynamicIcon
+              name={getNotificationIcon(item.type)}
+              size={theme.iconSizes.lg}
+              color={getNotificationColor(item.priority)}
+            />
           </View>
 
-          <Text style={styles.message} numberOfLines={2}>
-            {item.message}
-          </Text>
+          <View style={styles.textContainer}>
+            <View style={styles.headerRow}>
+              <Text style={[styles.title, !isRead && styles.unreadTitle]}>
+                {item.title}
+              </Text>
+              {!isRead && <View style={styles.unreadDot} />}
+            </View>
 
-          <Text style={styles.time}>{formatTime(item.createdAt)}</Text>
+            <Text style={styles.message} numberOfLines={2}>
+              {item.message}
+            </Text>
+
+            <Text style={styles.time}>{formatTime(item.createdAt)}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteNotification(item.id, isRead)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Delete notification"
+          >
+            <DynamicIcon
+              name="trash-2"
+              size={20}
+              color={healthColors.text.tertiary}
+            />
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDeleteNotification(item.id, isRead)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityLabel="Delete notification"
-        >
-          <DynamicIcon
-            name="trash-2"
-            size={20}
-            color={healthColors.text.tertiary}
-          />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
     );
   };
 
@@ -455,7 +487,11 @@ const NotificationsScreen = ({ navigation }) => {
           }}
         />
       ) : loading ? (
-        <View style={styles.loadingListWrapper}>{[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}</View>
+        <View style={styles.loadingListWrapper}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
+        </View>
       ) : notifications.length === 0 ? (
         <EmptyState
           icon="notifications-outline"
@@ -473,7 +509,6 @@ const NotificationsScreen = ({ navigation }) => {
           maxToRenderPerBatch={10}
           windowSize={10}
           initialNumToRender={10}
-
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: Math.max(insets.bottom, 20) },
@@ -481,7 +516,10 @@ const NotificationsScreen = ({ navigation }) => {
           ListFooterComponent={
             isFetchingNextPage ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
               </View>
             ) : null
           }
@@ -644,9 +682,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xs,
     marginLeft: theme.spacing.sm,
   },
-
 });
 
 export default NotificationsScreen;
-
-

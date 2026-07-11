@@ -23,14 +23,20 @@ import {
 import { Cross, ChevronRight, ArrowLeft, X } from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState, Card } from '@/components/common';
-import { parseError } from '@/utils/errorHandler';
-import { formatDate } from '@/utils/helpers';
-import { appointmentService, prescriptionService } from '@/services';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { theme, healthColors } from "@/theme";
+import {
+  SkeletonCardRow,
+  ErrorRecovery,
+  NetworkStatusIndicator,
+  EmptyState,
+  Card,
+} from "@/components/common";
+import { parseError } from "@/utils/errorHandler";
+import { formatDate } from "@/utils/helpers";
+import { appointmentService, prescriptionService } from "@/services";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const PAGE_SIZE = 20;
 
@@ -55,10 +61,13 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     staleTime: 2 * 60 * 1000,
     initialPageParam: 0,
     queryFn: async ({ pageParam = 0 }) => {
-      const response = await prescriptionService.getPatientPrescriptions(user.id, {
-        page: Math.floor(pageParam / PAGE_SIZE) + 1,
-        limit: PAGE_SIZE,
-      });
+      const response = await prescriptionService.getPatientPrescriptions(
+        user.id,
+        {
+          page: Math.floor(pageParam / PAGE_SIZE) + 1,
+          limit: PAGE_SIZE,
+        },
+      );
       const items = response?.data?.prescriptions || response?.data || [];
       return {
         items: Array.isArray(items) ? items : [],
@@ -66,7 +75,10 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       };
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      const loaded = allPages.reduce(
+        (sum, page) => sum + (page?.items?.length || 0),
+        0,
+      );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
       }
@@ -76,7 +88,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
 
   const prescriptions = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.items || []),
-    [data]
+    [data],
   );
 
   const { data: hasUpcomingAppointment = false } = useQuery({
@@ -121,11 +133,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     >
       <View style={styles.prescriptionHeader}>
         <View style={styles.prescriptionIcon}>
-          <Cross
-            
-            size={theme.iconSizes.lg}
-            color={healthColors.primary.main}
-          />
+          <Cross size={theme.iconSizes.lg} color={healthColors.primary.main} />
         </View>
         <View style={styles.prescriptionInfo}>
           <Text style={styles.doctorName}>
@@ -136,7 +144,6 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           </Text>
         </View>
         <ChevronRight
-          
           size={theme.iconSizes.md}
           color={healthColors.text.tertiary}
         />
@@ -159,7 +166,6 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             {meds.slice(0, 3).map((med, idx) => (
               <View key={idx} style={styles.medicationChip}>
                 <Cross
-                   
                   size={theme.iconSizes.xs}
                   color={healthColors.primary.main}
                 />
@@ -191,7 +197,9 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           ? "You already have an upcoming appointment. Your prescription will appear here after consultation."
           : "Your prescriptions from doctor visits will appear here. Book an appointment to get started."
       }
-      actionLabel={hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"}
+      actionLabel={
+        hasUpcomingAppointment ? "View My Appointments" : "Book Appointment"
+      }
       onActionPress={() =>
         hasUpcomingAppointment
           ? navigation.navigate(Routes.PATIENT.MY_APPOINTMENTS)
@@ -229,11 +237,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Prescriptions</Text>
         <View style={styles.placeholder} />
@@ -242,7 +246,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
       {/* Content */}
 
       {/* Prescription Detail Modal */}
-      <Modal statusBarTranslucent
+      <Modal
+        statusBarTranslucent
         visible={!!selectedPrescription}
         animationType="slide"
         transparent
@@ -254,12 +259,18 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
                 <View style={styles.modalIcon}>
-                      <Cross  size={theme.iconSizes.md} color={healthColors.primary.main} />
+                  <Cross
+                    size={theme.iconSizes.md}
+                    color={healthColors.primary.main}
+                  />
                 </View>
                 <View>
                   <Text style={styles.modalTitle}>Prescription Details</Text>
                   <Text style={styles.modalSubtitle}>
-                    {formatDate(selectedPrescription?.prescriptionDate || selectedPrescription?.createdAt)}
+                    {formatDate(
+                      selectedPrescription?.prescriptionDate ||
+                        selectedPrescription?.createdAt,
+                    )}
                   </Text>
                 </View>
               </View>
@@ -269,11 +280,17 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Close prescription details"
               >
-                <X  size={theme.iconSizes.md} color={healthColors.text.secondary} />
+                <X
+                  size={theme.iconSizes.md}
+                  color={healthColors.text.secondary}
+                />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.modalBody}
+              showsVerticalScrollIndicator={false}
+            >
               {/* Doctor */}
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionTitle}>Prescribed By</Text>
@@ -286,36 +303,62 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               {!!selectedPrescription?.diagnosis && (
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Diagnosis</Text>
-                  <Text style={styles.detailValue}>{selectedPrescription.diagnosis}</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedPrescription.diagnosis}
+                  </Text>
                 </View>
               )}
 
               {/* Medications */}
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionTitle}>Medications</Text>
-                {(selectedPrescription?.medications || selectedPrescription?.medicines || []).length === 0 ? (
-                  <Text style={styles.detailValueMuted}>No medications listed</Text>
+                {(
+                  selectedPrescription?.medications ||
+                  selectedPrescription?.medicines ||
+                  []
+                ).length === 0 ? (
+                  <Text style={styles.detailValueMuted}>
+                    No medications listed
+                  </Text>
                 ) : (
-                  (selectedPrescription?.medications || selectedPrescription?.medicines || []).map((med, idx) => (
+                  (
+                    selectedPrescription?.medications ||
+                    selectedPrescription?.medicines ||
+                    []
+                  ).map((med, idx) => (
                     <View key={idx} style={styles.medRow}>
                       <View style={styles.medBullet}>
-                        <Cross  size={theme.iconSizes.xs} color={healthColors.primary.main} />
+                        <Cross
+                          size={theme.iconSizes.xs}
+                          color={healthColors.primary.main}
+                        />
                       </View>
                       <View style={styles.medInfo}>
                         <Text style={styles.medName}>
-                          {med.name || med.medicationName || med.medicine || `Medication ${idx + 1}`}
+                          {med.name ||
+                            med.medicationName ||
+                            med.medicine ||
+                            `Medication ${idx + 1}`}
                         </Text>
                         {!!med.dosage && (
-                          <Text style={styles.medMeta}>Dosage: {med.dosage}</Text>
+                          <Text style={styles.medMeta}>
+                            Dosage: {med.dosage}
+                          </Text>
                         )}
                         {!!med.frequency && (
-                          <Text style={styles.medMeta}>Frequency: {med.frequency}</Text>
+                          <Text style={styles.medMeta}>
+                            Frequency: {med.frequency}
+                          </Text>
                         )}
                         {!!med.duration && (
-                          <Text style={styles.medMeta}>Duration: {med.duration}</Text>
+                          <Text style={styles.medMeta}>
+                            Duration: {med.duration}
+                          </Text>
                         )}
                         {!!med.instructions && (
-                          <Text style={styles.medMeta}>Instructions: {med.instructions}</Text>
+                          <Text style={styles.medMeta}>
+                            Instructions: {med.instructions}
+                          </Text>
                         )}
                       </View>
                     </View>
@@ -327,7 +370,9 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               {!!selectedPrescription?.notes && (
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Doctor Notes</Text>
-                  <Text style={styles.detailValue}>{selectedPrescription.notes}</Text>
+                  <Text style={styles.detailValue}>
+                    {selectedPrescription.notes}
+                  </Text>
                 </View>
               )}
 
@@ -336,7 +381,8 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionTitle}>Status</Text>
                   <Text style={styles.detailValue}>
-                    {selectedPrescription.status.charAt(0).toUpperCase() + selectedPrescription.status.slice(1)}
+                    {selectedPrescription.status.charAt(0).toUpperCase() +
+                      selectedPrescription.status.slice(1)}
                   </Text>
                 </View>
               )}
@@ -356,7 +402,9 @@ const MyPrescriptionsScreen = ({ navigation }) => {
 
       {loading ? (
         <View style={styles.loadingListWrapper}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
@@ -369,7 +417,6 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           maxToRenderPerBatch={10}
           windowSize={10}
           initialNumToRender={10}
-
           contentContainerStyle={[
             styles.content,
             prescriptions.length === 0 && styles.emptyContent,
@@ -379,7 +426,10 @@ const MyPrescriptionsScreen = ({ navigation }) => {
           ListFooterComponent={
             isFetchingNextPage ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
               </View>
             ) : null
           }
@@ -638,5 +688,3 @@ const styles = StyleSheet.create({
 });
 
 export default MyPrescriptionsScreen;
-
-

@@ -29,18 +29,15 @@ import {
   Shield,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
-import {
-  getScreenPadding,
-  verticalScale,
-} from '@/utils/responsive';
-import { EmergencyIcon } from '@/components/common/CustomIcons';
-import NetworkStatusIndicator from '@/components/common/NetworkStatusIndicator';
-import ErrorRecovery from '@/components/common/ErrorRecovery';
-import { showError, logError, parseError } from '@/utils/errorHandler';
+import { theme, healthColors } from "@/theme";
+import { getScreenPadding, verticalScale } from "@/utils/responsive";
+import { EmergencyIcon } from "@/components/common/CustomIcons";
+import NetworkStatusIndicator from "@/components/common/NetworkStatusIndicator";
+import ErrorRecovery from "@/components/common/ErrorRecovery";
+import { showError, logError, parseError } from "@/utils/errorHandler";
 import { useSelector } from "react-redux";
-import { handleSmartBack } from '@/utils/navigation';
-import { Card } from '@/components/common';
+import { handleSmartBack } from "@/utils/navigation";
+import { Card } from "@/components/common";
 
 const emergencyNumbers = [
   {
@@ -110,7 +107,6 @@ const EmergencyServices = ({ navigation }) => {
       showError("Could not open maps. Please search manually.");
     }
   };
- 
 
   const handleEmergencyCall = async (number, name) => {
     try {
@@ -173,12 +169,12 @@ const EmergencyServices = ({ navigation }) => {
                   context: "EmergencyServices.handleAmbulanceCall",
                 });
                 showError(
-                  "Failed to call ambulance. Please dial 108 manually."
+                  "Failed to call ambulance. Please dial 108 manually.",
                 );
               }
             },
           },
-        ]
+        ],
       );
     } catch (err) {
       logError(err, { context: "EmergencyServices.handleAmbulanceCall" });
@@ -244,13 +240,17 @@ const EmergencyServices = ({ navigation }) => {
           accessibilityLabel="Call ambulance 108"
         >
           <LinearGradient
-            colors={[healthColors.error.main, healthColors.error.dark, healthColors.error.dark]}
+            colors={[
+              healthColors.error.main,
+              healthColors.error.dark,
+              healthColors.error.dark,
+            ]}
             style={styles.ambulanceGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.ambulanceIcon}>
-              <BriefcaseMedical  size={48} color={theme.colors.white} />
+              <BriefcaseMedical size={48} color={theme.colors.white} />
             </View>
             <View style={styles.ambulanceText}>
               <Text style={styles.ambulanceTitle}>Call Ambulance</Text>
@@ -259,7 +259,7 @@ const EmergencyServices = ({ navigation }) => {
                 24/7 Emergency Service
               </Text>
             </View>
-            <Phone  size={32} color={theme.colors.white} />
+            <Phone size={32} color={theme.colors.white} />
           </LinearGradient>
         </TouchableOpacity>
 
@@ -332,7 +332,11 @@ const EmergencyServices = ({ navigation }) => {
                     : handleEmergencyCall(hospital.phone, hospital.name)
                 }
                 accessibilityRole="button"
-                accessibilityLabel={hospital.openMaps ? "Open hospital map" : `Call ${hospital.name}`}
+                accessibilityLabel={
+                  hospital.openMaps
+                    ? "Open hospital map"
+                    : `Call ${hospital.name}`
+                }
               >
                 {hospital.openMaps ? (
                   <Map size={20} color={healthColors.primary.main} />
@@ -353,15 +357,15 @@ const EmergencyServices = ({ navigation }) => {
               <Text style={styles.tipText}>Stay calm and speak clearly</Text>
             </View>
             <View style={styles.tipItem}>
-              <CheckCircle  size={20} color={healthColors.success.main} />
+              <CheckCircle size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Provide exact location details</Text>
             </View>
             <View style={styles.tipItem}>
-              <CheckCircle  size={20} color={healthColors.success.main} />
+              <CheckCircle size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>Describe the emergency clearly</Text>
             </View>
             <View style={styles.tipItem}>
-              <CheckCircle  size={20} color={healthColors.success.main} />
+              <CheckCircle size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>
                 Don&#39;t hang up until told to do so
               </Text>
@@ -371,11 +375,7 @@ const EmergencyServices = ({ navigation }) => {
 
         {/* Disclaimer */}
         <View style={styles.disclaimer}>
-          <Info
-            
-            size={20}
-            color={healthColors.text.tertiary}
-          />
+          <Info size={20} color={healthColors.text.tertiary} />
           <Text style={styles.disclaimerText}>
             For life-threatening emergencies, call 108 immediately. This app is
             a convenience tool and should not replace professional emergency
@@ -607,6 +607,3 @@ const styles = StyleSheet.create({
 });
 
 export default EmergencyServices;
-
-
-

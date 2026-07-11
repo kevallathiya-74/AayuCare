@@ -21,27 +21,47 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, Calendar, Cross, ChevronDown, X, CheckCircle, User, Star, Banknote, Building, Video, Clock, Check } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
+import {
+  ArrowLeft,
+  Calendar,
+  Cross,
+  ChevronDown,
+  X,
+  CheckCircle,
+  User,
+  Star,
+  Banknote,
+  Building,
+  Video,
+  Clock,
+  Check,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
 import {
   verticalScale,
   getScreenPadding,
   getSafeAreaEdges,
   getKeyboardConfig,
-} from '@/utils/responsive';
+} from "@/utils/responsive";
 import { useSelector } from "react-redux";
-import { SkeletonCardRow, EmptyState } from '@/components/common';
-import { Input, Button, Card } from '@/components/common';
-import { showError, logError, parseError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import { formatDate, formatCurrency, convertTo24Hour, convertTo12Hour } from '@/utils/helpers';
-import { doctorService, appointmentService } from '@/services';
+import { SkeletonCardRow, EmptyState } from "@/components/common";
+import { Input, Button, Card } from "@/components/common";
+import { showError, logError, parseError } from "@/utils/errorHandler";
+import { useNetworkStatus } from "@/utils/offlineHandler";
+import {
+  formatDate,
+  formatCurrency,
+  convertTo24Hour,
+  convertTo12Hour,
+} from "@/utils/helpers";
+import { doctorService, appointmentService } from "@/services";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
-const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+const isPlainObject = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
 
 const toDisplayText = (value, fallback = "N/A") => {
   if (value == null) return fallback;
@@ -53,7 +73,9 @@ const toDisplayText = (value, fallback = "N/A") => {
     return Number.isFinite(value) ? String(value) : fallback;
   }
   if (Array.isArray(value)) {
-    const items = value.map((item) => String(item || "").trim()).filter(Boolean);
+    const items = value
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
     return items.length ? items.join(", ") : fallback;
   }
   if (isPlainObject(value)) {
@@ -66,7 +88,10 @@ const toDisplayText = (value, fallback = "N/A") => {
 };
 
 const getDoctorSpecialtyText = (doctor) =>
-  toDisplayText(doctor?.specialization || doctor?.specialty, "General Medicine");
+  toDisplayText(
+    doctor?.specialization || doctor?.specialty,
+    "General Medicine",
+  );
 
 const getDoctorExperienceText = (doctor) => {
   const raw = doctor?.experience;
@@ -74,15 +99,19 @@ const getDoctorExperienceText = (doctor) => {
     return `${raw} years exp`;
   }
   if (typeof raw === "string" && raw.trim()) {
-    return raw.toLowerCase().includes("year") ? raw.trim() : `${raw.trim()} years exp`;
+    return raw.toLowerCase().includes("year")
+      ? raw.trim()
+      : `${raw.trim()} years exp`;
   }
   return "Experience unavailable";
 };
 
-const AppointmentBookingScreen = ({ navigation, route: _route }) => {
+const AppointmentBookingScreen = ({ navigation, route }) => {
   // Get authenticated user for hospitalId
   const { user } = useSelector((state) => state.auth);
-  
+  const params = route?.params || {};
+  const rescheduleId = params.rescheduleId;
+
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [appointmentType, setAppointmentType] = useState("in-person");
@@ -97,11 +126,21 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
+  // Query reschedule appointment details if rescheduling
+  const { data: rescheduleAppointment } = useQuery({
+    queryKey: queryKeys.appointments.detail(rescheduleId),
+    queryFn: async () => {
+      const response = await appointmentService.getAppointment(rescheduleId);
+      return response?.data;
+    },
+    enabled: !!rescheduleId && isConnected,
+  });
+
   const generateAllSlots = () => {
     const slots = [];
     for (let i = 9; i <= 17; i++) {
-      slots.push(`${i < 10 ? '0' + i : i}:00`);
-      if (i !== 17) slots.push(`${i < 10 ? '0' + i : i}:30`);
+      slots.push(`${i < 10 ? "0" + i : i}:00`);
+      if (i !== 17) slots.push(`${i < 10 ? "0" + i : i}:30`);
     }
     return slots;
   };
@@ -129,35 +168,90 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     retry: 1,
   });
 
-  const { data: filteredDoctors = [], isLoading: loadingFilteredDoctors } = useQuery({
-    queryKey: queryKeys.doctors.list({
-      specialization: selectedSpecialty || "all",
-      hospitalId: user?.hospitalId || "all",
-    }),
-    queryFn: async () => {
-      const response = await doctorService.getDoctors({
-        ...(selectedSpecialty ? { specialization: selectedSpecialty } : {}),
-        ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
-      });
-      return mapDoctorsResponse(response);
-    },
-    enabled: isConnected && user?.role === "patient",
-    staleTime: 2 * 60 * 1000,
-    retry: 1,
-  });
+  const { data: filteredDoctors = [], isLoading: loadingFilteredDoctors } =
+    useQuery({
+      queryKey: queryKeys.doctors.list({
+        specialization: selectedSpecialty || "all",
+        hospitalId: user?.hospitalId || "all",
+      }),
+      queryFn: async () => {
+        const response = await doctorService.getDoctors({
+          ...(selectedSpecialty ? { specialization: selectedSpecialty } : {}),
+          ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
+        });
+        return mapDoctorsResponse(response);
+      },
+      enabled: isConnected && user?.role === "patient",
+      staleTime: 2 * 60 * 1000,
+      retry: 1,
+    });
 
   const specialties = useMemo(
-    () => [...new Set(allDoctors.map((doctor) => doctor?.specialization).filter(Boolean))],
-    [allDoctors]
+    () => [
+      ...new Set(
+        allDoctors.map((doctor) => doctor?.specialization).filter(Boolean),
+      ),
+    ],
+    [allDoctors],
   );
   const doctors = selectedSpecialty ? filteredDoctors : allDoctors;
   const loadingDoctors = loadingAllDoctors || loadingFilteredDoctors;
 
   useEffect(() => {
     if (!selectedSpecialty && specialties.length > 0) {
-      setSelectedSpecialty(specialties[0]);
+      if (params.specialization) {
+        setSelectedSpecialty(params.specialization);
+      } else {
+        setSelectedSpecialty(specialties[0]);
+      }
     }
-  }, [specialties, selectedSpecialty]);
+  }, [specialties, selectedSpecialty, params.specialization]);
+
+  useEffect(() => {
+    if (params.doctorId && allDoctors.length > 0) {
+      const matchedDoctor = allDoctors.find((d) => d.id === params.doctorId);
+      if (matchedDoctor) {
+        setSelectedDoctor(matchedDoctor);
+      }
+    }
+  }, [params.doctorId, allDoctors]);
+
+  // Pre-fill fields when rescheduling
+  useEffect(() => {
+    if (rescheduleAppointment && allDoctors.length > 0) {
+      if (rescheduleAppointment.doctorSpecialization) {
+        setSelectedSpecialty(rescheduleAppointment.doctorSpecialization);
+      } else if (rescheduleAppointment.doctorSpecialisation) {
+        setSelectedSpecialty(rescheduleAppointment.doctorSpecialisation);
+      }
+
+      const docId =
+        rescheduleAppointment.doctorId || rescheduleAppointment.doctor_id;
+      if (docId) {
+        const matched = allDoctors.find((d) => d.id === docId);
+        if (matched) {
+          setSelectedDoctor(matched);
+        }
+      }
+
+      if (rescheduleAppointment.type) {
+        setAppointmentType(
+          rescheduleAppointment.type === "telemedicine"
+            ? "telemedicine"
+            : "in-person",
+        );
+      }
+      if (
+        rescheduleAppointment.chiefComplaint ||
+        rescheduleAppointment.chief_complaint
+      ) {
+        setReason(
+          rescheduleAppointment.chiefComplaint ||
+            rescheduleAppointment.chief_complaint,
+        );
+      }
+    }
+  }, [rescheduleAppointment, allDoctors]);
 
   const selectedDoctorId = selectedDoctor?.id;
   const { data: timeSlots = [] } = useQuery({
@@ -169,7 +263,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     queryFn: async () => {
       const response = await appointmentService.getAvailableSlots(
         selectedDoctorId,
-        date.toISOString()
+        date.toISOString(),
       );
       const slotsPayload = response?.data;
       const apiSlots = Array.isArray(slotsPayload)
@@ -177,31 +271,53 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
         : slotsPayload?.availableSlots || slotsPayload?.slots;
       return Array.isArray(apiSlots) ? apiSlots : [];
     },
-    enabled: !!selectedDoctorId && !!date && isConnected && user?.role === "patient",
+    enabled:
+      !!selectedDoctorId && !!date && isConnected && user?.role === "patient",
     staleTime: 60 * 1000,
     retry: 1,
   });
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData) => {
-      const response = await appointmentService.createAppointment(appointmentData);
+      const response =
+        await appointmentService.createAppointment(appointmentData);
       if (!(response?.status === "success" || response?.success)) {
         throw new Error(response?.message || "Failed to book appointment");
+      }
+      if (rescheduleId) {
+        try {
+          await appointmentService.cancelAppointment(
+            rescheduleId,
+            "Rescheduled to a new time slot",
+          );
+        } catch (cancelErr) {
+          logError(cancelErr, {
+            context: "AppointmentBookingScreen.rescheduleCancelOld",
+          });
+          // Surface this so the patient/support can manually resolve the duplicate
+          throw new Error(
+            "Appointment booked, but the previous appointment could not be cancelled automatically. Please cancel it manually.",
+          );
+        }
       }
       return response;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.appointments.all,
+      });
       Alert.alert(
-        "Appointment Booked!",
-        `Your appointment with ${selectedDoctor.name} has been scheduled for ${selectedDate} at ${selectedTime}`,
+        rescheduleId ? "Appointment Rescheduled!" : "Appointment Booked!",
+        rescheduleId
+          ? `Your appointment has been rescheduled with ${selectedDoctor?.name || "Doctor"} for ${selectedDate} at ${selectedTime}`
+          : `Your appointment with ${selectedDoctor?.name || "Doctor"} has been scheduled for ${selectedDate} at ${selectedTime}`,
         [
           {
             text: "OK",
             onPress: () =>
               navigation.navigate(Routes.TABS.PATIENT, { screen: "Dashboard" }),
           },
-        ]
+        ],
       );
     },
     onError: (err) => {
@@ -238,7 +354,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     if (!selectedDoctor || !selectedTime) {
       Alert.alert(
         "Missing Information",
-        "Please select a doctor and time slot"
+        "Please select a doctor and time slot",
       );
       return;
     }
@@ -246,7 +362,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     if (!reason.trim()) {
       Alert.alert(
         "Missing Information",
-        "Please enter a reason for the appointment"
+        "Please enter a reason for the appointment",
       );
       return;
     }
@@ -254,16 +370,13 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     if (reason.trim().length < 10) {
       Alert.alert(
         "Too Short",
-        "Please describe your symptoms or reason in at least 10 characters."
+        "Please describe your symptoms or reason in at least 10 characters.",
       );
       return;
     }
 
     if (reason.trim().length > 500) {
-      Alert.alert(
-        "Too Long",
-        "Reason must be 500 characters or fewer."
-      );
+      Alert.alert("Too Long", "Reason must be 500 characters or fewer.");
       return;
     }
 
@@ -275,7 +388,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     // Map appointment type to backend-accepted values
     const appointmentTypeMap = {
       "in-person": "clinic_visit",
-      "telemedicine": "telemedicine"
+      telemedicine: "telemedicine",
     };
 
     // Convert time from 12-hour format (e.g., "10:30 AM") to 24-hour format (e.g., "10:30")
@@ -289,7 +402,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
     if (selectedDateTime <= new Date()) {
       Alert.alert(
         "Invalid Selection",
-        "Please select a future date and time for your appointment."
+        "Please select a future date and time for your appointment.",
       );
       return;
     }
@@ -323,11 +436,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
           accessibilityHint="Returns to your patient tabs"
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Book Appointment</Text>
         <TouchableOpacity
@@ -337,15 +446,12 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
           accessibilityRole="button"
           accessibilityLabel="Open my appointments"
         >
-          <Calendar
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <Calendar size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -355,38 +461,6 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Step Indicator */}
-          <View style={styles.stepIndicatorContainer}>
-            {[1, 2, 3, 4, 5].map((step, index) => {
-              let currentStep = 1;
-              if (selectedSpecialty) currentStep = 2;
-              if (selectedDoctor) currentStep = 4;
-              if (selectedTime) currentStep = 5;
-              
-              const isActive = step === currentStep;
-              const isCompleted = step < currentStep;
-              
-              return (
-                <React.Fragment key={step}>
-                  <View style={[
-                    styles.indicatorCircle,
-                    isActive && styles.indicatorCircleActive,
-                    isCompleted && styles.indicatorCircleCompleted
-                  ]}>
-                    {isCompleted ? (
-                       <Check size={12} color={theme.colors.white} />
-                    ) : (
-                       <Text style={[styles.indicatorText, isActive && styles.indicatorTextActive]}>{step}</Text>
-                    )}
-                  </View>
-                  {index < 4 && (
-                    <View style={[styles.indicatorLine, isCompleted && styles.indicatorLineCompleted]} />
-                  )}
-                </React.Fragment>
-              )
-            })}
-          </View>
-
           {/* Step 1: Select Specialty */}
           <View style={styles.section}>
             <View style={styles.stepHeader}>
@@ -402,23 +476,16 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               accessibilityRole="button"
               accessibilityLabel="Select specialty"
             >
-              <Cross
-                
-                size={22}
-                color={healthColors.primary.main}
-              />
+              <Cross size={22} color={healthColors.primary.main} />
               <Text style={styles.specialtyText}>
                 {selectedSpecialty || "Select Specialty"}
               </Text>
-              <ChevronDown
-                
-                size={20}
-                color={healthColors.text.secondary}
-              />
+              <ChevronDown size={20} color={healthColors.text.secondary} />
             </TouchableOpacity>
 
             {/* Specialty Selection Modal */}
-            <Modal statusBarTranslucent
+            <Modal
+              statusBarTranslucent
               visible={showSpecialtyModal}
               transparent
               animationType="slide"
@@ -433,11 +500,7 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                       accessibilityRole="button"
                       accessibilityLabel="Close specialty list"
                     >
-                      <X
-                        
-                        size={24}
-                        color={healthColors.text.primary}
-                      />
+                      <X size={24} color={healthColors.text.primary} />
                     </TouchableOpacity>
                   </View>
                   <ScrollView style={styles.modalBody}>
@@ -464,7 +527,9 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                           activeOpacity={0.7}
                           accessibilityRole="button"
                           accessibilityLabel={`Select ${specialty}`}
-                          accessibilityState={{ selected: selectedSpecialty === specialty }}
+                          accessibilityState={{
+                            selected: selectedSpecialty === specialty,
+                          }}
                         >
                           <Text
                             style={[
@@ -477,7 +542,6 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                           </Text>
                           {selectedSpecialty === specialty && (
                             <CheckCircle
-                              
                               size={22}
                               color={healthColors.primary.main}
                             />
@@ -516,47 +580,39 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               doctors.map((doctor) => (
                 <Card
                   key={doctor.id || doctor.userId || doctor.email}
-                  variant={selectedDoctorId === doctor.id ? "secondary" : "standard"}
+                  variant={
+                    selectedDoctorId === doctor.id ? "secondary" : "standard"
+                  }
                   style={styles.doctorCard}
                   onPress={() => setSelectedDoctor(doctor)}
                 >
                   <View style={styles.doctorAvatar}>
-                    <User
-                      
-                      size={24}
-                      color={healthColors.primary.main}
-                    />
+                    <User size={24} color={healthColors.primary.main} />
                   </View>
                   <View style={styles.doctorInfo}>
                     <Text style={styles.doctorName}>{doctor.name}</Text>
                     <Text style={styles.doctorDetails}>
-                      {getDoctorSpecialtyText(doctor)} • {getDoctorExperienceText(doctor)}
+                      {getDoctorSpecialtyText(doctor)} •{" "}
+                      {getDoctorExperienceText(doctor)}
                     </Text>
                     <View style={styles.doctorStats}>
                       <View style={styles.ratingContainer}>
-                        <Star  size={14} color={theme.colors.warning.main} />
+                        <Star size={14} color={theme.colors.warning.main} />
                         <Text style={styles.ratingText}>
                           {doctor.rating ? `${doctor.rating} ★` : "N/A"}
                         </Text>
                       </View>
                       <View style={styles.feeContainer}>
-                        <Banknote
-                          
-                          size={14}
-                          color={healthColors.success.main}
-                        />
+                        <Banknote size={14} color={healthColors.success.main} />
                         <Text style={styles.feeText}>
-                          Consultation: {formatCurrency(doctor.consultationFee || 500)}
+                          Consultation:{" "}
+                          {formatCurrency(doctor.consultationFee || 500)}
                         </Text>
                       </View>
                     </View>
                   </View>
                   {selectedDoctorId === doctor.id && (
-                    <CheckCircle
-                      
-                      size={24}
-                      color={healthColors.success.main}
-                    />
+                    <CheckCircle size={24} color={healthColors.success.main} />
                   )}
                 </Card>
               ))
@@ -573,7 +629,9 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
             </View>
             <View style={styles.typeRow}>
               <Card
-                variant={appointmentType === "in-person" ? "secondary" : "standard"}
+                variant={
+                  appointmentType === "in-person" ? "secondary" : "standard"
+                }
                 style={styles.typeCard}
                 onPress={() => setAppointmentType("in-person")}
               >
@@ -585,7 +643,6 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                   ]}
                 >
                   <Building
-                    
                     size={32}
                     color={
                       appointmentType === "in-person"
@@ -605,7 +662,9 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                 <Text style={styles.typeSubtitle}>Visit Clinic</Text>
               </Card>
               <Card
-                variant={appointmentType === "telemedicine" ? "secondary" : "standard"}
+                variant={
+                  appointmentType === "telemedicine" ? "secondary" : "standard"
+                }
                 style={styles.typeCard}
                 onPress={() => setAppointmentType("telemedicine")}
               >
@@ -617,7 +676,6 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
                   ]}
                 >
                   <Video
-                    
                     size={32}
                     color={
                       appointmentType === "telemedicine"
@@ -655,22 +713,15 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               accessibilityRole="button"
               accessibilityLabel="Select appointment date"
             >
-              <Calendar
-                
-                size={22}
-                color={healthColors.primary.main}
-              />
+              <Calendar size={22} color={healthColors.primary.main} />
               <Text style={styles.dateText}>{selectedDate}</Text>
-              <ChevronDown
-                
-                size={20}
-                color={healthColors.text.secondary}
-              />
+              <ChevronDown size={20} color={healthColors.text.secondary} />
             </TouchableOpacity>
 
             {/* Date picker: native dialog on Android, sheet on iOS */}
             {Platform.OS === "ios" ? (
-              <Modal statusBarTranslucent
+              <Modal
+                statusBarTranslucent
                 visible={showDatePicker}
                 transparent
                 animationType="slide"
@@ -711,45 +762,45 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               )
             )}
             <View style={styles.timeLabelRow}>
-              <Clock
-                
-                size={18}
-                color={healthColors.text.primary}
-              />
+              <Clock size={18} color={healthColors.text.primary} />
               <Text style={styles.timeLabel}>Available Slots:</Text>
             </View>
             <View style={styles.timeSlotsGrid}>
               {generateAllSlots().map((slot) => {
                 const isAvailable = timeSlots.includes(slot);
                 return (
-                <TouchableOpacity
-                  key={slot}
-                  style={[
-                    styles.timeSlot,
-                    selectedTime === slot && styles.timeSlotSelected,
-                    !isAvailable && styles.timeSlotDisabled
-                  ]}
-                  onPress={() => isAvailable && setSelectedTime(slot)}
-                  activeOpacity={isAvailable ? 0.7 : 1}
-                  disabled={!isAvailable}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select time ${convertTo12Hour(slot)}`}
-                  accessibilityState={{ disabled: !isAvailable, selected: selectedTime === slot }}
-                >
-                  <Text
+                  <TouchableOpacity
+                    key={slot}
                     style={[
-                      styles.timeSlotText,
-                      selectedTime === slot && styles.timeSlotTextSelected,
-                      !isAvailable && styles.timeSlotTextDisabled
+                      styles.timeSlot,
+                      selectedTime === slot && styles.timeSlotSelected,
+                      !isAvailable && styles.timeSlotDisabled,
                     ]}
+                    onPress={() => isAvailable && setSelectedTime(slot)}
+                    activeOpacity={isAvailable ? 0.7 : 1}
+                    disabled={!isAvailable}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select time ${convertTo12Hour(slot)}`}
+                    accessibilityState={{
+                      disabled: !isAvailable,
+                      selected: selectedTime === slot,
+                    }}
                   >
-                    {convertTo12Hour(slot)}
-                  </Text>
-                  {selectedTime === slot && (
-                    <Check  size={16} color={theme.colors.white} />
-                  )}
-                </TouchableOpacity>
-              )})}
+                    <Text
+                      style={[
+                        styles.timeSlotText,
+                        selectedTime === slot && styles.timeSlotTextSelected,
+                        !isAvailable && styles.timeSlotTextDisabled,
+                      ]}
+                    >
+                      {convertTo12Hour(slot)}
+                    </Text>
+                    {selectedTime === slot && (
+                      <Check size={16} color={healthColors.white} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
@@ -778,15 +829,14 @@ const AppointmentBookingScreen = ({ navigation, route: _route }) => {
               size="large"
               fullWidth
               gradient
+              title={rescheduleId ? "Confirm Reschedule" : "Confirm Booking"}
               loading={createAppointmentMutation.isPending}
               disabled={!canConfirmBooking}
               onPress={handleConfirm}
               accessibilityRole="button"
               accessibilityLabel="Confirm appointment"
               accessibilityHint="Books your selected doctor, date and time"
-            >
-              <Text>Confirm Appointment</Text>
-            </Button>
+            />
           </View>
 
           <View style={styles.bottomSpacer} />
@@ -849,7 +899,7 @@ const styles = StyleSheet.create({
   stepNumberText: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
+    color: healthColors.white,
   },
   stepTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -860,7 +910,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
@@ -936,13 +986,13 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
   },
   typeIconBoxSelected: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
   },
   typeTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -963,7 +1013,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
@@ -1012,7 +1062,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
   },
   timeSlotTextSelected: {
-    color: theme.colors.white,
+    color: healthColors.white,
   },
 
   modalOverlay: {
@@ -1021,7 +1071,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "70%",
@@ -1049,7 +1099,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
     borderWidth: 2,
     borderColor: healthColors.border.light,
   },
@@ -1073,7 +1123,7 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.background.overlay,
   },
   datePickerContainer: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: healthColors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,
@@ -1115,50 +1165,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.tertiary,
     textDecorationLine: "line-through",
   },
-  stepIndicatorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  indicatorCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: healthColors.background.tertiary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  indicatorCircleActive: {
-    backgroundColor: healthColors.primary.main,
-    borderWidth: 2,
-    borderColor: healthColors.primary.light,
-  },
-  indicatorCircleCompleted: {
-    backgroundColor: healthColors.success.main,
-  },
-  indicatorText: {
-    color: healthColors.text.secondary,
-    fontSize: theme.typography.sizes.caption,
-    fontWeight: "bold",
-  },
-  indicatorTextActive: {
-    color: theme.colors.white,
-  },
-  indicatorLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: healthColors.border.light,
-    marginHorizontal: 4,
-  },
-  indicatorLineCompleted: {
-    backgroundColor: healthColors.success.main,
-  },
   emptyStatePadding: { paddingVertical: 24 },
 });
 
 export default AppointmentBookingScreen;
-
-
-

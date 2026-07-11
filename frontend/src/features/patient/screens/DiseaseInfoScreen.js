@@ -15,10 +15,27 @@ import {
   View,
   StatusBar,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, ArrowUpRight, Brain, Eye, Heart, Info, Leaf, Library, Search, ShieldCheck, Stethoscope, Wind, X } from "lucide-react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Brain,
+  Eye,
+  Heart,
+  Info,
+  Leaf,
+  Library,
+  Search,
+  ShieldCheck,
+  Stethoscope,
+  Wind,
+  X,
+} from "lucide-react-native";
 
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import {
   Button,
   Card,
@@ -27,19 +44,34 @@ import {
   Input,
   NetworkStatusIndicator,
   SectionHeader,
-} from '@/components/common';
-import { getScreenPadding } from '@/utils/responsive';
-import { handleSmartBack } from '@/utils/navigation';
-import { logError, parseError, showError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
+} from "@/components/common";
+import { getScreenPadding } from "@/utils/responsive";
+import { handleSmartBack } from "@/utils/navigation";
+import { logError, parseError, showError } from "@/utils/errorHandler";
+import { useNetworkStatus } from "@/utils/offlineHandler";
 
 const CATEGORIES = [
   { key: "heart", name: "Heart", icon: Heart, color: healthColors.error.main },
   { key: "lung", name: "Lung", icon: Wind, color: healthColors.info.main },
-  { key: "brain", name: "Brain", icon: Brain, color: healthColors.primary.main },
-  { key: "diabetes", name: "Diabetes", icon: Leaf, color: healthColors.warning.main },
+  {
+    key: "brain",
+    name: "Brain",
+    icon: Brain,
+    color: healthColors.primary.main,
+  },
+  {
+    key: "diabetes",
+    name: "Diabetes",
+    icon: Leaf,
+    color: healthColors.warning.main,
+  },
   { key: "eye", name: "Eye", icon: Eye, color: healthColors.success.main },
-  { key: "general", name: "General", icon: Stethoscope, color: healthColors.text.secondary },
+  {
+    key: "general",
+    name: "General",
+    icon: Stethoscope,
+    color: healthColors.text.secondary,
+  },
 ];
 
 const RESOURCE_LINKS = [
@@ -114,9 +146,26 @@ const DISEASE_LIBRARY = {
     title: "Respiratory Disease",
     overview:
       "Lung diseases include asthma, COPD, infections, and inflammatory conditions that affect breathing capacity.",
-    symptoms: ["Persistent cough", "Wheezing", "Breathlessness", "Chest tightness", "Frequent infections"],
-    causes: ["Air pollution", "Smoking", "Allergens", "Occupational exposure", "Infections"],
-    treatment: ["Inhalers or medication", "Breathing exercises", "Smoking cessation", "Pulmonary review"],
+    symptoms: [
+      "Persistent cough",
+      "Wheezing",
+      "Breathlessness",
+      "Chest tightness",
+      "Frequent infections",
+    ],
+    causes: [
+      "Air pollution",
+      "Smoking",
+      "Allergens",
+      "Occupational exposure",
+      "Infections",
+    ],
+    treatment: [
+      "Inhalers or medication",
+      "Breathing exercises",
+      "Smoking cessation",
+      "Pulmonary review",
+    ],
   },
   Brain: {
     title: "Neurological Disorders",
@@ -129,38 +178,101 @@ const DISEASE_LIBRARY = {
       "Speech difficulty",
       "Balance problems",
     ],
-    causes: ["Vascular conditions", "Infections", "Degenerative changes", "Metabolic imbalance", "Trauma"],
-    treatment: ["Early diagnosis", "Medication", "Rehabilitation", "Lifestyle and risk control"],
+    causes: [
+      "Vascular conditions",
+      "Infections",
+      "Degenerative changes",
+      "Metabolic imbalance",
+      "Trauma",
+    ],
+    treatment: [
+      "Early diagnosis",
+      "Medication",
+      "Rehabilitation",
+      "Lifestyle and risk control",
+    ],
   },
   Diabetes: {
     title: "Diabetes Mellitus",
     overview:
       "A chronic metabolic condition where blood glucose remains elevated due to insulin deficiency or insulin resistance.",
-    symptoms: ["Frequent urination", "Increased thirst", "Unexplained weight change", "Fatigue", "Blurred vision"],
-    causes: ["Genetic predisposition", "Insulin resistance", "Obesity", "Inactive lifestyle", "Diet patterns"],
-    treatment: ["Glucose monitoring", "Diet planning", "Regular exercise", "Medication or insulin"],
+    symptoms: [
+      "Frequent urination",
+      "Increased thirst",
+      "Unexplained weight change",
+      "Fatigue",
+      "Blurred vision",
+    ],
+    causes: [
+      "Genetic predisposition",
+      "Insulin resistance",
+      "Obesity",
+      "Inactive lifestyle",
+      "Diet patterns",
+    ],
+    treatment: [
+      "Glucose monitoring",
+      "Diet planning",
+      "Regular exercise",
+      "Medication or insulin",
+    ],
   },
   Eye: {
     title: "Ocular Conditions",
     overview:
       "Eye conditions can affect visual acuity, pressure, retina health, and optic nerve function.",
-    symptoms: ["Blurred vision", "Eye pain", "Light sensitivity", "Floaters", "Peripheral vision changes"],
-    causes: ["Aging", "Diabetes", "UV exposure", "Genetic risk", "Inflammation"],
-    treatment: ["Routine eye exams", "Medication", "Corrective lenses", "Procedure-based treatment"],
+    symptoms: [
+      "Blurred vision",
+      "Eye pain",
+      "Light sensitivity",
+      "Floaters",
+      "Peripheral vision changes",
+    ],
+    causes: [
+      "Aging",
+      "Diabetes",
+      "UV exposure",
+      "Genetic risk",
+      "Inflammation",
+    ],
+    treatment: [
+      "Routine eye exams",
+      "Medication",
+      "Corrective lenses",
+      "Procedure-based treatment",
+    ],
   },
   General: {
     title: "General Health Conditions",
     overview:
       "General conditions may involve multi-system symptoms and require clinical correlation for diagnosis.",
-    symptoms: ["Fatigue", "Fever", "Body aches", "Poor appetite", "Sleep disturbance"],
-    causes: ["Infections", "Stress", "Nutritional issues", "Inflammation", "Lifestyle imbalance"],
-    treatment: ["Hydration and rest", "Symptom monitoring", "Healthy routine", "Doctor consultation"],
+    symptoms: [
+      "Fatigue",
+      "Fever",
+      "Body aches",
+      "Poor appetite",
+      "Sleep disturbance",
+    ],
+    causes: [
+      "Infections",
+      "Stress",
+      "Nutritional issues",
+      "Inflammation",
+      "Lifestyle imbalance",
+    ],
+    treatment: [
+      "Hydration and rest",
+      "Symptom monitoring",
+      "Healthy routine",
+      "Doctor consultation",
+    ],
   },
 };
 
 const DEFAULT_DISEASE_DETAILS = {
   title: "Condition Overview",
-  overview: "This condition overview is educational. Consult a clinician for personalized diagnosis.",
+  overview:
+    "This condition overview is educational. Consult a clinician for personalized diagnosis.",
   symptoms: ["Symptoms vary by person and severity"],
   causes: ["Multiple contributing factors may be present"],
   treatment: ["Seek clinical guidance for a tailored treatment plan"],
@@ -180,7 +292,9 @@ const DiseaseInfoScreen = ({ navigation }) => {
   const filteredCategories = useMemo(() => {
     const keyword = searchQuery.trim().toLowerCase();
     if (!keyword) return CATEGORIES;
-    return CATEGORIES.filter((item) => item.name.toLowerCase().includes(keyword));
+    return CATEGORIES.filter((item) =>
+      item.name.toLowerCase().includes(keyword),
+    );
   }, [searchQuery]);
 
   const selectedDetails = useMemo(() => {
@@ -191,7 +305,9 @@ const DiseaseInfoScreen = ({ navigation }) => {
   const openExternalLink = useCallback(
     async (url) => {
       if (!isConnected) {
-        showError("No internet connection. Reconnect to open external resources.");
+        showError(
+          "No internet connection. Reconnect to open external resources.",
+        );
         return;
       }
 
@@ -207,7 +323,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         showError("Unable to open this resource right now.");
       }
     },
-    [isConnected]
+    [isConnected],
   );
 
   const handleOpenCategory = useCallback(async (category) => {
@@ -248,7 +364,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
       <NetworkStatusIndicator />
 
       <View
@@ -261,11 +380,16 @@ const DiseaseInfoScreen = ({ navigation }) => {
           accessibilityLabel="Go back"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+          <ArrowLeft
+            size={theme.iconSizes.md}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
 
         <View style={styles.headerTitleWrap} pointerEvents="none">
-          <Text style={styles.headerTitle} numberOfLines={1}>Disease Info Center</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            Disease Info Center
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -284,7 +408,12 @@ const DiseaseInfoScreen = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + theme.spacing.md, theme.spacing.xl) },
+          {
+            paddingBottom: Math.max(
+              insets.bottom + theme.spacing.md,
+              theme.spacing.xl,
+            ),
+          },
         ]}
         keyboardShouldPersistTaps="handled"
       >
@@ -296,7 +425,12 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 placeholder="Search categories"
-                leftIcon={<Search size={theme.iconSizes.sm} color={healthColors.text.tertiary} />}
+                leftIcon={
+                  <Search
+                    size={theme.iconSizes.sm}
+                    color={healthColors.text.tertiary}
+                  />
+                }
               />
             </Card>
           )}
@@ -317,17 +451,38 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   return (
                     <TouchableOpacity
                       key={category.key}
-                      style={[styles.categoryCard, { borderColor: `${category.color}33` }]}
+                      style={[
+                        styles.categoryCard,
+                        { borderColor: theme.withOpacity(category.color, 0.2) },
+                      ]}
                       onPress={() => handleOpenCategory(category)}
                       activeOpacity={0.85}
                       accessibilityRole="button"
                       accessibilityLabel={`Open ${category.name} information`}
                     >
-                      <View style={[styles.categoryIconWrap, { backgroundColor: `${category.color}14` }]}>
-                        <IconComponent size={theme.iconSizes.md} color={category.color} />
+                      <View
+                        style={[
+                          styles.categoryIconWrap,
+                          {
+                            backgroundColor: theme.withOpacity(
+                              category.color,
+                              0.08,
+                            ),
+                          },
+                        ]}
+                      >
+                        <IconComponent
+                          size={theme.iconSizes.md}
+                          color={category.color}
+                        />
                       </View>
-                      <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
-                      <ArrowUpRight size={theme.iconSizes.xs} color={healthColors.text.tertiary} />
+                      <Text style={styles.categoryName} numberOfLines={1}>
+                        {category.name}
+                      </Text>
+                      <ArrowUpRight
+                        size={theme.iconSizes.xs}
+                        color={healthColors.text.tertiary}
+                      />
                     </TouchableOpacity>
                   );
                 })}
@@ -346,12 +501,24 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   accessibilityRole="button"
                   accessibilityLabel={`Open ${item.title}`}
                 >
-                  <View style={[styles.resourceDot, { backgroundColor: item.color }]} />
+                  <View
+                    style={[
+                      styles.resourceDot,
+                      { backgroundColor: item.color },
+                    ]}
+                  />
                   <View style={styles.resourceTextWrap}>
-                    <Text style={styles.resourceTitle} numberOfLines={1}>{item.title}</Text>
-                    <Text style={styles.resourceSubtitle} numberOfLines={1}>{item.subtitle}</Text>
+                    <Text style={styles.resourceTitle} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.resourceSubtitle} numberOfLines={1}>
+                      {item.subtitle}
+                    </Text>
                   </View>
-                  <ArrowUpRight size={theme.iconSizes.sm} color={healthColors.text.tertiary} />
+                  <ArrowUpRight
+                    size={theme.iconSizes.sm}
+                    color={healthColors.text.tertiary}
+                  />
                 </TouchableOpacity>
               ))}
             </View>
@@ -369,8 +536,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
                   accessibilityLabel={`Open topic ${topic.title}`}
                 >
                   <View style={styles.topicBullet} />
-                  <Text style={styles.topicText} numberOfLines={2}>{topic.title}</Text>
-                  <ArrowUpRight size={theme.iconSizes.sm} color={healthColors.primary.main} />
+                  <Text style={styles.topicText} numberOfLines={2}>
+                    {topic.title}
+                  </Text>
+                  <ArrowUpRight
+                    size={theme.iconSizes.sm}
+                    color={healthColors.primary.main}
+                  />
                 </TouchableOpacity>
               ))}
             </View>
@@ -378,7 +550,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <Modal statusBarTranslucent
+      <Modal
+        statusBarTranslucent
         visible={detailVisible}
         animationType="slide"
         transparent
@@ -388,8 +561,13 @@ const DiseaseInfoScreen = ({ navigation }) => {
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
-                <Library size={theme.iconSizes.md} color={healthColors.primary.main} />
-                <Text style={styles.modalTitle} numberOfLines={2}>{selectedDetails.title}</Text>
+                <Library
+                  size={theme.iconSizes.md}
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.modalTitle} numberOfLines={2}>
+                  {selectedDetails.title}
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={closeDetailModal}
@@ -397,14 +575,19 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Close details"
               >
-                <X size={theme.iconSizes.md} color={healthColors.text.secondary} />
+                <X
+                  size={theme.iconSizes.md}
+                  color={healthColors.text.secondary}
+                />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalContent}>
               <View style={styles.detailCard}>
                 <Text style={styles.detailSectionTitle}>Overview</Text>
-                <Text style={styles.detailBody}>{selectedDetails.overview}</Text>
+                <Text style={styles.detailBody}>
+                  {selectedDetails.overview}
+                </Text>
               </View>
 
               <View style={styles.detailCard}>
@@ -429,7 +612,10 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
               <View style={styles.detailCard}>
                 <View style={styles.treatmentTitleRow}>
-                  <ShieldCheck size={theme.iconSizes.sm} color={healthColors.success.main} />
+                  <ShieldCheck
+                    size={theme.iconSizes.sm}
+                    color={healthColors.success.main}
+                  />
                   <Text style={styles.detailSectionTitle}>Treatment</Text>
                 </View>
                 {selectedDetails.treatment.map((item) => (
@@ -442,7 +628,9 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
               <Button
                 title="Open More Clinical Resources"
-                onPress={() => openExternalLink("https://www.who.int/news-room/fact-sheets")}
+                onPress={() =>
+                  openExternalLink("https://www.who.int/news-room/fact-sheets")
+                }
                 style={styles.modalAction}
               />
             </ScrollView>

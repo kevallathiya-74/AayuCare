@@ -17,23 +17,41 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { User, Calendar, Clock, Cross, MessageSquare, AlertCircle, XCircle, ArrowLeft } from "lucide-react-native";
+import {
+  User,
+  Calendar,
+  Clock,
+  Cross,
+  MessageSquare,
+  AlertCircle,
+  XCircle,
+  ArrowLeft,
+} from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import { SkeletonCardRow, ErrorRecovery, NetworkStatusIndicator, EmptyState, Card } from '@/components/common';
-import { logError, parseError } from '@/utils/errorHandler';
-import { usePatientAppointmentsInfinite } from '@/hooks/useAppointments';
-import { appointmentService } from '@/services';
-import { EmptyStateConfig } from '@/utils/constants';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import { formatDate, convertTo12Hour } from '@/utils/helpers';
-import Routes from '@/navigation/routes';
+import { theme, healthColors, textStyles } from "@/theme";
+import {
+  SkeletonCardRow,
+  ErrorRecovery,
+  NetworkStatusIndicator,
+  EmptyState,
+  Card,
+} from "@/components/common";
+import { logError, parseError } from "@/utils/errorHandler";
+import { usePatientAppointmentsInfinite } from "@/hooks/useAppointments";
+import { appointmentService } from "@/services";
+import { EmptyStateConfig } from "@/utils/constants";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import { formatDate, convertTo12Hour, getStatusColor } from "@/utils/helpers";
+import Routes from "@/navigation/routes";
 
 const getAppointmentDateLabel = (appointment) => {
-  const rawDate = appointment?.date || appointment?.appointmentDate || appointment?.appointment_date;
+  const rawDate =
+    appointment?.date ||
+    appointment?.appointmentDate ||
+    appointment?.appointment_date;
   if (!rawDate) return "Date TBD";
   try {
     return formatDate(rawDate);
@@ -43,7 +61,11 @@ const getAppointmentDateLabel = (appointment) => {
 };
 
 const getAppointmentTimeLabel = (appointment) => {
-  const rawTime = appointment?.time || appointment?.appointmentTime || appointment?.appointment_time || appointment?.timeSlot;
+  const rawTime =
+    appointment?.time ||
+    appointment?.appointmentTime ||
+    appointment?.appointment_time ||
+    appointment?.timeSlot;
   if (!rawTime) return "Time TBD";
 
   const normalized = String(rawTime).trim();
@@ -61,11 +83,13 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
   return {
     ...currentData,
     pages: currentData.pages.map((page) => {
-      const records = Array.isArray(page?.appointments) ? page.appointments : [];
+      const records = Array.isArray(page?.appointments)
+        ? page.appointments
+        : [];
       return {
         ...page,
         appointments: records.filter(
-          (appointment) => appointment?.id !== appointmentId
+          (appointment) => appointment?.id !== appointmentId,
         ),
       };
     }),
@@ -79,9 +103,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
   const queryClient = useQueryClient();
 
   // Determine status filter based on selected tab
-  const statusFilter = selectedTab === "upcoming" 
-    ? "scheduled,confirmed" 
-    : "completed,cancelled";
+  const statusFilter =
+    selectedTab === "upcoming" ? "scheduled,confirmed" : "completed,cancelled";
 
   // Use infinite query hook for lazy loading
   const {
@@ -123,11 +146,14 @@ const MyAppointmentsScreen = ({ navigation }) => {
     refetch();
   }, [refetch]);
 
-  const handleRescheduleAppointment = useCallback((appointment) => {
-    navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING, {
-      rescheduleId: appointment.id,
-    });
-  }, [navigation]);
+  const handleRescheduleAppointment = useCallback(
+    (appointment) => {
+      navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING, {
+        rescheduleId: appointment.id,
+      });
+    },
+    [navigation],
+  );
 
   const cancelAppointmentMutation = useMutation({
     mutationFn: ({ appointmentId, reason }) =>
@@ -143,7 +169,10 @@ const MyAppointmentsScreen = ({ navigation }) => {
         patientAppointmentQueries.forEach(([queryKey, currentData]) => {
           queryClient.setQueryData(
             queryKey,
-            removeAppointmentFromInfinitePages(currentData, cancelledAppointmentId)
+            removeAppointmentFromInfinitePages(
+              currentData,
+              cancelledAppointmentId,
+            ),
           );
         });
       }
@@ -152,99 +181,106 @@ const MyAppointmentsScreen = ({ navigation }) => {
         {
           text: "OK",
           onPress: () => {
-            queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.appointments.all,
+            });
           },
         },
       ]);
     },
     onError: (err) => {
-      logError(err, { context: "MyAppointmentsScreen.handleCancelAppointment" });
+      logError(err, {
+        context: "MyAppointmentsScreen.handleCancelAppointment",
+      });
       Alert.alert("Error", "Failed to cancel appointment. Please try again.");
     },
     retry: 1,
   });
 
-  const handleCancelAppointment = useCallback((appointment) => {
-    Alert.alert(
-      "Cancel Appointment",
-      `Are you sure you want to cancel your appointment with ${appointment.doctorName}?`,
-      [
-        { text: "Keep Appointment", style: "cancel" },
-        {
-          text: "Cancel Appointment",
-          style: "destructive",
-          onPress: async () => {
-            await cancelAppointmentMutation.mutateAsync({
-              appointmentId: appointment.id,
-              reason: "Cancelled by patient",
-            });
+  const handleCancelAppointment = useCallback(
+    (appointment) => {
+      Alert.alert(
+        "Cancel Appointment",
+        `Are you sure you want to cancel your appointment with ${appointment.doctorName}?`,
+        [
+          { text: "Keep Appointment", style: "cancel" },
+          {
+            text: "Cancel Appointment",
+            style: "destructive",
+            onPress: async () => {
+              await cancelAppointmentMutation.mutateAsync({
+                appointmentId: appointment.id,
+                reason: "Cancelled by patient",
+              });
+            },
           },
-        },
-      ]
-    );
-  }, [cancelAppointmentMutation]);
+        ],
+      );
+    },
+    [cancelAppointmentMutation],
+  );
 
   const renderAppointment = ({ item }) => (
     <Card style={styles.appointmentCard}>
       <View style={styles.cardHeader}>
         <View style={styles.doctorInfo}>
           <View style={styles.doctorAvatar}>
-            <User
-              
-              size={24}
-              color={healthColors.primary.main}
-            />
+            <User size={24} color={healthColors.primary.main} />
           </View>
           <View>
             <Text style={styles.doctorName}>{item.doctorName}</Text>
             <Text style={styles.specialization}>{item.specialization}</Text>
           </View>
         </View>
-        <View style={[styles.statusBadge, styles[`status_${item.status}`]]}>
-          <Text style={styles.statusText}>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusColor(item.status) + "1A" },
+          ]}
+        >
+          <Text
+            style={[styles.statusText, { color: getStatusColor(item.status) }]}
+          >
             {item.status
-              ? item.status.charAt(0).toUpperCase() + item.status.slice(1).replace(/_/g, ' ')
-              : 'Scheduled'}
+              ? item.status.charAt(0).toUpperCase() +
+                item.status.slice(1).replace(/_/g, " ")
+              : "Scheduled"}
           </Text>
         </View>
       </View>
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
-          <Calendar
-            
-            size={16}
-            color={healthColors.text.secondary}
-          />
+          <Calendar size={16} color={healthColors.text.secondary} />
           <Text style={styles.infoLabel}>Date:</Text>
           <Text style={styles.infoText}>{getAppointmentDateLabel(item)}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Clock
-            
-            size={16}
-            color={healthColors.text.secondary}
-          />
+          <Clock size={16} color={healthColors.text.secondary} />
           <Text style={styles.infoLabel}>Time:</Text>
           <Text style={styles.infoText}>{getAppointmentTimeLabel(item)}</Text>
         </View>
         {!!item.type && (
           <View style={styles.infoRow}>
-            <Cross  size={16} color={healthColors.text.secondary} />
+            <Cross size={16} color={healthColors.text.secondary} />
             <Text style={styles.infoText}>
-              {item.type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+              {item.type
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
             </Text>
           </View>
         )}
         {!!item.chiefComplaint && (
           <View style={styles.infoRow}>
-            <MessageSquare  size={16} color={healthColors.text.secondary} />
-            <Text style={styles.infoText} numberOfLines={2}>{item.chiefComplaint}</Text>
+            <MessageSquare size={16} color={healthColors.text.secondary} />
+            <Text style={styles.infoText} numberOfLines={2}>
+              {item.chiefComplaint}
+            </Text>
           </View>
         )}
         {!!item.cancellationReason && item.status === "cancelled" && (
           <View style={styles.infoRow}>
-            <AlertCircle  size={16} color={healthColors.error.main} />
+            <AlertCircle size={16} color={healthColors.error.main} />
             <Text style={[styles.infoText, { color: healthColors.error.main }]}>
               Reason: {item.cancellationReason}
             </Text>
@@ -253,30 +289,32 @@ const MyAppointmentsScreen = ({ navigation }) => {
       </View>
 
       {/* Action buttons — only for active (not yet complete/cancelled) appointments */}
-      {item.status !== "cancelled" && item.status !== "completed" && item.status !== "no_show" && (
-        <View style={styles.cardFooter}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            activeOpacity={0.7}
-            onPress={() => handleRescheduleAppointment(item)}
-            accessibilityRole="button"
-            accessibilityLabel={`Reschedule appointment with ${item.doctorName}`}
-          >
-            <Calendar  size={18} color={healthColors.primary.main} />
-            <Text style={styles.actionText}>Reschedule</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton]}
-            activeOpacity={0.7}
-            onPress={() => handleCancelAppointment(item)}
-            accessibilityRole="button"
-            accessibilityLabel={`Cancel appointment with ${item.doctorName}`}
-          >
-            <XCircle  size={18} color={healthColors.error.main} />
-            <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {item.status !== "cancelled" &&
+        item.status !== "completed" &&
+        item.status !== "no_show" && (
+          <View style={styles.cardFooter}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              activeOpacity={0.7}
+              onPress={() => handleRescheduleAppointment(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Reschedule appointment with ${item.doctorName}`}
+            >
+              <Calendar size={18} color={healthColors.primary.main} />
+              <Text style={styles.actionText}>Reschedule</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              activeOpacity={0.7}
+              onPress={() => handleCancelAppointment(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Cancel appointment with ${item.doctorName}`}
+            >
+              <XCircle size={18} color={healthColors.error.main} />
+              <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
     </Card>
   );
 
@@ -297,11 +335,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Appointments</Text>
         <View style={styles.headerRightPlaceholder} />
@@ -355,7 +389,9 @@ const MyAppointmentsScreen = ({ navigation }) => {
         />
       ) : isLoading ? (
         <View style={styles.loadingListWrapper}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       ) : (
         <FlatList
@@ -374,7 +410,6 @@ const MyAppointmentsScreen = ({ navigation }) => {
           maxToRenderPerBatch={10}
           windowSize={10}
           initialNumToRender={10}
-
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -396,14 +431,25 @@ const MyAppointmentsScreen = ({ navigation }) => {
           ListEmptyComponent={
             <EmptyState
               icon={EmptyStateConfig.APPOINTMENTS.icon}
-              title={selectedTab === "upcoming" ? EmptyStateConfig.APPOINTMENTS.title : "No Past Appointments"}
+              title={
+                selectedTab === "upcoming"
+                  ? EmptyStateConfig.APPOINTMENTS.title
+                  : "No Past Appointments"
+              }
               message={
                 selectedTab === "upcoming"
                   ? EmptyStateConfig.APPOINTMENTS.message
                   : "Your completed and cancelled appointments will appear here."
               }
-              actionLabel={selectedTab === "upcoming" ? "Book Appointment" : undefined}
-              onActionPress={selectedTab === "upcoming" ? () => navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING) : undefined}
+              actionLabel={
+                selectedTab === "upcoming" ? "Book Appointment" : undefined
+              }
+              onActionPress={
+                selectedTab === "upcoming"
+                  ? () =>
+                      navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING)
+                  : undefined
+              }
             />
           }
         />
@@ -436,7 +482,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: theme.typography.sizes.xxxl,
+    ...textStyles.h4,
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
@@ -452,12 +498,15 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     backgroundColor: healthColors.background.card,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: healthColors.border.light,
   },
   tabActive: {
     backgroundColor: healthColors.primary.main,
+    borderColor: healthColors.primary.main,
   },
   tabText: {
-    fontSize: theme.typography.sizes.lg,
+    ...textStyles.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.secondary,
   },
@@ -491,12 +540,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   doctorName: {
-    fontSize: theme.typography.sizes.lg,
+    ...textStyles.bodyLarge,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
   specialization: {
-    fontSize: theme.typography.sizes.sm,
+    ...textStyles.bodySmall,
     color: healthColors.text.secondary,
   },
   statusBadge: {
@@ -506,7 +555,7 @@ const styles = StyleSheet.create({
   },
 
   statusText: {
-    fontSize: theme.typography.sizes.xs,
+    ...textStyles.caption,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
   },
@@ -520,12 +569,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   infoText: {
-    fontSize: theme.typography.sizes.sm,
+    ...textStyles.bodyMedium,
     color: healthColors.text.primary,
     fontWeight: theme.typography.weights.medium,
   },
   infoLabel: {
-    fontSize: theme.typography.sizes.sm,
+    ...textStyles.bodyMedium,
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.semibold,
   },
@@ -542,12 +591,15 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.small,
     backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
+    borderWidth: 1,
+    borderColor: theme.withOpacity(healthColors.primary.main, 0.2),
   },
   cancelButton: {
     backgroundColor: healthColors.error.background,
+    borderColor: theme.withOpacity(healthColors.error.main, 0.2),
   },
   actionText: {
-    fontSize: theme.typography.sizes.sm,
+    ...textStyles.button,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.primary.main,
   },
@@ -569,7 +621,3 @@ const styles = StyleSheet.create({
 });
 
 export default MyAppointmentsScreen;
-
-
-
-

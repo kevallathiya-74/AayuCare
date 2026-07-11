@@ -5,13 +5,20 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { Menu, Bell, User } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
-import LanguageSelector from '@/components/common/LanguageSelector';
-import { calculateAge } from '@/utils/dateHelpers';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import LanguageSelector from "@/components/common/LanguageSelector";
+import { calculateAge } from "@/utils/dateHelpers";
+import { DynamicIcon } from "@/components/common";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PatientHeader = ({
   user,
@@ -23,10 +30,19 @@ const PatientHeader = ({
   onNotificationPress,
   onProfilePress,
 }) => {
+  const insets = useSafeAreaInsets();
+  
+  // The parent SafeAreaView may already apply the top inset. 
+  // We use Math.max to ensure at least 12px padding. If parent applies top inset, 
+  // we don't strictly need to add insets.top, but passing it dynamically allows 
+  // the component to adapt if used without a top-padded SafeAreaView.
+  // Actually, since we know parent applies it, we'll just use a small top padding,
+  // or use insets.top if the parent is ignoring it. We'll use a dynamic style.
+  
   return (
     <LinearGradient
       colors={[healthColors.primary.main, healthColors.primary.dark]}
-      style={styles.container}
+      style={[styles.container, { paddingTop: 12 }]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
@@ -43,7 +59,7 @@ const PatientHeader = ({
           accessibilityLabel="Open menu"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Menu  size={24} color={theme.colors.text.white} />
+          <Menu size={24} color={theme.colors.text.white} />
         </TouchableOpacity>
 
         <Text style={styles.appTitle}>AayuCare</Text>
@@ -58,7 +74,7 @@ const PatientHeader = ({
             accessibilityLabel="Notifications"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Bell  size={24} color={theme.colors.text.white} />
+            <Bell size={24} color={theme.colors.text.white} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -75,7 +91,7 @@ const PatientHeader = ({
             accessibilityLabel="Profile"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <User  size={24} color={theme.colors.text.white} />
+            <User size={24} color={theme.colors.text.white} />
           </TouchableOpacity>
         </View>
       </View>
@@ -104,14 +120,22 @@ const PatientHeader = ({
 
             <View style={styles.infoCard}>
               <View style={styles.infoRow}>
-                <DynamicIcon name="fingerprint" size={16} color={theme.colors.text.white} />
+                <DynamicIcon
+                  name="fingerprint"
+                  size={16}
+                  color={theme.colors.text.white}
+                />
                 <Text style={styles.infoText}>ID: {user?.userId || "N/A"}</Text>
               </View>
               <View style={styles.infoRow}>
-                <User  size={16} color={theme.colors.text.white} />
+                <User size={16} color={theme.colors.text.white} />
                 <Text style={styles.infoText}>
-                  Age: {user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : "N/A")}
-                  {" "}· Blood: {user?.bloodGroup || "N/A"}
+                  Age:{" "}
+                  {user?.age ||
+                    (user?.dateOfBirth
+                      ? calculateAge(user.dateOfBirth)
+                      : "N/A")}{" "}
+                  · Blood: {user?.bloodGroup || "N/A"}
                 </Text>
               </View>
             </View>
@@ -124,7 +148,6 @@ const PatientHeader = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 12,
     paddingBottom: 32,
     paddingHorizontal: 20,
     overflow: "hidden",
