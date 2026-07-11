@@ -21,7 +21,9 @@ try {
  * Check if running in Expo Go
  * Expo Go doesn't support native Sentry features
  */
-const isExpoGo = Constants.appOwnership === "expo";
+
+const isExpoGo = Constants.executionEnvironment === Constants.ExecutionEnvironment.StoreClient;
+
 
 /**
  * Track initialization state
@@ -140,10 +142,10 @@ export const isSentryEnabled = () => {
  */
 export const captureException = (error, context = {}) => {
   if (!isSentryEnabled()) {
-    // No Sentry configured, just console log in DEV
-    if (__DEV__) {
-      console.error("[Error]", context, error);
-    }
+
+    // No Sentry configured, just console log
+    console.error("[Error]", context, error);
+
     return;
   }
 
@@ -169,9 +171,9 @@ export const captureException = (error, context = {}) => {
  */
 export const captureMessage = (message, level = "info", context = {}) => {
   if (!isSentryEnabled()) {
-    if (__DEV__) {
-      console.warn(`[${level.toUpperCase()}]`, message, context);
-    }
+
+    console.warn(`[${level.toUpperCase()}]`, message, context);
+
     return;
   }
 

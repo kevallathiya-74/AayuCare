@@ -6,10 +6,16 @@
 
 import React, { useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { CalendarDays, Circle, Home, SquareUserRound, UsersRound } from "lucide-react-native";
+import {
+  CalendarDays,
+  Circle,
+  Home,
+  SquareUserRound,
+  UsersRound,
+} from "lucide-react-native";
 import { useIsFocused } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors, theme } from '@/theme';
+import { healthColors, theme } from "@/theme";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import {
@@ -53,7 +59,9 @@ const DoctorTabsInner = () => {
         lazy: true,
         tabBarIcon: ({ focused, color, size }) => {
           const Icon = ROUTE_ICON_MAP[route.name] || Circle;
-          return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
+          return (
+            <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />
+          );
         },
         tabBarActiveTintColor: healthColors.primary.main,
         tabBarInactiveTintColor: healthColors.text.tertiary,

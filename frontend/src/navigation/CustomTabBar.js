@@ -15,23 +15,51 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import { DynamicIcon } from "../components/common";
 
 import { useTranslation } from "react-i18next";
+import Routes from "./routes";
 
 // Full route → icon map covering all three tab navigators
 const ICON_MAP = {
-  Dashboard: { focused: "layout-dashboard", unfocused: "layout-dashboard-outline" },
-  Appointments: { focused: "calendar", unfocused: "calendar-outline" },
-  TodaysAppointments: { focused: "calendar", unfocused: "calendar-outline" },
-  Reports: { focused: "document-text", unfocused: "document-text-outline" },
-  Settings: { focused: "settings", unfocused: "settings-outline" },
-  Patients: { focused: "people", unfocused: "people-outline" },
-  Profile: { focused: "person", unfocused: "person-outline" },
-  Health: { focused: "fitness", unfocused: "fitness-outline" },
-  Info: { focused: "library", unfocused: "library-outline" },
-  More: { focused: "apps", unfocused: "apps-outline" },
+  [Routes.ADMIN_TABS.DASHBOARD]: {
+    focused: "layout-dashboard",
+    unfocused: "layout-dashboard-outline",
+  },
+  [Routes.ADMIN_TABS.APPOINTMENTS]: {
+    focused: "calendar",
+    unfocused: "calendar-outline",
+  },
+  [Routes.DOCTOR_TABS.TODAYS_APPOINTMENTS]: {
+    focused: "calendar",
+    unfocused: "calendar-outline",
+  },
+  [Routes.ADMIN_TABS.REPORTS]: {
+    focused: "document-text",
+    unfocused: "document-text-outline",
+  },
+  [Routes.ADMIN_TABS.SETTINGS]: {
+    focused: "settings",
+    unfocused: "settings-outline",
+  },
+  [Routes.DOCTOR_TABS.PATIENTS]: {
+    focused: "people",
+    unfocused: "people-outline",
+  },
+  [Routes.DOCTOR_TABS.PROFILE]: {
+    focused: "person",
+    unfocused: "person-outline",
+  },
+  [Routes.PATIENT_TABS.HEALTH]: {
+    focused: "fitness",
+    unfocused: "fitness-outline",
+  },
+  [Routes.PATIENT_TABS.INFO]: {
+    focused: "library",
+    unfocused: "library-outline",
+  },
+  [Routes.PATIENT_TABS.MORE]: { focused: "apps", unfocused: "apps-outline" },
 };
 
 const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
@@ -39,10 +67,18 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.85, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 0.85,
+      useNativeDriver: true,
+    }).start();
   };
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, friction: 4, tension: 100, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 4,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
   };
 
   const rawLabel =
@@ -52,29 +88,29 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
         ? options.title
         : route.name;
 
-  const label = typeof rawLabel === 'string'
-    ? t(`navigation.${rawLabel.toLowerCase().replace(/[-_\s]+/g, '')}`, rawLabel)
-    : rawLabel;
+  const label =
+    typeof rawLabel === "string"
+      ? t(
+          `navigation.${rawLabel.toLowerCase().replace(/[-_\s]+/g, "")}`,
+          rawLabel,
+        )
+      : rawLabel;
 
   const badge = options.tabBarBadge;
-  const icons = ICON_MAP[route.name] || { focused: "ellipse", unfocused: "ellipse-outline" };
+  const icons = ICON_MAP[route.name] || {
+    focused: "ellipse",
+    unfocused: "ellipse-outline",
+  };
 
-  let iconEl;
-  if (typeof options.tabBarIcon === "function") {
-    iconEl = options.tabBarIcon({
-      focused: isFocused,
-      color: isFocused ? healthColors.primary.main : healthColors.text.tertiary,
-      size: theme.iconSizes.md,
-    });
-  } else {
-    iconEl = (
-      <DynamicIcon
-        name={isFocused ? icons.focused : icons.unfocused}
-        size={theme.iconSizes.md}
-        color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
-      />
-    );
-  }
+  const iconEl = (
+    <DynamicIcon
+      name={isFocused ? icons.focused : icons.unfocused}
+      size={theme.iconSizes.md}
+      color={
+        isFocused ? healthColors.primary.main : healthColors.text.tertiary
+      }
+    />
+  );
 
   return (
     <TouchableOpacity
@@ -109,7 +145,11 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
         <Text
           style={[
             styles.label,
-            { color: isFocused ? healthColors.primary.main : healthColors.text.tertiary },
+            {
+              color: isFocused
+                ? healthColors.primary.main
+                : healthColors.text.tertiary,
+            },
             isFocused && styles.labelActive,
           ]}
           numberOfLines={1}

@@ -150,11 +150,13 @@ export const validateVitals = ({
   const errors = [];
   const isPresent = (val) => val !== undefined && val !== null && val !== "";
 
-  if (isPresent(bpSystolic)) {
+
+  if (bpSystolic) {
     const { valid, error } = validateRange(bpSystolic, 40, 250, "Systolic BP");
     if (!valid) errors.push(error);
   }
-  if (isPresent(bpDiastolic)) {
+  if (bpDiastolic) {
+
     const { valid, error } = validateRange(
       bpDiastolic,
       20,
@@ -163,11 +165,13 @@ export const validateVitals = ({
     );
     if (!valid) errors.push(error);
   }
-  if (isPresent(temperature)) {
+
+  if (temperature) {
     const { valid, error } = validateRange(temperature, 35, 42, "Temperature");
     if (!valid) errors.push(error);
   }
-  if (isPresent(pulse)) {
+  if (pulse) {
+
     const { valid, error } = validateRange(pulse, 20, 220, "Pulse");
     if (!valid) errors.push(error);
   }

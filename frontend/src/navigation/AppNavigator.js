@@ -14,20 +14,21 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
 import { useQueryClient } from "@tanstack/react-query";
-import { loadUser } from '@/store/slices/authSlice';
-import { initializeNotificationPermissions } from '@/store/slices/permissionSlice';
-import { healthColors } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import ErrorBoundary from '../components/common/ErrorBoundary';
-import adminService from '@/services/admin.service';
+import { loadUser } from "@/store/slices/authSlice";
+import { initializeNotificationPermissions } from "@/store/slices/permissionSlice";
+import { healthColors } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import Routes from "./routes";
+import ErrorBoundary from "../components/common/ErrorBoundary";
+import adminService from "@/services/admin.service";
 import {
   appointmentService,
   doctorService,
   medicalRecordService,
   notificationService,
   prescriptionService,
-} from '@/services';
-import logger from '@/utils/logger';
+} from "@/services";
+import logger from "@/utils/logger";
 import SplashScreen from "@/features/splash/screens/SplashScreen";
 import BoxSelectionScreen from "@/features/splash/screens/BoxSelectionScreen";
 import LoginScreen from "@/features/auth/screens/LoginScreen";
@@ -79,10 +80,10 @@ const AppNavigator = () => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { isAuthenticated, user, isLoading } = useSelector(
-    (state) => state.auth || {}
+    (state) => state.auth || {},
   );
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {}
+    (state) => state.permissions?.notification || {},
   );
   const navigationRef = useRef(null);
   const authInitialized = useRef(false); // Prevent multiple auth checks
@@ -115,7 +116,7 @@ const AppNavigator = () => {
         logger.error(
           "AppNavigator",
           "Auth initialization error",
-          error?.message || error
+          error?.message || error,
         );
         // Continue anyway - auth will default to logged out state
       }
@@ -135,9 +136,13 @@ const AppNavigator = () => {
       try {
         await dispatch(initializeNotificationPermissions()).unwrap();
       } catch (error) {
-        logger.warn("AppNavigator", "Notification permission bootstrap failed", {
-          error: error?.message || String(error),
-        });
+        logger.warn(
+          "AppNavigator",
+          "Notification permission bootstrap failed",
+          {
+            error: error?.message || String(error),
+          },
+        );
       }
     };
 
@@ -145,30 +150,41 @@ const AppNavigator = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", async (nextState) => {
-      const becameActive =
-        appStateRef.current.match(/inactive|background/) && nextState === "active";
+    const subscription = AppState.addEventListener(
+      "change",
+      async (nextState) => {
+        const becameActive =
+          appStateRef.current.match(/inactive|background/) &&
+          nextState === "active";
 
-      appStateRef.current = nextState;
+        appStateRef.current = nextState;
 
-      if (!becameActive) {
-        return;
-      }
+        if (!becameActive) {
+          return;
+        }
 
-      try {
-        await dispatch(initializeNotificationPermissions()).unwrap();
-      } catch (error) {
-        logger.warn("AppNavigator", "Notification permission refresh on foreground failed", {
-          error: error?.message || String(error),
-        });
-      }
+        try {
+          await dispatch(initializeNotificationPermissions()).unwrap();
+        } catch (error) {
+          logger.warn(
+            "AppNavigator",
+            "Notification permission refresh on foreground failed",
+            {
+              error: error?.message || String(error),
+            },
+          );
+        }
 
-      // If we are not authenticated, attempt to reload/validate user session on focus (recovery)
-      if (!isAuthenticated) {
-        logger.debug("AppNavigator", "App focused and unauthenticated, retrying loadUser...");
-        dispatch(loadUser());
-      }
-    });
+        // If we are not authenticated, attempt to reload/validate user session on focus (recovery)
+        if (!isAuthenticated) {
+          logger.debug(
+            "AppNavigator",
+            "App focused and unauthenticated, retrying loadUser...",
+          );
+          dispatch(loadUser());
+        }
+      },
+    );
 
     return () => {
       subscription.remove();
@@ -184,31 +200,40 @@ const AppNavigator = () => {
       logger.debug(
         "AppNavigator",
         "User authenticated on route",
-        currentRoute?.name
+        currentRoute?.name,
       );
       logger.debug("AppNavigator", "User role", userRole);
 
       // Don't auto-navigate if on splash screen (let splash handle it)
-      if (currentRoute && currentRoute.name === "SplashScreen") {
+      if (currentRoute && currentRoute.name === Routes.AUTH.SPLASH) {
         logger.debug(
           "AppNavigator",
-          "On splash screen, navigation handled there"
+          "On splash screen, navigation handled there",
         );
         return;
       }
 
       // Only auto-navigate to tabs if coming from an auth/onboarding screen
-      const authScreens = ["Login", "ForgotPassword", "SplashScreen", "BoxSelection"];
+      const authScreens = [
+        Routes.AUTH.LOGIN,
+        Routes.AUTH.FORGOT_PASSWORD,
+        Routes.AUTH.SPLASH,
+        Routes.AUTH.BOX_SELECTION,
+      ];
       if (currentRoute && !authScreens.includes(currentRoute.name)) {
-        logger.debug("AppNavigator", "Already on protected screen, skipping auto-navigate", currentRoute.name);
+        logger.debug(
+          "AppNavigator",
+          "Already on protected screen, skipping auto-navigate",
+          currentRoute.name,
+        );
         return;
       }
 
       // Don't navigate if already on correct tab screen
       const roleScreens = {
-        admin: "AdminTabs",
-        doctor: "DoctorTabs",
-        patient: "PatientTabs",
+        admin: Routes.TABS.ADMIN,
+        doctor: Routes.TABS.DOCTOR,
+        patient: Routes.TABS.PATIENT,
       };
 
       const targetScreen = roleScreens[userRole];
@@ -223,17 +248,17 @@ const AppNavigator = () => {
         if (userRole === "admin") {
           navigationRef.current?.reset({
             index: 0,
-            routes: [{ name: "AdminTabs" }],
+            routes: [{ name: Routes.TABS.ADMIN }],
           });
         } else if (userRole === "doctor") {
           navigationRef.current?.reset({
             index: 0,
-            routes: [{ name: "DoctorTabs" }],
+            routes: [{ name: Routes.TABS.DOCTOR }],
           });
         } else if (userRole === "patient") {
           navigationRef.current?.reset({
             index: 0,
-            routes: [{ name: "PatientTabs" }],
+            routes: [{ name: Routes.TABS.PATIENT }],
           });
         }
       }
@@ -246,24 +271,28 @@ const AppNavigator = () => {
       // Only navigate if we're not already on an auth screen
       const currentRoute = navigationRef.current.getCurrentRoute();
       const authScreens = [
-        "Login",
-        "ForgotPassword",
-        "SplashScreen",
-        "BoxSelection",
+        Routes.AUTH.LOGIN,
+        Routes.AUTH.FORGOT_PASSWORD,
+        Routes.AUTH.SPLASH,
+        Routes.AUTH.BOX_SELECTION,
       ];
 
       if (currentRoute && !authScreens.includes(currentRoute.name)) {
         logger.debug("AppNavigator", "Logged out, navigating to Login");
         navigationRef.current.reset({
           index: 0,
-          routes: [{ name: "Login" }],
+          routes: [{ name: Routes.AUTH.LOGIN }],
         });
       }
     }
   }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user?.role || !navigationRef.current?.isReady?.()) {
+    if (
+      !isAuthenticated ||
+      !user?.role ||
+      !navigationRef.current?.isReady?.()
+    ) {
       return;
     }
 
@@ -331,17 +360,22 @@ const AppNavigator = () => {
 
     const role = user.role;
     const canUseNotifications =
-      notificationPermission.granted && notificationPermission.notificationsEnabled;
+      notificationPermission.granted &&
+      notificationPermission.notificationsEnabled;
 
     if (role === "patient") {
       queryClient.prefetchQuery({
         queryKey: queryKeys.dashboardStats.patient(user.id),
         queryFn: async () => {
-          const [appointmentsRes, recordsRes, prescriptionsRes] = await Promise.allSettled([
-            appointmentService.getPatientAppointments(user.id),
-            medicalRecordService.getPatientRecords(user.id, { page: 1, limit: 10 }),
-            prescriptionService.getPatientPrescriptions(user.id),
-          ]);
+          const [appointmentsRes, recordsRes, prescriptionsRes] =
+            await Promise.allSettled([
+              appointmentService.getPatientAppointments(user.id),
+              medicalRecordService.getPatientRecords(user.id, {
+                page: 1,
+                limit: 10,
+              }),
+              prescriptionService.getPatientPrescriptions(user.id),
+            ]);
 
           const getCount = (result, keys = []) => {
             if (result.status !== "fulfilled") return 0;
@@ -356,9 +390,22 @@ const AppNavigator = () => {
           };
 
           return {
-            appointments: getCount(appointmentsRes, ["appointments", "items", "rows"]),
-            records: getCount(recordsRes, ["medicalRecords", "records", "items", "rows"]),
-            prescriptions: getCount(prescriptionsRes, ["prescriptions", "items", "rows"]),
+            appointments: getCount(appointmentsRes, [
+              "appointments",
+              "items",
+              "rows",
+            ]),
+            records: getCount(recordsRes, [
+              "medicalRecords",
+              "records",
+              "items",
+              "rows",
+            ]),
+            prescriptions: getCount(prescriptionsRes, [
+              "prescriptions",
+              "items",
+              "rows",
+            ]),
           };
         },
         staleTime: 60 * 1000,
@@ -386,10 +433,11 @@ const AppNavigator = () => {
 
       queryClient.prefetchQuery({
         queryKey: queryKeys.medicalRecords.patient(user.id),
-        queryFn: () => medicalRecordService.getPatientRecords(user.id, {
-          page: 1,
-          limit: 10,
-        }),
+        queryFn: () =>
+          medicalRecordService.getPatientRecords(user.id, {
+            page: 1,
+            limit: 10,
+          }),
         staleTime: 5 * 60 * 1000,
       });
     }
@@ -423,237 +471,248 @@ const AppNavigator = () => {
 
   return (
     <ErrorBoundary>
-    <NavigationContainer
-      ref={navigationRef}
-      onStateChange={() => {
-        if (isAuthenticated) {
-          queryClient.refetchQueries({ active: true });
-        }
-      }}
-    >
-      <Stack.Navigator
-        initialRouteName="SplashScreen"
-        screenOptions={{
-          headerShown: false,
-          animation: "slide_from_right",
-          contentStyle: { backgroundColor: healthColors.background.primary },
-        }}
+      <NavigationContainer
+        ref={navigationRef}
       >
-        {/* Splash & Selection - Always available */}
-        <Stack.Screen
-          name="SplashScreen"
-          component={SplashScreen}
-          options={{ animation: "fade" }}
-        />
-        <Stack.Screen
-          name="BoxSelection"
-          component={BoxSelectionScreen}
-          options={{ animation: "fade" }}
-        />
+        <Stack.Navigator
+          initialRouteName={Routes.AUTH.SPLASH}
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+            contentStyle: { backgroundColor: healthColors.background.primary },
+          }}
+        >
+          {/* Splash & Selection - Always available */}
+          <Stack.Screen
+            name={Routes.AUTH.SPLASH}
+            component={SplashScreen}
+            options={{ animation: "fade" }}
+          />
+          <Stack.Screen
+            name={Routes.AUTH.BOX_SELECTION}
+            component={BoxSelectionScreen}
+            options={{ animation: "fade" }}
+          />
 
-        {/* Auth Screens - Always available */}
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          {/* Auth Screens - Always available */}
+          <Stack.Screen name={Routes.AUTH.LOGIN} component={LoginScreen} />
+          <Stack.Screen
+            name={Routes.AUTH.FORGOT_PASSWORD}
+            component={ForgotPasswordScreen}
+          />
 
-        {/* Role-based Tab Navigators - Only when authenticated */}
-        {isAuthenticated && (
-          <>
-            <Stack.Screen
-              name="ChangePassword"
-              component={ChangePasswordScreen}
-            />
-            {userRole === "admin" && (
-              <>
-                <Stack.Screen name="AdminTabs" component={AdminTabNavigator} />
-                <Stack.Screen
-                  name="ManageDoctors"
-                  component={ManageDoctorsScreen}
-                />
-                <Stack.Screen
-                  name="PatientManagement"
-                  component={ManagePatientsScreen}
-                />
-                <Stack.Screen
-                  name="CreatePrescription"
-                  component={EnhancedPrescriptionScreen}
-                />
-                <Stack.Screen name="Reports" component={ReportsScreen} />
-                <Stack.Screen
-                  name="PharmacyManagement"
-                  component={PharmacyManagementScreen}
-                />
-                <Stack.Screen
-                  name="Appointments"
-                  component={AppointmentsScreen}
-                />
-                <Stack.Screen
-                  name="AdminSettings"
-                  component={AdminSettingsScreen}
-                />
-                <Stack.Screen
-                  name="SecuritySettings"
-                  component={SecuritySettingsScreen}
-                />
-                <Stack.Screen
-                  name="NotificationsScreen"
-                  component={NotificationsScreen}
-                />
-                <Stack.Screen
-                  name="HospitalEventsScreen"
-                  component={HospitalEventsScreen}
-                />
-                <Stack.Screen
-                  name="SettingsAccessibility"
-                  component={SettingsAccessibilityScreen}
-                />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
-                <Stack.Screen
-                  name="EditProfile"
-                  component={EditProfileScreen}
-                />
-              </>
-            )}
+          {/* Role-based Tab Navigators - Only when authenticated */}
+          {isAuthenticated && (
+            <>
+              <Stack.Screen
+                name={Routes.SHARED.CHANGE_PASSWORD}
+                component={ChangePasswordScreen}
+              />
+              {userRole === "admin" && (
+                <>
+                  <Stack.Screen
+                    name={Routes.TABS.ADMIN}
+                    component={AdminTabNavigator}
+                  />
+                  <Stack.Screen
+                    name="ManageDoctors"
+                    component={ManageDoctorsScreen}
+                  />
+                  <Stack.Screen
+                    name="PatientManagement"
+                    component={ManagePatientsScreen}
+                  />
+                  <Stack.Screen
+                    name="CreatePrescription"
+                    component={EnhancedPrescriptionScreen}
+                  />
+                  <Stack.Screen name="Reports" component={ReportsScreen} />
+                  <Stack.Screen
+                    name="PharmacyManagement"
+                    component={PharmacyManagementScreen}
+                  />
+                  <Stack.Screen
+                    name="Appointments"
+                    component={AppointmentsScreen}
+                  />
+                  <Stack.Screen
+                    name="AdminSettings"
+                    component={AdminSettingsScreen}
+                  />
+                  <Stack.Screen
+                    name="SecuritySettings"
+                    component={SecuritySettingsScreen}
+                  />
+                  <Stack.Screen
+                    name="NotificationsScreen"
+                    component={NotificationsScreen}
+                  />
+                  <Stack.Screen
+                    name="HospitalEventsScreen"
+                    component={HospitalEventsScreen}
+                  />
+                  <Stack.Screen
+                    name="SettingsAccessibility"
+                    component={SettingsAccessibilityScreen}
+                  />
+                  <Stack.Screen name="Settings" component={SettingsScreen} />
+                  <Stack.Screen
+                    name="EditProfile"
+                    component={EditProfileScreen}
+                  />
+                </>
+              )}
 
-            {userRole === "doctor" && (
-              <>
-                <Stack.Screen
-                  name="DoctorTabs"
-                  component={DoctorTabNavigator}
-                />
-                <Stack.Screen
-                  name="EditProfile"
-                  component={EditProfileScreen}
-                />
-                <Stack.Screen
-                  name="ConsultationHistory"
-                  component={ConsultationHistoryScreen}
-                />
-                <Stack.Screen
-                  name="ScheduleAvailability"
-                  component={ScheduleAvailabilityScreen}
-                />
-                <Stack.Screen
-                  name="WalkInPatient"
-                  component={WalkInPatientScreen}
-                />
-                <Stack.Screen
-                  name="PatientManagement"
-                  component={ManagePatientsScreen}
-                />
-                <Stack.Screen
-                  name="PatientDetails"
-                  component={ManagePatientsScreen}
-                />
-                <Stack.Screen
-                  name="CreatePrescription"
-                  component={EnhancedPrescriptionScreen}
-                />
-                <Stack.Screen
-                  name="Consultation"
-                  component={ConsultationScreen}
-                  options={{
-                    headerShown: true,
-                    headerShadowVisible: false,
-                    headerBackVisible: false,
-                    headerStyle: { backgroundColor: healthColors.background.primary },
-                    gestureEnabled: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="NotificationsScreen"
-                  component={NotificationsScreen}
-                />
-                <Stack.Screen
-                  name="SettingsAccessibility"
-                  component={SettingsAccessibilityScreen}
-                />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
-              </>
-            )}
+              {userRole === "doctor" && (
+                <>
+                  <Stack.Screen
+                    name={Routes.TABS.DOCTOR}
+                    component={DoctorTabNavigator}
+                  />
+                  <Stack.Screen
+                    name="EditProfile"
+                    component={EditProfileScreen}
+                  />
+                  <Stack.Screen
+                    name="ConsultationHistory"
+                    component={ConsultationHistoryScreen}
+                  />
+                  <Stack.Screen
+                    name="ScheduleAvailability"
+                    component={ScheduleAvailabilityScreen}
+                  />
+                  <Stack.Screen
+                    name="WalkInPatient"
+                    component={WalkInPatientScreen}
+                  />
+                  <Stack.Screen
+                    name="PatientManagement"
+                    component={ManagePatientsScreen}
+                  />
+                  <Stack.Screen
+                    name="PatientDetails"
+                    component={ManagePatientsScreen}
+                  />
+                  <Stack.Screen
+                    name="CreatePrescription"
+                    component={EnhancedPrescriptionScreen}
+                  />
+                  <Stack.Screen
+                    name="Consultation"
+                    component={ConsultationScreen}
+                    options={{
+                      headerShown: true,
+                      headerShadowVisible: false,
+                      headerBackVisible: false,
+                      headerStyle: {
+                        backgroundColor: healthColors.background.primary,
+                      },
+                      gestureEnabled: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="NotificationsScreen"
+                    component={NotificationsScreen}
+                  />
+                  <Stack.Screen
+                    name="SettingsAccessibility"
+                    component={SettingsAccessibilityScreen}
+                  />
+                  <Stack.Screen name="Settings" component={SettingsScreen} />
+                </>
+              )}
 
-            {userRole === "patient" && (
-              <>
-                <Stack.Screen
-                  name="PatientTabs"
-                  component={PatientTabNavigator}
-                />
-                <Stack.Screen name="Profile" component={ProfileScreen} />
-                <Stack.Screen
-                  name="PatientEditProfile"
-                  component={PatientEditProfileScreen}
-                />
-                <Stack.Screen
-                  name="MyPrescriptions"
-                  component={MyPrescriptionsScreen}
-                />
+              {userRole === "patient" && (
+                <>
+                  <Stack.Screen
+                    name={Routes.TABS.PATIENT}
+                    component={PatientTabNavigator}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.PROFILE}
+                    component={ProfileScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.EDIT_PROFILE}
+                    component={PatientEditProfileScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.MY_PRESCRIPTIONS}
+                    component={MyPrescriptionsScreen}
+                  />
 
-                <Stack.Screen
-                  name="DiseaseInfo"
-                  component={DiseaseInfoScreen}
-                />
-                <Stack.Screen
-                  name="HospitalEvents"
-                  component={HospitalEventsScreen}
-                />
-                <Stack.Screen
-                  name="PharmacyBilling"
-                  component={PharmacyBillingScreen}
-                />
-                <Stack.Screen
-                  name="AIHealthAssistant"
-                  component={AIHealthAssistantScreen}
-                />
-                <Stack.Screen
-                  name="SpecialistCareFinder"
-                  component={SpecialistCareFinderScreen}
-                />
-                <Stack.Screen
-                  name="DoctorProfileView"
-                  component={DoctorProfileViewScreen}
-                />
-                <Stack.Screen
-                  name="AppointmentBooking"
-                  component={AppointmentBookingScreen}
-                />
-                <Stack.Screen
-                  name="MedicalRecords"
-                  component={MedicalRecordsScreen}
-                />
-                <Stack.Screen
-                  name="AISymptomChecker"
-                  component={AISymptomChecker}
-                />
-                <Stack.Screen name="Emergency" component={EmergencyServices} />
-                <Stack.Screen
-                  name="Notifications"
-                  component={NotificationsScreen}
-                />
-                <Stack.Screen
-                  name="MyAppointments"
-                  component={MyAppointmentsScreen}
-                />
-                <Stack.Screen
-                  name="MyReports"
-                  component={MyReportsScreen}
-                />
-                <Stack.Screen
-                  name="HealthMetrics"
-                  component={HealthMetricsScreen}
-                />
-                <Stack.Screen
-                  name="SettingsAccessibility"
-                  component={SettingsAccessibilityScreen}
-                />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
-              </>
-            )}
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+                  <Stack.Screen
+                    name={Routes.PATIENT.DISEASE_INFO}
+                    component={DiseaseInfoScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.HOSPITAL_EVENTS}
+                    component={HospitalEventsScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.PHARMACY_BILLING}
+                    component={PharmacyBillingScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.AI_HEALTH_ASSISTANT}
+                    component={AIHealthAssistantScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.SPECIALIST_CARE_FINDER}
+                    component={SpecialistCareFinderScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.DOCTOR_PROFILE_VIEW}
+                    component={DoctorProfileViewScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.APPOINTMENT_BOOKING}
+                    component={AppointmentBookingScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.MEDICAL_RECORDS}
+                    component={MedicalRecordsScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.AI_SYMPTOM_CHECKER}
+                    component={AISymptomChecker}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.EMERGENCY}
+                    component={EmergencyServices}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.NOTIFICATIONS}
+                    component={NotificationsScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.MY_APPOINTMENTS}
+                    component={MyAppointmentsScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.MY_REPORTS}
+                    component={MyReportsScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.HEALTH_METRICS}
+                    component={HealthMetricsScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.SETTINGS_ACCESSIBILITY}
+                    component={SettingsAccessibilityScreen}
+                  />
+                  <Stack.Screen
+                    name={Routes.PATIENT.SETTINGS}
+                    component={SettingsScreen}
+                  />
+                </>
+              )}
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
     </ErrorBoundary>
   );
 };
 
 export default AppNavigator;
-

@@ -63,7 +63,8 @@ const buildGetCacheKey = (url = "", config = {}) => {
     headers: {
       acceptLanguage:
         config?.headers?.["Accept-Language"] ||
-        config?.headers?.["accept-language"] ||
+
+
         config?.headers?.acceptLanguage ||
         "",
     },

@@ -8,7 +8,9 @@
  */
 export const getLatestMetric = (metrics, type) => {
   if (!metrics || !Array.isArray(metrics) || !metrics.length) return null;
+
   const filtered = metrics.filter((m) => m.type === type && m.timestamp && !isNaN(new Date(m.timestamp).getTime()));
+
   if (!filtered.length) return null;
   return [...filtered].sort(
     (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
@@ -26,6 +28,12 @@ export const computeHealthStatus = (metrics) => {
 
   const bp = getLatestMetric(safeMetrics, "bp");
   const sugar = getLatestMetric(safeMetrics, "sugar");
+
+
+  if (!bp && !sugar) {
+    return { status: "UNKNOWN", riskScore: "N/A" };
+  }
+
   let riskScore = 0;
 
   if (bp?.value) {
@@ -45,26 +53,42 @@ export const computeHealthStatus = (metrics) => {
   return { status: "CONSULT DOCTOR", riskScore };
 };
 
+const getTimePeriod = (h) => {
+  if (h >= 5 && h < 12) return "morning";
+  if (h >= 12 && h < 17) return "afternoon";
+  if (h >= 17 && h < 21) return "evening";
+  return "night";
+};
+
+
 /**
  * Formats time-based greeting for UI headers.
  */
 export const getTimeBasedGreeting = () => {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "Good Morning";
-  if (h >= 12 && h < 17) return "Good Afternoon";
-  if (h >= 17 && h < 21) return "Good Evening";
-  return "Good Night";
+
+  const period = getTimePeriod(new Date().getHours());
+  switch (period) {
+    case "morning": return "Good Morning";
+    case "afternoon": return "Good Afternoon";
+    case "evening": return "Good Evening";
+    default: return "Good Night";
+  }
+
 };
 
 /**
  * Formats time-based greeting icon name for UI headers.
  */
 export const getGreetingIcon = () => {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "sunny";
-  if (h >= 12 && h < 17) return "partly-sunny";
-  if (h >= 17 && h < 21) return "moon";
-  return "moon-outline";
+
+  const period = getTimePeriod(new Date().getHours());
+  switch (period) {
+    case "morning": return "sunny";
+    case "afternoon": return "partly-sunny";
+    case "evening": return "moon";
+    default: return "moon-outline";
+  }
+
 };
 
 /**
@@ -73,6 +97,8 @@ export const getGreetingIcon = () => {
 export const getMetricRanges = () => ({
   bp: { min: 90, max: 140, label: "90-140 systolic" },
   sugar: { min: 70, max: 140, label: "70-140 mg/dL" },
-  temperature: { min: 35, max: 42, label: "35-42 °C" },
+
+  temperature: { min: 97, max: 99, label: "97-99 °F" },
+
   heartRate: { min: 60, max: 100, label: "60-100 bpm" },
 });

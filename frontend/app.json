@@ -12,19 +12,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#00ACC1"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aayucare.app",
       "buildNumber": "1",
       "icon": "./assets/icons/ios-icon.png",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "fetch",
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       }
     },
     "android": {
@@ -36,11 +31,7 @@
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true,
-      "permissions": [
-        "INTERNET",
-        "CAMERA",
-        "READ_MEDIA_IMAGES"
-      ]
+      "permissions": ["INTERNET", "CAMERA", "READ_MEDIA_IMAGES"]
     },
     "updates": {
       "enabled": true,

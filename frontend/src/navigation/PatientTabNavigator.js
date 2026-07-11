@@ -5,30 +5,32 @@
 
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Circle, HeartPulse, Home, LibraryBig, MoreHorizontal } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { healthColors, theme } from '@/theme';
-import { getTabBarHeight } from '@/utils/responsive';
+import {
+  Circle,
+  HeartPulse,
+  Home,
+  LibraryBig,
+  MoreHorizontal,
+} from "lucide-react-native";
+import { healthColors, theme } from "@/theme";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import PatientDashboard from "@/features/patient/screens/PatientDashboard";
 import HealthMetricsScreen from "@/features/patient/screens/HealthMetricsScreen";
 import DiseaseInfoScreen from "@/features/patient/screens/DiseaseInfoScreen";
 import SettingsScreen from "@/features/main/screens/SettingsScreen";
+import Routes from "./routes";
 
 const Tab = createBottomTabNavigator();
 
 const ROUTE_ICON_MAP = {
-  Dashboard: Home,
-  Health: HeartPulse,
-  Info: LibraryBig,
-  More: MoreHorizontal,
+  [Routes.PATIENT_TABS.DASHBOARD]: Home,
+  [Routes.PATIENT_TABS.HEALTH]: HeartPulse,
+  [Routes.PATIENT_TABS.INFO]: LibraryBig,
+  [Routes.PATIENT_TABS.MORE]: MoreHorizontal,
 };
 
 const PatientTabNavigator = () => {
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom, 8);
-
   return (
     <ErrorBoundary>
       <Tab.Navigator
@@ -36,23 +38,12 @@ const PatientTabNavigator = () => {
           headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
             const Icon = ROUTE_ICON_MAP[route.name] || Circle;
-            return <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />;
+            return (
+              <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />
+            );
           },
           tabBarActiveTintColor: healthColors.primary.main,
           tabBarInactiveTintColor: healthColors.text.tertiary,
-          tabBarStyle: {
-            backgroundColor: healthColors.background.card,
-            borderTopWidth: 1,
-            borderTopColor: healthColors.border.light,
-            paddingBottom: Math.max(insets.bottom, 8),
-            paddingTop: 8,
-            height: tabBarHeight,
-            elevation: 8,
-            shadowColor: healthColors.shadows.medium,
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-          },
           tabBarLabelStyle: {
             fontSize: theme.typography.sizes.bodySmall,
             fontWeight: "600",
@@ -62,28 +53,28 @@ const PatientTabNavigator = () => {
         tabBar={(props) => <CustomTabBar {...props} />}
       >
         <Tab.Screen
-          name="Dashboard"
+          name={Routes.PATIENT_TABS.DASHBOARD}
           component={PatientDashboard}
           options={{
             tabBarLabel: "Home",
           }}
         />
         <Tab.Screen
-          name="Health"
+          name={Routes.PATIENT_TABS.HEALTH}
           component={HealthMetricsScreen}
           options={{
             tabBarLabel: "Health",
           }}
         />
         <Tab.Screen
-          name="Info"
+          name={Routes.PATIENT_TABS.INFO}
           component={DiseaseInfoScreen}
           options={{
             tabBarLabel: "Info",
           }}
         />
         <Tab.Screen
-          name="More"
+          name={Routes.PATIENT_TABS.MORE}
           component={SettingsScreen}
           options={{
             tabBarLabel: "More",

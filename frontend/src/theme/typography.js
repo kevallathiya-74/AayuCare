@@ -10,7 +10,8 @@
  */
 
 import { Platform } from "react-native";
-import { healthColors } from "./healthColors";
+
+
 
 // Font families
 export const fontFamilies = {
@@ -209,7 +210,9 @@ export const textStyles = {
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.caption * lineHeights.normal,
-    color: healthColors.text.tertiary,
+
+    color: "#80868B", // Reference: colors.text.tertiary (use in components)
+
   },
 
   overline: {

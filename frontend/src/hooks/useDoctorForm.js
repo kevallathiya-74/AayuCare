@@ -104,9 +104,8 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         } catch {
           /* ignore parse errors */
         }
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          parsed = {};
-        }
+
+
       }
       setAvailabilitySlots(parsed);
       setErrors({});
