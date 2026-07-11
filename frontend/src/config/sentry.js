@@ -21,7 +21,7 @@ try {
  * Check if running in Expo Go
  * Expo Go doesn't support native Sentry features
  */
-const isExpoGo = Constants.appOwnership === "expo";
+const isExpoGo = Constants.executionEnvironment === Constants.ExecutionEnvironment.StoreClient;
 
 /**
  * Track initialization state

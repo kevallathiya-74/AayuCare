@@ -61,7 +61,6 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
       } catch (error) {
         logError(error, {
           context: "useAppointmentsInfinite.queryFn",
-          filters,
         });
         throw error;
       }
@@ -109,8 +108,6 @@ export function usePatientAppointmentsInfinite(
       } catch (error) {
         logError(error, {
           context: "usePatientAppointmentsInfinite.queryFn",
-          patientId,
-          filters,
         });
         throw error;
       }
@@ -159,8 +156,6 @@ export function useDoctorAppointmentsInfinite(
       } catch (error) {
         logError(error, {
           context: "useDoctorAppointmentsInfinite.queryFn",
-          doctorId,
-          filters,
         });
         throw error;
       }
@@ -195,7 +190,7 @@ export function useAppointment(appointmentId, options = {}) {
 
         return extractAppointment(response);
       } catch (error) {
-        logError(error, { context: "useAppointment.queryFn", appointmentId });
+        logError(error, { context: "useAppointment.queryFn" });
         throw error;
       }
     },
@@ -224,7 +219,6 @@ export function useCreateAppointment() {
       } catch (error) {
         logError(error, {
           context: "useCreateAppointment.mutationFn",
-          appointmentData,
         });
         throw error;
       }
@@ -257,8 +251,6 @@ export function useUpdateAppointmentStatus() {
       } catch (error) {
         logError(error, {
           context: "useUpdateAppointmentStatus.mutationFn",
-          appointmentId,
-          status,
         });
         throw error;
       }
@@ -297,8 +289,6 @@ export function useCancelAppointment() {
       } catch (error) {
         logError(error, {
           context: "useCancelAppointment.mutationFn",
-          appointmentId,
-          reason,
         });
         throw error;
       }
@@ -330,7 +320,6 @@ export function useAppointmentsRealTime(filters = {}, interval = 30000) {
       } catch (error) {
         logError(error, {
           context: "useAppointmentsRealTime.queryFn",
-          filters,
         });
         throw error;
       }

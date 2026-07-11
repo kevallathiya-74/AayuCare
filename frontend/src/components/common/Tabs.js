@@ -5,7 +5,7 @@
  * Features: scrollable tabs, icon support, badge support
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -31,23 +31,27 @@ const Tabs = ({
   const indicatorPosition = useRef(new Animated.Value(0)).current;
   const indicatorWidth = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    const animateIndicator = (index, widths) => {
+      if (widths.length === 0 || widths[index] == null) return;
+      const position = widths.slice(0, index).reduce((sum, width) => sum + width, 0);
+      Animated.parallel([
+        Animated.spring(indicatorPosition, {
+          toValue: position,
+          useNativeDriver: false,
+        }),
+        Animated.spring(indicatorWidth, {
+          toValue: widths[index] || 0,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    };
+
+    animateIndicator(activeIndex, tabWidths);
+  }, [activeIndex, tabWidths, indicatorPosition, indicatorWidth]);
+
   const handleTabPress = (index) => {
     if (onChange) onChange(index);
-
-    // Calculate indicator position
-    const position = tabWidths
-      .slice(0, index)
-      .reduce((sum, width) => sum + width, 0);
-    Animated.parallel([
-      Animated.spring(indicatorPosition, {
-        toValue: position,
-        useNativeDriver: false, // Must be false since we are animating width too
-      }),
-      Animated.spring(indicatorWidth, {
-        toValue: tabWidths[index] || 0,
-        useNativeDriver: false, // width cannot use native driver
-      }),
-    ]).start();
   };
 
   const handleTabLayout = (index, event) => {
@@ -56,8 +60,8 @@ const Tabs = ({
     newWidths[index] = width;
     setTabWidths(newWidths);
 
-    // Set initial indicator position
-    if (index === activeIndex && tabWidths.length === 0) {
+    // Set initial indicator position instantly without animation on first layout
+    if (index === activeIndex && tabWidths[activeIndex] == null) {
       const position = newWidths
         .slice(0, activeIndex)
         .reduce((sum, w) => sum + w, 0);

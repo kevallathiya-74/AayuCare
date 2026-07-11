@@ -473,11 +473,6 @@ const AppNavigator = () => {
     <ErrorBoundary>
       <NavigationContainer
         ref={navigationRef}
-        onStateChange={() => {
-          if (isAuthenticated) {
-            queryClient.refetchQueries({ active: true });
-          }
-        }}
       >
         <Stack.Navigator
           initialRouteName={Routes.AUTH.SPLASH}
@@ -516,7 +511,7 @@ const AppNavigator = () => {
               {userRole === "admin" && (
                 <>
                   <Stack.Screen
-                    name="AdminTabs"
+                    name={Routes.TABS.ADMIN}
                     component={AdminTabNavigator}
                   />
                   <Stack.Screen
@@ -571,7 +566,7 @@ const AppNavigator = () => {
               {userRole === "doctor" && (
                 <>
                   <Stack.Screen
-                    name="DoctorTabs"
+                    name={Routes.TABS.DOCTOR}
                     component={DoctorTabNavigator}
                   />
                   <Stack.Screen

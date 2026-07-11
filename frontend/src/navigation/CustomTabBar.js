@@ -102,24 +102,15 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
     unfocused: "ellipse-outline",
   };
 
-  let iconEl;
-  if (typeof options.tabBarIcon === "function") {
-    iconEl = options.tabBarIcon({
-      focused: isFocused,
-      color: isFocused ? healthColors.primary.main : healthColors.text.tertiary,
-      size: theme.iconSizes.md,
-    });
-  } else {
-    iconEl = (
-      <DynamicIcon
-        name={isFocused ? icons.focused : icons.unfocused}
-        size={theme.iconSizes.md}
-        color={
-          isFocused ? healthColors.primary.main : healthColors.text.tertiary
-        }
-      />
-    );
-  }
+  const iconEl = (
+    <DynamicIcon
+      name={isFocused ? icons.focused : icons.unfocused}
+      size={theme.iconSizes.md}
+      color={
+        isFocused ? healthColors.primary.main : healthColors.text.tertiary
+      }
+    />
+  );
 
   return (
     <TouchableOpacity

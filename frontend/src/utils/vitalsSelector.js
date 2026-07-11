@@ -26,6 +26,9 @@ export const computeHealthStatus = (metrics) => {
 
   const bp = getLatestMetric(safeMetrics, "bp");
   const sugar = getLatestMetric(safeMetrics, "sugar");
+  if (!bp && !sugar) {
+    return { status: "UNKNOWN", riskScore: "N/A" };
+  }
   let riskScore = 0;
 
   if (bp?.value) {
@@ -44,27 +47,37 @@ export const computeHealthStatus = (metrics) => {
   if (riskScore < 40) return { status: "MONITOR", riskScore };
   return { status: "CONSULT DOCTOR", riskScore };
 };
+const getTimePeriod = (h) => {
+  if (h >= 5 && h < 12) return "morning";
+  if (h >= 12 && h < 17) return "afternoon";
+  if (h >= 17 && h < 21) return "evening";
+  return "night";
+};
 
 /**
  * Formats time-based greeting for UI headers.
  */
 export const getTimeBasedGreeting = () => {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "Good Morning";
-  if (h >= 12 && h < 17) return "Good Afternoon";
-  if (h >= 17 && h < 21) return "Good Evening";
-  return "Good Night";
+  const period = getTimePeriod(new Date().getHours());
+  switch (period) {
+    case "morning": return "Good Morning";
+    case "afternoon": return "Good Afternoon";
+    case "evening": return "Good Evening";
+    default: return "Good Night";
+  }
 };
 
 /**
  * Formats time-based greeting icon name for UI headers.
  */
 export const getGreetingIcon = () => {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "sunny";
-  if (h >= 12 && h < 17) return "partly-sunny";
-  if (h >= 17 && h < 21) return "moon";
-  return "moon-outline";
+  const period = getTimePeriod(new Date().getHours());
+  switch (period) {
+    case "morning": return "sunny";
+    case "afternoon": return "partly-sunny";
+    case "evening": return "moon";
+    default: return "moon-outline";
+  }
 };
 
 /**

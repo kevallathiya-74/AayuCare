@@ -6,17 +6,9 @@
 
 import React, { useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import {
-  CalendarDays,
-  ChartColumnIncreasing,
-  Circle,
-  LayoutDashboard,
-  Settings,
-} from "lucide-react-native";
 import { useIsFocused } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Routes from "@/navigation/routes";
 import { healthColors, theme } from "@/theme";
-import { getTabBarHeight } from "@/utils/responsive";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
 import {
@@ -30,12 +22,7 @@ import AdminSettingsScreen from "@/features/hospital/screens/AdminSettingsScreen
 
 const Tab = createBottomTabNavigator();
 
-const ROUTE_ICON_MAP = {
-  Dashboard: LayoutDashboard,
-  Appointments: CalendarDays,
-  Reports: ChartColumnIncreasing,
-  Settings,
-};
+
 
 /**
  * Inner navigator that uses the appointment context
@@ -43,9 +30,6 @@ const ROUTE_ICON_MAP = {
 const AdminTabsInner = () => {
   const { pendingCount, refreshCount } = useAdminAppointments();
   const isFocused = useIsFocused();
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = getTabBarHeight() + Math.max(insets.bottom, 8);
-
   // Refresh count when navigator gains focus
   useEffect(() => {
     if (isFocused) {
@@ -55,47 +39,28 @@ const AdminTabsInner = () => {
 
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         lazy: true,
-        tabBarIcon: ({ focused, color, size }) => {
-          const Icon = ROUTE_ICON_MAP[route.name] || Circle;
-          return (
-            <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 2} />
-          );
-        },
         tabBarActiveTintColor: healthColors.primary.main,
         tabBarInactiveTintColor: healthColors.text.tertiary,
-        tabBarStyle: {
-          backgroundColor: healthColors.background.card,
-          borderTopWidth: 1,
-          borderTopColor: healthColors.border.light,
-          paddingBottom: Math.max(insets.bottom, 8),
-          paddingTop: 8,
-          height: tabBarHeight,
-          elevation: 8,
-          shadowColor: healthColors.shadows.medium,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
         tabBarLabelStyle: {
           fontSize: theme.typography.sizes.bodySmall,
           fontWeight: "600",
         },
         tabBarHideOnKeyboard: true,
-      })}
+      }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tab.Screen
-        name="Dashboard"
+        name={Routes.ADMIN_TABS.DASHBOARD}
         component={AdminHomeScreen}
         options={{
           tabBarLabel: "Home",
         }}
       />
       <Tab.Screen
-        name="Appointments"
+        name={Routes.ADMIN_TABS.APPOINTMENTS}
         component={AppointmentsScreen}
         options={{
           tabBarLabel: "Appointments",
@@ -110,14 +75,14 @@ const AdminTabsInner = () => {
         }}
       />
       <Tab.Screen
-        name="Reports"
+        name={Routes.ADMIN_TABS.REPORTS}
         component={ReportsScreen}
         options={{
           tabBarLabel: "Reports",
         }}
       />
       <Tab.Screen
-        name="Settings"
+        name={Routes.ADMIN_TABS.SETTINGS}
         component={AdminSettingsScreen}
         options={{
           tabBarLabel: "Settings",

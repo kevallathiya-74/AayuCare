@@ -37,6 +37,7 @@ export const queryClient = new QueryClient({
             error?.message,
           );
         }
+        logError(error, { context: "ReactQuery.query" });
         return;
       }
       if (__DEV__) {
@@ -54,6 +55,7 @@ export const queryClient = new QueryClient({
             error?.message,
           );
         }
+        logError(error, { context: "ReactQuery.mutation" });
         return;
       }
       if (__DEV__) {
