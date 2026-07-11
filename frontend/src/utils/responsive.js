@@ -143,7 +143,10 @@ export const getScreenPadding = () => {
 // Status bar height
 export const getStatusBarHeight = () => {
   if (Platform.OS === "ios") {
-    return isIOS ? 44 : 20; // iPhone X+ vs older models
+    const { height, width } = Dimensions.get("window");
+    // iPhone X and newer generally have height >= 812 or width >= 812
+    const hasNotch = height >= 812 || width >= 812;
+    return hasNotch ? 44 : 20; // iPhone X+ vs older models
   }
   return 24; // Android
 };

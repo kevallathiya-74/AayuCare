@@ -132,12 +132,17 @@ export const parseError = (error) => {
         // Safe ignore if store is not initialized or in a non-UI test runtime environment
       }
 
-      return (
-        `Permission Denied (403)\n` +
-        `Action: ${method} ${url}\n` +
-        `Current Role: ${currentRole}\n` +
-        `Details: Incorrect endpoint selected or insufficient role privileges.`
+      logError(
+        {
+          message: "Permission Denied (403)",
+          url,
+          method,
+          currentRole,
+        },
+        "API.parseError"
       );
+
+      return "Permission Denied. You do not have the required privileges for this action.";
     }
 
     const code = data?.code || data?.errorCode;
@@ -411,6 +416,7 @@ export const validateEmail = (email) => {
  * @returns {boolean}
  */
 export const validatePhone = (phone) => {
+  if (!phone || typeof phone !== "string") return false;
   // Indian phone: 10 digits, optionally with +91
   const phoneRegex = /^(\+91)?[6-9]\d{9}$/;
   return phoneRegex.test(phone.replace(/\s+/g, ""));

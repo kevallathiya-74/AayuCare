@@ -5,6 +5,7 @@
  */
 
 import { Dimensions, Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import { theme } from "../theme";
 
 // Device dimensions
@@ -41,6 +42,7 @@ export const formatCurrency = (amount, showSymbol = true) => {
  * @returns {string} Formatted phone number
  */
 export const formatPhoneNumber = (phone) => {
+  if (!phone || typeof phone !== "string") return phone;
   const cleaned = phone.replace(/\D/g, "");
   if (cleaned.length === 10) {
     return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
@@ -57,6 +59,7 @@ export const formatPhoneNumber = (phone) => {
  * @returns {boolean} Is valid
  */
 export const isValidAadhaar = (aadhaar) => {
+  if (!aadhaar || typeof aadhaar !== "string") return false;
   const cleaned = aadhaar.replace(/\D/g, "");
   return /^\d{12}$/.test(cleaned);
 };
@@ -378,10 +381,23 @@ export const getErrorMessage = (error) => {
  * Trigger haptic feedback (vibration)
  * @param {string} type - Type of feedback ('light', 'medium', 'heavy')
  */
-export const hapticFeedback = (_type = "light") => {
-  if (Platform.OS === "ios") {
-    // iOS haptic feedback would go here
-    // Requires expo-haptics
+export const hapticFeedback = async (type = "light") => {
+  try {
+    if (type === "light") {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } else if (type === "medium") {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else if (type === "heavy") {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } else if (type === "success") {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else if (type === "error") {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } else if (type === "warning") {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+  } catch (error) {
+    // Ignore errors on unsupported platforms
   }
 };
 

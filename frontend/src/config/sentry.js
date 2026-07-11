@@ -140,8 +140,10 @@ export const isSentryEnabled = () => {
  */
 export const captureException = (error, context = {}) => {
   if (!isSentryEnabled()) {
-    // No Sentry configured, just console log
-    console.error("[Error]", context, error);
+    // No Sentry configured, just console log in DEV
+    if (__DEV__) {
+      console.error("[Error]", context, error);
+    }
     return;
   }
 
@@ -167,7 +169,9 @@ export const captureException = (error, context = {}) => {
  */
 export const captureMessage = (message, level = "info", context = {}) => {
   if (!isSentryEnabled()) {
-    console.warn(`[${level.toUpperCase()}]`, message, context);
+    if (__DEV__) {
+      console.warn(`[${level.toUpperCase()}]`, message, context);
+    }
     return;
   }
 

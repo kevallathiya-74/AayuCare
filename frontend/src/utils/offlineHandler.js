@@ -32,7 +32,8 @@ class OfflineHandler {
   initializeNetworkListener() {
     NetInfo.addEventListener((state) => {
       const wasOffline = !this.isOnline;
-      this.isOnline = state.isConnected && state.isInternetReachable;
+      // Ensure isOnline is strictly boolean. Treat unknown internet reachability (null) as optimistic or handle explicitly.
+      this.isOnline = !!(state.isConnected && state.isInternetReachable !== false);
 
       // Notify all listeners of network status change
       this.notifyListeners(this.isOnline);
@@ -175,21 +176,15 @@ class OfflineHandler {
     }
 
     try {
-      // Execute the request
+      // Execute the request using stored data
+      const apiClient = require("../services/apiClient").default;
+      
+      // Delay before retry to avoid throttling server immediately
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
 
-      // This will be implemented with the actual API call
-      // For now, we log the retry attempt
-      logError(
-        {
-          message: `Retrying request ${request.id} (attempt ${request.retryCount + 1})`,
-        },
-        "OfflineHandler.retryRequest",
-      );
+      await apiClient(request);
 
       request.retryCount++;
-
-      // Delay before retry
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
 
       // Success - remove from queue
       showSuccess("Request synced successfully", "Synced");
@@ -227,10 +222,11 @@ class OfflineHandler {
       // Execute the request
       return await requestFn();
     } catch (error) {
+      const msg = error.message ? error.message.toLowerCase() : "";
       // If network error, queue the request
       if (
-        error.message?.includes("Network") ||
-        error.message?.includes("connection")
+        msg.includes("network") ||
+        msg.includes("connection")
       ) {
         await this.addToQueue(requestDetails);
 

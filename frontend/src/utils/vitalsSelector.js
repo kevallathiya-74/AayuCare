@@ -8,7 +8,7 @@
  */
 export const getLatestMetric = (metrics, type) => {
   if (!metrics || !Array.isArray(metrics) || !metrics.length) return null;
-  const filtered = metrics.filter((m) => m.type === type);
+  const filtered = metrics.filter((m) => m.type === type && m.timestamp && !isNaN(new Date(m.timestamp).getTime()));
   if (!filtered.length) return null;
   return [...filtered].sort(
     (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
@@ -73,6 +73,6 @@ export const getGreetingIcon = () => {
 export const getMetricRanges = () => ({
   bp: { min: 90, max: 140, label: "90-140 systolic" },
   sugar: { min: 70, max: 140, label: "70-140 mg/dL" },
-  temperature: { min: 97, max: 99, label: "97-99 °F" },
+  temperature: { min: 35, max: 42, label: "35-42 °C" },
   heartRate: { min: 60, max: 100, label: "60-100 bpm" },
 });
