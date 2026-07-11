@@ -11,18 +11,18 @@ const BASE_WIDTH = 375;
 const BASE_HEIGHT = 812;
 
 // Platform detection
-export const isIOS = Platform.OS === 'ios';
-export const isAndroid = Platform.OS === 'android';
+export const isIOS = Platform.OS === "ios";
+export const isAndroid = Platform.OS === "android";
 
 // Get current window dimensions
 export const getWindowDimensions = () => {
-  const { width, height } = Dimensions.get('window');
+  const { width, height } = Dimensions.get("window");
   return { width, height };
 };
 
 // Get screen dimensions (full physical screen)
 export const getScreenDimensions = () => {
-  const { width, height } = Dimensions.get('screen');
+  const { width, height } = Dimensions.get("screen");
   return { width, height };
 };
 
@@ -142,8 +142,11 @@ export const getScreenPadding = () => {
 
 // Status bar height
 export const getStatusBarHeight = () => {
-  if (Platform.OS === 'ios') {
-    return isIOS ? 44 : 20; // iPhone X+ vs older models
+  if (Platform.OS === "ios") {
+    const { height, width } = Dimensions.get("window");
+    // iPhone X and newer generally have height >= 812 or width >= 812
+    const hasNotch = height >= 812 || width >= 812;
+    return hasNotch ? 44 : 20; // iPhone X+ vs older models
   }
   return 24; // Android
 };
@@ -172,7 +175,7 @@ export const matchesBreakpoint = (breakpoint) => {
 };
 
 // Calculate card height
-export const getCardHeight = (variant = 'default') => {
+export const getCardHeight = (variant = "default") => {
   const heights = {
     compact: verticalScale(120),
     default: verticalScale(160),

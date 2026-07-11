@@ -1,10 +1,10 @@
 /**
  * AayuCare - Appointment Redux Slice
- * 
+ *
  * Manages appointment state.
  */
 
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 // Initial state
 const initialState = {
@@ -16,7 +16,7 @@ const initialState = {
 
 // Create the slice
 const appointmentSlice = createSlice({
-  name: 'appointment',
+  name: "appointment",
   initialState,
   reducers: {
     clearError: (state) => {
@@ -31,7 +31,7 @@ const appointmentSlice = createSlice({
   },
 });
 
-export const { clearError, setSelectedAppointment, clearSelectedAppointment } = appointmentSlice.actions;
+export const { clearError, setSelectedAppointment, clearSelectedAppointment } =
+  appointmentSlice.actions;
 
 export default appointmentSlice.reducer;
-
