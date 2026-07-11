@@ -5,13 +5,21 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+  StatusBar,
+} from "react-native";
 import { Menu, Bell, User } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
-import LanguageSelector from '@/components/common/LanguageSelector';
-import { calculateAge } from '@/utils/dateHelpers';
-import { DynamicIcon } from '@/components/common';
+import { theme, healthColors } from "@/theme";
+import LanguageSelector from "@/components/common/LanguageSelector";
+import { calculateAge } from "@/utils/dateHelpers";
+import { DynamicIcon } from "@/components/common";
 
 const PatientHeader = ({
   user,
@@ -43,7 +51,7 @@ const PatientHeader = ({
           accessibilityLabel="Open menu"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Menu  size={24} color={theme.colors.text.white} />
+          <Menu size={24} color={theme.colors.text.white} />
         </TouchableOpacity>
 
         <Text style={styles.appTitle}>AayuCare</Text>
@@ -58,7 +66,7 @@ const PatientHeader = ({
             accessibilityLabel="Notifications"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Bell  size={24} color={theme.colors.text.white} />
+            <Bell size={24} color={theme.colors.text.white} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -75,7 +83,7 @@ const PatientHeader = ({
             accessibilityLabel="Profile"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <User  size={24} color={theme.colors.text.white} />
+            <User size={24} color={theme.colors.text.white} />
           </TouchableOpacity>
         </View>
       </View>
@@ -104,14 +112,22 @@ const PatientHeader = ({
 
             <View style={styles.infoCard}>
               <View style={styles.infoRow}>
-                <DynamicIcon name="fingerprint" size={16} color={theme.colors.text.white} />
+                <DynamicIcon
+                  name="fingerprint"
+                  size={16}
+                  color={theme.colors.text.white}
+                />
                 <Text style={styles.infoText}>ID: {user?.userId || "N/A"}</Text>
               </View>
               <View style={styles.infoRow}>
-                <User  size={16} color={theme.colors.text.white} />
+                <User size={16} color={theme.colors.text.white} />
                 <Text style={styles.infoText}>
-                  Age: {user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : "N/A")}
-                  {" "}· Blood: {user?.bloodGroup || "N/A"}
+                  Age:{" "}
+                  {user?.age ||
+                    (user?.dateOfBirth
+                      ? calculateAge(user.dateOfBirth)
+                      : "N/A")}{" "}
+                  · Blood: {user?.bloodGroup || "N/A"}
                 </Text>
               </View>
             </View>
@@ -122,9 +138,12 @@ const PatientHeader = ({
   );
 };
 
+const statusBarHeight =
+  Platform.OS === "android" ? StatusBar.currentHeight || 24 : 47;
+
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 12,
+    paddingTop: statusBarHeight + 12,
     paddingBottom: 32,
     paddingHorizontal: 20,
     overflow: "hidden",

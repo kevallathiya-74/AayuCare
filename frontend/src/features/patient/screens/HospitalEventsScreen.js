@@ -23,19 +23,32 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Clock, MapPin, Users, Info, ArrowRight, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from '@/config/reactQueryConfig';
-import { getScreenPadding } from '@/utils/responsive';
+import {
+  Clock,
+  MapPin,
+  Users,
+  Info,
+  ArrowRight,
+  ArrowLeft,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { getScreenPadding } from "@/utils/responsive";
 
-import { logError, parseError } from '@/utils/errorHandler';
-import logger from '@/utils/logger';
-import { eventService } from '@/services';
-import { convertTo12Hour, getStatusColor } from '@/utils/helpers';
-import { SkeletonCardRow, EmptyState } from '@/components/common';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+import { logError, parseError } from "@/utils/errorHandler";
+import logger from "@/utils/logger";
+import { eventService } from "@/services";
+import { convertTo12Hour, getStatusColor } from "@/utils/helpers";
+import { SkeletonCardRow, EmptyState } from "@/components/common";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
 
 const PAGE_SIZE = 15;
 
@@ -75,7 +88,10 @@ const HospitalEventsScreen = ({ navigation }) => {
       };
     },
     getNextPageParam: (lastPage, allPages) => {
-      const loaded = allPages.reduce((sum, page) => sum + (page?.items?.length || 0), 0);
+      const loaded = allPages.reduce(
+        (sum, page) => sum + (page?.items?.length || 0),
+        0,
+      );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
       }
@@ -99,7 +115,7 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   const events = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.items || []),
-    [data]
+    [data],
   );
 
   const onRefresh = useCallback(async () => {
@@ -136,7 +152,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 setRegisteredEventIds((prev) => new Set([...prev, event.id]));
                 Alert.alert(
                   "Success",
-                  `Successfully registered for "${event.title}"!`
+                  `Successfully registered for "${event.title}"!`,
                 );
                 await refetch();
               } catch (err) {
@@ -151,10 +167,10 @@ const HospitalEventsScreen = ({ navigation }) => {
               }
             },
           },
-        ]
+        ],
       );
     },
-    [registerMutation, refetch]
+    [registerMutation, refetch],
   );
 
   const handleCancelRegistration = useCallback(
@@ -176,21 +192,27 @@ const HospitalEventsScreen = ({ navigation }) => {
                   next.delete(event.id);
                   return next;
                 });
-                Alert.alert("Done", `Registration cancelled for "${event.title}".`);
+                Alert.alert(
+                  "Done",
+                  `Registration cancelled for "${event.title}".`,
+                );
                 await refetch();
               } catch (err) {
                 const msg = parseError(err);
-                logError(err, { context: "HospitalEventsScreen.handleCancelRegistration", eventId: event.id });
+                logError(err, {
+                  context: "HospitalEventsScreen.handleCancelRegistration",
+                  eventId: event.id,
+                });
                 Alert.alert("Error", msg);
               } finally {
                 setRegisteringId(null);
               }
             },
           },
-        ]
+        ],
       );
     },
-    [cancelMutation, refetch]
+    [cancelMutation, refetch],
   );
 
   const getEventIcon = (type) => {
@@ -218,15 +240,29 @@ const HospitalEventsScreen = ({ navigation }) => {
   };
 
   const normalizeEventStatus = useCallback((event) => {
-    const rawStatus = String(event?.status || event?.eventStatus || "").toLowerCase();
+    const rawStatus = String(
+      event?.status || event?.eventStatus || "",
+    ).toLowerCase();
 
-    if (["upcoming", "scheduled", "planned", "open", "published"].includes(rawStatus)) {
+    if (
+      ["upcoming", "scheduled", "planned", "open", "published"].includes(
+        rawStatus,
+      )
+    ) {
       return "upcoming";
     }
-    if (["ongoing", "in_progress", "live", "running", "active"].includes(rawStatus)) {
+    if (
+      ["ongoing", "in_progress", "live", "running", "active"].includes(
+        rawStatus,
+      )
+    ) {
       return "ongoing";
     }
-    if (["completed", "closed", "cancelled", "canceled", "ended"].includes(rawStatus)) {
+    if (
+      ["completed", "closed", "cancelled", "canceled", "ended"].includes(
+        rawStatus,
+      )
+    ) {
       return "completed";
     }
 
@@ -252,7 +288,7 @@ const HospitalEventsScreen = ({ navigation }) => {
         ...event,
         _uiStatus: normalizeEventStatus(event),
       })),
-    [events, normalizeEventStatus]
+    [events, normalizeEventStatus],
   );
 
   const filteredEvents = normalizedEvents.filter((event) => {
@@ -261,8 +297,12 @@ const HospitalEventsScreen = ({ navigation }) => {
   });
 
   const filterOptions = useMemo(() => {
-    const upcomingCount = normalizedEvents.filter((event) => event._uiStatus === "upcoming").length;
-    const ongoingCount = normalizedEvents.filter((event) => event._uiStatus === "ongoing").length;
+    const upcomingCount = normalizedEvents.filter(
+      (event) => event._uiStatus === "upcoming",
+    ).length;
+    const ongoingCount = normalizedEvents.filter(
+      (event) => event._uiStatus === "ongoing",
+    ).length;
 
     return [
       { key: "all", label: "All", count: normalizedEvents.length },
@@ -301,7 +341,11 @@ const HospitalEventsScreen = ({ navigation }) => {
               { backgroundColor: eventColor + "20" },
             ]}
           >
-            <DynamicIcon name={getEventIcon(event.type)} size={32} color={eventColor} />
+            <DynamicIcon
+              name={getEventIcon(event.type)}
+              size={32}
+              color={eventColor}
+            />
           </View>
           <View style={styles.eventHeaderText}>
             <Text style={styles.eventTitle}>{event.title}</Text>
@@ -319,17 +363,18 @@ const HospitalEventsScreen = ({ navigation }) => {
         {/* Event Details */}
         <View style={styles.eventDetails}>
           <View style={styles.eventDetailRow}>
-            <Clock  size={18} color={eventColor} />
+            <Clock size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>
-              {convertTo12Hour(event.startTime)} - {convertTo12Hour(event.endTime)}
+              {convertTo12Hour(event.startTime)} -{" "}
+              {convertTo12Hour(event.endTime)}
             </Text>
           </View>
           <View style={styles.eventDetailRow}>
-            <MapPin  size={18} color={eventColor} />
+            <MapPin size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>{event.venue}</Text>
           </View>
           <View style={styles.eventDetailRow}>
-            <Users  size={18} color={eventColor} />
+            <Users size={18} color={eventColor} />
             <Text style={styles.eventDetailText}>
               {spotsRemaining > 0
                 ? `${spotsRemaining} spots available`
@@ -352,17 +397,13 @@ const HospitalEventsScreen = ({ navigation }) => {
             onPress={() =>
               Alert.alert(
                 "Event Details",
-                `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${convertTo12Hour(event.startTime)} - ${convertTo12Hour(event.endTime)}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`
+                `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${convertTo12Hour(event.startTime)} - ${convertTo12Hour(event.endTime)}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`,
               )
             }
             accessibilityRole="button"
             accessibilityLabel={`View details for ${event.title}`}
           >
-            <Info
-              
-              size={20}
-              color={healthColors.primary.main}
-            />
+            <Info size={20} color={healthColors.primary.main} />
             <Text style={styles.detailsButtonText}>Details</Text>
           </TouchableOpacity>
 
@@ -376,13 +417,18 @@ const HospitalEventsScreen = ({ navigation }) => {
               accessibilityState={{ disabled: registeringId === event.id }}
             >
               <LinearGradient
-                colors={[healthColors.error.main, healthColors.error.dark ?? healthColors.error.main + "DD"]}
+                colors={[
+                  healthColors.error.main,
+                  healthColors.error.dark ?? healthColors.error.main + "DD",
+                ]}
                 style={styles.registerGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
                 <Text style={styles.registerButtonText}>
-                  {registeringId === event.id ? "Cancelling..." : "Cancel Registration"}
+                  {registeringId === event.id
+                    ? "Cancelling..."
+                    : "Cancel Registration"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -395,8 +441,14 @@ const HospitalEventsScreen = ({ navigation }) => {
               onPress={() => handleRegister(event)}
               disabled={registeringId === event.id || spotsRemaining <= 0}
               accessibilityRole="button"
-              accessibilityLabel={spotsRemaining > 0 ? `Register for ${event.title}` : `${event.title} is full`}
-              accessibilityState={{ disabled: registeringId === event.id || spotsRemaining <= 0 }}
+              accessibilityLabel={
+                spotsRemaining > 0
+                  ? `Register for ${event.title}`
+                  : `${event.title} is full`
+              }
+              accessibilityState={{
+                disabled: registeringId === event.id || spotsRemaining <= 0,
+              }}
             >
               <LinearGradient
                 colors={
@@ -412,7 +464,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                   {spotsRemaining > 0 ? "Register" : "Full"}
                 </Text>
                 {spotsRemaining > 0 && (
-                  <ArrowRight  size={16} color={theme.colors.white} />
+                  <ArrowRight size={16} color={theme.colors.white} />
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -442,7 +494,12 @@ const HospitalEventsScreen = ({ navigation }) => {
               accessibilityLabel={`Filter ${option.label} events`}
               accessibilityState={{ selected: active }}
             >
-              <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+              <Text
+                style={[
+                  styles.filterChipText,
+                  active && styles.filterChipTextActive,
+                ]}
+              >
                 {option.label} ({option.count})
               </Text>
             </TouchableOpacity>
@@ -487,15 +544,17 @@ const HospitalEventsScreen = ({ navigation }) => {
       >
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => handleSmartBack(navigation, user?.role === "admin" ? "AdminTabs" : "PatientTabs")}
+          onPress={() =>
+            handleSmartBack(
+              navigation,
+              user?.role === "admin" ? "AdminTabs" : "PatientTabs",
+            )
+          }
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Hospital Events</Text>
@@ -513,10 +572,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           {isRefetching ? (
             <ActivityIndicator size="small" color={healthColors.text.primary} />
           ) : (
-            <RefreshCw
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <RefreshCw size={24} color={healthColors.text.primary} />
           )}
         </TouchableOpacity>
       </View>
@@ -524,15 +580,13 @@ const HospitalEventsScreen = ({ navigation }) => {
       {/* Events List */}
       {loading && !isRefetching ? (
         <View style={styles.loadingListWrapper}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       ) : isError ? (
         <View style={styles.errorContainer}>
-          <AlertCircle
-            
-            size={64}
-            color={healthColors.error.main}
-          />
+          <AlertCircle size={64} color={healthColors.error.main} />
           <Text style={styles.errorTitle}>Failed to Load Events</Text>
           <Text style={styles.errorText}>{parseError(error)}</Text>
           <TouchableOpacity
@@ -555,7 +609,6 @@ const HospitalEventsScreen = ({ navigation }) => {
           maxToRenderPerBatch={10}
           windowSize={10}
           initialNumToRender={10}
-
           ListHeaderComponent={renderHeader}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[
@@ -574,7 +627,10 @@ const HospitalEventsScreen = ({ navigation }) => {
           ListFooterComponent={
             isFetchingNextPage ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color={healthColors.primary.main} />
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
               </View>
             ) : null
           }
@@ -833,6 +889,3 @@ const styles = StyleSheet.create({
 });
 
 export default HospitalEventsScreen;
-
-
-

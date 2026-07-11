@@ -5,7 +5,7 @@
 
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import CompactActionCard from '@/components/common/CompactActionCard';
+import CompactActionCard from "@/components/common/CompactActionCard";
 
 /** @param {{ actionCards: Array<{title,icon,iconColor,onPress,badge?}> }} */
 const QuickActionsGrid = ({ actionCards = [] }) => (

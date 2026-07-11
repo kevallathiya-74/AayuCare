@@ -13,7 +13,10 @@ import {
   View,
   StatusBar,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -28,7 +31,7 @@ import {
   X,
 } from "lucide-react-native";
 
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import {
   Button,
   Card,
@@ -37,14 +40,15 @@ import {
   Input,
   NetworkStatusIndicator,
   SectionHeader,
-} from '@/components/common';
-import { AIIcon } from '@/components/common/CustomIcons';
-import { getScreenPadding } from '@/utils/responsive';
-import { handleSmartBack } from '@/utils/navigation';
-import { showError, parseError, logError } from '@/utils/errorHandler';
-import Routes from '@/navigation/routes';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import aiService from '@/services/ai.service';
+} from "@/components/common";
+import { AIIcon } from "@/components/common/CustomIcons";
+import { getScreenPadding } from "@/utils/responsive";
+import { handleSmartBack } from "@/utils/navigation";
+import { showError, parseError, logError } from "@/utils/errorHandler";
+import Routes from "@/navigation/routes";
+import { useNetworkStatus } from "@/utils/offlineHandler";
+import aiService from "@/services/ai.service";
+import { queryKeys } from "@/config/reactQueryConfig";
 
 const COMMON_SYMPTOMS = [
   "Fever",
@@ -69,28 +73,48 @@ const DISEASE_INFO_BY_KEYWORD = {
       "Common cold is a viral upper-respiratory infection that usually resolves within a week with supportive care.",
     symptoms: ["Runny nose", "Sneezing", "Sore throat", "Mild cough"],
     causes: ["Rhinovirus infection", "Close contact", "Seasonal spread"],
-    treatment: ["Hydration", "Rest", "Steam inhalation", "Symptom-relief medication"],
+    treatment: [
+      "Hydration",
+      "Rest",
+      "Steam inhalation",
+      "Symptom-relief medication",
+    ],
   },
   "viral fever": {
     overview:
       "Viral fever is a temperature rise caused by viral infection and is often accompanied by fatigue and body pain.",
     symptoms: ["Fever", "Body ache", "Fatigue", "Headache"],
     causes: ["Seasonal viruses", "Exposure to infected individuals"],
-    treatment: ["Rest", "Fluids", "Temperature monitoring", "Doctor review if persistent"],
+    treatment: [
+      "Rest",
+      "Fluids",
+      "Temperature monitoring",
+      "Doctor review if persistent",
+    ],
   },
   "seasonal flu": {
     overview:
       "Seasonal flu is an influenza infection that can cause moderate to high fever and respiratory symptoms.",
     symptoms: ["Fever", "Cough", "Body pain", "Headache", "Weakness"],
     causes: ["Influenza virus", "Airborne spread", "Crowded settings"],
-    treatment: ["Rest", "Hydration", "Antiviral guidance from doctor", "Isolation while symptomatic"],
+    treatment: [
+      "Rest",
+      "Hydration",
+      "Antiviral guidance from doctor",
+      "Isolation while symptomatic",
+    ],
   },
   "general illness": {
     overview:
       "General illness indicates non-specific symptoms that need monitoring and clinical correlation.",
     symptoms: ["Low energy", "Mild discomfort", "Variable symptoms"],
     causes: ["Transient infection", "Lifestyle stress", "Insufficient sleep"],
-    treatment: ["Symptom tracking", "Hydration", "Balanced nutrition", "Clinical follow-up if worsening"],
+    treatment: [
+      "Symptom tracking",
+      "Hydration",
+      "Balanced nutrition",
+      "Clinical follow-up if worsening",
+    ],
   },
 };
 
@@ -106,7 +130,7 @@ const resolveDiseaseInfo = (conditionName) => {
   if (!conditionName) return fallback;
   const lowerName = String(conditionName).toLowerCase();
   const foundKey = Object.keys(DISEASE_INFO_BY_KEYWORD).find((keyword) =>
-    lowerName.includes(keyword)
+    lowerName.includes(keyword),
   );
 
   return foundKey ? DISEASE_INFO_BY_KEYWORD[foundKey] : fallback;
@@ -127,13 +151,13 @@ const AISymptomChecker = ({ navigation }) => {
   const [screenError, setScreenError] = useState(null);
 
   const analysisQueryKey = useMemo(
-    () => ["ai", "symptom-analysis", user?.id || "anonymous"],
-    [user?.id]
+    () => queryKeys.ai.symptomAnalysis(user?.id),
+    [user?.id],
   );
 
   const normalizedSymptoms = useMemo(
     () => selectedSymptoms.map((item) => item.trim()).filter(Boolean),
-    [selectedSymptoms]
+    [selectedSymptoms],
   );
 
   const isFormReady = normalizedSymptoms.length > 0;
@@ -154,7 +178,8 @@ const AISymptomChecker = ({ navigation }) => {
       queryClient.invalidateQueries({ queryKey: analysisQueryKey });
     },
     onError: (error) => {
-      const message = parseError(error) || "Unable to analyze symptoms right now.";
+      const message =
+        parseError(error) || "Unable to analyze symptoms right now.";
       logError(error, {
         context: "AISymptomChecker.analyzeSymptoms",
         selectedSymptomsCount: normalizedSymptoms.length,
@@ -166,18 +191,26 @@ const AISymptomChecker = ({ navigation }) => {
   });
 
   const conditionList = useMemo(
-    () => [...(results?.possibleConditions || [])].sort((a, b) => (b?.probability || 0) - (a?.probability || 0)),
-    [results]
+    () =>
+      [...(results?.possibleConditions || [])].sort(
+        (a, b) => (b?.probability || 0) - (a?.probability || 0),
+      ),
+    [results],
   );
 
   const topCondition = conditionList[0] || null;
-  const diseaseInfo = useMemo(() => resolveDiseaseInfo(topCondition?.name), [topCondition]);
+  const diseaseInfo = useMemo(
+    () => resolveDiseaseInfo(topCondition?.name),
+    [topCondition],
+  );
 
   const handleToggleCommonSymptom = useCallback((symptom) => {
     setValidationMessage("");
     setResults(null);
     setSelectedSymptoms((prev) => {
-      const exists = prev.some((item) => item.toLowerCase() === symptom.toLowerCase());
+      const exists = prev.some(
+        (item) => item.toLowerCase() === symptom.toLowerCase(),
+      );
       return exists
         ? prev.filter((item) => item.toLowerCase() !== symptom.toLowerCase())
         : [...prev, symptom];
@@ -199,7 +232,9 @@ const AISymptomChecker = ({ navigation }) => {
     setResults(null);
     setSelectedSymptoms((prev) => {
       const existingLower = new Set(prev.map((item) => item.toLowerCase()));
-      const unique = tokens.filter((item) => !existingLower.has(item.toLowerCase()));
+      const unique = tokens.filter(
+        (item) => !existingLower.has(item.toLowerCase()),
+      );
       return [...prev, ...unique];
     });
     setSymptomDraft("");
@@ -267,7 +302,10 @@ const AISymptomChecker = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={healthColors.background.card} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={healthColors.background.card}
+      />
       <NetworkStatusIndicator />
 
       <View
@@ -280,7 +318,10 @@ const AISymptomChecker = ({ navigation }) => {
           accessibilityLabel="Go back"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ArrowLeft size={theme.iconSizes.md} color={healthColors.text.primary} />
+          <ArrowLeft
+            size={theme.iconSizes.md}
+            color={healthColors.text.primary}
+          />
         </TouchableOpacity>
 
         <View style={styles.headerTitleWrap} pointerEvents="none">
@@ -288,7 +329,8 @@ const AISymptomChecker = ({ navigation }) => {
             AI Symptom Checker
           </Text>
           <Text style={styles.headerSubtitle} numberOfLines={2}>
-            Analyze symptoms, review likely conditions, and read disease guidance
+            Analyze symptoms, review likely conditions, and read disease
+            guidance
           </Text>
         </View>
 
@@ -298,7 +340,12 @@ const AISymptomChecker = ({ navigation }) => {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + theme.spacing.md, theme.spacing.xl) },
+          {
+            paddingBottom: Math.max(
+              insets.bottom + theme.spacing.md,
+              theme.spacing.xl,
+            ),
+          },
         ]}
         keyboardShouldPersistTaps="handled"
       >
@@ -310,18 +357,26 @@ const AISymptomChecker = ({ navigation }) => {
             <View style={styles.symptomGrid}>
               {COMMON_SYMPTOMS.map((symptom) => {
                 const isSelected = selectedSymptoms.some(
-                  (item) => item.toLowerCase() === symptom.toLowerCase()
+                  (item) => item.toLowerCase() === symptom.toLowerCase(),
                 );
                 return (
                   <TouchableOpacity
                     key={symptom}
-                    style={[styles.symptomChip, isSelected && styles.symptomChipSelected]}
+                    style={[
+                      styles.symptomChip,
+                      isSelected && styles.symptomChipSelected,
+                    ]}
                     onPress={() => handleToggleCommonSymptom(symptom)}
                     accessibilityRole="button"
                     accessibilityLabel={`Toggle ${symptom}`}
                     accessibilityState={{ selected: isSelected }}
                   >
-                    <Text style={[styles.symptomChipText, isSelected && styles.symptomChipTextSelected]}>
+                    <Text
+                      style={[
+                        styles.symptomChipText,
+                        isSelected && styles.symptomChipTextSelected,
+                      ]}
+                    >
                       {symptom}
                     </Text>
                   </TouchableOpacity>
@@ -342,7 +397,12 @@ const AISymptomChecker = ({ navigation }) => {
               helperText="Example: chest discomfort, dizziness"
               multiline
               numberOfLines={3}
-              rightIcon={<Plus size={theme.iconSizes.sm} color={healthColors.primary.main} />}
+              rightIcon={
+                <Plus
+                  size={theme.iconSizes.sm}
+                  color={healthColors.primary.main}
+                />
+              }
               onSubmitEditing={handleAddCustomSymptoms}
               blurOnSubmit={false}
             />
@@ -352,7 +412,12 @@ const AISymptomChecker = ({ navigation }) => {
                 variant="outline"
                 title="Add Symptoms"
                 onPress={handleAddCustomSymptoms}
-                icon={<Plus size={theme.iconSizes.sm} color={healthColors.primary.main} />}
+                icon={
+                  <Plus
+                    size={theme.iconSizes.sm}
+                    color={healthColors.primary.main}
+                  />
+                }
               />
             </View>
 
@@ -362,7 +427,11 @@ const AISymptomChecker = ({ navigation }) => {
                 <View style={styles.selectedSymptomsWrap}>
                   {selectedSymptoms.map((symptom) => (
                     <View key={symptom} style={styles.selectedSymptomPill}>
-                      <Text style={styles.selectedSymptomText} numberOfLines={1} ellipsizeMode="tail">
+                      <Text
+                        style={styles.selectedSymptomText}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
                         {symptom}
                       </Text>
                       <TouchableOpacity
@@ -371,7 +440,10 @@ const AISymptomChecker = ({ navigation }) => {
                         accessibilityLabel={`Remove ${symptom}`}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <X size={theme.iconSizes.xs} color={healthColors.text.secondary} />
+                        <X
+                          size={theme.iconSizes.xs}
+                          color={healthColors.text.secondary}
+                        />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -400,7 +472,10 @@ const AISymptomChecker = ({ navigation }) => {
                     key={item.value}
                     style={[
                       styles.severityChip,
-                      active && { borderColor: item.color, backgroundColor: `${item.color}14` },
+                      active && {
+                        borderColor: item.color,
+                        backgroundColor: theme.withOpacity(item.color, 0.08),
+                      },
                     ]}
                     onPress={() => {
                       setSeverity(item.value);
@@ -410,7 +485,14 @@ const AISymptomChecker = ({ navigation }) => {
                     accessibilityLabel={`Set severity to ${item.label}`}
                     accessibilityState={{ selected: active }}
                   >
-                    <Text style={[styles.severityText, active && { color: item.color }]}>{item.label}</Text>
+                    <Text
+                      style={[
+                        styles.severityText,
+                        active && { color: item.color },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
@@ -422,16 +504,30 @@ const AISymptomChecker = ({ navigation }) => {
                 onPress={handleAnalyze}
                 disabled={!isFormReady || analysisMutation.isPending}
                 loading={analysisMutation.isPending}
-                icon={<Sparkles size={theme.iconSizes.sm} color={healthColors.text.white} />}
+                icon={
+                  <Sparkles
+                    size={theme.iconSizes.sm}
+                    color={healthColors.text.white}
+                  />
+                }
                 style={styles.primaryCta}
               />
-              <Button variant="outline" title="Clear Form" onPress={handleClearAll} style={styles.secondaryCta} />
+              <Button
+                variant="outline"
+                title="Clear Form"
+                onPress={handleClearAll}
+                style={styles.secondaryCta}
+              />
             </View>
 
             <View style={styles.noteBox}>
-              <Info size={theme.iconSizes.xs} color={healthColors.text.secondary} />
+              <Info
+                size={theme.iconSizes.xs}
+                color={healthColors.text.secondary}
+              />
               <Text style={styles.noteText}>
-                AI results are advisory only. Always consult a licensed clinician for diagnosis.
+                AI results are advisory only. Always consult a licensed
+                clinician for diagnosis.
               </Text>
             </View>
           </Card>
@@ -441,8 +537,13 @@ const AISymptomChecker = ({ navigation }) => {
 
             {analysisMutation.isPending ? (
               <View style={styles.loadingBlock}>
-                <ActivityIndicator size="large" color={healthColors.primary.main} />
-                <Text style={styles.loadingText}>Analyzing your symptoms...</Text>
+                <ActivityIndicator
+                  size="large"
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.loadingText}>
+                  Analyzing your symptoms...
+                </Text>
               </View>
             ) : !results ? (
               <EmptyState
@@ -453,7 +554,11 @@ const AISymptomChecker = ({ navigation }) => {
             ) : (
               <View style={styles.resultsBlock}>
                 {conditionList.map((condition, index) => (
-                  <Card key={`${condition?.name || "condition"}-${index}`} elevation="small" style={styles.conditionCard}>
+                  <Card
+                    key={`${condition?.name || "condition"}-${index}`}
+                    elevation="small"
+                    style={styles.conditionCard}
+                  >
                     <View style={styles.conditionTopRow}>
                       <View style={styles.rankPill}>
                         <Text style={styles.rankText}>#{index + 1}</Text>
@@ -461,14 +566,18 @@ const AISymptomChecker = ({ navigation }) => {
                       <Text style={styles.conditionName} numberOfLines={2}>
                         {condition?.name || "Unknown"}
                       </Text>
-                      <Text style={styles.probabilityText}>{condition?.probability || 0}%</Text>
+                      <Text style={styles.probabilityText}>
+                        {condition?.probability || 0}%
+                      </Text>
                     </View>
 
                     <View style={styles.progressTrack}>
                       <View
                         style={[
                           styles.progressFill,
-                          { width: `${Math.max(0, Math.min(100, condition?.probability || 0))}%` },
+                          {
+                            width: `${Math.max(0, Math.min(100, condition?.probability || 0))}%`,
+                          },
                         ]}
                       />
                     </View>
@@ -486,13 +595,20 @@ const AISymptomChecker = ({ navigation }) => {
                       }
                     />
                     <Text style={styles.metaLabel}>Urgency</Text>
-                    <Text style={styles.metaValue}>{String(results?.urgencyLevel || "medium").toUpperCase()}</Text>
+                    <Text style={styles.metaValue}>
+                      {String(results?.urgencyLevel || "medium").toUpperCase()}
+                    </Text>
                   </View>
 
                   <View style={styles.metaRow}>
-                    <Clock size={theme.iconSizes.sm} color={healthColors.primary.main} />
+                    <Clock
+                      size={theme.iconSizes.sm}
+                      color={healthColors.primary.main}
+                    />
                     <Text style={styles.metaLabel}>Estimated Recovery</Text>
-                    <Text style={styles.metaValue}>{results?.estimatedRecovery || "N/A"}</Text>
+                    <Text style={styles.metaValue}>
+                      {results?.estimatedRecovery || "N/A"}
+                    </Text>
                   </View>
                 </View>
 
@@ -501,7 +617,10 @@ const AISymptomChecker = ({ navigation }) => {
                     <Text style={styles.subSectionTitle}>Recommendations</Text>
                     {results.recommendations.map((item, index) => (
                       <View key={`rec-${index}`} style={styles.listRow}>
-                        <CheckCircle2 size={theme.iconSizes.xs} color={healthColors.success.main} />
+                        <CheckCircle2
+                          size={theme.iconSizes.xs}
+                          color={healthColors.success.main}
+                        />
                         <Text style={styles.listText}>{item}</Text>
                       </View>
                     ))}
@@ -510,10 +629,15 @@ const AISymptomChecker = ({ navigation }) => {
 
                 {!!results?.whenToSeekHelp?.length && (
                   <View style={styles.alertPanel}>
-                    <Text style={styles.subSectionTitle}>Seek immediate help if</Text>
+                    <Text style={styles.subSectionTitle}>
+                      Seek immediate help if
+                    </Text>
                     {results.whenToSeekHelp.map((item, index) => (
                       <View key={`warn-${index}`} style={styles.listRow}>
-                        <AlertTriangle size={theme.iconSizes.xs} color={healthColors.error.main} />
+                        <AlertTriangle
+                          size={theme.iconSizes.xs}
+                          color={healthColors.error.main}
+                        />
                         <Text style={styles.alertText}>{item}</Text>
                       </View>
                     ))}
@@ -658,7 +782,7 @@ const styles = StyleSheet.create({
   },
   symptomChipSelected: {
     borderColor: healthColors.primary.main,
-    backgroundColor: `${healthColors.primary.main}14`,
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
   },
   symptomChipText: {
     fontSize: theme.typography.sizes.bodyMedium,
@@ -772,7 +896,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: `${healthColors.primary.main}1A`,
+    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.1),
   },
   rankText: {
     fontSize: theme.typography.sizes.caption,
@@ -850,10 +974,10 @@ const styles = StyleSheet.create({
   alertPanel: {
     marginTop: theme.spacing.xs,
     borderWidth: 1,
-    borderColor: `${healthColors.error.main}40`,
+    borderColor: theme.withOpacity(healthColors.error.main, 0.25),
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
-    backgroundColor: `${healthColors.error.main}0F`,
+    backgroundColor: theme.withOpacity(healthColors.error.main, 0.06),
     gap: theme.spacing.xs,
   },
   alertText: {

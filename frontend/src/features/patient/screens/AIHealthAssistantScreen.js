@@ -22,20 +22,25 @@ import {
 } from "react-native-safe-area-context";
 import { ArrowLeft, Mic, BarChart2, PhoneCall } from "lucide-react-native";
 import { useSelector } from "react-redux";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import {
   verticalScale,
   getScreenPadding,
   getKeyboardConfig,
-} from '@/utils/responsive';
-import { ChatComposer, ErrorRecovery, NetworkStatusIndicator } from '@/components/common';
-import { showError, logError } from '@/utils/errorHandler';
-import { useNetworkStatus } from '@/utils/offlineHandler';
-import { aiService, healthMetricsService } from '@/services';
+} from "@/utils/responsive";
+import {
+  ChatComposer,
+  ErrorRecovery,
+  NetworkStatusIndicator,
+} from "@/components/common";
+import { showError, logError } from "@/utils/errorHandler";
+import { useNetworkStatus } from "@/utils/offlineHandler";
+import { aiService, healthMetricsService } from "@/services";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import { getLatestMetric } from "@/utils/vitalsSelector";
+import Routes from "@/navigation/routes";
 
 const AIHealthAssistantScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
@@ -68,10 +73,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
       return null;
     }
 
-    const bpMetrics = metricsData
-      .filter((m) => m.type === "bp")
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    const latestBP = bpMetrics[0];
+    const latestBP = getLatestMetric(metricsData, "bp");
 
     if (!latestBP?.value) {
       return null;
@@ -112,7 +114,8 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         value: bpValue,
         recommendations,
         risk: riskLevel,
-        preventiveCare: sys > 130 ? "Monthly BP monitoring" : "Regular annual checkups",
+        preventiveCare:
+          sys > 130 ? "Monthly BP monitoring" : "Regular annual checkups",
       },
     };
   }, [metricsData]);
@@ -122,12 +125,8 @@ const AIHealthAssistantScreen = ({ navigation }) => {
     onSuccess: (response) => {
       let aiText = "";
       if (response?.success && response?.data) {
-        const {
-          analysis,
-          recommendations,
-          urgencyLevel,
-          possibleConditions,
-        } = response.data;
+        const { analysis, recommendations, urgencyLevel, possibleConditions } =
+          response.data;
 
         aiText = `🔍 **Analysis:** ${analysis || "Based on your symptoms..."}\n\n`;
 
@@ -143,7 +142,8 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           aiText += `⚠️ **Urgency:** ${urgencyLevel}`;
         }
       } else {
-        aiText = "I've noted your concern. For accurate diagnosis, please consult with a doctor.";
+        aiText =
+          "I've noted your concern. For accurate diagnosis, please consult with a doctor.";
       }
 
       const aiResponse = {
@@ -251,15 +251,17 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           accessibilityLabel="Go back"
           accessibilityHint="Returns to patient dashboard"
         >
-          <ArrowLeft
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>AI Health Assistant</Text>
         <TouchableOpacity
           style={styles.voiceButton}
-          onPress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
+          onPress={() =>
+            Alert.alert(
+              "Voice Input",
+              "Voice input will be available in a future update.",
+            )
+          }
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Voice input"
@@ -338,9 +340,20 @@ const AIHealthAssistantScreen = ({ navigation }) => {
 
           {analyzeSymptomsMutation.isPending && (
             <View style={[styles.messageWrapper, styles.aiMessageWrapper]}>
-              <View style={[styles.messageBubble, styles.aiMessage, styles.typingBubble]}>
-                <ActivityIndicator size="small" color={healthColors.primary.main} />
-                <Text style={styles.typingText}>Analyzing your symptoms...</Text>
+              <View
+                style={[
+                  styles.messageBubble,
+                  styles.aiMessage,
+                  styles.typingBubble,
+                ]}
+              >
+                <ActivityIndicator
+                  size="small"
+                  color={healthColors.primary.main}
+                />
+                <Text style={styles.typingText}>
+                  Analyzing your symptoms...
+                </Text>
               </View>
             </View>
           )}
@@ -349,10 +362,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           {messages.length <= 1 && healthInsights && (
             <View style={styles.insightsSection}>
               <View style={styles.insightsHeader}>
-                <BarChart2
-                  size={20}
-                  color={healthColors.primary.main}
-                />
+                <BarChart2 size={20} color={healthColors.primary.main} />
                 <Text style={styles.insightsTitle}>YOUR HEALTH INSIGHTS:</Text>
               </View>
 
@@ -381,7 +391,9 @@ const AIHealthAssistantScreen = ({ navigation }) => {
 
               <TouchableOpacity
                 style={styles.doctorButton}
-                onPress={() => navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING)}
+                onPress={() =>
+                  navigation.navigate(Routes.PATIENT.APPOINTMENT_BOOKING)
+                }
                 activeOpacity={0.8}
                 accessibilityRole="button"
                 accessibilityLabel="Talk to real doctor"
@@ -399,7 +411,12 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           value={message}
           onChangeText={setMessage}
           onSend={handleSend}
-          onVoicePress={() => Alert.alert("Voice Input", "Voice input will be available in a future update.")}
+          onVoicePress={() =>
+            Alert.alert(
+              "Voice Input",
+              "Voice input will be available in a future update.",
+            )
+          }
           sending={analyzeSymptomsMutation.isPending}
           sendDisabled={!message.trim() || analyzeSymptomsMutation.isPending}
           placeholder="Ask anything about your health..."

@@ -23,11 +23,20 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { ArrowLeft, Calendar, Download, Share2, Filter, XCircle, Folder, User } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Calendar,
+  Download,
+  Share2,
+  Filter,
+  XCircle,
+  Folder,
+  User,
+} from "lucide-react-native";
 import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { theme, healthColors } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
+import { theme, healthColors } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
 import {
   ErrorRecovery,
   SkeletonCardRow,
@@ -37,11 +46,11 @@ import {
   FilterSectionTitle,
   FilterChipGroup,
   Card,
-} from '@/components/common';
-import { parseError } from '@/utils/errorHandler';
-import { medicalRecordService } from '@/services';
-import { DynamicIcon } from '@/components/common';
-import { handleSmartBack } from '@/utils/navigation';
+} from "@/components/common";
+import { parseError } from "@/utils/errorHandler";
+import { medicalRecordService } from "@/services";
+import { DynamicIcon } from "@/components/common";
+import { handleSmartBack } from "@/utils/navigation";
 
 const MyReportsScreen = ({ navigation }) => {
   const [selectedReport, setSelectedReport] = useState(null);
@@ -51,23 +60,37 @@ const MyReportsScreen = ({ navigation }) => {
 
   const insets = useSafeAreaInsets();
 
-  const { data: reports = [], isLoading: loading, isRefetching, isError, error, refetch } = useQuery({
-    queryKey: queryKeys.medicalRecords.list({ scope: "patient-reports", patientId: user?.id }),
+  const {
+    data: reports = [],
+    isLoading: loading,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.medicalRecords.list({
+      scope: "patient-reports",
+      patientId: user?.id,
+    }),
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const response = await medicalRecordService.getPatientRecords(user.id);
-      const records = response?.data?.medicalRecords || response?.medicalRecords || [];
+      const records =
+        response?.data?.medicalRecords || response?.medicalRecords || [];
 
       return records.map((record) => ({
         id: record.id,
         title: record.title || "Medical Report",
         type: formatRecordType(record.recordType || "general"),
-        date: new Date(record.createdAt || record.date).toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        }),
+        date: new Date(record.createdAt || record.date).toLocaleDateString(
+          "en-IN",
+          {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          },
+        ),
         doctor: record.doctorName || "Unknown Doctor",
         fileType: determineFileType(record),
         recordData: record,
@@ -98,11 +121,18 @@ const MyReportsScreen = ({ navigation }) => {
     return record.recordType === "imaging" ? "Image" : "PDF";
   };
 
-  const FILTER_OPTIONS = ["All", "Lab Report", "Imaging", "Test Result", "Doctor Visit", "Prescription"];
+  const FILTER_OPTIONS = [
+    "All",
+    "Lab Report",
+    "Imaging",
+    "Test Result",
+    "Doctor Visit",
+    "Prescription",
+  ];
 
   const filteredReports = useMemo(
     () => (filterType ? reports.filter((r) => r.type === filterType) : reports),
-    [filterType, reports]
+    [filterType, reports],
   );
 
   const getFileIcon = (fileType) => {
@@ -120,34 +150,33 @@ const MyReportsScreen = ({ navigation }) => {
           <TouchableOpacity
             onPress={() => handleSmartBack(navigation, "PatientTabs")}
             style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
-            <ArrowLeft
-              
-              size={24}
-              color={healthColors.text.primary}
-            />
+            <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Reports</Text>
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.skeletonWrap}>
-          {[1, 2, 3, 4].map((i) => (<SkeletonCardRow key={i} />))}
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCardRow key={i} />
+          ))}
         </View>
       </SafeAreaView>
     );
   }
 
   const renderReport = ({ item }) => (
-    <Card
-      style={styles.reportCard}
-      onPress={() => setSelectedReport(item)}
-    >
+    <Card style={styles.reportCard} onPress={() => setSelectedReport(item)}>
       {/* Removed navigation to non-existent ReportViewer screen */}
       <View style={styles.reportLeft}>
         <View style={[styles.fileIcon, styles[`fileType_${item.fileType}`]]}>
-          <DynamicIcon name={getFileIcon(item.fileType)} size={theme.iconSizes.lg} color={healthColors.text.white} />
+          <DynamicIcon
+            name={getFileIcon(item.fileType)}
+            size={theme.iconSizes.lg}
+            color={healthColors.text.white}
+          />
         </View>
         <View style={styles.reportInfo}>
           <Text style={styles.reportTitle}>{item.title}</Text>
@@ -172,20 +201,19 @@ const MyReportsScreen = ({ navigation }) => {
             const url = item.recordData?.attachments?.[0];
             if (url) {
               Linking.openURL(url).catch(() =>
-                Alert.alert("Error", "Unable to open the file.")
+                Alert.alert("Error", "Unable to open the file."),
               );
             } else {
-              Alert.alert("Not Available", "No downloadable file is attached to this report.");
+              Alert.alert(
+                "Not Available",
+                "No downloadable file is attached to this report.",
+              );
             }
           }}
           accessibilityRole="button"
           accessibilityLabel={`Download report ${item.title}`}
         >
-          <Download
-            
-            size={20}
-            color={healthColors.primary.main}
-          />
+          <Download size={20} color={healthColors.primary.main} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.shareButton}
@@ -199,11 +227,7 @@ const MyReportsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel={`Share report ${item.title}`}
         >
-          <Share2
-            
-            size={20}
-            color={healthColors.text.secondary}
-          />
+          <Share2 size={20} color={healthColors.text.secondary} />
         </TouchableOpacity>
       </View>
     </Card>
@@ -225,21 +249,17 @@ const MyReportsScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft
-            
-            size={24}
-            color={healthColors.text.primary}
-          />
+          <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Reports</Text>
         <TouchableOpacity
           style={styles.filterButton}
           activeOpacity={0.7}
           onPress={() => setFilterModalVisible(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Open report filters"
+          accessibilityRole="button"
+          accessibilityLabel="Open report filters"
         >
-          <Filter  size={theme.iconSizes.lg} color={healthColors.text.primary} />
+          <Filter size={theme.iconSizes.lg} color={healthColors.text.primary} />
         </TouchableOpacity>
       </View>
 
@@ -251,41 +271,41 @@ const MyReportsScreen = ({ navigation }) => {
           onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
         />
       ) : (
-      <FlatList
-        data={filteredReports}
-        renderItem={renderReport}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.listContent,
-          reports.length === 0 && styles.emptyListContent,
-          { paddingBottom: Math.max(insets.bottom, 20) },
-        ]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={onRefresh}
-            colors={[healthColors.primary.main]}
-            tintColor={healthColors.primary.main}
-          />
-        }
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-        initialNumToRender={10}
-
-        ListEmptyComponent={
-          <EmptyState
-            icon="document-text-outline"
-            title="No Reports Found"
-            message="Your medical reports will appear here once they are uploaded by your doctor."
-          />
-        }
-      />
+        <FlatList
+          data={filteredReports}
+          renderItem={renderReport}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listContent,
+            reports.length === 0 && styles.emptyListContent,
+            { paddingBottom: Math.max(insets.bottom, 20) },
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={onRefresh}
+              colors={[healthColors.primary.main]}
+              tintColor={healthColors.primary.main}
+            />
+          }
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          ListEmptyComponent={
+            <EmptyState
+              icon="document-text-outline"
+              title="No Reports Found"
+              message="Your medical reports will appear here once they are uploaded by your doctor."
+            />
+          }
+        />
       )}
 
       {/* Report Detail Modal */}
-      <Modal statusBarTranslucent
+      <Modal
+        statusBarTranslucent
         animationType="slide"
         transparent={true}
         visible={!!selectedReport}
@@ -294,46 +314,65 @@ const MyReportsScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle} numberOfLines={2}>{selectedReport?.title}</Text>
+              <Text style={styles.modalTitle} numberOfLines={2}>
+                {selectedReport?.title}
+              </Text>
               <TouchableOpacity
                 onPress={() => setSelectedReport(null)}
                 accessibilityRole="button"
                 accessibilityLabel="Close report details"
               >
-                <XCircle  size={28} color={healthColors.text.tertiary} />
+                <XCircle size={28} color={healthColors.text.tertiary} />
               </TouchableOpacity>
             </View>
             <ScrollView>
               {selectedReport && (
                 <>
                   <View style={styles.detailRow}>
-                    <Calendar  size={theme.iconSizes.xs} color={healthColors.text.secondary} />
+                    <Calendar
+                      size={theme.iconSizes.xs}
+                      color={healthColors.text.secondary}
+                    />
                     <Text style={styles.detailText}>{selectedReport.date}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Folder  size={theme.iconSizes.xs} color={healthColors.text.secondary} />
+                    <Folder
+                      size={theme.iconSizes.xs}
+                      color={healthColors.text.secondary}
+                    />
                     <Text style={styles.detailText}>{selectedReport.type}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <User  size={theme.iconSizes.xs} color={healthColors.text.secondary} />
-                    <Text style={styles.detailText}>Dr. {selectedReport.doctor}</Text>
+                    <User
+                      size={theme.iconSizes.xs}
+                      color={healthColors.text.secondary}
+                    />
+                    <Text style={styles.detailText}>
+                      Dr. {selectedReport.doctor}
+                    </Text>
                   </View>
                   {selectedReport.recordData?.description && (
                     <View style={styles.detailBlock}>
                       <Text style={styles.detailBlockTitle}>Description</Text>
-                      <Text style={styles.detailBlockBody}>{selectedReport.recordData.description}</Text>
+                      <Text style={styles.detailBlockBody}>
+                        {selectedReport.recordData.description}
+                      </Text>
                     </View>
                   )}
                   {selectedReport.recordData?.diagnosis && (
                     <View style={styles.detailBlock}>
                       <Text style={styles.detailBlockTitle}>Diagnosis</Text>
-                      <Text style={styles.detailBlockBody}>{selectedReport.recordData.diagnosis}</Text>
+                      <Text style={styles.detailBlockBody}>
+                        {selectedReport.recordData.diagnosis}
+                      </Text>
                     </View>
                   )}
                   {selectedReport.recordData?.aiAnalysis?.summary && (
                     <View style={styles.detailBlockAi}>
                       <Text style={styles.detailBlockTitle}>AI Analysis</Text>
-                      <Text style={styles.detailBlockBody}>{selectedReport.recordData.aiAnalysis.summary}</Text>
+                      <Text style={styles.detailBlockBody}>
+                        {selectedReport.recordData.aiAnalysis.summary}
+                      </Text>
                     </View>
                   )}
                   <View style={styles.modalActions}>
@@ -342,7 +381,9 @@ const MyReportsScreen = ({ navigation }) => {
                       onPress={() => {
                         const url = selectedReport.recordData?.attachments?.[0];
                         if (url) {
-                          Linking.openURL(url).catch(() => Alert.alert("Error", "Unable to open file."));
+                          Linking.openURL(url).catch(() =>
+                            Alert.alert("Error", "Unable to open file."),
+                          );
                         } else {
                           Alert.alert("Not Available", "No file attached.");
                         }
@@ -350,7 +391,10 @@ const MyReportsScreen = ({ navigation }) => {
                       accessibilityRole="button"
                       accessibilityLabel="Download selected report"
                     >
-                      <Download  size={theme.iconSizes.sm} color={healthColors.primary.main} />
+                      <Download
+                        size={theme.iconSizes.sm}
+                        color={healthColors.primary.main}
+                      />
                       <Text style={styles.modalActionText}>Download</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -364,7 +408,10 @@ const MyReportsScreen = ({ navigation }) => {
                       accessibilityRole="button"
                       accessibilityLabel="Share selected report"
                     >
-                      <Share2  size={theme.iconSizes.sm} color={healthColors.text.secondary} />
+                      <Share2
+                        size={theme.iconSizes.sm}
+                        color={healthColors.text.secondary}
+                      />
                       <Text style={styles.modalActionText}>Share</Text>
                     </TouchableOpacity>
                   </View>
@@ -605,4 +652,3 @@ const styles = StyleSheet.create({
 });
 
 export default MyReportsScreen;
-

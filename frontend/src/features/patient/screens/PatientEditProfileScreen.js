@@ -11,20 +11,23 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { ArrowLeft, Calendar, ChevronDown } from "lucide-react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { theme, healthColors, spacing, textStyles } from '@/theme';
-import { getSafeAreaEdges, getKeyboardConfig } from '@/utils/responsive';
-import { Card, Button, Input } from '@/components/common';
-import { patientService } from '@/services';
-import { updateUser } from '@/store/slices/authSlice';
-import { logError, parseError } from '@/utils/errorHandler';
-import { queryKeys } from '@/config/reactQueryConfig';
-import { handleSmartBack } from '@/utils/navigation';
-import appStorage from '@/utils/appStorage';
-import { STORAGE_KEYS } from '@/utils/constants';
+import { theme, healthColors, spacing, textStyles } from "@/theme";
+import { getSafeAreaEdges, getKeyboardConfig } from "@/utils/responsive";
+import { Card, Button, Input } from "@/components/common";
+import { patientService } from "@/services";
+import { updateUser } from "@/store/slices/authSlice";
+import { logError, parseError } from "@/utils/errorHandler";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { handleSmartBack } from "@/utils/navigation";
+import appStorage from "@/utils/appStorage";
+import { STORAGE_KEYS } from "@/utils/constants";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["male", "female", "other"];
@@ -52,7 +55,10 @@ const PatientEditProfileScreen = ({ navigation }) => {
   });
 
   const canSave = useMemo(() => {
-    return form.name.trim().length > 0 && /^\+?[1-9]\d{9,14}$/.test(form.phone.trim());
+    return (
+      form.name.trim().length > 0 &&
+      /^\+?[1-9]\d{9,14}$/.test(form.phone.trim())
+    );
   }, [form.name, form.phone]);
 
   const handleChange = (key, value) => {
@@ -91,7 +97,10 @@ const PatientEditProfileScreen = ({ navigation }) => {
     if (form.dateOfBirth) {
       const dob = new Date(form.dateOfBirth);
       if (isNaN(dob.getTime()) || dob >= new Date()) {
-        Alert.alert("Validation Error", "Enter a valid date of birth (YYYY-MM-DD)");
+        Alert.alert(
+          "Validation Error",
+          "Enter a valid date of birth (YYYY-MM-DD)",
+        );
         return false;
       }
     }
@@ -118,10 +127,14 @@ const PatientEditProfileScreen = ({ navigation }) => {
         dateOfBirth: form.dateOfBirth.trim() || undefined,
         emergencyContactName: form.emergencyContactName.trim() || undefined,
         emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
-        emergencyContactRelation: form.emergencyContactRelation.trim() || undefined,
+        emergencyContactRelation:
+          form.emergencyContactRelation.trim() || undefined,
       };
 
-      const response = await updateProfileMutation.mutateAsync({ userId: user.id, payload });
+      const response = await updateProfileMutation.mutateAsync({
+        userId: user.id,
+        payload,
+      });
       const updatedProfile = response?.data || {};
 
       const updateDataPayload = {
@@ -149,15 +162,23 @@ const PatientEditProfileScreen = ({ navigation }) => {
       };
 
       dispatch(updateUser(updateDataPayload));
-      
+
       const newUserState = { ...user, ...updateDataPayload };
-      await appStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(newUserState));
+      await appStorage.setItem(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(newUserState),
+      );
 
       Alert.alert("Success", "Profile updated successfully", [
-        { text: "OK", onPress: () => handleSmartBack(navigation, "PatientTabs") },
+        {
+          text: "OK",
+          onPress: () => handleSmartBack(navigation, "PatientTabs"),
+        },
       ]);
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.patients.detail(user.id) }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.patients.detail(user.id),
+        }),
         queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
       ]);
     } catch (error) {
@@ -167,150 +188,184 @@ const PatientEditProfileScreen = ({ navigation }) => {
   };
 
   const updateProfileMutation = useMutation({
-    mutationFn: ({ userId, payload }) => patientService.updatePatientProfile(userId, payload),
+    mutationFn: ({ userId, payload }) =>
+      patientService.updatePatientProfile(userId, payload),
     retry: 1,
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}> 
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("default")}>
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.flexContainer}
       >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          paddingHorizontal: spacing.lg,
-          paddingTop: spacing.lg,
-          paddingBottom: Math.max(insets.bottom, spacing.xl),
-        }}
-      >
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => handleSmartBack(navigation, "PatientTabs", { screen: "Profile" })}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <ArrowLeft  size={22} color={healthColors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Edit Profile</Text>
-          <View style={styles.iconButton} />
-        </View>
-
-        <Card style={styles.card}>
-          <Field
-            label="Full Name"
-            value={form.name}
-            onChangeText={(v) => handleChange("name", v)}
-            placeholder="Enter full name"
-          />
-          <Field
-            label="Phone"
-            value={form.phone}
-            onChangeText={(v) => handleChange("phone", v.replace(/[^0-9+]/g, ""))}
-            keyboardType="phone-pad"
-            placeholder="Enter phone"
-          />
-          <Field
-            label="Address"
-            value={form.address}
-            onChangeText={(v) => handleChange("address", v)}
-            placeholder="Enter address"
-          />
-          {/* Blood Group Selector */}
-          <View style={styles.pickerGroup}>
-            <Text style={styles.pickerLabel}>Blood Group</Text>
-            <View style={styles.chipRow}>
-              {BLOOD_GROUPS.map((bg) => (
-                <TouchableOpacity
-                  key={bg}
-                  style={[styles.chip, form.bloodGroup === bg && styles.chipActive]}
-                  onPress={() => handleChange("bloodGroup", bg)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select blood group ${bg}`}
-                  accessibilityState={{ selected: form.bloodGroup === bg }}
-                >
-                  <Text style={[styles.chipText, form.bloodGroup === bg && styles.chipTextActive]}>{bg}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          {/* Gender Selector */}
-          <View style={styles.pickerGroup}>
-            <Text style={styles.pickerLabel}>Gender</Text>
-            <View style={styles.chipRow}>
-              {GENDERS.map((g) => (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.chip, form.gender === g && styles.chipActive]}
-                  onPress={() => handleChange("gender", g)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select gender ${g}`}
-                  accessibilityState={{ selected: form.gender === g }}
-                >
-                  <Text style={[styles.chipText, form.gender === g && styles.chipTextActive]}>
-                    {g.charAt(0).toUpperCase() + g.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          {/* Date of Birth Picker */}
-          <View style={styles.pickerGroup}>
-            <Text style={styles.pickerLabel}>Date of Birth</Text>
-            <TouchableOpacity
-              style={styles.datePickerButton}
-              onPress={() => setShowDobPicker(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Select date of birth"
-            >
-              <Calendar  size={18} color={healthColors.text.secondary} />
-              <Text style={[styles.datePickerText, !form.dateOfBirth && styles.datePickerPlaceholder]}>
-                {form.dateOfBirth || "Select date of birth"}
-              </Text>
-              <ChevronDown  size={16} color={healthColors.text.tertiary} />
-            </TouchableOpacity>
-          </View>
-          <Field
-            label="Emergency Contact Name"
-            value={form.emergencyContactName}
-            onChangeText={(v) => handleChange("emergencyContactName", v)}
-            placeholder="Enter contact name"
-          />
-          <Field
-            label="Emergency Contact Phone"
-            value={form.emergencyContactPhone}
-            onChangeText={(v) => handleChange("emergencyContactPhone", v.replace(/[^0-9+]/g, ""))}
-            keyboardType="phone-pad"
-            placeholder="Enter contact phone"
-          />
-          <Field
-            label="Emergency Contact Relation"
-            value={form.emergencyContactRelation}
-            onChangeText={(v) => handleChange("emergencyContactRelation", v)}
-            placeholder="e.g. Father, Spouse, Friend"
-          />
-        </Card>
-
-        <Button
-          variant="primary"
-          size="large"
-          fullWidth
-          gradient
-          loading={updateProfileMutation.isPending}
-          disabled={!canSave || updateProfileMutation.isPending}
-          onPress={handleSave}
-          style={styles.saveButton}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.lg,
+            paddingBottom: Math.max(insets.bottom, spacing.xl),
+          }}
         >
-          <Text>Save Changes</Text>
-        </Button>
-      </ScrollView>
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() =>
+                handleSmartBack(navigation, "PatientTabs", {
+                  screen: "Profile",
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <ArrowLeft size={22} color={healthColors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.title}>Edit Profile</Text>
+            <View style={styles.iconButton} />
+          </View>
+
+          <Card style={styles.card}>
+            <Field
+              label="Full Name"
+              value={form.name}
+              onChangeText={(v) => handleChange("name", v)}
+              placeholder="Enter full name"
+            />
+            <Field
+              label="Phone"
+              value={form.phone}
+              onChangeText={(v) =>
+                handleChange("phone", v.replace(/[^0-9+]/g, ""))
+              }
+              keyboardType="phone-pad"
+              placeholder="Enter phone"
+            />
+            <Field
+              label="Address"
+              value={form.address}
+              onChangeText={(v) => handleChange("address", v)}
+              placeholder="Enter address"
+            />
+            {/* Blood Group Selector */}
+            <View style={styles.pickerGroup}>
+              <Text style={styles.pickerLabel}>Blood Group</Text>
+              <View style={styles.chipRow}>
+                {BLOOD_GROUPS.map((bg) => (
+                  <TouchableOpacity
+                    key={bg}
+                    style={[
+                      styles.chip,
+                      form.bloodGroup === bg && styles.chipActive,
+                    ]}
+                    onPress={() => handleChange("bloodGroup", bg)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select blood group ${bg}`}
+                    accessibilityState={{ selected: form.bloodGroup === bg }}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        form.bloodGroup === bg && styles.chipTextActive,
+                      ]}
+                    >
+                      {bg}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            {/* Gender Selector */}
+            <View style={styles.pickerGroup}>
+              <Text style={styles.pickerLabel}>Gender</Text>
+              <View style={styles.chipRow}>
+                {GENDERS.map((g) => (
+                  <TouchableOpacity
+                    key={g}
+                    style={[
+                      styles.chip,
+                      form.gender === g && styles.chipActive,
+                    ]}
+                    onPress={() => handleChange("gender", g)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select gender ${g}`}
+                    accessibilityState={{ selected: form.gender === g }}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        form.gender === g && styles.chipTextActive,
+                      ]}
+                    >
+                      {g.charAt(0).toUpperCase() + g.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            {/* Date of Birth Picker */}
+            <View style={styles.pickerGroup}>
+              <Text style={styles.pickerLabel}>Date of Birth</Text>
+              <TouchableOpacity
+                style={styles.datePickerButton}
+                onPress={() => setShowDobPicker(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Select date of birth"
+              >
+                <Calendar size={18} color={healthColors.text.secondary} />
+                <Text
+                  style={[
+                    styles.datePickerText,
+                    !form.dateOfBirth && styles.datePickerPlaceholder,
+                  ]}
+                >
+                  {form.dateOfBirth || "Select date of birth"}
+                </Text>
+                <ChevronDown size={16} color={healthColors.text.tertiary} />
+              </TouchableOpacity>
+            </View>
+            <Field
+              label="Emergency Contact Name"
+              value={form.emergencyContactName}
+              onChangeText={(v) => handleChange("emergencyContactName", v)}
+              placeholder="Enter contact name"
+            />
+            <Field
+              label="Emergency Contact Phone"
+              value={form.emergencyContactPhone}
+              onChangeText={(v) =>
+                handleChange("emergencyContactPhone", v.replace(/[^0-9+]/g, ""))
+              }
+              keyboardType="phone-pad"
+              placeholder="Enter contact phone"
+            />
+            <Field
+              label="Emergency Contact Relation"
+              value={form.emergencyContactRelation}
+              onChangeText={(v) => handleChange("emergencyContactRelation", v)}
+              placeholder="e.g. Father, Spouse, Friend"
+            />
+          </Card>
+
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
+            gradient
+            loading={updateProfileMutation.isPending}
+            disabled={!canSave || updateProfileMutation.isPending}
+            onPress={handleSave}
+            style={styles.saveButton}
+          >
+            <Text>Save Changes</Text>
+          </Button>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Date of Birth Picker */}
       {Platform.OS === "ios" ? (
-        <Modal statusBarTranslucent
+        <Modal
+          statusBarTranslucent
           transparent
           animationType="slide"
           visible={showDobPicker}
@@ -336,7 +391,11 @@ const PatientEditProfileScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
               <DateTimePicker
-                value={form.dateOfBirth ? new Date(form.dateOfBirth) : new Date(2000, 0, 1)}
+                value={
+                  form.dateOfBirth
+                    ? new Date(form.dateOfBirth)
+                    : new Date(2000, 0, 1)
+                }
                 mode="date"
                 display="spinner"
                 maximumDate={new Date()}
@@ -349,7 +408,11 @@ const PatientEditProfileScreen = ({ navigation }) => {
       ) : (
         showDobPicker && (
           <DateTimePicker
-            value={form.dateOfBirth ? new Date(form.dateOfBirth) : new Date(2000, 0, 1)}
+            value={
+              form.dateOfBirth
+                ? new Date(form.dateOfBirth)
+                : new Date(2000, 0, 1)
+            }
             mode="date"
             display="default"
             maximumDate={new Date()}
@@ -363,10 +426,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
 };
 
 const Field = ({ label, ...inputProps }) => (
-  <Input
-    label={label}
-    {...inputProps}
-  />
+  <Input label={label} {...inputProps} />
 );
 
 const styles = StyleSheet.create({

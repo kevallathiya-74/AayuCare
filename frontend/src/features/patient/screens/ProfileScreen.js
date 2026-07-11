@@ -39,21 +39,23 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import { theme, healthColors, textStyles, spacing } from '@/theme';
-import { queryKeys } from '@/config/reactQueryConfig';
-import {
-  getSafeAreaEdges,
-} from '@/utils/responsive';
-import { Card } from '@/components/common';
-import { logoutUser } from '@/store/slices/authSlice';
+import { theme, healthColors, textStyles, spacing } from "@/theme";
+import { queryKeys } from "@/config/reactQueryConfig";
+import { getSafeAreaEdges } from "@/utils/responsive";
+import { Card } from "@/components/common";
+import { logoutUser } from "@/store/slices/authSlice";
 import {
   appointmentService,
   medicalRecordService,
   prescriptionService,
-} from '@/services';
-import { calculateAge, formatDate, formatMedicalHistoryDuration } from '@/utils/dateHelpers';
-import { handleSmartBack } from '@/utils/navigation';
-import Routes from '@/navigation/routes';
+} from "@/services";
+import {
+  calculateAge,
+  formatDate,
+  formatMedicalHistoryDuration,
+} from "@/utils/dateHelpers";
+import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 
 const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -83,24 +85,38 @@ const ProfileScreen = ({ navigation }) => {
     enabled: !!user?.id && user?.role === "patient",
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const [appointmentsRes, recordsRes, prescriptionsRes] = await Promise.allSettled([
-        appointmentService.getPatientAppointments(user.id),
-        medicalRecordService.getPatientRecords(user.id),
-        prescriptionService.getPatientPrescriptions(user.id),
-      ]);
+      const [appointmentsRes, recordsRes, prescriptionsRes] =
+        await Promise.allSettled([
+          appointmentService.getPatientAppointments(user.id),
+          medicalRecordService.getPatientRecords(user.id),
+          prescriptionService.getPatientPrescriptions(user.id),
+        ]);
 
       return {
         appointments:
           appointmentsRes.status === "fulfilled"
-            ? getCollectionCount(appointmentsRes.value, ["appointments", "items", "rows"])
+            ? getCollectionCount(appointmentsRes.value, [
+                "appointments",
+                "items",
+                "rows",
+              ])
             : 0,
         records:
           recordsRes.status === "fulfilled"
-            ? getCollectionCount(recordsRes.value, ["medicalRecords", "records", "items", "rows"])
+            ? getCollectionCount(recordsRes.value, [
+                "medicalRecords",
+                "records",
+                "items",
+                "rows",
+              ])
             : 0,
         prescriptions:
           prescriptionsRes.status === "fulfilled"
-            ? getCollectionCount(prescriptionsRes.value, ["prescriptions", "items", "rows"])
+            ? getCollectionCount(prescriptionsRes.value, [
+                "prescriptions",
+                "items",
+                "rows",
+              ])
             : 0,
       };
     },
@@ -133,7 +149,11 @@ const ProfileScreen = ({ navigation }) => {
     }
 
     return (
-      <View style={styles.statSkeletonPill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View
+        style={styles.statSkeletonPill}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         <Text style={styles.statSkeletonText}>--</Text>
       </View>
     );
@@ -143,7 +163,8 @@ const ProfileScreen = ({ navigation }) => {
     if (title === "Logout") return "Logs you out of this device";
     if (title === "Edit Profile") return "Open profile edit form";
     if (title === "Change Password") return "Open password change form";
-    if (title === "Privacy Settings") return "Open accessibility and privacy settings";
+    if (title === "Privacy Settings")
+      return "Open accessibility and privacy settings";
     return "Opens support contact details";
   };
 
@@ -163,7 +184,8 @@ const ProfileScreen = ({ navigation }) => {
     : `Appointments ${stats.appointments}, Records ${stats.records}, Prescriptions ${stats.prescriptions}`;
 
   // Calculate age from dateOfBirth
-  const calculatedAge = user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
+  const calculatedAge =
+    user?.age || (user?.dateOfBirth ? calculateAge(user.dateOfBirth) : null);
 
   // Format medical history properly (array of objects)
   const formatMedicalHistory = () => {
@@ -196,9 +218,20 @@ const ProfileScreen = ({ navigation }) => {
         { label: "Patient ID", value: user?.userId || "N/A" },
         { label: "Email", value: user?.email || "N/A" },
         { label: "Phone", value: user?.phone || "N/A" },
-        { label: "Date of Birth", value: user?.dateOfBirth ? formatDate(user.dateOfBirth) : "N/A" },
-        { label: "Age", value: calculatedAge ? `${calculatedAge} years` : "N/A" },
-        { label: "Gender", value: user?.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : "N/A" },
+        {
+          label: "Date of Birth",
+          value: user?.dateOfBirth ? formatDate(user.dateOfBirth) : "N/A",
+        },
+        {
+          label: "Age",
+          value: calculatedAge ? `${calculatedAge} years` : "N/A",
+        },
+        {
+          label: "Gender",
+          value: user?.gender
+            ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1)
+            : "N/A",
+        },
         { label: "Blood Group", value: user?.bloodGroup || "N/A" },
         { label: "Address", value: user?.address || "N/A" },
       ],
@@ -209,7 +242,10 @@ const ProfileScreen = ({ navigation }) => {
       data: [
         { label: "Hospital", value: user?.hospitalName || "N/A" },
         { label: "Hospital ID", value: user?.hospitalId || "N/A" },
-        { label: "Account Status", value: user?.isActive ? "Active" : "Inactive" },
+        {
+          label: "Account Status",
+          value: user?.isActive ? "Active" : "Inactive",
+        },
         { label: "Verified", value: user?.isVerified ? "Yes" : "No" },
       ],
     },
@@ -234,11 +270,15 @@ const ProfileScreen = ({ navigation }) => {
       data: [
         {
           label: "Contact Name",
-          value: user?.emergencyContact?.name || user?.emergencyContactName || "N/A",
+          value:
+            user?.emergencyContact?.name || user?.emergencyContactName || "N/A",
         },
         {
           label: "Contact Phone",
-          value: user?.emergencyContact?.phone || user?.emergencyContactPhone || "N/A",
+          value:
+            user?.emergencyContact?.phone ||
+            user?.emergencyContactPhone ||
+            "N/A",
         },
         {
           label: "Relationship",
@@ -274,7 +314,7 @@ const ProfileScreen = ({ navigation }) => {
         Alert.alert(
           "Help & Support",
           "For assistance, please contact:\n\nEmail: support@aayucare.com\nPhone: 1800-123-4567\n\nAvailable 24/7",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         ),
     },
     {
@@ -320,15 +360,12 @@ const ProfileScreen = ({ navigation }) => {
             accessibilityHint="Returns to your dashboard tabs"
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
-            <ArrowLeft  size={theme.iconSizes.lg} color={theme.colors.white} />
+            <ArrowLeft size={theme.iconSizes.lg} color={theme.colors.white} />
           </TouchableOpacity>
 
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <User
-                size={60}
-                color={healthColors.primary.main}
-              />
+              <User size={60} color={healthColors.primary.main} />
             </View>
             <Text style={styles.userName}>{user?.name || "User"}</Text>
             <Text style={styles.userRole}>{user?.role || "Patient"}</Text>
@@ -346,30 +383,33 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard} accessible accessibilityRole="summary" accessibilityLabel={statsSummaryA11y}>
-            <Calendar
-              
-              size={24}
-              color={healthColors.primary.main}
-            />
+          <View
+            style={styles.statCard}
+            accessible
+            accessibilityRole="summary"
+            accessibilityLabel={statsSummaryA11y}
+          >
+            <Calendar size={24} color={healthColors.primary.main} />
             {renderStatValue(stats.appointments)}
             <Text style={styles.statLabel}>Appointments</Text>
           </View>
-          <View style={styles.statCard} accessible accessibilityRole="summary" accessibilityLabel={statsSummaryA11y}>
-            <FileText
-              
-              size={24}
-              color={healthColors.success.main}
-            />
+          <View
+            style={styles.statCard}
+            accessible
+            accessibilityRole="summary"
+            accessibilityLabel={statsSummaryA11y}
+          >
+            <FileText size={24} color={healthColors.success.main} />
             {renderStatValue(stats.records)}
             <Text style={styles.statLabel}>Records</Text>
           </View>
-          <View style={styles.statCard} accessible accessibilityRole="summary" accessibilityLabel={statsSummaryA11y}>
-            <BriefcaseMedical
-              
-              size={24}
-              color={healthColors.info.main}
-            />
+          <View
+            style={styles.statCard}
+            accessible
+            accessibilityRole="summary"
+            accessibilityLabel={statsSummaryA11y}
+          >
+            <BriefcaseMedical size={24} color={healthColors.info.main} />
             {renderStatValue(stats.prescriptions)}
             <Text style={styles.statLabel}>Prescriptions</Text>
           </View>
@@ -379,36 +419,43 @@ const ProfileScreen = ({ navigation }) => {
         {profileSections.map((section, index) => {
           const SectionIcon = section.Icon;
           return (
-          <View key={index} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIconContainer}>
-                <SectionIcon size={theme.iconSizes.md} color={healthColors.primary.main} />
-              </View>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-            </View>
-            <Card style={styles.card}>
-              {section.data.map((item, idx) => (
-                <View key={idx} style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{item.label}</Text>
-                  <Text
-                    style={styles.infoValue}
-                    numberOfLines={2}
-                    accessible
-                    accessibilityLabel={getValueLabel(item.label, item.value)}
-                  >
-                    {item.value}
-                  </Text>
+            <View key={index} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIconContainer}>
+                  <SectionIcon
+                    size={theme.iconSizes.md}
+                    color={healthColors.primary.main}
+                  />
                 </View>
-              ))}
-            </Card>
-          </View>
-        )})}
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+              </View>
+              <Card style={styles.card}>
+                {section.data.map((item, idx) => (
+                  <View key={idx} style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>{item.label}</Text>
+                    <Text
+                      style={styles.infoValue}
+                      numberOfLines={2}
+                      accessible
+                      accessibilityLabel={getValueLabel(item.label, item.value)}
+                    >
+                      {item.value}
+                    </Text>
+                  </View>
+                ))}
+              </Card>
+            </View>
+          );
+        })}
 
         {/* Action Items */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconContainer}>
-              <Settings size={theme.iconSizes.md} color={healthColors.primary.main} />
+              <Settings
+                size={theme.iconSizes.md}
+                color={healthColors.primary.main}
+              />
             </View>
             <Text style={styles.sectionTitle}>Account Actions</Text>
           </View>
@@ -436,10 +483,13 @@ const ProfileScreen = ({ navigation }) => {
                   >
                     <ActionIcon size={theme.iconSizes.md} color={item.color} />
                   </View>
-                  <Text style={[styles.actionText, { color: item.color }]}> 
+                  <Text style={[styles.actionText, { color: item.color }]}>
                     {item.title}
                   </Text>
-                  <ChevronRight size={theme.iconSizes.md} color={healthColors.text.secondary} />
+                  <ChevronRight
+                    size={theme.iconSizes.md}
+                    color={healthColors.text.secondary}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -618,6 +668,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
-
-
-
