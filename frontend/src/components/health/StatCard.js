@@ -24,7 +24,7 @@ import {
   Animated,
   StyleSheet,
 } from "react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import DynamicIcon from "../common/DynamicIcon";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -44,11 +44,18 @@ const StatCard = ({
 
   const handlePressIn = () => {
     if (!onPress) return;
-    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
   };
   const handlePressOut = () => {
     if (!onPress) return;
-    Animated.spring(scaleAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 4,
+      useNativeDriver: true,
+    }).start();
   };
 
   const trendIsPositive = typeof trend === "number" ? trend >= 0 : null;
@@ -67,9 +74,7 @@ const StatCard = ({
 
   const displayTrend =
     trendLabel ||
-    (typeof trend === "number"
-      ? `${trend >= 0 ? "+" : ""}${trend}%`
-      : null);
+    (typeof trend === "number" ? `${trend >= 0 ? "+" : ""}${trend}%` : null);
 
   const color = iconColor || healthColors.primary.main;
   const CardWrapper = onPress ? AnimatedTouchable : Animated.View;
@@ -88,9 +93,7 @@ const StatCard = ({
       ]}
     >
       {/* Icon blob */}
-      <View
-        style={[styles.iconWrap, { backgroundColor: color + "18" }]}
-      >
+      <View style={[styles.iconWrap, { backgroundColor: color + "18" }]}>
         <DynamicIcon name={icon} size={theme.iconSizes.md} color={color} />
       </View>
 
@@ -108,10 +111,15 @@ const StatCard = ({
       {displayTrend ? (
         <View style={styles.trendRow}>
           {trendIcon ? (
-            <DynamicIcon name={trendIcon} size={theme.iconSizes.xs} color={trendColor} />
+            <DynamicIcon
+              name={trendIcon}
+              size={theme.iconSizes.xs}
+              color={trendColor}
+            />
           ) : null}
           <Text style={[styles.trendText, { color: trendColor }]}>
-            {" "}{displayTrend}
+            {" "}
+            {displayTrend}
           </Text>
         </View>
       ) : null}

@@ -50,8 +50,24 @@ const initialForm = {
   availability: "",
 };
 
-const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-const DAY_LABELS = { monday: "Mon", tuesday: "Tue", wednesday: "Wed", thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun" };
+const DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+const DAY_LABELS = {
+  monday: "Mon",
+  tuesday: "Tue",
+  wednesday: "Wed",
+  thursday: "Thu",
+  friday: "Fri",
+  saturday: "Sat",
+  sunday: "Sun",
+};
 const TIME_SLOTS = ["09:00-12:00", "12:00-14:00", "14:00-17:00", "17:00-20:00"];
 
 export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
@@ -60,7 +76,8 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
   const [availabilitySlots, setAvailabilitySlots] = useState({});
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showSpecializationPicker, setShowSpecializationPicker] = useState(false);
+  const [showSpecializationPicker, setShowSpecializationPicker] =
+    useState(false);
 
   useEffect(() => {
     if (mode === "edit" && doctor) {
@@ -79,8 +96,14 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       // Parse availability into structured state
       let parsed = {};
       if (doctor.availability) {
-        parsed = typeof doctor.availability === "object" ? doctor.availability : {};
-        try { if (typeof doctor.availability === "string") parsed = JSON.parse(doctor.availability); } catch { /* ignore parse errors */ }
+        parsed =
+          typeof doctor.availability === "object" ? doctor.availability : {};
+        try {
+          if (typeof doctor.availability === "string")
+            parsed = JSON.parse(doctor.availability);
+        } catch {
+          /* ignore parse errors */
+        }
       }
       setAvailabilitySlots(parsed);
       setErrors({});
@@ -95,19 +118,33 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = "Invalid email format";
+    else if (!/^\S+@\S+\.\S+$/.test(formData.email))
+      newErrors.email = "Invalid email format";
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
-    else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) newErrors.phone = "Invalid phone format";
+    else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone))
+      newErrors.phone = "Invalid phone format";
     if (mode === "add") {
-      if (!formData.password.trim()) newErrors.password = "Password is required";
-      else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
+      if (!formData.password.trim())
+        newErrors.password = "Password is required";
+      else if (formData.password.length < 6)
+        newErrors.password = "Password must be at least 6 characters";
     }
-    if (!formData.specialization) newErrors.specialization = "Please select a specialization";
-    if (!formData.qualification.trim()) newErrors.qualification = "Qualification is required";
-    if (!formData.experience.trim()) newErrors.experience = "Experience is required";
-    else if (isNaN(formData.experience) || parseInt(formData.experience) < 0) newErrors.experience = "Experience must be a positive number";
-    if (formData.consultationFee && (isNaN(formData.consultationFee) || parseInt(formData.consultationFee) < 0)) newErrors.consultationFee = "Consultation fee must be a positive number";
-    if (!formData.licenseNumber.trim()) newErrors.licenseNumber = "License number is required";
+    if (!formData.specialization)
+      newErrors.specialization = "Please select a specialization";
+    if (!formData.qualification.trim())
+      newErrors.qualification = "Qualification is required";
+    if (!formData.experience.trim())
+      newErrors.experience = "Experience is required";
+    else if (isNaN(formData.experience) || parseInt(formData.experience) < 0)
+      newErrors.experience = "Experience must be a positive number";
+    if (
+      formData.consultationFee &&
+      (isNaN(formData.consultationFee) ||
+        parseInt(formData.consultationFee) < 0)
+    )
+      newErrors.consultationFee = "Consultation fee must be a positive number";
+    if (!formData.licenseNumber.trim())
+      newErrors.licenseNumber = "License number is required";
     if (!formData.bio.trim()) newErrors.bio = "Bio is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -140,7 +177,8 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           qualification: formData.qualification.trim(),
           experience: parseInt(formData.experience),
           consultationFee: parseInt(formData.consultationFee) || 500,
-          department: formData.department.trim() || formData.specialization || "General",
+          department:
+            formData.department.trim() || formData.specialization || "General",
           licenseNumber: formData.licenseNumber.trim(),
           bio: formData.bio.trim(),
           availability: parsedAvailability,
@@ -171,7 +209,10 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           bio: formData.bio.trim(),
           availability: parsedAvailability,
         };
-        const response = await adminService.updateUserProfile(doctor.userId, updateData);
+        const response = await adminService.updateUserProfile(
+          doctor.userId,
+          updateData,
+        );
         if (response.success === true) {
           if (onSuccess) onSuccess();
           onClose();
@@ -181,28 +222,43 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         }
       }
     } catch (error) {
-      logger.error("useDoctorForm", mode === "add" ? "Add doctor error" : "Edit doctor error", error);
+      logger.error(
+        "useDoctorForm",
+        mode === "add" ? "Add doctor error" : "Edit doctor error",
+        error,
+      );
       let errorMessage =
         mode === "add"
           ? "Failed to add doctor. Please try again."
           : "Failed to update doctor profile. Please try again.";
       if (typeof error === "string") errorMessage = error;
-      else if (error.response?.data?.message) errorMessage = error.response.data.message;
+      else if (error.response?.data?.message)
+        errorMessage = error.response.data.message;
       else if (error.message) errorMessage = error.message;
 
       const lowerMessage = errorMessage.toLowerCase();
       if (lowerMessage.includes("already exists")) {
         if (lowerMessage.includes("email")) {
-          errorMessage = "This email is already registered. Please use a different email.";
-          setErrors(prev => ({ ...prev, email: "This email is already registered" }));
+          errorMessage =
+            "This email is already registered. Please use a different email.";
+          setErrors((prev) => ({
+            ...prev,
+            email: "This email is already registered",
+          }));
         } else if (lowerMessage.includes("phone")) {
           errorMessage = "This phone number is already registered.";
-          setErrors(prev => ({ ...prev, phone: "This phone number is already registered" }));
+          setErrors((prev) => ({
+            ...prev,
+            phone: "This phone number is already registered",
+          }));
         } else {
           errorMessage = "A doctor with these details already exists.";
         }
       }
-      showError(errorMessage, mode === "add" ? "Registration Failed" : "Update Failed");
+      showError(
+        errorMessage,
+        mode === "add" ? "Registration Failed" : "Update Failed",
+      );
     } finally {
       setLoading(false);
     }
@@ -256,7 +312,12 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
                 style={[styles.dayChip, active && styles.dayChipActive]}
                 onPress={() => toggleDay(day)}
               >
-                <Text style={[styles.dayChipText, active && styles.dayChipTextActive]}>
+                <Text
+                  style={[
+                    styles.dayChipText,
+                    active && styles.dayChipTextActive,
+                  ]}
+                >
                   {DAY_LABELS[day]}
                 </Text>
               </TouchableOpacity>
@@ -278,7 +339,12 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
                     style={[styles.slotChip, active && styles.slotChipActive]}
                     onPress={() => toggleSlot(day, slot)}
                   >
-                    <Text style={[styles.slotChipText, active && styles.slotChipTextActive]}>
+                    <Text
+                      style={[
+                        styles.slotChipText,
+                        active && styles.slotChipTextActive,
+                      ]}
+                    >
                       {slot}
                     </Text>
                   </TouchableOpacity>
@@ -288,7 +354,9 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           </View>
         ))}
         {Object.keys(availabilitySlots).length === 0 && (
-          <Text style={styles.availabilityHint}>Tap a day to add availability</Text>
+          <Text style={styles.availabilityHint}>
+            Tap a day to add availability
+          </Text>
         )}
       </View>
     </View>
@@ -301,20 +369,24 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     icon,
     keyboardType = "default",
     secureTextEntry = false,
-    multiline = false
+    multiline = false,
   ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputWrapper, errors[key] && styles.inputError, multiline && styles.inputWrapperMultiline]}>
+      <View
+        style={[
+          styles.inputWrapper,
+          errors[key] && styles.inputError,
+          multiline && styles.inputWrapperMultiline,
+        ]}
+      >
         <DynamicIcon
           name={icon}
           size={18}
           color={
-            errors[key]
-              ? healthColors.error.main
-              : healthColors.text.secondary
+            errors[key] ? healthColors.error.main : healthColors.text.secondary
           }
-          style={[styles.inputIcon, multiline ]}
+          style={[styles.inputIcon, multiline]}
         />
         <TextInput
           style={[styles.input, multiline && styles.inputMultiline]}
@@ -347,13 +419,16 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           color={healthColors.text.secondary}
           style={styles.inputIcon}
         />
-        <Text style={[styles.pickerText, !formData[key] && styles.placeholderText]}>
+        <Text
+          style={[styles.pickerText, !formData[key] && styles.placeholderText]}
+        >
           {formData[key] || "Select specialization"}
         </Text>
-        <DynamicIcon  size={18} color={healthColors.text.secondary} />
+        <DynamicIcon size={18} color={healthColors.text.secondary} />
       </TouchableOpacity>
 
-      <Modal statusBarTranslucent
+      <Modal
+        statusBarTranslucent
         visible={showSpecializationPicker}
         transparent
         animationType="slide"
@@ -363,8 +438,10 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           <View style={styles.dropdownContainer}>
             <View style={styles.dropdownHeader}>
               <Text style={styles.dropdownTitle}>Select Specialization</Text>
-              <TouchableOpacity onPress={() => setShowSpecializationPicker(false)}>
-                <X  size={22} color={healthColors.text.primary} />
+              <TouchableOpacity
+                onPress={() => setShowSpecializationPicker(false)}
+              >
+                <X size={22} color={healthColors.text.primary} />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -389,11 +466,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
                       {item}
                     </Text>
                     {selected ? (
-                      <Check
-                        
-                        size={18}
-                        color={healthColors.primary.main}
-                      />
+                      <Check size={18} color={healthColors.primary.main} />
                     ) : null}
                   </TouchableOpacity>
                 );

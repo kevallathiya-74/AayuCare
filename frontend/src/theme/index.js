@@ -9,7 +9,7 @@
  *   padding: theme.spacing.md
  */
 
-import { healthColors, withOpacity } from './healthColors';
+import { healthColors, withOpacity } from "./healthColors";
 import {
   fontFamilies,
   fontWeights,
@@ -17,23 +17,29 @@ import {
   lineHeights,
   letterSpacing,
   textStyles,
-} from './typography';
-import { spacing, componentSpacing, layout, breakpoints, grid, safeAreaConfig } from './spacing';
-
+} from "./typography";
+import {
+  spacing,
+  componentSpacing,
+  layout,
+  breakpoints,
+  grid,
+  safeAreaConfig,
+} from "./spacing";
 
 const typographySizes = {
   ...fontSizes,
   // legacy short aliases
-  xs: fontSizes.bodySmall,   // 12
-  sm: fontSizes.bodyMedium,  // 14
-  md: fontSizes.bodyLarge,   // 16
-  lg: fontSizes.h5,          // 18
-  xl: fontSizes.h4,          // 20
-  xxl: fontSizes.h3,          // 24
-  xxxl: fontSizes.h2,          // 28
-  xxxxl: fontSizes.h1,          // 32
-  base: fontSizes.bodyLarge,   // 16
-  body: fontSizes.bodyMedium,  // 14
+  xs: fontSizes.bodySmall, // 12
+  sm: fontSizes.bodyMedium, // 14
+  md: fontSizes.bodyLarge, // 16
+  lg: fontSizes.h5, // 18
+  xl: fontSizes.h4, // 20
+  xxl: fontSizes.h3, // 24
+  xxxl: fontSizes.h2, // 28
+  xxxxl: fontSizes.h1, // 32
+  base: fontSizes.bodyLarge, // 16
+  body: fontSizes.bodyMedium, // 14
 };
 
 const typographyWeights = {
@@ -41,9 +47,7 @@ const typographyWeights = {
   semiBold: fontWeights.semibold, // camelCase alias
 };
 
-
 export const theme = {
-
   // COLORS
   colors: {
     // Brand
@@ -179,13 +183,12 @@ export const theme = {
     accent: healthColors.accent,
   },
 
-
   // TYPOGRAPHY
   typography: {
     fontFamilies,
-    fontFamily: fontFamilies,   // backward compat
+    fontFamily: fontFamilies, // backward compat
     sizes: typographySizes,
-    fontSizes,                    // canonical scale export
+    fontSizes, // canonical scale export
     weights: typographyWeights,
     fontWeights,
     lineHeights,
@@ -220,11 +223,10 @@ export const theme = {
     pill: 9999,
   },
 
-
   // SHADOWS & ELEVATION
   shadows: {
     none: {
-      shadowColor: 'transparent',
+      shadowColor: "transparent",
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0,
       shadowRadius: 0,
@@ -254,7 +256,7 @@ export const theme = {
     lg: {
       shadowColor: healthColors.shadows.color,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.10,
+      shadowOpacity: 0.1,
       shadowRadius: 12,
       elevation: 5,
     },
@@ -306,8 +308,8 @@ export const theme = {
     lg: 24,
     xl: 28,
     xxl: 32,
-    nav: 24,   // bottom tab icon
-    fab: 28,   // floating action button
+    nav: 24, // bottom tab icon
+    fab: 28, // floating action button
   },
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -324,15 +326,15 @@ export const theme = {
 
   // GRADIENTS
   gradients: {
-    primary: ['#14B8A6', '#0EA5E9'],
-    primaryV: ['#0F766E', '#14B8A6'],
-    secondary: ['#0EA5E9', '#38BDF8'],
-    success: ['#22C55E', '#16A34A'],
-    error: ['#EF4444', '#DC2626'],
-    warm: ['#F59E0B', '#F97316'],
-    cool: ['#14B8A6', '#6366F1'],
-    hero: ['#0F172A', '#1E293B'],
-    health: ['#22C55E', '#14B8A6'],
+    primary: ["#14B8A6", "#0EA5E9"],
+    primaryV: ["#0F766E", "#14B8A6"],
+    secondary: ["#0EA5E9", "#38BDF8"],
+    success: ["#22C55E", "#16A34A"],
+    error: ["#EF4444", "#DC2626"],
+    warm: ["#F59E0B", "#F97316"],
+    cool: ["#14B8A6", "#6366F1"],
+    hero: ["#0F172A", "#1E293B"],
+    health: ["#22C55E", "#14B8A6"],
   },
 
   // UTILITY FUNCTIONS

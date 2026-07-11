@@ -8,7 +8,7 @@ import { View } from "react-native";
 import { Sparkles } from "lucide-react-native";
 import DynamicIcon from "./DynamicIcon";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 // Animated Icon with Background
 export const IconWithBackground = ({
@@ -54,7 +54,6 @@ export const IconWithBackground = ({
 // Feature Icons
 export const AIIcon = (props) => (
   <IconWithBackground
-    
     gradient
     gradientColors={[healthColors.info.main, healthColors.secondary.main]}
     {...props}

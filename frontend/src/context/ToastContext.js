@@ -126,7 +126,7 @@ export const ToastProvider = ({ children }) => {
 
       timerRef.current = setTimeout(hideToast, duration);
     },
-    [fadeAnim, translateY, hideToast]
+    [fadeAnim, translateY, hideToast],
   );
 
   const config = toast ? TOAST_CONFIG[toast.type] || TOAST_CONFIG.info : null;
@@ -153,7 +153,10 @@ export const ToastProvider = ({ children }) => {
             color={config.text}
             style={styles.icon}
           />
-          <Text style={[styles.message, { color: config.text }]} numberOfLines={3}>
+          <Text
+            style={[styles.message, { color: config.text }]}
+            numberOfLines={3}
+          >
             {toast.message}
           </Text>
           <TouchableOpacity
@@ -189,22 +192,22 @@ export const ToastProvider = ({ children }) => {
                     dialog.icon
                       ? dialog.icon
                       : dialog.type === "success"
-                      ? "checkmark-circle"
-                      : dialog.type === "error"
-                      ? "close-circle"
-                      : dialog.type === "warning"
-                      ? "warning"
-                      : "help-circle"
+                        ? "checkmark-circle"
+                        : dialog.type === "error"
+                          ? "close-circle"
+                          : dialog.type === "warning"
+                            ? "warning"
+                            : "help-circle"
                   }
                   size={30}
                   color={
                     dialog.type === "success"
                       ? healthColors.success.main
                       : dialog.type === "error"
-                      ? healthColors.error.main
-                      : dialog.type === "warning"
-                      ? healthColors.warning.main
-                      : healthColors.primary.main
+                        ? healthColors.error.main
+                        : dialog.type === "warning"
+                          ? healthColors.warning.main
+                          : healthColors.primary.main
                   }
                 />
               </View>
@@ -228,11 +231,15 @@ export const ToastProvider = ({ children }) => {
                       btn.style === "cancel"
                         ? "secondary"
                         : btn.style === "destructive"
-                        ? "danger"
-                        : "primary"
+                          ? "danger"
+                          : "primary"
                     }
                     onPress={() => handleButtonPress(btn.onPress)}
-                    style={dialog.buttons.length > 1 ? styles.dialogButtonFlex : styles.dialogButtonFull}
+                    style={
+                      dialog.buttons.length > 1
+                        ? styles.dialogButtonFlex
+                        : styles.dialogButtonFull
+                    }
                   />
                 ))}
               </View>

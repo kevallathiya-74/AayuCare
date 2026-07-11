@@ -1,30 +1,30 @@
 /**
  * AayuCare - Avatar Component
- * 
+ *
  * Variants: image, initials, icon
  * Sizes: small, medium, large, xlarge
  */
 
-import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-import { User } from 'lucide-react-native';
-import { healthColors } from '@/theme/healthColors';
-import { fontFamilies } from '@/theme/typography';
-import { layout } from '@/theme/spacing';
+import React from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
+import { User } from "lucide-react-native";
+import { healthColors } from "@/theme/healthColors";
+import { fontFamilies } from "@/theme/typography";
+import { layout } from "@/theme/spacing";
 
 const Avatar = ({
   source,
   name,
   icon,
-  size = 'medium', // small, medium, large, xlarge
-  variant = 'image', // image, initials, icon
+  size = "medium", // small, medium, large, xlarge
+  variant = "image", // image, initials, icon
   backgroundColor,
   textColor,
   online = false,
   style,
 }) => {
   const getSize = () => {
-    if (typeof size === 'number') return size;
+    if (typeof size === "number") return size;
     return layout.avatar[size] || layout.avatar.medium;
   };
 
@@ -34,26 +34,31 @@ const Avatar = ({
   };
 
   const getInitials = () => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    return (
+      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+    ).toUpperCase();
   };
 
   const avatarSize = getSize();
   const fontSize = getFontSize();
   const defaultBgColor = backgroundColor || healthColors.primary.main;
   const defaultTextColor = textColor || healthColors.neutral.white;
-  const isInitialsVariant = variant === 'initials' || (variant === 'image' && !source);
+  const isInitialsVariant =
+    variant === "initials" || (variant === "image" && !source);
   const avatarDynamicStyle = {
     width: avatarSize,
     height: avatarSize,
     borderRadius: avatarSize / 2,
-    backgroundColor: isInitialsVariant ? defaultBgColor : healthColors.transparent,
+    backgroundColor: isInitialsVariant
+      ? defaultBgColor
+      : healthColors.transparent,
   };
 
   const renderContent = () => {
-    if (variant === 'image' && source) {
+    if (variant === "image" && source) {
       return (
         <Image
           source={source}
@@ -62,13 +67,8 @@ const Avatar = ({
       );
     }
 
-    if (variant === 'icon' || icon) {
-      return (
-        <User
-          size={fontSize}
-          color={defaultTextColor}
-        />
-      );
+    if (variant === "icon" || icon) {
+      return <User size={fontSize} color={defaultTextColor} />;
     }
 
     // Default to initials
@@ -81,14 +81,7 @@ const Avatar = ({
 
   return (
     <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.avatar,
-          avatarDynamicStyle,
-        ]}
-      >
-        {renderContent()}
-      </View>
+      <View style={[styles.avatar, avatarDynamicStyle]}>{renderContent()}</View>
       {online && (
         <View
           style={[
@@ -108,23 +101,23 @@ const Avatar = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
+    position: "relative",
   },
   avatar: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
   },
   image: {
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   initials: {
     fontFamily: fontFamilies.heading,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
   },
   onlineIndicator: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     backgroundColor: healthColors.success.main,
@@ -133,4 +126,3 @@ const styles = StyleSheet.create({
 });
 
 export default Avatar;
-

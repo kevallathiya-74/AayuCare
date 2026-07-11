@@ -4,7 +4,10 @@
  * Prevents console statements in production builds
  */
 
-const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : (process.env.NODE_ENV !== 'production');
+const isDev =
+  typeof __DEV__ !== "undefined"
+    ? __DEV__
+    : process.env.NODE_ENV !== "production";
 
 const logger = {
   /**
@@ -114,4 +117,3 @@ const logger = {
 };
 
 export default logger;
-

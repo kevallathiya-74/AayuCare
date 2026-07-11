@@ -1,24 +1,24 @@
 /**
  * AayuCare - Secure Application Storage Module
- * 
+ *
  * Production-grade storage using expo-secure-store for sensitive data.
  * Adheres to 2048-byte limit per key.
- * 
+ *
  * WHY "appStorage" NOT "storage":
  * - Avoids conflicts with browser Storage API
  * - Prevents shadowing by bundler/polyfills
  * - Clear, unambiguous module identity
  */
 
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
-const isWeb = Platform.OS === 'web';
+const isWeb = Platform.OS === "web";
 
 const canUseLocalStorage = () => {
   if (!isWeb) return false;
   try {
-    return typeof window !== 'undefined' && !!window.localStorage;
+    return typeof window !== "undefined" && !!window.localStorage;
   } catch {
     return false;
   }
@@ -91,7 +91,9 @@ export const setItem = async (key, value) => {
 
     if (value && value.length > 2000) {
       if (__DEV__) {
-        console.warn(`[appStorage] WARNING: Value for key "${key}" is approaching SecureStore limit.`);
+        console.warn(
+          `[appStorage] WARNING: Value for key "${key}" is approaching SecureStore limit.`,
+        );
       }
     }
     await SecureStore.setItemAsync(key, value);
@@ -153,7 +155,10 @@ export const deleteItemSync = (key) => {
     SecureStore.deleteItem(key);
   } catch (error) {
     if (__DEV__) {
-      console.error(`[appStorage] deleteItemSync error for key "${key}":`, error);
+      console.error(
+        `[appStorage] deleteItemSync error for key "${key}":`,
+        error,
+      );
     }
     throw error;
   }
@@ -179,11 +184,11 @@ export const clear = async () => {
   try {
     if (isWeb) {
       const keysToClear = [
-        'aayucare_auth_token',
-        'aayucare_user_data',
-        'aayucare_session_data',
-        'aayucare_refresh_token',
-        'aayucare_language',
+        "aayucare_auth_token",
+        "aayucare_user_data",
+        "aayucare_session_data",
+        "aayucare_refresh_token",
+        "aayucare_language",
       ];
       keysToClear.forEach(removeWebItem);
       return;
@@ -192,15 +197,17 @@ export const clear = async () => {
     // In a production app, we should track all keys or use a specific storage solution.
     // For AayuCare, these are the critical ones.
     const keysToClear = [
-      'aayucare_auth_token',
-      'aayucare_user_data',
-      'aayucare_session_data',
-      'aayucare_refresh_token'
+      "aayucare_auth_token",
+      "aayucare_user_data",
+      "aayucare_session_data",
+      "aayucare_refresh_token",
     ];
-    await Promise.all(keysToClear.map(key => SecureStore.deleteItemAsync(key)));
+    await Promise.all(
+      keysToClear.map((key) => SecureStore.deleteItemAsync(key)),
+    );
   } catch (error) {
     if (__DEV__) {
-      console.error('[appStorage] clear error:', error);
+      console.error("[appStorage] clear error:", error);
     }
     throw error;
   }
@@ -217,7 +224,7 @@ export const getAllKeys = async () => {
   }
 
   if (__DEV__) {
-    console.warn('[appStorage] getAllKeys is not supported by SecureStore.');
+    console.warn("[appStorage] getAllKeys is not supported by SecureStore.");
   }
   return [];
 };

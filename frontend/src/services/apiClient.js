@@ -3,28 +3,32 @@
  * Production-ready Axios instance with interceptors and offline support
  */
 
-import axios from 'axios';
-import appStorage from '../utils/appStorage';
-import { STORAGE_KEYS } from '../utils/constants';
-import { APP_CONFIG } from '../config/appConfig';
-import { parseError } from '../utils/errorHandler';
+import axios from "axios";
+import appStorage from "../utils/appStorage";
+import { STORAGE_KEYS } from "../utils/constants";
+import { APP_CONFIG } from "../config/appConfig";
+import { parseError } from "../utils/errorHandler";
 
 // Runtime guard: Ensure appStorage is properly wired
-if (!appStorage || typeof appStorage.getItem !== 'function') {
+if (!appStorage || typeof appStorage.getItem !== "function") {
   if (__DEV__) {
-    console.error('[API] CRITICAL: appStorage module not properly loaded!');
-    console.error('[API] appStorage:', appStorage);
+    console.error("[API] CRITICAL: appStorage module not properly loaded!");
+    console.error("[API] appStorage:", appStorage);
   }
-  throw new Error('appStorage module is not properly initialized');
+  throw new Error("appStorage module is not properly initialized");
 }
 
 // Create axios instance using centralized configuration.
 // Guard against malformed runtime config values to avoid startup crashes.
-const normalizedBaseUrl = String(APP_CONFIG?.api?.baseURL ?? '').trim().replace(/\/+$/, '');
+const normalizedBaseUrl = String(APP_CONFIG?.api?.baseURL ?? "")
+  .trim()
+  .replace(/\/+$/, "");
 if (!normalizedBaseUrl) {
-  throw new Error('CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.');
+  throw new Error(
+    "CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.",
+  );
 }
-const apiBaseV1 = normalizedBaseUrl.endsWith('/v1')
+const apiBaseV1 = normalizedBaseUrl.endsWith("/v1")
   ? normalizedBaseUrl
   : `${normalizedBaseUrl}/v1`;
 
@@ -32,7 +36,7 @@ const api = axios.create({
   baseURL: apiBaseV1,
   timeout: APP_CONFIG.api.timeout,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -43,7 +47,7 @@ const MAX_GET_CACHE_SIZE = 100;
 const getResponseCache = new Map();
 const inFlightGetRequests = new Map();
 
-const buildGetCacheKey = (url = '', config = {}) => {
+const buildGetCacheKey = (url = "", config = {}) => {
   const params = config?.params || {};
   const sortedParams = Object.keys(params)
     .sort()
@@ -57,16 +61,19 @@ const buildGetCacheKey = (url = '', config = {}) => {
     url,
     params: sortedParams,
     headers: {
-      acceptLanguage: config?.headers?.['Accept-Language'] || config?.headers?.acceptLanguage || '',
+      acceptLanguage:
+        config?.headers?.["Accept-Language"] ||
+        config?.headers?.acceptLanguage ||
+        "",
     },
   });
 };
 
-const shouldBypassGetCache = (url = '', config = {}) => {
+const shouldBypassGetCache = (url = "", config = {}) => {
   if (config?.useCache !== true) return true;
   if (config?.skipCache === true) return true;
-  if (config?.headers?.['x-skip-cache'] === true) return true;
-  if (String(url).includes('/auth/')) return true;
+  if (config?.headers?.["x-skip-cache"] === true) return true;
+  if (String(url).includes("/auth/")) return true;
   return false;
 };
 
@@ -122,7 +129,9 @@ api.get = (url, config = {}) => {
 
 let isHandlingAuthExpiry = false;
 
-const resetAuthExpiryFlag = () => { isHandlingAuthExpiry = false; };
+const resetAuthExpiryFlag = () => {
+  isHandlingAuthExpiry = false;
+};
 
 export const resetApiState = () => {
   getResponseCache.clear();
@@ -175,14 +184,16 @@ const normalizeRequestPath = (url = "") => {
 };
 
 const getAllowedRolesForPath = (path = "") => {
-  const matchedRule = ENDPOINT_ROLE_RULES.find((rule) => rule.pattern.test(path));
+  const matchedRule = ENDPOINT_ROLE_RULES.find((rule) =>
+    rule.pattern.test(path),
+  );
   return matchedRule?.allowedRoles || null;
 };
 
 const createRoleAccessError = ({ path, role, allowedRoles }) => {
   const safeRole = role || "unknown";
   const error = new Error(
-    `Access denied: role ${safeRole} cannot call ${path}.`
+    `Access denied: role ${safeRole} cannot call ${path}.`,
   );
   error.code = "ROLE_ACCESS_DENIED";
   error.status = 403;
@@ -192,9 +203,12 @@ const createRoleAccessError = ({ path, role, allowedRoles }) => {
 
 // Log API URL for debugging (dev only)
 if (__DEV__) {
-  console.warn('[API] API Base URL:', apiBaseV1);
-  console.warn('[API] Environment:', APP_CONFIG.env.isDevelopment ? 'Development' : 'Production');
-  console.warn('[API] Expo Go:', APP_CONFIG.env.isExpoGo);
+  console.warn("[API] API Base URL:", apiBaseV1);
+  console.warn(
+    "[API] Environment:",
+    APP_CONFIG.env.isDevelopment ? "Development" : "Production",
+  );
+  console.warn("[API] Expo Go:", APP_CONFIG.env.isExpoGo);
 }
 
 // Request interceptor - Add auth token
@@ -213,11 +227,11 @@ api.interceptors.request.use(
       ) {
         if (__DEV__) {
           console.warn(
-            `[API] Blocked disallowed role endpoint call: role=${role} path=${requestPath}`
+            `[API] Blocked disallowed role endpoint call: role=${role} path=${requestPath}`,
           );
         }
         return Promise.reject(
-          createRoleAccessError({ path: requestPath, role, allowedRoles })
+          createRoleAccessError({ path: requestPath, role, allowedRoles }),
         );
       }
 
@@ -229,11 +243,11 @@ api.interceptors.request.use(
         headers.Authorization = `Bearer ${token}`;
         localConfig.headers = headers;
         if (__DEV__) {
-          console.warn('[TOKEN] Authorization header set');
+          console.warn("[TOKEN] Authorization header set");
         }
       } else {
         if (__DEV__) {
-          console.warn('⚠️ No auth token found in storage');
+          console.warn("⚠️ No auth token found in storage");
         }
       }
 
@@ -244,24 +258,26 @@ api.interceptors.request.use(
       return config;
     } catch (error) {
       if (__DEV__) {
-        console.error('[ERROR] Error getting auth token:', error);
+        console.error("[ERROR] Error getting auth token:", error);
       }
       return config;
     }
   },
   (error) => {
     if (__DEV__) {
-      console.error('[ERROR] Request interceptor error:', error);
+      console.error("[ERROR] Request interceptor error:", error);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor - Handle errors
 api.interceptors.response.use(
   (response) => {
-    const method = String(response?.config?.method || '').toLowerCase();
-    const isMutationMethod = ['post', 'put', 'patch', 'delete'].includes(method);
+    const method = String(response?.config?.method || "").toLowerCase();
+    const isMutationMethod = ["post", "put", "patch", "delete"].includes(
+      method,
+    );
 
     // Clear in-memory GET caches after successful writes.
     // React Query invalidation is handled by each screen/useMutation onSuccess.
@@ -276,17 +292,22 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Skip token refresh for auth endpoints (login, register)
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/sign-in') || 
-                           originalRequest.url?.includes('/auth/sign-up') ||
-                           originalRequest.url?.includes('/auth/refresh');
+    const isAuthEndpoint =
+      originalRequest.url?.includes("/auth/sign-in") ||
+      originalRequest.url?.includes("/auth/sign-up") ||
+      originalRequest.url?.includes("/auth/refresh");
 
     // Handle 401 Unauthorized - Session expired (Better Auth uses session tokens, not refresh tokens)
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       originalRequest._retry = true;
 
       if (isHandlingAuthExpiry) {
-        const authError = new Error('Session expired. Please login again.');
-        authError.code = 'AUTH_EXPIRED';
+        const authError = new Error("Session expired. Please login again.");
+        authError.code = "AUTH_EXPIRED";
         return Promise.reject(authError);
       }
 
@@ -294,9 +315,9 @@ api.interceptors.response.use(
 
       try {
         if (__DEV__) {
-          console.warn('[API] 401 error - Session expired, clearing storage');
+          console.warn("[API] 401 error - Session expired, clearing storage");
         }
-        
+
         // Better Auth doesn't use refresh tokens - session is managed server-side
         // Clear storage and force re-login
         await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -304,17 +325,20 @@ api.interceptors.response.use(
 
         // Dispatch logout to Redux so UI state is also cleared
         try {
-          const store = require('../store/store').default;
-          const { logoutUser } = require('../store/slices/authSlice');
+          const store = require("../store/store").default;
+          const { logoutUser } = require("../store/slices/authSlice");
           store.dispatch(logoutUser({ silent: true }));
         } catch (storeErr) {
           if (__DEV__) {
-            console.warn('[API] Could not dispatch logoutUser to Redux store:', storeErr);
+            console.warn(
+              "[API] Could not dispatch logoutUser to Redux store:",
+              storeErr,
+            );
           }
         }
 
-        const authError = new Error('Session expired. Please login again.');
-        authError.code = 'AUTH_EXPIRED';
+        const authError = new Error("Session expired. Please login again.");
+        authError.code = "AUTH_EXPIRED";
         return Promise.reject(authError);
       } finally {
         resetAuthExpiryFlag();
@@ -323,20 +347,28 @@ api.interceptors.response.use(
 
     // Handle network errors
     if (!error.response) {
-      const networkError = new Error('Unable to connect to server. Please check your internet connection and try again.');
+      const networkError = new Error(
+        "Unable to connect to server. Please check your internet connection and try again.",
+      );
       if (__DEV__) {
-        console.warn('[NETWORK] Network Error');
-        console.warn('[INFO] Attempted URL:', error.config?.baseURL + error.config?.url);
-        console.warn('[INFO] API Base URL:', APP_CONFIG.api.baseURL);
+        console.warn("[NETWORK] Network Error");
+        console.warn(
+          "[INFO] Attempted URL:",
+          error.config?.baseURL + error.config?.url,
+        );
+        console.warn("[INFO] API Base URL:", APP_CONFIG.api.baseURL);
       }
       return Promise.reject(networkError);
     }
 
     const errorMessage = parseError(error);
     if (__DEV__) {
-      console.error('[ERROR] API Error:', errorMessage);
+      console.error("[ERROR] API Error:", errorMessage);
       if (error.response?.data?.message) {
-        console.warn('[ERROR] Raw server message:', error.response.data.message);
+        console.warn(
+          "[ERROR] Raw server message:",
+          error.response.data.message,
+        );
       }
     }
 
@@ -344,9 +376,8 @@ api.interceptors.response.use(
     safeError.code = error.response?.data?.code || error.code;
     safeError.status = error.response?.status;
     return Promise.reject(safeError);
-  }
+  },
 );
 
 // Test API connectivity (useful for debugging)
 export default api;
-

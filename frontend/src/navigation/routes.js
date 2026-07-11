@@ -52,10 +52,10 @@ export const ADMIN = Object.freeze({
 
 // ─── Doctor Tab Screens ───────────────────────────────────────────────────────
 export const DOCTOR_TABS = Object.freeze({
-  DASHBOARD: "DoctorHome",
+  DASHBOARD: "Dashboard",
   TODAYS_APPOINTMENTS: "TodaysAppointments",
-  PATIENTS: "DoctorPatients",
-  PROFILE: "DoctorProfile",
+  PATIENTS: "Patients",
+  PROFILE: "Profile",
 });
 
 // ─── Doctor Stack Screens ─────────────────────────────────────────────────────
@@ -75,10 +75,10 @@ export const DOCTOR = Object.freeze({
 
 // ─── Patient Tab Screens ──────────────────────────────────────────────────────
 export const PATIENT_TABS = Object.freeze({
-  HOME: "PatientHome",
-  APPOINTMENTS: "PatientAppointments",
-  REPORTS: "PatientReports",
-  PROFILE: "PatientProfile",
+  DASHBOARD: "Dashboard",
+  HEALTH: "Health",
+  INFO: "Info",
+  MORE: "More",
 });
 
 // ─── Patient Stack Screens ────────────────────────────────────────────────────

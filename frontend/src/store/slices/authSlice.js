@@ -2,7 +2,7 @@
  * AayuCare - Auth Redux Slice
  *
  * Manages authentication state.
- * 
+ *
  * ARCHITECTURE NOTE:
  * - This slice does NOT use 'storage' directly
  * - Redux Toolkit does NOT provide 'storage' by default
@@ -12,11 +12,11 @@
  */
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import * as authService from '@/features/auth/api/auth.service';
-import logger from '@/utils/logger';
-import appStorage from '@/utils/appStorage';
-import { STORAGE_KEYS } from '@/utils/constants';
-import i18n from '@/i18n';
+import * as authService from "@/features/auth/api/auth.service";
+import logger from "@/utils/logger";
+import appStorage from "@/utils/appStorage";
+import { STORAGE_KEYS } from "@/utils/constants";
+import i18n from "@/i18n";
 
 // Initial state
 const initialState = {
@@ -33,7 +33,9 @@ export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
-      logger.debug("authSlice", "Login thunk started", { userId: credentials.userId });
+      logger.debug("authSlice", "Login thunk started", {
+        userId: credentials.userId,
+      });
       const response = await authService.login(credentials);
       logger.debug("authSlice", "Login response received", {
         hasUser: !!response?.user,
@@ -46,22 +48,28 @@ export const loginUser = createAsyncThunk(
         error?.message || error?.toString() || "Login failed";
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (options, { rejectWithValue }) => {
     try {
-      logger.debug("authSlice", "Logout thunk started", { silent: options?.silent });
-      
+      logger.debug("authSlice", "Logout thunk started", {
+        silent: options?.silent,
+      });
+
       // Cancel and clear React Query cache immediately
       try {
-        const queryClient = require('@/config/reactQueryConfig').default;
+        const queryClient = require("@/config/reactQueryConfig").default;
         queryClient.cancelQueries();
         queryClient.clear();
       } catch (err) {
-        logger.warn("authSlice", "Error clearing queryClient cache during logout:", err.message);
+        logger.warn(
+          "authSlice",
+          "Error clearing queryClient cache during logout:",
+          err.message,
+        );
       }
 
       // Check if we should call backend logout
@@ -84,7 +92,7 @@ export const logoutUser = createAsyncThunk(
       logger.error("authSlice", "Logout error", error?.message || error);
       return rejectWithValue(error.message || "Logout failed");
     }
-  }
+  },
 );
 
 export const validateSessionBackground = createAsyncThunk(
@@ -93,20 +101,29 @@ export const validateSessionBackground = createAsyncThunk(
     try {
       logger.debug("authSlice", "Background session validation started");
       const session = await authService.getSession();
-      
+
       if (!session || !session.user) {
-        logger.warn("authSlice", "Background validation failed - invalid/expired session. Logging out.");
+        logger.warn(
+          "authSlice",
+          "Background validation failed - invalid/expired session. Logging out.",
+        );
         dispatch(logoutUser());
         return null;
       }
-      
-      logger.debug("authSlice", "Background validation successful", { id: session.user.id });
+
+      logger.debug("authSlice", "Background validation successful", {
+        id: session.user.id,
+      });
       return { user: session.user, token: session.token };
     } catch (error) {
-      logger.warn("authSlice", "Background validation failed (network/timeout). Keeping cached session.", error?.message || error);
+      logger.warn(
+        "authSlice",
+        "Background validation failed (network/timeout). Keeping cached session.",
+        error?.message || error,
+      );
       return null;
     }
-  }
+  },
 );
 
 export const loadUser = createAsyncThunk(
@@ -129,11 +146,15 @@ export const loadUser = createAsyncThunk(
       }
 
       if (storedToken && cachedUser) {
-        logger.debug("authSlice", "Fast-loaded user from cache, bypassing splash wait", { id: cachedUser.id });
-        
+        logger.debug(
+          "authSlice",
+          "Fast-loaded user from cache, bypassing splash wait",
+          { id: cachedUser.id },
+        );
+
         // Dispatch background validation thunk
         dispatch(validateSessionBackground({ token: storedToken }));
-        
+
         return { user: cachedUser, token: storedToken };
       }
 
@@ -141,11 +162,16 @@ export const loadUser = createAsyncThunk(
       const session = await authService.getSession();
 
       if (!session || !session.user) {
-        logger.debug("authSlice", "No valid session found - user not authenticated");
+        logger.debug(
+          "authSlice",
+          "No valid session found - user not authenticated",
+        );
         return null;
       }
 
-      logger.debug("authSlice", "User loaded from session", { id: session.user.id });
+      logger.debug("authSlice", "User loaded from session", {
+        id: session.user.id,
+      });
       // Return both user and token so the reducer can restore full state
       return { user: session.user, token: session.token || null };
     } catch (error) {
@@ -153,7 +179,7 @@ export const loadUser = createAsyncThunk(
       // Always return null instead of rejecting - allows app to continue
       return null;
     }
-  }
+  },
 );
 
 // Create the slice
@@ -171,7 +197,9 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
       if (action.payload?.preferred_language) {
-        appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.preferred_language).catch(() => {});
+        appStorage
+          .setItem(STORAGE_KEYS.LANGUAGE, action.payload.preferred_language)
+          .catch(() => {});
         i18n.changeLanguage(action.payload.preferred_language).catch(() => {});
       }
     },
@@ -193,8 +221,15 @@ const authSlice = createSlice({
         state.isAuthenticated = !!action.payload?.user;
         state.error = null;
         if (action.payload?.user?.preferred_language) {
-          appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.user.preferred_language).catch(() => {});
-          i18n.changeLanguage(action.payload.user.preferred_language).catch(() => {});
+          appStorage
+            .setItem(
+              STORAGE_KEYS.LANGUAGE,
+              action.payload.user.preferred_language,
+            )
+            .catch(() => {});
+          i18n
+            .changeLanguage(action.payload.user.preferred_language)
+            .catch(() => {});
         }
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -230,8 +265,15 @@ const authSlice = createSlice({
           state.token = action.payload.token || null;
           state.isAuthenticated = true;
           if (action.payload?.user?.preferred_language) {
-            appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.user.preferred_language).catch(() => {});
-            i18n.changeLanguage(action.payload.user.preferred_language).catch(() => {});
+            appStorage
+              .setItem(
+                STORAGE_KEYS.LANGUAGE,
+                action.payload.user.preferred_language,
+              )
+              .catch(() => {});
+            i18n
+              .changeLanguage(action.payload.user.preferred_language)
+              .catch(() => {});
           }
         } else {
           state.user = null;
@@ -251,8 +293,15 @@ const authSlice = createSlice({
           state.token = action.payload.token || null;
           state.isAuthenticated = true;
           if (action.payload?.user?.preferred_language) {
-            appStorage.setItem(STORAGE_KEYS.LANGUAGE, action.payload.user.preferred_language).catch(() => {});
-            i18n.changeLanguage(action.payload.user.preferred_language).catch(() => {});
+            appStorage
+              .setItem(
+                STORAGE_KEYS.LANGUAGE,
+                action.payload.user.preferred_language,
+              )
+              .catch(() => {});
+            i18n
+              .changeLanguage(action.payload.user.preferred_language)
+              .catch(() => {});
           }
         }
       });
@@ -262,4 +311,3 @@ const authSlice = createSlice({
 export const { clearError, updateUser, setUser, setToken } = authSlice.actions;
 
 export default authSlice.reducer;
-

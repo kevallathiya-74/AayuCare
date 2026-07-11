@@ -7,9 +7,9 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { RefreshCw, ArrowLeft, Headphones } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import DynamicIcon from "./DynamicIcon";
-import { parseError } from '@/utils/errorHandler';
+import { parseError } from "@/utils/errorHandler";
 
 const ErrorRecovery = ({
   error,
@@ -123,7 +123,11 @@ const ErrorRecovery = ({
           { backgroundColor: errorInfo.iconColor + "15" },
         ]}
       >
-        <DynamicIcon name={errorInfo.icon} size={theme.iconSizes.xxl} color={errorInfo.iconColor} />
+        <DynamicIcon
+          name={errorInfo.icon}
+          size={theme.iconSizes.xxl}
+          color={errorInfo.iconColor}
+        />
       </View>
 
       <Text style={styles.title}>{errorInfo.title}</Text>
@@ -151,7 +155,7 @@ const ErrorRecovery = ({
             onPress={onRetry}
             activeOpacity={0.8}
           >
-            <RefreshCw  size={theme.iconSizes.md} color={healthColors.white} />
+            <RefreshCw size={theme.iconSizes.md} color={healthColors.white} />
             <Text style={styles.primaryButtonText}>Try Again</Text>
           </TouchableOpacity>
         )}
@@ -163,7 +167,6 @@ const ErrorRecovery = ({
             activeOpacity={0.8}
           >
             <ArrowLeft
-               
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
@@ -178,7 +181,6 @@ const ErrorRecovery = ({
             activeOpacity={0.8}
           >
             <Headphones
-               
               size={theme.iconSizes.md}
               color={healthColors.text.secondary}
             />

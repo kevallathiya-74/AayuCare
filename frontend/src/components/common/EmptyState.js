@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { Inbox } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import Button from "./Button";
 import DynamicIcon from "./DynamicIcon";
 
@@ -34,7 +34,11 @@ const EmptyState = ({
 
   return (
     <Animated.View
-      style={[styles.container, { opacity, transform: [{ translateY }] }, style]}
+      style={[
+        styles.container,
+        { opacity, transform: [{ translateY }] },
+        style,
+      ]}
     >
       <View style={styles.iconContainer}>
         {typeof Icon === "string" ? (
@@ -98,7 +102,3 @@ const styles = StyleSheet.create({
 });
 
 export default EmptyState;
-
-
-
-

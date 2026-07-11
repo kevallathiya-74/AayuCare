@@ -10,7 +10,13 @@ export default [
 
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
-    ignores: ["node_modules/**", ".expo/**", "dist/**", "web-build/**", "coverage/**"],
+    ignores: [
+      "node_modules/**",
+      ".expo/**",
+      "dist/**",
+      "web-build/**",
+      "coverage/**",
+    ],
 
     plugins: {
       react: reactPlugin,
@@ -43,7 +49,7 @@ export default [
         URLSearchParams: "readonly",
         URL: "readonly",
         beforeAll: "readonly",
-      }
+      },
     },
 
     settings: {
@@ -69,12 +75,15 @@ export default [
       // General
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" },
+      ],
       "@typescript-eslint/no-require-imports": "off",
       "no-undef": "error",
       "prefer-const": "warn",
       "no-var": "error",
-      "eqeqeq": ["warn", "smart"],
+      eqeqeq: ["warn", "smart"],
       "no-throw-literal": "warn",
       "prefer-promise-reject-errors": "warn",
       "no-return-await": "warn",

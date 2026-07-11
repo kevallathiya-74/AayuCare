@@ -14,8 +14,8 @@ import {
 } from "react-native";
 import { Cloud, CloudOff, RefreshCw } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from '@/theme';
-import { useNetworkStatus, useRequestQueue } from '@/utils/offlineHandler';
+import { theme, healthColors } from "@/theme";
+import { useNetworkStatus, useRequestQueue } from "@/utils/offlineHandler";
 
 const NetworkStatusIndicator = ({ onPress }) => {
   const { isConnected: isOnline } = useNetworkStatus();
@@ -49,7 +49,9 @@ const NetworkStatusIndicator = ({ onPress }) => {
     : healthColors.warning.main;
 
   const IconComponent = isOnline
-    ? queueSize > 0 ? RefreshCw : Cloud
+    ? queueSize > 0
+      ? RefreshCw
+      : Cloud
     : CloudOff;
 
   const message = isOnline
@@ -125,6 +127,3 @@ const styles = StyleSheet.create({
 });
 
 export default NetworkStatusIndicator;
-
-
-

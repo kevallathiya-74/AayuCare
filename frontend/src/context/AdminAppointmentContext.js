@@ -97,11 +97,10 @@ export const useAdminAppointments = () => {
   const context = useContext(AdminAppointmentContext);
   if (!context) {
     throw new Error(
-      "useAdminAppointments must be used within AdminAppointmentProvider"
+      "useAdminAppointments must be used within AdminAppointmentProvider",
     );
   }
   return context;
 };
 
 export default AdminAppointmentContext;
-

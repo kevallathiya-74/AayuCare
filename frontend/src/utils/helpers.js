@@ -1,19 +1,23 @@
 /**
  * AayuCare - Utility Functions & Constants
- * 
+ *
  * Common helper functions used throughout the app.
  */
 
-import { Dimensions, Platform } from 'react-native';
-import { theme } from '../theme';
+import { Dimensions, Platform } from "react-native";
+import { theme } from "../theme";
 
 // Device dimensions
-export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
+  Dimensions.get("window");
 
 // Device type detection
 export const isTablet = () => {
   const aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
-  return Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) >= 600 && (aspectRatio > 1.2 || aspectRatio < 0.9);
+  return (
+    Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) >= 600 &&
+    (aspectRatio > 1.2 || aspectRatio < 0.9)
+  );
 };
 
 // Indian-specific formatting
@@ -25,7 +29,8 @@ export const isTablet = () => {
  * @returns {string} Formatted currency
  */
 export const formatCurrency = (amount, showSymbol = true) => {
-  if (amount === null || amount === undefined || isNaN(amount)) return showSymbol ? '₹0' : '0';
+  if (amount === null || amount === undefined || isNaN(amount))
+    return showSymbol ? "₹0" : "0";
   const formatted = Math.abs(amount).toFixed(2);
   return showSymbol ? `₹${formatted}` : formatted;
 };
@@ -36,11 +41,11 @@ export const formatCurrency = (amount, showSymbol = true) => {
  * @returns {string} Formatted phone number
  */
 export const formatPhoneNumber = (phone) => {
-  const cleaned = phone.replace(/\D/g, '');
+  const cleaned = phone.replace(/\D/g, "");
   if (cleaned.length === 10) {
     return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
   }
-  if (cleaned.length === 12 && cleaned.startsWith('91')) {
+  if (cleaned.length === 12 && cleaned.startsWith("91")) {
     return `+${cleaned.slice(0, 2)} ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`;
   }
   return phone;
@@ -52,7 +57,7 @@ export const formatPhoneNumber = (phone) => {
  * @returns {boolean} Is valid
  */
 export const isValidAadhaar = (aadhaar) => {
-  const cleaned = aadhaar.replace(/\D/g, '');
+  const cleaned = aadhaar.replace(/\D/g, "");
   return /^\d{12}$/.test(cleaned);
 };
 
@@ -65,8 +70,8 @@ export const isValidAadhaar = (aadhaar) => {
  */
 export const formatDate = (date) => {
   const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
 };
@@ -79,10 +84,10 @@ export const formatDate = (date) => {
 export const formatTime = (date) => {
   const d = new Date(date);
   let hours = d.getHours();
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12 || 12;
-  const paddedHours = String(hours).padStart(2, '0');
+  const paddedHours = String(hours).padStart(2, "0");
   return `${paddedHours}:${minutes} ${ampm}`;
 };
 
@@ -92,12 +97,12 @@ export const formatTime = (date) => {
  * @returns {string} Time in 12-hour format (e.g., '2:00 PM', '9:30 AM')
  */
 export const convertTo12Hour = (time24) => {
-  if (!time24) return '';
-  const [hours24, minutes] = time24.split(':');
+  if (!time24) return "";
+  const [hours24, minutes] = time24.split(":");
   let hours = parseInt(hours24, 10);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12 || 12;
-  const paddedHours = String(hours).padStart(2, '0');
+  const paddedHours = String(hours).padStart(2, "0");
   return `${paddedHours}:${minutes} ${ampm}`;
 };
 
@@ -107,25 +112,25 @@ export const convertTo12Hour = (time24) => {
  * @returns {string} Time in 24-hour format (e.g., '14:00', '09:30', '10:30')
  */
 export const convertTo24Hour = (time12) => {
-  if (!time12) return '';
-  
+  if (!time12) return "";
+
   // Match time format like "10:30 AM" or "2:00 PM"
   const match = time12.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
   if (!match) return time12; // Return as-is if format doesn't match
-  
+
   let hours = parseInt(match[1], 10);
   const minutes = match[2];
   const period = match[3].toUpperCase();
-  
+
   // Convert to 24-hour format
-  if (period === 'PM' && hours !== 12) {
+  if (period === "PM" && hours !== 12) {
     hours += 12;
-  } else if (period === 'AM' && hours === 12) {
+  } else if (period === "AM" && hours === 12) {
     hours = 0;
   }
-  
+
   // Ensure hours are zero-padded
-  const hours24 = String(hours).padStart(2, '0');
+  const hours24 = String(hours).padStart(2, "0");
   return `${hours24}:${minutes}`;
 };
 
@@ -148,13 +153,15 @@ export const getRelativeTime = (date) => {
   const target = new Date(date);
   const diffMs = target - now;
   const diffMins = Math.floor(Math.abs(diffMs) / 60000);
-  
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return diffMs < 0 ? `${diffMins} mins ago` : `in ${diffMins} mins`;
-  
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60)
+    return diffMs < 0 ? `${diffMins} mins ago` : `in ${diffMins} mins`;
+
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return diffMs < 0 ? `${diffHours} hours ago` : `in ${diffHours} hours`;
-  
+  if (diffHours < 24)
+    return diffMs < 0 ? `${diffHours} hours ago` : `in ${diffHours} hours`;
+
   const diffDays = Math.floor(diffHours / 24);
   return diffMs < 0 ? `${diffDays} days ago` : `in ${diffDays} days`;
 };
@@ -167,10 +174,10 @@ export const getRelativeTime = (date) => {
  * @returns {string} Category (Underweight, Normal, Overweight, Obese)
  */
 export const getBMICategory = (bmi) => {
-  if (bmi < 18.5) return 'Underweight';
-  if (bmi < 25) return 'Normal';
-  if (bmi < 30) return 'Overweight';
-  return 'Obese';
+  if (bmi < 18.5) return "Underweight";
+  if (bmi < 25) return "Normal";
+  if (bmi < 30) return "Overweight";
+  return "Obese";
 };
 
 /**
@@ -180,10 +187,10 @@ export const getBMICategory = (bmi) => {
  * @returns {string} Category (Normal, Elevated, High)
  */
 export const getBPCategory = (systolic, diastolic) => {
-  if (systolic < 120 && diastolic < 80) return 'Normal';
-  if (systolic < 130 && diastolic < 80) return 'Elevated';
-  if (systolic < 140 || diastolic < 90) return 'High (Stage 1)';
-  return 'High (Stage 2)';
+  if (systolic < 120 && diastolic < 80) return "Normal";
+  if (systolic < 130 && diastolic < 80) return "Elevated";
+  if (systolic < 140 || diastolic < 90) return "High (Stage 1)";
+  return "High (Stage 2)";
 };
 
 /**
@@ -192,9 +199,9 @@ export const getBPCategory = (systolic, diastolic) => {
  * @returns {string} Category (Low, Normal, High)
  */
 export const getHeartRateCategory = (heartRate) => {
-  if (heartRate < 60) return 'Low';
-  if (heartRate <= 100) return 'Normal';
-  return 'High';
+  if (heartRate < 60) return "Low";
+  if (heartRate <= 100) return "Normal";
+  return "High";
 };
 
 /**
@@ -203,26 +210,47 @@ export const getHeartRateCategory = (heartRate) => {
  * @param {string} context - The context (appointment, payment, etc.)
  * @returns {string} Hex color code
  */
-export const getStatusColor = (status, _context = 'appointment') => {
-  if (!status) return theme.colors.grey[500];
-  
+export const getStatusColor = (status, _context = "appointment") => {
+  if (!status) return theme.colors.grays.gray500;
+
   const s = status.toLowerCase();
-  
+
   // Generic success/active states
-  if (['completed', 'confirmed', 'ready', 'dispensed', 'paid', 'active', 'success'].includes(s)) {
-    return theme.colors.success;
+  if (
+    [
+      "completed",
+      "confirmed",
+      "ready",
+      "dispensed",
+      "paid",
+      "active",
+      "success",
+    ].includes(s)
+  ) {
+    return theme.colors.success.main;
   }
-  
+
   // Generic warning/pending states
-  if (['pending', 'processing', 'scheduled', 'preparing', 'ongoing'].includes(s)) {
-    return theme.colors.warning;
+  if (
+    ["pending", "processing", "scheduled", "preparing", "ongoing"].includes(s)
+  ) {
+    return theme.colors.warning.main;
   }
-  
+
   // Generic error/cancelled states
-  if (['cancelled', 'failed', 'refunded', 'no_show', 'inactive', 'critical'].includes(s)) {
-    return theme.colors.error;
+  if (
+    [
+      "cancelled",
+      "failed",
+      "refunded",
+      "no_show",
+      "inactive",
+      "critical",
+    ].includes(s)
+  ) {
+    return theme.colors.error.main;
   }
-  
+
   // Default fallback
   return theme.colors.primary;
 };
@@ -233,27 +261,67 @@ export const getStatusColor = (status, _context = 'appointment') => {
  * @returns {Object} { color, backgroundColor } style object
  */
 export const getStatusStyle = (status) => {
-  if (!status) return { color: theme.colors.text.secondary, backgroundColor: theme.colors.grays.gray200 };
-  
+  if (!status)
+    return {
+      color: theme.colors.text.secondary,
+      backgroundColor: theme.colors.grays.gray200,
+    };
+
   const s = status.toLowerCase();
-  
-  if (['completed', 'confirmed', 'ready', 'dispensed', 'paid', 'active', 'success'].includes(s)) {
-    return { color: theme.colors.success.dark, backgroundColor: theme.colors.success.background };
+
+  if (
+    [
+      "completed",
+      "confirmed",
+      "ready",
+      "dispensed",
+      "paid",
+      "active",
+      "success",
+    ].includes(s)
+  ) {
+    return {
+      color: theme.colors.success.dark,
+      backgroundColor: theme.colors.success.background,
+    };
   }
-  
-  if (['pending', 'processing', 'scheduled', 'preparing', 'ongoing'].includes(s)) {
-    return { color: theme.colors.warning.dark, backgroundColor: theme.colors.warning.background };
+
+  if (
+    ["pending", "processing", "scheduled", "preparing", "ongoing"].includes(s)
+  ) {
+    return {
+      color: theme.colors.warning.dark,
+      backgroundColor: theme.colors.warning.background,
+    };
   }
-  
-  if (['cancelled', 'failed', 'refunded', 'no_show', 'inactive', 'critical'].includes(s)) {
-    return { color: theme.colors.error.dark, backgroundColor: theme.colors.error.background };
+
+  if (
+    [
+      "cancelled",
+      "failed",
+      "refunded",
+      "no_show",
+      "inactive",
+      "critical",
+    ].includes(s)
+  ) {
+    return {
+      color: theme.colors.error.dark,
+      backgroundColor: theme.colors.error.background,
+    };
   }
-  
-  if (['in_progress', 'started', 'arrived'].includes(s)) {
-    return { color: theme.colors.info.dark, backgroundColor: theme.colors.info.background };
+
+  if (["in_progress", "started", "arrived"].includes(s)) {
+    return {
+      color: theme.colors.info.dark,
+      backgroundColor: theme.colors.info.background,
+    };
   }
-  
-  return { color: theme.colors.primaryDark, backgroundColor: theme.colors.primaryLight + "30" };
+
+  return {
+    color: theme.colors.primaryDark,
+    backgroundColor: theme.colors.primaryLight + "30",
+  };
 };
 
 // String utilities
@@ -264,7 +332,7 @@ export const getStatusStyle = (status) => {
  * @returns {string} Capitalized string
  */
 export const capitalize = (str) => {
-  if (!str) return '';
+  if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
@@ -276,7 +344,7 @@ export const capitalize = (str) => {
  */
 export const truncate = (str, maxLength = 50) => {
   if (!str || str.length <= maxLength) return str;
-  return str.substring(0, maxLength - 3) + '...';
+  return str.substring(0, maxLength - 3) + "...";
 };
 
 /**
@@ -285,11 +353,11 @@ export const truncate = (str, maxLength = 50) => {
  * @returns {string} Initials (e.g., "John Doe" -> "JD")
  */
 export const getInitials = (name) => {
-  if (!name) return '';
+  if (!name) return "";
   return name
-    .split(' ')
-    .map(part => part.charAt(0).toUpperCase())
-    .join('')
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("")
     .substring(0, 2);
 };
 
@@ -299,9 +367,9 @@ export const getInitials = (name) => {
  * @returns {string} User-friendly message
  */
 export const getErrorMessage = (error) => {
-  if (typeof error === 'string') return error;
+  if (typeof error === "string") return error;
   if (error?.message) return error.message;
-  return 'An unexpected error occurred. Please try again.';
+  return "An unexpected error occurred. Please try again.";
 };
 
 // Platform utilities
@@ -310,8 +378,8 @@ export const getErrorMessage = (error) => {
  * Trigger haptic feedback (vibration)
  * @param {string} type - Type of feedback ('light', 'medium', 'heavy')
  */
-export const hapticFeedback = (_type = 'light') => {
-  if (Platform.OS === 'ios') {
+export const hapticFeedback = (_type = "light") => {
+  if (Platform.OS === "ios") {
     // iOS haptic feedback would go here
     // Requires expo-haptics
   }
@@ -378,9 +446,9 @@ export const groupBy = (array, key) => {
  * @param {string} order - 'asc' or 'desc'
  * @returns {Array} Sorted array
  */
-export const sortBy = (array, key, order = 'asc') => {
+export const sortBy = (array, key, order = "asc") => {
   return [...array].sort((a, b) => {
-    if (order === 'asc') {
+    if (order === "asc") {
       return a[key] > b[key] ? 1 : -1;
     }
     return a[key] < b[key] ? 1 : -1;
@@ -410,4 +478,3 @@ export default {
   getStatusColor,
   getStatusStyle,
 };
-

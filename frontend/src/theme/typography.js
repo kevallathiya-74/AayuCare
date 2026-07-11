@@ -1,45 +1,45 @@
 /**
  * AayuCare Design System - Typography
- * 
+ *
  * Font choices optimized for Indian users:
  * - Poppins SemiBold for headings (friendly, modern)
  * - Lato/Inter for body text (highly legible)
  * - Inter for numbers (clear on budget Android screens)
- * 
+ *
  * All sizes are optimized for mobile readability.
  */
 
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
 // Font families
 export const fontFamilies = {
   // Headings - Poppins
-  heading: 'Poppins-SemiBold',
-  
+  heading: "Poppins-SemiBold",
+
   // Body - Inter
-  body: 'Inter-Regular',
-  
+  body: "Inter-Regular",
+
   // Numbers - Inter
-  numbers: 'Inter-Regular',
-  
+  numbers: "Inter-Regular",
+
   // Alternative - Inter
-  bodyAlt: 'Inter-Medium',
-  
+  bodyAlt: "Inter-Medium",
+
   // Monospace (for codes, IDs)
   mono: Platform.select({
-    ios: 'Courier',
-    android: 'monospace',
-    default: 'monospace',
+    ios: "Courier",
+    android: "monospace",
+    default: "monospace",
   }),
 };
 
 // Font weights
 export const fontWeights = {
-  light: '300',
-  regular: '400',
-  medium: '500',
-  semibold: '600',
-  bold: '700',
+  light: "300",
+  regular: "400",
+  medium: "500",
+  semibold: "600",
+  bold: "700",
 };
 
 // Font sizes (mobile-optimized, accessible)
@@ -48,7 +48,7 @@ export const fontSizes = {
   displayLarge: 48,
   displayMedium: 40,
   displaySmall: 36,
-  
+
   // Heading sizes
   h1: 32,
   h2: 28,
@@ -56,17 +56,17 @@ export const fontSizes = {
   h4: 20,
   h5: 18,
   h6: 16,
-  
+
   // Body text sizes
   bodyLarge: 16,
   bodyMedium: 14,
   bodySmall: 12,
-  
+
   // Label sizes (for buttons, inputs)
   labelLarge: 16,
   labelMedium: 14,
   labelSmall: 12,
-  
+
   // Caption/Helper text
   caption: 12,
   overline: 10,
@@ -74,10 +74,10 @@ export const fontSizes = {
 
 // Line heights
 export const lineHeights = {
-  tight: 1.2,            // Headings
-  normal: 1.5,           // Body text (optimal for reading)
-  relaxed: 1.75,         // Comfortable reading
-  loose: 2,              // Very spacious
+  tight: 1.2, // Headings
+  normal: 1.5, // Body text (optimal for reading)
+  relaxed: 1.75, // Comfortable reading
+  loose: 2, // Very spacious
 };
 
 // Letter spacing (for clarity)
@@ -97,21 +97,21 @@ export const textStyles = {
     lineHeight: fontSizes.displayLarge * lineHeights.tight,
     letterSpacing: letterSpacing.normal,
   },
-  
+
   displayMedium: {
     fontFamily: fontFamilies.heading,
     fontSize: fontSizes.displayMedium,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.displayMedium * lineHeights.tight,
   },
-  
+
   displaySmall: {
     fontFamily: fontFamilies.heading,
     fontSize: fontSizes.displaySmall,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.displaySmall * lineHeights.tight,
   },
-  
+
   // Heading styles
   h1: {
     fontFamily: fontFamilies.heading,
@@ -119,28 +119,28 @@ export const textStyles = {
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.h1 * lineHeights.tight,
   },
-  
+
   h2: {
     fontFamily: fontFamilies.heading,
     fontSize: fontSizes.h2,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.h2 * lineHeights.tight,
   },
-  
+
   h3: {
     fontFamily: fontFamilies.heading,
     fontSize: fontSizes.h3,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.h3 * lineHeights.normal,
   },
-  
+
   h4: {
     fontFamily: fontFamilies.heading,
     fontSize: fontSizes.h4,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.h4 * lineHeights.normal,
   },
-  
+
   // Body styles
   bodyLarge: {
     fontFamily: fontFamilies.body,
@@ -148,21 +148,21 @@ export const textStyles = {
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.bodyLarge * lineHeights.normal,
   },
-  
+
   bodyMedium: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMedium,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.bodyMedium * lineHeights.normal,
   },
-  
+
   bodySmall: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodySmall,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.bodySmall * lineHeights.normal,
   },
-  
+
   // Body bold variants
   bodyLargeBold: {
     fontFamily: fontFamilies.body,
@@ -170,14 +170,14 @@ export const textStyles = {
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.bodyLarge * lineHeights.normal,
   },
-  
+
   bodyMediumBold: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMedium,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.bodyMedium * lineHeights.normal,
   },
-  
+
   // Label styles
   labelLarge: {
     fontFamily: fontFamilies.body,
@@ -185,50 +185,50 @@ export const textStyles = {
     fontWeight: fontWeights.medium,
     lineHeight: fontSizes.labelLarge * lineHeights.normal,
   },
-  
+
   labelMedium: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMedium,
     fontWeight: fontWeights.medium,
     lineHeight: fontSizes.labelMedium * lineHeights.normal,
   },
-  
+
   labelSmall: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelSmall,
     fontWeight: fontWeights.medium,
     lineHeight: fontSizes.labelSmall * lineHeights.normal,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: letterSpacing.wide,
   },
-  
+
   // Special styles
   caption: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.caption * lineHeights.normal,
-    color: '#80868B', // Reference: colors.text.tertiary (use in components)
+    color: "#80868B", // Reference: colors.text.tertiary (use in components)
   },
-  
+
   overline: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.overline,
     fontWeight: fontWeights.medium,
     lineHeight: fontSizes.overline * lineHeights.normal,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: letterSpacing.wider,
   },
-  
+
   // Button styles
   button: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelLarge,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.labelLarge * lineHeights.tight,
-    textTransform: 'none', // Do not uppercase buttons (friendlier)
+    textTransform: "none", // Do not uppercase buttons (friendlier)
   },
-  
+
   // Number styles (for health metrics)
   numberLarge: {
     fontFamily: fontFamilies.numbers,
@@ -236,14 +236,14 @@ export const textStyles = {
     fontWeight: fontWeights.semibold,
     lineHeight: 32 * lineHeights.tight,
   },
-  
+
   numberMedium: {
     fontFamily: fontFamilies.numbers,
     fontSize: 24,
     fontWeight: fontWeights.medium,
     lineHeight: 24 * lineHeights.tight,
   },
-  
+
   numberSmall: {
     fontFamily: fontFamilies.numbers,
     fontSize: 16,
@@ -271,4 +271,3 @@ export default {
   textStyles,
   fontsToLoad,
 };
-

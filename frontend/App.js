@@ -61,7 +61,7 @@ let paperTheme;
 try {
   // Import theme
   const { theme } = require("./src/theme");
-  
+
   // Create paperTheme adapter from theme
   paperTheme = {
     colors: {
@@ -72,7 +72,7 @@ try {
       text: theme.colors.text.primary,
       disabled: theme.colors.grays.gray400,
       placeholder: theme.colors.text.secondary,
-      backdrop: 'rgba(0, 0, 0, 0.5)',
+      backdrop: "rgba(0, 0, 0, 0.5)",
       notification: theme.colors.error.main,
     },
     fonts: {
@@ -81,22 +81,25 @@ try {
       },
       medium: {
         fontFamily: theme.typography.fontFamilies.body,
-        fontWeight: '500',
+        fontWeight: "500",
       },
       light: {
         fontFamily: theme.typography.fontFamilies.body,
-        fontWeight: '300',
+        fontWeight: "300",
       },
       thin: {
         fontFamily: theme.typography.fontFamilies.body,
-        fontWeight: '100',
+        fontWeight: "100",
       },
     },
   };
 
   // Fix 2.4 — Runtime validation
   if (!paperTheme.colors.primary) {
-    if (__DEV__) console.warn("[App] theme.colors.primary is undefined, applying fallback");
+    if (__DEV__)
+      console.warn(
+        "[App] theme.colors.primary is undefined, applying fallback",
+      );
     paperTheme.colors.primary = "#00ACC1"; // Primary teal fallback
   }
 } catch (e) {
@@ -148,7 +151,7 @@ export default function App() {
             <QueryClientProvider client={queryClient}>
               <PaperProvider theme={paperTheme}>
                 <ToastProvider>
-                  <StatusBar style="dark" />
+                  <StatusBar style="auto" />
                   <AppNavigator />
                 </ToastProvider>
               </PaperProvider>

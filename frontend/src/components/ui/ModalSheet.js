@@ -35,7 +35,7 @@ import {
 import { X } from "lucide-react-native";
 import { getKeyboardConfig } from "@/utils/responsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const ANIMATION_DURATION = 280;
@@ -109,7 +109,8 @@ const ModalSheet = ({
       </Animated.View>
 
       {/* Sheet panel */}
-      <KeyboardAvoidingView {...getKeyboardConfig()}
+      <KeyboardAvoidingView
+        {...getKeyboardConfig()}
         style={styles.keyboardView}
         pointerEvents="box-none"
       >
@@ -137,7 +138,10 @@ const ModalSheet = ({
                 onPress={onClose}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <X  size={theme.iconSizes.md} color={healthColors.text.secondary} />
+                <X
+                  size={theme.iconSizes.md}
+                  color={healthColors.text.secondary}
+                />
               </TouchableOpacity>
             </View>
           ) : null}

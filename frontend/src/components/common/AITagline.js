@@ -8,7 +8,7 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { Sparkles } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 const AITagline = ({
   animated = true,
   variant = "default", // 'default', 'gradient', 'minimal'
@@ -53,15 +53,18 @@ const AITagline = ({
         ]}
       >
         <LinearGradient
-          colors={[theme.colors.info.main, theme.colors.healthcare.purple, theme.colors.healthcare.purple]}
+          colors={[
+            theme.colors.info.main,
+            theme.colors.healthcare.purple,
+            theme.colors.healthcare.purple,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradientContainer}
         >
           <Sparkles
-            
-          size={theme.iconSizes.sm}
-          color={healthColors.neutral.white}
+            size={theme.iconSizes.sm}
+            color={healthColors.neutral.white}
           />
           <Text style={styles.gradientText}>
             Your health, enhanced by intelligence.
@@ -83,7 +86,10 @@ const AITagline = ({
           },
         ]}
       >
-        <Sparkles  size={theme.iconSizes.xs} color={theme.colors.healthcare.purple} />
+        <Sparkles
+          size={theme.iconSizes.xs}
+          color={theme.colors.healthcare.purple}
+        />
         <Text style={styles.minimalText}>
           Your health, enhanced by intelligence.
         </Text>
@@ -104,7 +110,10 @@ const AITagline = ({
       ]}
     >
       <View style={styles.iconCircle}>
-        <Sparkles  size={theme.iconSizes.sm} color={theme.colors.healthcare.purple} />
+        <Sparkles
+          size={theme.iconSizes.sm}
+          color={theme.colors.healthcare.purple}
+        />
       </View>
       <View style={styles.textContainer}>
         <Text style={styles.text}>Your health, enhanced by intelligence.</Text>
@@ -195,6 +204,3 @@ const styles = StyleSheet.create({
 });
 
 export default AITagline;
-
-
-
