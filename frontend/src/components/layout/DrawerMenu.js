@@ -35,7 +35,7 @@ const getInitials = (name) => {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 const ROLE_LABELS = {
   patient: "Patient Account",
@@ -60,7 +60,7 @@ const DrawerMenu = ({
         setTimeout(onPress, 120);
       }
     },
-    [onClose]
+    [onClose],
   );
 
   const handleLogout = useCallback(() => {
@@ -99,13 +99,17 @@ const DrawerMenu = ({
             <View style={styles.headerContent}>
               <View style={styles.profileRow}>
                 <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarInitials}>{getInitials(user?.name)}</Text>
+                  <Text style={styles.avatarInitials}>
+                    {getInitials(user?.name)}
+                  </Text>
                 </View>
                 <View style={styles.userInfo}>
                   <Text style={styles.userName} numberOfLines={1}>
                     {user?.name || "User"}
                   </Text>
-                  <Text style={styles.userRole}>{ROLE_LABELS[role] ?? role}</Text>
+                  <Text style={styles.userRole}>
+                    {ROLE_LABELS[role] ?? role}
+                  </Text>
                   {user?.userId ? (
                     <Text style={styles.userId}>ID: {user.userId}</Text>
                   ) : null}
@@ -118,7 +122,7 @@ const DrawerMenu = ({
                 accessibilityRole="button"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <X  size={theme.iconSizes.xl} color={healthColors.white} />
+                <X size={theme.iconSizes.xl} color={healthColors.white} />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -147,7 +151,8 @@ const DrawerMenu = ({
                         styles.menuIconWrap,
                         {
                           backgroundColor:
-                            (item.iconColor || healthColors.primary.main) + "18",
+                            (item.iconColor || healthColors.primary.main) +
+                            "18",
                         },
                       ]}
                     >
@@ -185,7 +190,6 @@ const DrawerMenu = ({
                     ]}
                   >
                     <LogOut
-                       
                       size={theme.iconSizes.md}
                       color={healthColors.error.main}
                     />

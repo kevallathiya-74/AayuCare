@@ -6,7 +6,7 @@
  * Features: spring press animation, gradient, loading state, icon support, full-width, accessibility, memoization
  */
 
-import React, { useRef, useMemo, memo } from 'react';
+import React, { useRef, useMemo, memo } from "react";
 import {
   Pressable,
   Text,
@@ -19,24 +19,33 @@ import {
   ViewStyle,
   TextStyle,
   GestureResponderEvent,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { theme, healthColors } from '@/theme';
-import { textStyles } from '@/theme/typography';
-import { spacing } from '@/theme/spacing';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { theme, healthColors } from "@/theme";
+import { textStyles } from "@/theme/typography";
+import { spacing } from "@/theme/spacing";
 import {
   touchTargets,
   borderRadius as responsiveBorderRadius,
   getButtonHeight,
-} from '@/utils/responsive';
+} from "@/utils/responsive";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'text' | 'danger';
-export type ButtonSize = 'small' | 'medium' | 'large';
-export type IconPosition = 'left' | 'right';
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "text"
+  | "danger";
+export type ButtonSize = "small" | "medium" | "large";
+export type IconPosition = "left" | "right";
 
-export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
+export interface ButtonProps extends Omit<
+  PressableProps,
+  "style" | "children"
+> {
   title?: string;
   children?: React.ReactNode;
   onPress?: (event: GestureResponderEvent) => void;
@@ -56,12 +65,12 @@ const Button: React.FC<ButtonProps> = ({
   children,
   title,
   onPress,
-  variant = 'primary',
-  size = 'medium',
+  variant = "primary",
+  size = "medium",
   disabled = false,
   loading = false,
   icon,
-  iconPosition = 'left',
+  iconPosition = "left",
   gradient = false,
   fullWidth = false,
   style,
@@ -113,35 +122,71 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const buttonStyle = useMemo(() => {
-    const sizeStyles = { small: styles.small, medium: styles.medium, large: styles.large };
-    const baseStyle: StyleProp<ViewStyle>[] = [styles.button, sizeStyles[size] || sizeStyles.medium];
-    
-    if (fullWidth) baseStyle.push(styles.fullWidth);
-    if (disabled || loading) baseStyle.push(styles.disabled);
+    const sizeStyles = {
+      small: styles.small,
+      medium: styles.medium,
+      large: styles.large,
+    };
+    const baseStyle: StyleProp<ViewStyle>[] = [
+      styles.button,
+      sizeStyles[size] || sizeStyles.medium,
+    ];
 
+    if (fullWidth) baseStyle.push(styles.fullWidth);
     switch (variant) {
-      case 'secondary': baseStyle.push(styles.secondary); break;
-      case 'outline':   baseStyle.push(styles.outline);   break;
-      case 'ghost':     baseStyle.push(styles.ghost);     break;
-      case 'text':      baseStyle.push(styles.textBtn);   break;
-      case 'danger':    baseStyle.push(styles.danger);    break;
-      default:          baseStyle.push(styles.primary);
+      case "secondary":
+        baseStyle.push(styles.secondary);
+        break;
+      case "outline":
+        baseStyle.push(styles.outline);
+        break;
+      case "ghost":
+        baseStyle.push(styles.ghost);
+        break;
+      case "text":
+        baseStyle.push(styles.textBtn);
+        break;
+      case "danger":
+        baseStyle.push(styles.danger);
+        break;
+      default:
+        baseStyle.push(styles.primary);
     }
+
+    if (disabled || loading) baseStyle.push(styles.disabled);
 
     return baseStyle;
   }, [variant, size, disabled, loading, fullWidth]);
 
   const buttonTextStyle = useMemo(() => {
-    const sizeTextStyles = { small: styles.smallText, medium: styles.mediumText, large: styles.largeText };
-    const baseStyle: StyleProp<TextStyle>[] = [styles.buttonText, sizeTextStyles[size] || sizeTextStyles.medium];
+    const sizeTextStyles = {
+      small: styles.smallText,
+      medium: styles.mediumText,
+      large: styles.largeText,
+    };
+    const baseStyle: StyleProp<TextStyle>[] = [
+      styles.buttonText,
+      sizeTextStyles[size] || sizeTextStyles.medium,
+    ];
 
     switch (variant) {
-      case 'secondary': baseStyle.push(styles.secondaryText); break;
-      case 'outline':   baseStyle.push(styles.outlineText);   break;
-      case 'ghost':     baseStyle.push(styles.ghostText);     break;
-      case 'text':      baseStyle.push(styles.textBtnText);   break;
-      case 'danger':    baseStyle.push(styles.dangerText);    break;
-      default:          baseStyle.push(styles.primaryText);
+      case "secondary":
+        baseStyle.push(styles.secondaryText);
+        break;
+      case "outline":
+        baseStyle.push(styles.outlineText);
+        break;
+      case "ghost":
+        baseStyle.push(styles.ghostText);
+        break;
+      case "text":
+        baseStyle.push(styles.textBtnText);
+        break;
+      case "danger":
+        baseStyle.push(styles.dangerText);
+        break;
+      default:
+        baseStyle.push(styles.primaryText);
     }
 
     if (disabled || loading) baseStyle.push(styles.disabledText);
@@ -149,7 +194,8 @@ const Button: React.FC<ButtonProps> = ({
   }, [variant, size, disabled, loading]);
 
   const indicatorColor = useMemo(() => {
-    if (variant === 'primary' || variant === 'danger') return healthColors.white;
+    if (variant === "primary" || variant === "danger")
+      return healthColors.white;
     return healthColors.primary.main;
   }, [variant]);
 
@@ -159,11 +205,19 @@ const Button: React.FC<ButtonProps> = ({
         <ActivityIndicator size="small" color={indicatorColor} />
       ) : (
         <>
-          {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{icon}</View>}
-          <Text numberOfLines={1} ellipsizeMode="tail" style={[buttonTextStyle, textStyle]}>
+          {icon && iconPosition === "left" && (
+            <View style={styles.iconLeft}>{icon}</View>
+          )}
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[buttonTextStyle, textStyle]}
+          >
             {labelContent}
           </Text>
-          {icon && iconPosition === 'right' && <View style={styles.iconRight}>{icon}</View>}
+          {icon && iconPosition === "right" && (
+            <View style={styles.iconRight}>{icon}</View>
+          )}
         </>
       )}
     </View>
@@ -174,19 +228,27 @@ const Button: React.FC<ButtonProps> = ({
     opacity: opacityAnim,
   };
 
-  const isGradientEnabled = gradient && variant === 'primary' && !disabled && !loading;
+  const isGradientEnabled =
+    gradient && variant === "primary" && !disabled && !loading;
 
   if (isGradientEnabled) {
-    const rawColors = (healthColors.gradients && healthColors.gradients.primary) 
-      ? healthColors.gradients.primary 
-      : [healthColors.primary.main, healthColors.secondary?.main || healthColors.primary.main];
+    const rawColors =
+      healthColors.gradients && healthColors.gradients.primary
+        ? healthColors.gradients.primary
+        : [
+            healthColors.primary.main,
+            healthColors.secondary?.main || healthColors.primary.main,
+          ];
     const gradientColors: [string, string, ...string[]] = [
       rawColors[0] || healthColors.primary.main,
       rawColors[1] || healthColors.primary.main,
       ...rawColors.slice(2),
     ];
 
-    const sizeStyle = styles[size] as { height?: number; paddingHorizontal?: number };
+    const sizeStyle = styles[size] as {
+      height?: number;
+      paddingHorizontal?: number;
+    };
     const buttonHeight = sizeStyle?.height ?? 50;
     const buttonPadding = sizeStyle?.paddingHorizontal ?? 20;
 
@@ -196,10 +258,19 @@ const Button: React.FC<ButtonProps> = ({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled || loading}
-        style={[animStyle, styles.button, { height: buttonHeight }, styles.gradientWrapper, fullWidth && styles.fullWidth, style]}
+        style={[
+          animStyle,
+          styles.button,
+          { height: buttonHeight },
+          styles.gradientWrapper,
+          fullWidth && styles.fullWidth,
+          style,
+        ]}
         accessibilityRole="button"
         accessibilityState={{ disabled: disabled || loading, busy: loading }}
-        accessibilityLabel={typeof labelContent === 'string' ? labelContent : undefined}
+        accessibilityLabel={
+          typeof labelContent === "string" ? labelContent : undefined
+        }
         collapsable={false}
         {...props}
       >
@@ -224,7 +295,9 @@ const Button: React.FC<ButtonProps> = ({
       style={[animStyle, buttonStyle, style]}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      accessibilityLabel={typeof labelContent === 'string' ? labelContent : undefined}
+      accessibilityLabel={
+        typeof labelContent === "string" ? labelContent : undefined
+      }
       collapsable={false}
       {...props}
     >
@@ -236,23 +309,23 @@ const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     borderRadius: responsiveBorderRadius.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   fullWidth: {
-    width: '100%',
+    width: "100%",
   },
   small: {
-    height: Math.max(getButtonHeight('small'), touchTargets.medium),
+    height: Math.max(getButtonHeight("small"), touchTargets.medium),
     paddingHorizontal: spacing.md,
   },
   medium: {
-    height: Math.max(getButtonHeight('medium'), touchTargets.medium),
+    height: Math.max(getButtonHeight("medium"), touchTargets.medium),
     paddingHorizontal: spacing.lg,
   },
   large: {
-    height: Math.max(getButtonHeight('large'), touchTargets.large),
+    height: Math.max(getButtonHeight("large"), touchTargets.large),
     paddingHorizontal: spacing.xl,
   },
   primary: {
@@ -330,9 +403,9 @@ const styles = StyleSheet.create({
     color: healthColors.button.disabledText,
   },
   contentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconLeft: {
     marginRight: spacing.sm,
@@ -341,10 +414,10 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   gradient: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

@@ -6,8 +6,8 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { AlertTriangle, RotateCw } from "lucide-react-native";
-import { healthColors } from '@/theme';
-import { captureException } from '@/config/sentry';
+import { healthColors } from "@/theme";
+import { captureException } from "@/config/sentry";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -38,7 +38,7 @@ class ErrorBoundary extends React.Component {
     } catch (sentryError) {
       console.warn(
         "[ErrorBoundary] Sentry capture failed:",
-        sentryError.message
+        sentryError.message,
       );
     }
   }
@@ -61,7 +61,8 @@ class ErrorBoundary extends React.Component {
 
           <Text style={styles.title}>Oops! Something went wrong</Text>
           <Text style={styles.message}>
-            The application encountered an unexpected error. You can try reloading the screen to restore functionality.
+            The application encountered an unexpected error. You can try
+            reloading the screen to restore functionality.
           </Text>
 
           {__DEV__ && this.state.error && (
@@ -82,7 +83,11 @@ class ErrorBoundary extends React.Component {
             accessibilityRole="button"
             accessibilityLabel="Try reloading the screen"
           >
-            <RotateCw size={18} color={healthColors.white} style={styles.buttonIcon} />
+            <RotateCw
+              size={18}
+              color={healthColors.white}
+              style={styles.buttonIcon}
+            />
             <Text style={styles.buttonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -184,4 +189,3 @@ const styles = StyleSheet.create({
 });
 
 export default ErrorBoundary;
-

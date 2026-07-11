@@ -1,10 +1,17 @@
 /**
  * AayuCare - Custom Input Component
- * 
+ *
  * Features: floating label, validation states, icons, password toggle
  */
 
-import React, { useState, useCallback, useRef, forwardRef, memo, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  forwardRef,
+  memo,
+  useEffect,
+} from "react";
 import {
   View,
   TextInput,
@@ -12,186 +19,207 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-} from 'react-native';
-import { Eye, EyeOff, CheckCircle2 } from 'lucide-react-native';
-import { theme, healthColors } from '@/theme';
-import { textStyles, fontFamilies } from '@/theme/typography';
-import { spacing, layout } from '@/theme/spacing';
-import { 
-    touchTargets,
-    borderRadius as responsiveBorderRadius,
-    getInputHeight,
-} from '@/utils/responsive';
+} from "react-native";
+import { Eye, EyeOff, CheckCircle2 } from "lucide-react-native";
+import { theme, healthColors } from "@/theme";
+import { textStyles, fontFamilies } from "@/theme/typography";
+import { spacing, layout } from "@/theme/spacing";
+import {
+  touchTargets,
+  borderRadius as responsiveBorderRadius,
+  getInputHeight,
+} from "@/utils/responsive";
 
-const Input = memo(forwardRef(({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  error,
-  success,
-  helperText,
-  leftIcon,
-  rightIcon,
-  secureTextEntry,
-  disabled = false,
-  multiline = false,
-  numberOfLines = 1,
-  style,
-  inputStyle,
-  onFocus,
-  onBlur,
-  ...props
-}, ref) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  
-  // Use useRef to keep the Animated.Value reference completely stable across renders
-  const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
-
-  // Keep labelAnim synchronized with focus and value changes smoothly
-  useEffect(() => {
-    Animated.timing(labelAnim, {
-      toValue: (value || isFocused) ? 1 : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [value, isFocused, labelAnim]);
-
-  const handleFocus = useCallback((e) => {
-    setIsFocused(true);
-    if (onFocus) {
-      onFocus(e);
-    }
-  }, [onFocus]);
-
-  const handleBlur = useCallback((e) => {
-    setIsFocused(false);
-    if (onBlur) {
-      onBlur(e);
-    }
-  }, [onBlur]);
-
-  const labelStyle = {
-    position: 'absolute',
-    left: leftIcon ? 48 : spacing.md,
-    top: 13,
-    fontSize: 16,
-    color: error
-      ? healthColors.error.main
-      : success
-      ? healthColors.success.main
-      : isFocused
-      ? healthColors.primary.main
-      : healthColors.text.tertiary,
-    backgroundColor: healthColors.background.primary,
-    paddingHorizontal: 6,
-    fontWeight: '500',
-    zIndex: 1,
-    transform: [
+const Input = memo(
+  forwardRef(
+    (
       {
-        translateY: labelAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -23],
-        }),
+        label,
+        value,
+        onChangeText,
+        placeholder,
+        error,
+        success,
+        helperText,
+        leftIcon,
+        rightIcon,
+        secureTextEntry,
+        disabled = false,
+        multiline = false,
+        numberOfLines = 1,
+        style,
+        inputStyle,
+        onFocus,
+        onBlur,
+        ...props
       },
-      {
-        scale: labelAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, 0.75],
-        }),
-      },
-      {
-        translateX: labelAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -12],
-        }),
-      },
-    ],
-  };
+      ref,
+    ) => {
+      const [isFocused, setIsFocused] = useState(false);
+      const [showPassword, setShowPassword] = useState(false);
 
-  const containerStyle = [
-    styles.container,
-    isFocused && styles.containerFocused,
-    error && styles.containerError,
-    success && !error && styles.containerSuccess,
-    disabled && styles.containerDisabled,
-  ];
+      // Use useRef to keep the Animated.Value reference completely stable across renders
+      const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
-  return (
-    <View style={[styles.wrapper, style]}>
-      <View style={containerStyle}>
-        {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+      // Keep labelAnim synchronized with focus and value changes smoothly
+      useEffect(() => {
+        Animated.timing(labelAnim, {
+          toValue: value || isFocused ? 1 : 0,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
+      }, [value, isFocused, labelAnim]);
 
-        {label && <Animated.Text style={labelStyle} pointerEvents="none">{label}</Animated.Text>}
+      const handleFocus = useCallback(
+        (e) => {
+          setIsFocused(true);
+          if (onFocus) {
+            onFocus(e);
+          }
+        },
+        [onFocus],
+      );
 
-        <TextInput
-          ref={ref}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={(label && !isFocused && !value) ? 'transparent' : healthColors.input.placeholder}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          editable={!disabled}
-          secureTextEntry={secureTextEntry && !showPassword}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
-          autoCorrect={false}
-          autoCapitalize="none"
-          accessibilityLabel={label || placeholder}
-          accessibilityHint={helperText}
-          accessibilityState={{ disabled }}
-          style={[
-            styles.input,
-            leftIcon && styles.inputWithLeftIcon,
-            (rightIcon || secureTextEntry) && styles.inputWithRightIcon,
-            multiline && styles.inputMultiline,
-            inputStyle,
-          ]}
-          {...props}
-        />
+      const handleBlur = useCallback(
+        (e) => {
+          setIsFocused(false);
+          if (onBlur) {
+            onBlur(e);
+          }
+        },
+        [onBlur],
+      );
 
-        {secureTextEntry && (
-          <TouchableOpacity
-            style={styles.rightIcon}
-            onPress={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? (
-              <EyeOff size={20} color={healthColors.text.tertiary} />
-            ) : (
-              <Eye size={20} color={healthColors.text.tertiary} />
+      const labelStyle = {
+        position: "absolute",
+        left: leftIcon ? 48 : spacing.md,
+        top: 13,
+        fontSize: 16,
+        color: error
+          ? healthColors.error.main
+          : success
+            ? healthColors.success.main
+            : isFocused
+              ? healthColors.primary.main
+              : healthColors.text.tertiary,
+        backgroundColor: healthColors.background.primary,
+        paddingHorizontal: 6,
+        fontWeight: "500",
+        zIndex: 1,
+        transform: [
+          {
+            translateY: labelAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, -23],
+            }),
+          },
+          {
+            scale: labelAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 0.75],
+            }),
+          },
+          {
+            translateX: labelAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, -12],
+            }),
+          },
+        ],
+      };
+
+      const containerStyle = [
+        styles.container,
+        isFocused && styles.containerFocused,
+        error && styles.containerError,
+        success && !error && styles.containerSuccess,
+        disabled && styles.containerDisabled,
+      ];
+
+      return (
+        <View style={[styles.wrapper, style]}>
+          <View style={containerStyle}>
+            {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+
+            {label && (
+              <Animated.Text style={labelStyle} pointerEvents="none">
+                {label}
+              </Animated.Text>
             )}
-          </TouchableOpacity>
-        )}
 
-        {success && !error && !rightIcon && !secureTextEntry && (
-          <View style={styles.rightIcon}>
-            <CheckCircle2 size={20} color={healthColors.success.main} />
+            <TextInput
+              ref={ref}
+              value={value}
+              onChangeText={onChangeText}
+              placeholder={placeholder}
+              placeholderTextColor={
+                label && !isFocused && !value
+                  ? "transparent"
+                  : healthColors.input.placeholder
+              }
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              editable={!disabled}
+              secureTextEntry={secureTextEntry && !showPassword}
+              multiline={multiline}
+              numberOfLines={numberOfLines}
+              autoCorrect={false}
+              autoCapitalize="none"
+              accessibilityLabel={label || placeholder}
+              accessibilityHint={helperText}
+              accessibilityState={{ disabled }}
+              style={[
+                styles.input,
+                leftIcon && styles.inputWithLeftIcon,
+                (rightIcon || secureTextEntry) && styles.inputWithRightIcon,
+                multiline && styles.inputMultiline,
+                inputStyle,
+              ]}
+              {...props}
+            />
+
+            {secureTextEntry && (
+              <TouchableOpacity
+                style={styles.rightIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} color={healthColors.text.tertiary} />
+                ) : (
+                  <Eye size={20} color={healthColors.text.tertiary} />
+                )}
+              </TouchableOpacity>
+            )}
+
+            {success && !error && !rightIcon && !secureTextEntry && (
+              <View style={styles.rightIcon}>
+                <CheckCircle2 size={20} color={healthColors.success.main} />
+              </View>
+            )}
+
+            {rightIcon && !secureTextEntry && (
+              <View style={styles.rightIcon}>{rightIcon}</View>
+            )}
           </View>
-        )}
 
-        {rightIcon && !secureTextEntry && (
-          <View style={styles.rightIcon}>{rightIcon}</View>
-        )}
-      </View>
-
-      {(error || helperText) && (
-        <Text style={[styles.helperText, error && styles.errorText]}>
-          {error || helperText}
-        </Text>
-      )}
-    </View>
-  );
-}));
+          {(error || helperText) && (
+            <Text style={[styles.helperText, error && styles.errorText]}>
+              {error || helperText}
+            </Text>
+          )}
+        </View>
+      );
+    },
+  ),
+);
 
 const styles = StyleSheet.create({
   wrapper: {
     marginBottom: theme.spacing.lg,
   },
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: healthColors.background.primary,
     borderWidth: 1.5,
     borderColor: healthColors.input.border,
@@ -203,7 +231,7 @@ const styles = StyleSheet.create({
     borderColor: healthColors.input.borderFocused,
     borderWidth: 1.5,
     backgroundColor: healthColors.background.primary,
-    // Removed shadows/elevation here because adding them dynamically on focus 
+    // Removed shadows/elevation here because adding them dynamically on focus
     // causes a native view rebuild on Android, which immediately blurs the input!
   },
   containerError: {
@@ -226,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     paddingTop: 10,
-    textAlign: 'left',
+    textAlign: "left",
   },
   inputWithLeftIcon: {
     paddingLeft: 0,
@@ -235,10 +263,10 @@ const styles = StyleSheet.create({
     paddingRight: 0,
   },
   inputMultiline: {
-    height: 'auto',
+    height: "auto",
     minHeight: layout.inputHeight,
     paddingTop: spacing.md,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   leftIcon: {
     paddingLeft: spacing.md,
@@ -259,7 +287,3 @@ const styles = StyleSheet.create({
 });
 
 export default Input;
-
-
-
-

@@ -19,7 +19,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 const BASE_COLOR = healthColors.neutral.gray200;
 const HIGHLIGHT_COLOR = healthColors.neutral.gray100;
@@ -47,7 +47,7 @@ const SkeletonLoader = ({
           duration: 900,
           useNativeDriver: false,
         }),
-      ])
+      ]),
     ).start();
   }, [shimmerAnim]);
 
@@ -120,7 +120,12 @@ export const SkeletonCardRow = ({ style }) => (
     <SkeletonLoader variant="avatar" size={44} />
     <View style={styles.cardRowLines}>
       <SkeletonLoader variant="line" width="55%" height={14} />
-      <SkeletonLoader variant="line" width="80%" height={12} style={styles.cardRowSecondLine} />
+      <SkeletonLoader
+        variant="line"
+        width="80%"
+        height={12}
+        style={styles.cardRowSecondLine}
+      />
     </View>
   </View>
 );

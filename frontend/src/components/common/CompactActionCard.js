@@ -6,7 +6,7 @@
 
 import React, { memo } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors, textStyles } from "@/theme";
 
 const CompactActionCard = memo(
   ({
@@ -31,7 +31,10 @@ const CompactActionCard = memo(
         accessibilityState={{ disabled }}
       >
         <View
-          style={[styles.iconContainer, { backgroundColor: iconColor + "15" }]}
+          style={[
+            styles.iconContainer,
+            { backgroundColor: theme.withOpacity(iconColor, 0.08) },
+          ]}
         >
           {Icon ? <Icon size={theme.iconSizes.xl} color={iconColor} /> : null}
         </View>
@@ -47,7 +50,7 @@ const CompactActionCard = memo(
         )}
       </TouchableOpacity>
     );
-  }
+  },
 );
 
 CompactActionCard.displayName = "CompactActionCard";
@@ -76,7 +79,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   title: {
-    fontSize: theme.typography.sizes.bodyMedium,
+    ...textStyles.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
     textAlign: "center",
@@ -95,13 +98,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   badgeText: {
-    fontSize: theme.typography.sizes.caption,
+    ...textStyles.caption,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.text.white,
+    color: healthColors.white,
   },
 });
 
 export default CompactActionCard;
-
-
-

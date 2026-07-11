@@ -1,7 +1,13 @@
 import React from "react";
-import { View, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { Search, XCircle } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 const SearchField = ({
   value,
@@ -49,7 +55,10 @@ const SearchField = ({
           accessibilityLabel="Clear search"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <XCircle size={theme.iconSizes.sm} color={healthColors.text.disabled} />
+          <XCircle
+            size={theme.iconSizes.sm}
+            color={healthColors.text.disabled}
+          />
         </TouchableOpacity>
       ) : null}
     </View>

@@ -19,15 +19,10 @@
  */
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Menu, Bell, UserCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 import LanguageSelector from "../common/LanguageSelector";
 
 const ScreenHeader = ({
@@ -67,7 +62,7 @@ const ScreenHeader = ({
             accessibilityLabel="Open menu"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Menu  size={theme.iconSizes.lg} color={healthColors.white} />
+            <Menu size={theme.iconSizes.lg} color={healthColors.white} />
           </TouchableOpacity>
         ) : (
           <View style={styles.iconButton} />
@@ -92,7 +87,7 @@ const ScreenHeader = ({
               accessibilityLabel="Notifications"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Bell  size={theme.iconSizes.lg} color={healthColors.white} />
+              <Bell size={theme.iconSizes.lg} color={healthColors.white} />
               {notificationCount > 0 ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
@@ -111,18 +106,19 @@ const ScreenHeader = ({
               accessibilityLabel="Profile"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <UserCircle  size={theme.iconSizes.xl} color={healthColors.white} />
+              <UserCircle
+                size={theme.iconSizes.xl}
+                color={healthColors.white}
+              />
             </TouchableOpacity>
           ) : null}
         </View>
       </View>
 
       {/* Greeting row */}
-      {(greeting || subtitle) ? (
+      {greeting || subtitle ? (
         <View style={styles.greetingRow}>
-          {greeting ? (
-            <Text style={styles.greeting}>{greeting}</Text>
-          ) : null}
+          {greeting ? <Text style={styles.greeting}>{greeting}</Text> : null}
           {subtitle ? (
             <Text style={styles.subtitle} numberOfLines={1}>
               {subtitle}

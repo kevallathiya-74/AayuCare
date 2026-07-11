@@ -7,8 +7,8 @@
 
 import React, { useRef } from "react";
 import { View, StyleSheet, Pressable, Animated } from "react-native";
-import { theme, healthColors } from '@/theme';
-import { borderRadius as responsiveBorderRadius } from '@/utils/responsive';
+import { theme, healthColors } from "@/theme";
+import { borderRadius as responsiveBorderRadius } from "@/utils/responsive";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -49,28 +49,40 @@ const Card = ({
   const getElevationStyle = () => {
     if (variant === "outline") return {};
     switch (elevation) {
-      case "none":  return styles.elevationNone;
-      case "small": return styles.elevationSmall;
-      case "large": return styles.elevationLarge;
-      default:      return styles.elevationMedium;
+      case "none":
+        return styles.elevationNone;
+      case "small":
+        return styles.elevationSmall;
+      case "large":
+        return styles.elevationLarge;
+      default:
+        return styles.elevationMedium;
     }
   };
 
   const getVariantStyle = () => {
     switch (variant) {
-      case "outline":   return styles.variantOutline;
-      case "primary":   return styles.variantPrimary;
-      case "secondary": return styles.variantSecondary;
-      default:          return styles.variantStandard;
+      case "outline":
+        return styles.variantOutline;
+      case "primary":
+        return styles.variantPrimary;
+      case "secondary":
+        return styles.variantSecondary;
+      default:
+        return styles.variantStandard;
     }
   };
 
   const getRadiusStyle = () => {
     switch (borderRadius) {
-      case "small":  return { borderRadius: responsiveBorderRadius.small };
-      case "large":  return { borderRadius: responsiveBorderRadius.large };
-      case "xlarge": return { borderRadius: responsiveBorderRadius.xlarge };
-      default:       return { borderRadius: responsiveBorderRadius.medium };
+      case "small":
+        return { borderRadius: responsiveBorderRadius.small };
+      case "large":
+        return { borderRadius: responsiveBorderRadius.large };
+      case "xlarge":
+        return { borderRadius: responsiveBorderRadius.xlarge };
+      default:
+        return { borderRadius: responsiveBorderRadius.medium };
     }
   };
 
@@ -87,7 +99,7 @@ const Card = ({
           getRadiusStyle(),
           padding && styles.withPadding,
           style,
-          { transform: [{ scale: scaleAnim }] }
+          { transform: [{ scale: scaleAnim }] },
         ],
         accessibilityRole: "button",
         accessible: true,
@@ -126,7 +138,7 @@ const styles = StyleSheet.create({
   withPadding: {
     padding: theme.spacing.md,
   },
-  
+
   // Variants
   variantStandard: {
     backgroundColor: healthColors.background.card,
@@ -165,4 +177,3 @@ const styles = StyleSheet.create({
 });
 
 export default Card;
-

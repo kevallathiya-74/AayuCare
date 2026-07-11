@@ -15,8 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Globe, CheckCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { theme, healthColors } from '@/theme';
-import { changeLanguage } from '@/i18n';
+import { theme, healthColors } from "@/theme";
+import { changeLanguage } from "@/i18n";
 
 const LANGUAGES = [
   { code: "en", label: "EN", fullName: "English" },
@@ -55,13 +55,14 @@ const LanguageSelector = ({
           accessibilityRole="button"
           accessibilityLabel={`Current language: ${currentLang.fullName}. Tap to change language`}
         >
-          <Globe  size={theme.iconSizes.lg} color={iconColor} />
+          <Globe size={theme.iconSizes.lg} color={iconColor} />
           <Text style={[styles.compactLabel, { color: iconColor }]}>
             {currentLang.label}
           </Text>
         </TouchableOpacity>
 
-        <Modal statusBarTranslucent
+        <Modal
+          statusBarTranslucent
           animationType="fade"
           transparent={true}
           visible={modalVisible}
@@ -121,17 +122,13 @@ const LanguageSelector = ({
   // Default mode: Inline language buttons
   return (
     <View style={[styles.container, style]}>
-      <Globe
-        size={theme.iconSizes.sm}
-        color={iconColor}
-        style={styles.icon}
-      />
+      <Globe size={theme.iconSizes.sm} color={iconColor} style={styles.icon} />
       {LANGUAGES.map((language) => (
         <TouchableOpacity
           key={language.code}
           style={[
             styles.languageButton,
-            currentLanguage === language.code &&             styles.languageButtonActive,
+            currentLanguage === language.code && styles.languageButtonActive,
             { borderColor: theme.withOpacity(iconColor, 0.25) },
           ]}
           onPress={() => handleLanguageChange(language.code)}
@@ -257,6 +254,3 @@ const styles = StyleSheet.create({
 });
 
 export default LanguageSelector;
-
-
-

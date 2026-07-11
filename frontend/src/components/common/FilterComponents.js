@@ -1,11 +1,15 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { ChevronDown } from "lucide-react-native";
-import { theme, healthColors } from '@/theme';
+import { theme, healthColors } from "@/theme";
 
 export const FilterHeaderRow = ({ onClear, clearLabel = "Clear" }) => (
   <View style={styles.headerRow}>
-    <TouchableOpacity onPress={onClear} accessibilityRole="button" accessibilityLabel={clearLabel}>
+    <TouchableOpacity
+      onPress={onClear}
+      accessibilityRole="button"
+      accessibilityLabel={clearLabel}
+    >
       <Text style={styles.clearText}>{clearLabel}</Text>
     </TouchableOpacity>
   </View>
@@ -15,7 +19,12 @@ export const FilterSectionTitle = ({ title }) => (
   <Text style={styles.sectionTitle}>{title}</Text>
 );
 
-export const FilterSelectField = ({ label, onPress, isOpen = false, accessibilityLabel }) => (
+export const FilterSelectField = ({
+  label,
+  onPress,
+  isOpen = false,
+  accessibilityLabel,
+}) => (
   <TouchableOpacity
     style={styles.selectField}
     onPress={onPress}
@@ -56,7 +65,12 @@ export const FilterDropdownList = ({
           ]}
           onPress={() => onSelect(option)}
         >
-          <Text style={[styles.dropdownOptionText, active && styles.dropdownOptionTextActive]}>
+          <Text
+            style={[
+              styles.dropdownOptionText,
+              active && styles.dropdownOptionTextActive,
+            ]}
+          >
             {label}
           </Text>
           {typeof count === "number" ? (
@@ -90,7 +104,14 @@ export const FilterChipGroup = ({
           style={[styles.chipOption, active && styles.chipOptionActive]}
           onPress={() => onSelect(option)}
         >
-          <Text style={[styles.chipOptionText, active && styles.chipOptionTextActive]}>{text}</Text>
+          <Text
+            style={[
+              styles.chipOptionText,
+              active && styles.chipOptionTextActive,
+            ]}
+          >
+            {text}
+          </Text>
         </TouchableOpacity>
       );
     })}

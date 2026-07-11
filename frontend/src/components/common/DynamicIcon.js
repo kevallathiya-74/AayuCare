@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 // Direct named imports enable tree-shaking with Metro bundler
 // avoids importing all ~1,550 lucide-react-native icons
 import {
@@ -93,7 +93,7 @@ import {
   Volume2,
   X,
   XCircle,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 
 const ICON_MAP = {
   activity: Activity,
@@ -190,166 +190,166 @@ const ICON_MAP = {
 };
 
 const LEGACY_ICON_ALIASES = {
-  apps: 'layoutgrid',
-  'apps-outline': 'layoutgrid',
-  book: 'bookopen',
-  'briefcase-medical': 'briefcasemedical',
-  'bulb-outline': 'lightbulb',
-  'body-outline': 'bone',
-  'battery-dead': 'battery',
-  business: 'building2',
-  'business-outline': 'building2',
-  calendar: 'calendar',
-  'calendar-outline': 'calendar',
-  call: 'phone',
-  'call-outline': 'phone',
-  card: 'creditcard',
-  cash: 'banknote',
-  close: 'x',
-  'close-circle': 'xcircle',
-  'chevron-forward': 'chevronright',
-  'chevron-forward-outline': 'chevronright',
-  'chevron-back': 'chevronleft',
-  'chevron-back-outline': 'chevronleft',
-  'chevron-up': 'chevronup',
-  'chevron-up-outline': 'chevronup',
-  'chevron-down': 'chevrondown',
-  'chevron-down-outline': 'chevrondown',
-  'arrow-forward': 'arrowright',
-  'arrow-forward-outline': 'arrowright',
-  'arrow-back': 'arrowleft',
-  'arrow-back-outline': 'arrowleft',
-  'cloud-offline-outline': 'cloudoff',
-  'create-outline': 'pencil',
-  'document-text': 'filetext',
-  'document-text-outline': 'filetext',
-  flame: 'flame',
-  eye: 'eye',
-  'eye-outline': 'eye',
-  'eye-off-outline': 'eyeoff',
-  fitness: 'activity',
-  'fitness-outline': 'activity',
-  flask: 'flaskconical',
-  'folder-open': 'folderopen',
-  grid: 'layoutgrid',
-  'grid-outline': 'layoutgrid',
-  'happy-outline': 'smile',
-  'heart-outline': 'heart',
-  hospital: 'hospital',
-  'id-card': 'creditcard',
-  'id-card-outline': 'creditcard',
-  'briefcase-outline': 'briefcasemedical',
-  'home-outline': 'house',
-  home: 'house',
-  'information-circle': 'info',
-  'information-circle-outline': 'info',
-  language: 'languages',
-  'key-outline': 'key',
-  library: 'library',
-  'library-outline': 'library',
-  'lock-closed': 'lock',
-  'lock-closed-outline': 'lock',
-  'log-out-outline': 'logout',
-  'log-in': 'login',
-  'log-in-outline': 'login',
-  settings: 'settings',
-  'settings-outline': 'settings',
-  medical: 'stethoscope',
-  'medical-outline': 'stethoscope',
-  medkit: 'briefcasemedical',
-  'mic-off': 'micoff',
-  'mic-outline': 'mic',
-  'contrast-outline': 'contrast',
-  'navigate-outline': 'navigation',
-  'volume-high-outline': 'volume2',
-  'megaphone-outline': 'megaphone',
-  'text-outline': 'type',
-  'medkit-outline': 'briefcasemedical',
-  'musical-notes': 'music',
-  people: 'users',
-  'people-outline': 'users',
-  'person-add': 'userplus',
-  'person-add-outline': 'userplus',
-  person: 'user',
-  'person-outline': 'user',
-  'person-circle': 'usercircle',
-  'person-circle-outline': 'usercircle',
-  paperclip: 'paperclip',
-  'phone-portrait': 'smartphone',
-  pulse: 'activity',
-  refresh: 'refreshcw',
-  'refresh-cw': 'refreshcw',
-  restaurant: 'utensils',
-  ribbon: 'award',
-  'rose-outline': 'flower2',
-  sad: 'frown',
-  school: 'graduationcap',
-  'search-outline': 'search',
-  'server-outline': 'server',
-  'shield-checkmark': 'shieldcheck',
-  'shield-checkmark-outline': 'shieldcheck',
-  shield: 'shield',
-  'skull-outline': 'skull',
-  'stats-chart': 'trendingup',
-  'time-outline': 'clock',
-  time: 'clock',
-  water: 'droplets',
-  'water-outline': 'droplets',
-  'image-outline': 'image',
-  walk: 'footprints',
-  warning: 'alerttriangle',
-  male: 'mars',
-  female: 'venus',
-  man: 'mars',
-  woman: 'venus',
-  'male-female': 'venusandmars',
-  location: 'mappin',
-  'location-outline': 'mappin',
-  'finger-print': 'fingerprint',
-  'folder-open-outline': 'folderopen',
-  x: 'x',
-  'checkmark-circle': 'checkcircle2',
-  'checkmark-done': 'checkcheck',
-  star: 'star',
-  'star-outline': 'star',
-  'help-circle': 'lifebuoy',
-  'help-circle-outline': 'lifebuoy',
-  'alert-circle': 'alertcircle',
-  'alert-circle-outline': 'alertcircle',
-  dashboard: 'layoutdashboard',
-  'dashboard-outline': 'layoutdashboard',
-  'layout-dashboard': 'layoutdashboard',
-  'layout-dashboard-outline': 'layoutdashboard',
-  'trending-up': 'trendingup',
-  'trending-down': 'trendingdown',
-  'trending_up': 'trendingup',
-  'trending_down': 'trendingdown',
-  checkbox: 'checksquare',
-  'square-outline': 'square',
-  sunny: 'sun',
-  'partly-sunny': 'sun',
-  moon: 'moon',
-  'moon-outline': 'moon',
-  'calendar-number-outline': 'calendar',
-  'checkmark-circle-outline': 'checkcircle2',
-  'hourglass-outline': 'clock',
+  apps: "layoutgrid",
+  "apps-outline": "layoutgrid",
+  book: "bookopen",
+  "briefcase-medical": "briefcasemedical",
+  "bulb-outline": "lightbulb",
+  "body-outline": "bone",
+  "battery-dead": "battery",
+  business: "building2",
+  "business-outline": "building2",
+  calendar: "calendar",
+  "calendar-outline": "calendar",
+  call: "phone",
+  "call-outline": "phone",
+  card: "creditcard",
+  cash: "banknote",
+  close: "x",
+  "close-circle": "xcircle",
+  "chevron-forward": "chevronright",
+  "chevron-forward-outline": "chevronright",
+  "chevron-back": "chevronleft",
+  "chevron-back-outline": "chevronleft",
+  "chevron-up": "chevronup",
+  "chevron-up-outline": "chevronup",
+  "chevron-down": "chevrondown",
+  "chevron-down-outline": "chevrondown",
+  "arrow-forward": "arrowright",
+  "arrow-forward-outline": "arrowright",
+  "arrow-back": "arrowleft",
+  "arrow-back-outline": "arrowleft",
+  "cloud-offline-outline": "cloudoff",
+  "create-outline": "pencil",
+  "document-text": "filetext",
+  "document-text-outline": "filetext",
+  flame: "flame",
+  eye: "eye",
+  "eye-outline": "eye",
+  "eye-off-outline": "eyeoff",
+  fitness: "activity",
+  "fitness-outline": "activity",
+  flask: "flaskconical",
+  "folder-open": "folderopen",
+  grid: "layoutgrid",
+  "grid-outline": "layoutgrid",
+  "happy-outline": "smile",
+  "heart-outline": "heart",
+  hospital: "hospital",
+  "id-card": "creditcard",
+  "id-card-outline": "creditcard",
+  "briefcase-outline": "briefcasemedical",
+  "home-outline": "house",
+  home: "house",
+  "information-circle": "info",
+  "information-circle-outline": "info",
+  language: "languages",
+  "key-outline": "key",
+  library: "library",
+  "library-outline": "library",
+  "lock-closed": "lock",
+  "lock-closed-outline": "lock",
+  "log-out-outline": "logout",
+  "log-in": "login",
+  "log-in-outline": "login",
+  settings: "settings",
+  "settings-outline": "settings",
+  medical: "stethoscope",
+  "medical-outline": "stethoscope",
+  medkit: "briefcasemedical",
+  "mic-off": "micoff",
+  "mic-outline": "mic",
+  "contrast-outline": "contrast",
+  "navigate-outline": "navigation",
+  "volume-high-outline": "volume2",
+  "megaphone-outline": "megaphone",
+  "text-outline": "type",
+  "medkit-outline": "briefcasemedical",
+  "musical-notes": "music",
+  people: "users",
+  "people-outline": "users",
+  "person-add": "userplus",
+  "person-add-outline": "userplus",
+  person: "user",
+  "person-outline": "user",
+  "person-circle": "usercircle",
+  "person-circle-outline": "usercircle",
+  paperclip: "paperclip",
+  "phone-portrait": "smartphone",
+  pulse: "activity",
+  refresh: "refreshcw",
+  "refresh-cw": "refreshcw",
+  restaurant: "utensils",
+  ribbon: "award",
+  "rose-outline": "flower2",
+  sad: "frown",
+  school: "graduationcap",
+  "search-outline": "search",
+  "server-outline": "server",
+  "shield-checkmark": "shieldcheck",
+  "shield-checkmark-outline": "shieldcheck",
+  shield: "shield",
+  "skull-outline": "skull",
+  "stats-chart": "trendingup",
+  "time-outline": "clock",
+  time: "clock",
+  water: "droplets",
+  "water-outline": "droplets",
+  "image-outline": "image",
+  walk: "footprints",
+  warning: "alerttriangle",
+  male: "mars",
+  female: "venus",
+  man: "mars",
+  woman: "venus",
+  "male-female": "venusandmars",
+  location: "mappin",
+  "location-outline": "mappin",
+  "finger-print": "fingerprint",
+  "folder-open-outline": "folderopen",
+  x: "x",
+  "checkmark-circle": "checkcircle2",
+  "checkmark-done": "checkcheck",
+  star: "star",
+  "star-outline": "star",
+  "help-circle": "lifebuoy",
+  "help-circle-outline": "lifebuoy",
+  "alert-circle": "alertcircle",
+  "alert-circle-outline": "alertcircle",
+  dashboard: "layoutdashboard",
+  "dashboard-outline": "layoutdashboard",
+  "layout-dashboard": "layoutdashboard",
+  "layout-dashboard-outline": "layoutdashboard",
+  "trending-up": "trendingup",
+  "trending-down": "trendingdown",
+  trending_up: "trendingup",
+  trending_down: "trendingdown",
+  checkbox: "checksquare",
+  "square-outline": "square",
+  sunny: "sun",
+  "partly-sunny": "sun",
+  moon: "moon",
+  "moon-outline": "moon",
+  "calendar-number-outline": "calendar",
+  "checkmark-circle-outline": "checkcircle2",
+  "hourglass-outline": "clock",
 };
 
 const sanitizeLegacyName = (rawName) =>
   rawName
     .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-fill$/i, '')
-    .replace(/-sharp$/i, '')
-    .replace(/_fill$/i, '')
-    .replace(/_sharp$/i, '');
+    .replace(/\s+/g, "-")
+    .replace(/-fill$/i, "")
+    .replace(/-sharp$/i, "")
+    .replace(/_fill$/i, "")
+    .replace(/_sharp$/i, "");
 
 const toPascalCase = (value) =>
   value
     .split(/[-_]/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('');
+    .join("");
 
 const resolveLucideName = (name) => {
   const sanitized = sanitizeLegacyName(name);
@@ -359,31 +359,31 @@ const resolveLucideName = (name) => {
     return LEGACY_ICON_ALIASES[normalized];
   }
 
-  const directKey = normalized.replace(/[-_]/g, '');
+  const directKey = normalized.replace(/[-_]/g, "");
   if (ICON_MAP[directKey]) {
     return directKey;
   }
 
   const pascalName = toPascalCase(sanitized)
-    .replace(/Outline$/i, '')
-    .replace(/Sharp$/i, '');
+    .replace(/Outline$/i, "")
+    .replace(/Sharp$/i, "");
   const pascalLower = pascalName.toLowerCase();
-  const pascalKey = pascalLower.replace(/[-_]/g, '');
+  const pascalKey = pascalLower.replace(/[-_]/g, "");
   if (ICON_MAP[pascalKey]) {
     return pascalKey;
   }
 
-  return 'circlehelp';
+  return "circlehelp";
 };
 
 const isRenderableComponentType = (value) => {
   if (!value) return false;
-  if (typeof value === 'function') return true;
-  if (typeof value !== 'object') return false;
-  return !!value.$$typeof || typeof value.render === 'function';
+  if (typeof value === "function") return true;
+  if (typeof value !== "object") return false;
+  return !!value.$$typeof || typeof value.render === "function";
 };
 
-const DynamicIcon = ({ name, size = 24, color = 'black', ...props }) => {
+const DynamicIcon = ({ name, size = 24, color = "black", ...props }) => {
   if (!name) return null;
 
   if (React.isValidElement(name)) {
@@ -395,7 +395,7 @@ const DynamicIcon = ({ name, size = 24, color = 'black', ...props }) => {
     return <IconComponent size={size} color={color} {...props} />;
   }
 
-  if (typeof name !== 'string') {
+  if (typeof name !== "string") {
     return <CircleHelp size={size} color={color} {...props} />;
   }
 
