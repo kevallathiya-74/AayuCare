@@ -325,10 +325,7 @@ const PatientDashboard = ({ navigation }) => {
 
   if (authLoading && !user) {
     return (
-      <SafeAreaView
-        style={styles.container}
-        edges={getSafeAreaEdges("withTabBar")}
-      >
+      <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
         <View style={styles.loadingSkeletonWrap}>
           <SkeletonStatGrid rows={2} />
           <SkeletonCardRow />
@@ -342,7 +339,7 @@ const PatientDashboard = ({ navigation }) => {
 
   // ── Render ──
   return (
-    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
       {isFocused && (
         <StatusBar style="light" backgroundColor="transparent" translucent />
       )}

@@ -140,7 +140,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   });
 
   const subtotal =
-    prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0), 0) ||
+    prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0) * (med.qty || 1), 0) ||
     0;
   const discount = selectedPurchase === "hospital" ? subtotal * 0.15 : 0;
   const total = subtotal - discount;

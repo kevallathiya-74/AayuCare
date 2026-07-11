@@ -201,7 +201,7 @@ const MyReportsScreen = ({ navigation }) => {
             const url = item.recordData?.attachments?.[0];
             if (url) {
               Linking.openURL(url).catch(() =>
-                Alert.alert("Error", "Unable to open the file."),
+                Alert.alert("Error", "Unable to open file."),
               );
             } else {
               Alert.alert(

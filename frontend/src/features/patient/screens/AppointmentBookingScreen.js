@@ -294,6 +294,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           logError(cancelErr, {
             context: "AppointmentBookingScreen.rescheduleCancelOld",
           });
+          // Surface this so the patient/support can manually resolve the duplicate
+          throw new Error(
+            "Appointment booked, but the previous appointment could not be cancelled automatically. Please cancel it manually.",
+          );
         }
       }
       return response;
