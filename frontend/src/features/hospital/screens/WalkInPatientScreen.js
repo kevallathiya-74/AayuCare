@@ -121,7 +121,10 @@ const WalkInPatientScreen = ({ navigation }) => {
 
       showError(errorMessage);
     },
-    retry: 1,
+    retry: (failureCount, err) => {
+      if (failureCount >= 1) return false;
+      return err.code === "NETWORK_ERROR" || !err.response;
+    },
   });
 
   const handleInputChange = (field, value) => {
@@ -146,7 +149,7 @@ const WalkInPatientScreen = ({ navigation }) => {
     }
 
     // Enhanced phone validation
-    const phonePattern = /^\+?[0-9]{7,15}$/;
+    const phonePattern = /^\+?[0-9]{10}$/;
     if (!formData.phone.trim() || !phonePattern.test(formData.phone.trim())) {
       showError("Please enter valid 10-digit phone number");
       return false;

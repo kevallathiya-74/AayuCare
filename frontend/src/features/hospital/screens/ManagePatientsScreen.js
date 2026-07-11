@@ -290,50 +290,6 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     [queryClient],
   );
 
-  const handleDeletePatient = useCallback(
-    async (patient) => {
-      if (!canManageUsers) {
-        Alert.alert("Access Denied", "Only admins can delete patients.");
-        return;
-      }
-
-      if (!isSuperAdmin) {
-        Alert.alert(
-          "Deactivate Patient",
-          `Delete permanently is restricted to super admin.\n\nDeactivate ${patient.name} instead?`,
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Deactivate",
-              style: "destructive",
-              onPress: () => handleSoftDeletePatient(patient),
-            },
-          ],
-        );
-        return;
-      }
-
-      Alert.alert(
-        "Delete Patient",
-        `Are you sure you want to permanently delete ${patient.name}? This action cannot be undone.`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Delete Permanently",
-            style: "destructive",
-            onPress: () => handlePermanentDeletePatient(patient),
-          },
-        ],
-      );
-    },
-    [
-      canManageUsers,
-      isSuperAdmin,
-      handleSoftDeletePatient,
-      handlePermanentDeletePatient,
-    ],
-  );
-
   const handlePermanentDeletePatient = useCallback(
     async (patient) => {
       if (!isSuperAdmin) {
@@ -390,6 +346,50 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       );
     },
     [isSuperAdmin, queryClient],
+  );
+
+  const handleDeletePatient = useCallback(
+    async (patient) => {
+      if (!canManageUsers) {
+        Alert.alert("Access Denied", "Only admins can delete patients.");
+        return;
+      }
+
+      if (!isSuperAdmin) {
+        Alert.alert(
+          "Deactivate Patient",
+          `Delete permanently is restricted to super admin.\n\nDeactivate ${patient.name} instead?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Deactivate",
+              style: "destructive",
+              onPress: () => handleSoftDeletePatient(patient),
+            },
+          ],
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Delete Patient",
+        `Are you sure you want to permanently delete ${patient.name}? This action cannot be undone.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete Permanently",
+            style: "destructive",
+            onPress: () => handlePermanentDeletePatient(patient),
+          },
+        ],
+      );
+    },
+    [
+      canManageUsers,
+      isSuperAdmin,
+      handleSoftDeletePatient,
+      handlePermanentDeletePatient,
+    ],
   );
 
   const handlePatientPress = (patient) => {

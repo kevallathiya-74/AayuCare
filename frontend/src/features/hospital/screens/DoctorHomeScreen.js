@@ -244,7 +244,8 @@ const DoctorHomeScreen = ({ navigation }) => {
       (todaysAppointments || []).filter((a) => {
         const s = String(a?.status || "")
           .toLowerCase()
-          .replace(/-/g, "_");
+          .replace(/-/g, "_")
+          .replace(/\s+/g, "_");
         return s === "scheduled" || s === "confirmed" || s === "in_progress";
       }),
     [todaysAppointments],

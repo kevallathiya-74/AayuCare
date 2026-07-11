@@ -248,50 +248,6 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     [queryClient],
   );
 
-  const handleDeleteDoctor = useCallback(
-    async (doctor) => {
-      if (!canManageUsers) {
-        Alert.alert("Access Denied", "Only admins can delete doctors.");
-        return;
-      }
-
-      if (!isSuperAdmin) {
-        Alert.alert(
-          "Deactivate Doctor",
-          `Delete permanently is restricted to super admin.\n\nDeactivate Dr. ${doctor.name} instead?`,
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Deactivate",
-              style: "destructive",
-              onPress: () => handleSoftDeleteDoctor(doctor),
-            },
-          ],
-        );
-        return;
-      }
-
-      Alert.alert(
-        "Delete Doctor",
-        `Are you sure you want to permanently delete ${doctor.name}? This action cannot be undone.`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Delete Permanently",
-            style: "destructive",
-            onPress: () => handlePermanentDeleteDoctor(doctor),
-          },
-        ],
-      );
-    },
-    [
-      canManageUsers,
-      isSuperAdmin,
-      handleSoftDeleteDoctor,
-      handlePermanentDeleteDoctor,
-    ],
-  );
-
   const handlePermanentDeleteDoctor = useCallback(
     async (doctor) => {
       if (!isSuperAdmin) {
@@ -347,6 +303,50 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       );
     },
     [isSuperAdmin, queryClient],
+  );
+
+  const handleDeleteDoctor = useCallback(
+    async (doctor) => {
+      if (!canManageUsers) {
+        Alert.alert("Access Denied", "Only admins can delete doctors.");
+        return;
+      }
+
+      if (!isSuperAdmin) {
+        Alert.alert(
+          "Deactivate Doctor",
+          `Delete permanently is restricted to super admin.\n\nDeactivate Dr. ${doctor.name} instead?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Deactivate",
+              style: "destructive",
+              onPress: () => handleSoftDeleteDoctor(doctor),
+            },
+          ],
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Delete Doctor",
+        `Are you sure you want to permanently delete ${doctor.name}? This action cannot be undone.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete Permanently",
+            style: "destructive",
+            onPress: () => handlePermanentDeleteDoctor(doctor),
+          },
+        ],
+      );
+    },
+    [
+      canManageUsers,
+      isSuperAdmin,
+      handleSoftDeleteDoctor,
+      handlePermanentDeleteDoctor,
+    ],
   );
 
   const handleDoctorPress = (doctor) => {

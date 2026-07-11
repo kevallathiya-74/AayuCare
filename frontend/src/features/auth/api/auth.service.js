@@ -34,7 +34,7 @@ export const authClient = createAuthClient({
           try {
             return appStorage.getItemSync(key);
           } catch (error) {
-            console.error("[Auth] Storage getItem error:", error);
+            if (__DEV__) logger.error("[Auth] Storage getItem error:", error);
             return null;
           }
         },
@@ -42,14 +42,14 @@ export const authClient = createAuthClient({
           try {
             await appStorage.setItem(key, value);
           } catch (error) {
-            console.error("[Auth] Storage setItem error:", error);
+            if (__DEV__) logger.error("[Auth] Storage setItem error:", error);
           }
         },
         removeItem: async (key) => {
           try {
             await appStorage.deleteItem(key);
           } catch (error) {
-            console.error("[Auth] Storage removeItem error:", error);
+            if (__DEV__) logger.error("[Auth] Storage removeItem error:", error);
           }
         },
       },
@@ -381,8 +381,10 @@ export const login = async (credentials) => {
           "[auth.service] No session token available - API calls may fail",
         );
       }
+      throw new Error(
+        "Login failed. Unable to establish a valid session. Please try again.",
+      );
     }
-
     if (__DEV__) {
       logger.debug(
         "[auth.service] Login successful for role:",
@@ -599,9 +601,8 @@ export const getSession = async () => {
 
       if (__DEV__) {
         logger.debug(
-          "[auth.service] Session restored and cached for:",
+          "[auth.service] Session restored and cached for role:",
           normalizedUser.role,
-          normalizedUser.email,
         );
       }
       return { user: normalizedUser, token: storedToken };
@@ -653,16 +654,19 @@ export const updateProfile = async (profileData) => {
 
   if (userProfile) {
     const normalizedUser = normalizeUserProfile(userProfile);
-    await appStorage.setItem(
-      STORAGE_KEYS.USER_DATA,
-      JSON.stringify(normalizedUser),
-    );
+    try {
+      await appStorage.setItem(
+        STORAGE_KEYS.USER_DATA,
+        JSON.stringify(normalizedUser),
+      );
+    } catch (err) {
+      if (__DEV__) logger.error("[auth.service] Failed to cache profile:", err);
+    }
     return {
       success: true,
       data: normalizedUser,
     };
   }
-
   return {
     success: false,
     message: responseData?.message || "Failed to update profile",
