@@ -86,7 +86,7 @@ const AdminHomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {},
+    (state) => state.permissions?.notification || {}
   );
   const canUseNotifications =
     !!notificationPermission.granted &&
@@ -192,7 +192,7 @@ const AdminHomeScreen = ({ navigation }) => {
     useCallback(() => {
       refetchDashboard();
       refreshCount();
-    }, [refetchDashboard, refreshCount]),
+    }, [refetchDashboard, refreshCount])
   );
 
   const onRefresh = useCallback(async () => {
@@ -208,7 +208,7 @@ const AdminHomeScreen = ({ navigation }) => {
       () => dispatch(logoutUser()),
       () => {},
       "Logout",
-      "log-out-outline",
+      "log-out-outline"
     );
   }, [dispatch]);
 
@@ -233,7 +233,7 @@ const AdminHomeScreen = ({ navigation }) => {
           {
             today: stats.appointments.today,
             pending: stats.appointments.pending,
-          },
+          }
         ),
         icon: Calendar,
         gradient: [healthColors.primary.main, healthColors.primary.dark],
@@ -247,7 +247,7 @@ const AdminHomeScreen = ({ navigation }) => {
         subtitle: t(
           "dashboard.doctorsSubtitle",
           "{{active}} active • {{onDuty}} on duty",
-          { active: stats.doctors.active, onDuty: stats.doctors.onDuty },
+          { active: stats.doctors.active, onDuty: stats.doctors.onDuty }
         ),
         icon: Stethoscope,
         gradient: [healthColors.secondary.main, healthColors.secondary.dark],
@@ -261,7 +261,7 @@ const AdminHomeScreen = ({ navigation }) => {
         subtitle: t(
           "dashboard.patientsSubtitle",
           "{{new}} new • {{returning}} returning",
-          { new: stats.patients.new, returning: stats.patients.returning },
+          { new: stats.patients.new, returning: stats.patients.returning }
         ),
         icon: Users,
         gradient: [healthColors.accent.coral, healthColors.accent.pink],
@@ -275,7 +275,7 @@ const AdminHomeScreen = ({ navigation }) => {
         subtitle: t(
           "dashboard.prescriptionsSubtitle",
           "{{today}} issued today",
-          { today: stats.prescriptions.today },
+          { today: stats.prescriptions.today }
         ),
         icon: Pill,
         gradient: [healthColors.info.main, healthColors.info.dark],
@@ -284,7 +284,7 @@ const AdminHomeScreen = ({ navigation }) => {
         isTabScreen: true,
       },
     ],
-    [stats, t],
+    [stats, t]
   );
 
   // Navigate helper
@@ -295,7 +295,7 @@ const AdminHomeScreen = ({ navigation }) => {
           navigation.navigate(Routes.TABS.ADMIN, { screen, ...params });
         else navigation.navigate(screen, params);
       },
-    [navigation],
+    [navigation]
   );
 
   const quickActions = useMemo(
@@ -340,7 +340,7 @@ const AdminHomeScreen = ({ navigation }) => {
         onPress: nav(Routes.ADMIN.HOSPITAL_EVENTS),
       },
     ],
-    [stats, upcomingEventsCount, nav, t],
+    [stats, upcomingEventsCount, nav, t]
   );
 
   const warmManageDoctors = useCallback(() => {
@@ -372,7 +372,7 @@ const AdminHomeScreen = ({ navigation }) => {
                   doctorName: doctor?.name,
                   doctorPayload: doctor,
                 }
-              : undefined,
+              : undefined
           );
         }
       } catch {
@@ -383,10 +383,10 @@ const AdminHomeScreen = ({ navigation }) => {
         Routes.ADMIN.MANAGE_DOCTORS,
         id
           ? { doctorId: id, doctorName: doctor?.name, doctorPayload: doctor }
-          : undefined,
+          : undefined
       );
     },
-    [navigation, warmManageDoctors],
+    [navigation, warmManageDoctors]
   );
 
   const handlePatientPress = useCallback(
@@ -407,7 +407,7 @@ const AdminHomeScreen = ({ navigation }) => {
                   patientName: patient?.name,
                   patientPayload: patient,
                 }
-              : undefined,
+              : undefined
           );
         }
       } catch {
@@ -422,10 +422,10 @@ const AdminHomeScreen = ({ navigation }) => {
               patientName: patient?.name,
               patientPayload: patient,
             }
-          : undefined,
+          : undefined
       );
     },
-    [navigation, warmManagePatients],
+    [navigation, warmManagePatients]
   );
 
   const handleDoctorsSectionPress = useCallback(() => {
@@ -448,7 +448,7 @@ const AdminHomeScreen = ({ navigation }) => {
           else navigation.navigate(screen);
         }, 100);
       },
-    [navigation, closeMenu],
+    [navigation, closeMenu]
   );
 
   const menuSections = useMemo(
@@ -509,7 +509,7 @@ const AdminHomeScreen = ({ navigation }) => {
         ],
       },
     ],
-    [navFromDrawer, closeMenu, t],
+    [navFromDrawer, closeMenu, t]
   );
 
   // ── Render ──

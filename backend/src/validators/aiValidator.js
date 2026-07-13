@@ -54,7 +54,7 @@ exports.validateRiskScore = [
     .optional()
     .matches(/^\d{2,3}\/\d{2,3}$/)
     .withMessage(
-      "Blood pressure must be in format systolic/diastolic (e.g., 120/80)"
+      "Blood pressure must be in format systolic/diastolic (e.g., 120/80)",
     ),
 
   body("sugar")
@@ -124,7 +124,7 @@ exports.validateExerciseRecommendations = [
     .optional()
     .isIn(["sedentary", "light", "moderate", "active", "very_active"])
     .withMessage(
-      "Fitness level must be sedentary, light, moderate, active, or very_active"
+      "Fitness level must be sedentary, light, moderate, active, or very_active",
     ),
 
   body("conditions")
@@ -135,7 +135,9 @@ exports.validateExerciseRecommendations = [
   body("goal")
     .optional()
     .isIn(["fitness", "lose_weight", "gain_muscle", "cardio", "flexibility"])
-    .withMessage("Goal must be one of: fitness, lose_weight, gain_muscle, cardio, flexibility"),
+    .withMessage(
+      "Goal must be one of: fitness, lose_weight, gain_muscle, cardio, flexibility",
+    ),
 
   validate,
 ];
@@ -157,7 +159,9 @@ exports.validateRecordId = [
     .notEmpty()
     .withMessage("Record ID is required")
     .matches(/^[0-9a-fA-F]{24}$/)
-    .withMessage("Invalid medical record ID format (must be a 24-character hex string)"),
+    .withMessage(
+      "Invalid medical record ID format (must be a 24-character hex string)",
+    ),
 
   validate,
 ];

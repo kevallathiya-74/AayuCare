@@ -34,56 +34,76 @@ router.get(
     const role = req.user?.role || "admin";
     return `cache:admin:dashboard:${hospitalId}:${role}`;
   }),
-  adminController.getDashboardStats
+  adminController.getDashboardStats,
 );
-router.get("/activities", cacheMiddleware(15), adminController.getRecentActivities);
+router.get(
+  "/activities",
+  cacheMiddleware(15),
+  adminController.getRecentActivities,
+);
 
 router.get("/users", cacheMiddleware(60), adminController.getUsers);
 router.post("/users", validateBody(registerSchema), adminController.createUser);
 router.put(
   "/users/:userId",
   validateBody(updateProfileSchema),
-  adminController.updateUserProfile
+  adminController.updateUserProfile,
 );
 router.delete("/users/:userId", adminController.deleteUser);
 router.delete(
   "/users/:userId/permanent",
   authorize("super_admin"),
   criticalOperationLimiter,
-  adminController.permanentDeleteUser
+  adminController.permanentDeleteUser,
 );
 router.patch(
   "/users/:userId/status",
   validateBody(updateUserStatusSchema),
-  adminController.updateUserStatus
+  adminController.updateUserStatus,
 );
 router.patch(
   "/users/:userId/role",
   validateBody(updateUserRoleSchema),
-  adminController.updateUserRole
+  adminController.updateUserRole,
 );
 
 router.post(
   "/users/bulk",
   validateBody(bulkUpdateUsersSchema),
-  adminController.bulkUpdateUsers
+  adminController.bulkUpdateUsers,
 );
-router.get("/system/health", cacheMiddleware(10), adminController.getSystemHealth);
-router.get("/system/metrics", cacheMiddleware(30), adminController.getSystemMetrics);
+router.get(
+  "/system/health",
+  cacheMiddleware(10),
+  adminController.getSystemHealth,
+);
+router.get(
+  "/system/metrics",
+  cacheMiddleware(30),
+  adminController.getSystemMetrics,
+);
 
-router.get("/medical-records", cacheMiddleware(60), adminController.getMedicalRecordsOverview);
+router.get(
+  "/medical-records",
+  cacheMiddleware(60),
+  adminController.getMedicalRecordsOverview,
+);
 router.get("/audit-logs", cacheMiddleware(30), adminController.getAuditLogs);
 router.get(
   "/notifications/manage",
   cacheMiddleware(30),
-  adminController.getNotificationsManagement
+  adminController.getNotificationsManagement,
 );
 
-router.get("/security", cacheMiddleware(60), adminController.getSecuritySettings);
+router.get(
+  "/security",
+  cacheMiddleware(60),
+  adminController.getSecuritySettings,
+);
 router.post(
   "/security/change-password",
   validateBody(changePasswordSchema),
-  adminController.changePassword
+  adminController.changePassword,
 );
 router.post("/security/logout-all", adminController.logoutAllDevices);
 

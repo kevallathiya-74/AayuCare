@@ -86,33 +86,33 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "Email Address *",
               "doctor@example.com",
               "mail",
-              "email-address",
+              "email-address"
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+911234567890",
               "call",
-              "phone-pad",
+              "phone-pad"
             )}
             {renderPicker(
               "specialization",
               "Specialization *",
               "medical",
-              SPECIALIZATIONS,
+              SPECIALIZATIONS
             )}
             {renderInput(
               "qualification",
               "Qualification *",
               "MBBS, MD",
-              "school",
+              "school"
             )}
             {renderInput(
               "experience",
               "Years of Experience *",
               "5",
               "time",
-              "numeric",
+              "numeric"
             )}
             {renderInput("department", "Department", "Cardiology", "business")}
             {renderInput(
@@ -120,13 +120,13 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "Consultation Fee",
               "500",
               "cash",
-              "numeric",
+              "numeric"
             )}
             {renderInput(
               "licenseNumber",
               "License Number *",
               "MH/12345/2010",
-              "id-card",
+              "id-card"
             )}
             {renderInput(
               "bio",
@@ -135,7 +135,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
               "information-circle",
               "default",
               false,
-              true,
+              true
             )}
             {renderAvailabilityPicker()}
 

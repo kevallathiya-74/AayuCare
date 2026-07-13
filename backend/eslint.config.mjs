@@ -22,7 +22,7 @@ export default [
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "prefer-const": "warn",
       "no-var": "error",
-      "eqeqeq": ["warn", "smart"],
+      eqeqeq: ["warn", "smart"],
       "no-throw-literal": "warn",
       "prefer-promise-reject-errors": "warn",
       "no-return-await": "warn",

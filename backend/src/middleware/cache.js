@@ -8,7 +8,7 @@ const logger = require("../utils/logger");
  */
 
 // API version for cache key namespacing
-const API_VERSION = 'v1';
+const API_VERSION = "v1";
 
 /**
  * Create cache middleware for GET endpoints
@@ -86,8 +86,13 @@ const cacheDoctorAvailability = cacheMiddleware(60, (req) => {
 const cacheDoctorList = cacheMiddleware(300, (req) => {
   const hospitalId = req.hospitalId || "all";
   const specialization = req.query.specialization || "all";
-  const search = (req.query.search || req.query.q || "").toString().trim().toLowerCase();
-  const includeInactive = (req.query.includeInactive || "false").toString().toLowerCase();
+  const search = (req.query.search || req.query.q || "")
+    .toString()
+    .trim()
+    .toLowerCase();
+  const includeInactive = (req.query.includeInactive || "false")
+    .toString()
+    .toLowerCase();
   const page = (req.query.page || "1").toString();
   const limit = (req.query.limit || "20").toString();
 
@@ -126,7 +131,9 @@ const invalidateCache = (pattern) => {
   return async (req, res, next) => {
     try {
       // Ensure pattern matches the versioned keys stored by cacheMiddleware
-      const versionedPattern = pattern.startsWith(`${API_VERSION}:`) ? pattern : `${API_VERSION}:${pattern}`;
+      const versionedPattern = pattern.startsWith(`${API_VERSION}:`)
+        ? pattern
+        : `${API_VERSION}:${pattern}`;
       await deleteCacheByPattern(versionedPattern);
       logger.debug(`Cache invalidated: ${versionedPattern}`);
     } catch (error) {

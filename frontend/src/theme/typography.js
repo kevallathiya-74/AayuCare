@@ -11,8 +11,6 @@
 
 import { Platform } from "react-native";
 
-
-
 // Font families
 export const fontFamilies = {
   // Headings - Poppins
@@ -212,7 +210,6 @@ export const textStyles = {
     lineHeight: fontSizes.caption * lineHeights.normal,
 
     color: "#80868B", // Reference: colors.text.tertiary (use in components)
-
   },
 
   overline: {

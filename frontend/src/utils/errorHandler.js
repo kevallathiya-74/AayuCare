@@ -69,7 +69,7 @@ const extractServerMessage = (data) => {
     candidates.push(
       typeof firstError === "string"
         ? firstError
-        : firstError?.message || firstError?.msg,
+        : firstError?.message || firstError?.msg
     );
   }
 
@@ -132,7 +132,6 @@ export const parseError = (error) => {
         // Safe ignore if store is not initialized or in a non-UI test runtime environment
       }
 
-
       logError(
         {
           message: "Permission Denied (403)",
@@ -149,7 +148,6 @@ export const parseError = (error) => {
         `Current Role: ${currentRole}\n` +
         `Details: Incorrect endpoint selected or insufficient role privileges.`
       );
-
     }
 
     const code = data?.code || data?.errorCode;
@@ -239,7 +237,7 @@ export const showError = (error, title = "Error", onDismiss) => {
         onPress: onDismiss,
       },
     ],
-    { cancelable: false },
+    { cancelable: false }
   );
 };
 
@@ -274,7 +272,7 @@ export const showSuccess = (message, title = "Success", onDismiss) => {
         onPress: onDismiss,
       },
     ],
-    { cancelable: false },
+    { cancelable: false }
   );
 };
 
@@ -290,7 +288,7 @@ export const showConfirmation = (
   onConfirm,
   onCancel,
   title = "Confirm",
-  icon = "help-circle",
+  icon = "help-circle"
 ) => {
   if (activeDialogTrigger) {
     activeDialogTrigger({
@@ -328,7 +326,7 @@ export const showConfirmation = (
         onPress: onConfirm,
       },
     ],
-    { cancelable: false },
+    { cancelable: false }
   );
 };
 
@@ -382,7 +380,7 @@ export const logError = (error, context = "") => {
           platform: Platform.OS,
           timestamp: new Date().toISOString(),
         },
-      },
+      }
     );
   }
 };
@@ -423,8 +421,6 @@ export const validateEmail = (email) => {
  * @returns {boolean}
  */
 export const validatePhone = (phone) => {
-
-
   // Indian phone: 10 digits, optionally with +91
   const phoneRegex = /^(\+91)?[6-9]\d{9}$/;
   return phoneRegex.test(phone.replace(/\s+/g, ""));
@@ -441,7 +437,7 @@ export const handleAsync = async (
   asyncFn,
   setLoading,
   setError = null,
-  errorContext = "",
+  errorContext = ""
 ) => {
   try {
     if (setLoading) setLoading(true);

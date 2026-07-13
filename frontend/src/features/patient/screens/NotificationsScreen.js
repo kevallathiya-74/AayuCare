@@ -47,7 +47,7 @@ const PAGE_SIZE = 20;
 const NotificationsScreen = ({ navigation }) => {
   const user = useSelector((state) => state.auth.user);
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {},
+    (state) => state.permissions?.notification || {}
   );
   const isAdminUser = user?.role === "admin" || user?.role === "super_admin";
   const canUseNotifications =
@@ -85,7 +85,7 @@ const NotificationsScreen = ({ navigation }) => {
         ? response?.data?.notifications || []
         : response?.data || [];
       const total = Number(
-        response?.data?.total || response?.pagination?.total || 0,
+        response?.data?.total || response?.pagination?.total || 0
       );
       const unread = isAdminUser
         ? Number(response?.data?.stats?.unreadCount || 0)
@@ -95,7 +95,7 @@ const NotificationsScreen = ({ navigation }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.items?.length || 0),
-        0,
+        0
       );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
@@ -106,7 +106,7 @@ const NotificationsScreen = ({ navigation }) => {
 
   const notifications = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.items || []),
-    [data],
+    [data]
   );
 
   const { data: unreadCount = 0, refetch: refetchUnread } = useQuery({
@@ -121,7 +121,7 @@ const NotificationsScreen = ({ navigation }) => {
 
   const adminUnreadCount = useMemo(
     () => Number((data?.pages || [])[0]?.unread || 0),
-    [data],
+    [data]
   );
 
   const effectiveUnreadCount = isAdminUser ? adminUnreadCount : unreadCount;
@@ -191,7 +191,7 @@ const NotificationsScreen = ({ navigation }) => {
         });
       }
     },
-    [navigation, isAdminUser, canUseNotifications, queryClient, refetchUnread],
+    [navigation, isAdminUser, canUseNotifications, queryClient, refetchUnread]
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
@@ -200,7 +200,7 @@ const NotificationsScreen = ({ navigation }) => {
     }
     if (isAdminUser) {
       showError(
-        "Mark all as read is only available for your own notifications",
+        "Mark all as read is only available for your own notifications"
       );
       return;
     }
@@ -248,7 +248,7 @@ const NotificationsScreen = ({ navigation }) => {
             }
           },
         },
-      ],
+      ]
     );
   }, [isAdminUser, queryClient, refetchUnread, canUseNotifications]);
 
@@ -285,10 +285,10 @@ const NotificationsScreen = ({ navigation }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [isAdminUser, queryClient, refetchUnread, canUseNotifications],
+    [isAdminUser, queryClient, refetchUnread, canUseNotifications]
   );
 
   const getNotificationIcon = (type) => {

@@ -52,7 +52,9 @@ const AIHealthAssistantScreen = ({ navigation }) => {
     {
       id: 1,
       type: "ai",
-      text: `🤖 Hello ${user?.name || "there"}! I'm your AI Health Assistant. How can I help today? You can describe your symptoms or ask health questions.`,
+      text: `🤖 Hello ${
+        user?.name || "there"
+      }! I'm your AI Health Assistant. How can I help today? You can describe your symptoms or ask health questions.`,
     },
   ]);
   const scrollViewRef = useRef();
@@ -128,14 +130,20 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         const { analysis, recommendations, urgencyLevel, possibleConditions } =
           response.data;
 
-        aiText = `🔍 **Analysis:** ${analysis || "Based on your symptoms..."}\n\n`;
+        aiText = `🔍 **Analysis:** ${
+          analysis || "Based on your symptoms..."
+        }\n\n`;
 
         if (possibleConditions?.length > 0) {
-          aiText += `📋 **Possible Conditions:**\n${possibleConditions.map((c) => `• ${c}`).join("\n")}\n\n`;
+          aiText += `📋 **Possible Conditions:**\n${possibleConditions
+            .map((c) => `• ${c}`)
+            .join("\n")}\n\n`;
         }
 
         if (recommendations?.length > 0) {
-          aiText += `💡 **Recommendations:**\n${recommendations.map((r) => `• ${r}`).join("\n")}\n\n`;
+          aiText += `💡 **Recommendations:**\n${recommendations
+            .map((r) => `• ${r}`)
+            .join("\n")}\n\n`;
         }
 
         if (urgencyLevel) {
@@ -259,7 +267,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           onPress={() =>
             Alert.alert(
               "Voice Input",
-              "Voice input will be available in a future update.",
+              "Voice input will be available in a future update."
             )
           }
           activeOpacity={0.7}
@@ -414,7 +422,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           onVoicePress={() =>
             Alert.alert(
               "Voice Input",
-              "Voice input will be available in a future update.",
+              "Voice input will be available in a future update."
             )
           }
           sending={analyzeSymptomsMutation.isPending}

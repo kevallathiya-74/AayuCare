@@ -21,74 +21,74 @@ router.get(
   "/search",
   authorize("doctor", "admin"),
   cacheMiddleware(60),
-  patientController.searchPatients
+  patientController.searchPatients,
 );
 
 router.get(
   "/:patientId/complete-history",
   authorize("patient", "doctor", "admin"),
   cacheMiddleware(30),
-  patientController.getCompleteHistory
+  patientController.getCompleteHistory,
 );
 
 router.get(
   "/:patientId/profile",
   authorize("patient", "doctor", "admin"),
   cacheMiddleware(120),
-  patientController.getPatientProfile
+  patientController.getPatientProfile,
 );
 
 router.patch(
   "/:patientId/profile",
   authorize("patient", "admin"),
   validateBody(updatePatientProfileSchema),
-  patientController.updatePatientProfile
+  patientController.updatePatientProfile,
 );
 
 router.get(
   "/:patientId/health-metrics",
   authorize("patient", "doctor", "admin"),
-  patientController.getHealthMetrics
+  patientController.getHealthMetrics,
 );
 
 router.get(
   "/:patientId/health-metrics/latest/:type",
   authorize("patient", "doctor", "admin"),
   validateParams(getMetricTypeParamsSchema),
-  patientController.getLatestHealthMetric
+  patientController.getLatestHealthMetric,
 );
 
 router.post(
   "/:patientId/health-metrics",
   authorize("patient", "doctor", "admin"),
   validateBody(addHealthMetricSchema),
-  patientController.addHealthMetric
+  patientController.addHealthMetric,
 );
 
 router.put(
   "/:patientId/health-metrics/:metricId",
   authorize("patient", "admin", "doctor"),
   validateBody(updateHealthMetricSchema),
-  patientController.updateHealthMetric
+  patientController.updateHealthMetric,
 );
 
 router.delete(
   "/:patientId/health-metrics/:metricId",
   authorize("patient", "admin"),
-  patientController.deleteHealthMetric
+  patientController.deleteHealthMetric,
 );
 
 router.get(
   "/:patientId/activity",
   authorize("patient", "doctor", "admin"),
-  patientController.getActivityData
+  patientController.getActivityData,
 );
 
 router.post(
   "/:patientId/activity",
   authorize("patient", "admin"),
   validateBody(activityUpdateSchema),
-  patientController.updateActivityData
+  patientController.updateActivityData,
 );
 
 module.exports = router;

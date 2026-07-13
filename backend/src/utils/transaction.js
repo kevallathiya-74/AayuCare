@@ -109,7 +109,7 @@ const createAppointmentWithPayment = async (appointmentData, paymentData) => {
 const cancelAppointmentWithRefund = async (
   appointmentId,
   cancelledBy,
-  cancellationReason
+  cancellationReason,
 ) => {
   return withTransaction(async (client) => {
     // Update appointment status

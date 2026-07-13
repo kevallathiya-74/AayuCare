@@ -22,7 +22,13 @@ exports.analyzeSymptoms = async (req, res, next) => {
     const { symptoms = [], severity = "moderate" } = req.body;
 
     if (!symptoms || symptoms.length === 0) {
-      return sendError(res, req, "Please provide at least one symptom", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Please provide at least one symptom",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     // AI Analysis Logic (Simplified version - can integrate with OpenAI/Gemini)
@@ -39,16 +45,21 @@ exports.analyzeSymptoms = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {
-      analysis: {
-        possibleConditions,
-        urgencyLevel,
-        recommendations,
-        whenToSeekHelp,
-        estimatedRecovery: calculateRecoveryTime(severity),
+    return sendSuccess(
+      res,
+      req,
+      {
+        analysis: {
+          possibleConditions,
+          urgencyLevel,
+          recommendations,
+          whenToSeekHelp,
+          estimatedRecovery: calculateRecoveryTime(severity),
+        },
+        tagline: "Your health, enhanced by intelligence.",
       },
-      tagline: "Your health, enhanced by intelligence.",
-    }, "Symptoms analyzed successfully");
+      "Symptoms analyzed successfully",
+    );
   } catch (error) {
     logger.error("Symptom analysis error:", {
       error: error.message,
@@ -72,20 +83,28 @@ exports.getHealthInsights = async (req, res, next) => {
     const safePatientId = String(patientId);
 
     // Verify access rights
-    const isOwnData = req.user.id === safePatientId || req.user.userId === safePatientId;
+    const isOwnData =
+      req.user.id === safePatientId || req.user.userId === safePatientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return sendError(res, req, "Not authorized to view this data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view this data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Get patient data - supports both UUID (users.id) and custom userId (users.user_id)
-    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const uuidRegex =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     let patient;
     if (uuidRegex.test(safePatientId)) {
       patient = await userRepository.findById(safePatientId);
     } else {
       patient = await userRepository.findByUserId(safePatientId);
     }
-    
+
     // Verify it's actually a patient
     if (!patient || patient.role !== "patient") {
       return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
@@ -94,16 +113,21 @@ exports.getHealthInsights = async (req, res, next) => {
     // Get recent medical records using patient.id
     const records = await medicalRecordRepository.findWithFilters(
       { patientId: patient.id },
-      { sort: 'created_at DESC', limit: 10 }
+      { sort: "created_at DESC", limit: 10 },
     );
 
     // Generate comprehensive insights
     const insights = generateHealthInsights(patient, records);
 
-    return sendSuccess(res, req, {
-      insights,
-      tagline: "Your health, enhanced by intelligence.",
-    }, "Health insights retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      {
+        insights,
+        tagline: "Your health, enhanced by intelligence.",
+      },
+      "Health insights retrieved successfully",
+    );
   } catch (error) {
     logger.error("Health insights error:", {
       error: error.message,
@@ -191,29 +215,34 @@ exports.calculateRiskScore = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {
-      riskScore,
-      riskLevel,
-      riskFactors,
-      factors: {
-        bmi: {
-          value: bmi.toFixed(1),
-          status: bmi < 25 ? "healthy" : bmi < 30 ? "overweight" : "obese",
+    return sendSuccess(
+      res,
+      req,
+      {
+        riskScore,
+        riskLevel,
+        riskFactors,
+        factors: {
+          bmi: {
+            value: bmi.toFixed(1),
+            status: bmi < 25 ? "healthy" : bmi < 30 ? "overweight" : "obese",
+          },
+          bloodPressure: {
+            value: bp,
+            status:
+              systolic < 120 ? "normal" : systolic < 140 ? "elevated" : "high",
+          },
+          bloodSugar: {
+            value: sugar,
+            status:
+              sugar < 100 ? "normal" : sugar < 126 ? "prediabetic" : "diabetic",
+          },
         },
-        bloodPressure: {
-          value: bp,
-          status:
-            systolic < 120 ? "normal" : systolic < 140 ? "elevated" : "high",
-        },
-        bloodSugar: {
-          value: sugar,
-          status:
-            sugar < 100 ? "normal" : sugar < 126 ? "prediabetic" : "diabetic",
-        },
+        recommendations: generateRiskRecommendations(riskLevel, riskFactors),
+        tagline: "Your health, enhanced by intelligence.",
       },
-      recommendations: generateRiskRecommendations(riskLevel, riskFactors),
-      tagline: "Your health, enhanced by intelligence.",
-    }, "Risk score calculated successfully");
+      "Risk score calculated successfully",
+    );
   } catch (error) {
     logger.error("Risk score calculation error:", {
       error: error.message,
@@ -246,7 +275,7 @@ exports.getDietRecommendations = async (req, res, next) => {
       height,
       conditions,
       allergies,
-      goal
+      goal,
     );
 
     // Invalidate AI-related caches after generating diet recommendations
@@ -257,10 +286,15 @@ exports.getDietRecommendations = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {
-      dietPlan,
-      tagline: "Your health, enhanced by intelligence.",
-    }, "Diet recommendations generated successfully");
+    return sendSuccess(
+      res,
+      req,
+      {
+        dietPlan,
+        tagline: "Your health, enhanced by intelligence.",
+      },
+      "Diet recommendations generated successfully",
+    );
   } catch (error) {
     logger.error("Diet recommendations error:", {
       error: error.message,
@@ -295,10 +329,15 @@ exports.getExerciseRecommendations = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {
-      exercisePlan,
-      tagline: "Your health, enhanced by intelligence.",
-    }, "Exercise recommendations generated successfully");
+    return sendSuccess(
+      res,
+      req,
+      {
+        exercisePlan,
+        tagline: "Your health, enhanced by intelligence.",
+      },
+      "Exercise recommendations generated successfully",
+    );
   } catch (error) {
     logger.error("Exercise recommendations error:", {
       error: error.message,
@@ -317,7 +356,13 @@ exports.getExerciseRecommendations = async (req, res, next) => {
 exports.analyzeMedicalRecord = async (req, res, next) => {
   try {
     if (req.user.role !== "doctor" && req.user.role !== "admin") {
-      return sendError(res, req, "Only doctors and admins can analyze medical records", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Only doctors and admins can analyze medical records",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     const { recordId } = req.params;
@@ -341,10 +386,15 @@ exports.analyzeMedicalRecord = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {
-      aiAnalysis,
-      tagline: "Your health, enhanced by intelligence.",
-    }, "Medical record analyzed successfully");
+    return sendSuccess(
+      res,
+      req,
+      {
+        aiAnalysis,
+        tagline: "Your health, enhanced by intelligence.",
+      },
+      "Medical record analyzed successfully",
+    );
   } catch (error) {
     logger.error("Medical record analysis error:", {
       error: error.message,
@@ -366,13 +416,13 @@ function analyzeSymptomsPattern(symptoms, severity) {
   const fluSymptoms = ["body ache", "fatigue", "headache"];
 
   const hasFever = symptoms.some((s) =>
-    feverSymptoms.some((fs) => s.toLowerCase().includes(fs))
+    feverSymptoms.some((fs) => s.toLowerCase().includes(fs)),
   );
   const hasCold = symptoms.some((s) =>
-    coldSymptoms.some((cs) => s.toLowerCase().includes(cs))
+    coldSymptoms.some((cs) => s.toLowerCase().includes(cs)),
   );
   const hasFlu = symptoms.some((s) =>
-    fluSymptoms.some((fs) => s.toLowerCase().includes(fs))
+    fluSymptoms.some((fs) => s.toLowerCase().includes(fs)),
   );
 
   if (hasCold) {
@@ -413,7 +463,7 @@ function determineUrgency(severity, symptoms) {
     "unconscious",
   ];
   const hasEmergency = symptoms.some((s) =>
-    emergencyKeywords.some((ek) => s.toLowerCase().includes(ek))
+    emergencyKeywords.some((ek) => s.toLowerCase().includes(ek)),
   );
 
   if (hasEmergency || severity === "severe") return "high";
@@ -515,7 +565,7 @@ function generateRiskRecommendations(riskLevel, riskFactors) {
 
   if (riskFactors.includes("Overweight") || riskFactors.includes("Obesity")) {
     recommendations.push(
-      "Focus on weight management through diet and exercise"
+      "Focus on weight management through diet and exercise",
     );
   }
 
@@ -525,7 +575,7 @@ function generateRiskRecommendations(riskLevel, riskFactors) {
 
   if (riskFactors.includes("Elevated blood sugar")) {
     recommendations.push(
-      "Monitor blood sugar levels and consult endocrinologist"
+      "Monitor blood sugar levels and consult endocrinologist",
     );
   }
 

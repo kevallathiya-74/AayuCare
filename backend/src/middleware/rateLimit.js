@@ -23,7 +23,10 @@ const resolvePolicy = (req) => {
   const path = req.path || req.originalUrl || "";
   const method = req.method;
 
-  if (path.startsWith("/api/auth/sign-in") || path.startsWith("/api/auth/sign-up")) {
+  if (
+    path.startsWith("/api/auth/sign-in") ||
+    path.startsWith("/api/auth/sign-up")
+  ) {
     return {
       scope: "auth",
       max: APP_ENV.rateLimit.auth.max,
@@ -80,7 +83,7 @@ const tieredRateLimit = async (req, res, next) => {
         req,
         "Too many requests. Please wait before trying again.",
         429,
-        "RATE_LIMIT_EXCEEDED"
+        "RATE_LIMIT_EXCEEDED",
       );
     }
 
@@ -88,14 +91,19 @@ const tieredRateLimit = async (req, res, next) => {
   } catch (error) {
     // Auth rate limiting MUST be fail-closed (security > availability)
     const path = req.path || req.originalUrl || "";
-    if (path.startsWith("/api/auth/sign-in") || path.startsWith("/api/auth/sign-up")) {
-      logger.error(`Rate limiter critical error on auth endpoint: ${error.message}`);
+    if (
+      path.startsWith("/api/auth/sign-in") ||
+      path.startsWith("/api/auth/sign-up")
+    ) {
+      logger.error(
+        `Rate limiter critical error on auth endpoint: ${error.message}`,
+      );
       return sendError(
         res,
         req,
         "Authentication service temporarily unavailable",
         503,
-        "AUTH_SERVICE_UNAVAILABLE"
+        "AUTH_SERVICE_UNAVAILABLE",
       );
     }
     logger.warn(`Rate limiter fallback (fail-open): ${error.message}`);

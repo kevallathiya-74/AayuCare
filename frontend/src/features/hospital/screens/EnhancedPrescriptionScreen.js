@@ -54,7 +54,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       day: "numeric",
       month: "short",
       year: "numeric",
-    }),
+    })
   );
   const [medications, setMedications] = useState([]);
   const [diagnosis, setDiagnosis] = useState("");
@@ -133,11 +133,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       const doctorLinkedPatients = Array.isArray(doctorLinkedVal)
         ? doctorLinkedVal
         : Array.isArray(doctorLinkedVal?.data)
-          ? doctorLinkedVal.data
-          : doctorLinkedVal?.data?.patients ||
-            doctorLinkedVal?.data?.data ||
-            doctorLinkedVal?.patients ||
-            [];
+        ? doctorLinkedVal.data
+        : doctorLinkedVal?.data?.patients ||
+          doctorLinkedVal?.data?.data ||
+          doctorLinkedVal?.patients ||
+          [];
 
       const allPatientsVal =
         allPatientsResult.status === "fulfilled"
@@ -146,11 +146,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       const allPatients = Array.isArray(allPatientsVal)
         ? allPatientsVal
         : Array.isArray(allPatientsVal?.data)
-          ? allPatientsVal.data
-          : allPatientsVal?.data?.patients ||
-            allPatientsVal?.data?.data ||
-            allPatientsVal?.patients ||
-            [];
+        ? allPatientsVal.data
+        : allPatientsVal?.data?.patients ||
+          allPatientsVal?.data?.data ||
+          allPatientsVal?.patients ||
+          [];
 
       const merged = [...doctorLinkedPatients, ...allPatients].filter(Boolean);
       const uniquePatients = Array.from(
@@ -158,8 +158,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           merged.map((entry) => {
             const uniqueId = entry?.id || entry?.userId;
             return [uniqueId, entry];
-          }),
-        ).values(),
+          })
+        ).values()
       );
 
       return uniquePatients.filter((entry) => entry?.id || entry?.userId);
@@ -215,7 +215,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     ) {
       Alert.alert(
         "Missing details",
-        "Please enter medicine name, dosage, and duration.",
+        "Please enter medicine name, dosage, and duration."
       );
       return;
     }
@@ -229,7 +229,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     if (!timings.morning && !timings.afternoon && !timings.evening) {
       Alert.alert(
         "Missing timing",
-        "Please select at least one medicine timing.",
+        "Please select at least one medicine timing."
       );
       return;
     }
@@ -295,7 +295,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             text: "Cancel",
             style: "cancel",
           },
-        ],
+        ]
       );
       return;
     }
@@ -305,7 +305,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       if (!isValidFollowUpDate) {
         Alert.alert(
           "Invalid Date",
-          "Next visit date is invalid. Please pick a date using the calendar.",
+          "Next visit date is invalid. Please pick a date using the calendar."
         );
         return;
       }
@@ -316,7 +316,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       if (followUp < today) {
         Alert.alert(
           "Invalid Date",
-          "Next visit date must be today or a future date.",
+          "Next visit date must be today or a future date."
         );
         return;
       }
@@ -342,24 +342,29 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         sendOptions,
       };
 
-      const response =
-        await prescriptionService.createPrescription(prescriptionData);
+      const response = await prescriptionService.createPrescription(
+        prescriptionData
+      );
 
       if (response?.success) {
         Alert.alert(
           "Prescription Saved",
-          `Prescription has been saved and will be sent to:\n${sendOptions.patientApp ? "Patient Mobile App\n" : ""}${sendOptions.hospitalPharmacy ? "Hospital Pharmacy\n" : ""}${sendOptions.externalPharmacy ? "External Pharmacy" : ""}`,
+          `Prescription has been saved and will be sent to:\n${
+            sendOptions.patientApp ? "Patient Mobile App\n" : ""
+          }${sendOptions.hospitalPharmacy ? "Hospital Pharmacy\n" : ""}${
+            sendOptions.externalPharmacy ? "External Pharmacy" : ""
+          }`,
           [
             {
               text: "OK",
               onPress: () => handleSmartBack(navigation, "DoctorTabs"),
             },
-          ],
+          ]
         );
       } else {
         Alert.alert(
           "Error",
-          response?.message || "Failed to save prescription",
+          response?.message || "Failed to save prescription"
         );
       }
     } catch (err) {
@@ -510,7 +515,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               <View
                 style={styles.infoCard}
                 accessible={true}
-                accessibilityLabel={`Prescription for ${patient?.name || "Patient"}`}
+                accessibilityLabel={`Prescription for ${
+                  patient?.name || "Patient"
+                }`}
               >
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Patient:</Text>

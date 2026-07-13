@@ -16,7 +16,9 @@ const registerSchema = Joi.object({
     .min(8)
     .max(100)
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .message('Password must be at least 8 characters and contain uppercase, lowercase, and number')
+    .message(
+      "Password must be at least 8 characters and contain uppercase, lowercase, and number",
+    )
     .required(),
   role: Joi.string().valid("doctor", "patient").required(),
   hospitalId: Joi.string().required(),
@@ -76,11 +78,14 @@ const registerSchema = Joi.object({
     then: Joi.optional(),
     otherwise: Joi.forbidden(),
   }),
-  gender: Joi.string().lowercase().valid("male", "female", "other").when("role", {
-    is: "patient",
-    then: Joi.optional(),
-    otherwise: Joi.forbidden(),
-  }),
+  gender: Joi.string()
+    .lowercase()
+    .valid("male", "female", "other")
+    .when("role", {
+      is: "patient",
+      then: Joi.optional(),
+      otherwise: Joi.forbidden(),
+    }),
   bloodGroup: Joi.string().when("role", {
     is: "patient",
     then: Joi.optional(),
@@ -134,12 +139,11 @@ const loginSchema = Joi.alternatives().try(
   }),
   // Identifier-based login (frontend compatibility)
   Joi.object({
-    identifier: Joi.alternatives().try(
-      Joi.string().email(),
-      Joi.string().min(3)
-    ).required(),
+    identifier: Joi.alternatives()
+      .try(Joi.string().email(), Joi.string().min(3))
+      .required(),
     password: Joi.string().min(6).required(),
-  })
+  }),
 );
 
 // Appointment creation validation
@@ -174,7 +178,7 @@ const createAppointmentSchema = Joi.object({
       "follow_up",
       "emergency",
       "clinic_visit",
-      "telemedicine"
+      "telemedicine",
     )
     .default("consultation"),
   symptoms: Joi.array().items(Joi.string()).optional(),
@@ -192,7 +196,7 @@ const updateAppointmentSchema = Joi.object({
       "in_progress",
       "completed",
       "cancelled",
-      "no_show"
+      "no_show",
     )
     .optional(),
   appointmentDate: Joi.date().optional(),
@@ -230,7 +234,7 @@ const updateProfileSchema = Joi.object({
     .pattern(/^\+?[1-9]\d{1,14}$/)
     .optional(),
   preferred_language: Joi.string().valid("en", "hi", "gu").optional(),
-  
+
   // Doctor-specific fields
   specialization: Joi.string().max(255).optional(),
   qualification: Joi.string().max(255).optional(),
@@ -241,11 +245,13 @@ const updateProfileSchema = Joi.object({
   license_number: Joi.string().max(100).optional(),
   bio: Joi.string().max(1000).optional(),
   availability: Joi.object().optional(),
-  
+
   // Patient-specific fields
   dateOfBirth: Joi.date().optional(),
   gender: Joi.string().lowercase().valid("male", "female", "other").optional(),
-  bloodGroup: Joi.string().valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-").optional(),
+  bloodGroup: Joi.string()
+    .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+    .optional(),
   address: Joi.string().max(500).optional(),
   emergencyContactName: Joi.string().max(255).optional(),
   emergencyContactPhone: Joi.string()
@@ -263,7 +269,7 @@ const changePasswordSchema = Joi.object({
     .max(100)
     .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .message(
-      "New password must be at least 8 characters and contain uppercase, lowercase, and number"
+      "New password must be at least 8 characters and contain uppercase, lowercase, and number",
     )
     .required(),
 });
@@ -297,7 +303,9 @@ const updatePatientProfileSchema = Joi.object({
   // Patient-specific fields
   dateOfBirth: Joi.date().optional(),
   gender: Joi.string().lowercase().valid("male", "female", "other").optional(),
-  bloodGroup: Joi.string().valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-").optional(),
+  bloodGroup: Joi.string()
+    .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+    .optional(),
   address: Joi.string().max(500).optional(),
   emergencyContactName: Joi.string().max(255).optional(),
   emergencyContactPhone: Joi.string()
@@ -327,7 +335,7 @@ const createPrescriptionSchema = Joi.object({
         // pricing info kept for pharmacy cost calculation
         price: Joi.number().min(0).optional(),
         unitPrice: Joi.number().min(0).optional(),
-      })
+      }),
     )
     .min(1)
     .optional(),
@@ -341,7 +349,7 @@ const createPrescriptionSchema = Joi.object({
         instructions: Joi.string().optional().allow(""),
         price: Joi.number().min(0).optional(),
         unitPrice: Joi.number().min(0).optional(),
-      })
+      }),
     )
     .min(1)
     .optional(),
@@ -355,17 +363,24 @@ const createPrescriptionSchema = Joi.object({
   }).optional(),
 }).or("medications", "medicines"); // at least one must be provided
 
-// Medical record validation 
+// Medical record validation
 const createMedicalRecordSchema = Joi.object({
   patientId: Joi.string().min(1).required(),
   // recordType is required by the model
   recordType: Joi.string()
-    .valid('lab_report', 'prescription', 'doctor_visit', 'test_result', 'imaging', 'other')
+    .valid(
+      "lab_report",
+      "prescription",
+      "doctor_visit",
+      "test_result",
+      "imaging",
+      "other",
+    )
     .required(),
   title: Joi.string().min(1).max(500).required(),
-  description: Joi.string().max(2000).optional().allow(''),
+  description: Joi.string().max(2000).optional().allow(""),
   date: Joi.date().optional(),
-  diagnosis: Joi.string().max(1000).optional().allow(''),
+  diagnosis: Joi.string().max(1000).optional().allow(""),
   symptoms: Joi.array().items(Joi.string()).optional(),
   medications: Joi.array()
     .items(
@@ -374,7 +389,7 @@ const createMedicalRecordSchema = Joi.object({
         dosage: Joi.string().optional(),
         frequency: Joi.string().optional(),
         duration: Joi.string().optional(),
-      })
+      }),
     )
     .optional(),
   labResults: Joi.array()
@@ -384,8 +399,8 @@ const createMedicalRecordSchema = Joi.object({
         value: Joi.string().optional(),
         unit: Joi.string().optional(),
         normalRange: Joi.string().optional(),
-        status: Joi.string().valid('normal', 'abnormal', 'critical').optional(),
-      })
+        status: Joi.string().valid("normal", "abnormal", "critical").optional(),
+      }),
     )
     .optional(),
   files: Joi.array()
@@ -395,7 +410,7 @@ const createMedicalRecordSchema = Joi.object({
         fileName: Joi.string().optional(),
         fileType: Joi.string().optional(),
         fileSize: Joi.number().optional(),
-      })
+      }),
     )
     .optional(),
 });
@@ -405,12 +420,32 @@ const createEventSchema = Joi.object({
   title: Joi.string().min(3).max(255).required(),
   description: Joi.string().max(2000).required(),
   type: Joi.string()
-    .valid('blood-donation', 'screening', 'vaccination', 'workshop', 'health-camp', 'awareness', 'other')
+    .valid(
+      "blood-donation",
+      "screening",
+      "vaccination",
+      "workshop",
+      "health-camp",
+      "awareness",
+      "other",
+    )
     .required(),
   hospitalId: Joi.string().uppercase().max(50).optional(),
   date: Joi.date().required(),
-  startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'startTime must be in HH:MM 24-hour format (e.g. 09:00)' }),
-  endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'endTime must be in HH:MM 24-hour format (e.g. 17:00)' }),
+  startTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "startTime must be in HH:MM 24-hour format (e.g. 09:00)",
+    }),
+  endTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "endTime must be in HH:MM 24-hour format (e.g. 17:00)",
+    }),
   // model uses 'venue', not 'location'
   venue: Joi.string().max(500).required(),
   availableSpots: Joi.number().integer().min(0).optional(),
@@ -428,11 +463,29 @@ const updateEventSchema = Joi.object({
   title: Joi.string().min(3).max(255).optional(),
   description: Joi.string().max(2000).optional(),
   type: Joi.string()
-    .valid('blood-donation', 'screening', 'vaccination', 'workshop', 'health-camp', 'awareness', 'other')
+    .valid(
+      "blood-donation",
+      "screening",
+      "vaccination",
+      "workshop",
+      "health-camp",
+      "awareness",
+      "other",
+    )
     .optional(),
   date: Joi.date().optional(),
-  startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).optional().messages({ 'string.pattern.base': 'startTime must be in HH:MM 24-hour format' }),
-  endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).optional().messages({ 'string.pattern.base': 'endTime must be in HH:MM 24-hour format' }),
+  startTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .optional()
+    .messages({
+      "string.pattern.base": "startTime must be in HH:MM 24-hour format",
+    }),
+  endTime: Joi.string()
+    .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .optional()
+    .messages({
+      "string.pattern.base": "endTime must be in HH:MM 24-hour format",
+    }),
   venue: Joi.string().max(500).optional(),
   availableSpots: Joi.number().integer().min(0).optional(),
   requirements: Joi.array().items(Joi.string()).optional(),
@@ -443,7 +496,9 @@ const updateEventSchema = Joi.object({
   }).optional(),
   icon: Joi.string().optional(),
   color: Joi.string().optional(),
-  status: Joi.string().valid('upcoming', 'ongoing', 'completed', 'cancelled').optional(),
+  status: Joi.string()
+    .valid("upcoming", "ongoing", "completed", "cancelled")
+    .optional(),
   isActive: Joi.boolean().optional(),
 });
 
@@ -453,9 +508,20 @@ const createNotificationSchema = Joi.object({
   title: Joi.string().min(1).max(255).required(),
   message: Joi.string().max(2000).required(),
   type: Joi.string()
-    .valid('appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert', 'health_alert')
-    .default('system'),
-  priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+    .valid(
+      "appointment",
+      "prescription",
+      "lab_report",
+      "event",
+      "reminder",
+      "system",
+      "alert",
+      "health_alert",
+    )
+    .default("system"),
+  priority: Joi.string()
+    .valid("low", "medium", "high", "urgent")
+    .default("medium"),
   data: Joi.object().unknown(true).optional(),
   actionUrl: Joi.string().optional(),
   icon: Joi.string().optional(),
@@ -468,9 +534,20 @@ const broadcastNotificationSchema = Joi.object({
   title: Joi.string().min(1).max(255).required(),
   message: Joi.string().max(2000).required(),
   type: Joi.string()
-    .valid('appointment', 'prescription', 'lab_report', 'event', 'reminder', 'system', 'alert', 'health_alert')
-    .default('system'),
-  priority: Joi.string().valid('low', 'medium', 'high', 'urgent').default('medium'),
+    .valid(
+      "appointment",
+      "prescription",
+      "lab_report",
+      "event",
+      "reminder",
+      "system",
+      "alert",
+      "health_alert",
+    )
+    .default("system"),
+  priority: Joi.string()
+    .valid("low", "medium", "high", "urgent")
+    .default("medium"),
   data: Joi.object().unknown(true).optional(),
   actionUrl: Joi.string().optional(),
   icon: Joi.string().optional(),
@@ -485,7 +562,10 @@ const walkInPatientSchema = Joi.object({
   phone: Joi.string()
     .pattern(/^\+?[0-9]{7,15}$/)
     .required()
-    .messages({ 'string.pattern.base': 'Phone number must be 7-15 digits, optionally starting with +' }),
+    .messages({
+      "string.pattern.base":
+        "Phone number must be 7-15 digits, optionally starting with +",
+    }),
   bloodGroup: Joi.string()
     .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
     .optional(),
@@ -497,7 +577,20 @@ const walkInPatientSchema = Joi.object({
 // Health metric schemas
 const addHealthMetricSchema = Joi.object({
   type: Joi.string()
-    .valid("bp", "sugar", "weight", "bmi", "temperature", "steps", "sleep", "water", "exercise", "stress", "heart-rate", "oxygen")
+    .valid(
+      "bp",
+      "sugar",
+      "weight",
+      "bmi",
+      "temperature",
+      "steps",
+      "sleep",
+      "water",
+      "exercise",
+      "stress",
+      "heart-rate",
+      "oxygen",
+    )
     .required()
     .messages({ "any.only": "Invalid metric type" }),
   value: Joi.alternatives()
@@ -509,9 +602,7 @@ const addHealthMetricSchema = Joi.object({
 });
 
 const updateHealthMetricSchema = Joi.object({
-  value: Joi.alternatives()
-    .try(Joi.number(), Joi.object())
-    .optional(),
+  value: Joi.alternatives().try(Joi.number(), Joi.object()).optional(),
   notes: Joi.string().max(500).optional().allow(""),
   timestamp: Joi.date().optional(),
 }).min(1);
@@ -520,7 +611,10 @@ const activityUpdateSchema = Joi.object({
   type: Joi.string()
     .valid("steps", "sleep", "water", "exercise", "stress")
     .required()
-    .messages({ "any.only": "Invalid activity type. Must be one of: steps, sleep, water, exercise, stress" }),
+    .messages({
+      "any.only":
+        "Invalid activity type. Must be one of: steps, sleep, water, exercise, stress",
+    }),
   value: Joi.alternatives()
     .try(Joi.number(), Joi.object())
     .required()
@@ -533,17 +627,37 @@ const scheduleUpdateSchema = Joi.object({
   timeSlots: Joi.array()
     .items(
       Joi.object({
-        startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'startTime must be in HH:MM format' }),
-        endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'endTime must be in HH:MM format' }),
+        startTime: Joi.string()
+          .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .required()
+          .messages({
+            "string.pattern.base": "startTime must be in HH:MM format",
+          }),
+        endTime: Joi.string()
+          .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+          .required()
+          .messages({
+            "string.pattern.base": "endTime must be in HH:MM format",
+          }),
         maxPatients: Joi.number().integer().min(1).optional(),
         consultationDuration: Joi.number().integer().min(5).max(120).optional(),
         isAvailable: Joi.boolean().optional(),
-      })
+      }),
     )
     .optional(),
   breakTime: Joi.object({
-    startTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'Break startTime must be in HH:MM format' }),
-    endTime: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d$/).required().messages({ 'string.pattern.base': 'Break endTime must be in HH:MM format' }),
+    startTime: Joi.string()
+      .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Break startTime must be in HH:MM format",
+      }),
+    endTime: Joi.string()
+      .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+      .required()
+      .messages({
+        "string.pattern.base": "Break endTime must be in HH:MM format",
+      }),
   })
     .optional()
     .allow(null),
@@ -553,43 +667,86 @@ const scheduleUpdateSchema = Joi.object({
 // Prescription status update validation
 const updatePrescriptionStatusSchema = Joi.object({
   status: Joi.string()
-    .valid('pending', 'sent_to_pharmacy', 'processing', 'preparing', 'ready', 'dispensed', 'cancelled')
+    .valid(
+      "pending",
+      "sent_to_pharmacy",
+      "processing",
+      "preparing",
+      "ready",
+      "dispensed",
+      "cancelled",
+    )
     .required()
-    .messages({ 'any.only': 'Invalid prescription status' }),
-  notes: Joi.string().max(500).optional().allow(''),
+    .messages({ "any.only": "Invalid prescription status" }),
+  notes: Joi.string().max(500).optional().allow(""),
 });
 
 // Pharmacy status update validation
 const updatePrescriptionPharmacySchema = Joi.object({
   pharmacyStatus: Joi.string()
-    .valid('pending', 'processing', 'preparing', 'ready', 'dispensed', 'cancelled')
+    .valid(
+      "pending",
+      "processing",
+      "preparing",
+      "ready",
+      "dispensed",
+      "cancelled",
+    )
     .optional(),
   pharmacyId: Joi.string().max(100).optional(),
   dispensedAt: Joi.date().optional(),
-  pharmacyNotes: Joi.string().max(500).optional().allow(''),
+  pharmacyNotes: Joi.string().max(500).optional().allow(""),
 }).min(1);
 
 // Admin: update user active/inactive status
 const updateUserStatusSchema = Joi.object({
-  isActive: Joi.boolean().required()
-    .messages({ 'any.required': 'isActive (boolean) is required' }),
-  reason: Joi.string().max(500).optional().allow(''),
+  isActive: Joi.boolean()
+    .required()
+    .messages({ "any.required": "isActive (boolean) is required" }),
+  reason: Joi.string().max(500).optional().allow(""),
 });
 
 // Params schema: validate :type in /patients/:id/health-metrics/latest/:type
 const getMetricTypeParamsSchema = Joi.object({
   type: Joi.string()
-    .valid('bp', 'sugar', 'weight', 'bmi', 'temperature', 'steps', 'sleep', 'water', 'exercise', 'stress', 'heart-rate', 'oxygen')
+    .valid(
+      "bp",
+      "sugar",
+      "weight",
+      "bmi",
+      "temperature",
+      "steps",
+      "sleep",
+      "water",
+      "exercise",
+      "stress",
+      "heart-rate",
+      "oxygen",
+    )
     .required()
-    .messages({ 'any.only': 'Invalid metric type. Allowed: bp, sugar, weight, bmi, temperature, steps, sleep, water, exercise, stress, heart-rate, oxygen' }),
+    .messages({
+      "any.only":
+        "Invalid metric type. Allowed: bp, sugar, weight, bmi, temperature, steps, sleep, water, exercise, stress, heart-rate, oxygen",
+    }),
 });
 
 // Schedule day-of-week param validation (used for PUT /me/schedule/:dayOfWeek and PATCH toggle)
 const scheduleParamsSchema = Joi.object({
   dayOfWeek: Joi.string()
-    .valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')
+    .valid(
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    )
     .required()
-    .messages({ 'any.only': 'dayOfWeek must be a valid day name: monday, tuesday, wednesday, thursday, friday, saturday, sunday' }),
+    .messages({
+      "any.only":
+        "dayOfWeek must be a valid day name: monday, tuesday, wednesday, thursday, friday, saturday, sunday",
+    }),
 });
 
 // ID validation helper
@@ -623,13 +780,19 @@ module.exports = {
     version: Joi.number().optional(),
   }),
   bulkUpdateUsersSchema: Joi.object({
-    operations: Joi.array().items(
-      Joi.object({
-        userId: Joi.string().required(),
-        action: Joi.string().valid("activate", "deactivate", "delete", "updateRole").required(),
-        data: Joi.object().optional(),
-      })
-    ).min(1).max(100).required(),
+    operations: Joi.array()
+      .items(
+        Joi.object({
+          userId: Joi.string().required(),
+          action: Joi.string()
+            .valid("activate", "deactivate", "delete", "updateRole")
+            .required(),
+          data: Joi.object().optional(),
+        }),
+      )
+      .min(1)
+      .max(100)
+      .required(),
   }),
   updatePrescriptionStatusSchema,
   updatePrescriptionPharmacySchema,

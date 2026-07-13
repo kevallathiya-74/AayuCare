@@ -24,7 +24,7 @@ export const initializeNotificationPermissions = createAsyncThunk(
         permissionService.getPermissionState(),
         permissionService.getStoredSettings(),
         permissionService.getPermissionMeta(),
-      ],
+      ]
     );
 
     const notificationsEnabled =
@@ -42,7 +42,7 @@ export const initializeNotificationPermissions = createAsyncThunk(
       lastCheckedAt: new Date().toISOString(),
       error: null,
     };
-  },
+  }
 );
 
 export const setNotificationsEnabled = createAsyncThunk(
@@ -88,7 +88,7 @@ export const setNotificationsEnabled = createAsyncThunk(
         ? null
         : "Notification permission is disabled on this device.",
     };
-  },
+  }
 );
 
 const permissionSlice = createSlice({

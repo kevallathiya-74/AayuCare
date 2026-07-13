@@ -166,7 +166,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     text: "OK",
                     onPress: forceLogoutToLogin,
                   },
-                ],
+                ]
               );
               closePasswordModal();
             } catch (error) {
@@ -180,7 +180,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             }
           },
         },
-      ],
+      ]
     );
   };
 
@@ -205,7 +205,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     text: "OK",
                     onPress: forceLogoutToLogin,
                   },
-                ],
+                ]
               );
             } catch (error) {
               showError("Failed to logout from all devices");
@@ -217,7 +217,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             }
           },
         },
-      ],
+      ]
     );
   };
 
@@ -320,7 +320,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   {
                     backgroundColor: theme.withOpacity(
                       healthColors.success.main,
-                      0.08,
+                      0.08
                     ),
                   },
                 ]}
@@ -379,25 +379,25 @@ const SecuritySettingsScreen = ({ navigation }) => {
               "Active Sessions",
               securityData?.statistics?.activeSessions || 0,
               "people",
-              healthColors.success.main,
+              healthColors.success.main
             )}
             {renderStatCard(
               "Recent Logins",
               securityData?.statistics?.recentLogins || 0,
               "log-in",
-              healthColors.info.main,
+              healthColors.info.main
             )}
             {renderStatCard(
               "Verified Users",
               securityData?.statistics?.verifiedUsers || 0,
               "checkmark-circle",
-              healthColors.primary.main,
+              healthColors.primary.main
             )}
             {renderStatCard(
               "Active Users (7d)",
               securityData?.statistics?.activeUsers7d || 0,
               "pulse",
-              healthColors.warning.main,
+              healthColors.warning.main
             )}
           </View>
         </View>
@@ -419,7 +419,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 {
                   backgroundColor: theme.withOpacity(
                     healthColors.primary.main,
-                    0.08,
+                    0.08
                   ),
                 },
               ]}
@@ -449,7 +449,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 {
                   backgroundColor: theme.withOpacity(
                     healthColors.error.main,
-                    0.08,
+                    0.08
                   ),
                 },
               ]}

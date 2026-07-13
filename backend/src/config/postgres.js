@@ -9,7 +9,11 @@ const normalizeDatabaseUrl = (rawUrl) => {
     const sslmode = (parsed.searchParams.get("sslmode") || "").toLowerCase();
     const hasCompat = parsed.searchParams.has("uselibpqcompat");
 
-    if (sslmode && ["prefer", "require", "verify-ca"].includes(sslmode) && !hasCompat) {
+    if (
+      sslmode &&
+      ["prefer", "require", "verify-ca"].includes(sslmode) &&
+      !hasCompat
+    ) {
       parsed.searchParams.set("uselibpqcompat", "true");
     }
 
@@ -31,7 +35,9 @@ const buildPoolConfig = () => {
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
       statement_timeout: 10000,
-      ...(process.env.NODE_ENV === "production" ? { ssl: { rejectUnauthorized: false } } : {})
+      ...(process.env.NODE_ENV === "production"
+        ? { ssl: { rejectUnauthorized: false } }
+        : {}),
     };
   }
   return {
@@ -57,7 +63,7 @@ const pool = new Pool(poolConfig);
 // Per-connection lifecycle logs are debug-tier; gate them so production
 // logs aren't flooded with one INFO line per checkout/checkin (could be
 // hundreds per minute under load). Development keeps full visibility.
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   pool.on("connect", (_client) => {
     logger.info("✅ PostgreSQL client connected to pool");
   });
@@ -72,9 +78,9 @@ pool.on("error", (err, _client) => {
 });
 
 // Log pool statistics every 60 seconds in development
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   const poolStatsInterval = setInterval(() => {
-    logger.debug('📊 PostgreSQL Pool Stats:', {
+    logger.debug("📊 PostgreSQL Pool Stats:", {
       total: pool.totalCount,
       idle: pool.idleCount,
       waiting: pool.waitingCount,
@@ -100,7 +106,7 @@ const connectPostgres = async () => {
         !process.env.POSTGRES_DB)
     ) {
       throw new Error(
-        "PostgreSQL credentials not defined in environment variables (set DATABASE_URL or individual POSTGRES_* vars)"
+        "PostgreSQL credentials not defined in environment variables (set DATABASE_URL or individual POSTGRES_* vars)",
       );
     }
 
@@ -163,7 +169,7 @@ const runMigrations = async () => {
         const pgm = require("node-pg-migrate");
         const migrationsPath = path.join(__dirname, "../../migrations");
         logger.warn(
-          "⚠️ Existing schema detected while applying migrations. Marking pending migrations as applied (fake)."
+          "⚠️ Existing schema detected while applying migrations. Marking pending migrations as applied (fake).",
         );
 
         const faked = await pgm.default({
@@ -177,7 +183,9 @@ const runMigrations = async () => {
         });
 
         if (faked && faked.length > 0) {
-          logger.info(`✅ Faked ${faked.length} migration(s) on existing schema:`);
+          logger.info(
+            `✅ Faked ${faked.length} migration(s) on existing schema:`,
+          );
           faked.forEach((m) => logger.info(`   - ${m}`));
         } else {
           logger.info("✅ Existing schema migration state already aligned");
@@ -186,7 +194,7 @@ const runMigrations = async () => {
       } catch (fakeError) {
         logger.error(
           "❌ Failed to fake migrations after detecting existing schema:",
-          fakeError?.message || String(fakeError)
+          fakeError?.message || String(fakeError),
         );
       }
     }

@@ -13,7 +13,9 @@ const humanizeField = (path = "field") => {
 };
 
 const formatJoiDetail = (detail = {}) => {
-  const field = humanizeField(detail?.path?.join(" ") || detail?.context?.key || "field");
+  const field = humanizeField(
+    detail?.path?.join(" ") || detail?.context?.key || "field",
+  );
   const type = detail?.type || "";
 
   if (type === "any.required") return `${field} is required`;

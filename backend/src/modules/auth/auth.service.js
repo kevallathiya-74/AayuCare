@@ -4,7 +4,10 @@ const patientRepository = require("../patient/patient.repository");
 const authRepository = require("./auth.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const { getAuth } = require("../../lib/auth");
-const { invalidateAfterAuthProfileMutation, invalidateAfterPasswordMutation } = require("../../utils/cacheInvalidation");
+const {
+  invalidateAfterAuthProfileMutation,
+  invalidateAfterPasswordMutation,
+} = require("../../utils/cacheInvalidation");
 const bcrypt = require("bcryptjs");
 const logger = require("../../utils/logger");
 
@@ -20,21 +23,21 @@ class AuthService {
    */
   async getEmailByUserId(userId) {
     // Validate userId parameter
-    if (!userId || typeof userId !== 'string' || userId.length === 0) {
-      throw new AppError('User ID is required.', 400, 'VALIDATION_ERROR');
+    if (!userId || typeof userId !== "string" || userId.length === 0) {
+      throw new AppError("User ID is required.", 400, "VALIDATION_ERROR");
     }
 
     // Exact-match policy: preserve input as-is and reject hidden whitespace differences.
     if (userId !== userId.trim()) {
       throw new AppError(
-        'User ID must match exactly. Remove leading or trailing spaces and use exact uppercase/lowercase.',
+        "User ID must match exactly. Remove leading or trailing spaces and use exact uppercase/lowercase.",
         400,
-        'VALIDATION_ERROR'
+        "VALIDATION_ERROR",
       );
     }
 
     if (userId.length > 50) {
-      throw new AppError('User ID format is invalid.', 400, 'VALIDATION_ERROR');
+      throw new AppError("User ID format is invalid.", 400, "VALIDATION_ERROR");
     }
 
     // Strict case-sensitive lookup against stored user_id.
@@ -42,9 +45,9 @@ class AuthService {
 
     if (!user) {
       throw new AppError(
-        'Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).',
+        "Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).",
         404,
-        'NOT_FOUND'
+        "NOT_FOUND",
       );
     }
 
@@ -63,7 +66,7 @@ class AuthService {
     const sessions = await authRepository.findSessionsByUserId(userId);
 
     if (sessions.length === 0) {
-      throw new AppError('No active session found', 404, 'NOT_FOUND');
+      throw new AppError("No active session found", 404, "NOT_FOUND");
     }
 
     // Return the most recent session (first in the list due to ORDER BY in repository)
@@ -72,7 +75,9 @@ class AuthService {
     // The returned `token` is `session.token_hash` — see JSDoc in controller.
     // Logged at debug level so future developers see a hint in their terminal
     // when this endpoint is exercised. No change to the response payload.
-    logger.debug("[auth.getCurrentSession] returning session identifier (not a Bearer token)");
+    logger.debug(
+      "[auth.getCurrentSession] returning session identifier (not a Bearer token)",
+    );
 
     return {
       token: session.token,
@@ -88,16 +93,20 @@ class AuthService {
    */
   async getSessionTokenByCredentials(email, password, requestInfo = {}) {
     if (!email || !password) {
-      throw new AppError('Email/User ID and password are required exactly as provided.', 400, 'VALIDATION_ERROR');
+      throw new AppError(
+        "Email/User ID and password are required exactly as provided.",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     // 1. Find user by email (include password hash)
     const user = await userRepository.findByEmail(email, true);
     if (!user) {
       throw new AppError(
-        'Invalid credentials. Enter the exact User ID/email and password.',
+        "Invalid credentials. Enter the exact User ID/email and password.",
         401,
-        'UNAUTHORIZED'
+        "UNAUTHORIZED",
       );
     }
 
@@ -105,17 +114,17 @@ class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       throw new AppError(
-        'Invalid credentials. Enter the exact User ID/email and password.',
+        "Invalid credentials. Enter the exact User ID/email and password.",
         401,
-        'UNAUTHORIZED'
+        "UNAUTHORIZED",
       );
     }
 
     if (user.is_active === false) {
       throw new AppError(
-        'Your account has been deactivated. Please contact support.',
+        "Your account has been deactivated. Please contact support.",
         403,
-        'FORBIDDEN'
+        "FORBIDDEN",
       );
     }
 
@@ -146,7 +155,9 @@ class AuthService {
       });
 
       if (result) {
-        const activeSessions = await authRepository.findSessionsByUserId(user.id);
+        const activeSessions = await authRepository.findSessionsByUserId(
+          user.id,
+        );
         if (activeSessions.length > 0) {
           const session = activeSessions[0];
           return {
@@ -159,7 +170,7 @@ class AuthService {
       logger.error("Better Auth fallback signInEmail failed:", e.message);
     }
 
-    throw new AppError('No active session found', 404, 'NOT_FOUND');
+    throw new AppError("No active session found", 404, "NOT_FOUND");
   }
 
   /**
@@ -169,14 +180,14 @@ class AuthService {
    */
   async getProfileByEmail(email) {
     if (!email) {
-      throw new AppError('Email is required', 400, 'VALIDATION_ERROR');
+      throw new AppError("Email is required", 400, "VALIDATION_ERROR");
     }
 
     // Query PostgreSQL users table
     const user = await userRepository.findByEmail(email);
 
     if (!user) {
-      throw new AppError('User not found', 404, 'NOT_FOUND');
+      throw new AppError("User not found", 404, "NOT_FOUND");
     }
 
     // Return user-friendly data (no password hash)
@@ -216,7 +227,8 @@ class AuthService {
         userProfile.address = patient.address;
         userProfile.emergencyContactName = patient.emergency_contact_name;
         userProfile.emergencyContactPhone = patient.emergency_contact_phone;
-        userProfile.emergencyContactRelation = patient.emergency_contact_relation || null;
+        userProfile.emergencyContactRelation =
+          patient.emergency_contact_relation || null;
         userProfile.emergencyContact = {
           name: patient.emergency_contact_name || null,
           phone: patient.emergency_contact_phone || null,
@@ -251,12 +263,7 @@ class AuthService {
    * @returns {Promise<Object>} Updated user
    */
   async updateProfile(userId, updates) {
-    const allowedUpdates = [
-      "name",
-      "email",
-      "phone",
-      "preferred_language",
-    ];
+    const allowedUpdates = ["name", "email", "phone", "preferred_language"];
 
     const filteredUpdates = {};
     Object.keys(updates).forEach((key) => {
@@ -339,7 +346,7 @@ class AuthService {
     if (currentPassword === newPassword) {
       throw new AppError(
         "New password must be different from current password",
-        400
+        400,
       );
     }
 
@@ -384,7 +391,7 @@ class AuthService {
    */
   async updatePushToken(userId, token) {
     if (!token) {
-      throw new AppError('Push token is required', 400, 'VALIDATION_ERROR');
+      throw new AppError("Push token is required", 400, "VALIDATION_ERROR");
     }
 
     // Update user in PostgreSQL (we added expo_push_token to the schema)

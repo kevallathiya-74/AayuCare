@@ -126,19 +126,19 @@ const DoctorHomeScreen = ({ navigation }) => {
         dashboardData?.schedule?.nextPatient || "No upcoming patients",
       nextTime: dashboardData?.schedule?.nextTime || "--:--",
     }),
-    [dashboardData],
+    [dashboardData]
   );
 
   const todaysAppointments = useMemo(
     () => dashboardData?.todaysAppointments || [],
-    [dashboardData],
+    [dashboardData]
   );
 
   useFocusEffect(
     useCallback(() => {
       refetchDashboard();
       refreshCount();
-    }, [refetchDashboard, refreshCount]),
+    }, [refetchDashboard, refreshCount])
   );
 
   const onRefresh = useCallback(async () => {
@@ -208,7 +208,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         Alert.alert("Error", "Failed to start consultation. Please try again.");
       }
     },
-    [refetchDashboard, refreshCount, navigation],
+    [refetchDashboard, refreshCount, navigation]
   );
 
   const handleViewHistory = useCallback(
@@ -218,7 +218,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         patientName: appointment.patientName,
       });
     },
-    [navigation],
+    [navigation]
   );
 
   // ── Greeting helpers ──
@@ -248,7 +248,7 @@ const DoctorHomeScreen = ({ navigation }) => {
           .replace(/\s+/g, "_");
         return s === "scheduled" || s === "confirmed" || s === "in_progress";
       }),
-    [todaysAppointments],
+    [todaysAppointments]
   );
 
   // ── Drawer menu ──
@@ -257,7 +257,7 @@ const DoctorHomeScreen = ({ navigation }) => {
       closeMenu();
       setTimeout(() => navigation.navigate(screen, params), 100);
     },
-    [navigation, closeMenu],
+    [navigation, closeMenu]
   );
   const menuSections = useMemo(
     () => [
@@ -314,7 +314,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         ],
       },
     ],
-    [nav],
+    [nav]
   );
 
   // ── Render ──
@@ -444,7 +444,7 @@ const DoctorHomeScreen = ({ navigation }) => {
                       </View>
                       <Text style={styles.quickLabel}>{label}</Text>
                     </TouchableOpacity>
-                  ),
+                  )
                 )}
               </View>
             </>

@@ -299,7 +299,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.records?.length || 0),
-        0,
+        0
       );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
@@ -310,7 +310,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
   const records = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.records || []),
-    [data],
+    [data]
   );
 
   // ── Handlers ───────────────────────────────
@@ -320,7 +320,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
       if (key === activeFilter) return;
       setActiveFilter(key);
     },
-    [activeFilter],
+    [activeFilter]
   );
 
   const handleRefresh = useCallback(() => {
@@ -339,7 +339,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
         navigation.navigate("RecordDetail", { record });
       }
     },
-    [navigation],
+    [navigation]
   );
 
   // ── Render helpers ─────────────────────────
@@ -357,7 +357,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
         ))}
       </View>
     ),
-    [activeFilter, handleFilterChange],
+    [activeFilter, handleFilterChange]
   );
 
   const ListFooter = isFetchingNextPage ? (
@@ -368,7 +368,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
 
   const renderItem = useCallback(
     ({ item }) => <RecordCard record={item} onPress={handleRecordPress} />,
-    [handleRecordPress],
+    [handleRecordPress]
   );
 
   const keyExtractor = useCallback((item, idx) => item.id || String(idx), []);

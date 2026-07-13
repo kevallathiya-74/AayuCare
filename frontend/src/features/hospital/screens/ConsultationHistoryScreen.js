@@ -79,7 +79,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
 
   const consultations = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.consultations || []),
-    [data],
+    [data]
   );
 
   const handleRefresh = useCallback(() => {
@@ -118,7 +118,9 @@ const ConsultationHistoryScreen = ({ navigation }) => {
       }
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`Open consultation details for ${item.patientName || "patient"}`}
+      accessibilityLabel={`Open consultation details for ${
+        item.patientName || "patient"
+      }`}
     >
       <View style={styles.consultationHeader}>
         <View style={styles.patientInfo}>
@@ -274,7 +276,9 @@ const ConsultationHistoryScreen = ({ navigation }) => {
               title={
                 filter === "all"
                   ? EmptyStateConfig.CONSULTATIONS.title
-                  : `No ${filter.charAt(0).toUpperCase() + filter.slice(1)} Consultations`
+                  : `No ${
+                      filter.charAt(0).toUpperCase() + filter.slice(1)
+                    } Consultations`
               }
               message={
                 filter === "all"

@@ -142,7 +142,7 @@ const ConsultationScreen = ({ navigation, route }) => {
       await doctorService.updateAppointmentStatus(
         apptId,
         "completed",
-        formattedNotes,
+        formattedNotes
       );
     },
     onSuccess: async () => {
@@ -160,14 +160,14 @@ const ConsultationScreen = ({ navigation, route }) => {
             text: "OK",
             onPress: () => handleSmartBack(navigation, "DoctorTabs"),
           },
-        ],
+        ]
       );
     },
     onError: (err) => {
       logError(err, { context: "ConsultationScreen.handleComplete" });
       Alert.alert(
         "Error",
-        "Failed to complete consultation. Please try again.",
+        "Failed to complete consultation. Please try again."
       );
     },
   });
@@ -209,7 +209,7 @@ const ConsultationScreen = ({ navigation, route }) => {
               style: "destructive",
               onPress: () => handleSmartBack(navigation, "DoctorTabs"),
             },
-          ],
+          ]
         );
         return true; // prevent default back
       }
@@ -238,7 +238,7 @@ const ConsultationScreen = ({ navigation, route }) => {
                     style: "destructive",
                     onPress: () => handleSmartBack(navigation, "DoctorTabs"),
                   },
-                ],
+                ]
               );
             } else {
               handleSmartBack(navigation, "DoctorTabs");
@@ -288,7 +288,7 @@ const ConsultationScreen = ({ navigation, route }) => {
             });
           },
         },
-      ],
+      ]
     );
   }, [appointmentId, vitals, diagnosis, notes, completeConsultationMutation]);
 

@@ -42,10 +42,8 @@ export type ButtonVariant =
 export type ButtonSize = "small" | "medium" | "large";
 export type IconPosition = "left" | "right";
 
-export interface ButtonProps extends Omit<
-  PressableProps,
-  "style" | "children"
-> {
+export interface ButtonProps
+  extends Omit<PressableProps, "style" | "children"> {
   title?: string;
   children?: React.ReactNode;
   onPress?: (event: GestureResponderEvent) => void;

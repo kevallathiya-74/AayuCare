@@ -5,7 +5,8 @@ const IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
 
 const idempotencyMiddleware = async (req, res, next) => {
   try {
-    const idempotencyKey = req.header("Idempotency-Key") || req.header("idempotency-key");
+    const idempotencyKey =
+      req.header("Idempotency-Key") || req.header("idempotency-key");
 
     if (!idempotencyKey) {
       return next();
@@ -28,7 +29,9 @@ const idempotencyMiddleware = async (req, res, next) => {
         });
       }
       res.setHeader("X-Idempotent-Replay", "true");
-      return res.status(cached.statusCode || 200).json(cached.responseBody || {});
+      return res
+        .status(cached.statusCode || 200)
+        .json(cached.responseBody || {});
     }
 
     const originalJson = res.json.bind(res);
@@ -42,10 +45,11 @@ const idempotencyMiddleware = async (req, res, next) => {
               statusCode: res.statusCode,
               responseBody: payload,
               headers: {
-                "Content-Type": res.getHeader("Content-Type") || "application/json",
+                "Content-Type":
+                  res.getHeader("Content-Type") || "application/json",
               },
             },
-            IDEMPOTENCY_TTL_SECONDS
+            IDEMPOTENCY_TTL_SECONDS,
           );
         }
       } catch {

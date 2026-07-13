@@ -48,7 +48,7 @@ export const loginUser = createAsyncThunk(
         error?.message || error?.toString() || "Login failed";
       return rejectWithValue(errorMessage);
     }
-  },
+  }
 );
 
 export const logoutUser = createAsyncThunk(
@@ -68,7 +68,7 @@ export const logoutUser = createAsyncThunk(
         logger.warn(
           "authSlice",
           "Error clearing queryClient cache during logout:",
-          err.message,
+          err.message
         );
       }
 
@@ -92,7 +92,7 @@ export const logoutUser = createAsyncThunk(
       logger.error("authSlice", "Logout error", error?.message || error);
       return rejectWithValue(error.message || "Logout failed");
     }
-  },
+  }
 );
 
 export const validateSessionBackground = createAsyncThunk(
@@ -105,7 +105,7 @@ export const validateSessionBackground = createAsyncThunk(
       if (!session || !session.user) {
         logger.warn(
           "authSlice",
-          "Background validation failed - invalid/expired session. Logging out.",
+          "Background validation failed - invalid/expired session. Logging out."
         );
         dispatch(logoutUser());
         return null;
@@ -119,11 +119,11 @@ export const validateSessionBackground = createAsyncThunk(
       logger.warn(
         "authSlice",
         "Background validation failed (network/timeout). Keeping cached session.",
-        error?.message || error,
+        error?.message || error
       );
       return null;
     }
-  },
+  }
 );
 
 export const loadUser = createAsyncThunk(
@@ -149,7 +149,7 @@ export const loadUser = createAsyncThunk(
         logger.debug(
           "authSlice",
           "Fast-loaded user from cache, bypassing splash wait",
-          { id: cachedUser.id },
+          { id: cachedUser.id }
         );
 
         // Dispatch background validation thunk
@@ -164,7 +164,7 @@ export const loadUser = createAsyncThunk(
       if (!session || !session.user) {
         logger.debug(
           "authSlice",
-          "No valid session found - user not authenticated",
+          "No valid session found - user not authenticated"
         );
         return null;
       }
@@ -179,7 +179,7 @@ export const loadUser = createAsyncThunk(
       // Always return null instead of rejecting - allows app to continue
       return null;
     }
-  },
+  }
 );
 
 // Create the slice
@@ -224,7 +224,7 @@ const authSlice = createSlice({
           appStorage
             .setItem(
               STORAGE_KEYS.LANGUAGE,
-              action.payload.user.preferred_language,
+              action.payload.user.preferred_language
             )
             .catch(() => {});
           i18n
@@ -268,7 +268,7 @@ const authSlice = createSlice({
             appStorage
               .setItem(
                 STORAGE_KEYS.LANGUAGE,
-                action.payload.user.preferred_language,
+                action.payload.user.preferred_language
               )
               .catch(() => {});
             i18n
@@ -296,7 +296,7 @@ const authSlice = createSlice({
             appStorage
               .setItem(
                 STORAGE_KEYS.LANGUAGE,
-                action.payload.user.preferred_language,
+                action.payload.user.preferred_language
               )
               .catch(() => {});
             i18n

@@ -26,20 +26,40 @@ const passwordChangeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.post("/email-by-userid", sensitiveAuthLimiter, authController.getEmailByUserId);
-router.post("/profile-by-email", sensitiveAuthLimiter, authController.getProfileByEmail);
-router.post("/session-token", sensitiveAuthLimiter, authController.getSessionTokenByCredentials);
+router.post(
+  "/email-by-userid",
+  sensitiveAuthLimiter,
+  authController.getEmailByUserId,
+);
+router.post(
+  "/profile-by-email",
+  sensitiveAuthLimiter,
+  authController.getProfileByEmail,
+);
+router.post(
+  "/session-token",
+  sensitiveAuthLimiter,
+  authController.getSessionTokenByCredentials,
+);
 
 router.use(protect);
 
-router.post("/current-session", sensitiveAuthLimiter, authController.getCurrentSession);
+router.post(
+  "/current-session",
+  sensitiveAuthLimiter,
+  authController.getCurrentSession,
+);
 router.get("/me", authController.getMe);
-router.put("/profile", validateBody(updateProfileSchema), authController.updateProfile);
+router.put(
+  "/profile",
+  validateBody(updateProfileSchema),
+  authController.updateProfile,
+);
 router.put(
   "/change-password",
   passwordChangeLimiter,
   validateBody(changePasswordSchema),
-  authController.changePassword
+  authController.changePassword,
 );
 router.put("/push-token", authController.updatePushToken);
 

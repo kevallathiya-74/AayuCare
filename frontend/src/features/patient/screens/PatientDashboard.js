@@ -55,10 +55,10 @@ const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user, isLoading: authLoading } = useSelector((state) => state.auth);
   const { vitals: healthMetrics, isLoading: loadingMetrics } = useSelector(
-    (state) => state.health,
+    (state) => state.health
   );
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {},
+    (state) => state.permissions?.notification || {}
   );
   const [refreshing, setRefreshing] = useState(false);
   const isFocused = useIsFocused();
@@ -100,7 +100,7 @@ const PatientDashboard = ({ navigation }) => {
   // ── Metric helpers ──
   const safeMetrics = useMemo(
     () => (Array.isArray(healthMetrics) ? healthMetrics : []),
-    [healthMetrics],
+    [healthMetrics]
   );
 
   const formatBP = useCallback(() => {
@@ -126,12 +126,16 @@ const PatientDashboard = ({ navigation }) => {
   const getLastUpdateTime = useCallback(() => {
     if (!safeMetrics.length) return "No data";
     const latest = [...safeMetrics].sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
     )[0];
     const date = new Date(latest.timestamp);
     const isToday = date.toDateString() === new Date().toDateString();
     if (isToday)
-      return `Today ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}`;
+      return `Today ${date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })}`;
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }, [safeMetrics]);
 
@@ -212,7 +216,7 @@ const PatientDashboard = ({ navigation }) => {
         onPress: () => navigation.navigate(Routes.PATIENT.PHARMACY_BILLING),
       },
     ],
-    [navigation],
+    [navigation]
   );
 
   // ── Drawer menu sections ──
@@ -221,7 +225,7 @@ const PatientDashboard = ({ navigation }) => {
       closeMenu();
       setTimeout(() => navigation.navigate(screen, params), 100);
     },
-    [navigation, closeMenu],
+    [navigation, closeMenu]
   );
 
   const menuSections = useMemo(
@@ -318,14 +322,17 @@ const PatientDashboard = ({ navigation }) => {
         ],
       },
     ],
-    [nav],
+    [nav]
   );
 
   const healthStatus = useMemo(() => getHealthStatus(), [getHealthStatus]);
 
   if (authLoading && !user) {
     return (
-      <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+      <SafeAreaView
+        style={styles.container}
+        edges={getSafeAreaEdges("withTabBar")}
+      >
         <View style={styles.loadingSkeletonWrap}>
           <SkeletonStatGrid rows={2} />
           <SkeletonCardRow />
@@ -339,7 +346,10 @@ const PatientDashboard = ({ navigation }) => {
 
   // ── Render ──
   return (
-    <SafeAreaView style={styles.container} edges={getSafeAreaEdges("withTabBar")}>
+    <SafeAreaView
+      style={styles.container}
+      edges={getSafeAreaEdges("withTabBar")}
+    >
       {isFocused && (
         <StatusBar style="light" backgroundColor="transparent" translucent />
       )}

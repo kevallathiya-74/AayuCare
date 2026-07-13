@@ -67,7 +67,7 @@ const EditProfileScreen = ({ navigation }) => {
     if (!formData.phone.trim() || formData.phone.length !== 10) {
       Alert.alert(
         "Validation Error",
-        "Valid 10-digit phone number is required",
+        "Valid 10-digit phone number is required"
       );
       return false;
     }
@@ -88,7 +88,7 @@ const EditProfileScreen = ({ navigation }) => {
       if (isNaN(expNum) || expNum < 0 || expNum > 60) {
         Alert.alert(
           "Validation Error",
-          "Experience must be between 0 and 60 years",
+          "Experience must be between 0 and 60 years"
         );
         return false;
       }
@@ -97,7 +97,7 @@ const EditProfileScreen = ({ navigation }) => {
         if (isNaN(fee) || fee < 0) {
           Alert.alert(
             "Validation Error",
-            "Consultation fee must be a positive number",
+            "Consultation fee must be a positive number"
           );
           return false;
         }
@@ -140,7 +140,7 @@ const EditProfileScreen = ({ navigation }) => {
         dispatch(setUser(newUserState));
         await appStorage.setItem(
           STORAGE_KEYS.USER_DATA,
-          JSON.stringify(newUserState),
+          JSON.stringify(newUserState)
         );
 
         if (isAdmin) {
@@ -192,7 +192,7 @@ const EditProfileScreen = ({ navigation }) => {
             onPress={() =>
               handleSmartBack(
                 navigation,
-                user?.role === "admin" ? "AdminTabs" : "DoctorTabs",
+                user?.role === "admin" ? "AdminTabs" : "DoctorTabs"
               )
             }
             style={styles.backButton}

@@ -5,7 +5,6 @@
  * Features: scrollable tabs, icon support, badge support
  */
 
-
 import React, { useState, useRef, useEffect } from "react";
 
 import {
@@ -33,11 +32,12 @@ const Tabs = ({
   const indicatorPosition = useRef(new Animated.Value(0)).current;
   const indicatorWidth = useRef(new Animated.Value(0)).current;
 
-
   useEffect(() => {
     const animateIndicator = (index, widths) => {
       if (widths.length === 0 || widths[index] == null) return;
-      const position = widths.slice(0, index).reduce((sum, width) => sum + width, 0);
+      const position = widths
+        .slice(0, index)
+        .reduce((sum, width) => sum + width, 0);
       Animated.parallel([
         Animated.spring(indicatorPosition, {
           toValue: position,
@@ -72,7 +72,6 @@ const Tabs = ({
       indicatorWidth.setValue(width);
     }
   };
-
 
   const renderTab = (tab, index) => {
     const isActive = index === activeIndex;

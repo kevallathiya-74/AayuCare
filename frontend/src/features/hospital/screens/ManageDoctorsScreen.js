@@ -95,7 +95,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               page: Math.floor(pageParam / PAGE_SIZE) + 1,
               limit: PAGE_SIZE,
               ...(user?.hospitalId ? { hospitalId: user.hospitalId } : {}),
-            },
+            }
       );
       const rawDoctorsList =
         response?.doctors || response?.data?.doctors || response?.data || [];
@@ -108,9 +108,9 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
             typeof doctor?.isActive === "boolean"
               ? doctor.isActive
               : typeof doctor?.is_active === "boolean"
-                ? doctor.is_active
-                : !!doctor?.is_active,
-        }),
+              ? doctor.is_active
+              : !!doctor?.is_active,
+        })
       );
 
       return {
@@ -121,7 +121,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.items?.length || 0),
-        0,
+        0
       );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
@@ -138,7 +138,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch]),
+    }, [refetch])
   );
 
   const onRefresh = useCallback(() => {
@@ -168,7 +168,9 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
       Alert.alert(
         newStatus ? "Activate Doctor" : "Deactivate Doctor",
-        `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${doctor.name}?`,
+        `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${
+          doctor.name
+        }?`,
         [
           { text: "Cancel", style: "cancel" },
           {
@@ -178,7 +180,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               try {
                 const response = await adminService.updateUserStatus(
                   doctor.userId,
-                  newStatus,
+                  newStatus
                 );
                 logger.debug("ManageDoctorsScreen", "Status update response", {
                   success: response.success,
@@ -192,7 +194,9 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
                 Alert.alert(
                   "Success",
-                  `Doctor ${newStatus ? "activated" : "deactivated"} successfully`,
+                  `Doctor ${
+                    newStatus ? "activated" : "deactivated"
+                  } successfully`
                 );
               } catch (err) {
                 logError(err, {
@@ -204,10 +208,10 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [canManageUsers, queryClient],
+    [canManageUsers, queryClient]
   );
 
   const handleEditDoctor = useCallback((doctor) => {
@@ -231,7 +235,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
         Alert.alert(
           "Doctor Deactivated",
-          `Dr. ${doctor.name} has been deactivated. Doctor data is retained for compliance and can be reactivated later.`,
+          `Dr. ${doctor.name} has been deactivated. Doctor data is retained for compliance and can be reactivated later.`
         );
       } catch (err) {
         logError(err, {
@@ -245,7 +249,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         setUpdatingId(null);
       }
     },
-    [queryClient],
+    [queryClient]
   );
 
   const handlePermanentDeleteDoctor = useCallback(
@@ -253,7 +257,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       if (!isSuperAdmin) {
         Alert.alert(
           "Access Denied",
-          "Permanent deletion is restricted to super admin.",
+          "Permanent deletion is restricted to super admin."
         );
         return;
       }
@@ -283,7 +287,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
                 });
                 Alert.alert(
                   "Permanently Deleted",
-                  `Dr. ${doctor.name} has been permanently removed from the system. This action was logged for audit purposes.`,
+                  `Dr. ${doctor.name} has been permanently removed from the system. This action was logged for audit purposes.`
                 );
               } catch (err) {
                 logError(err, {
@@ -299,10 +303,10 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [isSuperAdmin, queryClient],
+    [isSuperAdmin, queryClient]
   );
 
   const handleDeleteDoctor = useCallback(
@@ -323,7 +327,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               style: "destructive",
               onPress: () => handleSoftDeleteDoctor(doctor),
             },
-          ],
+          ]
         );
         return;
       }
@@ -338,7 +342,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
             style: "destructive",
             onPress: () => handlePermanentDeleteDoctor(doctor),
           },
-        ],
+        ]
       );
     },
     [
@@ -346,7 +350,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       isSuperAdmin,
       handleSoftDeleteDoctor,
       handlePermanentDeleteDoctor,
-    ],
+    ]
   );
 
   const handleDoctorPress = (doctor) => {
@@ -386,7 +390,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         id: doctorIdFromRoute,
         userId: doctorIdFromRoute,
         name: route?.params?.doctorName || "",
-      },
+      }
     );
   }, [doctorIdFromRoute, doctorPayloadFromRoute, doctors, navigation]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -508,7 +512,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       handleEditDoctor,
       handleDeleteDoctor,
       updatingId,
-    ],
+    ]
   );
 
   const renderEmptyState = () => (

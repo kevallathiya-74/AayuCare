@@ -32,7 +32,7 @@ class PrescriptionService {
     try {
       const query = new URLSearchParams(params).toString();
       const response = await api.get(
-        `/prescriptions/patient/${patientId}${query ? `?${query}` : ""}`,
+        `/prescriptions/patient/${patientId}${query ? `?${query}` : ""}`
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -85,7 +85,7 @@ class PrescriptionService {
     try {
       const response = await api.patch(
         `/prescriptions/${prescriptionId}/status`,
-        { status },
+        { status }
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -107,7 +107,7 @@ class PrescriptionService {
     try {
       const response = await api.patch(
         `/prescriptions/${prescriptionId}/pharmacy-status`,
-        { pharmacyStatus, ...paymentData },
+        { pharmacyStatus, ...paymentData }
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -125,7 +125,7 @@ class PrescriptionService {
     try {
       const queryString = new URLSearchParams(params).toString();
       const response = await api.get(
-        `/prescriptions${queryString ? `?${queryString}` : ""}`,
+        `/prescriptions${queryString ? `?${queryString}` : ""}`
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {

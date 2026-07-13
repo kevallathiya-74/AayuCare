@@ -63,14 +63,14 @@ const StatCard = ({
     trendIsPositive === null
       ? healthColors.text.tertiary
       : trendIsPositive
-        ? healthColors.success.main
-        : healthColors.error.main;
+      ? healthColors.success.main
+      : healthColors.error.main;
   const trendIcon =
     trendIsPositive === null
       ? null
       : trendIsPositive
-        ? "trending-up"
-        : "trending-down";
+      ? "trending-up"
+      : "trending-down";
 
   const displayTrend =
     trendLabel ||

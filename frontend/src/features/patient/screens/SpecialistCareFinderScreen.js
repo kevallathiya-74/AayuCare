@@ -81,7 +81,7 @@ const toDisplayText = (value, fallback = "N/A") => {
 const getDoctorSpecialtyText = (doctor) =>
   toDisplayText(
     doctor?.specialization || doctor?.specialty,
-    "General Medicine",
+    "General Medicine"
   );
 
 const getDoctorExperienceText = (doctor) => {
@@ -113,7 +113,7 @@ const getDoctorAvailabilityText = (doctor) => {
       .filter(([, enabled]) => Boolean(enabled))
       .map(
         ([day]) =>
-          dayShort[String(day).toLowerCase()] || String(day).slice(0, 3),
+          dayShort[String(day).toLowerCase()] || String(day).slice(0, 3)
       );
     if (!openDays.length) return "Check availability";
     if (openDays.length > 3) {
@@ -173,7 +173,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         filteredDoctors = filteredDoctors.filter(
           (doc) =>
             doc.consultationFee >= feeRange[0] &&
-            doc.consultationFee <= feeRange[1],
+            doc.consultationFee <= feeRange[1]
         );
       }
 

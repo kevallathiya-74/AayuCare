@@ -80,10 +80,10 @@ const AppNavigator = () => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { isAuthenticated, user, isLoading } = useSelector(
-    (state) => state.auth || {},
+    (state) => state.auth || {}
   );
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {},
+    (state) => state.permissions?.notification || {}
   );
   const navigationRef = useRef(null);
   const authInitialized = useRef(false); // Prevent multiple auth checks
@@ -116,7 +116,7 @@ const AppNavigator = () => {
         logger.error(
           "AppNavigator",
           "Auth initialization error",
-          error?.message || error,
+          error?.message || error
         );
         // Continue anyway - auth will default to logged out state
       }
@@ -141,7 +141,7 @@ const AppNavigator = () => {
           "Notification permission bootstrap failed",
           {
             error: error?.message || String(error),
-          },
+          }
         );
       }
     };
@@ -171,7 +171,7 @@ const AppNavigator = () => {
             "Notification permission refresh on foreground failed",
             {
               error: error?.message || String(error),
-            },
+            }
           );
         }
 
@@ -179,11 +179,11 @@ const AppNavigator = () => {
         if (!isAuthenticated) {
           logger.debug(
             "AppNavigator",
-            "App focused and unauthenticated, retrying loadUser...",
+            "App focused and unauthenticated, retrying loadUser..."
           );
           dispatch(loadUser());
         }
-      },
+      }
     );
 
     return () => {
@@ -200,7 +200,7 @@ const AppNavigator = () => {
       logger.debug(
         "AppNavigator",
         "User authenticated on route",
-        currentRoute?.name,
+        currentRoute?.name
       );
       logger.debug("AppNavigator", "User role", userRole);
 
@@ -208,7 +208,7 @@ const AppNavigator = () => {
       if (currentRoute && currentRoute.name === Routes.AUTH.SPLASH) {
         logger.debug(
           "AppNavigator",
-          "On splash screen, navigation handled there",
+          "On splash screen, navigation handled there"
         );
         return;
       }
@@ -224,7 +224,7 @@ const AppNavigator = () => {
         logger.debug(
           "AppNavigator",
           "Already on protected screen, skipping auto-navigate",
-          currentRoute.name,
+          currentRoute.name
         );
         return;
       }
@@ -471,9 +471,7 @@ const AppNavigator = () => {
 
   return (
     <ErrorBoundary>
-      <NavigationContainer
-        ref={navigationRef}
-      >
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator
           initialRouteName={Routes.AUTH.SPLASH}
           screenOptions={{

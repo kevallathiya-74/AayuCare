@@ -66,7 +66,7 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
   const specialty = useMemo(
     () =>
       asText(doctor?.specialization || doctor?.specialty, "General Medicine"),
-    [doctor],
+    [doctor]
   );
 
   const experience = useMemo(() => {

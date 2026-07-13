@@ -59,19 +59,19 @@ if (typeof cleanupInterval.unref === "function") {
 const getCache = async (key) => {
   const entry = memoryCache.get(key);
   if (!entry) return null;
-  
+
   if (entry.expiresAt && entry.expiresAt < Date.now()) {
     memoryCache.delete(key);
     return null;
   }
-  
+
   return entry.value;
 };
 
 const setCache = async (key, value, ttl = 3600) => {
   memoryCache.set(key, {
     value,
-    expiresAt: ttl ? Date.now() + ttl * 1000 : null
+    expiresAt: ttl ? Date.now() + ttl * 1000 : null,
   });
   return true;
 };
@@ -84,14 +84,14 @@ const deleteCacheByPattern = async (pattern) => {
   let deletedCount = 0;
   // Convert glob pattern user:* to simple prefix/regex match
   const regexPattern = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
-  
+
   for (const key of memoryCache.keys()) {
     if (regexPattern.test(key)) {
       memoryCache.delete(key);
       deletedCount++;
     }
   }
-  
+
   return deletedCount;
 };
 
@@ -108,7 +108,11 @@ const deleteSession = async (sessionId) => {
 };
 
 const setOTP = async (identifier, otp, ttl = 300) => {
-  return setCache(`otp:${identifier}`, { otp, createdAt: new Date().toISOString() }, ttl);
+  return setCache(
+    `otp:${identifier}`,
+    { otp, createdAt: new Date().toISOString() },
+    ttl,
+  );
 };
 
 const getOTP = async (identifier) => {
@@ -119,31 +123,39 @@ const deleteOTP = async (identifier) => {
   return deleteCache(`otp:${identifier}`);
 };
 
-const checkRateLimit = async (identifier, maxRequests = 100, windowSeconds = 60) => {
+const checkRateLimit = async (
+  identifier,
+  maxRequests = 100,
+  windowSeconds = 60,
+) => {
   const key = `ratelimit:${identifier}`;
   const now = Date.now();
   const windowMs = windowSeconds * 1000;
-  
+
   let entry = memoryCache.get(key);
   if (!entry || (entry.expiresAt && entry.expiresAt < now)) {
     entry = {
       count: 0,
-      expiresAt: now + windowMs
+      expiresAt: now + windowMs,
     };
   }
-  
+
   entry.count += 1;
   memoryCache.set(key, entry);
-  
+
   const allowed = entry.count <= maxRequests;
   const remaining = Math.max(0, maxRequests - entry.count);
   const resetInSeconds = Math.max(1, Math.ceil((entry.expiresAt - now) / 1000));
-  
+
   return { allowed, remaining, resetInSeconds, current: entry.count };
 };
 
 const blacklistToken = async (token, ttl = 2592000) => {
-  return setCache(`blacklist:${token}`, { blacklistedAt: new Date().toISOString() }, ttl);
+  return setCache(
+    `blacklist:${token}`,
+    { blacklistedAt: new Date().toISOString() },
+    ttl,
+  );
 };
 
 const isTokenBlacklisted = async (token) => {

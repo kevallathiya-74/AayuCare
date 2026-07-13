@@ -117,18 +117,28 @@ const mapPrescriptionData = (dbPrescription) => {
     // NOTE: `_id` MongoDB-shape residue was removed on 2026-06-30.
     // PostgreSQL exposes a UUID `id` via the `prescriptions.id` column.
     id: dbPrescription.id,
-    prescriptionId: dbPrescription.prescription_id || dbPrescription.prescriptionId,
+    prescriptionId:
+      dbPrescription.prescription_id || dbPrescription.prescriptionId,
     patientId: dbPrescription.patient_id || dbPrescription.patientId,
     doctorId: dbPrescription.doctor_id || dbPrescription.doctorId,
-    appointmentId: dbPrescription.appointment_id || dbPrescription.appointmentId,
+    appointmentId:
+      dbPrescription.appointment_id || dbPrescription.appointmentId,
     hospitalId: dbPrescription.hospital_id || dbPrescription.hospitalId,
-    prescriptionDate: dbPrescription.prescription_date || dbPrescription.prescriptionDate || dbPrescription.created_at || dbPrescription.createdAt,
+    prescriptionDate:
+      dbPrescription.prescription_date ||
+      dbPrescription.prescriptionDate ||
+      dbPrescription.created_at ||
+      dbPrescription.createdAt,
     diagnosis: dbPrescription.diagnosis,
     medicines: Array.isArray(rawMedicines) ? rawMedicines : [],
     instructions: dbPrescription.instructions,
     followUpDate: dbPrescription.follow_up_date || dbPrescription.followUpDate,
-    isActive: dbPrescription.is_active !== false && dbPrescription.isActive !== false,
-    pharmacyStatus: dbPrescription.pharmacy_status || dbPrescription.pharmacyStatus || "pending",
+    isActive:
+      dbPrescription.is_active !== false && dbPrescription.isActive !== false,
+    pharmacyStatus:
+      dbPrescription.pharmacy_status ||
+      dbPrescription.pharmacyStatus ||
+      "pending",
     createdAt: dbPrescription.created_at || dbPrescription.createdAt,
     updatedAt: dbPrescription.updated_at || dbPrescription.updatedAt,
   };

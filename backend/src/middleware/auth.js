@@ -33,7 +33,10 @@ exports.protect = async (req, res, next) => {
 
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.substring(7); // Remove "Bearer " prefix
-        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        const hashedToken = crypto
+          .createHash("sha256")
+          .update(token)
+          .digest("hex");
 
         // Query session from PostgreSQL (Better Auth stores sessions in PostgreSQL)
         try {
@@ -44,12 +47,12 @@ exports.protect = async (req, res, next) => {
                AND expires_at > NOW()
              ORDER BY created_at DESC
              LIMIT 1`,
-            [token, hashedToken]
+            [token, hashedToken],
           );
 
           if (sessionResult.rows.length > 0) {
             const sessionDoc = sessionResult.rows[0];
-            
+
             // Get user from PostgreSQL users table
             const userResult = await query(
               `SELECT id, user_id as "userId", name, email, phone, role, 
@@ -57,7 +60,7 @@ exports.protect = async (req, res, next) => {
                       is_active as "isActive", email_verified as "emailVerified"
                FROM users
                WHERE id = $1`,
-              [sessionDoc.userId]
+              [sessionDoc.userId],
             );
 
             if (userResult.rows.length > 0) {
@@ -66,28 +69,33 @@ exports.protect = async (req, res, next) => {
                 user: userDoc,
                 session: sessionDoc,
               };
-              
-              if (process.env.NODE_ENV === 'development') {
-                logger.debug(`[Auth] Token validated successfully for user: ${userDoc.email}`);
+
+              if (process.env.NODE_ENV === "development") {
+                logger.debug(
+                  `[Auth] Token validated successfully for user: ${userDoc.email}`,
+                );
               }
             }
           } else {
-            logger.warn('[Auth] Token not found or expired:', token.substring(0, 10) + '...');
+            logger.warn(
+              "[Auth] Token not found or expired:",
+              token.substring(0, 10) + "...",
+            );
           }
         } catch (tokenError) {
-          logger.error('[Auth] Token verification failed:', tokenError.message);
+          logger.error("[Auth] Token verification failed:", tokenError.message);
         }
       }
     }
 
     // Check if we have a valid session
     if (!session || !session.user) {
-      logger.warn('[Auth] No valid session found');
+      logger.warn("[Auth] No valid session found");
       return next(new AppError("Authentication required", 401));
     }
 
     if (!session.user.isActive) {
-      logger.warn('[Auth] Account deactivated for user:', session.user.email);
+      logger.warn("[Auth] Account deactivated for user:", session.user.email);
       return next(new AppError("Account deactivated", 403));
     }
 
@@ -95,7 +103,7 @@ exports.protect = async (req, res, next) => {
 
     next();
   } catch (error) {
-    logger.error('[Auth] Protection error:', error.message);
+    logger.error("[Auth] Protection error:", error.message);
     return next(new AppError("Authentication failed", 401));
   }
 };
@@ -103,28 +111,33 @@ exports.protect = async (req, res, next) => {
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      logger.warn('[Auth] Authorization failed: Authentication required');
+      logger.warn("[Auth] Authorization failed: Authentication required");
       return next(new AppError("Authentication required", 401));
     }
     if (!roles.includes(req.user.role)) {
-      const userEmail = req.user.email || 'unknown';
-      const userId = req.user.id || req.user.userId || 'unknown';
-      const role = req.user.role || 'unknown';
-      const hospitalId = req.user.hospitalId || 'none';
-      const route = req.originalUrl || req.url || 'unknown';
+      const userEmail = req.user.email || "unknown";
+      const userId = req.user.id || req.user.userId || "unknown";
+      const role = req.user.role || "unknown";
+      const hospitalId = req.user.hospitalId || "none";
+      const route = req.originalUrl || req.url || "unknown";
 
       logger.warn(
         `[Auth] Access Denied Details:\n` +
-        `  - User ID: ${userId} (${userEmail})\n` +
-        `  - Current Role: ${role}\n` +
-        `  - Hospital ID: ${hospitalId}\n` +
-        `  - Requested Route: ${route}\n` +
-        `  - Required Roles: ${roles.join(', ')}\n` +
-        `  - Middleware Name: restrictTo (authorize)\n` +
-        `  - Denied Reason: Current role '${role}' is not allowed to access this route.`
+          `  - User ID: ${userId} (${userEmail})\n` +
+          `  - Current Role: ${role}\n` +
+          `  - Hospital ID: ${hospitalId}\n` +
+          `  - Requested Route: ${route}\n` +
+          `  - Required Roles: ${roles.join(", ")}\n` +
+          `  - Middleware Name: restrictTo (authorize)\n` +
+          `  - Denied Reason: Current role '${role}' is not allowed to access this route.`,
       );
 
-      return next(new AppError(`Access denied: role '${role}' cannot access this endpoint.`, 403));
+      return next(
+        new AppError(
+          `Access denied: role '${role}' cannot access this endpoint.`,
+          403,
+        ),
+      );
     }
     next();
   };
@@ -200,16 +213,19 @@ exports.optionalAuth = async (req, res, next) => {
     // Fallback: try Bearer token (mobile clients)
     if (!session?.user) {
       const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
+      if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.substring(7);
-        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        const hashedToken = crypto
+          .createHash("sha256")
+          .update(token)
+          .digest("hex");
         try {
           const sessionResult = await query(
             `SELECT token_hash as token, user_id as "userId", expires_at as "expiresAt"
              FROM session
              WHERE (token_hash = $1 OR token_hash = $2) AND expires_at > NOW()
              LIMIT 1`,
-            [token, hashedToken]
+            [token, hashedToken],
           );
           if (sessionResult.rows.length > 0) {
             const userResult = await query(
@@ -217,10 +233,13 @@ exports.optionalAuth = async (req, res, next) => {
                       hospital_id as "hospitalId", hospital_name as "hospitalName",
                       is_active as "isActive", email_verified as "emailVerified"
                FROM users WHERE id = $1`,
-              [sessionResult.rows[0].userId]
+              [sessionResult.rows[0].userId],
             );
             if (userResult.rows.length > 0 && userResult.rows[0].isActive) {
-              session = { user: userResult.rows[0], session: sessionResult.rows[0] };
+              session = {
+                user: userResult.rows[0],
+                session: sessionResult.rows[0],
+              };
             }
           }
         } catch {

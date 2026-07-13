@@ -97,7 +97,7 @@ const WalkInPatientScreen = ({ navigation }) => {
               });
             },
           },
-        ],
+        ]
       );
     },
     onError: (err) => {
@@ -281,8 +281,8 @@ const WalkInPatientScreen = ({ navigation }) => {
                             option === "male"
                               ? "male"
                               : option === "female"
-                                ? "female"
-                                : "male-female"
+                              ? "female"
+                              : "male-female"
                           }
                           size={14}
                           color={

@@ -29,8 +29,8 @@ class AppointmentService {
       // Filter out null/undefined values to prevent "null" strings in query params
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(
-          ([_, v]) => v != null && v !== "null" && v !== "",
-        ),
+          ([_, v]) => v != null && v !== "null" && v !== ""
+        )
       );
       const params = new URLSearchParams(cleanFilters).toString();
       const response = await api.get(`/appointments/cursor?${params}`);
@@ -49,8 +49,8 @@ class AppointmentService {
     try {
       const cleanFilters = Object.fromEntries(
         Object.entries({ ...filters, patientId }).filter(
-          ([_, v]) => v != null && v !== "null" && v !== "",
-        ),
+          ([_, v]) => v != null && v !== "null" && v !== ""
+        )
       );
       const params = new URLSearchParams(cleanFilters).toString();
       const response = await api.get(`/appointments/cursor?${params}`);
@@ -72,8 +72,8 @@ class AppointmentService {
     try {
       const cleanFilters = Object.fromEntries(
         Object.entries({ ...filters, doctorId }).filter(
-          ([_, v]) => v != null && v !== "null" && v !== "",
-        ),
+          ([_, v]) => v != null && v !== "null" && v !== ""
+        )
       );
       const params = new URLSearchParams(cleanFilters).toString();
       const response = await api.get(`/appointments/cursor?${params}`);
@@ -156,7 +156,7 @@ class AppointmentService {
     try {
       const response = await api.put(
         `/appointments/${appointmentId}`,
-        updateData,
+        updateData
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -175,7 +175,7 @@ class AppointmentService {
     try {
       const response = await api.patch(
         `/appointments/${appointmentId}/status`,
-        { status },
+        { status }
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {

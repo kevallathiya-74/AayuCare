@@ -76,7 +76,7 @@ const LoginScreen = ({ navigation }) => {
         top: Math.max(insets.top + theme.spacing.sm, 16),
       },
     ],
-    [insets.top],
+    [insets.top]
   );
 
   useEffect(() => {
@@ -129,7 +129,7 @@ const LoginScreen = ({ navigation }) => {
     } catch (error) {
       setFormError(
         error?.message ||
-          t("auth.loginError", "Invalid credentials. Please try again."),
+          t("auth.loginError", "Invalid credentials. Please try again.")
       );
     }
   }, [userId, password, dispatch, scaleAnim, t]);
@@ -143,7 +143,7 @@ const LoginScreen = ({ navigation }) => {
   const onPasswordChange = useCallback((text) => {
     setPassword(text);
     setFieldErrors((prev) =>
-      prev.password ? { ...prev, password: "" } : prev,
+      prev.password ? { ...prev, password: "" } : prev
     );
     setFormError((prev) => (prev ? "" : prev));
   }, []);
@@ -235,7 +235,7 @@ const LoginForm = memo(
           }
         }, 150);
       },
-      [scrollViewRef],
+      [scrollViewRef]
     );
 
     return (
@@ -313,7 +313,7 @@ const LoginForm = memo(
             accessible={true}
             accessibilityLabel={t(
               "auth.rolesAvailable",
-              "Roles available: Admin, Doctor, Patient",
+              "Roles available: Admin, Doctor, Patient"
             )}
           >
             {[
@@ -330,8 +330,8 @@ const LoginForm = memo(
                         idx === 0
                           ? healthColors.accent.coral
                           : idx === 1
-                            ? healthColors.secondary.main
-                            : healthColors.primary.main,
+                          ? healthColors.secondary.main
+                          : healthColors.primary.main,
                     },
                   ]}
                 />
@@ -347,7 +347,7 @@ const LoginForm = memo(
               onChangeText={onUserIdChange}
               placeholder={t(
                 "auth.userIdPlaceholder",
-                "e.g. pat1, doc1, admin@aayucare.com",
+                "e.g. pat1, doc1, admin@aayucare.com"
               )}
               leftIcon={emailIcon}
               error={fieldErrors.userId}
@@ -443,13 +443,13 @@ const LoginForm = memo(
           <Text style={styles.footerText}>
             {t(
               "auth.footerCompliance",
-              "End-to-end encrypted · HIPAA Compliant",
+              "End-to-end encrypted · HIPAA Compliant"
             )}
           </Text>
         </View>
       </ScrollView>
     );
-  },
+  }
 );
 
 const styles = StyleSheet.create({

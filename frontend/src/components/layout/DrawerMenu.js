@@ -60,7 +60,7 @@ const DrawerMenu = ({
         setTimeout(onPress, 120);
       }
     },
-    [onClose],
+    [onClose]
   );
 
   const handleLogout = useCallback(() => {

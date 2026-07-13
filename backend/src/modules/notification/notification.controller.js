@@ -13,8 +13,7 @@ const { AppError } = require("../../middleware/errorHandler");
 const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 // Resolve user's UUID string id from the authenticated request
-const resolveUserId = (req) =>
-  req.user?.id;
+const resolveUserId = (req) => req.user?.id;
 
 /**
  * @desc    Get user notifications
@@ -27,7 +26,9 @@ exports.getUserNotifications = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return next(new AppError("Authentication required to fetch notifications", 401));
+      return next(
+        new AppError("Authentication required to fetch notifications", 401),
+      );
     }
 
     const query = { userId };
@@ -35,14 +36,11 @@ exports.getUserNotifications = async (req, res, next) => {
       query.read = read === "true";
     }
 
-    const notifications = await notificationRepository.findWithFilters(
-      query,
-      {
-        sort: { createdAt: -1 },
-        limit: parseInt(limit),
-        offset: (parseInt(page) - 1) * parseInt(limit),
-      }
-    );
+    const notifications = await notificationRepository.findWithFilters(query, {
+      sort: { createdAt: -1 },
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+    });
 
     const total = await notificationRepository.count(query);
     const unreadCount = await notificationRepository.getUnreadCount(userId);
@@ -59,7 +57,7 @@ exports.getUserNotifications = async (req, res, next) => {
         },
         unreadCount,
       },
-      "Notifications retrieved successfully"
+      "Notifications retrieved successfully",
     );
   } catch (error) {
     logger.error("Get notifications error:", {
@@ -78,9 +76,16 @@ exports.getUserNotifications = async (req, res, next) => {
 exports.getUnreadCount = async (req, res, next) => {
   try {
     const userId = resolveUserId(req);
-    const count = userId ? await notificationRepository.getUnreadCount(userId) : 0;
+    const count = userId
+      ? await notificationRepository.getUnreadCount(userId)
+      : 0;
 
-    return sendSuccess(res, req, { count }, "Unread notification count retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      { count },
+      "Unread notification count retrieved successfully",
+    );
   } catch (error) {
     logger.error("Get unread count error:", {
       error: error.message,
@@ -101,7 +106,13 @@ exports.markAsRead = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, req, "Invalid user context for notifications", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Invalid user context for notifications",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const notification = await notificationRepository.findById(id);
@@ -123,7 +134,12 @@ exports.markAsRead = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, updatedNotification, "Notification marked as read");
+    return sendSuccess(
+      res,
+      req,
+      updatedNotification,
+      "Notification marked as read",
+    );
   } catch (error) {
     logger.error("Mark as read error:", {
       error: error.message,
@@ -143,7 +159,13 @@ exports.markAllAsRead = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, req, "Invalid user context for notifications", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Invalid user context for notifications",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const result = await notificationRepository.markAllAsRead(userId);
@@ -156,7 +178,12 @@ exports.markAllAsRead = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, { updated: result.rowCount }, "All notifications marked as read");
+    return sendSuccess(
+      res,
+      req,
+      { updated: result.rowCount },
+      "All notifications marked as read",
+    );
   } catch (error) {
     logger.error("Mark all as read error:", {
       error: error.message,
@@ -177,7 +204,13 @@ exports.deleteNotification = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, req, "Invalid user context for notifications", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Invalid user context for notifications",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const result = await notificationRepository.delete(id, userId);
@@ -214,7 +247,13 @@ exports.clearAllNotifications = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, req, "Invalid user context for notifications", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Invalid user context for notifications",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const result = await notificationRepository.deleteAllForUser(userId);
@@ -227,7 +266,12 @@ exports.clearAllNotifications = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, { deleted: result.rowCount }, "All notifications cleared");
+    return sendSuccess(
+      res,
+      req,
+      { deleted: result.rowCount },
+      "All notifications cleared",
+    );
   } catch (error) {
     logger.error("Clear all notifications error:", {
       error: error.message,
@@ -255,7 +299,13 @@ exports.createNotification = async (req, res, next) => {
       return sendError(res, req, "title is required", 400, "VALIDATION_ERROR");
     }
     if (!message || typeof message !== "string" || !message.trim()) {
-      return sendError(res, req, "message is required", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "message is required",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const notification = await notificationRepository.create({
@@ -278,7 +328,13 @@ exports.createNotification = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, notification, "Notification created successfully", 201);
+    return sendSuccess(
+      res,
+      req,
+      notification,
+      "Notification created successfully",
+      201,
+    );
   } catch (error) {
     logger.error("Create notification error:", { error: error.message });
     next(error);
@@ -296,15 +352,33 @@ exports.broadcastNotification = async (req, res, next) => {
       req.body;
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
-      return sendError(res, req, "Please provide an array of user IDs", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Please provide an array of user IDs",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     if (userIds.length > 1000) {
-      return sendError(res, req, "Cannot broadcast to more than 1000 recipients per request", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Cannot broadcast to more than 1000 recipients per request",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     if (!title || !message) {
-      return sendError(res, req, "title and message are required", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "title and message are required",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const hospitalId = req.hospitalId || req.user?.hospitalId;
@@ -335,11 +409,10 @@ exports.broadcastNotification = async (req, res, next) => {
       req,
       { count: result.length },
       `Notification sent to ${result.length} users`,
-      201
+      201,
     );
   } catch (error) {
     logger.error("Broadcast notification error:", { error: error.message });
     next(error);
   }
 };
-

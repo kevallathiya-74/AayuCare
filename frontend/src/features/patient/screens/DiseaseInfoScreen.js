@@ -293,7 +293,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
     const keyword = searchQuery.trim().toLowerCase();
     if (!keyword) return CATEGORIES;
     return CATEGORIES.filter((item) =>
-      item.name.toLowerCase().includes(keyword),
+      item.name.toLowerCase().includes(keyword)
     );
   }, [searchQuery]);
 
@@ -306,7 +306,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
     async (url) => {
       if (!isConnected) {
         showError(
-          "No internet connection. Reconnect to open external resources.",
+          "No internet connection. Reconnect to open external resources."
         );
         return;
       }
@@ -323,7 +323,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
         showError("Unable to open this resource right now.");
       }
     },
-    [isConnected],
+    [isConnected]
   );
 
   const handleOpenCategory = useCallback(async (category) => {
@@ -411,7 +411,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
           {
             paddingBottom: Math.max(
               insets.bottom + theme.spacing.md,
-              theme.spacing.xl,
+              theme.spacing.xl
             ),
           },
         ]}
@@ -466,7 +466,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                           {
                             backgroundColor: theme.withOpacity(
                               category.color,
-                              0.08,
+                              0.08
                             ),
                           },
                         ]}

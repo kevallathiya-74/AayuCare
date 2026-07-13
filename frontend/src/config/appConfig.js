@@ -61,7 +61,7 @@ const isDevEnv = runtimeNodeEnv !== "production";
  */
 const getApiBaseUrl = () => {
   const explicitUrl = normalizeUrl(
-    getEnvVar("EXPO_PUBLIC_API_BASE_URL") || getEnvVar("API_BASE_URL"),
+    getEnvVar("EXPO_PUBLIC_API_BASE_URL") || getEnvVar("API_BASE_URL")
   );
   if (explicitUrl) {
     if (__DEV__) {
@@ -74,7 +74,7 @@ const getApiBaseUrl = () => {
     const prodUrl = normalizeUrl(
       getEnvVar("EXPO_PUBLIC_API_BASE_URL_PROD") ||
         getEnvVar("PRODUCTION_API_URL") ||
-        getEnvVar("API_BASE_URL_PROD"),
+        getEnvVar("API_BASE_URL_PROD")
     );
 
     if (prodUrl) {
@@ -85,7 +85,7 @@ const getApiBaseUrl = () => {
   // No URL configured
   console.error(
     "[APP_CONFIG] FATAL: No API base URL configured. " +
-      "Please set EXPO_PUBLIC_API_BASE_URL in your frontend/.env file.",
+      "Please set EXPO_PUBLIC_API_BASE_URL in your frontend/.env file."
   );
   return "";
 };

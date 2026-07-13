@@ -34,8 +34,8 @@ const AdminUserRow = React.memo(
             {user.specialization
               ? user.specialization
               : user.bloodGroup
-                ? `Blood Group: ${user.bloodGroup}`
-                : user.email || "Patient"}
+              ? `Blood Group: ${user.bloodGroup}`
+              : user.email || "Patient"}
           </Text>
         </View>
         {renderRight ? (
@@ -45,7 +45,7 @@ const AdminUserRow = React.memo(
         )}
       </TouchableOpacity>
     </>
-  ),
+  )
 );
 
 const AdminUsersList = ({

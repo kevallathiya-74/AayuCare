@@ -3,14 +3,20 @@ const doctorController = require("./doctor.controller");
 const { protect, authorize, optionalAuth } = require("../../middleware/auth");
 const { attachHospitalId } = require("../../middleware/hospitalMiddleware");
 const { validateBody, validateParams } = require("../../middleware/validation");
-const { validateUpdateAppointmentStatus } = require("../../validators/appointmentValidator");
+const {
+  validateUpdateAppointmentStatus,
+} = require("../../validators/appointmentValidator");
 const {
   updateDoctorProfileSchema,
   walkInPatientSchema,
   scheduleUpdateSchema,
   scheduleParamsSchema,
 } = require("../../validators/schemas");
-const { cacheDoctorList, cacheDoctorAvailability, cacheDashboard } = require("../../middleware/cache");
+const {
+  cacheDoctorList,
+  cacheDoctorAvailability,
+  cacheDashboard,
+} = require("../../middleware/cache");
 const { sendError } = require("../../utils/apiResponse");
 
 const router = express.Router();
@@ -21,7 +27,7 @@ router.get(
   attachHospitalId,
   authorize("doctor"),
   cacheDashboard,
-  doctorController.getDoctorDashboard
+  doctorController.getDoctorDashboard,
 );
 
 router.get(
@@ -29,7 +35,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor"),
-  doctorController.getTodaysAppointments
+  doctorController.getTodaysAppointments,
 );
 
 router.get(
@@ -37,7 +43,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor"),
-  doctorController.getUpcomingAppointments
+  doctorController.getUpcomingAppointments,
 );
 
 router.get(
@@ -45,7 +51,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor"),
-  doctorController.searchPatients
+  doctorController.searchPatients,
 );
 
 router.get(
@@ -53,7 +59,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor", "admin"),
-  doctorController.getPatientDetails
+  doctorController.getPatientDetails,
 );
 
 router.patch(
@@ -62,7 +68,7 @@ router.patch(
   attachHospitalId,
   authorize("doctor"),
   validateUpdateAppointmentStatus,
-  doctorController.updateAppointmentStatus
+  doctorController.updateAppointmentStatus,
 );
 
 router.get(
@@ -70,7 +76,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor"),
-  doctorController.getDoctorProfileStats
+  doctorController.getDoctorProfileStats,
 );
 
 router.get(
@@ -86,14 +92,14 @@ router.get(
           req,
           "hospitalId query parameter is required",
           400,
-          "VALIDATION_ERROR"
+          "VALIDATION_ERROR",
         );
       }
     }
     next();
   },
   cacheDoctorList,
-  doctorController.getDoctors
+  doctorController.getDoctors,
 );
 
 router.get(
@@ -101,7 +107,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor"),
-  doctorController.getConsultationHistory
+  doctorController.getConsultationHistory,
 );
 
 router.get(
@@ -110,7 +116,7 @@ router.get(
   attachHospitalId,
   authorize("doctor"),
   cacheDoctorAvailability,
-  doctorController.getSchedule
+  doctorController.getSchedule,
 );
 
 router.get("/:id", optionalAuth, doctorController.getDoctor);
@@ -121,7 +127,7 @@ router.post(
   attachHospitalId,
   authorize("doctor"),
   validateBody(walkInPatientSchema),
-  doctorController.registerWalkInPatient
+  doctorController.registerWalkInPatient,
 );
 
 router.put(
@@ -130,7 +136,7 @@ router.put(
   attachHospitalId,
   authorize("doctor"),
   validateBody(updateDoctorProfileSchema),
-  doctorController.updateProfile
+  doctorController.updateProfile,
 );
 
 router.put(
@@ -140,7 +146,7 @@ router.put(
   authorize("doctor"),
   validateParams(scheduleParamsSchema),
   validateBody(scheduleUpdateSchema),
-  doctorController.updateSchedule
+  doctorController.updateSchedule,
 );
 
 router.patch(
@@ -149,7 +155,7 @@ router.patch(
   attachHospitalId,
   authorize("doctor"),
   validateParams(scheduleParamsSchema),
-  doctorController.toggleDayAvailability
+  doctorController.toggleDayAvailability,
 );
 
 router.get(
@@ -157,7 +163,7 @@ router.get(
   protect,
   attachHospitalId,
   authorize("doctor", "admin"),
-  doctorController.getDoctorStats
+  doctorController.getDoctorStats,
 );
 
 module.exports = router;

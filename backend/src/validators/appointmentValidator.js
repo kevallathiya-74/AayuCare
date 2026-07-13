@@ -19,7 +19,8 @@ const validate = (req, res, next) => {
 };
 
 // UUID regex (PostgreSQL format)
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Short user/resource ID (e.g., PAT5, DOC1, APT-1234-1, HOSP1)
 const SHORT_ID_REGEX = /^[A-Za-z0-9_-]{1,50}$/;
 
@@ -51,7 +52,9 @@ const isValidDate = (value) => {
 // Custom validator for time format (HH:MM, 24-hour internally)
 const isValidTime = (value) => {
   if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
-    throw new Error("Appointment time must be in HH:MM format (e.g., 09:00, 14:30)");
+    throw new Error(
+      "Appointment time must be in HH:MM format (e.g., 09:00, 14:30)",
+    );
   }
   return true;
 };
@@ -180,13 +183,17 @@ exports.validateGetAppointments = [
         "no_show",
         "all",
       ];
-      
+
       // Split by comma and check each status
-      const statuses = value.split(',').map(s => s.trim());
-      const allValid = statuses.every(status => validStatuses.includes(status));
-      
+      const statuses = value.split(",").map((s) => s.trim());
+      const allValid = statuses.every((status) =>
+        validStatuses.includes(status),
+      );
+
       if (!allValid) {
-        throw new Error("Invalid status filter. Allowed values: " + validStatuses.join(", "));
+        throw new Error(
+          "Invalid status filter. Allowed values: " + validStatuses.join(", "),
+        );
       }
       return true;
     })

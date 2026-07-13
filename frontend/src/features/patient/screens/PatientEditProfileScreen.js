@@ -99,7 +99,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
       if (isNaN(dob.getTime()) || dob >= new Date()) {
         Alert.alert(
           "Validation Error",
-          "Enter a valid date of birth (YYYY-MM-DD)",
+          "Enter a valid date of birth (YYYY-MM-DD)"
         );
         return false;
       }
@@ -166,7 +166,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
       const newUserState = { ...user, ...updateDataPayload };
       await appStorage.setItem(
         STORAGE_KEYS.USER_DATA,
-        JSON.stringify(newUserState),
+        JSON.stringify(newUserState)
       );
 
       Alert.alert("Success", "Profile updated successfully", [

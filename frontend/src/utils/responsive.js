@@ -143,9 +143,7 @@ export const getScreenPadding = () => {
 // Status bar height
 export const getStatusBarHeight = () => {
   if (Platform.OS === "ios") {
-
     return isIOS ? 44 : 20; // iPhone X+ vs older models
-
   }
   return 24; // Android
 };

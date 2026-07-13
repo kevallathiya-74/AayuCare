@@ -89,7 +89,7 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
       return {
         ...page,
         appointments: records.filter(
-          (appointment) => appointment?.id !== appointmentId,
+          (appointment) => appointment?.id !== appointmentId
         ),
       };
     }),
@@ -152,7 +152,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
         rescheduleId: appointment.id,
       });
     },
-    [navigation],
+    [navigation]
   );
 
   const cancelAppointmentMutation = useMutation({
@@ -171,8 +171,8 @@ const MyAppointmentsScreen = ({ navigation }) => {
             queryKey,
             removeAppointmentFromInfinitePages(
               currentData,
-              cancelledAppointmentId,
-            ),
+              cancelledAppointmentId
+            )
           );
         });
       }
@@ -214,10 +214,10 @@ const MyAppointmentsScreen = ({ navigation }) => {
               });
             },
           },
-        ],
+        ]
       );
     },
-    [cancelAppointmentMutation],
+    [cancelAppointmentMutation]
   );
 
   const renderAppointment = ({ item }) => (

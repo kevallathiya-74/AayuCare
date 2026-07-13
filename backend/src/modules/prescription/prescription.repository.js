@@ -22,24 +22,23 @@ const create = async (data) => {
       JSON.stringify(data.medications || []),
       data.instructions,
       data.followUpDate || null,
-      data.pharmacyStatus || 'pending'
-    ]
+      data.pharmacyStatus || "pending",
+    ],
   );
   return rows[0];
 };
 
 const findById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM prescriptions WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM prescriptions WHERE id = $1`, [
+    id,
+  ]);
   return rows[0] || null;
 };
 
 const findByPrescriptionId = async (prescriptionId) => {
   const { rows } = await query(
     `SELECT * FROM prescriptions WHERE prescription_id = $1`,
-    [prescriptionId]
+    [prescriptionId],
   );
   return rows[0] || null;
 };
@@ -48,7 +47,7 @@ const findByPatientId = async (patientId, options = {}) => {
   const { limit = 50, offset = 0 } = options;
   const { rows } = await query(
     `SELECT * FROM prescriptions WHERE patient_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
-    [patientId, limit, offset]
+    [patientId, limit, offset],
   );
   return rows;
 };
@@ -57,7 +56,7 @@ const findByDoctorId = async (doctorId, options = {}) => {
   const { limit = 50, offset = 0 } = options;
   const { rows } = await query(
     `SELECT * FROM prescriptions WHERE doctor_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
-    [doctorId, limit, offset]
+    [doctorId, limit, offset],
   );
   return rows;
 };
@@ -156,12 +155,21 @@ const update = async (id, updates) => {
   const params = [id];
   let paramIndex = 2;
 
-  const allowed = ['diagnosis', 'chiefComplaint', 'medications', 'instructions', 'followUpDate', 'isActive'];
+  const allowed = [
+    "diagnosis",
+    "chiefComplaint",
+    "medications",
+    "instructions",
+    "followUpDate",
+    "isActive",
+  ];
   for (const key of allowed) {
     if (updates[key] !== undefined) {
       const dbCol = key.replace(/([A-Z])/g, "_$1").toLowerCase();
       fields.push(`${dbCol} = $${paramIndex}`);
-      params.push(key === 'medications' ? JSON.stringify(updates[key]) : updates[key]);
+      params.push(
+        key === "medications" ? JSON.stringify(updates[key]) : updates[key],
+      );
       paramIndex++;
     }
   }
@@ -169,8 +177,8 @@ const update = async (id, updates) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE prescriptions SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,
-    params
+    `UPDATE prescriptions SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    params,
   );
   return rows[0] || null;
 };
@@ -178,7 +186,7 @@ const update = async (id, updates) => {
 const updatePharmacyStatus = async (id, status) => {
   const { rows } = await query(
     `UPDATE prescriptions SET pharmacy_status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
-    [id, status]
+    [id, status],
   );
   return rows[0] || null;
 };
@@ -200,10 +208,9 @@ const getPharmacyStatusCounts = async (filters = {}) => {
 };
 
 const remove = async (id) => {
-  const { rowCount } = await query(
-    `DELETE FROM prescriptions WHERE id = $1`,
-    [id]
-  );
+  const { rowCount } = await query(`DELETE FROM prescriptions WHERE id = $1`, [
+    id,
+  ]);
   return rowCount > 0;
 };
 

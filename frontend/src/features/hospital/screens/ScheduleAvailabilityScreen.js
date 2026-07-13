@@ -137,7 +137,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
       if (notes.length > 500) {
         Alert.alert(
           "Validation Error",
-          "Notes must be 500 characters or fewer",
+          "Notes must be 500 characters or fewer"
         );
         setSaving(false);
         return;
@@ -156,7 +156,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         if (!slot.startTime || !slot.endTime) {
           Alert.alert(
             "Validation Error",
-            "All time slots must have start and end times",
+            "All time slots must have start and end times"
           );
           setSaving(false);
           return;
@@ -164,7 +164,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         if (!HHMM.test(slot.startTime) || !HHMM.test(slot.endTime)) {
           Alert.alert(
             "Validation Error",
-            "Time slots must be in HH:MM format (e.g. 09:00)",
+            "Time slots must be in HH:MM format (e.g. 09:00)"
           );
           setSaving(false);
           return;

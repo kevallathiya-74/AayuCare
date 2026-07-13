@@ -60,7 +60,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
     staleTime: 2 * 60 * 1000,
     queryFn: async ({ pageParam = 0 }) => {
       const response = await doctorService.searchMyPatients(
-        debouncedSearch || "",
+        debouncedSearch || ""
       );
 
       let list = [];
@@ -89,7 +89,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.items?.length || 0),
-        0,
+        0
       );
       return loaded < (lastPage?.total || 0) ? loaded : undefined;
     },
@@ -102,7 +102,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch]),
+    }, [refetch])
   );
 
   // Debounced search
@@ -133,7 +133,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
       }
       navigation.navigate(Routes.DOCTOR.CREATE_PRESCRIPTION, { patientId });
     },
-    [navigation],
+    [navigation]
   );
 
   const handleViewHistory = useCallback(
@@ -144,7 +144,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
         patientName: patient.name,
       });
     },
-    [navigation],
+    [navigation]
   );
 
   const renderPatientCard = ({ item }) => {
@@ -249,7 +249,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
           renderItem={renderPatientCard}
           keyExtractor={(item, index) =>
             String(
-              item.id || item.userId || item.patientId || `patient-${index}`,
+              item.id || item.userId || item.patientId || `patient-${index}`
             )
           }
           onEndReached={handleLoadMore}

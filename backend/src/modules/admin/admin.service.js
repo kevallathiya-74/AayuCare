@@ -55,7 +55,11 @@ const getDashboardStats = async (ctx) => {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const previousMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const previousMonthStart = new Date(
+    today.getFullYear(),
+    today.getMonth() - 1,
+    1,
+  );
 
   const scopedHospitalId = getScopedHospitalId(ctx);
   const baseQuery = scopedHospitalId ? { hospitalId: scopedHospitalId } : {};
@@ -64,7 +68,10 @@ const getDashboardStats = async (ctx) => {
     try {
       return await prescriptionRepository.count(filters);
     } catch (error) {
-      logger.warn(`Prescription count fallback triggered for ${source}:`, error.message);
+      logger.warn(
+        `Prescription count fallback triggered for ${source}:`,
+        error.message,
+      );
       return 0;
     }
   };
@@ -78,13 +85,39 @@ const getDashboardStats = async (ctx) => {
     prescriptionsYesterday,
     revenueStats,
   ] = await Promise.all([
-    adminRepository.getAppointmentStats({ today, tomorrow, yesterday, currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
-    adminRepository.getDoctorStats({ currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
-    adminRepository.getPatientStats({ currentMonthStart, previousMonthStart, hospitalId: scopedHospitalId }),
+    adminRepository.getAppointmentStats({
+      today,
+      tomorrow,
+      yesterday,
+      currentMonthStart,
+      previousMonthStart,
+      hospitalId: scopedHospitalId,
+    }),
+    adminRepository.getDoctorStats({
+      currentMonthStart,
+      previousMonthStart,
+      hospitalId: scopedHospitalId,
+    }),
+    adminRepository.getPatientStats({
+      currentMonthStart,
+      previousMonthStart,
+      hospitalId: scopedHospitalId,
+    }),
     safePrescriptionCount(baseQuery, "prescriptions_total"),
-    safePrescriptionCount({ ...baseQuery, startDate: today, endDate: tomorrow }, "prescriptions_today"),
-    safePrescriptionCount({ ...baseQuery, startDate: yesterday, endDate: today }, "prescriptions_yesterday"),
-    adminRepository.getRevenueStats({ today, tomorrow, yesterday, hospitalId: scopedHospitalId }),
+    safePrescriptionCount(
+      { ...baseQuery, startDate: today, endDate: tomorrow },
+      "prescriptions_today",
+    ),
+    safePrescriptionCount(
+      { ...baseQuery, startDate: yesterday, endDate: today },
+      "prescriptions_yesterday",
+    ),
+    adminRepository.getRevenueStats({
+      today,
+      tomorrow,
+      yesterday,
+      hospitalId: scopedHospitalId,
+    }),
   ]);
 
   const totalAppointments = parseInt(appointmentStats.total, 10);
@@ -99,10 +132,16 @@ const getDashboardStats = async (ctx) => {
   const prescriptionsTodayCount = parseInt(prescriptionsToday, 10);
   const prescriptionsYesterdayCount = parseInt(prescriptionsYesterday, 10);
   const appointmentsThisMonth = parseInt(appointmentStats.this_month, 10);
-  const appointmentsPreviousMonth = parseInt(appointmentStats.previous_month, 10);
+  const appointmentsPreviousMonth = parseInt(
+    appointmentStats.previous_month,
+    10,
+  );
   const doctorsNewThisMonth = parseInt(doctorStats.new_this_month, 10);
   const doctorsNewPreviousMonth = parseInt(doctorStats.new_previous_month, 10);
-  const patientsNewPreviousMonth = parseInt(patientStats.new_previous_month, 10);
+  const patientsNewPreviousMonth = parseInt(
+    patientStats.new_previous_month,
+    10,
+  );
   const totalRevenue = parseFloat(revenueStats.total || 0);
   const revenueToday = parseFloat(revenueStats.today || 0);
   const revenueYesterday = parseFloat(revenueStats.yesterday || 0);
@@ -130,7 +169,10 @@ const getDashboardStats = async (ctx) => {
     prescriptions: {
       total: totalPrescriptionsCount,
       today: prescriptionsTodayCount,
-      trend: calculateTrend(prescriptionsTodayCount, prescriptionsYesterdayCount),
+      trend: calculateTrend(
+        prescriptionsTodayCount,
+        prescriptionsYesterdayCount,
+      ),
     },
     revenue: {
       total: totalRevenue,
@@ -160,11 +202,17 @@ const getRecentActivities = async (limit, ctx) => {
   const scopedHospitalId = getScopedHospitalId(ctx);
 
   const [recentAppointmentRows, recentPrescriptions] = await Promise.all([
-    adminRepository.getRecentAppointments({ limit, hospitalId: scopedHospitalId }),
-    prescriptionRepository.findWithFilters({ hospitalId: scopedHospitalId }, { limit, offset: 0 }),
+    adminRepository.getRecentAppointments({
+      limit,
+      hospitalId: scopedHospitalId,
+    }),
+    prescriptionRepository.findWithFilters(
+      { hospitalId: scopedHospitalId },
+      { limit, offset: 0 },
+    ),
   ]);
 
-  const recentAppointments = recentAppointmentRows.map(row => ({
+  const recentAppointments = recentAppointmentRows.map((row) => ({
     id: row.id,
     createdAt: row.created_at,
     patientId: { name: row.patient_name, userId: row.patient_user_id },
@@ -172,14 +220,14 @@ const getRecentActivities = async (limit, ctx) => {
   }));
 
   const activities = [
-    ...recentAppointments.map(apt => ({
+    ...recentAppointments.map((apt) => ({
       id: apt.id,
       text: `${apt.doctorId?.name || "Doctor"} scheduled appointment with ${apt.patientId?.name || "patient"}`,
       icon: "calendar",
       time: apt.createdAt,
       type: "appointment",
     })),
-    ...recentPrescriptions.map(presc => ({
+    ...recentPrescriptions.map((presc) => ({
       id: presc.id,
       text: `Prescription added for patient`,
       icon: "document-text",
@@ -189,12 +237,19 @@ const getRecentActivities = async (limit, ctx) => {
   ]
     .sort((a, b) => new Date(b.time) - new Date(a.time))
     .slice(0, limit)
-    .map(activity => ({ ...activity, time: getTimeAgo(activity.time) }));
+    .map((activity) => ({ ...activity, time: getTimeAgo(activity.time) }));
 
   return activities;
 };
 
-const getUsers = async ({ role, search, includeInactive, limit, page, ctx }) => {
+const getUsers = async ({
+  role,
+  search,
+  includeInactive,
+  limit,
+  page,
+  ctx,
+}) => {
   const scopedHospitalId = getScopedHospitalId(ctx);
   const skip = (page - 1) * limit;
 
@@ -211,7 +266,7 @@ const getUsers = async ({ role, search, includeInactive, limit, page, ctx }) => 
     skip,
   });
 
-  const users = rows.map(row => ({
+  const users = rows.map((row) => ({
     id: row.id,
     userId: row.user_id,
     name: row.name,
@@ -229,7 +284,9 @@ const getUsers = async ({ role, search, includeInactive, limit, page, ctx }) => 
     qualification: row.qualification,
     experience: row.experience,
     department: row.department,
-    consultationFee: row.consultation_fee ? parseFloat(row.consultation_fee) : null,
+    consultationFee: row.consultation_fee
+      ? parseFloat(row.consultation_fee)
+      : null,
     bio: row.bio,
     dateOfBirth: row.date_of_birth,
     gender: row.gender,
@@ -243,7 +300,12 @@ const getUsers = async ({ role, search, includeInactive, limit, page, ctx }) => 
   return { users, total, page, limit };
 };
 
-const updateUserStatus = async ({ userId, isActive, adminUser, hospitalId }) => {
+const updateUserStatus = async ({
+  userId,
+  isActive,
+  adminUser,
+  hospitalId,
+}) => {
   if (typeof isActive !== "boolean") {
     throw new AppError("isActive must be a boolean value", 400);
   }
@@ -251,15 +313,27 @@ const updateUserStatus = async ({ userId, isActive, adminUser, hospitalId }) => 
   const user = await userRepository.findByUserId(userId);
   if (!user) throw new AppError("User not found", 404);
 
-  if (hospitalId && adminUser.role !== "super_admin" && user.hospital_id !== hospitalId) {
-    throw new AppError("Access denied — user belongs to a different hospital", 403);
+  if (
+    hospitalId &&
+    adminUser.role !== "super_admin" &&
+    user.hospital_id !== hospitalId
+  ) {
+    throw new AppError(
+      "Access denied — user belongs to a different hospital",
+      403,
+    );
   }
 
   const updatedUser = await userRepository.update(user.id, { isActive });
 
   await invalidateCaches(
-    CACHE_KEYS.USER, CACHE_KEYS.DOCTORS, CACHE_KEYS.DOCTOR,
-    CACHE_KEYS.PATIENT, CACHE_KEYS.PATIENTS, CACHE_KEYS.ADMIN_USERS, CACHE_KEYS.DASHBOARD
+    CACHE_KEYS.USER,
+    CACHE_KEYS.DOCTORS,
+    CACHE_KEYS.DOCTOR,
+    CACHE_KEYS.PATIENT,
+    CACHE_KEYS.PATIENTS,
+    CACHE_KEYS.ADMIN_USERS,
+    CACHE_KEYS.DASHBOARD,
   );
 
   await writeAuditLog({
@@ -277,20 +351,33 @@ const updateUserStatus = async ({ userId, isActive, adminUser, hospitalId }) => 
 const updateUserRole = async ({ userId, role, adminUser, hospitalId }) => {
   const validRoles = ["patient", "doctor", "admin"];
   if (!validRoles.includes(role)) {
-    throw new AppError(`Invalid role. Must be one of: ${validRoles.join(", ")}`, 400);
+    throw new AppError(
+      `Invalid role. Must be one of: ${validRoles.join(", ")}`,
+      400,
+    );
   }
 
   const user = await userRepository.findByUserId(userId);
   if (!user) throw new AppError("User not found", 404);
 
-  if (hospitalId && adminUser.role !== "super_admin" && user.hospital_id !== hospitalId) {
-    throw new AppError("Access denied — user belongs to a different hospital", 403);
+  if (
+    hospitalId &&
+    adminUser.role !== "super_admin" &&
+    user.hospital_id !== hospitalId
+  ) {
+    throw new AppError(
+      "Access denied — user belongs to a different hospital",
+      403,
+    );
   }
 
   if (user.role === "admin" && role !== "admin") {
     const adminCount = await adminRepository.countActiveAdmins();
     if (adminCount <= 1) {
-      throw new AppError("Cannot demote the last admin. Promote another user first.", 400);
+      throw new AppError(
+        "Cannot demote the last admin. Promote another user first.",
+        400,
+      );
     }
   }
 
@@ -298,7 +385,11 @@ const updateUserRole = async ({ userId, role, adminUser, hospitalId }) => {
   const updatedUser = await userRepository.findById(user.id);
 
   await invalidateCaches(
-    CACHE_KEYS.USER, CACHE_KEYS.DOCTORS, CACHE_KEYS.DOCTOR, CACHE_KEYS.PATIENT, CACHE_KEYS.DASHBOARD
+    CACHE_KEYS.USER,
+    CACHE_KEYS.DOCTORS,
+    CACHE_KEYS.DOCTOR,
+    CACHE_KEYS.PATIENT,
+    CACHE_KEYS.DASHBOARD,
   );
 
   await writeAuditLog({
@@ -324,10 +415,17 @@ const bulkUpdateUsers = async ({ operations, adminUser, hospitalId }) => {
   const isSuperAdmin = adminUser.role === "super_admin";
   const scopedHospitalId = hospitalId && !isSuperAdmin ? hospitalId : null;
 
-  const results = await adminRepository.bulkUpdateUsers(operations, scopedHospitalId, isSuperAdmin);
+  const results = await adminRepository.bulkUpdateUsers(
+    operations,
+    scopedHospitalId,
+    isSuperAdmin,
+  );
 
   await invalidateCaches(
-    CACHE_KEYS.USER, CACHE_KEYS.DOCTORS, CACHE_KEYS.PATIENT, CACHE_KEYS.DASHBOARD
+    CACHE_KEYS.USER,
+    CACHE_KEYS.DOCTORS,
+    CACHE_KEYS.PATIENT,
+    CACHE_KEYS.DASHBOARD,
   );
 
   return results;
@@ -344,7 +442,11 @@ const getSecuritySettings = async (userId, ctx) => {
   const scopedHospitalId = getScopedHospitalId(ctx);
 
   const [{ stats, totalActiveSessions }, myActiveSessions] = await Promise.all([
-    adminRepository.getSecurityStats({ sevenDaysAgo, today, hospitalId: scopedHospitalId }),
+    adminRepository.getSecurityStats({
+      sevenDaysAgo,
+      today,
+      hospitalId: scopedHospitalId,
+    }),
     adminRepository.getUserActiveSessions(user.id),
   ]);
 
@@ -379,7 +481,10 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
     throw new AppError("New password must be at least 8 characters", 400);
   }
   if (currentPassword === newPassword) {
-    throw new AppError("New password must be different from current password", 400);
+    throw new AppError(
+      "New password must be different from current password",
+      400,
+    );
   }
 
   const user = await userRepository.findByUserId(userId);
@@ -393,7 +498,9 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
 
   const newPasswordHash = await bcrypt.hash(newPassword, 10);
   await adminRepository.updatePasswordHash(user.id, newPasswordHash);
-  const loggedOutSessions = await adminRepository.deleteAllUserSessions(user.id);
+  const loggedOutSessions = await adminRepository.deleteAllUserSessions(
+    user.id,
+  );
 
   await invalidateCaches(CACHE_KEYS.SESSION);
 
@@ -404,7 +511,9 @@ const logoutAllDevices = async (userId) => {
   const user = await userRepository.findByUserId(userId);
   if (!user) throw new AppError("User not found", 404);
 
-  const loggedOutSessions = await adminRepository.deleteAllUserSessions(user.id);
+  const loggedOutSessions = await adminRepository.deleteAllUserSessions(
+    user.id,
+  );
   await adminRepository.touchUser(user.id);
 
   await invalidateCaches(CACHE_KEYS.SESSION);
@@ -419,13 +528,14 @@ const getSystemMetrics = async (ctx) => {
   const weekAgo = new Date(today);
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const [userGrowth, appointmentTrends, activeUsers, totalUsers, dataSize] = await Promise.all([
-    adminRepository.getUserGrowth(scopedHospitalId),
-    adminRepository.getAppointmentTrends(scopedHospitalId),
-    adminRepository.getActiveUsersCount(weekAgo, scopedHospitalId),
-    adminRepository.getTotalUsersCount(scopedHospitalId),
-    adminRepository.getDatabaseSize(),
-  ]);
+  const [userGrowth, appointmentTrends, activeUsers, totalUsers, dataSize] =
+    await Promise.all([
+      adminRepository.getUserGrowth(scopedHospitalId),
+      adminRepository.getAppointmentTrends(scopedHospitalId),
+      adminRepository.getActiveUsersCount(weekAgo, scopedHospitalId),
+      adminRepository.getTotalUsersCount(scopedHospitalId),
+      adminRepository.getDatabaseSize(),
+    ]);
 
   return {
     userGrowth,
@@ -459,12 +569,21 @@ const getMedicalRecordsOverview = async ({ patientId, limit, skip, ctx }) => {
   ]);
 
   // Aggregate record type counts
-  const typeStats = await adminRepository.getMedicalRecordTypeStats(scopedHospitalId, patientId);
+  const typeStats = await adminRepository.getMedicalRecordTypeStats(
+    scopedHospitalId,
+    patientId,
+  );
 
   return { records, stats: typeStats, total };
 };
 
-const getNotificationsManagement = async ({ type, status, limit, skip, ctx }) => {
+const getNotificationsManagement = async ({
+  type,
+  status,
+  limit,
+  skip,
+  ctx,
+}) => {
   const scopedHospitalId = getScopedHospitalId(ctx);
   const filters = {};
 
@@ -479,12 +598,22 @@ const getNotificationsManagement = async ({ type, status, limit, skip, ctx }) =>
   ]);
 
   // Get type distribution in SQL
-  const typeStats = await adminRepository.getNotificationTypeStats(scopedHospitalId, type);
+  const typeStats = await adminRepository.getNotificationTypeStats(
+    scopedHospitalId,
+    type,
+  );
 
   return { notifications, total, unreadCount, typeDistribution: typeStats };
 };
 
-const getAuditLogs = async ({ userId: targetUserId, action, entityType, limit, page, ctx }) => {
+const getAuditLogs = async ({
+  userId: targetUserId,
+  action,
+  entityType,
+  limit,
+  page,
+  ctx,
+}) => {
   const scopedHospitalId = getScopedHospitalId(ctx);
   const offset = (page - 1) * limit;
 
@@ -510,7 +639,7 @@ const getSystemHealth = async () => {
     logger.warn("Postgres health check failed:", e.message);
   }
 
-  const issues = Object.values(services).filter(s => !s.connected).length;
+  const issues = Object.values(services).filter((s) => !s.connected).length;
   return {
     success: true,
     data: {
@@ -527,19 +656,45 @@ const getSystemHealth = async () => {
 
 const createUser = async (req) => {
   const {
-    name, email, phone, password, role,
-    specialization, qualification, experience, department, consultationFee, licenseNumber, license_number, bio, availability,
-    dateOfBirth, gender, bloodGroup, address, emergencyContactName, emergencyContactPhone, emergencyContactRelation, allergies, chronicConditions
+    name,
+    email,
+    phone,
+    password,
+    role,
+    specialization,
+    qualification,
+    experience,
+    department,
+    consultationFee,
+    licenseNumber,
+    license_number,
+    bio,
+    availability,
+    dateOfBirth,
+    gender,
+    bloodGroup,
+    address,
+    emergencyContactName,
+    emergencyContactPhone,
+    emergencyContactRelation,
+    allergies,
+    chronicConditions,
   } = req.body;
 
   if (!name || !email || !phone || !password || !role) {
-    throw new AppError("Name, email, phone, password, and role are required", 400);
+    throw new AppError(
+      "Name, email, phone, password, and role are required",
+      400,
+    );
   }
   if (!["doctor", "patient"].includes(role)) {
     throw new AppError("Role must be either doctor or patient", 400);
   }
   if (role === "doctor" && (!specialization || !qualification)) {
-    throw new AppError("Specialization and qualification are required for doctors", 400);
+    throw new AppError(
+      "Specialization and qualification are required for doctors",
+      400,
+    );
   }
 
   if (await userRepository.emailExists(email.toLowerCase())) {
@@ -565,24 +720,75 @@ const createUser = async (req) => {
   const user = await userRepository.create(userData);
 
   if (role === "doctor") {
-    const normalizedAvailability = typeof availability === "string" ? (() => { try { return JSON.parse(availability); } catch { return {}; } })() : availability || {};
+    const normalizedAvailability =
+      typeof availability === "string"
+        ? (() => {
+            try {
+              return JSON.parse(availability);
+            } catch {
+              return {};
+            }
+          })()
+        : availability || {};
     const normalizedLicenseNumber = licenseNumber || license_number || null;
-    await adminRepository.createDoctorProfile(user.id, specialization, qualification, experience || 0, department || specialization, consultationFee ?? 500, normalizedLicenseNumber, bio || null, JSON.stringify(normalizedAvailability));
+    await adminRepository.createDoctorProfile(
+      user.id,
+      specialization,
+      qualification,
+      experience || 0,
+      department || specialization,
+      consultationFee ?? 500,
+      normalizedLicenseNumber,
+      bio || null,
+      JSON.stringify(normalizedAvailability),
+    );
   } else if (role === "patient") {
     const patientFields = ["user_id"];
     const patientValues = [user.id];
-    if (dateOfBirth) { patientFields.push("date_of_birth"); patientValues.push(dateOfBirth); }
-    if (gender) { patientFields.push("gender"); patientValues.push(gender); }
-    if (bloodGroup) { patientFields.push("blood_group"); patientValues.push(bloodGroup); }
-    if (address) { patientFields.push("address"); patientValues.push(address); }
-    if (emergencyContactName) { patientFields.push("emergency_contact_name"); patientValues.push(emergencyContactName); }
-    if (emergencyContactPhone) { patientFields.push("emergency_contact_phone"); patientValues.push(emergencyContactPhone); }
-    if (emergencyContactRelation) { patientFields.push("emergency_contact_relation"); patientValues.push(emergencyContactRelation); }
-    if (Array.isArray(allergies) && allergies.length > 0) { patientFields.push("allergies"); patientValues.push(allergies); }
-    if (Array.isArray(chronicConditions) && chronicConditions.length > 0) { patientFields.push("chronic_conditions"); patientValues.push(chronicConditions); }
+    if (dateOfBirth) {
+      patientFields.push("date_of_birth");
+      patientValues.push(dateOfBirth);
+    }
+    if (gender) {
+      patientFields.push("gender");
+      patientValues.push(gender);
+    }
+    if (bloodGroup) {
+      patientFields.push("blood_group");
+      patientValues.push(bloodGroup);
+    }
+    if (address) {
+      patientFields.push("address");
+      patientValues.push(address);
+    }
+    if (emergencyContactName) {
+      patientFields.push("emergency_contact_name");
+      patientValues.push(emergencyContactName);
+    }
+    if (emergencyContactPhone) {
+      patientFields.push("emergency_contact_phone");
+      patientValues.push(emergencyContactPhone);
+    }
+    if (emergencyContactRelation) {
+      patientFields.push("emergency_contact_relation");
+      patientValues.push(emergencyContactRelation);
+    }
+    if (Array.isArray(allergies) && allergies.length > 0) {
+      patientFields.push("allergies");
+      patientValues.push(allergies);
+    }
+    if (Array.isArray(chronicConditions) && chronicConditions.length > 0) {
+      patientFields.push("chronic_conditions");
+      patientValues.push(chronicConditions);
+    }
 
-    const placeholders = patientValues.map((_, idx) => `$${idx + 1}`).join(", ");
-    await adminRepository.createPatientProfile(`INSERT INTO patients (${patientFields.join(", ")}) VALUES (${placeholders})`, patientValues);
+    const placeholders = patientValues
+      .map((_, idx) => `$${idx + 1}`)
+      .join(", ");
+    await adminRepository.createPatientProfile(
+      `INSERT INTO patients (${patientFields.join(", ")}) VALUES (${placeholders})`,
+      patientValues,
+    );
   }
 
   let userResponse = user;
@@ -594,8 +800,23 @@ const createUser = async (req) => {
     if (pat) userResponse = { ...userResponse, ...pat };
   }
 
-  await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:/api/admin/users*", "v1:cache:dashboard:*");
-  await writeAuditLog({ userId: req.user.id, action: AUDIT_ACTIONS.USER_REGISTER, entityType: "user", entityId: user.id, newValues: { userId: user.userId, role, email: user.email }, req });
+  await invalidateCaches(
+    "v1:cache:user:*",
+    "v1:cache:doctors:*",
+    "v1:cache:doctor:*",
+    "v1:cache:patient:*",
+    "v1:cache:*patients*",
+    "v1:cache:/api/admin/users*",
+    "v1:cache:dashboard:*",
+  );
+  await writeAuditLog({
+    userId: req.user.id,
+    action: AUDIT_ACTIONS.USER_REGISTER,
+    entityType: "user",
+    entityId: user.id,
+    newValues: { userId: user.userId, role, email: user.email },
+    req,
+  });
 
   return { user: userResponse };
 };
@@ -603,18 +824,43 @@ const createUser = async (req) => {
 const updateUserProfile = async (req) => {
   const { userId } = req.params;
   const {
-    name, email, phone, specialization, qualification, experience, department, consultationFee, licenseNumber, license_number, bio, availability,
-    dateOfBirth, gender, bloodGroup, address, emergencyContactName, emergencyContactPhone, emergencyContactRelation, allergies, chronicConditions
+    name,
+    email,
+    phone,
+    specialization,
+    qualification,
+    experience,
+    department,
+    consultationFee,
+    licenseNumber,
+    license_number,
+    bio,
+    availability,
+    dateOfBirth,
+    gender,
+    bloodGroup,
+    address,
+    emergencyContactName,
+    emergencyContactPhone,
+    emergencyContactRelation,
+    allergies,
+    chronicConditions,
   } = req.body;
 
   const user = await userRepository.findByUserId(userId);
   if (!user) throw new AppError("User not found or access denied", 404);
-  if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
+  if (
+    req.hospitalId &&
+    req.user.role !== "super_admin" &&
+    user.hospital_id !== req.hospitalId
+  ) {
     throw new AppError("Access denied", 403);
   }
 
   if (email && email.toLowerCase() !== user.email) {
-    if (await adminRepository.checkDuplicateEmail(email.toLowerCase(), user.id)) {
+    if (
+      await adminRepository.checkDuplicateEmail(email.toLowerCase(), user.id)
+    ) {
       throw new AppError("Email already exists", 400);
     }
   }
@@ -628,7 +874,8 @@ const updateUserProfile = async (req) => {
   if (name) updates.name = name.trim();
   if (email) updates.email = email.toLowerCase().trim();
   if (phone) updates.phone = phone.trim();
-  if (Object.keys(updates).length > 0) await userRepository.update(user.id, updates);
+  if (Object.keys(updates).length > 0)
+    await userRepository.update(user.id, updates);
 
   if (user.role === "doctor") {
     if (!(await adminRepository.checkDoctorExists(user.id))) {
@@ -637,20 +884,48 @@ const updateUserProfile = async (req) => {
     const doctorUpdates = [];
     const doctorValues = [];
     let paramIndex = 1;
-    if (specialization) { doctorUpdates.push(`specialization = $${paramIndex++}`); doctorValues.push(specialization); }
-    if (qualification) { doctorUpdates.push(`qualification = $${paramIndex++}`); doctorValues.push(qualification); }
-    if (experience !== undefined) { doctorUpdates.push(`experience = $${paramIndex++}`); doctorValues.push(experience); }
-    if (department) { doctorUpdates.push(`department = $${paramIndex++}`); doctorValues.push(department); }
-    if (consultationFee !== undefined) { doctorUpdates.push(`consultation_fee = $${paramIndex++}`); doctorValues.push(consultationFee); }
+    if (specialization) {
+      doctorUpdates.push(`specialization = $${paramIndex++}`);
+      doctorValues.push(specialization);
+    }
+    if (qualification) {
+      doctorUpdates.push(`qualification = $${paramIndex++}`);
+      doctorValues.push(qualification);
+    }
+    if (experience !== undefined) {
+      doctorUpdates.push(`experience = $${paramIndex++}`);
+      doctorValues.push(experience);
+    }
+    if (department) {
+      doctorUpdates.push(`department = $${paramIndex++}`);
+      doctorValues.push(department);
+    }
+    if (consultationFee !== undefined) {
+      doctorUpdates.push(`consultation_fee = $${paramIndex++}`);
+      doctorValues.push(consultationFee);
+    }
     const normalizedLicenseNumber = licenseNumber ?? license_number;
-    if (normalizedLicenseNumber !== undefined) { doctorUpdates.push(`license_number = $${paramIndex++}`); doctorValues.push(normalizedLicenseNumber || null); }
-    if (bio !== undefined) { doctorUpdates.push(`bio = $${paramIndex++}`); doctorValues.push(bio || null); }
-    if (availability !== undefined) { doctorUpdates.push(`availability = $${paramIndex++}`); doctorValues.push(JSON.stringify(availability || {})); }
-    
+    if (normalizedLicenseNumber !== undefined) {
+      doctorUpdates.push(`license_number = $${paramIndex++}`);
+      doctorValues.push(normalizedLicenseNumber || null);
+    }
+    if (bio !== undefined) {
+      doctorUpdates.push(`bio = $${paramIndex++}`);
+      doctorValues.push(bio || null);
+    }
+    if (availability !== undefined) {
+      doctorUpdates.push(`availability = $${paramIndex++}`);
+      doctorValues.push(JSON.stringify(availability || {}));
+    }
+
     if (doctorUpdates.length > 0) {
       doctorValues.push(user.id);
-      const res = await adminRepository.updateDoctorProfile(`UPDATE doctors SET ${doctorUpdates.join(", ")}, updated_at = NOW() WHERE user_id = $${paramIndex}`, doctorValues);
-      if (res === 0) throw new AppError("Failed to update doctor profile.", 500);
+      const res = await adminRepository.updateDoctorProfile(
+        `UPDATE doctors SET ${doctorUpdates.join(", ")}, updated_at = NOW() WHERE user_id = $${paramIndex}`,
+        doctorValues,
+      );
+      if (res === 0)
+        throw new AppError("Failed to update doctor profile.", 500);
     }
   } else if (user.role === "patient") {
     if (!(await adminRepository.checkPatientExists(user.id))) {
@@ -659,20 +934,51 @@ const updateUserProfile = async (req) => {
     const patientUpdates = [];
     const patientValues = [];
     let paramIndex = 1;
-    if (dateOfBirth) { patientUpdates.push(`date_of_birth = $${paramIndex++}`); patientValues.push(dateOfBirth); }
-    if (gender) { patientUpdates.push(`gender = $${paramIndex++}`); patientValues.push(gender); }
-    if (bloodGroup) { patientUpdates.push(`blood_group = $${paramIndex++}`); patientValues.push(bloodGroup); }
-    if (address) { patientUpdates.push(`address = $${paramIndex++}`); patientValues.push(address); }
-    if (emergencyContactName) { patientUpdates.push(`emergency_contact_name = $${paramIndex++}`); patientValues.push(emergencyContactName); }
-    if (emergencyContactPhone) { patientUpdates.push(`emergency_contact_phone = $${paramIndex++}`); patientValues.push(emergencyContactPhone); }
-    if (emergencyContactRelation) { patientUpdates.push(`emergency_contact_relation = $${paramIndex++}`); patientValues.push(emergencyContactRelation); }
-    if (Array.isArray(allergies)) { patientUpdates.push(`allergies = $${paramIndex++}`); patientValues.push(allergies); }
-    if (Array.isArray(chronicConditions)) { patientUpdates.push(`chronic_conditions = $${paramIndex++}`); patientValues.push(chronicConditions); }
-    
+    if (dateOfBirth) {
+      patientUpdates.push(`date_of_birth = $${paramIndex++}`);
+      patientValues.push(dateOfBirth);
+    }
+    if (gender) {
+      patientUpdates.push(`gender = $${paramIndex++}`);
+      patientValues.push(gender);
+    }
+    if (bloodGroup) {
+      patientUpdates.push(`blood_group = $${paramIndex++}`);
+      patientValues.push(bloodGroup);
+    }
+    if (address) {
+      patientUpdates.push(`address = $${paramIndex++}`);
+      patientValues.push(address);
+    }
+    if (emergencyContactName) {
+      patientUpdates.push(`emergency_contact_name = $${paramIndex++}`);
+      patientValues.push(emergencyContactName);
+    }
+    if (emergencyContactPhone) {
+      patientUpdates.push(`emergency_contact_phone = $${paramIndex++}`);
+      patientValues.push(emergencyContactPhone);
+    }
+    if (emergencyContactRelation) {
+      patientUpdates.push(`emergency_contact_relation = $${paramIndex++}`);
+      patientValues.push(emergencyContactRelation);
+    }
+    if (Array.isArray(allergies)) {
+      patientUpdates.push(`allergies = $${paramIndex++}`);
+      patientValues.push(allergies);
+    }
+    if (Array.isArray(chronicConditions)) {
+      patientUpdates.push(`chronic_conditions = $${paramIndex++}`);
+      patientValues.push(chronicConditions);
+    }
+
     if (patientUpdates.length > 0) {
       patientValues.push(user.id);
-      const res = await adminRepository.updatePatientProfile(`UPDATE patients SET ${patientUpdates.join(", ")}, updated_at = NOW() WHERE user_id = $${paramIndex}`, patientValues);
-      if (res === 0) throw new AppError("Failed to update patient profile.", 500);
+      const res = await adminRepository.updatePatientProfile(
+        `UPDATE patients SET ${patientUpdates.join(", ")}, updated_at = NOW() WHERE user_id = $${paramIndex}`,
+        patientValues,
+      );
+      if (res === 0)
+        throw new AppError("Failed to update patient profile.", 500);
     }
   }
 
@@ -685,7 +991,14 @@ const updateUserProfile = async (req) => {
     if (pat) userResponse = { ...userResponse, ...pat };
   }
 
-  await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:dashboard:*");
+  await invalidateCaches(
+    "v1:cache:user:*",
+    "v1:cache:doctors:*",
+    "v1:cache:doctor:*",
+    "v1:cache:patient:*",
+    "v1:cache:*patients*",
+    "v1:cache:dashboard:*",
+  );
   return { user: userResponse };
 };
 
@@ -693,7 +1006,11 @@ const deleteUser = async (req) => {
   const { userId } = req.params;
   const user = await userRepository.findByUserId(userId);
   if (!user) throw new AppError("User not found or access denied", 404);
-  if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
+  if (
+    req.hospitalId &&
+    req.user.role !== "super_admin" &&
+    user.hospital_id !== req.hospitalId
+  ) {
     throw new AppError("Access denied", 403);
   }
   if (["admin", "super_admin"].includes(user.role)) {
@@ -701,15 +1018,29 @@ const deleteUser = async (req) => {
   }
 
   if (user.role === "doctor") {
-    const activeAppointments = await adminRepository.countActiveAppointments(user.id, new Date());
+    const activeAppointments = await adminRepository.countActiveAppointments(
+      user.id,
+      new Date(),
+    );
     if (activeAppointments > 0) {
-      throw new AppError(`Cannot delete doctor with ${activeAppointments} active appointments.`, 400);
+      throw new AppError(
+        `Cannot delete doctor with ${activeAppointments} active appointments.`,
+        400,
+      );
     }
   }
 
   await userRepository.update(user.id, { isActive: false });
-  await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:/api/admin/users*", "v1:cache:dashboard:*");
-  
+  await invalidateCaches(
+    "v1:cache:user:*",
+    "v1:cache:doctors:*",
+    "v1:cache:doctor:*",
+    "v1:cache:patient:*",
+    "v1:cache:*patients*",
+    "v1:cache:/api/admin/users*",
+    "v1:cache:dashboard:*",
+  );
+
   return { userId: user.user_id, deletedAt: new Date() };
 };
 
@@ -717,7 +1048,11 @@ const permanentDeleteUser = async (req) => {
   const { userId } = req.params;
   const user = await userRepository.findByUserId(userId);
   if (!user) throw new AppError("User not found", 404);
-  if (req.hospitalId && req.user.role !== "super_admin" && user.hospital_id !== req.hospitalId) {
+  if (
+    req.hospitalId &&
+    req.user.role !== "super_admin" &&
+    user.hospital_id !== req.hospitalId
+  ) {
     throw new AppError("Access denied", 403);
   }
   if (["admin", "super_admin"].includes(user.role)) {
@@ -725,9 +1060,15 @@ const permanentDeleteUser = async (req) => {
   }
 
   if (user.role === "doctor") {
-    const activeAppointments = await adminRepository.countActiveAppointments(user.id, new Date());
+    const activeAppointments = await adminRepository.countActiveAppointments(
+      user.id,
+      new Date(),
+    );
     if (activeAppointments > 0) {
-      throw new AppError(`Cannot delete doctor with ${activeAppointments} active appointments.`, 400);
+      throw new AppError(
+        `Cannot delete doctor with ${activeAppointments} active appointments.`,
+        400,
+      );
     }
   }
 
@@ -740,12 +1081,24 @@ const permanentDeleteUser = async (req) => {
     entityType: "user",
     entityId: user.id,
     oldValues: { userId: user.user_id, role: user.role, email: user.email },
-    req
+    req,
   });
-  
-  await invalidateCaches("v1:cache:user:*", "v1:cache:doctors:*", "v1:cache:doctor:*", "v1:cache:patient:*", "v1:cache:*patients*", "v1:cache:/api/admin/users*", "v1:cache:dashboard:*");
 
-  return { userId: user.user_id, deletedAt: new Date(), deletedBy: req.user.userId };
+  await invalidateCaches(
+    "v1:cache:user:*",
+    "v1:cache:doctors:*",
+    "v1:cache:doctor:*",
+    "v1:cache:patient:*",
+    "v1:cache:*patients*",
+    "v1:cache:/api/admin/users*",
+    "v1:cache:dashboard:*",
+  );
+
+  return {
+    userId: user.user_id,
+    deletedAt: new Date(),
+    deletedBy: req.user.userId,
+  };
 };
 
 module.exports = {

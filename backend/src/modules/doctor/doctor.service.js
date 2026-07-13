@@ -38,7 +38,10 @@ class DoctorService {
         offset,
       });
       // Get accurate total from DB
-      total = await doctorRepository.countSearch(search, hospitalId, { includeInactive, specialization });
+      total = await doctorRepository.countSearch(search, hospitalId, {
+        includeInactive,
+        specialization,
+      });
     } else {
       const doctors = await doctorRepository.findAll({
         hospitalId,
@@ -50,7 +53,11 @@ class DoctorService {
         ? doctors
         : doctors.filter((doctor) => doctor.isActive);
       // Get accurate total from DB
-      total = await doctorRepository.countAll({ hospitalId, specialization, includeInactive });
+      total = await doctorRepository.countAll({
+        hospitalId,
+        specialization,
+        includeInactive,
+      });
     }
 
     return {
@@ -84,7 +91,7 @@ class DoctorService {
     const statusCounts = await appointmentRepository.countByStatus(
       doctorId,
       "doctor",
-      null
+      null,
     );
 
     // Get doctor profile for experience

@@ -61,8 +61,6 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
       } catch (error) {
         logError(error, {
           context: "useAppointmentsInfinite.queryFn",
-
-
         });
         throw error;
       }
@@ -90,7 +88,7 @@ export function useAppointmentsInfinite(filters = {}, options = {}) {
 export function usePatientAppointmentsInfinite(
   patientId,
   filters = {},
-  options = {},
+  options = {}
 ) {
   return useInfiniteQuery({
     queryKey: [...queryKeys.appointments.patient(patientId), filters],
@@ -110,8 +108,6 @@ export function usePatientAppointmentsInfinite(
       } catch (error) {
         logError(error, {
           context: "usePatientAppointmentsInfinite.queryFn",
-
-
         });
         throw error;
       }
@@ -139,7 +135,7 @@ export function usePatientAppointmentsInfinite(
 export function useDoctorAppointmentsInfinite(
   doctorId,
   filters = {},
-  options = {},
+  options = {}
 ) {
   return useInfiniteQuery({
     // Include filters in queryKey so different filter combinations use separate cache entries
@@ -160,8 +156,6 @@ export function useDoctorAppointmentsInfinite(
       } catch (error) {
         logError(error, {
           context: "useDoctorAppointmentsInfinite.queryFn",
-
-
         });
         throw error;
       }
@@ -196,7 +190,6 @@ export function useAppointment(appointmentId, options = {}) {
 
         return extractAppointment(response);
       } catch (error) {
-
         logError(error, { context: "useAppointment.queryFn", appointmentId });
 
         throw error;
@@ -218,8 +211,9 @@ export function useCreateAppointment() {
   return useMutation({
     mutationFn: async (appointmentData) => {
       try {
-        const response =
-          await appointmentService.createAppointment(appointmentData);
+        const response = await appointmentService.createAppointment(
+          appointmentData
+        );
 
         ensureSuccess(response, "Failed to create appointment");
 
@@ -227,8 +221,6 @@ export function useCreateAppointment() {
       } catch (error) {
         logError(error, {
           context: "useCreateAppointment.mutationFn",
-
-
         });
         throw error;
       }
@@ -252,7 +244,7 @@ export function useUpdateAppointmentStatus() {
       try {
         const response = await appointmentService.updateAppointmentStatus(
           appointmentId,
-          status,
+          status
         );
 
         ensureSuccess(response, "Failed to update appointment status");
@@ -261,8 +253,6 @@ export function useUpdateAppointmentStatus() {
       } catch (error) {
         logError(error, {
           context: "useUpdateAppointmentStatus.mutationFn",
-
-
         });
         throw error;
       }
@@ -275,7 +265,7 @@ export function useUpdateAppointmentStatus() {
       // Update the cache for this specific appointment
       queryClient.setQueryData(
         queryKeys.appointments.detail(updatedAppointment.id),
-        updatedAppointment,
+        updatedAppointment
       );
     },
   });
@@ -292,7 +282,7 @@ export function useCancelAppointment() {
       try {
         const response = await appointmentService.cancelAppointment(
           appointmentId,
-          reason,
+          reason
         );
 
         ensureSuccess(response, "Failed to cancel appointment");
@@ -301,8 +291,6 @@ export function useCancelAppointment() {
       } catch (error) {
         logError(error, {
           context: "useCancelAppointment.mutationFn",
-
-
         });
         throw error;
       }
@@ -334,8 +322,6 @@ export function useAppointmentsRealTime(filters = {}, interval = 30000) {
       } catch (error) {
         logError(error, {
           context: "useAppointmentsRealTime.queryFn",
-
-
         });
         throw error;
       }

@@ -47,7 +47,7 @@ const SkeletonLoader = ({
           duration: 900,
           useNativeDriver: false,
         }),
-      ]),
+      ])
     ).start();
   }, [shimmerAnim]);
 

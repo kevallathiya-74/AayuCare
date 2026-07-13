@@ -6,7 +6,6 @@
 
 import { Dimensions, Platform } from "react-native";
 
-
 import { theme } from "../theme";
 
 // Device dimensions
@@ -43,8 +42,6 @@ export const formatCurrency = (amount, showSymbol = true) => {
  * @returns {string} Formatted phone number
  */
 export const formatPhoneNumber = (phone) => {
-
-
   const cleaned = phone.replace(/\D/g, "");
   if (cleaned.length === 10) {
     return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
@@ -61,8 +58,6 @@ export const formatPhoneNumber = (phone) => {
  * @returns {boolean} Is valid
  */
 export const isValidAadhaar = (aadhaar) => {
-
-
   const cleaned = aadhaar.replace(/\D/g, "");
   return /^\d{12}$/.test(cleaned);
 };
@@ -389,7 +384,6 @@ export const hapticFeedback = (_type = "light") => {
   if (Platform.OS === "ios") {
     // iOS haptic feedback would go here
     // Requires expo-haptics
-
   }
 };
 

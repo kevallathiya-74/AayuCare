@@ -102,12 +102,12 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         .trim()
         .replace(/-/g, "_")
         .replace(/\s+/g, "_"),
-    [],
+    []
   );
 
   const visibleStatusFilters = useMemo(
     () => STATUS_FILTERS_BY_TAB[selectedFilter] || STATUS_FILTERS_BY_TAB.today,
-    [selectedFilter],
+    [selectedFilter]
   );
 
   const extractAppointments = useCallback((response) => {
@@ -204,7 +204,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       setStatusFilter("all");
       setSearchQuery("");
     },
-    [selectedFilter],
+    [selectedFilter]
   );
 
   const handleRefresh = useCallback(() => {
@@ -239,7 +239,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       if (!allowedNext.includes(nextStatus)) {
         Alert.alert(
           "Invalid Action",
-          "This appointment status cannot be changed with the selected action.",
+          "This appointment status cannot be changed with the selected action."
         );
         return;
       }
@@ -253,13 +253,13 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         logError(err, "TodaysAppointmentsScreen.handleStatusUpdate");
         Alert.alert(
           "Error",
-          "Unable to update appointment status. Please try again.",
+          "Unable to update appointment status. Please try again."
         );
       } finally {
         setUpdatingAppointmentId(null);
       }
     },
-    [updateStatusMutation, normalizeStatus, refetch, refreshCount],
+    [updateStatusMutation, normalizeStatus, refetch, refreshCount]
   );
 
   // Derived filtered & searched appointments (local, instant)
@@ -281,7 +281,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         (apt) =>
           (apt.patientName || "").toLowerCase().includes(q) ||
           (apt.reasonForVisit || apt.reason || "").toLowerCase().includes(q) ||
-          (apt.timeSlot || apt.time || "").toLowerCase().includes(q),
+          (apt.timeSlot || apt.time || "").toLowerCase().includes(q)
       );
     }
 
@@ -292,7 +292,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
     useCallback(() => {
       refetch();
       refreshCount();
-    }, [refetch, refreshCount]),
+    }, [refetch, refreshCount])
   );
 
   const handleStartConsultation = useCallback(
@@ -309,7 +309,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         setUpdatingAppointmentId(appointmentId);
         await doctorService.updateAppointmentStatus(
           appointmentId,
-          "in_progress",
+          "in_progress"
         );
         refreshCount();
         navigation.navigate(Routes.DOCTOR.CONSULTATION, { appointment });
@@ -320,7 +320,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         setUpdatingAppointmentId(null);
       }
     },
-    [navigation, refreshCount, updatingAppointmentId],
+    [navigation, refreshCount, updatingAppointmentId]
   );
 
   const getStatusLabel = useCallback(
@@ -343,7 +343,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           return "Pending";
       }
     },
-    [normalizeStatus],
+    [normalizeStatus]
   );
 
   const handleCreatePrescription = useCallback(
@@ -358,7 +358,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       if (!resolvedPatientId) {
         Alert.alert(
           "Patient Missing",
-          "Unable to identify patient for this appointment.",
+          "Unable to identify patient for this appointment."
         );
         return;
       }
@@ -368,7 +368,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         appointmentId: resolvedAppointmentId,
       });
     },
-    [navigation],
+    [navigation]
   );
 
   const renderAppointmentCard = useCallback(
@@ -378,8 +378,14 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         onPress={() => {
           Alert.alert(
             "Appointment Details",
-            `Patient: ${item.patientName || "Unknown"}\nTime: ${item.timeSlot || item.time || "N/A"}\nReason: ${item.reasonForVisit || item.reason || "N/A"}\nStatus: ${getStatusLabel(item.status)}\nPhone: ${item.phone || "N/A"}`,
-            [{ text: "OK" }],
+            `Patient: ${item.patientName || "Unknown"}\nTime: ${
+              item.timeSlot || item.time || "N/A"
+            }\nReason: ${
+              item.reasonForVisit || item.reason || "N/A"
+            }\nStatus: ${getStatusLabel(item.status)}\nPhone: ${
+              item.phone || "N/A"
+            }`,
+            [{ text: "OK" }]
           );
         }}
         activeOpacity={0.7}
@@ -416,7 +422,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                       {
                         day: "numeric",
                         month: "short",
-                      },
+                      }
                     )}
                   </Text>
                 </>
@@ -488,7 +494,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                               onPress: () =>
                                 handleStatusUpdate(item, "cancelled"),
                             },
-                          ],
+                          ]
                         );
                       }}
                       accessibilityRole="button"
@@ -522,7 +528,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               if (!item.phone || item.phone === "N/A") {
                 Alert.alert(
                   "Call Unavailable",
-                  "Patient phone number is not available.",
+                  "Patient phone number is not available."
                 );
                 return;
               }
@@ -543,7 +549,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             style={[
               styles.actionButton,
               !["scheduled", "confirmed", "in_progress"].includes(
-                normalizeStatus(item.status),
+                normalizeStatus(item.status)
               ) && styles.actionButtonDisabled,
             ]}
             activeOpacity={0.7}
@@ -551,12 +557,12 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
               const normalizedStatus = normalizeStatus(item.status);
               if (
                 !["scheduled", "confirmed", "in_progress"].includes(
-                  normalizedStatus,
+                  normalizedStatus
                 )
               ) {
                 Alert.alert(
                   "Unavailable",
-                  "Consultation can only be started for scheduled, confirmed, or in-progress appointments.",
+                  "Consultation can only be started for scheduled, confirmed, or in-progress appointments."
                 );
                 return;
               }
@@ -618,7 +624,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       navigation,
       normalizeStatus,
       updatingAppointmentId,
-    ],
+    ]
   );
 
   const renderEmptyState = useCallback(() => {
@@ -639,8 +645,8 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           selectedFilter === "today"
             ? "No appointments scheduled for today."
             : selectedFilter === "upcoming"
-              ? "No upcoming appointments."
-              : "No completed appointments."
+            ? "No upcoming appointments."
+            : "No completed appointments."
         }
       />
     );
@@ -816,7 +822,10 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             {filteredAppointments.length !== 1 ? "s" : ""}
             {searchQuery.trim().length > 0 ? ` for "${searchQuery}"` : ""}
             {statusFilter !== "all"
-              ? ` · ${visibleStatusFilters.find((s) => s.key === statusFilter)?.label || statusFilter}`
+              ? ` · ${
+                  visibleStatusFilters.find((s) => s.key === statusFilter)
+                    ?.label || statusFilter
+                }`
               : ""}
           </Text>
           <TouchableOpacity

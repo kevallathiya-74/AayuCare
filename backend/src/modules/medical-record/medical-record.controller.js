@@ -2,13 +2,24 @@ const medicalRecordRepository = require("./medical-record.repository");
 const userRepository = require("../auth/user.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
-const { invalidateAfterMedicalRecordMutation } = require("../../utils/cacheInvalidation");
+const {
+  invalidateAfterMedicalRecordMutation,
+} = require("../../utils/cacheInvalidation");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
 const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 // Shared UUID regex — used to decide findById vs findByUserId
-const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-const VALID_RECORD_TYPES = ["lab_report", "prescription", "doctor_visit", "test_result", "imaging", "vaccination", "other"];
+const UUID_REGEX =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const VALID_RECORD_TYPES = [
+  "lab_report",
+  "prescription",
+  "doctor_visit",
+  "test_result",
+  "imaging",
+  "vaccination",
+  "other",
+];
 const RECORD_TYPE_ALIASES = {
   lab: "lab_report",
   visit: "doctor_visit",
@@ -39,15 +50,24 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     } = req.query;
 
     const normalizedRecordType = normalizeRecordType(recordType);
-    if (normalizedRecordType && !VALID_RECORD_TYPES.includes(normalizedRecordType)) {
-      return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
+    if (
+      normalizedRecordType &&
+      !VALID_RECORD_TYPES.includes(normalizedRecordType)
+    ) {
+      return next(
+        new AppError(
+          `Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(", ")}`,
+          400,
+        ),
+      );
     }
-    const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const UUID_RE =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (patientId && !UUID_RE.test(String(patientId))) {
-      return next(new AppError('Invalid patient ID format', 400));
+      return next(new AppError("Invalid patient ID format", 400));
     }
     if (doctorId && !UUID_RE.test(String(doctorId))) {
-      return next(new AppError('Invalid doctor ID format', 400));
+      return next(new AppError("Invalid doctor ID format", 400));
     }
 
     const query = {};
@@ -64,12 +84,15 @@ exports.getAllMedicalRecords = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
     const options = {
-      sort: 'record_date DESC',
+      sort: "record_date DESC",
       offset: skip,
       limit: parseInt(limit),
     };
 
-    const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
+    const medicalRecords = await medicalRecordRepository.findWithFilters(
+      query,
+      options,
+    );
     const total = await medicalRecordRepository.count(query);
 
     const totalPages = Math.ceil(total / limit);
@@ -90,9 +113,9 @@ exports.getAllMedicalRecords = async (req, res, next) => {
         total,
         totalPages,
         hasNextPage: parseInt(page) < totalPages,
-        hasPreviousPage: parseInt(page) > 1
+        hasPreviousPage: parseInt(page) > 1,
       },
-      "Medical records retrieved successfully"
+      "Medical records retrieved successfully",
     );
   } catch (error) {
     next(error);
@@ -121,7 +144,12 @@ exports.createMedicalRecord = async (req, res, next) => {
     const normalizedRecordType = normalizeRecordType(recordType);
 
     if (!VALID_RECORD_TYPES.includes(normalizedRecordType)) {
-      return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
+      return next(
+        new AppError(
+          `Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(", ")}`,
+          400,
+        ),
+      );
     }
 
     // Find patient by UUID or custom userId (e.g. "PAT001")
@@ -143,7 +171,9 @@ exports.createMedicalRecord = async (req, res, next) => {
 
     const hospitalId = req.hospitalId || req.user?.hospitalId;
     if (!hospitalId && req.user?.role !== "super_admin") {
-      return next(new AppError("Hospital context required to create medical record", 400));
+      return next(
+        new AppError("Hospital context required to create medical record", 400),
+      );
     }
 
     const medicalRecord = await medicalRecordRepository.create({
@@ -162,7 +192,7 @@ exports.createMedicalRecord = async (req, res, next) => {
     });
 
     logger.info(
-      `Medical record created by ${req.user.userId} for patient ${patient.userId}`
+      `Medical record created by ${req.user.userId} for patient ${patient.userId}`,
     );
 
     // Invalidate relevant caches after medical record creation
@@ -178,7 +208,11 @@ exports.createMedicalRecord = async (req, res, next) => {
       action: AUDIT_ACTIONS.MEDICAL_RECORD_CREATE,
       entityType: "medicalRecord",
       entityId: medicalRecord.id,
-      newValues: { patientId: patient.id, recordType: normalizedRecordType, title },
+      newValues: {
+        patientId: patient.id,
+        recordType: normalizedRecordType,
+        title,
+      },
       req,
     });
 
@@ -187,7 +221,7 @@ exports.createMedicalRecord = async (req, res, next) => {
       req,
       { medicalRecord },
       "Medical record created successfully",
-      201
+      201,
     );
   } catch (error) {
     next(error);
@@ -206,14 +240,34 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     const normalizedRecordType = normalizeRecordType(recordType);
 
     // Validate recordType against allowed enum
-    if (normalizedRecordType && !VALID_RECORD_TYPES.includes(normalizedRecordType)) {
-      return next(new AppError(`Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(', ')}`, 400));
+    if (
+      normalizedRecordType &&
+      !VALID_RECORD_TYPES.includes(normalizedRecordType)
+    ) {
+      return next(
+        new AppError(
+          `Invalid record type. Must be one of: ${VALID_RECORD_TYPES.join(", ")}`,
+          400,
+        ),
+      );
     }
 
     // Check authorization - allow patient to view own data, doctors and admins can view any
-    const isOwnData = req.user.id === patientId || req.user.userId === patientId;
-    if (req.user.role !== "admin" && req.user.role !== "doctor" && req.user.role !== "super_admin" && !isOwnData) {
-      return sendError(res, req, "Not authorized to view these medical records", 403, "FORBIDDEN");
+    const isOwnData =
+      req.user.id === patientId || req.user.userId === patientId;
+    if (
+      req.user.role !== "admin" &&
+      req.user.role !== "doctor" &&
+      req.user.role !== "super_admin" &&
+      !isOwnData
+    ) {
+      return sendError(
+        res,
+        req,
+        "Not authorized to view these medical records",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Find patient by UUID or custom userId (e.g. "PAT001")
@@ -250,12 +304,15 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
     const options = {
-      sort: 'record_date DESC',
+      sort: "record_date DESC",
       offset: skip,
       limit: parseInt(limit),
     };
 
-    const medicalRecords = await medicalRecordRepository.findWithFilters(query, options);
+    const medicalRecords = await medicalRecordRepository.findWithFilters(
+      query,
+      options,
+    );
     const total = await medicalRecordRepository.count(query);
 
     return sendSuccess(
@@ -270,7 +327,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
           pages: Math.ceil(total / limit),
         },
       },
-      "Patient medical records retrieved successfully"
+      "Patient medical records retrieved successfully",
     );
   } catch (error) {
     next(error);
@@ -298,12 +355,21 @@ exports.getMedicalRecord = async (req, res, next) => {
       }
     } else if (role !== "super_admin") {
       // Doctor or admin — must be same hospital as the record
-      if (req.hospitalId && medicalRecord.hospitalId && medicalRecord.hospitalId !== req.hospitalId) {
+      if (
+        req.hospitalId &&
+        medicalRecord.hospitalId &&
+        medicalRecord.hospitalId !== req.hospitalId
+      ) {
         return next(new AppError("Not authorized to view this record", 403));
       }
     }
 
-    return sendSuccess(res, req, { medicalRecord }, "Medical record retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      { medicalRecord },
+      "Medical record retrieved successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -323,25 +389,24 @@ exports.updateMedicalRecord = async (req, res, next) => {
     }
 
     // Only the doctor who created it can update
-    if (
-      medicalRecord.doctorId !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
+    if (medicalRecord.doctorId !== req.user.id && req.user.role !== "admin") {
       return next(new AppError("Not authorized to update this record", 403));
     }
 
     const updates = {
       ...req.body,
-      ...(req.body?.recordType ? { recordType: normalizeRecordType(req.body.recordType) } : {}),
+      ...(req.body?.recordType
+        ? { recordType: normalizeRecordType(req.body.recordType) }
+        : {}),
     };
 
     const updatedRecord = await medicalRecordRepository.update(
       req.params.id,
-      updates
+      updates,
     );
 
     logger.info(
-      `Medical record ${req.params.id} updated by ${req.user.userId}`
+      `Medical record ${req.params.id} updated by ${req.user.userId}`,
     );
 
     // Invalidate relevant caches after medical record update
@@ -352,7 +417,12 @@ exports.updateMedicalRecord = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, { medicalRecord: updatedRecord }, "Medical record updated successfully");
+    return sendSuccess(
+      res,
+      req,
+      { medicalRecord: updatedRecord },
+      "Medical record updated successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -372,17 +442,14 @@ exports.deleteMedicalRecord = async (req, res, next) => {
     }
 
     // Only the doctor who created it (UUID comparison) or admin can delete
-    if (
-      medicalRecord.doctorId !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
+    if (medicalRecord.doctorId !== req.user.id && req.user.role !== "admin") {
       return next(new AppError("Not authorized to delete this record", 403));
     }
 
     await medicalRecordRepository.delete(req.params.id);
 
     logger.info(
-      `Medical record ${req.params.id} deleted by ${req.user.userId}`
+      `Medical record ${req.params.id} deleted by ${req.user.userId}`,
     );
 
     // Invalidate relevant caches after medical record deletion
@@ -417,7 +484,7 @@ exports.getPatientHistory = async (req, res, next) => {
     } else {
       patient = await userRepository.findByUserId(safePatientId);
     }
-    
+
     // Verify it's actually a patient
     if (!patient || patient.role !== "patient") {
       return next(new AppError("Patient not found", 404));
@@ -428,13 +495,16 @@ exports.getPatientHistory = async (req, res, next) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       historyQuery.hospitalId = req.hospitalId;
     }
-    
+
     const historyOptions = {
-      sort: 'record_date DESC',
+      sort: "record_date DESC",
       limit: 200,
     };
-    
-    const medicalRecords = await medicalRecordRepository.findWithFilters(historyQuery, historyOptions);
+
+    const medicalRecords = await medicalRecordRepository.findWithFilters(
+      historyQuery,
+      historyOptions,
+    );
 
     // Group by record type
     const history = {
@@ -449,20 +519,25 @@ exports.getPatientHistory = async (req, res, next) => {
       records: {
         labReports: medicalRecords.filter((r) => r.recordType === "lab_report"),
         prescriptions: medicalRecords.filter(
-          (r) => r.recordType === "prescription"
+          (r) => r.recordType === "prescription",
         ),
         doctorVisits: medicalRecords.filter(
-          (r) => r.recordType === "doctor_visit"
+          (r) => r.recordType === "doctor_visit",
         ),
         testResults: medicalRecords.filter(
-          (r) => r.recordType === "test_result"
+          (r) => r.recordType === "test_result",
         ),
         imaging: medicalRecords.filter((r) => r.recordType === "imaging"),
       },
       totalRecords: medicalRecords.length,
     };
 
-    return sendSuccess(res, req, history, "Patient history retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      history,
+      "Patient history retrieved successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -476,9 +551,14 @@ exports.getPatientHistory = async (req, res, next) => {
 exports.uploadAttachment = async (req, res, next) => {
   try {
     const { medicalRecordId, filename, mimeType, fileData } = req.body;
-    
+
     if (!medicalRecordId || !filename || !mimeType || !fileData) {
-      return next(new AppError("medicalRecordId, filename, mimeType, and fileData are required", 400));
+      return next(
+        new AppError(
+          "medicalRecordId, filename, mimeType, and fileData are required",
+          400,
+        ),
+      );
     }
 
     const record = await medicalRecordRepository.findById(medicalRecordId);
@@ -487,8 +567,14 @@ exports.uploadAttachment = async (req, res, next) => {
     }
 
     // Check authorization: only record doctor or admin can upload
-    if (record.doctorId !== req.user.id && req.user.role !== "admin" && req.user.role !== "super_admin") {
-      return next(new AppError("Not authorized to upload files to this record", 403));
+    if (
+      record.doctorId !== req.user.id &&
+      req.user.role !== "admin" &&
+      req.user.role !== "super_admin"
+    ) {
+      return next(
+        new AppError("Not authorized to upload files to this record", 403),
+      );
     }
 
     // Create attachment in database
@@ -496,19 +582,28 @@ exports.uploadAttachment = async (req, res, next) => {
       medicalRecordId,
       filename,
       mimeType,
-      fileData
+      fileData,
     });
 
     // Update medical record file_urls list
     const fileUrl = `/api/v1/medical-records/files/${attachment.id}`;
     const currentUrls = Array.isArray(record.file_urls) ? record.file_urls : [];
-    const updatedUrls = [...currentUrls, { id: attachment.id, name: filename, url: fileUrl }];
+    const updatedUrls = [
+      ...currentUrls,
+      { id: attachment.id, name: filename, url: fileUrl },
+    ];
 
     await medicalRecordRepository.update(medicalRecordId, {
-      fileUrls: updatedUrls
+      fileUrls: updatedUrls,
     });
 
-    return sendSuccess(res, req, { attachment, fileUrl }, "File uploaded successfully", 201);
+    return sendSuccess(
+      res,
+      req,
+      { attachment, fileUrl },
+      "File uploaded successfully",
+      201,
+    );
   } catch (error) {
     next(error);
   }
@@ -523,13 +618,15 @@ exports.downloadAttachment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const attachment = await medicalRecordRepository.findAttachmentById(id);
-    
+
     if (!attachment) {
       return next(new AppError("File not found", 404));
     }
 
     // Access check: patient of record, or doctor/admin can access
-    const record = await medicalRecordRepository.findById(attachment.medical_record_id);
+    const record = await medicalRecordRepository.findById(
+      attachment.medical_record_id,
+    );
     if (record) {
       const role = req.user.role;
       if (role === "patient") {
@@ -545,7 +642,10 @@ exports.downloadAttachment = async (req, res, next) => {
 
     // Set appropriate headers for file download/viewing
     res.setHeader("Content-Type", attachment.mime_type);
-    res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(attachment.filename)}"`);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(attachment.filename)}"`,
+    );
     res.setHeader("Content-Length", attachment.file_size);
 
     return res.send(attachment.file_data);

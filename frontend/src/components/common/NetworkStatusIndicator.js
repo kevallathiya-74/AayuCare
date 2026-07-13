@@ -56,7 +56,9 @@ const NetworkStatusIndicator = ({ onPress }) => {
 
   const message = isOnline
     ? queueSize > 0
-      ? `Syncing ${queueSize} pending ${queueSize === 1 ? "request" : "requests"}...`
+      ? `Syncing ${queueSize} pending ${
+          queueSize === 1 ? "request" : "requests"
+        }...`
       : "Back online"
     : "You are offline";
 

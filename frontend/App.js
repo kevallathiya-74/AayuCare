@@ -98,7 +98,7 @@ try {
   if (!paperTheme.colors.primary) {
     if (__DEV__)
       console.warn(
-        "[App] theme.colors.primary is undefined, applying fallback",
+        "[App] theme.colors.primary is undefined, applying fallback"
       );
     paperTheme.colors.primary = "#00ACC1"; // Primary teal fallback
   }

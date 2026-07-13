@@ -9,7 +9,9 @@ const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
 const { writeAuditLog } = require("../../utils/audit");
 const crypto = require("crypto");
-const { invalidateAfterPaymentMutation } = require("../../utils/cacheInvalidation");
+const {
+  invalidateAfterPaymentMutation,
+} = require("../../utils/cacheInvalidation");
 const { sendSuccess } = require("../../utils/apiResponse");
 
 /**
@@ -18,8 +20,7 @@ const { sendSuccess } = require("../../utils/apiResponse");
  */
 exports.createPayment = async (req, res, next) => {
   try {
-    const { prescriptionId, amount, paymentMethod, purchaseType } =
-      req.body;
+    const { prescriptionId, amount, paymentMethod, purchaseType } = req.body;
     const patientId = req.user?.id;
     const hospitalId = req.hospitalId;
 
@@ -44,8 +45,8 @@ exports.createPayment = async (req, res, next) => {
       return next(
         new AppError(
           `Invalid payment method. Allowed: ${validMethods.join(", ")}`,
-          400
-        )
+          400,
+        ),
       );
     }
 
@@ -63,7 +64,7 @@ exports.createPayment = async (req, res, next) => {
           appointmentId: req.body?.appointmentId || null,
           prescriptionId: req.body?.prescriptionId || null,
         },
-        "Online payment is not active. Please pay at the clinic counter."
+        "Online payment is not active. Please pay at the clinic counter.",
       );
     }
 
@@ -87,14 +88,16 @@ exports.createPayment = async (req, res, next) => {
       if (isGatewayEnabled) {
         // Future integration with Razorpay/Stripe
         // E.g. creating a payment intent and returning client_secret
-        logger.info("Payment gateway is enabled - initializing real payment intent");
+        logger.info(
+          "Payment gateway is enabled - initializing real payment intent",
+        );
       } else {
         // Development stub: auto-complete the payment
         await paymentRepository.update(payment.id, {
           status: "completed",
           paid_at: new Date().toISOString(),
           transaction_id: `MOCK_TXN_${Date.now()}`,
-          payment_gateway: "stub"
+          payment_gateway: "stub",
         });
       }
     }
@@ -124,7 +127,13 @@ exports.createPayment = async (req, res, next) => {
 
     logger.info(`Payment created: ${payment.id} for patient ${patientId}`);
 
-    return sendSuccess(res, req, finalPayment || payment, "Payment processed successfully", 201);
+    return sendSuccess(
+      res,
+      req,
+      finalPayment || payment,
+      "Payment processed successfully",
+      201,
+    );
   } catch (error) {
     logger.error("createPayment error:", error);
     next(error);
@@ -178,7 +187,7 @@ exports.getPatientPayments = async (req, res, next) => {
           total,
         },
       },
-      "Patient payments retrieved successfully"
+      "Patient payments retrieved successfully",
     );
   } catch (error) {
     logger.error("getPatientPayments error:", error);

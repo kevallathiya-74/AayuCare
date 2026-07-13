@@ -74,14 +74,14 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     if (!isHospital && email.includes("@")) {
       if (!validateEmail(email)) {
         showError(
-          t("auth.validEmailRequired", "Please enter a valid email address"),
+          t("auth.validEmailRequired", "Please enter a valid email address")
         );
         return;
       }
     } else if (!isHospital && !email.includes("@")) {
       if (!validatePhone(email)) {
         showError(
-          t("auth.validPhoneRequired", "Please enter a valid phone number"),
+          t("auth.validPhoneRequired", "Please enter a valid phone number")
         );
         return;
       }
@@ -92,9 +92,9 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
       t(
         "auth.otpSentMsg",
         "OTP sent successfully to {{target}}. Please check your {{type}}.",
-        { target: email, type: email.includes("@") ? "email" : "phone" },
+        { target: email, type: email.includes("@") ? "email" : "phone" }
       ),
-      t("auth.otpSent", "OTP Sent"),
+      t("auth.otpSent", "OTP Sent")
     );
     setEmailSent(true);
 
@@ -163,17 +163,17 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 {emailSent
                   ? t(
                       "auth.checkInstructions",
-                      "Check your email for reset instructions",
+                      "Check your email for reset instructions"
                     )
                   : isHospital
-                    ? t(
-                        "auth.enterHospitalIdToReset",
-                        "Enter your Hospital ID or email to reset password",
-                      )
-                    : t(
-                        "auth.enterRegisteredToReset",
-                        "Enter your registered email or phone to reset password",
-                      )}
+                  ? t(
+                      "auth.enterHospitalIdToReset",
+                      "Enter your Hospital ID or email to reset password"
+                    )
+                  : t(
+                      "auth.enterRegisteredToReset",
+                      "Enter your registered email or phone to reset password"
+                    )}
               </Text>
             </View>
 

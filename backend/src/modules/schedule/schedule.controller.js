@@ -18,9 +18,12 @@ exports.getDoctorSchedule = async (req, res, next) => {
     const { doctorId } = req.params;
     const hospitalId = req.hospitalId || null;
 
-    const schedule = await scheduleService.getDoctorSchedule(doctorId, hospitalId);
+    const schedule = await scheduleService.getDoctorSchedule(
+      doctorId,
+      hospitalId,
+    );
 
-    return sendSuccess(res, req, schedule, 'Schedule retrieved successfully');
+    return sendSuccess(res, req, schedule, "Schedule retrieved successfully");
   } catch (error) {
     next(error);
   }
@@ -38,12 +41,16 @@ exports.getAvailableSlots = async (req, res, next) => {
     const hospitalId = req.hospitalId || null;
 
     if (!day) {
-      return next(new AppError('day query parameter is required', 400));
+      return next(new AppError("day query parameter is required", 400));
     }
 
-    const slots = await scheduleService.getAvailableSlots(doctorId, day, hospitalId);
+    const slots = await scheduleService.getAvailableSlots(
+      doctorId,
+      day,
+      hospitalId,
+    );
 
-    return sendSuccess(res, req, slots, 'Available slots retrieved');
+    return sendSuccess(res, req, slots, "Available slots retrieved");
   } catch (error) {
     next(error);
   }
@@ -61,13 +68,24 @@ exports.setWeeklySchedule = async (req, res, next) => {
     const hospitalId = req.hospitalId || req.user.hospitalId || null;
 
     // Only allow doctors to set their own schedule (unless admin)
-    if (req.user.role === 'doctor' && req.user.id !== doctorId) {
-      return next(new AppError('Doctors can only manage their own schedule', 403));
+    if (req.user.role === "doctor" && req.user.id !== doctorId) {
+      return next(
+        new AppError("Doctors can only manage their own schedule", 403),
+      );
     }
 
-    const result = await scheduleService.setWeeklySchedule(doctorId, schedules, hospitalId);
+    const result = await scheduleService.setWeeklySchedule(
+      doctorId,
+      schedules,
+      hospitalId,
+    );
 
-    return sendSuccess(res, req, result, 'Weekly schedule updated successfully');
+    return sendSuccess(
+      res,
+      req,
+      result,
+      "Weekly schedule updated successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -84,13 +102,20 @@ exports.updateDaySchedule = async (req, res, next) => {
     const updates = req.body;
     const hospitalId = req.hospitalId || req.user.hospitalId || null;
 
-    if (req.user.role === 'doctor' && req.user.id !== doctorId) {
-      return next(new AppError('Doctors can only manage their own schedule', 403));
+    if (req.user.role === "doctor" && req.user.id !== doctorId) {
+      return next(
+        new AppError("Doctors can only manage their own schedule", 403),
+      );
     }
 
-    const updated = await scheduleService.updateDaySchedule(doctorId, dayOfWeek, updates, hospitalId);
+    const updated = await scheduleService.updateDaySchedule(
+      doctorId,
+      dayOfWeek,
+      updates,
+      hospitalId,
+    );
 
-    return sendSuccess(res, req, updated, 'Day schedule updated successfully');
+    return sendSuccess(res, req, updated, "Day schedule updated successfully");
   } catch (error) {
     next(error);
   }
@@ -107,18 +132,20 @@ exports.addTimeSlot = async (req, res, next) => {
     const { startTime, endTime } = req.body;
     const hospitalId = req.hospitalId || req.user.hospitalId || null;
 
-    if (req.user.role === 'doctor' && req.user.id !== doctorId) {
-      return next(new AppError('Doctors can only manage their own schedule', 403));
+    if (req.user.role === "doctor" && req.user.id !== doctorId) {
+      return next(
+        new AppError("Doctors can only manage their own schedule", 403),
+      );
     }
 
     const updated = await scheduleService.addTimeSlot(
       doctorId,
       dayOfWeek,
       { startTime, endTime, isAvailable: true },
-      hospitalId
+      hospitalId,
     );
 
-    return sendSuccess(res, req, updated, 'Time slot added successfully', 201);
+    return sendSuccess(res, req, updated, "Time slot added successfully", 201);
   } catch (error) {
     next(error);
   }
@@ -134,13 +161,20 @@ exports.removeTimeSlot = async (req, res, next) => {
     const { doctorId, dayOfWeek, slotId } = req.params;
     const hospitalId = req.hospitalId || req.user.hospitalId || null;
 
-    if (req.user.role === 'doctor' && req.user.id !== doctorId) {
-      return next(new AppError('Doctors can only manage their own schedule', 403));
+    if (req.user.role === "doctor" && req.user.id !== doctorId) {
+      return next(
+        new AppError("Doctors can only manage their own schedule", 403),
+      );
     }
 
-    const updated = await scheduleService.removeTimeSlot(doctorId, dayOfWeek, slotId, hospitalId);
+    const updated = await scheduleService.removeTimeSlot(
+      doctorId,
+      dayOfWeek,
+      slotId,
+      hospitalId,
+    );
 
-    return sendSuccess(res, req, updated, 'Time slot removed successfully');
+    return sendSuccess(res, req, updated, "Time slot removed successfully");
   } catch (error) {
     next(error);
   }
@@ -158,18 +192,23 @@ exports.toggleAvailability = async (req, res, next) => {
     const { doctorId } = req.query;
     const hospitalId = req.hospitalId || req.user.hospitalId || null;
 
-    if (typeof isAvailable !== 'boolean') {
-      return next(new AppError('isAvailable must be a boolean', 400));
+    if (typeof isAvailable !== "boolean") {
+      return next(new AppError("isAvailable must be a boolean", 400));
     }
 
     const updated = await scheduleService.toggleDayAvailability(
       scheduleId,
       isAvailable,
       doctorId,
-      hospitalId
+      hospitalId,
     );
 
-    return sendSuccess(res, req, updated, `Schedule availability set to ${isAvailable}`);
+    return sendSuccess(
+      res,
+      req,
+      updated,
+      `Schedule availability set to ${isAvailable}`,
+    );
   } catch (error) {
     next(error);
   }

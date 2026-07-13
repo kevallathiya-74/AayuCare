@@ -17,7 +17,7 @@ router.use(protect);
 router.post(
   "/analyze-symptoms",
   validateAnalyzeSymptoms,
-  aiController.analyzeSymptoms
+  aiController.analyzeSymptoms,
 );
 
 router.get(
@@ -25,7 +25,7 @@ router.get(
   authorize("patient", "doctor", "admin"),
   validatePatientId,
   cacheMiddleware(120),
-  aiController.getHealthInsights
+  aiController.getHealthInsights,
 );
 
 router.post("/risk-score", validateRiskScore, aiController.calculateRiskScore);
@@ -33,20 +33,20 @@ router.post("/risk-score", validateRiskScore, aiController.calculateRiskScore);
 router.post(
   "/diet-recommendations",
   validateDietRecommendations,
-  aiController.getDietRecommendations
+  aiController.getDietRecommendations,
 );
 
 router.post(
   "/exercise-recommendations",
   validateExerciseRecommendations,
-  aiController.getExerciseRecommendations
+  aiController.getExerciseRecommendations,
 );
 
 router.post(
   "/analyze-medical-record/:recordId",
   authorize("doctor", "admin"),
   validateRecordId,
-  aiController.analyzeMedicalRecord
+  aiController.analyzeMedicalRecord,
 );
 
 module.exports = router;

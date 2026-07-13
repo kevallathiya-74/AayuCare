@@ -22,16 +22,34 @@ const router = express.Router();
 router.use(protect);
 router.use(attachHospitalId);
 
-router.get("/cursor", authorize("patient", "doctor", "admin"), cachePatientAppointments, appointmentController.getAppointmentsCursor);
-router.get("/stats", authorize("admin", "doctor"), appointmentController.getAppointmentStats);
-router.get("/patient/:patientId", authorize("patient", "doctor", "admin"), appointmentController.getPatientAppointments);
+router.get(
+  "/cursor",
+  authorize("patient", "doctor", "admin"),
+  cachePatientAppointments,
+  appointmentController.getAppointmentsCursor,
+);
+router.get(
+  "/stats",
+  authorize("admin", "doctor"),
+  appointmentController.getAppointmentStats,
+);
+router.get(
+  "/patient/:patientId",
+  authorize("patient", "doctor", "admin"),
+  appointmentController.getPatientAppointments,
+);
 router.get(
   "/slots/:doctorId",
   authorize("patient", "doctor", "admin"),
   validateGetAvailableSlots,
-  appointmentController.getAvailableSlots
+  appointmentController.getAvailableSlots,
 );
-router.get("/", authorize("patient", "doctor", "admin"), validateGetAppointments, appointmentController.getAppointments);
+router.get(
+  "/",
+  authorize("patient", "doctor", "admin"),
+  validateGetAppointments,
+  appointmentController.getAppointments,
+);
 
 router.post(
   "/",
@@ -39,25 +57,34 @@ router.post(
   idempotencyMiddleware,
   validateBody(createAppointmentSchema),
   validateCreateAppointment,
-  appointmentController.createAppointment
+  appointmentController.createAppointment,
 );
 
-router.get("/:id", authorize("patient", "doctor", "admin"), appointmentController.getAppointment);
+router.get(
+  "/:id",
+  authorize("patient", "doctor", "admin"),
+  appointmentController.getAppointment,
+);
 
 router.put(
   "/:id",
   authorize("doctor", "admin"),
   validateBody(updateAppointmentSchema),
-  appointmentController.updateAppointment
+  appointmentController.updateAppointment,
 );
 
 router.patch(
   "/:id/status",
   authorize("doctor", "admin"),
   validateUpdateAppointmentStatus,
-  appointmentController.updateAppointmentStatus
+  appointmentController.updateAppointmentStatus,
 );
 
-router.post("/:id/cancel", authorize("patient", "doctor", "admin"), validateCancelAppointment, appointmentController.cancelAppointment);
+router.post(
+  "/:id/cancel",
+  authorize("patient", "doctor", "admin"),
+  validateCancelAppointment,
+  appointmentController.cancelAppointment,
+);
 
 module.exports = router;

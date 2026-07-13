@@ -23,7 +23,7 @@ import logger from "@/utils/logger";
 
 const SplashScreen = ({ navigation }) => {
   const { isAuthenticated, user, isLoading } = useSelector(
-    (state) => state.auth || {},
+    (state) => state.auth || {}
   );
   const routed = useRef(false);
   const { height } = useWindowDimensions();
@@ -37,10 +37,10 @@ const SplashScreen = ({ navigation }) => {
     pulseScale.value = withRepeat(
       withSequence(
         withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
       ),
       -1, // Infinite repeat
-      true,
+      true
     );
   }, [pulseScale]);
 
@@ -61,7 +61,7 @@ const SplashScreen = ({ navigation }) => {
     if (!isAuthenticated) {
       logger.debug(
         "SplashScreen",
-        "Not authenticated — navigate to BoxSelection",
+        "Not authenticated — navigate to BoxSelection"
       );
       navigation.replace("BoxSelection");
       return;
@@ -81,7 +81,7 @@ const SplashScreen = ({ navigation }) => {
         { duration: 400, easing: Easing.inOut(Easing.ease) },
         () => {
           runOnJS(navigation.replace)(screen);
-        },
+        }
       );
     };
 

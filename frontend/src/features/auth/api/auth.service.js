@@ -16,7 +16,7 @@ const getAuthBaseURL = () => {
   const baseURL = String(APP_CONFIG?.api?.baseURL ?? "").trim();
   if (!baseURL) {
     throw new Error(
-      "CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.",
+      "CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL."
     );
   }
   return baseURL.replace(/\/api\/?$/, "");
@@ -49,7 +49,8 @@ export const authClient = createAuthClient({
           try {
             await appStorage.deleteItem(key);
           } catch (error) {
-            if (__DEV__) logger.error("[Auth] Storage removeItem error:", error);
+            if (__DEV__)
+              logger.error("[Auth] Storage removeItem error:", error);
           }
         },
       },
@@ -142,14 +143,14 @@ export const login = async (credentials) => {
     if (__DEV__) {
       logger.debug(
         "[auth.service] Login attempt with:",
-        isEmail(userInput) ? "email" : "userId",
+        isEmail(userInput) ? "email" : "userId"
       );
     }
 
     // Validate credentials
     if (!userInput || !credentials.password) {
       throw new Error(
-        "Please enter User ID/Email and password exactly as provided.",
+        "Please enter User ID/Email and password exactly as provided."
       );
     }
     let email = userInput;
@@ -162,7 +163,7 @@ export const login = async (credentials) => {
       if (__DEV__) {
         logger.debug(
           "[auth.service] API URL:",
-          `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`,
+          `${APP_CONFIG.api.baseURL}/v1/user/email-by-userid`
         );
       }
 
@@ -175,13 +176,13 @@ export const login = async (credentials) => {
           },
           body: JSON.stringify({ userId: email }),
         },
-        10000, // 10 second timeout
+        10000 // 10 second timeout
       );
 
       if (__DEV__) {
         logger.debug(
           "[auth.service] Email lookup response status:",
-          emailResponse.status,
+          emailResponse.status
         );
       }
 
@@ -192,7 +193,7 @@ export const login = async (credentials) => {
         }
         if (emailResponse.status === 404) {
           throw new Error(
-            "Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match).",
+            "Invalid User ID. Enter the exact ID as provided (uppercase/lowercase must match)."
           );
         } else if (emailResponse.status === 503) {
           throw new Error("Service temporarily unavailable. Please try again.");
@@ -231,7 +232,7 @@ export const login = async (credentials) => {
     }
     if (!result.data?.user) {
       throw new Error(
-        "Invalid credentials. Please enter the exact User ID and password.",
+        "Invalid credentials. Please enter the exact User ID and password."
       );
     }
 
@@ -244,7 +245,7 @@ export const login = async (credentials) => {
     if (__DEV__) {
       logger.debug(
         "[auth.service] Session token from sign-in:",
-        sessionToken ? "exists" : "missing",
+        sessionToken ? "exists" : "missing"
       );
     }
 
@@ -265,14 +266,14 @@ export const login = async (credentials) => {
         headers: authHeaders,
         body: JSON.stringify({ email: email }),
       },
-      10000,
+      10000
     );
 
     if (!profileResponse.ok) {
       if (__DEV__) {
         console.error(
           "[auth.service] Profile fetch failed",
-          profileResponse.status,
+          profileResponse.status
         );
       }
       throw new Error("Failed to fetch user profile");
@@ -283,7 +284,7 @@ export const login = async (credentials) => {
     if (__DEV__) {
       logger.debug(
         "[auth.service] Profile fetched for role:",
-        normalizedUser.role,
+        normalizedUser.role
       );
     }
 
@@ -291,14 +292,14 @@ export const login = async (credentials) => {
     if (normalizedUser.isActive === false) {
       await signOut().catch(() => {});
       throw new Error(
-        "Your account has been deactivated. Please contact support.",
+        "Your account has been deactivated. Please contact support."
       );
     }
 
     // Always exchange credentials for authoritative session token used by protected API middleware
     if (__DEV__) {
       logger.debug(
-        "[auth.service] Exchanging credentials for session token...",
+        "[auth.service] Exchanging credentials for session token..."
       );
     }
     try {
@@ -315,7 +316,7 @@ export const login = async (credentials) => {
             userId: betterAuthUserId,
           }),
         },
-        8000,
+        8000
       );
 
       if (sessionResponse.ok) {
@@ -325,24 +326,24 @@ export const login = async (credentials) => {
         if (__DEV__) {
           logger.debug(
             "[auth.service] Session token exchange successful:",
-            sessionToken ? "exists" : "missing",
+            sessionToken ? "exists" : "missing"
           );
         }
       } else {
         if (__DEV__) {
           console.warn(
             "[auth.service] Session token exchange returned error status:",
-            sessionResponse.status,
+            sessionResponse.status
           );
         }
         if (!sessionToken) {
           throw new Error(
-            "Login failed. Please check your exact User ID and password.",
+            "Login failed. Please check your exact User ID and password."
           );
         }
         if (__DEV__) {
           logger.debug(
-            "[auth.service] Using client-side session token fallback",
+            "[auth.service] Using client-side session token fallback"
           );
         }
       }
@@ -350,7 +351,7 @@ export const login = async (credentials) => {
       if (__DEV__) {
         console.error(
           "[auth.service] Error during session token exchange:",
-          sessionError,
+          sessionError
         );
       }
       if (!sessionToken) {
@@ -358,7 +359,7 @@ export const login = async (credentials) => {
       }
       if (__DEV__) {
         logger.debug(
-          "[auth.service] Using client-side session token fallback after exception",
+          "[auth.service] Using client-side session token fallback after exception"
         );
       }
     }
@@ -368,27 +369,27 @@ export const login = async (credentials) => {
       await appStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, sessionToken);
       await appStorage.setItem(
         STORAGE_KEYS.USER_DATA,
-        JSON.stringify(normalizedUser),
+        JSON.stringify(normalizedUser)
       );
       if (__DEV__) {
         logger.debug(
-          "[auth.service] Session token and user data stored in appStorage",
+          "[auth.service] Session token and user data stored in appStorage"
         );
       }
     } else {
       if (__DEV__) {
         console.warn(
-          "[auth.service] No session token available - API calls may fail",
+          "[auth.service] No session token available - API calls may fail"
         );
       }
       throw new Error(
-        "Login failed. Unable to establish a valid session. Please try again.",
+        "Login failed. Unable to establish a valid session. Please try again."
       );
     }
     if (__DEV__) {
       logger.debug(
         "[auth.service] Login successful for role:",
-        profileData.data.role,
+        profileData.data.role
       );
     }
 
@@ -410,7 +411,7 @@ export const login = async (credentials) => {
       error.message.includes("Network request failed")
     ) {
       throw new Error(
-        "Cannot connect to server. Please ensure:\n1. You have internet connection\n2. Backend server is running",
+        "Cannot connect to server. Please ensure:\n1. You have internet connection\n2. Backend server is running"
       );
     }
 
@@ -419,7 +420,7 @@ export const login = async (credentials) => {
       error.message.includes("not responding")
     ) {
       throw new Error(
-        "Server is not responding. Please check if the backend is running on Render.",
+        "Server is not responding. Please check if the backend is running on Render."
       );
     }
 
@@ -457,7 +458,7 @@ export const register = async (userData) => {
     if (normalizedUser) {
       await appStorage.setItem(
         STORAGE_KEYS.USER_DATA,
-        JSON.stringify(normalizedUser),
+        JSON.stringify(normalizedUser)
       );
     }
     if (__DEV__) {
@@ -515,7 +516,7 @@ export const getSession = async () => {
     if (!storedToken) {
       if (__DEV__) {
         logger.debug(
-          "[auth.service] No token in AsyncStorage - user must log in",
+          "[auth.service] No token in AsyncStorage - user must log in"
         );
       }
       return null;
@@ -548,7 +549,7 @@ export const getSession = async () => {
             "Content-Type": "application/json",
           },
         },
-        timeout,
+        timeout
       );
 
       if (!validateResponse.ok) {
@@ -559,7 +560,7 @@ export const getSession = async () => {
         ) {
           if (__DEV__) {
             logger.debug(
-              "[auth.service] Stored token is invalid/expired (401/403), clearing storage",
+              "[auth.service] Stored token is invalid/expired (401/403), clearing storage"
             );
           }
           await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -571,7 +572,7 @@ export const getSession = async () => {
         if (cachedUser) {
           if (__DEV__) {
             logger.debug(
-              "[auth.service] Server error, falling back to cached user",
+              "[auth.service] Server error, falling back to cached user"
             );
           }
           return { user: cachedUser, token: storedToken, isOffline: true };
@@ -585,7 +586,7 @@ export const getSession = async () => {
       if (!userProfile) {
         if (__DEV__) {
           logger.debug(
-            "[auth.service] Session valid but no user data returned",
+            "[auth.service] Session valid but no user data returned"
           );
         }
         return null;
@@ -596,13 +597,13 @@ export const getSession = async () => {
       // Cache the valid user profile
       await appStorage.setItem(
         STORAGE_KEYS.USER_DATA,
-        JSON.stringify(normalizedUser),
+        JSON.stringify(normalizedUser)
       );
 
       if (__DEV__) {
         logger.debug(
           "[auth.service] Session restored and cached for role:",
-          normalizedUser.role,
+          normalizedUser.role
         );
       }
       return { user: normalizedUser, token: storedToken };
@@ -615,7 +616,7 @@ export const getSession = async () => {
       if (__DEV__) {
         console.warn(
           `[auth.service] Network error during session validation (Timeout: ${isTimeout}):`,
-          networkError.message,
+          networkError.message
         );
       }
 
@@ -623,7 +624,7 @@ export const getSession = async () => {
       if (cachedUser) {
         if (__DEV__) {
           logger.debug(
-            "[auth.service] Network unreachable, falling back to cached user",
+            "[auth.service] Network unreachable, falling back to cached user"
           );
         }
         return {
@@ -640,7 +641,7 @@ export const getSession = async () => {
     if (__DEV__) {
       console.error(
         "[auth.service] getSession critical error:",
-        error?.message || error,
+        error?.message || error
       );
     }
     return null;
@@ -657,7 +658,7 @@ export const updateProfile = async (profileData) => {
     try {
       await appStorage.setItem(
         STORAGE_KEYS.USER_DATA,
-        JSON.stringify(normalizedUser),
+        JSON.stringify(normalizedUser)
       );
     } catch (err) {
       if (__DEV__) logger.error("[auth.service] Failed to cache profile:", err);

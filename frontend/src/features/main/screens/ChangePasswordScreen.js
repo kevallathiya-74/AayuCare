@@ -43,7 +43,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       hasLower: /[a-z]/.test(newPassword),
       hasNumber: /\d/.test(newPassword),
     }),
-    [newPassword],
+    [newPassword]
   );
 
   const isStrongPassword =
@@ -128,7 +128,7 @@ const ChangePasswordScreen = ({ navigation }) => {
           onPress={() =>
             handleSmartBack(
               navigation,
-              user?.role === "admin" ? "AdminTabs" : "DoctorTabs",
+              user?.role === "admin" ? "AdminTabs" : "DoctorTabs"
             )
           }
           accessibilityRole="button"

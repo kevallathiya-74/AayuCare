@@ -1,7 +1,11 @@
 const userRepository = require("../auth/user.repository");
 const appointmentRepository = require("../appointment/appointment.repository");
 const doctorRepository = require("../doctor/doctor.repository");
-const { createAppointmentWithPayment, cancelAppointmentWithRefund, completeAppointmentWithPayment } = require("../../utils/transaction");
+const {
+  createAppointmentWithPayment,
+  cancelAppointmentWithRefund,
+  completeAppointmentWithPayment,
+} = require("../../utils/transaction");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
 
@@ -49,7 +53,7 @@ class AppointmentService {
     if (patient.hospital_id !== doctor.hospital_id) {
       throw new AppError(
         "Cannot book appointment with doctor from different hospital",
-        400
+        400,
       );
     }
 
@@ -72,7 +76,7 @@ class AppointmentService {
       doctorId,
       appointmentDate,
       appointmentTime,
-      hospitalId || doctor.hospital_id
+      hospitalId || doctor.hospital_id,
     );
 
     if (!isAvailable) {
@@ -82,7 +86,7 @@ class AppointmentService {
     // Create appointment and payment atomically using transaction
     const { appointment } = await createAppointmentWithPayment(
       {
-        appointmentId: `APT-${Date.now()}-${require("crypto").randomBytes(5).toString('hex').toUpperCase()}`,
+        appointmentId: `APT-${Date.now()}-${require("crypto").randomBytes(5).toString("hex").toUpperCase()}`,
         patientId,
         doctorId,
         hospitalId: hospitalId || doctor.hospital_id,
@@ -99,11 +103,11 @@ class AppointmentService {
           .toUpperCase()}`,
         amount: doctorProfile.consultation_fee || 0,
         currency: "INR",
-      }
+      },
     );
 
     logger.info(
-      `Appointment created: ${appointment.id} for patient ${patient.user_id} with doctor ${doctor.user_id} at hospital ${doctor.hospital_id}`
+      `Appointment created: ${appointment.id} for patient ${patient.user_id} with doctor ${doctor.user_id} at hospital ${doctor.hospital_id}`,
     );
 
     return appointment;
@@ -157,13 +161,7 @@ class AppointmentService {
    * Get appointments for a patient - Uses PostgreSQL
    */
   async getPatientAppointmentsCursor(patientId, filters = {}) {
-    const {
-      status,
-      startDate,
-      endDate,
-      limit = 20,
-      cursor = 0,
-    } = filters;
+    const { status, startDate, endDate, limit = 20, cursor = 0 } = filters;
 
     const parsedLimit = parseInt(limit, 10);
     const offset = parseInt(cursor, 10) || 0;
@@ -194,7 +192,14 @@ class AppointmentService {
    * Get appointments for a doctor - Uses PostgreSQL
    */
   async getDoctorAppointmentsCursor(doctorId, filters = {}) {
-    const { status, date, startDate, endDate, limit = 20, cursor = 0 } = filters;
+    const {
+      status,
+      date,
+      startDate,
+      endDate,
+      limit = 20,
+      cursor = 0,
+    } = filters;
 
     const parsedLimit = parseInt(limit, 10);
     const offset = parseInt(cursor, 10) || 0;
@@ -261,7 +266,12 @@ class AppointmentService {
 
     // Get accurate total count from DB (not just current page length)
     const total = await appointmentRepository.countAll({
-      hospitalId, patientId, doctorId, status, startDate, endDate,
+      hospitalId,
+      patientId,
+      doctorId,
+      status,
+      startDate,
+      endDate,
     });
 
     return {
@@ -279,13 +289,7 @@ class AppointmentService {
    * Get appointments for a patient - Uses PostgreSQL
    */
   async getPatientAppointments(patientId, filters = {}) {
-    const {
-      status,
-      startDate,
-      endDate,
-      page = 1,
-      limit = 10,
-    } = filters;
+    const { status, startDate, endDate, page = 1, limit = 10 } = filters;
 
     const offset = (page - 1) * limit;
 
@@ -300,7 +304,9 @@ class AppointmentService {
 
     // Get accurate total count from DB
     const total = await appointmentRepository.countByPatient(patientId, {
-      status, startDate, endDate,
+      status,
+      startDate,
+      endDate,
     });
 
     return {
@@ -341,7 +347,9 @@ class AppointmentService {
 
     // Get accurate total count from DB
     const total = await appointmentRepository.countByDoctor(doctorId, {
-      status, startDate, endDate,
+      status,
+      startDate,
+      endDate,
     });
 
     return {
@@ -391,18 +399,19 @@ class AppointmentService {
     if (!validTransitions[appointment.status].includes(status)) {
       throw new AppError(
         `Cannot change status from ${appointment.status} to ${status}`,
-        400
+        400,
       );
     }
 
     // Use transaction for "completed" status to atomically mark payment as completed
     if (status === "completed") {
-      const { appointment: updatedAppointment } = await completeAppointmentWithPayment(
-        appointmentId,
-        null // notes can be updated separately
-      );
+      const { appointment: updatedAppointment } =
+        await completeAppointmentWithPayment(
+          appointmentId,
+          null, // notes can be updated separately
+        );
       logger.info(
-        `Appointment ${appointmentId} marked as completed and payment processed by ${userRole}`
+        `Appointment ${appointmentId} marked as completed and payment processed by ${userRole}`,
       );
       return updatedAppointment;
     }
@@ -415,11 +424,11 @@ class AppointmentService {
 
     const updatedAppointment = await appointmentRepository.update(
       appointmentId,
-      updates
+      updates,
     );
 
     logger.info(
-      `Appointment ${appointmentId} status updated to ${status} by ${userRole}`
+      `Appointment ${appointmentId} status updated to ${status} by ${userRole}`,
     );
 
     return updatedAppointment;
@@ -441,7 +450,7 @@ class AppointmentService {
     ) {
       throw new AppError(
         `Cannot cancel ${appointment.status} appointment`,
-        400
+        400,
       );
     }
 
@@ -457,19 +466,16 @@ class AppointmentService {
     if (hoursDiff < 2 && userRole === "patient") {
       throw new AppError(
         "Appointments can only be cancelled at least 2 hours before the scheduled time",
-        400
+        400,
       );
     }
 
     // Use transaction to atomically cancel appointment and refund payment
-    const { appointment: updatedAppointment } = await cancelAppointmentWithRefund(
-      appointmentId,
-      userId,
-      cancelReason
-    );
+    const { appointment: updatedAppointment } =
+      await cancelAppointmentWithRefund(appointmentId, userId, cancelReason);
 
     logger.info(
-      `Appointment ${appointmentId} cancelled by ${userRole}: ${userId} - refund processed`
+      `Appointment ${appointmentId} cancelled by ${userRole}: ${userId} - refund processed`,
     );
 
     return updatedAppointment;
@@ -501,11 +507,11 @@ class AppointmentService {
 
     const updatedAppointment = await appointmentRepository.update(
       appointmentId,
-      updates
+      updates,
     );
 
     logger.info(
-      `Appointment ${appointmentId} updated by ${userRole}: ${userId}`
+      `Appointment ${appointmentId} updated by ${userRole}: ${userId}`,
     );
 
     return updatedAppointment;
@@ -576,7 +582,7 @@ class AppointmentService {
     }
 
     const slotsAfterBookedFilter = allSlots.filter(
-      (slot) => !bookedSlots.includes(slot)
+      (slot) => !bookedSlots.includes(slot),
     );
 
     const isToday = startOfDay.getTime() === todayStart.getTime();

@@ -89,7 +89,7 @@ const MyReportsScreen = ({ navigation }) => {
             day: "numeric",
             month: "short",
             year: "numeric",
-          },
+          }
         ),
         doctor: record.doctorName || "Unknown Doctor",
         fileType: determineFileType(record),
@@ -132,7 +132,7 @@ const MyReportsScreen = ({ navigation }) => {
 
   const filteredReports = useMemo(
     () => (filterType ? reports.filter((r) => r.type === filterType) : reports),
-    [filterType, reports],
+    [filterType, reports]
   );
 
   const getFileIcon = (fileType) => {
@@ -201,12 +201,12 @@ const MyReportsScreen = ({ navigation }) => {
             const url = item.recordData?.attachments?.[0];
             if (url) {
               Linking.openURL(url).catch(() =>
-                Alert.alert("Error", "Unable to open file."),
+                Alert.alert("Error", "Unable to open file.")
               );
             } else {
               Alert.alert(
                 "Not Available",
-                "No downloadable file is attached to this report.",
+                "No downloadable file is attached to this report."
               );
             }
           }}
@@ -382,7 +382,7 @@ const MyReportsScreen = ({ navigation }) => {
                         const url = selectedReport.recordData?.attachments?.[0];
                         if (url) {
                           Linking.openURL(url).catch(() =>
-                            Alert.alert("Error", "Unable to open file."),
+                            Alert.alert("Error", "Unable to open file.")
                           );
                         } else {
                           Alert.alert("Not Available", "No file attached.");

@@ -98,8 +98,8 @@ const PatientDetailsModal = ({
       const normalizedData = responseData?.patient
         ? responseData
         : responseData?.data?.patient
-          ? responseData.data
-          : null;
+        ? responseData.data
+        : null;
 
       if (
         (response?.success || responseData?.success !== false) &&

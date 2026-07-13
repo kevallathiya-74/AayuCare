@@ -18,14 +18,12 @@ exports.createAppointment = async (req, res, next) => {
   try {
     const appointmentData = {
       ...req.body,
-      patientId:
-        req.user.role === "patient" ? req.user.id : req.body.patientId,
+      patientId: req.user.role === "patient" ? req.user.id : req.body.patientId,
       hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
     };
 
-    const appointment = await appointmentService.createAppointment(
-      appointmentData
-    );
+    const appointment =
+      await appointmentService.createAppointment(appointmentData);
 
     // Invalidate all appointment-related read caches after mutation
     try {
@@ -39,7 +37,11 @@ exports.createAppointment = async (req, res, next) => {
       action: AUDIT_ACTIONS.APPOINTMENT_CREATE,
       entityType: "appointment",
       entityId: appointment.id || null,
-      newValues: { patientId: appointment.patientId, doctorId: appointment.doctorId, date: appointment.appointmentDate },
+      newValues: {
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        date: appointment.appointmentDate,
+      },
       req,
     });
 
@@ -48,7 +50,7 @@ exports.createAppointment = async (req, res, next) => {
       req,
       { appointment },
       "Appointment created successfully",
-      201
+      201,
     );
   } catch (error) {
     next(error);
@@ -65,16 +67,16 @@ exports.getAllAppointmentsCursor = async (req, res, next) => {
     // Whitelist safe filter fields — never spread req.query directly into DB filters
     const { status, startDate, endDate, date, cursor, limit } = req.query;
     const filters = {};
-    if (status)    filters.status    = String(status);
+    if (status) filters.status = String(status);
     if (startDate) filters.startDate = String(startDate);
-    if (endDate)   filters.endDate   = String(endDate);
-    if (date)      filters.date      = String(date);
-    if (cursor)    filters.cursor    = String(cursor);
-    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
+    if (endDate) filters.endDate = String(endDate);
+    if (date) filters.date = String(date);
+    if (cursor) filters.cursor = String(cursor);
+    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
-    
+
     const result = await appointmentService.getAllAppointmentsCursor(filters);
 
     return sendSuccess(res, req, result, "Appointments retrieved successfully");
@@ -91,16 +93,16 @@ exports.getAllAppointmentsCursor = async (req, res, next) => {
 exports.getAppointmentsCursor = async (req, res, next) => {
   try {
     let result;
-    
+
     // Whitelist safe filter fields — never spread req.query directly into DB filters
     const { status, startDate, endDate, date, cursor, limit } = req.query;
     const filters = {};
-    if (status)    filters.status    = String(status);
+    if (status) filters.status = String(status);
     if (startDate) filters.startDate = String(startDate);
-    if (endDate)   filters.endDate   = String(endDate);
-    if (date)      filters.date      = String(date);
-    if (cursor)    filters.cursor    = String(cursor);
-    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
+    if (endDate) filters.endDate = String(endDate);
+    if (date) filters.date = String(date);
+    if (cursor) filters.cursor = String(cursor);
+    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
@@ -108,31 +110,40 @@ exports.getAppointmentsCursor = async (req, res, next) => {
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointmentsCursor(
         req.user.id,
-        filters
+        filters,
       );
     } else if (req.user.role === "doctor") {
       result = await appointmentService.getDoctorAppointmentsCursor(
         req.user.id,
-        filters
+        filters,
       );
     } else if (req.user.role === "admin" || req.user.role === "super_admin") {
       // Admin/super_admin can view all appointments or filter by patient/doctor
-      const rawPid = Array.isArray(req.body.patientId) ? req.body.patientId[0] : req.body.patientId;
-      const rawDid = Array.isArray(req.body.doctorId)  ? req.body.doctorId[0]  : req.body.doctorId;
-      const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-      const patientId = rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
-      const doctorId  = rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
-      if (rawPid && !patientId) return next(new AppError("Invalid patient ID format", 400));
-      if (rawDid && !doctorId)  return next(new AppError("Invalid doctor ID format",  400));
+      const rawPid = Array.isArray(req.body.patientId)
+        ? req.body.patientId[0]
+        : req.body.patientId;
+      const rawDid = Array.isArray(req.body.doctorId)
+        ? req.body.doctorId[0]
+        : req.body.doctorId;
+      const UUID_RE =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      const patientId =
+        rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
+      const doctorId =
+        rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
+      if (rawPid && !patientId)
+        return next(new AppError("Invalid patient ID format", 400));
+      if (rawDid && !doctorId)
+        return next(new AppError("Invalid doctor ID format", 400));
       if (patientId) {
         result = await appointmentService.getPatientAppointmentsCursor(
           patientId,
-          filters
+          filters,
         );
       } else if (doctorId) {
         result = await appointmentService.getDoctorAppointmentsCursor(
           doctorId,
-          filters
+          filters,
         );
       } else {
         // No filters - get all appointments (admin only)
@@ -158,16 +169,16 @@ exports.getAllAppointments = async (req, res, next) => {
     // Whitelist safe filter fields — never spread req.query directly into DB filters
     const { status, startDate, endDate, date, page, limit } = req.query;
     const filters = {};
-    if (status)    filters.status    = String(status);
+    if (status) filters.status = String(status);
     if (startDate) filters.startDate = String(startDate);
-    if (endDate)   filters.endDate   = String(endDate);
-    if (date)      filters.date      = String(date);
-    if (page)      filters.page      = parseInt(String(page), 10) || 1;
-    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
+    if (endDate) filters.endDate = String(endDate);
+    if (date) filters.date = String(date);
+    if (page) filters.page = parseInt(String(page), 10) || 1;
+    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
-    
+
     const result = await appointmentService.getAllAppointments(filters);
 
     return sendSuccess(res, req, result, "Appointments retrieved successfully");
@@ -184,16 +195,16 @@ exports.getAllAppointments = async (req, res, next) => {
 exports.getAppointments = async (req, res, next) => {
   try {
     let result;
-    
+
     // Whitelist safe filter fields — never spread req.query directly into DB filters
     const { status, startDate, endDate, date, page, limit } = req.query;
     const filters = {};
-    if (status)    filters.status    = String(status);
+    if (status) filters.status = String(status);
     if (startDate) filters.startDate = String(startDate);
-    if (endDate)   filters.endDate   = String(endDate);
-    if (date)      filters.date      = String(date);
-    if (page)      filters.page      = parseInt(String(page), 10) || 1;
-    if (limit)     filters.limit     = parseInt(String(limit), 10) || 20;
+    if (endDate) filters.endDate = String(endDate);
+    if (date) filters.date = String(date);
+    if (page) filters.page = parseInt(String(page), 10) || 1;
+    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
@@ -201,31 +212,40 @@ exports.getAppointments = async (req, res, next) => {
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointments(
         req.user.id,
-        filters
+        filters,
       );
     } else if (req.user.role === "doctor") {
       result = await appointmentService.getDoctorAppointments(
         req.user.id,
-        filters
+        filters,
       );
     } else if (req.user.role === "admin" || req.user.role === "super_admin") {
       // Admin/super_admin can view all appointments or filter by patient/doctor
-      const rawPid = Array.isArray(req.body.patientId) ? req.body.patientId[0] : req.body.patientId;
-      const rawDid = Array.isArray(req.body.doctorId)  ? req.body.doctorId[0]  : req.body.doctorId;
-      const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-      const patientId = rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
-      const doctorId  = rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
-      if (rawPid && !patientId) return next(new AppError("Invalid patient ID format", 400));
-      if (rawDid && !doctorId)  return next(new AppError("Invalid doctor ID format",  400));
+      const rawPid = Array.isArray(req.body.patientId)
+        ? req.body.patientId[0]
+        : req.body.patientId;
+      const rawDid = Array.isArray(req.body.doctorId)
+        ? req.body.doctorId[0]
+        : req.body.doctorId;
+      const UUID_RE =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      const patientId =
+        rawPid && UUID_RE.test(String(rawPid)) ? String(rawPid) : null;
+      const doctorId =
+        rawDid && UUID_RE.test(String(rawDid)) ? String(rawDid) : null;
+      if (rawPid && !patientId)
+        return next(new AppError("Invalid patient ID format", 400));
+      if (rawDid && !doctorId)
+        return next(new AppError("Invalid doctor ID format", 400));
       if (patientId) {
         result = await appointmentService.getPatientAppointments(
           patientId,
-          filters
+          filters,
         );
       } else if (doctorId) {
         result = await appointmentService.getDoctorAppointments(
           doctorId,
-          filters
+          filters,
         );
       } else {
         // No filters - get all appointments (admin only)
@@ -238,7 +258,8 @@ exports.getAppointments = async (req, res, next) => {
     let responseData = result;
     if (result && result.appointments && result.pagination) {
       const { appointments, pagination } = result;
-      const totalPages = pagination.pages || Math.ceil(pagination.total / pagination.limit);
+      const totalPages =
+        pagination.pages || Math.ceil(pagination.total / pagination.limit);
       responseData = {
         appointments,
         pagination,
@@ -248,11 +269,16 @@ exports.getAppointments = async (req, res, next) => {
         total: pagination.total,
         totalPages,
         hasNextPage: pagination.page < totalPages,
-        hasPreviousPage: pagination.page > 1
+        hasPreviousPage: pagination.page > 1,
       };
     }
 
-    return sendSuccess(res, req, responseData, "Appointments retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      responseData,
+      "Appointments retrieved successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -268,7 +294,8 @@ exports.getAppointment = async (req, res, next) => {
     const { id } = req.params;
 
     // Validate UUID format for PostgreSQL IDs
-    const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const UUID_REGEX =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (!UUID_REGEX.test(id)) {
       return next(new AppError("Invalid appointment ID format", 400));
     }
@@ -284,7 +311,12 @@ exports.getAppointment = async (req, res, next) => {
       return next(new AppError("Not authorized to view this appointment", 403));
     }
 
-    return sendSuccess(res, req, { appointment }, "Appointment retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      { appointment },
+      "Appointment retrieved successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -307,7 +339,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       req.params.id,
       status,
       req.user.id,
-      req.user.role
+      req.user.role,
     );
 
     // Invalidate all appointment-related read caches after mutation
@@ -319,14 +351,22 @@ exports.updateAppointmentStatus = async (req, res, next) => {
 
     await writeAuditLog({
       userId: req.user.id,
-      action: status === "completed" ? AUDIT_ACTIONS.APPOINTMENT_COMPLETE : AUDIT_ACTIONS.APPOINTMENT_UPDATE,
+      action:
+        status === "completed"
+          ? AUDIT_ACTIONS.APPOINTMENT_COMPLETE
+          : AUDIT_ACTIONS.APPOINTMENT_UPDATE,
       entityType: "appointment",
       entityId: req.params.id,
       newValues: { status },
       req,
     });
 
-    return sendSuccess(res, req, { appointment }, "Appointment status updated successfully");
+    return sendSuccess(
+      res,
+      req,
+      { appointment },
+      "Appointment status updated successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -339,7 +379,8 @@ exports.updateAppointmentStatus = async (req, res, next) => {
  */
 exports.cancelAppointment = async (req, res, next) => {
   try {
-    const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const UUID_REGEX =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (!UUID_REGEX.test(req.params.id)) {
       return next(new AppError("Invalid appointment ID format", 400));
     }
@@ -349,7 +390,7 @@ exports.cancelAppointment = async (req, res, next) => {
       req.params.id,
       req.user.id,
       req.user.role,
-      cancelReason
+      cancelReason,
     );
 
     // Invalidate all appointment-related read caches after mutation
@@ -368,7 +409,12 @@ exports.cancelAppointment = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(res, req, { appointment }, "Appointment cancelled successfully");
+    return sendSuccess(
+      res,
+      req,
+      { appointment },
+      "Appointment cancelled successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -381,7 +427,8 @@ exports.cancelAppointment = async (req, res, next) => {
  */
 exports.updateAppointment = async (req, res, next) => {
   try {
-    const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const UUID_REGEX =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (!UUID_REGEX.test(req.params.id)) {
       return next(new AppError("Invalid appointment ID format", 400));
     }
@@ -389,7 +436,7 @@ exports.updateAppointment = async (req, res, next) => {
       req.params.id,
       req.body,
       req.user.id,
-      req.user.role
+      req.user.role,
     );
 
     // Invalidate all appointment-related read caches after mutation
@@ -399,7 +446,12 @@ exports.updateAppointment = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, { appointment }, "Appointment updated successfully");
+    return sendSuccess(
+      res,
+      req,
+      { appointment },
+      "Appointment updated successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -420,10 +472,15 @@ exports.getAvailableSlots = async (req, res, next) => {
 
     const slots = await appointmentService.getAvailableSlots(
       req.params.doctorId,
-      date
+      date,
     );
 
-    return sendSuccess(res, req, slots, "Available slots retrieved successfully");
+    return sendSuccess(
+      res,
+      req,
+      slots,
+      "Available slots retrieved successfully",
+    );
   } catch (error) {
     next(error);
   }
@@ -438,7 +495,7 @@ exports.getAppointmentStats = async (req, res, next) => {
   try {
     const statsPayload = await appointmentService.getAppointmentStats(
       req.user.id,
-      req.user.role
+      req.user.role,
     );
 
     return sendSuccess(
@@ -448,7 +505,7 @@ exports.getAppointmentStats = async (req, res, next) => {
         stats: statsPayload.statusCounts,
         dateRanges: statsPayload.dateRanges,
       },
-      "Appointment stats retrieved successfully"
+      "Appointment stats retrieved successfully",
     );
   } catch (error) {
     next(error);
@@ -469,12 +526,22 @@ exports.getPatientAppointments = async (req, res, next) => {
     const isOwnData =
       req.user.userId === patientId || req.user.id === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return sendError(res, req, "Not authorized to view these appointments", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view these appointments",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Find patient by either userId or _id (UUID format)
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    if (
+      patientId.match(
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+      )
+    ) {
       patient = await userRepository.findById(patientId);
     } else {
       // Short user ID (e.g. PAT5) lookup
@@ -486,20 +553,28 @@ exports.getPatientAppointments = async (req, res, next) => {
     }
 
     // Build filters for appointments
-    const filters = { 
+    const filters = {
       patientId: patient.id,
       sortBy: "appointmentDate",
-      sortOrder: "DESC"
+      sortOrder: "DESC",
     };
-    
+
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
     if (req.hospitalId && req.user.role !== "super_admin") {
       filters.hospitalId = req.hospitalId;
     }
-    
-    const appointments = await appointmentRepository.findByPatient(patient.id, filters);
 
-    return sendSuccess(res, req, { appointments }, "Patient appointments retrieved successfully");
+    const appointments = await appointmentRepository.findByPatient(
+      patient.id,
+      filters,
+    );
+
+    return sendSuccess(
+      res,
+      req,
+      { appointments },
+      "Patient appointments retrieved successfully",
+    );
   } catch (error) {
     next(error);
   }

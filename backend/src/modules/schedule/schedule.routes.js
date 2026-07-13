@@ -19,47 +19,47 @@ router.get(
   cache(
     300,
     (req) =>
-      `aayucare:v1:schedule:doctor:${req.params.doctorId}:hospital:${req.hospitalId || "all"}`
+      `aayucare:v1:schedule:doctor:${req.params.doctorId}:hospital:${req.hospitalId || "all"}`,
   ),
-  scheduleController.getDoctorSchedule
+  scheduleController.getDoctorSchedule,
 );
 
 router.get(
   "/:doctorId/slots",
   restrictTo("patient", "doctor", "admin", "super_admin"),
-  scheduleController.getAvailableSlots
+  scheduleController.getAvailableSlots,
 );
 
 router.put(
   "/:doctorId/weekly",
   restrictTo("doctor", "admin", "super_admin"),
   validateSchedule,
-  scheduleController.setWeeklySchedule
+  scheduleController.setWeeklySchedule,
 );
 
 router.patch(
   "/:doctorId/day/:dayOfWeek",
   restrictTo("doctor", "admin", "super_admin"),
-  scheduleController.updateDaySchedule
+  scheduleController.updateDaySchedule,
 );
 
 router.post(
   "/:doctorId/day/:dayOfWeek/slots",
   restrictTo("doctor", "admin", "super_admin"),
   validateTimeSlot,
-  scheduleController.addTimeSlot
+  scheduleController.addTimeSlot,
 );
 
 router.delete(
   "/:doctorId/day/:dayOfWeek/slots/:slotId",
   restrictTo("doctor", "admin", "super_admin"),
-  scheduleController.removeTimeSlot
+  scheduleController.removeTimeSlot,
 );
 
 router.patch(
   "/entries/:scheduleId/availability",
   restrictTo("doctor", "admin", "super_admin"),
-  scheduleController.toggleAvailability
+  scheduleController.toggleAvailability,
 );
 
 module.exports = router;

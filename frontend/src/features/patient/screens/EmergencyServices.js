@@ -169,12 +169,12 @@ const EmergencyServices = ({ navigation }) => {
                   context: "EmergencyServices.handleAmbulanceCall",
                 });
                 showError(
-                  "Failed to call ambulance. Please dial 108 manually.",
+                  "Failed to call ambulance. Please dial 108 manually."
                 );
               }
             },
           },
-        ],
+        ]
       );
     } catch (err) {
       logError(err, { context: "EmergencyServices.handleAmbulanceCall" });

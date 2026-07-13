@@ -104,11 +104,7 @@ class AuthRepository {
    * @returns {Promise<Object>} Updated session
    */
   async updateSession(sessionId, updates) {
-    const allowedFields = [
-      "ip_address",
-      "user_agent",
-      "expires_at",
-    ];
+    const allowedFields = ["ip_address", "user_agent", "expires_at"];
 
     const updateFields = [];
     const values = [];

@@ -69,7 +69,7 @@ const RoleCard = memo(
         </View>
       </LinearGradient>
     </TouchableOpacity>
-  ),
+  )
 );
 
 const BoxSelectionScreen = ({ navigation }) => {

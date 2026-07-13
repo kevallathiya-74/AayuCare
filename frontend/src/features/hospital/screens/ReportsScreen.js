@@ -84,7 +84,7 @@ const ReportsScreen = ({ navigation }) => {
 
       return rawReports.map((report, index) => {
         const recordType = String(
-          report?.recordType || report?.type || "other",
+          report?.recordType || report?.type || "other"
         ).toLowerCase();
         return {
           ...report,
@@ -106,7 +106,7 @@ const ReportsScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch]),
+    }, [refetch])
   );
 
   const availableRecordTypes = useMemo(
@@ -115,15 +115,15 @@ const ReportsScreen = ({ navigation }) => {
         new Set(
           reports
             .map((report) => report.recordType)
-            .filter((recordType) => !!recordType),
-        ),
+            .filter((recordType) => !!recordType)
+        )
       ),
-    [reports],
+    [reports]
   );
 
   const filterTypeOptions = useMemo(
     () => ["all", ...availableRecordTypes],
-    [availableRecordTypes],
+    [availableRecordTypes]
   );
 
   const filteredReports =
@@ -132,7 +132,7 @@ const ReportsScreen = ({ navigation }) => {
       : reports.filter(
           (report) =>
             (report.recordType || "").toLowerCase() ===
-            selectedRecordType.toLowerCase(),
+            selectedRecordType.toLowerCase()
         );
 
   const draftFilteredCount =
@@ -141,7 +141,7 @@ const ReportsScreen = ({ navigation }) => {
       : reports.filter(
           (report) =>
             (report.recordType || "").toLowerCase() ===
-            draftRecordType.toLowerCase(),
+            draftRecordType.toLowerCase()
         ).length;
 
   const onRefresh = useCallback(() => {
@@ -163,8 +163,10 @@ const ReportsScreen = ({ navigation }) => {
   const handleReportPress = (report) => {
     Alert.alert(
       "Report Details",
-      `Type: ${report.recordTypeLabel || "N/A"}\nPatient: ${report.patientName || "N/A"}\nDate: ${formatDate(report.createdAt)}`,
-      [{ text: "OK" }],
+      `Type: ${report.recordTypeLabel || "N/A"}\nPatient: ${
+        report.patientName || "N/A"
+      }\nDate: ${formatDate(report.createdAt)}`,
+      [{ text: "OK" }]
     );
   };
 
@@ -188,7 +190,9 @@ const ReportsScreen = ({ navigation }) => {
         style={styles.reportCard}
         onPress={() => handleReportPress(item)}
         accessibilityRole="button"
-        accessibilityLabel={`Report ${item.recordType || item.type || "Medical Record"}`}
+        accessibilityLabel={`Report ${
+          item.recordType || item.type || "Medical Record"
+        }`}
       >
         <View style={styles.reportHeader}>
           <View style={styles.iconContainer}>
@@ -216,7 +220,7 @@ const ReportsScreen = ({ navigation }) => {
         )}
       </TouchableOpacity>
     ),
-    [],
+    []
   );
 
   const renderEmptyState = () => (
@@ -227,8 +231,8 @@ const ReportsScreen = ({ navigation }) => {
         isError
           ? parseError(error)
           : selectedRecordType === "all"
-            ? "Medical reports will appear here."
-            : `No reports found for type: ${selectedRecordType}`
+          ? "Medical reports will appear here."
+          : `No reports found for type: ${selectedRecordType}`
       }
       actionLabel={isError ? "Retry" : undefined}
       onActionPress={isError ? refetch : undefined}

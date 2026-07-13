@@ -53,7 +53,7 @@ const Input = memo(
         onBlur,
         ...props
       },
-      ref,
+      ref
     ) => {
       const [isFocused, setIsFocused] = useState(false);
       const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +77,7 @@ const Input = memo(
             onFocus(e);
           }
         },
-        [onFocus],
+        [onFocus]
       );
 
       const handleBlur = useCallback(
@@ -87,7 +87,7 @@ const Input = memo(
             onBlur(e);
           }
         },
-        [onBlur],
+        [onBlur]
       );
 
       const labelStyle = {
@@ -98,10 +98,10 @@ const Input = memo(
         color: error
           ? healthColors.error.main
           : success
-            ? healthColors.success.main
-            : isFocused
-              ? healthColors.primary.main
-              : healthColors.text.tertiary,
+          ? healthColors.success.main
+          : isFocused
+          ? healthColors.primary.main
+          : healthColors.text.tertiary,
         backgroundColor: healthColors.background.primary,
         paddingHorizontal: 6,
         fontWeight: "500",
@@ -209,8 +209,8 @@ const Input = memo(
           )}
         </View>
       );
-    },
-  ),
+    }
+  )
 );
 
 const styles = StyleSheet.create({

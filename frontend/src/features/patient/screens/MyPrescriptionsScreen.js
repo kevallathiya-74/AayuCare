@@ -66,7 +66,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         {
           page: Math.floor(pageParam / PAGE_SIZE) + 1,
           limit: PAGE_SIZE,
-        },
+        }
       );
       const items = response?.data?.prescriptions || response?.data || [];
       return {
@@ -77,7 +77,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.items?.length || 0),
-        0,
+        0
       );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
@@ -88,7 +88,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
 
   const prescriptions = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.items || []),
-    [data],
+    [data]
   );
 
   const { data: hasUpcomingAppointment = false } = useQuery({
@@ -269,7 +269,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                   <Text style={styles.modalSubtitle}>
                     {formatDate(
                       selectedPrescription?.prescriptionDate ||
-                        selectedPrescription?.createdAt,
+                        selectedPrescription?.createdAt
                     )}
                   </Text>
                 </View>

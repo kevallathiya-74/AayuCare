@@ -1,49 +1,53 @@
 # 🔐 AayuCare - Login Credentials Reference Card
 
 ## Quick Access Credentials
+
 **Common Password for ALL users:** `password123`
 
 ---
 
 ## 👤 ADMIN USERS (1)
 
-| Name | Email | Phone | User ID |
-|------|-------|-------|---------|
-| Admin User | admin@gmail.com | 9000000001 | adm1 |
+| Name       | Email           | Phone      | User ID |
+| ---------- | --------------- | ---------- | ------- |
+| Admin User | admin@gmail.com | 9000000001 | adm1    |
 
 ---
 
 ## 👨‍⚕️ DOCTOR USERS (1)
 
-| Name | Specialization | Email | Phone | Fee | User ID |
-|------|----------------|-------|-------|-----|---------|
-| Dr. Doctor User | General Physician | doctor@gmail.com | 9000000002 | ₹1000 | doc1 |
+| Name            | Specialization    | Email            | Phone      | Fee   | User ID |
+| --------------- | ----------------- | ---------------- | ---------- | ----- | ------- |
+| Dr. Doctor User | General Physician | doctor@gmail.com | 9000000002 | ₹1000 | doc1    |
 
 ---
 
 ## 🩺 PATIENT USERS (1)
 
-| Name | Email | Phone | Blood Group | User ID |
-|------|-------|-------|-------------|---------|
-| Patient User | patient@gmail.com | 9000000003 | O+ | pat1 |
+| Name         | Email             | Phone      | Blood Group | User ID |
+| ------------ | ----------------- | ---------- | ----------- | ------- |
+| Patient User | patient@gmail.com | 9000000003 | O+          | pat1    |
 
 ---
 
 ## 🚀 Quick Login Examples
 
 ### Admin Login
+
 ```
 Email: admin@gmail.com
 Password: password123
 ```
 
 ### Doctor Login
+
 ```
 Email: doctor@gmail.com
 Password: password123
 ```
 
 ### Patient Login
+
 ```
 Email: patient@gmail.com
 Password: password123
@@ -102,11 +106,11 @@ npm run seed:db
 
 ## 📋 NPM Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run seed:db` | Seed sample data |
+| Command              | Description             |
+| -------------------- | ----------------------- |
+| `npm run seed:db`    | Seed sample data        |
 | `npm run setup:full` | Full setup with seeding |
-| `npm run dev` | Start backend server |
+| `npm run dev`        | Start backend server    |
 
 ---
 

@@ -22,8 +22,6 @@ import AdminSettingsScreen from "@/features/hospital/screens/AdminSettingsScreen
 
 const Tab = createBottomTabNavigator();
 
-
-
 /**
  * Inner navigator that uses the appointment context
  */

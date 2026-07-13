@@ -22,7 +22,9 @@ const initAuth = () => {
           max: 10,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 10000,
-          ...(process.env.NODE_ENV === "production" ? { ssl: { rejectUnauthorized: false } } : {})
+          ...(process.env.NODE_ENV === "production"
+            ? { ssl: { rejectUnauthorized: false } }
+            : {}),
         }
       : {
           host: process.env.POSTGRES_HOST || "localhost",
@@ -46,7 +48,7 @@ const initAuth = () => {
 
       // Map to existing PostgreSQL users table
       user: {
-        modelName: "users", 
+        modelName: "users",
         fields: {
           emailVerified: "email_verified",
           createdAt: "created_at",
@@ -114,7 +116,7 @@ const initAuth = () => {
         },
       },
 
-      // Map account table fields  
+      // Map account table fields
       account: {
         modelName: "account",
         fields: {
@@ -156,7 +158,7 @@ const initAuth = () => {
         requireOriginHeader: false,
         disableCSRFCheck: true,
         crossSubdomainCookies: {
-        enabled: false,
+          enabled: false,
         },
       },
 
@@ -174,7 +176,7 @@ const initAuth = () => {
   } catch (error) {
     logger.error("Better Auth initialization error:", {
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
     throw error;
   }

@@ -70,7 +70,7 @@ const AppointmentsScreen = ({ navigation }) => {
       { key: "no_show", label: "No Show", status: "no_show" },
       { key: "cancelled", label: "Cancelled", status: "cancelled" },
     ],
-    [],
+    []
   );
 
   const dateOptions = useMemo(
@@ -79,12 +79,12 @@ const AppointmentsScreen = ({ navigation }) => {
       { key: "today", label: "Today" },
       { key: "next_7_days", label: "Next 7 Days" },
     ],
-    [],
+    []
   );
 
   const queryFilters = useMemo(() => {
     const selectedStatus = statusOptions.find(
-      (option) => option.key === appliedFilters.status,
+      (option) => option.key === appliedFilters.status
     );
 
     const filters = {
@@ -153,7 +153,7 @@ const AppointmentsScreen = ({ navigation }) => {
         (byStatus.scheduled || 0) + (byStatus.confirmed || 0);
       const allCount = Object.values(byStatus).reduce(
         (sum, value) => sum + Number(value || 0),
-        0,
+        0
       );
 
       return {
@@ -188,7 +188,7 @@ const AppointmentsScreen = ({ navigation }) => {
         no_show: 0,
         cancelled: 0,
       },
-    [statsSnapshot?.statusCounts],
+    [statsSnapshot?.statusCounts]
   );
 
   const dateCounts = useMemo(
@@ -198,7 +198,7 @@ const AppointmentsScreen = ({ navigation }) => {
         today: 0,
         next_7_days: 0,
       },
-    [statsSnapshot?.dateCounts],
+    [statsSnapshot?.dateCounts]
   );
 
   // Use infinite query hook for admin appointments with lazy loading
@@ -218,7 +218,7 @@ const AppointmentsScreen = ({ navigation }) => {
     {
       enabled:
         !!user?.id && (user?.role === "admin" || user?.role === "receptionist"),
-    },
+    }
   );
 
   useEffect(() => {
@@ -233,19 +233,19 @@ const AppointmentsScreen = ({ navigation }) => {
   const appointments = useMemo(() => {
     if (!data?.pages) return [];
     const allAppointments = data.pages.flatMap(
-      (page) => page.appointments || [],
+      (page) => page.appointments || []
     );
 
     if (appliedFilters.sortBy === "oldest") {
       return [...allAppointments].sort(
         (a, b) =>
-          new Date(a?.appointmentDate || 0) - new Date(b?.appointmentDate || 0),
+          new Date(a?.appointmentDate || 0) - new Date(b?.appointmentDate || 0)
       );
     }
 
     return [...allAppointments].sort(
       (a, b) =>
-        new Date(b?.appointmentDate || 0) - new Date(a?.appointmentDate || 0),
+        new Date(b?.appointmentDate || 0) - new Date(a?.appointmentDate || 0)
     );
   }, [data, appliedFilters.sortBy]);
 
@@ -354,7 +354,7 @@ const AppointmentsScreen = ({ navigation }) => {
         .map((value) => String(value).toLowerCase());
 
       return searchableParts.some((value) =>
-        value.includes(debouncedSearchText),
+        value.includes(debouncedSearchText)
       );
     });
   }, [
@@ -366,7 +366,7 @@ const AppointmentsScreen = ({ navigation }) => {
 
   const previewSelectedStatus = useMemo(
     () => statusOptions.find((option) => option.key === draftFilters.status),
-    [statusOptions, draftFilters.status],
+    [statusOptions, draftFilters.status]
   );
 
   const draftFilteredCount = useMemo(() => {
@@ -375,7 +375,7 @@ const AppointmentsScreen = ({ navigation }) => {
       ? new Set(
           String(draftStatusCsv)
             .split(",")
-            .map((entry) => entry.trim().toLowerCase()),
+            .map((entry) => entry.trim().toLowerCase())
         )
       : null;
 
@@ -439,7 +439,7 @@ const AppointmentsScreen = ({ navigation }) => {
         .map((value) => String(value).toLowerCase());
 
       return searchableParts.some((value) =>
-        value.includes(debouncedSearchText),
+        value.includes(debouncedSearchText)
       );
     }).length;
   }, [
@@ -456,7 +456,7 @@ const AppointmentsScreen = ({ navigation }) => {
       refetch();
       refreshCount();
       refetchStats();
-    }, [refetch, refreshCount, refetchStats]),
+    }, [refetch, refreshCount, refetchStats])
   );
 
   // Handle pull to refresh
@@ -517,7 +517,7 @@ const AppointmentsScreen = ({ navigation }) => {
           : null,
       ]
         .filter(Boolean)
-        .join("\n"),
+        .join("\n")
     );
   }, []);
 
@@ -550,7 +550,7 @@ const AppointmentsScreen = ({ navigation }) => {
               {
                 backgroundColor: theme.withOpacity(
                   getStatusColor(item.status),
-                  0.12,
+                  0.12
                 ),
               },
             ]}
@@ -572,7 +572,7 @@ const AppointmentsScreen = ({ navigation }) => {
         )}
       </TouchableOpacity>
     ),
-    [handleAppointmentPress],
+    [handleAppointmentPress]
   );
 
   const renderEmptyState = () => {
@@ -769,7 +769,7 @@ const AppointmentsScreen = ({ navigation }) => {
                   .split("-")
                   .map(
                     (segment) =>
-                      segment.charAt(0).toUpperCase() + segment.slice(1),
+                      segment.charAt(0).toUpperCase() + segment.slice(1)
                   )
                   .join(" ")
           }

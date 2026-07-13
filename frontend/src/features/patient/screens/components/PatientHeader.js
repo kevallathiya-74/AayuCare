@@ -18,7 +18,7 @@ import { theme, healthColors } from "@/theme";
 import LanguageSelector from "@/components/common/LanguageSelector";
 import { calculateAge } from "@/utils/dateHelpers";
 import { DynamicIcon } from "@/components/common";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 
 const PatientHeader = ({
   user,
@@ -30,19 +30,18 @@ const PatientHeader = ({
   onNotificationPress,
   onProfilePress,
 }) => {
-  const insets = useSafeAreaInsets();
-  
-  // The parent SafeAreaView may already apply the top inset. 
-  // We use Math.max to ensure at least 12px padding. If parent applies top inset, 
-  // we don't strictly need to add insets.top, but passing it dynamically allows 
+
+  // The parent SafeAreaView may already apply the top inset.
+  // We use Math.max to ensure at least 12px padding. If parent applies top inset,
+  // we don't strictly need to add insets.top, but passing it dynamically allows
   // the component to adapt if used without a top-padded SafeAreaView.
   // Actually, since we know parent applies it, we'll just use a small top padding,
   // or use insets.top if the parent is ignoring it. We'll use a dynamic style.
-  
+
   return (
     <LinearGradient
       colors={[healthColors.primary.main, healthColors.primary.dark]}
-      style={[styles.container, { paddingTop: 12 }]}
+      style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >

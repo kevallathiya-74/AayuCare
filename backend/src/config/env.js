@@ -1,13 +1,18 @@
 const MIN_JWT_SECRET_LENGTH = 64;
 
 const normalizeNodeEnv = () => {
-  const raw = String(process.env.NODE_ENV || "").trim().toLowerCase();
+  const raw = String(process.env.NODE_ENV || "")
+    .trim()
+    .toLowerCase();
   if (raw === "production" || raw === "development" || raw === "test") {
     return raw;
   }
 
   const runningOnCloud = Boolean(
-    process.env.RENDER || process.env.VERCEL || process.env.RAILWAY_ENVIRONMENT || process.env.K_SERVICE
+    process.env.RENDER ||
+    process.env.VERCEL ||
+    process.env.RAILWAY_ENVIRONMENT ||
+    process.env.K_SERVICE,
   );
 
   return runningOnCloud ? "production" : "development";
@@ -53,19 +58,31 @@ const APP_ENV = {
   rateLimit: {
     auth: {
       max: toNumber(process.env.RATE_LIMIT_AUTH_MAX, isProduction ? 10 : 50),
-      windowSeconds: toNumber(process.env.RATE_LIMIT_AUTH_WINDOW_SECONDS, 15 * 60),
+      windowSeconds: toNumber(
+        process.env.RATE_LIMIT_AUTH_WINDOW_SECONDS,
+        15 * 60,
+      ),
     },
     read: {
       max: toNumber(process.env.RATE_LIMIT_READ_MAX, isProduction ? 200 : 1000),
-      windowSeconds: toNumber(process.env.RATE_LIMIT_READ_WINDOW_SECONDS, 15 * 60),
+      windowSeconds: toNumber(
+        process.env.RATE_LIMIT_READ_WINDOW_SECONDS,
+        15 * 60,
+      ),
     },
     write: {
       max: toNumber(process.env.RATE_LIMIT_WRITE_MAX, isProduction ? 50 : 300),
-      windowSeconds: toNumber(process.env.RATE_LIMIT_WRITE_WINDOW_SECONDS, 15 * 60),
+      windowSeconds: toNumber(
+        process.env.RATE_LIMIT_WRITE_WINDOW_SECONDS,
+        15 * 60,
+      ),
     },
     ai: {
       max: toNumber(process.env.RATE_LIMIT_AI_MAX, isProduction ? 20 : 80),
-      windowSeconds: toNumber(process.env.RATE_LIMIT_AI_WINDOW_SECONDS, 60 * 60),
+      windowSeconds: toNumber(
+        process.env.RATE_LIMIT_AI_WINDOW_SECONDS,
+        60 * 60,
+      ),
     },
   },
   jwtSecretMinLength: MIN_JWT_SECRET_LENGTH,

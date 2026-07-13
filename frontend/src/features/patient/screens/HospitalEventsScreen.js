@@ -90,7 +90,7 @@ const HospitalEventsScreen = ({ navigation }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.items?.length || 0),
-        0,
+        0
       );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
@@ -115,7 +115,7 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   const events = useMemo(
     () => (data?.pages || []).flatMap((page) => page?.items || []),
-    [data],
+    [data]
   );
 
   const onRefresh = useCallback(async () => {
@@ -152,7 +152,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 setRegisteredEventIds((prev) => new Set([...prev, event.id]));
                 Alert.alert(
                   "Success",
-                  `Successfully registered for "${event.title}"!`,
+                  `Successfully registered for "${event.title}"!`
                 );
                 await refetch();
               } catch (err) {
@@ -167,10 +167,10 @@ const HospitalEventsScreen = ({ navigation }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [registerMutation, refetch],
+    [registerMutation, refetch]
   );
 
   const handleCancelRegistration = useCallback(
@@ -194,7 +194,7 @@ const HospitalEventsScreen = ({ navigation }) => {
                 });
                 Alert.alert(
                   "Done",
-                  `Registration cancelled for "${event.title}".`,
+                  `Registration cancelled for "${event.title}".`
                 );
                 await refetch();
               } catch (err) {
@@ -209,10 +209,10 @@ const HospitalEventsScreen = ({ navigation }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [cancelMutation, refetch],
+    [cancelMutation, refetch]
   );
 
   const getEventIcon = (type) => {
@@ -241,26 +241,26 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   const normalizeEventStatus = useCallback((event) => {
     const rawStatus = String(
-      event?.status || event?.eventStatus || "",
+      event?.status || event?.eventStatus || ""
     ).toLowerCase();
 
     if (
       ["upcoming", "scheduled", "planned", "open", "published"].includes(
-        rawStatus,
+        rawStatus
       )
     ) {
       return "upcoming";
     }
     if (
       ["ongoing", "in_progress", "live", "running", "active"].includes(
-        rawStatus,
+        rawStatus
       )
     ) {
       return "ongoing";
     }
     if (
       ["completed", "closed", "cancelled", "canceled", "ended"].includes(
-        rawStatus,
+        rawStatus
       )
     ) {
       return "completed";
@@ -288,7 +288,7 @@ const HospitalEventsScreen = ({ navigation }) => {
         ...event,
         _uiStatus: normalizeEventStatus(event),
       })),
-    [events, normalizeEventStatus],
+    [events, normalizeEventStatus]
   );
 
   const filteredEvents = normalizedEvents.filter((event) => {
@@ -298,10 +298,10 @@ const HospitalEventsScreen = ({ navigation }) => {
 
   const filterOptions = useMemo(() => {
     const upcomingCount = normalizedEvents.filter(
-      (event) => event._uiStatus === "upcoming",
+      (event) => event._uiStatus === "upcoming"
     ).length;
     const ongoingCount = normalizedEvents.filter(
-      (event) => event._uiStatus === "ongoing",
+      (event) => event._uiStatus === "ongoing"
     ).length;
 
     return [
@@ -397,7 +397,19 @@ const HospitalEventsScreen = ({ navigation }) => {
             onPress={() =>
               Alert.alert(
                 "Event Details",
-                `${event.title}\n\nType: ${event.type || "General"}\nDate: ${formattedDate}\nTime: ${convertTo12Hour(event.startTime)} - ${convertTo12Hour(event.endTime)}\nVenue: ${event.venue || "TBD"}\nOrganizer: ${event.organizer || "Hospital Admin"}\nAvailable Spots: ${spotsRemaining > 0 ? spotsRemaining : 0}\n\n${event.description || "No additional description available."}`,
+                `${event.title}\n\nType: ${
+                  event.type || "General"
+                }\nDate: ${formattedDate}\nTime: ${convertTo12Hour(
+                  event.startTime
+                )} - ${convertTo12Hour(event.endTime)}\nVenue: ${
+                  event.venue || "TBD"
+                }\nOrganizer: ${
+                  event.organizer || "Hospital Admin"
+                }\nAvailable Spots: ${
+                  spotsRemaining > 0 ? spotsRemaining : 0
+                }\n\n${
+                  event.description || "No additional description available."
+                }`
               )
             }
             accessibilityRole="button"
@@ -547,7 +559,7 @@ const HospitalEventsScreen = ({ navigation }) => {
           onPress={() =>
             handleSmartBack(
               navigation,
-              user?.role === "admin" ? "AdminTabs" : "PatientTabs",
+              user?.role === "admin" ? "AdminTabs" : "PatientTabs"
             )
           }
           activeOpacity={0.7}

@@ -17,7 +17,7 @@ export const fetchHealthMetrics = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch health metrics");
     }
-  },
+  }
 );
 
 // Initial state

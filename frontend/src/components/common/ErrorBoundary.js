@@ -38,7 +38,7 @@ class ErrorBoundary extends React.Component {
     } catch (sentryError) {
       console.warn(
         "[ErrorBoundary] Sentry capture failed:",
-        sentryError.message,
+        sentryError.message
       );
     }
   }

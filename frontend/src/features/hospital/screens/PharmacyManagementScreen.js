@@ -90,7 +90,9 @@ const getSearchableText = (item) => {
         .join(" ")
     : "";
 
-  return `${item.patientName || ""} ${item.doctorName || ""} ${medicineNames}`.toLowerCase();
+  return `${item.patientName || ""} ${
+    item.doctorName || ""
+  } ${medicineNames}`.toLowerCase();
 };
 
 const StatusChip = ({ label, count, isActive, onPress }) => {
@@ -145,7 +147,7 @@ const OrderCard = ({ order }) => {
           </Text>
           <Text style={styles.orderCreatedTime}>
             {formatDate(
-              order.createdAt || order.prescriptionDate || new Date(),
+              order.createdAt || order.prescriptionDate || new Date()
             )}
           </Text>
         </View>
@@ -197,7 +199,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch]),
+    }, [refetch])
   );
 
   const onRefresh = useCallback(() => {
@@ -384,7 +386,10 @@ const PharmacyManagementScreen = ({ navigation }) => {
             title={
               selectedFilter === "all"
                 ? EmptyStateConfig.PHARMACY.title
-                : `No ${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Orders`
+                : `No ${
+                    selectedFilter.charAt(0).toUpperCase() +
+                    selectedFilter.slice(1)
+                  } Orders`
             }
             message={
               selectedFilter === "all"

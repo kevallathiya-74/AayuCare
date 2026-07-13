@@ -51,7 +51,7 @@ const SettingsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const userRole = useSelector((state) => state.auth?.user?.role);
   const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {},
+    (state) => state.permissions?.notification || {}
   );
   const notificationsEnabled =
     !!notificationPermission.granted &&
@@ -142,7 +142,7 @@ const SettingsScreen = ({ navigation }) => {
                 });
               },
             },
-          ],
+          ]
         );
       }
     } catch (err) {
@@ -218,7 +218,7 @@ const SettingsScreen = ({ navigation }) => {
                 onPress: () => openURL("https://aayucare.in/privacy-policy"),
               },
               { text: "OK", style: "default" },
-            ],
+            ]
           );
         }
       },
@@ -237,7 +237,7 @@ const SettingsScreen = ({ navigation }) => {
         Alert.alert(
           "About AayuCare",
           "AayuCare – Your Complete Health Management Platform\n\nVersion: 1.0.0\nPlatform: Android & iOS\n\nAayuCare connects patients, doctors, and hospitals in one seamless ecosystem for better, safer healthcare.",
-          [{ text: "OK" }],
+          [{ text: "OK" }]
         ),
     },
     {
@@ -263,7 +263,7 @@ const SettingsScreen = ({ navigation }) => {
       rightIcon: { name: "chevron-forward" },
       onPress: () =>
         openURL(
-          "https://play.google.com/store/apps/details?id=in.aayucare.app",
+          "https://play.google.com/store/apps/details?id=in.aayucare.app"
         ),
     },
   ];
@@ -344,7 +344,7 @@ const SettingsScreen = ({ navigation }) => {
                 {renderSwitch(
                   appointmentReminders,
                   setAppointmentReminders,
-                  "appointmentReminders",
+                  "appointmentReminders"
                 )}
               </View>
 
@@ -360,7 +360,7 @@ const SettingsScreen = ({ navigation }) => {
                 {renderSwitch(
                   medicationReminders,
                   setMedicationReminders,
-                  "medicationReminders",
+                  "medicationReminders"
                 )}
               </View>
 

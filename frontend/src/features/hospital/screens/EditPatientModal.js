@@ -81,7 +81,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
 
       throw new Error(
         response?.message ||
-          "Failed to update patient profile. Please try again.",
+          "Failed to update patient profile. Please try again."
       );
     },
   });
@@ -332,7 +332,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     placeholder,
     icon,
     keyboardType = "default",
-    multiline = false,
+    multiline = false
   ) => (
     <View style={styles.inputContainer}>
       <Input
@@ -404,7 +404,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
     selectedValue,
     onSelect,
     visible,
-    onClose,
+    onClose
   ) => (
     <Modal
       statusBarTranslucent
@@ -500,14 +500,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Email Address *",
               "patient@example.com",
               "mail",
-              "email-address",
+              "email-address"
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+911234567890",
               "call",
-              "phone-pad",
+              "phone-pad"
             )}
             {/* Date of Birth Picker */}
             <View style={styles.inputContainer}>
@@ -552,14 +552,14 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Gender",
               "person-outline",
               GENDERS,
-              setShowGenderPicker,
+              setShowGenderPicker
             )}
             {renderPicker(
               "bloodGroup",
               "Blood Group",
               "water",
               BLOOD_GROUPS,
-              setShowBloodGroupPicker,
+              setShowBloodGroupPicker
             )}
             {renderInput(
               "address",
@@ -567,40 +567,40 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "Full address",
               "location",
               "default",
-              true,
+              true
             )}
             {renderInput(
               "emergencyContactName",
               "Emergency Contact Name",
               "Contact person name",
-              "person-add",
+              "person-add"
             )}
             {renderInput(
               "emergencyContactPhone",
               "Emergency Contact Phone",
               "+911234567890",
               "call",
-              "phone-pad",
+              "phone-pad"
             )}
             {renderInput(
               "emergencyContactRelation",
               "Emergency Contact Relation",
               "e.g. Father, Spouse, Friend",
-              "people",
+              "people"
             )}
             {renderInput(
               "allergies",
               "Allergies",
               "e.g. Penicillin, Pollen",
               "warning",
-              "default",
+              "default"
             )}
             {renderInput(
               "chronicConditions",
               "Chronic Conditions",
               "e.g. Diabetes, Hypertension",
               "medkit",
-              "default",
+              "default"
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>
@@ -639,7 +639,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           setShowGenderPicker(false);
         },
         showGenderPicker,
-        () => setShowGenderPicker(false),
+        () => setShowGenderPicker(false)
       )}
 
       {renderPickerModal(
@@ -651,7 +651,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
           setShowBloodGroupPicker(false);
         },
         showBloodGroupPicker,
-        () => setShowBloodGroupPicker(false),
+        () => setShowBloodGroupPicker(false)
       )}
 
       {/* Date Picker */}

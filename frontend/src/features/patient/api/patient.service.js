@@ -22,7 +22,7 @@ class PatientService {
           useCache: options?.forceFresh !== true,
           skipCache: options?.forceFresh === true,
           cacheTTL: options?.cacheTTL ?? 20000,
-        },
+        }
       );
       return normalizeServiceResponse(response.data, { fallbackData: [] });
     } catch (error) {
@@ -39,7 +39,7 @@ class PatientService {
   async searchPatients(query) {
     try {
       const response = await api.get(
-        `/patients/search?q=${encodeURIComponent(query)}`,
+        `/patients/search?q=${encodeURIComponent(query)}`
       );
       return normalizeServiceResponse(response.data, { fallbackData: [] });
     } catch (error) {
@@ -104,7 +104,7 @@ class PatientService {
     try {
       const response = await api.patch(
         `/patients/${patientId}/profile`,
-        updates,
+        updates
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {

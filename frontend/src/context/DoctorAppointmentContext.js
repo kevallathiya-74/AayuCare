@@ -44,8 +44,8 @@ export const DoctorAppointmentProvider = ({ children }) => {
           (Array.isArray(appointmentsData?.appointments)
             ? appointmentsData.appointments.length
             : Array.isArray(appointmentsData)
-              ? appointmentsData.length
-              : 0);
+            ? appointmentsData.length
+            : 0);
         setTodayCount(count);
       }
     } catch (error) {
@@ -93,7 +93,7 @@ export const useDoctorAppointments = () => {
   const context = useContext(DoctorAppointmentContext);
   if (!context) {
     throw new Error(
-      "useDoctorAppointments must be used within DoctorAppointmentProvider",
+      "useDoctorAppointments must be used within DoctorAppointmentProvider"
     );
   }
   return context;

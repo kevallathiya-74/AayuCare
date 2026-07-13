@@ -9,11 +9,14 @@
 export const getLatestMetric = (metrics, type) => {
   if (!metrics || !Array.isArray(metrics) || !metrics.length) return null;
 
-  const filtered = metrics.filter((m) => m.type === type && m.timestamp && !isNaN(new Date(m.timestamp).getTime()));
+  const filtered = metrics.filter(
+    (m) =>
+      m.type === type && m.timestamp && !isNaN(new Date(m.timestamp).getTime())
+  );
 
   if (!filtered.length) return null;
   return [...filtered].sort(
-    (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
   )[0];
 };
 
@@ -28,7 +31,6 @@ export const computeHealthStatus = (metrics) => {
 
   const bp = getLatestMetric(safeMetrics, "bp");
   const sugar = getLatestMetric(safeMetrics, "sugar");
-
 
   if (!bp && !sugar) {
     return { status: "UNKNOWN", riskScore: "N/A" };
@@ -60,35 +62,38 @@ const getTimePeriod = (h) => {
   return "night";
 };
 
-
 /**
  * Formats time-based greeting for UI headers.
  */
 export const getTimeBasedGreeting = () => {
-
   const period = getTimePeriod(new Date().getHours());
   switch (period) {
-    case "morning": return "Good Morning";
-    case "afternoon": return "Good Afternoon";
-    case "evening": return "Good Evening";
-    default: return "Good Night";
+    case "morning":
+      return "Good Morning";
+    case "afternoon":
+      return "Good Afternoon";
+    case "evening":
+      return "Good Evening";
+    default:
+      return "Good Night";
   }
-
 };
 
 /**
  * Formats time-based greeting icon name for UI headers.
  */
 export const getGreetingIcon = () => {
-
   const period = getTimePeriod(new Date().getHours());
   switch (period) {
-    case "morning": return "sunny";
-    case "afternoon": return "partly-sunny";
-    case "evening": return "moon";
-    default: return "moon-outline";
+    case "morning":
+      return "sunny";
+    case "afternoon":
+      return "partly-sunny";
+    case "evening":
+      return "moon";
+    default:
+      return "moon-outline";
   }
-
 };
 
 /**

@@ -162,23 +162,25 @@ class UserRepository {
     logger.info("[USER_UPDATE] Executing SQL update", {
       id,
       updates,
-      values: values.map((v, i) => i === values.indexOf(updates.password_hash) ? '***' : v)
+      values: values.map((v, i) =>
+        i === values.indexOf(updates.password_hash) ? "***" : v,
+      ),
     });
 
     const result = await query(sql, values);
-    
+
     if (!result.rows || result.rows.length === 0) {
       logger.error("[USER_UPDATE] No rows returned after update", { id });
       throw new AppError("User not found or update failed", 404);
     }
-    
+
     logger.info("[USER_UPDATE] SQL update successful", {
       id,
-      updates
+      updates,
     });
-    
+
     const row = result.rows[0];
-    
+
     // Map snake_case PostgreSQL fields to camelCase for frontend
     return {
       id: row.id,
@@ -193,7 +195,7 @@ class UserRepository {
       emailVerified: row.email_verified,
       phoneVerified: row.phone_verified,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
@@ -222,11 +224,14 @@ class UserRepository {
   async getNextUserId(role) {
     // Map role → { sequence name, prefix }. Default to admin for safety.
     const roleMap = {
-      patient:     { seq: "user_id_pat_seq",  prefix: "PAT"  },
-      doctor:      { seq: "user_id_doc_seq",  prefix: "DOC"  },
+      patient: { seq: "user_id_pat_seq", prefix: "PAT" },
+      doctor: { seq: "user_id_doc_seq", prefix: "DOC" },
       super_admin: { seq: "user_id_sadm_seq", prefix: "SADM" },
     };
-    const { seq, prefix } = roleMap[role] || { seq: "user_id_adm_seq", prefix: "ADM" };
+    const { seq, prefix } = roleMap[role] || {
+      seq: "user_id_adm_seq",
+      prefix: "ADM",
+    };
 
     // nextval() is atomic; concurrent callers receive distinct values.
     const result = await query(`SELECT nextval($1) AS n`, [seq]);
@@ -306,9 +311,14 @@ class UserRepository {
    * - Optional search across name, email, phone, user_id (case-insensitive)
    * Uses parameterized queries to prevent SQL injection.
    */
-  async findPatientsByHospital(hospitalId, limit = 20, offset = 0, searchTerm = '') {
+  async findPatientsByHospital(
+    hospitalId,
+    limit = 20,
+    offset = 0,
+    searchTerm = "",
+  ) {
     // Build WHERE clause with search conditions (includes inactive users)
-    let whereConditions = 'u.hospital_id = $1 AND u.role = \'patient\'';
+    let whereConditions = "u.hospital_id = $1 AND u.role = 'patient'";
     const params = [hospitalId];
     let paramIndex = 2;
 
@@ -344,7 +354,7 @@ class UserRepository {
     ]);
 
     // Map snake_case PostgreSQL fields to camelCase for frontend
-    const mappedData = dataResult.rows.map(row => ({
+    const mappedData = dataResult.rows.map((row) => ({
       id: row.id,
       userId: row.user_id,
       name: row.name,
@@ -359,7 +369,7 @@ class UserRepository {
       emergencyContactName: row.emergency_contact_name,
       emergencyContactPhone: row.emergency_contact_phone,
       allergies: row.allergies,
-      chronicConditions: row.chronic_conditions
+      chronicConditions: row.chronic_conditions,
     }));
 
     const total = parseInt(countResult.rows[0].count, 10);
@@ -369,7 +379,7 @@ class UserRepository {
       data: mappedData,
       total,
       page,
-      limit
+      limit,
     };
   }
 
@@ -386,7 +396,13 @@ class UserRepository {
    * @param {string} searchTerm - Optional text filter (name, email, phone, user_id)
    * @returns {Promise<{data: Array, total: number, page: number, limit: number}>}
    */
-  async findPatientsByDoctor(doctorId, hospitalId, limit = 20, offset = 0, searchTerm = '') {
+  async findPatientsByDoctor(
+    doctorId,
+    hospitalId,
+    limit = 20,
+    offset = 0,
+    searchTerm = "",
+  ) {
     // Filter by hospital + role + doctor-specific appointment link.
     let whereConditions = `u.hospital_id = $1 AND u.role = 'patient' AND a.doctor_id = $2`;
     const params = [hospitalId, doctorId];
@@ -432,7 +448,7 @@ class UserRepository {
       query(countSql, params),
     ]);
 
-    const mappedData = dataResult.rows.map(row => ({
+    const mappedData = dataResult.rows.map((row) => ({
       id: row.id,
       userId: row.user_id,
       name: row.name,

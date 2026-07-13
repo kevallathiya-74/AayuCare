@@ -106,7 +106,7 @@ class AppointmentRepository {
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean);
-      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
+      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(", ")})`;
       params.push(...statusArray);
       paramCount += statusArray.length;
     }
@@ -182,7 +182,7 @@ class AppointmentRepository {
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean);
-      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
+      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(", ")})`;
       params.push(...statusArray);
       paramCount += statusArray.length;
     }
@@ -277,7 +277,7 @@ class AppointmentRepository {
             .split(",")
             .map((s) => s.trim())
             .filter(Boolean);
-      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(', ')})`;
+      sql += ` AND a.status IN (${statusArray.map((_, i) => `$${paramCount + i}`).join(", ")})`;
       params.push(...statusArray);
       paramCount += statusArray.length;
     }
@@ -368,7 +368,7 @@ class AppointmentRepository {
     appointmentDate,
     appointmentTime,
     hospitalId,
-    excludeAppointmentId = null
+    excludeAppointmentId = null,
   ) {
     let sql = `
             SELECT 1 FROM appointments
@@ -404,8 +404,12 @@ class AppointmentRepository {
       options && typeof options === "object" && !Array.isArray(options)
         ? options
         : { hospitalId: options || null };
-    const { hospitalId = null, status = null, startDate = null, endDate = null } =
-      parsedOptions;
+    const {
+      hospitalId = null,
+      status = null,
+      startDate = null,
+      endDate = null,
+    } = parsedOptions;
 
     let sql = `
             SELECT status, COUNT(*) as count
@@ -471,7 +475,7 @@ class AppointmentRepository {
       ...statusCounts,
       total: Object.values(statusCounts).reduce(
         (sum, count) => sum + Number(count || 0),
-        0
+        0,
       ),
     };
   }
@@ -533,7 +537,7 @@ class AppointmentRepository {
    *   3. Use UPDATE instead of DELETE: UPDATE appointments SET deleted_at = NOW(), deleted_by = $1 WHERE id = $2
    *   4. Filter out soft-deleted records in queries: WHERE deleted_at IS NULL
    *   5. Benefits: Audit trail, data recovery, compliance with data retention policies
-   * 
+   *
    * @param {string} id - Appointment UUID
    * @returns {Promise<boolean>} Success status
    */
@@ -561,7 +565,12 @@ class AppointmentRepository {
   /**
    * Count appointments for a doctor at a specific date + time (walk-in slot conflict check)
    */
-  async countByDoctorAtTime(doctorId, hospitalId, appointmentDate, appointmentTime) {
+  async countByDoctorAtTime(
+    doctorId,
+    hospitalId,
+    appointmentDate,
+    appointmentTime,
+  ) {
     const sql = `
       SELECT COUNT(*) AS count
       FROM appointments
@@ -571,7 +580,12 @@ class AppointmentRepository {
         AND appointment_time = $4
         AND status NOT IN ('cancelled', 'completed')
     `;
-    const result = await query(sql, [doctorId, hospitalId, appointmentDate, appointmentTime]);
+    const result = await query(sql, [
+      doctorId,
+      hospitalId,
+      appointmentDate,
+      appointmentTime,
+    ]);
     return Number(result.rows[0]?.count || 0);
   }
 
@@ -579,20 +593,42 @@ class AppointmentRepository {
    * Count all appointments matching admin-level filters
    */
   async countAll(filters = {}) {
-    const { hospitalId, patientId, doctorId, status, startDate, endDate } = filters;
+    const { hospitalId, patientId, doctorId, status, startDate, endDate } =
+      filters;
     let sql = `SELECT COUNT(*) AS count FROM appointments a WHERE 1=1`;
     const params = [];
     let p = 1;
-    if (hospitalId) { sql += ` AND a.hospital_id = $${p++}`; params.push(hospitalId); }
-    if (patientId) { sql += ` AND a.patient_id = $${p++}`; params.push(patientId); }
-    if (doctorId) { sql += ` AND a.doctor_id = $${p++}`; params.push(doctorId); }
-    if (status) {
-      const sa = Array.isArray(status) ? status : String(status).split(',').map(s => s.trim()).filter(Boolean);
-      sql += ` AND a.status IN (${sa.map((_, i) => `$${p + i}`).join(', ')})`;
-      params.push(...sa); p += sa.length;
+    if (hospitalId) {
+      sql += ` AND a.hospital_id = $${p++}`;
+      params.push(hospitalId);
     }
-    if (startDate) { sql += ` AND a.appointment_date >= $${p++}`; params.push(startDate); }
-    if (endDate)   { sql += ` AND a.appointment_date <= $${p++}`; params.push(endDate); }
+    if (patientId) {
+      sql += ` AND a.patient_id = $${p++}`;
+      params.push(patientId);
+    }
+    if (doctorId) {
+      sql += ` AND a.doctor_id = $${p++}`;
+      params.push(doctorId);
+    }
+    if (status) {
+      const sa = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+      sql += ` AND a.status IN (${sa.map((_, i) => `$${p + i}`).join(", ")})`;
+      params.push(...sa);
+      p += sa.length;
+    }
+    if (startDate) {
+      sql += ` AND a.appointment_date >= $${p++}`;
+      params.push(startDate);
+    }
+    if (endDate) {
+      sql += ` AND a.appointment_date <= $${p++}`;
+      params.push(endDate);
+    }
     const result = await query(sql, params);
     return Number(result.rows[0]?.count || 0);
   }
@@ -606,14 +642,32 @@ class AppointmentRepository {
     const params = [patientId];
     let p = 2;
     if (status) {
-      const sa = Array.isArray(status) ? status : String(status).split(',').map(s => s.trim()).filter(Boolean);
-      sql += ` AND a.status IN (${sa.map((_, i) => `$${p + i}`).join(', ')})`;
-      params.push(...sa); p += sa.length;
+      const sa = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+      sql += ` AND a.status IN (${sa.map((_, i) => `$${p + i}`).join(", ")})`;
+      params.push(...sa);
+      p += sa.length;
     }
-    if (doctorId)   { sql += ` AND a.doctor_id = $${p++}`; params.push(doctorId); }
-    if (hospitalId) { sql += ` AND a.hospital_id = $${p++}`; params.push(hospitalId); }
-    if (startDate)  { sql += ` AND a.appointment_date >= $${p++}`; params.push(startDate); }
-    if (endDate)    { sql += ` AND a.appointment_date <= $${p++}`; params.push(endDate); }
+    if (doctorId) {
+      sql += ` AND a.doctor_id = $${p++}`;
+      params.push(doctorId);
+    }
+    if (hospitalId) {
+      sql += ` AND a.hospital_id = $${p++}`;
+      params.push(hospitalId);
+    }
+    if (startDate) {
+      sql += ` AND a.appointment_date >= $${p++}`;
+      params.push(startDate);
+    }
+    if (endDate) {
+      sql += ` AND a.appointment_date <= $${p++}`;
+      params.push(endDate);
+    }
     const result = await query(sql, params);
     return Number(result.rows[0]?.count || 0);
   }
@@ -627,14 +681,32 @@ class AppointmentRepository {
     const params = [doctorId];
     let p = 2;
     if (status) {
-      const sa = Array.isArray(status) ? status : String(status).split(',').map(s => s.trim()).filter(Boolean);
-      sql += ` AND a.status IN (${sa.map((_, i) => `$${p + i}`).join(', ')})`;
-      params.push(...sa); p += sa.length;
+      const sa = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+      sql += ` AND a.status IN (${sa.map((_, i) => `$${p + i}`).join(", ")})`;
+      params.push(...sa);
+      p += sa.length;
     }
-    if (patientId)  { sql += ` AND a.patient_id = $${p++}`; params.push(patientId); }
-    if (hospitalId) { sql += ` AND a.hospital_id = $${p++}`; params.push(hospitalId); }
-    if (startDate)  { sql += ` AND a.appointment_date >= $${p++}`; params.push(startDate); }
-    if (endDate)    { sql += ` AND a.appointment_date <= $${p++}`; params.push(endDate); }
+    if (patientId) {
+      sql += ` AND a.patient_id = $${p++}`;
+      params.push(patientId);
+    }
+    if (hospitalId) {
+      sql += ` AND a.hospital_id = $${p++}`;
+      params.push(hospitalId);
+    }
+    if (startDate) {
+      sql += ` AND a.appointment_date >= $${p++}`;
+      params.push(startDate);
+    }
+    if (endDate) {
+      sql += ` AND a.appointment_date <= $${p++}`;
+      params.push(endDate);
+    }
     const result = await query(sql, params);
     return Number(result.rows[0]?.count || 0);
   }

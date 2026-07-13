@@ -235,7 +235,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
               onPress={() =>
                 Alert.alert(
                   "Privacy Policy",
-                  "AayuCare protects your health data with encryption in transit and at rest. We use your data only for care, appointments, and platform operations, and we never sell personal medical data. You can request account-data review through support@aayucare.com.",
+                  "AayuCare protects your health data with encryption in transit and at rest. We use your data only for care, appointments, and platform operations, and we never sell personal medical data. You can request account-data review through support@aayucare.com."
                 )
               }
             />

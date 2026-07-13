@@ -14,55 +14,60 @@ router.get(
   "/",
   authorize("admin"),
   cacheMiddleware(60),
-  medicalRecordController.getAllMedicalRecords
+  medicalRecordController.getAllMedicalRecords,
 );
 
 router.post(
   "/",
   authorize("doctor", "admin"),
   validateBody(createMedicalRecordSchema),
-  medicalRecordController.createMedicalRecord
+  medicalRecordController.createMedicalRecord,
 );
 
 router.get(
   "/patient/:patientId",
   authorize("patient", "doctor", "admin"),
   cacheMiddleware(120),
-  medicalRecordController.getPatientMedicalRecords
+  medicalRecordController.getPatientMedicalRecords,
 );
 
 router.get(
   "/history/:patientId",
   authorize("doctor", "admin"),
   cacheMiddleware(120),
-  medicalRecordController.getPatientHistory
+  medicalRecordController.getPatientHistory,
 );
 
-router.get("/:id", authorize("patient", "doctor", "admin"), cacheMiddleware(120), medicalRecordController.getMedicalRecord);
+router.get(
+  "/:id",
+  authorize("patient", "doctor", "admin"),
+  cacheMiddleware(120),
+  medicalRecordController.getMedicalRecord,
+);
 
 router.put(
   "/:id",
   authorize("doctor", "admin"),
   validateBody(createMedicalRecordSchema),
-  medicalRecordController.updateMedicalRecord
+  medicalRecordController.updateMedicalRecord,
 );
 
 router.delete(
   "/:id",
   authorize("doctor", "admin"),
-  medicalRecordController.deleteMedicalRecord
+  medicalRecordController.deleteMedicalRecord,
 );
 
 router.post(
   "/upload",
   authorize("doctor", "admin"),
-  medicalRecordController.uploadAttachment
+  medicalRecordController.uploadAttachment,
 );
 
 router.get(
   "/files/:id",
   authorize("doctor", "admin", "patient"),
-  medicalRecordController.downloadAttachment
+  medicalRecordController.downloadAttachment,
 );
 
 module.exports = router;

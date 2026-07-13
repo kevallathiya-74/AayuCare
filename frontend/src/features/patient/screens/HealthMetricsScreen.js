@@ -436,7 +436,7 @@ const HealthMetricsScreen = ({ navigation }) => {
     mutationFn: (payload) => healthMetricsService.addMetric(user.id, payload),
     onSuccess: async (response, variables) => {
       const createdMetric = normalizeMetricRecord(
-        response?.data?.metric || response?.data || variables,
+        response?.data?.metric || response?.data || variables
       );
 
       queryClient.setQueryData(
@@ -444,7 +444,7 @@ const HealthMetricsScreen = ({ navigation }) => {
         (current = []) => {
           const list = Array.isArray(current) ? current : [];
           return createdMetric ? [createdMetric, ...list] : list;
-        },
+        }
       );
 
       await Promise.all([
@@ -531,7 +531,7 @@ const HealthMetricsScreen = ({ navigation }) => {
         onAddPress={openAddModal}
       />
     ),
-    [latestMetricMap, openAddModal],
+    [latestMetricMap, openAddModal]
   );
 
   if (isLoading && !isRefetching) {

@@ -124,7 +124,13 @@ exports.getDoctor = async (req, res, next) => {
   try {
     const doctor = await doctorService.getDoctorById(req.params.id);
 
-    return sendSuccess(res, req, { doctor }, "Doctor retrieved successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      { doctor },
+      "Doctor retrieved successfully",
+      200,
+    );
   } catch (error) {
     next(error);
   }
@@ -139,7 +145,13 @@ exports.getDoctorStats = async (req, res, next) => {
   try {
     const stats = await doctorService.getDoctorStats(req.params.id);
 
-    return sendSuccess(res, req, { stats }, "Doctor stats retrieved successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      { stats },
+      "Doctor stats retrieved successfully",
+      200,
+    );
   } catch (error) {
     next(error);
   }
@@ -159,9 +171,12 @@ exports.getDoctorDashboard = async (req, res, next) => {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Build query base with hospitalId filter
-    const baseFilters = { 
+    const baseFilters = {
       doctorId,
-      hospitalId: (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : undefined
+      hospitalId:
+        req.hospitalId && req.user.role !== "super_admin"
+          ? req.hospitalId
+          : undefined,
     };
 
     // Run all queries in parallel
@@ -183,18 +198,20 @@ exports.getDoctorDashboard = async (req, res, next) => {
         ...baseFilters,
         startDate: today,
         endDate: today,
-        status: 'completed',
+        status: "completed",
       }),
       // Total unique patients (completed appointments, all time)
       appointmentRepository.countUniquePatientsForDoctor(
         doctorId,
-        (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : "MAIN"
+        req.hospitalId && req.user.role !== "super_admin"
+          ? req.hospitalId
+          : "MAIN",
       ),
       // Upcoming appointments (next 7 days) - count scheduled/confirmed
       appointmentRepository.findByDoctor(doctorId, {
         ...baseFilters,
         startDate: today,
-        status: 'scheduled,confirmed',
+        status: "scheduled,confirmed",
       }),
       // Recent prescriptions
       prescriptionRepository.findByDoctorId(doctorId, {
@@ -203,10 +220,11 @@ exports.getDoctorDashboard = async (req, res, next) => {
       }),
     ]);
 
-
     const parseAppointmentDateTime = (appointment) => {
-      const rawDate = appointment.appointmentDate || appointment.appointment_date;
-      const rawTime = appointment.appointmentTime || appointment.appointment_time;
+      const rawDate =
+        appointment.appointmentDate || appointment.appointment_date;
+      const rawTime =
+        appointment.appointmentTime || appointment.appointment_time;
 
       if (!rawDate || !rawTime) return null;
 
@@ -253,7 +271,9 @@ exports.getDoctorDashboard = async (req, res, next) => {
     });
 
     // Count completed appointments
-    const completedCount = Array.isArray(completedToday) ? completedToday.length : 0;
+    const completedCount = Array.isArray(completedToday)
+      ? completedToday.length
+      : 0;
 
     const pendingCount = visibleTodaysAppointments.filter((apt) => {
       const status = String(apt.status || "").toLowerCase();
@@ -275,9 +295,10 @@ exports.getDoctorDashboard = async (req, res, next) => {
 
     // Format appointments for frontend
     const formattedAppointments = visibleTodaysAppointments.map((apt) => {
-      const age = apt.dateOfBirth || apt.date_of_birth
-        ? calculateAge(apt.dateOfBirth || apt.date_of_birth)
-        : null;
+      const age =
+        apt.dateOfBirth || apt.date_of_birth
+          ? calculateAge(apt.dateOfBirth || apt.date_of_birth)
+          : null;
 
       return {
         id: apt.id,
@@ -297,11 +318,17 @@ exports.getDoctorDashboard = async (req, res, next) => {
 
     // Enrich recent prescriptions with patient names via batch lookup
     const enrichedPrescriptions = await (async () => {
-      if (!Array.isArray(recentPrescriptions) || recentPrescriptions.length === 0) return [];
-      const patientIds = [...new Set(recentPrescriptions.map(p => p.patientId).filter(Boolean))];
+      if (
+        !Array.isArray(recentPrescriptions) ||
+        recentPrescriptions.length === 0
+      )
+        return [];
+      const patientIds = [
+        ...new Set(recentPrescriptions.map((p) => p.patientId).filter(Boolean)),
+      ];
       const users = await userRepository.findByIds(patientIds);
-      const userMap = new Map(users.map(u => [u.id, u]));
-      return recentPrescriptions.map(p => ({
+      const userMap = new Map(users.map((u) => [u.id, u]));
+      return recentPrescriptions.map((p) => ({
         ...p,
         patientName: userMap.get(p.patientId)?.name || "Unknown",
       }));
@@ -315,9 +342,11 @@ exports.getDoctorDashboard = async (req, res, next) => {
         todaysAppointments: formattedAppointments,
         stats: {
           totalPatients: totalUniquePatients,
-          upcomingAppointments: Array.isArray(upcomingAppointmentsCount) ? upcomingAppointmentsCount.length : 0,
+          upcomingAppointments: Array.isArray(upcomingAppointmentsCount)
+            ? upcomingAppointmentsCount.length
+            : 0,
           prescriptionsToday: recentPrescriptions.filter(
-            (p) => new Date(p.createdAt || p.created_at) >= today
+            (p) => new Date(p.createdAt || p.created_at) >= today,
           ).length,
         },
         recentPrescriptions: enrichedPrescriptions.map((p) => ({
@@ -328,7 +357,7 @@ exports.getDoctorDashboard = async (req, res, next) => {
         })),
       },
       "Doctor dashboard retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Doctor dashboard error:", {
@@ -359,7 +388,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
         req,
         "Invalid filter. Allowed values: all, pending, completed",
         400,
-        "VALIDATION_ERROR"
+        "VALIDATION_ERROR",
       );
     }
 
@@ -391,11 +420,16 @@ exports.getTodaysAppointments = async (req, res, next) => {
       filters.status = "scheduled,confirmed,in_progress";
     }
 
-    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const appointments = await appointmentRepository.findByDoctor(
+      doctorId,
+      filters,
+    );
 
     const parseAppointmentDateTime = (appointment) => {
-      const rawDate = appointment.appointmentDate || appointment.appointment_date;
-      const rawTime = appointment.appointmentTime || appointment.appointment_time;
+      const rawDate =
+        appointment.appointmentDate || appointment.appointment_date;
+      const rawTime =
+        appointment.appointmentTime || appointment.appointment_time;
 
       if (!rawDate || !rawTime) return null;
 
@@ -456,7 +490,9 @@ exports.getTodaysAppointments = async (req, res, next) => {
             patientId: apt.patientUserId || apt.patientId || apt.patient_id,
             patientUserId: apt.patientUserId || apt.patientId || apt.patient_id,
             patientPhoto: null,
-            age: apt.dateOfBirth ? calculateAge(apt.dateOfBirth) : (apt.patientAge || "N/A"),
+            age: apt.dateOfBirth
+              ? calculateAge(apt.dateOfBirth)
+              : apt.patientAge || "N/A",
             gender: apt.gender || "N/A",
             phone: apt.patientPhone || "N/A",
             reasonForVisit: apt.reason || apt.chiefComplaint || "Consultation",
@@ -467,7 +503,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
         }),
       },
       "Today's appointments retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Today appointments error:", {
@@ -506,12 +542,19 @@ exports.getUpcomingAppointments = async (req, res, next) => {
       filters.hospitalId = req.hospitalId;
     }
 
-    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
-    const counts = await appointmentRepository.countByStatus(doctorId, "doctor", {
-      status: ["scheduled", "confirmed"],
-      startDate: tomorrow,
-      hospitalId: filters.hospitalId,
-    });
+    const appointments = await appointmentRepository.findByDoctor(
+      doctorId,
+      filters,
+    );
+    const counts = await appointmentRepository.countByStatus(
+      doctorId,
+      "doctor",
+      {
+        status: ["scheduled", "confirmed"],
+        startDate: tomorrow,
+        hospitalId: filters.hospitalId,
+      },
+    );
     const total = counts.total || 0;
 
     return sendSuccess(
@@ -544,7 +587,7 @@ exports.getUpcomingAppointments = async (req, res, next) => {
         },
       },
       "Upcoming appointments retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Upcoming appointments error:", {
@@ -573,7 +616,9 @@ exports.searchPatients = async (req, res, next) => {
     const searchQuery = String(q || "").trim();
 
     if (searchQuery && searchQuery.length > 100) {
-      return next(new AppError("Search query must be 100 characters or fewer", 400));
+      return next(
+        new AppError("Search query must be 100 characters or fewer", 400),
+      );
     }
 
     logger.info("Search patients request:", {
@@ -594,7 +639,7 @@ exports.searchPatients = async (req, res, next) => {
       effectiveHospitalId,
       limit,
       skip,
-      searchQuery
+      searchQuery,
     );
 
     const paginatedPatients = Array.isArray(result?.data) ? result.data : [];
@@ -621,7 +666,7 @@ exports.searchPatients = async (req, res, next) => {
         },
       },
       "Patients retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Patient search error:", {
@@ -660,7 +705,7 @@ exports.getPatientDetails = async (req, res, next) => {
     const patientLookupValue = String(patientId || "").trim();
     const isUuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        patientLookupValue
+        patientLookupValue,
       );
 
     let patientUser = isUuid
@@ -683,7 +728,13 @@ exports.getPatientDetails = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       patientUser.hospital_id !== req.hospitalId
     ) {
-      return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to access this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     if (req.user.role === "doctor") {
@@ -692,10 +743,16 @@ exports.getPatientDetails = async (req, res, next) => {
         `SELECT 1 FROM appointments 
          WHERE doctor_id = $1 AND patient_id = $2
          LIMIT 1`,
-        [req.user.id, resolvedPatientId]
+        [req.user.id, resolvedPatientId],
       );
       if (hasRelationship.rows.length === 0) {
-        return sendError(res, req, "Access denied — you do not have an appointment with this patient", 403, "FORBIDDEN");
+        return sendError(
+          res,
+          req,
+          "Access denied — you do not have an appointment with this patient",
+          403,
+          "FORBIDDEN",
+        );
       }
     }
 
@@ -735,19 +792,29 @@ exports.getPatientDetails = async (req, res, next) => {
       prescriptionFilters.hospitalId = req.hospitalId;
     }
 
-    const [appointments, dbMedicalRecords, dbPrescriptions] = await Promise.all([
-      appointmentRepository.findByPatient(resolvedPatientId, appointmentFilters),
-      medicalRecordRepository.findWithFilters(medicalRecordsFilters, {
-        limit: 10,
-        offset: 0,
-        sort: { createdAt: -1 },
-      }),
-      prescriptionRepository.findByPatient(resolvedPatientId, prescriptionFilters),
-    ]);
+    const [appointments, dbMedicalRecords, dbPrescriptions] = await Promise.all(
+      [
+        appointmentRepository.findByPatient(
+          resolvedPatientId,
+          appointmentFilters,
+        ),
+        medicalRecordRepository.findWithFilters(medicalRecordsFilters, {
+          limit: 10,
+          offset: 0,
+          sort: { createdAt: -1 },
+        }),
+        prescriptionRepository.findByPatient(
+          resolvedPatientId,
+          prescriptionFilters,
+        ),
+      ],
+    );
 
     const medicalRecords = Array.isArray(dbMedicalRecords)
       ? dbMedicalRecords
-      : (Array.isArray(dbMedicalRecords?.data) ? dbMedicalRecords.data : []);
+      : Array.isArray(dbMedicalRecords?.data)
+        ? dbMedicalRecords.data
+        : [];
 
     // Map prescriptions to proper format
     const prescriptions = mapArray(dbPrescriptions, mapPrescriptionData);
@@ -775,7 +842,7 @@ exports.getPatientDetails = async (req, res, next) => {
         },
       },
       "Patient details retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Get patient details error:", {
@@ -814,20 +881,27 @@ exports.updateAppointmentStatus = async (req, res, next) => {
         req,
         `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
         400,
-        "VALIDATION_ERROR"
+        "VALIDATION_ERROR",
       );
     }
 
     const appointment = await appointmentRepository.findById(id);
 
     if (!appointment || appointment.doctor_id !== doctorId) {
-      return sendError(res, req, "Appointment not found or unauthorized", 404, "NOT_FOUND");
+      return sendError(
+        res,
+        req,
+        "Appointment not found or unauthorized",
+        404,
+        "NOT_FOUND",
+      );
     }
 
     const currentStatus = normalizeAppointmentStatus(
-      appointment.status || appointment.appointment_status
+      appointment.status || appointment.appointment_status,
     );
-    const allowedTransitions = APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
+    const allowedTransitions =
+      APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
 
     if (!allowedTransitions.includes(normalizedStatus)) {
       return sendError(
@@ -835,7 +909,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
         req,
         `Cannot change status from ${currentStatus} to ${normalizedStatus}`,
         400,
-        "VALIDATION_ERROR"
+        "VALIDATION_ERROR",
       );
     }
 
@@ -844,7 +918,10 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       updateData.notes = notes;
     }
 
-    const updatedAppointment = await appointmentRepository.update(id, updateData);
+    const updatedAppointment = await appointmentRepository.update(
+      id,
+      updateData,
+    );
 
     // Invalidate appointment caches after status update
     try {
@@ -860,7 +937,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       newStatus: normalizedStatus,
     });
 
-    return sendSuccess(res, req, updatedAppointment, "Appointment status updated", 200);
+    return sendSuccess(
+      res,
+      req,
+      updatedAppointment,
+      "Appointment status updated",
+      200,
+    );
   } catch (error) {
     logger.error("Update appointment status error:", {
       error: error.message,
@@ -878,10 +961,16 @@ exports.updateAppointmentStatus = async (req, res, next) => {
 exports.getDoctorProfileStats = async (req, res, next) => {
   try {
     const doctorId = req.user.id;
-    const effectiveHospitalId = (req.hospitalId && req.user.role !== "super_admin") ? req.hospitalId : undefined;
+    const effectiveHospitalId =
+      req.hospitalId && req.user.role !== "super_admin"
+        ? req.hospitalId
+        : undefined;
 
     const [totalPatients, completedCounts, doctor] = await Promise.all([
-      appointmentRepository.countUniquePatientsForDoctor(doctorId, effectiveHospitalId),
+      appointmentRepository.countUniquePatientsForDoctor(
+        doctorId,
+        effectiveHospitalId,
+      ),
       appointmentRepository.countByStatus(doctorId, "doctor", {
         status: "completed",
         hospitalId: effectiveHospitalId,
@@ -899,7 +988,7 @@ exports.getDoctorProfileStats = async (req, res, next) => {
         yearsExperience: doctor?.experience || 0,
       },
       "Doctor profile stats retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Doctor profile stats error:", {
@@ -929,7 +1018,9 @@ exports.registerWalkInPatient = async (req, res, next) => {
     let patient = await userRepository.findByPhone(normalizedPhone);
 
     const ensurePatientProfile = async (userRecord) => {
-      const existingProfile = await patientRepository.findByUserId(userRecord.id);
+      const existingProfile = await patientRepository.findByUserId(
+        userRecord.id,
+      );
       if (existingProfile) return existingProfile;
 
       const today = new Date();
@@ -952,13 +1043,13 @@ exports.registerWalkInPatient = async (req, res, next) => {
       const now = new Date();
       let proposedTime = new Date(now.getTime() + 15 * 60 * 1000); // Start with 15 minutes from now
       const maxAttempts = 12; // Check up to 3 hours ahead (12 x 15-minute slots)
-      
+
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const localDate = `${proposedTime.getFullYear()}-${String(
-          proposedTime.getMonth() + 1
+          proposedTime.getMonth() + 1,
         ).padStart(2, "0")}-${String(proposedTime.getDate()).padStart(2, "0")}`;
         const appointmentTime = `${String(proposedTime.getHours()).padStart(2, "0")}:${String(
-          proposedTime.getMinutes()
+          proposedTime.getMinutes(),
         ).padStart(2, "0")}`;
 
         // Check if doctor has too many appointments in this time slot
@@ -966,7 +1057,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
           doctorId,
           hospitalId,
           localDate,
-          appointmentTime
+          appointmentTime,
         );
 
         // Allow maximum 2 appointments per 15-minute slot
@@ -974,7 +1065,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
           return {
             scheduledAt: proposedTime,
             localDate,
-            appointmentTime
+            appointmentTime,
           };
         }
 
@@ -983,16 +1074,18 @@ exports.registerWalkInPatient = async (req, res, next) => {
       }
 
       // If no slot found within 3 hours, use original logic with warning
-      logger.warn(`No available slots found for doctor ${doctorId}, scheduling anyway`);
+      logger.warn(
+        `No available slots found for doctor ${doctorId}, scheduling anyway`,
+      );
       const fallbackTime = new Date(now.getTime() + 15 * 60 * 1000);
       return {
         scheduledAt: fallbackTime,
         localDate: `${fallbackTime.getFullYear()}-${String(
-          fallbackTime.getMonth() + 1
+          fallbackTime.getMonth() + 1,
         ).padStart(2, "0")}-${String(fallbackTime.getDate()).padStart(2, "0")}`,
         appointmentTime: `${String(fallbackTime.getHours()).padStart(2, "0")}:${String(
-          fallbackTime.getMinutes()
-        ).padStart(2, "0")}`
+          fallbackTime.getMinutes(),
+        ).padStart(2, "0")}`,
       };
     };
 
@@ -1002,8 +1095,8 @@ exports.registerWalkInPatient = async (req, res, next) => {
       // Add walk-in appointment for existing patient when symptoms provided.
       if (symptoms) {
         const { localDate, appointmentTime } = await getNextAvailableSlot(
-          doctorId, 
-          effectiveHospitalId
+          doctorId,
+          effectiveHospitalId,
         );
 
         await appointmentRepository.create({
@@ -1034,18 +1127,19 @@ exports.registerWalkInPatient = async (req, res, next) => {
           isExisting: true,
         },
         "Patient already registered",
-        200
+        200,
       );
     }
 
     const nextPatientUserId = await userRepository.getNextUserId("patient");
     const generatedEmail = `${nextPatientUserId.toLowerCase()}@walkin.aayucare.local`;
-    
+
     // Generate a simple, memorable default password for walk-in patients
     // Format: walkin{phone_last4} or walkin{year} if no phone
-    const phoneLast4 = normalizedPhone.length >= 4 
-      ? normalizedPhone.slice(-4) 
-      : new Date().getFullYear().toString();
+    const phoneLast4 =
+      normalizedPhone.length >= 4
+        ? normalizedPhone.slice(-4)
+        : new Date().getFullYear().toString();
     const defaultPassword = `walkin${phoneLast4}`;
     const temporaryPasswordHash = await bcrypt.hash(defaultPassword, 12);
 
@@ -1061,16 +1155,16 @@ exports.registerWalkInPatient = async (req, res, next) => {
     });
 
     await ensurePatientProfile(patient);
-    
+
     // Store the credentials for Better Auth sync
     const credentialAccount = {
       id: `credential:${patient.id}`,
       account_id: generatedEmail,
-      provider_id: 'credential',
+      provider_id: "credential",
       user_id: patient.id,
       password: temporaryPasswordHash,
     };
-    
+
     // Sync to Better Auth account table
     try {
       const { query } = require("../../config/postgres");
@@ -1078,18 +1172,26 @@ exports.registerWalkInPatient = async (req, res, next) => {
         `INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET password = $5, updated_at = NOW()`,
-        [credentialAccount.id, credentialAccount.account_id, credentialAccount.provider_id, 
-         credentialAccount.user_id, credentialAccount.password]
+        [
+          credentialAccount.id,
+          credentialAccount.account_id,
+          credentialAccount.provider_id,
+          credentialAccount.user_id,
+          credentialAccount.password,
+        ],
       );
     } catch (syncError) {
-      logger.warn('Failed to sync walk-in patient to Better Auth:', syncError.message);
+      logger.warn(
+        "Failed to sync walk-in patient to Better Auth:",
+        syncError.message,
+      );
     }
 
     // Create appointment immediately if needed
     if (symptoms) {
       const { localDate, appointmentTime } = await getNextAvailableSlot(
-        doctorId, 
-        effectiveHospitalId
+        doctorId,
+        effectiveHospitalId,
       );
 
       await appointmentRepository.create({
@@ -1132,7 +1234,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
         isExisting: false,
       },
       "Walk-in patient registered successfully",
-      201
+      201,
     );
   } catch (error) {
     logger.error("Register walk-in patient error:", {
@@ -1176,17 +1278,21 @@ exports.updateProfile = async (req, res, next) => {
     }
 
     const doctorUpdateData = {};
-    if (specialization !== undefined) doctorUpdateData.specialization = specialization;
-    if (qualification !== undefined) doctorUpdateData.qualification = qualification;
+    if (specialization !== undefined)
+      doctorUpdateData.specialization = specialization;
+    if (qualification !== undefined)
+      doctorUpdateData.qualification = qualification;
     if (experience !== undefined) doctorUpdateData.experience = experience;
-    if (consultationFee !== undefined) doctorUpdateData.consultationFee = consultationFee;
+    if (consultationFee !== undefined)
+      doctorUpdateData.consultationFee = consultationFee;
     if (department !== undefined) doctorUpdateData.department = department;
     const normalizedLicenseNumber = licenseNumber ?? license_number;
     if (normalizedLicenseNumber !== undefined) {
       doctorUpdateData.licenseNumber = normalizedLicenseNumber;
     }
     if (bio !== undefined) doctorUpdateData.bio = bio;
-    if (availability !== undefined) doctorUpdateData.availability = availability;
+    if (availability !== undefined)
+      doctorUpdateData.availability = availability;
 
     if (Object.keys(doctorUpdateData).length > 0) {
       await doctorRepository.update(doctorId, doctorUpdateData);
@@ -1222,10 +1328,10 @@ exports.getConsultationHistory = async (req, res, next) => {
     const doctorId = req.user.id;
     const { page = 1, limit = 20, status, startDate, endDate } = req.query;
 
-    const filters = { 
+    const filters = {
       doctorId,
       page: parseInt(page),
-      limit: parseInt(limit)
+      limit: parseInt(limit),
     };
 
     // Add hospitalId filter for multi-tenancy (skip for super_admin)
@@ -1244,7 +1350,10 @@ exports.getConsultationHistory = async (req, res, next) => {
       filters.endDate = new Date(endDate);
     }
 
-    const appointments = await appointmentRepository.findByDoctor(doctorId, filters);
+    const appointments = await appointmentRepository.findByDoctor(
+      doctorId,
+      filters,
+    );
     const consultationCounts = await appointmentRepository.countByStatus(
       doctorId,
       "doctor",
@@ -1253,7 +1362,7 @@ exports.getConsultationHistory = async (req, res, next) => {
         startDate: filters.startDate,
         endDate: filters.endDate,
         hospitalId: filters.hospitalId,
-      }
+      },
     );
     const total = consultationCounts.total || 0;
 
@@ -1270,7 +1379,7 @@ exports.getConsultationHistory = async (req, res, next) => {
         },
       },
       "Consultation history retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Get consultation history error:", {
@@ -1289,11 +1398,15 @@ exports.getConsultationHistory = async (req, res, next) => {
 exports.getSchedule = async (req, res, next) => {
   try {
     const doctorId = req.user.id;
-    const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
+    const hospitalId =
+      req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
     // Use findByDoctor (not findAvailableByDoctor) so all 7 days are always returned,
     // including days with isAvailable: false — the frontend needs the full week.
-    const schedules = await scheduleRepository.findByDoctor(doctorId, hospitalId);
+    const schedules = await scheduleRepository.findByDoctor(
+      doctorId,
+      hospitalId,
+    );
 
     // Create default schedule if none exists for this doctor+hospital
     if (schedules.length === 0) {
@@ -1319,11 +1432,13 @@ exports.getSchedule = async (req, res, next) => {
                 { startTime: "14:00", endTime: "17:00", isAvailable: true },
               ]
             : [],
-          breakTime: isWeekday ? { startTime: "12:00", endTime: "14:00" } : null,
+          breakTime: isWeekday
+            ? { startTime: "12:00", endTime: "14:00" }
+            : null,
         });
       });
       const created = await Promise.all(defaultSchedulePromises);
-      
+
       // Invalidate relevant caches after default schedule creation
       try {
         await invalidateAfterDoctorScheduleBootstrapMutation();
@@ -1331,11 +1446,23 @@ exports.getSchedule = async (req, res, next) => {
       } catch (cacheError) {
         logger.warn("Failed to invalidate cache:", cacheError.message);
       }
-      
-      return sendSuccess(res, req, created, "Schedule retrieved successfully", 200);
+
+      return sendSuccess(
+        res,
+        req,
+        created,
+        "Schedule retrieved successfully",
+        200,
+      );
     }
 
-    return sendSuccess(res, req, schedules, "Schedule retrieved successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      schedules,
+      "Schedule retrieved successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Get schedule error:", {
       error: error.message,
@@ -1367,11 +1494,20 @@ exports.updateSchedule = async (req, res, next) => {
       "sunday",
     ];
     if (!validDays.includes(dayOfWeek.toLowerCase())) {
-      return sendError(res, req, "Invalid day of week", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Invalid day of week",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     // Find and update or create new schedule
-    let schedule = await scheduleRepository.findByDoctorAndDay(doctorId, dayOfWeek.toLowerCase());
+    let schedule = await scheduleRepository.findByDoctorAndDay(
+      doctorId,
+      dayOfWeek.toLowerCase(),
+    );
 
     if (schedule) {
       const updateData = {};
@@ -1379,10 +1515,11 @@ exports.updateSchedule = async (req, res, next) => {
       if (timeSlots) updateData.timeSlots = timeSlots;
       if (breakTime) updateData.breakTime = breakTime;
       if (notes !== undefined) updateData.notes = notes;
-      
+
       schedule = await scheduleRepository.update(schedule.id, updateData);
     } else {
-      const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
+      const hospitalId =
+        req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
       schedule = await scheduleRepository.create({
         doctorId,
         hospitalId,
@@ -1407,7 +1544,13 @@ exports.updateSchedule = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, schedule, "Schedule updated successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      schedule,
+      "Schedule updated successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Update schedule error:", {
       error: error.message,
@@ -1426,9 +1569,13 @@ exports.toggleDayAvailability = async (req, res, next) => {
   try {
     const doctorId = req.user.id;
     const { dayOfWeek } = req.params;
-    const hospitalId = req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
+    const hospitalId =
+      req.hospitalId || req.user.hospitalId || req.user.hospital_id || "MAIN";
 
-    let schedule = await scheduleRepository.findByDoctorAndDay(doctorId, dayOfWeek.toLowerCase());
+    let schedule = await scheduleRepository.findByDoctorAndDay(
+      doctorId,
+      dayOfWeek.toLowerCase(),
+    );
 
     // If no schedule record exists for this day (e.g. doctor registered before defaults were
     // seeded), create it now as available so the toggle makes sense.
@@ -1464,7 +1611,13 @@ exports.toggleDayAvailability = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, updatedSchedule, `${dayOfWeek} availability updated`, 200);
+    return sendSuccess(
+      res,
+      req,
+      updatedSchedule,
+      `${dayOfWeek} availability updated`,
+      200,
+    );
   } catch (error) {
     logger.error("Toggle availability error:", {
       error: error.message,
@@ -1473,7 +1626,3 @@ exports.toggleDayAvailability = async (req, res, next) => {
     next(error);
   }
 };
-
-
-
-

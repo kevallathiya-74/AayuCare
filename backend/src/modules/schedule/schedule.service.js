@@ -8,13 +8,20 @@ const scheduleRepository = require("../schedule/schedule.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
 
-const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const UUID_REGEX =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const VALID_DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
 
 const invalidateScheduleCache = async (doctorId) => {
-  await invalidateByPatterns([
-    `aayucare:v1:schedule:doctor:${doctorId}:*`,
-  ]);
+  await invalidateByPatterns([`aayucare:v1:schedule:doctor:${doctorId}:*`]);
 };
 
 /**
@@ -24,7 +31,7 @@ const invalidateScheduleCache = async (doctorId) => {
  */
 const getDoctorSchedule = async (doctorUuid, hospitalId) => {
   if (!UUID_REGEX.test(doctorUuid)) {
-    throw new AppError('Invalid doctor ID format', 400);
+    throw new AppError("Invalid doctor ID format", 400);
   }
   return scheduleRepository.findByDoctor(doctorUuid, hospitalId);
 };
@@ -37,11 +44,14 @@ const getDoctorSchedule = async (doctorUuid, hospitalId) => {
  */
 const getAvailableSlots = async (doctorUuid, dayOfWeek, hospitalId) => {
   if (!UUID_REGEX.test(doctorUuid)) {
-    throw new AppError('Invalid doctor ID format', 400);
+    throw new AppError("Invalid doctor ID format", 400);
   }
   const day = dayOfWeek?.toLowerCase();
   if (!VALID_DAYS.includes(day)) {
-    throw new AppError(`Invalid day. Must be one of: ${VALID_DAYS.join(', ')}`, 400);
+    throw new AppError(
+      `Invalid day. Must be one of: ${VALID_DAYS.join(", ")}`,
+      400,
+    );
   }
   return scheduleRepository.getAvailableTimeSlots(doctorUuid, day, hospitalId);
 };
@@ -54,31 +64,36 @@ const getAvailableSlots = async (doctorUuid, dayOfWeek, hospitalId) => {
  */
 const setWeeklySchedule = async (doctorUuid, schedules, hospitalId) => {
   if (!UUID_REGEX.test(doctorUuid)) {
-    throw new AppError('Invalid doctor ID format', 400);
+    throw new AppError("Invalid doctor ID format", 400);
   }
 
   if (!Array.isArray(schedules) || schedules.length === 0) {
-    throw new AppError('schedules must be a non-empty array', 400);
+    throw new AppError("schedules must be a non-empty array", 400);
   }
 
   const results = [];
   for (const scheduleData of schedules) {
-    const { dayOfWeek, isAvailable, timeSlots, breakTime, notes } = scheduleData;
+    const { dayOfWeek, isAvailable, timeSlots, breakTime, notes } =
+      scheduleData;
     const day = dayOfWeek?.toLowerCase();
 
     if (!VALID_DAYS.includes(day)) {
       throw new AppError(`Invalid dayOfWeek: ${dayOfWeek}`, 400);
     }
 
-    const updated = await scheduleRepository.updateByDoctorAndDay(doctorUuid, day, {
-      doctorId: doctorUuid,
-      hospitalId,
-      dayOfWeek: day,
-      isAvailable: isAvailable !== undefined ? isAvailable : true,
-      timeSlots: Array.isArray(timeSlots) ? timeSlots : [],
-      breakTime: breakTime || {},
-      notes: notes || '',
-    });
+    const updated = await scheduleRepository.updateByDoctorAndDay(
+      doctorUuid,
+      day,
+      {
+        doctorId: doctorUuid,
+        hospitalId,
+        dayOfWeek: day,
+        isAvailable: isAvailable !== undefined ? isAvailable : true,
+        timeSlots: Array.isArray(timeSlots) ? timeSlots : [],
+        breakTime: breakTime || {},
+        notes: notes || "",
+      },
+    );
     results.push(updated);
   }
 
@@ -93,13 +108,21 @@ const setWeeklySchedule = async (doctorUuid, schedules, hospitalId) => {
  * @param {Object} updates - fields to update
  * @param {string} hospitalId - scope guard
  */
-const updateDaySchedule = async (doctorUuid, dayOfWeek, updates, hospitalId) => {
+const updateDaySchedule = async (
+  doctorUuid,
+  dayOfWeek,
+  updates,
+  hospitalId,
+) => {
   if (!UUID_REGEX.test(doctorUuid)) {
-    throw new AppError('Invalid doctor ID format', 400);
+    throw new AppError("Invalid doctor ID format", 400);
   }
   const day = dayOfWeek?.toLowerCase();
   if (!VALID_DAYS.includes(day)) {
-    throw new AppError(`Invalid day. Must be one of: ${VALID_DAYS.join(', ')}`, 400);
+    throw new AppError(
+      `Invalid day. Must be one of: ${VALID_DAYS.join(", ")}`,
+      400,
+    );
   }
 
   const existing = await scheduleRepository.findByDoctorAndDay(doctorUuid, day);
@@ -108,10 +131,16 @@ const updateDaySchedule = async (doctorUuid, dayOfWeek, updates, hospitalId) => 
   }
 
   if (hospitalId && existing.hospitalId !== hospitalId) {
-    throw new AppError('Access denied — schedule belongs to a different hospital', 403);
+    throw new AppError(
+      "Access denied — schedule belongs to a different hospital",
+      403,
+    );
   }
 
-  const updated = await scheduleRepository.update(existing.id.toString(), updates);
+  const updated = await scheduleRepository.update(
+    existing.id.toString(),
+    updates,
+  );
   await invalidateScheduleCache(doctorUuid);
   return updated;
 };
@@ -121,18 +150,25 @@ const updateDaySchedule = async (doctorUuid, dayOfWeek, updates, hospitalId) => 
  */
 const addTimeSlot = async (doctorUuid, dayOfWeek, timeSlot, _hospitalId) => {
   if (!UUID_REGEX.test(doctorUuid)) {
-    throw new AppError('Invalid doctor ID format', 400);
+    throw new AppError("Invalid doctor ID format", 400);
   }
   const day = dayOfWeek?.toLowerCase();
   if (!VALID_DAYS.includes(day)) {
-    throw new AppError(`Invalid day. Must be one of: ${VALID_DAYS.join(', ')}`, 400);
+    throw new AppError(
+      `Invalid day. Must be one of: ${VALID_DAYS.join(", ")}`,
+      400,
+    );
   }
 
   if (!timeSlot?.startTime || !timeSlot?.endTime) {
-    throw new AppError('timeSlot must have startTime and endTime', 400);
+    throw new AppError("timeSlot must have startTime and endTime", 400);
   }
 
-  const updated = await scheduleRepository.addTimeSlot(doctorUuid, day, timeSlot);
+  const updated = await scheduleRepository.addTimeSlot(
+    doctorUuid,
+    day,
+    timeSlot,
+  );
   await invalidateScheduleCache(doctorUuid);
   return updated;
 };
@@ -140,12 +176,21 @@ const addTimeSlot = async (doctorUuid, dayOfWeek, timeSlot, _hospitalId) => {
 /**
  * Remove a time slot from a specific day
  */
-const removeTimeSlot = async (doctorUuid, dayOfWeek, timeSlotId, _hospitalId) => {
+const removeTimeSlot = async (
+  doctorUuid,
+  dayOfWeek,
+  timeSlotId,
+  _hospitalId,
+) => {
   if (!UUID_REGEX.test(doctorUuid)) {
-    throw new AppError('Invalid doctor ID format', 400);
+    throw new AppError("Invalid doctor ID format", 400);
   }
   const day = dayOfWeek?.toLowerCase();
-  const updated = await scheduleRepository.removeTimeSlot(doctorUuid, day, timeSlotId);
+  const updated = await scheduleRepository.removeTimeSlot(
+    doctorUuid,
+    day,
+    timeSlotId,
+  );
   await invalidateScheduleCache(doctorUuid);
   return updated;
 };
@@ -153,15 +198,26 @@ const removeTimeSlot = async (doctorUuid, dayOfWeek, timeSlotId, _hospitalId) =>
 /**
  * Toggle availability for a day
  */
-const toggleDayAvailability = async (scheduleId, isAvailable, doctorUuid, hospitalId) => {
+const toggleDayAvailability = async (
+  scheduleId,
+  isAvailable,
+  doctorUuid,
+  hospitalId,
+) => {
   const schedule = await scheduleRepository.findById(scheduleId);
-  if (!schedule) throw new AppError('Schedule not found', 404);
+  if (!schedule) throw new AppError("Schedule not found", 404);
 
   if (hospitalId && schedule.hospitalId !== hospitalId) {
-    throw new AppError('Access denied — schedule belongs to a different hospital', 403);
+    throw new AppError(
+      "Access denied — schedule belongs to a different hospital",
+      403,
+    );
   }
 
-  const updated = await scheduleRepository.toggleAvailability(scheduleId, isAvailable);
+  const updated = await scheduleRepository.toggleAvailability(
+    scheduleId,
+    isAvailable,
+  );
   await invalidateScheduleCache(doctorUuid);
   return updated;
 };

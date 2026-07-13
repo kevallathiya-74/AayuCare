@@ -6,7 +6,14 @@ const buildMeta = (req, extraMeta = {}) => ({
   ...extraMeta,
 });
 
-const sendSuccess = (res, req, data = {}, message = "Request successful", statusCode = 200, meta = {}) => {
+const sendSuccess = (
+  res,
+  req,
+  data = {},
+  message = "Request successful",
+  statusCode = 200,
+  meta = {},
+) => {
   return res.status(statusCode).json({
     success: true,
     status: "success",
@@ -23,7 +30,7 @@ const sendPaginated = (
   pagination = {},
   message = "Request successful",
   statusCode = 200,
-  meta = {}
+  meta = {},
 ) => {
   return res.status(statusCode).json({
     success: true,
@@ -41,7 +48,7 @@ const sendError = (
   message = "Something went wrong",
   statusCode = 500,
   code = DEFAULT_ERROR_CODE,
-  errors = []
+  errors = [],
 ) => {
   return res.status(statusCode).json({
     success: false,

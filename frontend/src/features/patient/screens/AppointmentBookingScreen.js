@@ -90,7 +90,7 @@ const toDisplayText = (value, fallback = "N/A") => {
 const getDoctorSpecialtyText = (doctor) =>
   toDisplayText(
     doctor?.specialization || doctor?.specialty,
-    "General Medicine",
+    "General Medicine"
   );
 
 const getDoctorExperienceText = (doctor) => {
@@ -189,10 +189,10 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
   const specialties = useMemo(
     () => [
       ...new Set(
-        allDoctors.map((doctor) => doctor?.specialization).filter(Boolean),
+        allDoctors.map((doctor) => doctor?.specialization).filter(Boolean)
       ),
     ],
-    [allDoctors],
+    [allDoctors]
   );
   const doctors = selectedSpecialty ? filteredDoctors : allDoctors;
   const loadingDoctors = loadingAllDoctors || loadingFilteredDoctors;
@@ -238,7 +238,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         setAppointmentType(
           rescheduleAppointment.type === "telemedicine"
             ? "telemedicine"
-            : "in-person",
+            : "in-person"
         );
       }
       if (
@@ -247,7 +247,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       ) {
         setReason(
           rescheduleAppointment.chiefComplaint ||
-            rescheduleAppointment.chief_complaint,
+            rescheduleAppointment.chief_complaint
         );
       }
     }
@@ -263,7 +263,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     queryFn: async () => {
       const response = await appointmentService.getAvailableSlots(
         selectedDoctorId,
-        date.toISOString(),
+        date.toISOString()
       );
       const slotsPayload = response?.data;
       const apiSlots = Array.isArray(slotsPayload)
@@ -279,8 +279,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData) => {
-      const response =
-        await appointmentService.createAppointment(appointmentData);
+      const response = await appointmentService.createAppointment(
+        appointmentData
+      );
       if (!(response?.status === "success" || response?.success)) {
         throw new Error(response?.message || "Failed to book appointment");
       }
@@ -288,7 +289,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         try {
           await appointmentService.cancelAppointment(
             rescheduleId,
-            "Rescheduled to a new time slot",
+            "Rescheduled to a new time slot"
           );
         } catch (cancelErr) {
           logError(cancelErr, {
@@ -296,7 +297,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
           });
           // Surface this so the patient/support can manually resolve the duplicate
           throw new Error(
-            "Appointment booked, but the previous appointment could not be cancelled automatically. Please cancel it manually.",
+            "Appointment booked, but the previous appointment could not be cancelled automatically. Please cancel it manually."
           );
         }
       }
@@ -309,15 +310,19 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       Alert.alert(
         rescheduleId ? "Appointment Rescheduled!" : "Appointment Booked!",
         rescheduleId
-          ? `Your appointment has been rescheduled with ${selectedDoctor?.name || "Doctor"} for ${selectedDate} at ${selectedTime}`
-          : `Your appointment with ${selectedDoctor?.name || "Doctor"} has been scheduled for ${selectedDate} at ${selectedTime}`,
+          ? `Your appointment has been rescheduled with ${
+              selectedDoctor?.name || "Doctor"
+            } for ${selectedDate} at ${selectedTime}`
+          : `Your appointment with ${
+              selectedDoctor?.name || "Doctor"
+            } has been scheduled for ${selectedDate} at ${selectedTime}`,
         [
           {
             text: "OK",
             onPress: () =>
               navigation.navigate(Routes.TABS.PATIENT, { screen: "Dashboard" }),
           },
-        ],
+        ]
       );
     },
     onError: (err) => {
@@ -354,7 +359,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     if (!selectedDoctor || !selectedTime) {
       Alert.alert(
         "Missing Information",
-        "Please select a doctor and time slot",
+        "Please select a doctor and time slot"
       );
       return;
     }
@@ -362,7 +367,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     if (!reason.trim()) {
       Alert.alert(
         "Missing Information",
-        "Please enter a reason for the appointment",
+        "Please enter a reason for the appointment"
       );
       return;
     }
@@ -370,7 +375,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     if (reason.trim().length < 10) {
       Alert.alert(
         "Too Short",
-        "Please describe your symptoms or reason in at least 10 characters.",
+        "Please describe your symptoms or reason in at least 10 characters."
       );
       return;
     }
@@ -402,7 +407,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
     if (selectedDateTime <= new Date()) {
       Alert.alert(
         "Invalid Selection",
-        "Please select a future date and time for your appointment.",
+        "Please select a future date and time for your appointment."
       );
       return;
     }
@@ -574,7 +579,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <EmptyState
                 icon="medkit-outline"
                 title="No Doctors Available"
-                message={`No doctors found for ${selectedSpecialty || "this specialty"}. Try selecting a different specialty.`}
+                message={`No doctors found for ${
+                  selectedSpecialty || "this specialty"
+                }. Try selecting a different specialty.`}
               />
             ) : (
               doctors.map((doctor) => (

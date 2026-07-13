@@ -65,9 +65,9 @@ class DoctorRepository {
 
     const result = await query(sql, [userId]);
     const row = result.rows[0];
-    
+
     if (!row) return null;
-    
+
     // Map snake_case PostgreSQL fields to camelCase for frontend
     return {
       id: row.user_uuid,
@@ -87,7 +87,7 @@ class DoctorRepository {
       bio: row.bio,
       availability: row.availability,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
@@ -173,9 +173,9 @@ class DoctorRepository {
     sql += ` ORDER BY u.name LIMIT 100`;
 
     const result = await query(sql, params);
-    
+
     // Map snake_case PostgreSQL fields to camelCase for frontend
-    const mappedDoctors = result.rows.map(row => ({
+    const mappedDoctors = result.rows.map((row) => ({
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,
@@ -193,9 +193,9 @@ class DoctorRepository {
       bio: row.bio,
       availability: row.availability,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     }));
-    
+
     return mappedDoctors;
   }
 
@@ -237,9 +237,9 @@ class DoctorRepository {
     params.push(limit, offset);
 
     const result = await query(sql, params);
-    
+
     // Map snake_case PostgreSQL fields to camelCase for frontend
-    const mappedDoctors = result.rows.map(row => ({
+    const mappedDoctors = result.rows.map((row) => ({
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,
@@ -257,9 +257,9 @@ class DoctorRepository {
       bio: row.bio,
       availability: row.availability,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     }));
-    
+
     return mappedDoctors;
   }
 
@@ -323,9 +323,9 @@ class DoctorRepository {
     params.push(limit, offset);
 
     const result = await query(sql, params);
-    
+
     // Map snake_case PostgreSQL fields to camelCase for frontend
-    const mappedDoctors = result.rows.map(row => ({
+    const mappedDoctors = result.rows.map((row) => ({
       id: row.user_uuid,
       userId: row.custom_user_id,
       name: row.name,
@@ -343,9 +343,9 @@ class DoctorRepository {
       bio: row.bio,
       availability: row.availability,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     }));
-    
+
     return mappedDoctors;
   }
 
@@ -358,8 +358,14 @@ class DoctorRepository {
     const params = [];
     let p = 1;
     if (!includeInactive) sql += ` AND u.is_active = true`;
-    if (hospitalId) { sql += ` AND u.hospital_id = $${p++}`; params.push(hospitalId); }
-    if (specialization) { sql += ` AND d.specialization ILIKE $${p++}`; params.push(`%${specialization}%`); }
+    if (hospitalId) {
+      sql += ` AND u.hospital_id = $${p++}`;
+      params.push(hospitalId);
+    }
+    if (specialization) {
+      sql += ` AND d.specialization ILIKE $${p++}`;
+      params.push(`%${specialization}%`);
+    }
     const result = await query(sql, params);
     return Number(result.rows[0]?.count || 0);
   }
@@ -373,8 +379,14 @@ class DoctorRepository {
     const params = [];
     let p = 1;
     if (!includeInactive) sql += ` AND u.is_active = true`;
-    if (hospitalId) { sql += ` AND u.hospital_id = $${p++}`; params.push(hospitalId); }
-    if (specialization) { sql += ` AND d.specialization ILIKE $${p++}`; params.push(`%${specialization}%`); }
+    if (hospitalId) {
+      sql += ` AND u.hospital_id = $${p++}`;
+      params.push(hospitalId);
+    }
+    if (specialization) {
+      sql += ` AND d.specialization ILIKE $${p++}`;
+      params.push(`%${specialization}%`);
+    }
     sql += ` AND (u.name ILIKE $${p} OR u.email ILIKE $${p} OR d.specialization ILIKE $${p} OR d.qualification ILIKE $${p})`;
     params.push(`%${searchTerm}%`);
     const result = await query(sql, params);

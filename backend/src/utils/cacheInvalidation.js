@@ -58,10 +58,7 @@ const PAYMENT_CACHE_PATTERNS = [
   "v1:cache:dashboard:*",
 ];
 
-const AI_CACHE_PATTERNS = [
-  "v1:cache:ai:*",
-  "cache:ai:*",
-];
+const AI_CACHE_PATTERNS = ["v1:cache:ai:*", "cache:ai:*"];
 
 const AI_DASHBOARD_CACHE_PATTERNS = [
   ...AI_CACHE_PATTERNS,
@@ -77,10 +74,7 @@ const AUTH_PROFILE_CACHE_PATTERNS = [
   "cache:*",
 ];
 
-const AUTH_PASSWORD_CACHE_PATTERNS = [
-  "v1:cache:session:*",
-  "cache:session:*",
-];
+const AUTH_PASSWORD_CACHE_PATTERNS = ["v1:cache:session:*", "cache:session:*"];
 
 const DOCTOR_APPOINTMENT_STATUS_CACHE_PATTERNS = [
   "v1:cache:appointments:*",

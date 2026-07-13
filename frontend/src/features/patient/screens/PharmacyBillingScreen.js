@@ -73,7 +73,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
     queryKey: queryKeys.prescriptions.patient(user?.id || "unknown"),
     queryFn: async () => {
       const response = await prescriptionService.getPatientPrescriptions(
-        user.id,
+        user.id
       );
       if (!response?.success) {
         return null;
@@ -89,7 +89,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       return {
         id: latest.id,
         date: new Date(
-          latest.prescriptionDate || latest.createdAt,
+          latest.prescriptionDate || latest.createdAt
         ).toLocaleDateString("en-IN", {
           day: "numeric",
           month: "short",
@@ -103,7 +103,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             duration: med.duration || "7 days",
             price: med.price || 50,
             qty: med.quantity || 1,
-          }),
+          })
         ),
       };
     },
@@ -140,8 +140,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   });
 
   const subtotal =
-    prescription?.medicines?.reduce((sum, med) => sum + (med.price || 0) * (med.qty || 1), 0) ||
-    0;
+    prescription?.medicines?.reduce(
+      (sum, med) => sum + (med.price || 0) * (med.qty || 1),
+      0
+    ) || 0;
   const discount = selectedPurchase === "hospital" ? subtotal * 0.15 : 0;
   const total = subtotal - discount;
 
@@ -173,8 +175,12 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         setPaymentResult(response.data);
         Alert.alert(
           "Payment Successful",
-          `Payment of ${formatCurrency(total)} via ${selectedPayment.toUpperCase()} processed successfully!\nPayment ID: ${response.data?.payment_id || "N/A"}`,
-          [{ text: "OK" }],
+          `Payment of ${formatCurrency(
+            total
+          )} via ${selectedPayment.toUpperCase()} processed successfully!\nPayment ID: ${
+            response.data?.payment_id || "N/A"
+          }`,
+          [{ text: "OK" }]
         );
         return;
       }
@@ -341,11 +347,17 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             paymentResult
               ? Alert.alert(
                   "Payment Receipt",
-                  `Payment ID: ${paymentResult.payment_id}\nAmount: ${formatCurrency(total)}\nMethod: ${selectedPayment.toUpperCase()}\nStatus: ${paymentResult.status || "completed"}`,
+                  `Payment ID: ${
+                    paymentResult.payment_id
+                  }\nAmount: ${formatCurrency(
+                    total
+                  )}\nMethod: ${selectedPayment.toUpperCase()}\nStatus: ${
+                    paymentResult.status || "completed"
+                  }`
                 )
               : Alert.alert(
                   "No Receipt",
-                  "Complete a payment to view the receipt.",
+                  "Complete a payment to view the receipt."
                 )
           }
           accessibilityRole="button"

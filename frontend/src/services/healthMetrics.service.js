@@ -36,7 +36,7 @@ const healthMetricsService = {
     try {
       const response = await api.post(
         `/patients/${patientId}/health-metrics`,
-        metricData,
+        metricData
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -63,7 +63,7 @@ const healthMetricsService = {
       });
 
       const response = await api.get(
-        `/patients/${patientId}/health-metrics?${params}`,
+        `/patients/${patientId}/health-metrics?${params}`
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -85,7 +85,7 @@ const healthMetricsService = {
   async getLatestMetric(patientId, type) {
     try {
       const response = await api.get(
-        `/patients/${patientId}/health-metrics/latest/${type}`,
+        `/patients/${patientId}/health-metrics/latest/${type}`
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -109,7 +109,7 @@ const healthMetricsService = {
     try {
       const response = await api.put(
         `/patients/${patientId}/health-metrics/${metricId}`,
-        metricData,
+        metricData
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {
@@ -131,7 +131,7 @@ const healthMetricsService = {
   async deleteMetric(patientId, metricId) {
     try {
       const response = await api.delete(
-        `/patients/${patientId}/health-metrics/${metricId}`,
+        `/patients/${patientId}/health-metrics/${metricId}`
       );
       return normalizeServiceResponse(response.data);
     } catch (error) {

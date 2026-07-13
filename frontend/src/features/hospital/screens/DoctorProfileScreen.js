@@ -185,8 +185,8 @@ const DoctorProfileScreen = ({ navigation }) => {
                 {loading
                   ? "--"
                   : stats.rating != null
-                    ? stats.rating.toFixed(1)
-                    : "N/A"}
+                  ? stats.rating.toFixed(1)
+                  : "N/A"}
               </Text>
               <Text style={styles.heroStatLabel}>Rating</Text>
             </View>

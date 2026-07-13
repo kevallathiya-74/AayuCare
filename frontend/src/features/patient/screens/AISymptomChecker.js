@@ -130,7 +130,7 @@ const resolveDiseaseInfo = (conditionName) => {
   if (!conditionName) return fallback;
   const lowerName = String(conditionName).toLowerCase();
   const foundKey = Object.keys(DISEASE_INFO_BY_KEYWORD).find((keyword) =>
-    lowerName.includes(keyword),
+    lowerName.includes(keyword)
   );
 
   return foundKey ? DISEASE_INFO_BY_KEYWORD[foundKey] : fallback;
@@ -152,12 +152,12 @@ const AISymptomChecker = ({ navigation }) => {
 
   const analysisQueryKey = useMemo(
     () => queryKeys.ai.symptomAnalysis(user?.id),
-    [user?.id],
+    [user?.id]
   );
 
   const normalizedSymptoms = useMemo(
     () => selectedSymptoms.map((item) => item.trim()).filter(Boolean),
-    [selectedSymptoms],
+    [selectedSymptoms]
   );
 
   const isFormReady = normalizedSymptoms.length > 0;
@@ -193,15 +193,15 @@ const AISymptomChecker = ({ navigation }) => {
   const conditionList = useMemo(
     () =>
       [...(results?.possibleConditions || [])].sort(
-        (a, b) => (b?.probability || 0) - (a?.probability || 0),
+        (a, b) => (b?.probability || 0) - (a?.probability || 0)
       ),
-    [results],
+    [results]
   );
 
   const topCondition = conditionList[0] || null;
   const diseaseInfo = useMemo(
     () => resolveDiseaseInfo(topCondition?.name),
-    [topCondition],
+    [topCondition]
   );
 
   const handleToggleCommonSymptom = useCallback((symptom) => {
@@ -209,7 +209,7 @@ const AISymptomChecker = ({ navigation }) => {
     setResults(null);
     setSelectedSymptoms((prev) => {
       const exists = prev.some(
-        (item) => item.toLowerCase() === symptom.toLowerCase(),
+        (item) => item.toLowerCase() === symptom.toLowerCase()
       );
       return exists
         ? prev.filter((item) => item.toLowerCase() !== symptom.toLowerCase())
@@ -233,7 +233,7 @@ const AISymptomChecker = ({ navigation }) => {
     setSelectedSymptoms((prev) => {
       const existingLower = new Set(prev.map((item) => item.toLowerCase()));
       const unique = tokens.filter(
-        (item) => !existingLower.has(item.toLowerCase()),
+        (item) => !existingLower.has(item.toLowerCase())
       );
       return [...prev, ...unique];
     });
@@ -343,7 +343,7 @@ const AISymptomChecker = ({ navigation }) => {
           {
             paddingBottom: Math.max(
               insets.bottom + theme.spacing.md,
-              theme.spacing.xl,
+              theme.spacing.xl
             ),
           },
         ]}
@@ -357,7 +357,7 @@ const AISymptomChecker = ({ navigation }) => {
             <View style={styles.symptomGrid}>
               {COMMON_SYMPTOMS.map((symptom) => {
                 const isSelected = selectedSymptoms.some(
-                  (item) => item.toLowerCase() === symptom.toLowerCase(),
+                  (item) => item.toLowerCase() === symptom.toLowerCase()
                 );
                 return (
                   <TouchableOpacity
@@ -576,7 +576,10 @@ const AISymptomChecker = ({ navigation }) => {
                         style={[
                           styles.progressFill,
                           {
-                            width: `${Math.max(0, Math.min(100, condition?.probability || 0))}%`,
+                            width: `${Math.max(
+                              0,
+                              Math.min(100, condition?.probability || 0)
+                            )}%`,
                           },
                         ]}
                       />

@@ -104,14 +104,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               : {
                   page: Math.floor(pageParam / PAGE_SIZE) + 1,
                   limit: PAGE_SIZE,
-                },
+                }
           );
 
       const patientsList = Array.isArray(response)
         ? response
         : Array.isArray(response?.data)
-          ? response.data
-          : response?.data?.patients || response?.data?.data || [];
+        ? response.data
+        : response?.data?.patients || response?.data?.data || [];
 
       const items = (Array.isArray(patientsList) ? patientsList : []).map(
         (patient) => ({
@@ -122,16 +122,16 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             typeof patient?.isActive === "boolean"
               ? patient.isActive
               : typeof patient?.is_active === "boolean"
-                ? patient.is_active
-                : !!patient?.is_active,
-        }),
+              ? patient.is_active
+              : !!patient?.is_active,
+        })
       );
 
       const total = Number(
         response?.total ||
           response?.data?.total ||
           response?.pagination?.total ||
-          (Array.isArray(patientsList) ? patientsList.length : 0),
+          (Array.isArray(patientsList) ? patientsList.length : 0)
       );
 
       return { items, total };
@@ -139,7 +139,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce(
         (sum, page) => sum + (page?.items?.length || 0),
-        0,
+        0
       );
       if (lastPage?.total > 0) {
         return loaded < lastPage.total ? loaded : undefined;
@@ -172,15 +172,15 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
     Promise.allSettled(
       idsToPrefetch.map((id) =>
-        patientService.getPatientById(id, { useCache: true, cacheTTL: 45000 }),
-      ),
+        patientService.getPatientById(id, { useCache: true, cacheTTL: 45000 })
+      )
     ).catch(() => {});
   }, [patients, normalizedUserRole]);
 
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [refetch]),
+    }, [refetch])
   );
 
   const onRefresh = useCallback(() => {
@@ -210,7 +210,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       Alert.alert(
         newStatus ? "Activate Patient" : "Deactivate Patient",
-        `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${patient.name}?`,
+        `Are you sure you want to ${newStatus ? "activate" : "deactivate"} ${
+          patient.name
+        }?`,
         [
           { text: "Cancel", style: "cancel" },
           {
@@ -220,7 +222,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               try {
                 const response = await adminService.updateUserStatus(
                   patient.userId,
-                  newStatus,
+                  newStatus
                 );
 
                 logger.debug("ManagePatientsScreen", "Status update response", {
@@ -234,7 +236,9 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
                 Alert.alert(
                   "Success",
-                  `Patient ${newStatus ? "activated" : "deactivated"} successfully`,
+                  `Patient ${
+                    newStatus ? "activated" : "deactivated"
+                  } successfully`
                 );
               } catch (err) {
                 logError(err, {
@@ -246,10 +250,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [canManageUsers, queryClient],
+    [canManageUsers, queryClient]
   );
 
   const handleEditPatient = useCallback((patient) => {
@@ -273,7 +277,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
         Alert.alert(
           "Patient Deactivated",
-          `${patient.name} has been deactivated. Patient data is retained for compliance and can be reactivated later.`,
+          `${patient.name} has been deactivated. Patient data is retained for compliance and can be reactivated later.`
         );
       } catch (err) {
         logError(err, {
@@ -287,7 +291,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         setUpdatingId(null);
       }
     },
-    [queryClient],
+    [queryClient]
   );
 
   const handlePermanentDeletePatient = useCallback(
@@ -295,7 +299,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       if (!isSuperAdmin) {
         Alert.alert(
           "Access Denied",
-          "Permanent deletion is restricted to super admin.",
+          "Permanent deletion is restricted to super admin."
         );
         return;
       }
@@ -325,7 +329,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 });
                 Alert.alert(
                   "Permanently Deleted",
-                  `${patient.name} has been permanently removed from the system. This action was logged for audit purposes.`,
+                  `${patient.name} has been permanently removed from the system. This action was logged for audit purposes.`
                 );
               } catch (err) {
                 logError(err, {
@@ -342,10 +346,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               }
             },
           },
-        ],
+        ]
       );
     },
-    [isSuperAdmin, queryClient],
+    [isSuperAdmin, queryClient]
   );
 
   const handleDeletePatient = useCallback(
@@ -366,7 +370,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
               style: "destructive",
               onPress: () => handleSoftDeletePatient(patient),
             },
-          ],
+          ]
         );
         return;
       }
@@ -381,7 +385,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             style: "destructive",
             onPress: () => handlePermanentDeletePatient(patient),
           },
-        ],
+        ]
       );
     },
     [
@@ -389,7 +393,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       isSuperAdmin,
       handleSoftDeletePatient,
       handlePermanentDeletePatient,
-    ],
+    ]
   );
 
   const handlePatientPress = (patient) => {
@@ -403,7 +407,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       if (!resolvedPatientId) {
         Alert.alert(
           "Patient Missing",
-          "Unable to identify this patient for prescription.",
+          "Unable to identify this patient for prescription."
         );
         return;
       }
@@ -413,7 +417,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         patientName: patient?.name,
       });
     },
-    [navigation],
+    [navigation]
   );
 
   useEffect(() => {
@@ -443,7 +447,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         id: patientIdFromRoute,
         userId: patientIdFromRoute,
         name: route?.params?.patientName || "",
-      },
+      }
     );
   }, [patientIdFromRoute, patientPayloadFromRoute]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -598,7 +602,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       handleDeletePatient,
       handleCreatePrescription,
       updatingId,
-    ],
+    ]
   );
 
   const renderEmptyState = () => (

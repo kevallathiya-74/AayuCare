@@ -13,7 +13,7 @@ const mapNotificationRow = (row) => {
     read: row.is_read,
     readAt: row.read_at,
     sentAt: row.sent_at,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 };
 
@@ -30,8 +30,8 @@ const create = async (data) => {
       data.title,
       data.body,
       JSON.stringify(data.data || {}),
-      data.read || false
-    ]
+      data.read || false,
+    ],
   );
   return mapNotificationRow(rows[0]);
 };
@@ -45,26 +45,25 @@ const createBulk = async (arr) => {
 };
 
 const findById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM notifications WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM notifications WHERE id = $1`, [
+    id,
+  ]);
   return mapNotificationRow(rows[0]);
 };
 
 const findByUserId = async (userId, options = {}) => {
   const { limit = 50, offset = 0, unreadOnly = false } = options;
-  
+
   let queryText = `SELECT * FROM notifications WHERE user_id = $1`;
   const params = [userId];
-  
+
   if (unreadOnly) {
     queryText += ` AND is_read = false`;
   }
-  
+
   queryText += ` ORDER BY created_at DESC LIMIT $2 OFFSET $3`;
   params.push(limit, offset);
-  
+
   const { rows } = await query(queryText, params);
   return rows.map(mapNotificationRow);
 };
@@ -136,7 +135,7 @@ const count = async (filters = {}) => {
 const getUnreadCount = async (userId) => {
   const { rows } = await query(
     `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false`,
-    [userId]
+    [userId],
   );
   return parseInt(rows[0].count, 10);
 };
@@ -144,7 +143,7 @@ const getUnreadCount = async (userId) => {
 const markAsRead = async (id, userId) => {
   const { rows } = await query(
     `UPDATE notifications SET is_read = true, read_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`,
-    [id, userId]
+    [id, userId],
   );
   return mapNotificationRow(rows[0]);
 };
@@ -152,7 +151,7 @@ const markAsRead = async (id, userId) => {
 const markAllAsRead = async (userId) => {
   const { rowCount } = await query(
     `UPDATE notifications SET is_read = true, read_at = NOW() WHERE user_id = $1 AND is_read = false`,
-    [userId]
+    [userId],
   );
   return { rowCount };
 };
@@ -160,7 +159,7 @@ const markAllAsRead = async (userId) => {
 const remove = async (id, userId) => {
   const { rowCount } = await query(
     `DELETE FROM notifications WHERE id = $1 AND user_id = $2`,
-    [id, userId]
+    [id, userId],
   );
   return rowCount > 0;
 };
@@ -172,7 +171,7 @@ const deleteByIdAndUserId = async (id, userId) => {
 const deleteAllForUser = async (userId) => {
   const { rowCount } = await query(
     `DELETE FROM notifications WHERE user_id = $1`,
-    [userId]
+    [userId],
   );
   return { rowCount };
 };
@@ -180,7 +179,7 @@ const deleteAllForUser = async (userId) => {
 const deleteOldNotifications = async (beforeDate) => {
   const { rowCount } = await query(
     `DELETE FROM notifications WHERE created_at < $1`,
-    [beforeDate]
+    [beforeDate],
   );
   return { rowCount };
 };
@@ -191,18 +190,20 @@ const update = async (id, updateData) => {
   let paramIndex = 2;
 
   const allowed = {
-    title: 'title',
-    body: 'body',
-    type: 'type',
-    data: 'data',
-    read: 'is_read',
-    is_read: 'is_read'
+    title: "title",
+    body: "body",
+    type: "type",
+    data: "data",
+    read: "is_read",
+    is_read: "is_read",
   };
 
   for (const [key, dbCol] of Object.entries(allowed)) {
     if (updateData[key] !== undefined) {
       fields.push(`${dbCol} = $${paramIndex}`);
-      params.push(dbCol === 'data' ? JSON.stringify(updateData[key]) : updateData[key]);
+      params.push(
+        dbCol === "data" ? JSON.stringify(updateData[key]) : updateData[key],
+      );
       paramIndex++;
     }
   }
@@ -210,8 +211,8 @@ const update = async (id, updateData) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE notifications SET ${fields.join(', ')} WHERE id = $1 RETURNING *`,
-    params
+    `UPDATE notifications SET ${fields.join(", ")} WHERE id = $1 RETURNING *`,
+    params,
   );
   return mapNotificationRow(rows[0]);
 };
@@ -274,8 +275,8 @@ const updateMany = async (filters, updateData) => {
   if (setFields.length === 0) return { modifiedCount: 0 };
 
   const { rowCount } = await query(
-    `UPDATE notifications SET ${setFields.join(', ')}, updated_at = NOW() ${whereText} RETURNING id`,
-    params
+    `UPDATE notifications SET ${setFields.join(", ")}, updated_at = NOW() ${whereText} RETURNING id`,
+    params,
   );
   return { modifiedCount: rowCount };
 };

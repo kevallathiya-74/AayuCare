@@ -115,7 +115,10 @@ class PaymentRepository {
    */
   async findByPatient(patientId, filters = {}) {
     const { limit = 20, offset = 0 } = filters;
-    const { whereClause, params } = buildPatientFiltersWhere(patientId, filters);
+    const { whereClause, params } = buildPatientFiltersWhere(
+      patientId,
+      filters,
+    );
 
     const sql = `
             SELECT p.*,
@@ -133,7 +136,7 @@ class PaymentRepository {
 
     const result = await query(
       `${sql} ORDER BY p.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
-      params
+      params,
     );
     return result.rows;
   }
@@ -146,7 +149,10 @@ class PaymentRepository {
    * @returns {Promise<number>} Total matching payment count
    */
   async countByPatient(patientId, filters = {}) {
-    const { whereClause, params } = buildPatientFiltersWhere(patientId, filters);
+    const { whereClause, params } = buildPatientFiltersWhere(
+      patientId,
+      filters,
+    );
     const sql = `
             SELECT COUNT(*) AS total
             FROM payments p

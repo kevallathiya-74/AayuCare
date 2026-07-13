@@ -82,7 +82,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
       }
 
       throw new Error(
-        response?.message || "Failed to register patient. Please try again.",
+        response?.message || "Failed to register patient. Please try again."
       );
     },
   });
@@ -303,7 +303,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     icon,
     keyboardType = "default",
     secureTextEntry = false,
-    multiline = false,
+    multiline = false
   ) => (
     <View style={styles.inputContainer}>
       <Input
@@ -386,7 +386,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
     selectedValue,
     onSelect,
     visible,
-    onClose,
+    onClose
   ) => (
     <Modal
       statusBarTranslucent
@@ -484,14 +484,14 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Email Address *",
               "patient@example.com",
               "mail",
-              "email-address",
+              "email-address"
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+91 1234567890",
               "call",
-              "phone-pad",
+              "phone-pad"
             )}
             {renderInput(
               "password",
@@ -499,7 +499,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Minimum 8 characters",
               "lock-closed",
               "default",
-              true,
+              true
             )}
             {/* Date of Birth Picker */}
             <View style={styles.inputContainer}>
@@ -544,14 +544,14 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "Gender *",
               "person-outline",
               GENDERS,
-              setShowGenderPicker,
+              setShowGenderPicker
             )}
             {renderPicker(
               "bloodGroup",
               "Blood Group",
               "water",
               BLOOD_GROUPS,
-              setShowBloodGroupPicker,
+              setShowBloodGroupPicker
             )}
             {renderInput(
               "address",
@@ -560,42 +560,42 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "location",
               "default",
               false,
-              true,
+              true
             )}
             {renderInput(
               "emergencyContactName",
               "Emergency Contact Name",
               "Contact person name",
               "person-add",
-              "default",
+              "default"
             )}
             {renderInput(
               "emergencyContactPhone",
               "Emergency Contact Phone",
               "+91 1234567890",
               "call",
-              "phone-pad",
+              "phone-pad"
             )}
             {renderInput(
               "emergencyContactRelation",
               "Emergency Contact Relation",
               "e.g. Father, Spouse, Friend",
               "people",
-              "default",
+              "default"
             )}
             {renderInput(
               "allergies",
               "Allergies",
               "e.g. Penicillin, Pollen",
               "warning",
-              "default",
+              "default"
             )}
             {renderInput(
               "chronicConditions",
               "Chronic Conditions",
               "e.g. Diabetes, Hypertension",
               "medkit",
-              "default",
+              "default"
             )}
 
             <Text style={styles.noteText}>* Required fields</Text>
@@ -642,7 +642,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           setShowGenderPicker(false);
         },
         showGenderPicker,
-        () => setShowGenderPicker(false),
+        () => setShowGenderPicker(false)
       )}
 
       {renderPickerModal(
@@ -654,7 +654,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
           setShowBloodGroupPicker(false);
         },
         showBloodGroupPicker,
-        () => setShowBloodGroupPicker(false),
+        () => setShowBloodGroupPicker(false)
       )}
 
       {/* Date Picker */}

@@ -68,7 +68,7 @@ const DoctorCard = ({
               : healthColors.neutral.gray300
           }
           style={styles.star}
-        />,
+        />
       );
     }
     return stars;

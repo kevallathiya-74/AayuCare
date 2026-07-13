@@ -15,7 +15,7 @@ const mapMetricRow = (row) => {
     source: row.source,
     timestamp: row.recorded_at,
     recordedAt: row.recorded_at,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 };
 
@@ -23,7 +23,7 @@ const create = async (data) => {
   const patientId = data.patient || data.patientId;
   const metricType = data.type || data.metricType;
   const recordedAt = data.timestamp || data.recordedAt || new Date();
-  
+
   const { rows } = await query(
     `INSERT INTO health_metrics (
       patient_id, hospital_id, metric_type, value, unit, notes, recorded_by, source, recorded_at
@@ -38,23 +38,22 @@ const create = async (data) => {
       data.notes || null,
       data.recordedBy || null,
       data.source || "manual",
-      recordedAt
-    ]
+      recordedAt,
+    ],
   );
   return mapMetricRow(rows[0]);
 };
 
 const findById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM health_metrics WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM health_metrics WHERE id = $1`, [
+    id,
+  ]);
   return mapMetricRow(rows[0]);
 };
 
 const findWithFilters = async (filters = {}, options = {}) => {
-  const { limit = 50, offset = 0, sort = 'recorded_at DESC' } = options;
-  
+  const { limit = 50, offset = 0, sort = "recorded_at DESC" } = options;
+
   let queryText = `SELECT * FROM health_metrics WHERE 1=1`;
   const params = [];
   let paramIndex = 1;
@@ -79,7 +78,8 @@ const findWithFilters = async (filters = {}, options = {}) => {
     paramIndex++;
   }
 
-  const recordedAtFilter = filters.recordedAt || filters.recorded_at || filters.timestamp;
+  const recordedAtFilter =
+    filters.recordedAt || filters.recorded_at || filters.timestamp;
   if (recordedAtFilter) {
     if (recordedAtFilter.$gte) {
       queryText += ` AND recorded_at >= $${paramIndex}`;
@@ -104,17 +104,27 @@ const findWithFilters = async (filters = {}, options = {}) => {
   }
 
   // Handle sorting translation
-  let sqlSort = 'recorded_at DESC';
+  let sqlSort = "recorded_at DESC";
   if (sort) {
-    if (typeof sort === 'object') {
+    if (typeof sort === "object") {
       const keys = Object.keys(sort);
       if (keys.length > 0) {
-        const order = sort[keys[0]] === -1 || sort[keys[0]] === 'desc' || sort[keys[0]] === 'DESC' ? 'DESC' : 'ASC';
-        const field = keys[0] === 'timestamp' || keys[0] === 'recordedAt' ? 'recorded_at' : keys[0];
+        const order =
+          sort[keys[0]] === -1 ||
+          sort[keys[0]] === "desc" ||
+          sort[keys[0]] === "DESC"
+            ? "DESC"
+            : "ASC";
+        const field =
+          keys[0] === "timestamp" || keys[0] === "recordedAt"
+            ? "recorded_at"
+            : keys[0];
         sqlSort = `${field} ${order}`;
       }
-    } else if (typeof sort === 'string') {
-      sqlSort = sort.replace('timestamp', 'recorded_at').replace('recordedAt', 'recorded_at');
+    } else if (typeof sort === "string") {
+      sqlSort = sort
+        .replace("timestamp", "recorded_at")
+        .replace("recordedAt", "recorded_at");
     }
   }
 
@@ -168,18 +178,20 @@ const update = async (id, updateData) => {
   let paramIndex = 2;
 
   const allowed = {
-    value: 'value',
-    unit: 'unit',
-    notes: 'notes',
-    source: 'source',
-    timestamp: 'recorded_at',
-    recordedAt: 'recorded_at'
+    value: "value",
+    unit: "unit",
+    notes: "notes",
+    source: "source",
+    timestamp: "recorded_at",
+    recordedAt: "recorded_at",
   };
 
   for (const [key, dbCol] of Object.entries(allowed)) {
     if (updateData[key] !== undefined) {
       fields.push(`${dbCol} = $${paramIndex}`);
-      params.push(dbCol === 'value' ? JSON.stringify(updateData[key]) : updateData[key]);
+      params.push(
+        dbCol === "value" ? JSON.stringify(updateData[key]) : updateData[key],
+      );
       paramIndex++;
     }
   }
@@ -187,24 +199,23 @@ const update = async (id, updateData) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE health_metrics SET ${fields.join(', ')} WHERE id = $1 RETURNING *`,
-    params
+    `UPDATE health_metrics SET ${fields.join(", ")} WHERE id = $1 RETURNING *`,
+    params,
   );
   return mapMetricRow(rows[0]);
 };
 
 const remove = async (id) => {
-  const { rowCount } = await query(
-    `DELETE FROM health_metrics WHERE id = $1`,
-    [id]
-  );
+  const { rowCount } = await query(`DELETE FROM health_metrics WHERE id = $1`, [
+    id,
+  ]);
   return rowCount > 0;
 };
 
 const deleteOldMetrics = async (beforeDate) => {
   const { rowCount } = await query(
     `DELETE FROM health_metrics WHERE recorded_at < $1`,
-    [beforeDate]
+    [beforeDate],
   );
   return { deletedCount: rowCount };
 };
@@ -216,14 +227,14 @@ const getLatestMetrics = async (patientId, metricTypes = []) => {
     WHERE patient_id = $1
   `;
   const params = [patientId];
-  
+
   if (metricTypes.length > 0) {
     queryText += ` AND metric_type = ANY($2)`;
     params.push(metricTypes);
   }
-  
+
   queryText += ` ORDER BY metric_type, recorded_at DESC`;
-  
+
   const { rows } = await query(queryText, params);
   return rows.map(mapMetricRow);
 };
@@ -238,7 +249,7 @@ const getTodayMetrics = async (patientId) => {
     `SELECT * FROM health_metrics 
      WHERE patient_id = $1 AND recorded_at >= $2 AND recorded_at < $3 
      ORDER BY recorded_at DESC LIMIT 500`,
-    [patientId, today, tomorrow]
+    [patientId, today, tomorrow],
   );
   return rows.map(mapMetricRow);
 };
@@ -273,18 +284,18 @@ const getMetricStats = async (patientId, type, startDate, endDate) => {
       COUNT(*) as count
      FROM health_metrics
      WHERE patient_id = $1 AND metric_type = $2 AND recorded_at >= $3 AND recorded_at <= $4`,
-    [patientId, type, startDate, endDate]
+    [patientId, type, startDate, endDate],
   );
-  
-  if (!rows[0] || rows[0].count === '0') return null;
-  
+
+  if (!rows[0] || rows[0].count === "0") return null;
+
   const latestResult = await query(
     `SELECT value FROM health_metrics WHERE patient_id = $1 AND metric_type = $2 AND recorded_at >= $3 AND recorded_at <= $4 ORDER BY recorded_at DESC LIMIT 1`,
-    [patientId, type, startDate, endDate]
+    [patientId, type, startDate, endDate],
   );
   const oldestResult = await query(
     `SELECT value FROM health_metrics WHERE patient_id = $1 AND metric_type = $2 AND recorded_at >= $3 AND recorded_at <= $4 ORDER BY recorded_at ASC LIMIT 1`,
-    [patientId, type, startDate, endDate]
+    [patientId, type, startDate, endDate],
   );
 
   return {
@@ -293,7 +304,7 @@ const getMetricStats = async (patientId, type, startDate, endDate) => {
     max: parseFloat(rows[0].max),
     count: parseInt(rows[0].count, 10),
     latest: latestResult.rows[0]?.value,
-    oldest: oldestResult.rows[0]?.value
+    oldest: oldestResult.rows[0]?.value,
   };
 };
 

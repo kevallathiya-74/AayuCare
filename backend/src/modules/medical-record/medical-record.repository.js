@@ -5,8 +5,12 @@ const { query } = require("../../config/postgres");
  */
 const create = async (data) => {
   const recordId = data.recordId || `REC${Date.now()}`;
-  const symptoms = data.symptoms ? (Array.isArray(data.symptoms) ? data.symptoms : [data.symptoms]) : [];
-  
+  const symptoms = data.symptoms
+    ? Array.isArray(data.symptoms)
+      ? data.symptoms
+      : [data.symptoms]
+    : [];
+
   const { rows } = await query(
     `INSERT INTO medical_records (
       record_id, patient_id, doctor_id, hospital_id, record_type, title, description,
@@ -27,29 +31,39 @@ const create = async (data) => {
       JSON.stringify(data.aiAnalysis || {}),
       data.isShared || false,
       JSON.stringify(data.sharedWith || []),
-      data.date || data.recordDate || new Date()
-    ]
+      data.date || data.recordDate || new Date(),
+    ],
   );
   return rows[0];
 };
 
 const findById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM medical_records WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM medical_records WHERE id = $1`, [
+    id,
+  ]);
   return rows[0] || null;
 };
 
 const findWithFilters = async (filters = {}, options = {}) => {
-  const { limit = 50, offset = 0, sort: sortOpt = 'record_date DESC' } = options;
+  const {
+    limit = 50,
+    offset = 0,
+    sort: sortOpt = "record_date DESC",
+  } = options;
 
-  let sortClause = 'record_date DESC';
-  if (typeof sortOpt === 'string') {
-    const validSortColumns = ['record_date DESC', 'record_date ASC', 'created_at DESC', 'created_at ASC'];
-    sortClause = validSortColumns.includes(sortOpt) ? sortOpt : 'record_date DESC';
+  let sortClause = "record_date DESC";
+  if (typeof sortOpt === "string") {
+    const validSortColumns = [
+      "record_date DESC",
+      "record_date ASC",
+      "created_at DESC",
+      "created_at ASC",
+    ];
+    sortClause = validSortColumns.includes(sortOpt)
+      ? sortOpt
+      : "record_date DESC";
   }
-  
+
   let queryText = `SELECT * FROM medical_records WHERE 1=1`;
   const params = [];
   let paramIndex = 1;
@@ -141,29 +155,33 @@ const update = async (id, updateData) => {
   let paramIndex = 2;
 
   const allowedFields = {
-    title: 'title',
-    description: 'description',
-    diagnosis: 'diagnosis',
-    symptoms: 'symptoms',
-    recordType: 'record_type',
-    fileUrls: 'file_urls',
-    files: 'file_urls',
-    aiAnalysis: 'ai_analysis',
-    isShared: 'is_shared',
-    sharedWith: 'shared_with',
-    date: 'record_date',
-    recordDate: 'record_date'
+    title: "title",
+    description: "description",
+    diagnosis: "diagnosis",
+    symptoms: "symptoms",
+    recordType: "record_type",
+    fileUrls: "file_urls",
+    files: "file_urls",
+    aiAnalysis: "ai_analysis",
+    isShared: "is_shared",
+    sharedWith: "shared_with",
+    date: "record_date",
+    recordDate: "record_date",
   };
 
   for (const [key, dbField] of Object.entries(allowedFields)) {
     if (updateData[key] !== undefined) {
       fields.push(`${dbField} = $${paramIndex}`);
-      
+
       let val = updateData[key];
-      if (dbField === 'file_urls' || dbField === 'shared_with' || dbField === 'ai_analysis') {
+      if (
+        dbField === "file_urls" ||
+        dbField === "shared_with" ||
+        dbField === "ai_analysis"
+      ) {
         val = JSON.stringify(val);
       }
-      
+
       params.push(val);
       paramIndex++;
     }
@@ -172,8 +190,8 @@ const update = async (id, updateData) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE medical_records SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,
-    params
+    `UPDATE medical_records SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    params,
   );
   return rows[0] || null;
 };
@@ -181,7 +199,7 @@ const update = async (id, updateData) => {
 const remove = async (id) => {
   const { rowCount } = await query(
     `DELETE FROM medical_records WHERE id = $1`,
-    [id]
+    [id],
   );
   return rowCount > 0;
 };
@@ -190,25 +208,22 @@ const createAttachment = async (data) => {
   const { medicalRecordId, filename, mimeType, fileSize, fileData } = data;
   const buffer = Buffer.isBuffer(fileData)
     ? fileData
-    : (typeof fileData === 'string' && fileData.includes(';base64,')
-        ? Buffer.from(fileData.split(';base64,')[1], 'base64')
-        : Buffer.from(fileData, 'base64'));
+    : typeof fileData === "string" && fileData.includes(";base64,")
+      ? Buffer.from(fileData.split(";base64,")[1], "base64")
+      : Buffer.from(fileData, "base64");
 
   const { rows } = await query(
     `INSERT INTO attachments (
       medical_record_id, filename, mime_type, file_size, file_data
     ) VALUES ($1, $2, $3, $4, $5)
     RETURNING id, medical_record_id, filename, mime_type, file_size, created_at`,
-    [medicalRecordId, filename, mimeType, fileSize || buffer.length, buffer]
+    [medicalRecordId, filename, mimeType, fileSize || buffer.length, buffer],
   );
   return rows[0];
 };
 
 const findAttachmentById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM attachments WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM attachments WHERE id = $1`, [id]);
   return rows[0] || null;
 };
 
@@ -217,16 +232,15 @@ const findAttachmentsByRecordId = async (medicalRecordId) => {
     `SELECT id, medical_record_id, filename, mime_type, file_size, created_at 
      FROM attachments 
      WHERE medical_record_id = $1`,
-    [medicalRecordId]
+    [medicalRecordId],
   );
   return rows;
 };
 
 const deleteAttachment = async (id) => {
-  const { rowCount } = await query(
-    `DELETE FROM attachments WHERE id = $1`,
-    [id]
-  );
+  const { rowCount } = await query(`DELETE FROM attachments WHERE id = $1`, [
+    id,
+  ]);
   return rowCount > 0;
 };
 

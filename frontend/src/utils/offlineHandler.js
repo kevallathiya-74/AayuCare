@@ -35,7 +35,6 @@ class OfflineHandler {
 
       this.isOnline = state.isConnected && state.isInternetReachable;
 
-
       // Notify all listeners of network status change
       this.notifyListeners(this.isOnline);
 
@@ -105,7 +104,7 @@ class OfflineHandler {
 
     logError(
       { message: "Request queued for offline" },
-      "OfflineHandler.addToQueue",
+      "OfflineHandler.addToQueue"
     );
   }
 
@@ -116,7 +115,7 @@ class OfflineHandler {
     try {
       await appStorage.setItem(
         QUEUE_STORAGE_KEY,
-        JSON.stringify(this.requestQueue),
+        JSON.stringify(this.requestQueue)
       );
     } catch (error) {
       logError(error, "OfflineHandler.saveQueue");
@@ -171,29 +170,29 @@ class OfflineHandler {
     if (request.retryCount >= MAX_RETRY_ATTEMPTS) {
       logError(
         { message: `Max retry attempts reached for request ${request.id}` },
-        "OfflineHandler.retryRequest",
+        "OfflineHandler.retryRequest"
       );
       return;
     }
 
     try {
-
       // Execute the request
 
       // This will be implemented with the actual API call
       // For now, we log the retry attempt
       logError(
         {
-          message: `Retrying request ${request.id} (attempt ${request.retryCount + 1})`,
+          message: `Retrying request ${request.id} (attempt ${
+            request.retryCount + 1
+          })`,
         },
-        "OfflineHandler.retryRequest",
+        "OfflineHandler.retryRequest"
       );
 
       request.retryCount++;
 
       // Delay before retry
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-
 
       // Success - remove from queue
       showSuccess("Request synced successfully", "Synced");
@@ -223,7 +222,7 @@ class OfflineHandler {
       await this.addToQueue(requestDetails);
 
       throw new Error(
-        "You are offline. This request will be automatically synced when connection is restored.",
+        "You are offline. This request will be automatically synced when connection is restored."
       );
     }
 
@@ -231,17 +230,15 @@ class OfflineHandler {
       // Execute the request
       return await requestFn();
     } catch (error) {
-
       // If network error, queue the request
       if (
         error.message?.includes("Network") ||
         error.message?.includes("connection")
-
       ) {
         await this.addToQueue(requestDetails);
 
         throw new Error(
-          "Connection lost. This request will be automatically synced when connection is restored.",
+          "Connection lost. This request will be automatically synced when connection is restored."
         );
       }
 
@@ -282,7 +279,7 @@ export const offlineHandler = new OfflineHandler();
 // Returns { isConnected } object for consistent usage across components
 export const useNetworkStatus = () => {
   const [isConnected, setIsConnected] = React.useState(
-    offlineHandler.getNetworkStatus(),
+    offlineHandler.getNetworkStatus()
   );
 
   React.useEffect(() => {
@@ -296,7 +293,7 @@ export const useNetworkStatus = () => {
 // React Hook for request queue
 export const useRequestQueue = () => {
   const [queueSize, setQueueSize] = React.useState(
-    offlineHandler.getQueueSize(),
+    offlineHandler.getQueueSize()
   );
 
   React.useEffect(() => {

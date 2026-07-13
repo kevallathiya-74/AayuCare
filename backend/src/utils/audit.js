@@ -14,33 +14,33 @@ const logger = require("./logger");
  */
 const AUDIT_ACTIONS = {
   // Auth
-  USER_REGISTER:          "user_register",
-  USER_LOGIN:             "user_login",
-  USER_LOGOUT:            "user_logout",
+  USER_REGISTER: "user_register",
+  USER_LOGIN: "user_login",
+  USER_LOGOUT: "user_logout",
   // Profile
-  PROFILE_UPDATE:         "profile_update",
-  PASSWORD_CHANGE:        "password_change",
-  ROLE_CHANGE:            "role_change",
+  PROFILE_UPDATE: "profile_update",
+  PASSWORD_CHANGE: "password_change",
+  ROLE_CHANGE: "role_change",
   // Appointments
-  APPOINTMENT_CREATE:     "appointment_create",
-  APPOINTMENT_CANCEL:     "appointment_cancel",
-  APPOINTMENT_COMPLETE:   "appointment_complete",
-  APPOINTMENT_UPDATE:     "appointment_update",
+  APPOINTMENT_CREATE: "appointment_create",
+  APPOINTMENT_CANCEL: "appointment_cancel",
+  APPOINTMENT_COMPLETE: "appointment_complete",
+  APPOINTMENT_UPDATE: "appointment_update",
   // Payments
-  PAYMENT_CREATE:         "payment_create",
-  PAYMENT_REFUND:         "payment_refund",
+  PAYMENT_CREATE: "payment_create",
+  PAYMENT_REFUND: "payment_refund",
   // Medical records
-  MEDICAL_RECORD_VIEW:    "medical_record_view",
-  MEDICAL_RECORD_CREATE:  "medical_record_create",
-  MEDICAL_RECORD_UPDATE:  "medical_record_update",
+  MEDICAL_RECORD_VIEW: "medical_record_view",
+  MEDICAL_RECORD_CREATE: "medical_record_create",
+  MEDICAL_RECORD_UPDATE: "medical_record_update",
   // Prescriptions
-  PRESCRIPTION_CREATE:    "prescription_create",
-  PRESCRIPTION_UPDATE:    "prescription_update",
+  PRESCRIPTION_CREATE: "prescription_create",
+  PRESCRIPTION_UPDATE: "prescription_update",
   // Admin
-  ADMIN_ACTION:           "admin_action",
-  USER_STATUS_CHANGE:     "user_status_change",
-  USER_DELETE:            "user_delete",
-  BULK_UPDATE:            "bulk_update",
+  ADMIN_ACTION: "admin_action",
+  USER_STATUS_CHANGE: "user_status_change",
+  USER_DELETE: "user_delete",
+  BULK_UPDATE: "bulk_update",
 };
 
 /**
@@ -65,16 +65,16 @@ async function writeAuditLog({
 }) {
   try {
     // Sanitize x-forwarded-for: take only the first (client) IP and validate format
-    const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
+    const IPV4_REGEX =
+      /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
     const IPV6_REGEX = /^[0-9a-fA-F:]+$/;
-    const rawIp = req
-      ? (req.headers["x-forwarded-for"] || req.ip || null)
-      : null;
-    const firstIp = rawIp ? String(rawIp).split(',')[0].trim() : null;
-    const ipAddress = firstIp && (IPV4_REGEX.test(firstIp) || IPV6_REGEX.test(firstIp))
-      ? firstIp
-      : null;
-    const userAgent = req ? (req.get("user-agent") || null) : null;
+    const rawIp = req ? req.headers["x-forwarded-for"] || req.ip || null : null;
+    const firstIp = rawIp ? String(rawIp).split(",")[0].trim() : null;
+    const ipAddress =
+      firstIp && (IPV4_REGEX.test(firstIp) || IPV6_REGEX.test(firstIp))
+        ? firstIp
+        : null;
+    const userAgent = req ? req.get("user-agent") || null : null;
 
     await pool.query(
       `INSERT INTO audit_logs
@@ -89,7 +89,7 @@ async function writeAuditLog({
         newValues ? JSON.stringify(newValues) : null,
         ipAddress || null,
         userAgent || null,
-      ]
+      ],
     );
   } catch (err) {
     // Audit failures must never break primary operations

@@ -201,7 +201,10 @@ const ProfileScreen = ({ navigation }) => {
         if (typeof item === "string") return item;
         const condition = item.condition || "Unknown";
         const duration = item.diagnosedDate
-          ? ` (${formatMedicalHistoryDuration(item.diagnosedDate, item.status)})`
+          ? ` (${formatMedicalHistoryDuration(
+              item.diagnosedDate,
+              item.status
+            )})`
           : "";
         const status = item.status ? ` - ${item.status}` : "";
         return `${condition}${duration}${status}`;
@@ -314,7 +317,7 @@ const ProfileScreen = ({ navigation }) => {
         Alert.alert(
           "Help & Support",
           "For assistance, please contact:\n\nEmail: support@aayucare.com\nPhone: 1800-123-4567\n\nAvailable 24/7",
-          [{ text: "OK" }],
+          [{ text: "OK" }]
         ),
     },
     {

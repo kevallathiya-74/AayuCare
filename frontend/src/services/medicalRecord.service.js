@@ -25,7 +25,7 @@ export const getPatientMedicalRecords = async (patientId, filters = {}) => {
     params.append("limit", limit);
 
     const response = await api.get(
-      `/medical-records/patient/${patientId}?${params}`,
+      `/medical-records/patient/${patientId}?${params}`
     );
     return extractResponseData(response.data, []);
   } catch (error) {

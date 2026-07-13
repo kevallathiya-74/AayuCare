@@ -26,7 +26,7 @@ const mapEventRow = (row) => {
     isActive: row.is_active,
     createdBy: row.created_by,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
   };
 };
 
@@ -58,17 +58,14 @@ const create = async (data) => {
       JSON.stringify(data.contactInfo || {}),
       JSON.stringify(data.registrations || []),
       data.isActive !== false,
-      data.createdBy || null
-    ]
+      data.createdBy || null,
+    ],
   );
   return mapEventRow(rows[0]);
 };
 
 const findById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM events WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM events WHERE id = $1`, [id]);
   return mapEventRow(rows[0]);
 };
 
@@ -96,27 +93,32 @@ const findUpcoming = async (options = {}) => {
 };
 
 const findByHospitalId = async (hospitalId, options = {}) => {
-  const { limit = 20, offset = 0, sort = 'date DESC' } = options;
-  
+  const { limit = 20, offset = 0, sort = "date DESC" } = options;
+
   // Sort parsing
-  let sqlSort = 'date DESC';
-  if (sort && typeof sort === 'object') {
+  let sqlSort = "date DESC";
+  if (sort && typeof sort === "object") {
     const keys = Object.keys(sort);
     if (keys.length > 0) {
-      const order = sort[keys[0]] === -1 || sort[keys[0]] === 'desc' || sort[keys[0]] === 'DESC' ? 'DESC' : 'ASC';
+      const order =
+        sort[keys[0]] === -1 ||
+        sort[keys[0]] === "desc" ||
+        sort[keys[0]] === "DESC"
+          ? "DESC"
+          : "ASC";
       sqlSort = `${keys[0]} ${order}`;
     }
   }
 
   const { rows } = await query(
     `SELECT * FROM events WHERE hospital_id = $1 ORDER BY ${sqlSort} LIMIT $2 OFFSET $3`,
-    [hospitalId, limit, offset]
+    [hospitalId, limit, offset],
   );
   return rows.map(mapEventRow);
 };
 
 const findWithFilters = async (filters = {}, options = {}) => {
-  const { limit = 20, offset = 0, sort = 'date DESC' } = options;
+  const { limit = 20, offset = 0, sort = "date DESC" } = options;
   let queryText = `SELECT * FROM events WHERE 1=1`;
   const params = [];
   let paramIndex = 1;
@@ -142,15 +144,20 @@ const findWithFilters = async (filters = {}, options = {}) => {
     paramIndex++;
   }
 
-  let sqlSort = 'date DESC';
+  let sqlSort = "date DESC";
   if (sort) {
-    if (typeof sort === 'object') {
+    if (typeof sort === "object") {
       const keys = Object.keys(sort);
       if (keys.length > 0) {
-        const order = sort[keys[0]] === -1 || sort[keys[0]] === 'desc' || sort[keys[0]] === 'DESC' ? 'DESC' : 'ASC';
+        const order =
+          sort[keys[0]] === -1 ||
+          sort[keys[0]] === "desc" ||
+          sort[keys[0]] === "DESC"
+            ? "DESC"
+            : "ASC";
         sqlSort = `${keys[0]} ${order}`;
       }
-    } else if (typeof sort === 'string') {
+    } else if (typeof sort === "string") {
       sqlSort = sort;
     }
   }
@@ -186,9 +193,11 @@ const registerUser = async (eventId, registrationData) => {
   const event = await findById(eventId);
   if (!event) return null;
 
-  const currentRegs = Array.isArray(event.registrations) ? event.registrations : [];
+  const currentRegs = Array.isArray(event.registrations)
+    ? event.registrations
+    : [];
   // Prevent duplicate registration
-  if (currentRegs.some(r => r.userId === registrationData.userId)) {
+  if (currentRegs.some((r) => r.userId === registrationData.userId)) {
     return event;
   }
 
@@ -200,7 +209,7 @@ const registerUser = async (eventId, registrationData) => {
      SET registrations = $2, registered_count = $3, updated_at = NOW() 
      WHERE id = $1 
      RETURNING *`,
-    [eventId, JSON.stringify(updatedRegs), newCount]
+    [eventId, JSON.stringify(updatedRegs), newCount],
   );
   return mapEventRow(rows[0]);
 };
@@ -209,8 +218,10 @@ const unregisterUser = async (eventId, userId) => {
   const event = await findById(eventId);
   if (!event) return null;
 
-  const currentRegs = Array.isArray(event.registrations) ? event.registrations : [];
-  const updatedRegs = currentRegs.filter(r => r.userId !== userId);
+  const currentRegs = Array.isArray(event.registrations)
+    ? event.registrations
+    : [];
+  const updatedRegs = currentRegs.filter((r) => r.userId !== userId);
   const newCount = Math.max(0, (event.registeredCount || 0) - 1);
 
   const { rows } = await query(
@@ -218,7 +229,7 @@ const unregisterUser = async (eventId, userId) => {
      SET registrations = $2, registered_count = $3, updated_at = NOW() 
      WHERE id = $1 
      RETURNING *`,
-    [eventId, JSON.stringify(updatedRegs), newCount]
+    [eventId, JSON.stringify(updatedRegs), newCount],
   );
   return mapEventRow(rows[0]);
 };
@@ -226,8 +237,10 @@ const unregisterUser = async (eventId, userId) => {
 const isUserRegistered = async (eventId, userId) => {
   const event = await findById(eventId);
   if (!event) return false;
-  const currentRegs = Array.isArray(event.registrations) ? event.registrations : [];
-  return currentRegs.some(r => r.userId === userId);
+  const currentRegs = Array.isArray(event.registrations)
+    ? event.registrations
+    : [];
+  return currentRegs.some((r) => r.userId === userId);
 };
 
 const update = async (id, updateData) => {
@@ -236,30 +249,30 @@ const update = async (id, updateData) => {
   let paramIndex = 2;
 
   const allowed = {
-    title: 'title',
-    description: 'description',
-    eventType: 'event_type',
-    type: 'event_type',
-    icon: 'icon',
-    color: 'color',
-    date: 'date',
-    startTime: 'start_time',
-    endTime: 'end_time',
-    venue: 'venue',
-    organizer: 'organizer',
-    availableSpots: 'available_spots',
-    status: 'status',
-    requirements: 'requirements',
-    benefits: 'benefits',
-    contactInfo: 'contact_info',
-    isActive: 'is_active'
+    title: "title",
+    description: "description",
+    eventType: "event_type",
+    type: "event_type",
+    icon: "icon",
+    color: "color",
+    date: "date",
+    startTime: "start_time",
+    endTime: "end_time",
+    venue: "venue",
+    organizer: "organizer",
+    availableSpots: "available_spots",
+    status: "status",
+    requirements: "requirements",
+    benefits: "benefits",
+    contactInfo: "contact_info",
+    isActive: "is_active",
   };
 
   for (const [key, dbCol] of Object.entries(allowed)) {
     if (updateData[key] !== undefined) {
       fields.push(`${dbCol} = $${paramIndex}`);
       let val = updateData[key];
-      if (dbCol === 'contact_info') {
+      if (dbCol === "contact_info") {
         val = JSON.stringify(val);
       }
       params.push(val);
@@ -270,24 +283,21 @@ const update = async (id, updateData) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE events SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,
-    params
+    `UPDATE events SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    params,
   );
   return mapEventRow(rows[0]);
 };
 
 const remove = async (id) => {
-  const { rowCount } = await query(
-    `DELETE FROM events WHERE id = $1`,
-    [id]
-  );
+  const { rowCount } = await query(`DELETE FROM events WHERE id = $1`, [id]);
   return rowCount > 0;
 };
 
 const updateStatus = async (id, status) => {
   const { rows } = await query(
     `UPDATE events SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
-    [id, status]
+    [id, status],
   );
   return mapEventRow(rows[0]);
 };

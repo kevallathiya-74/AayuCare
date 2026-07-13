@@ -116,14 +116,14 @@ const AdminSettingsScreen = ({ navigation }) => {
             action: () =>
               Alert.alert(
                 "AayuCare",
-                "Version 1.0.0\nHealthcare Management System",
+                "Version 1.0.0\nHealthcare Management System"
               ),
             color: healthColors.info.main,
           },
         ],
       },
     ],
-    [],
+    []
   );
 
   const handleSettingPress = useCallback(
@@ -139,7 +139,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         item.action();
       }
     },
-    [navigation],
+    [navigation]
   );
 
   const renderSettingItem = useCallback(
@@ -167,7 +167,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         />
       </TouchableOpacity>
     ),
-    [handleSettingPress],
+    [handleSettingPress]
   );
 
   return (

@@ -17,27 +17,27 @@ router.post(
   authorize("patient"),
   idempotencyMiddleware,
   validateBody(createPaymentSchema),
-  paymentController.createPayment
+  paymentController.createPayment,
 );
 
 router.get(
   "/stats",
   authorize("admin"),
   cacheMiddleware(60),
-  paymentController.getPaymentStats
+  paymentController.getPaymentStats,
 );
 
 router.get(
   "/patient/:patientId",
   authorize("patient", "admin"),
   cacheMiddleware(30),
-  paymentController.getPatientPayments
+  paymentController.getPatientPayments,
 );
 
 router.get(
   "/:id",
   authorize("patient", "doctor", "admin"),
-  paymentController.getPaymentById
+  paymentController.getPaymentById,
 );
 
 module.exports = router;

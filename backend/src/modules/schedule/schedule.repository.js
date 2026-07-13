@@ -8,48 +8,58 @@ const DAYS_MAP = {
   thursday: 4,
   friday: 5,
   saturday: 6,
-  0: 'monday', // Fallback defaults
-  1: 'monday',
-  2: 'tuesday',
-  3: 'wednesday',
-  4: 'thursday',
-  5: 'friday',
-  6: 'saturday',
-  7: 'sunday'
+  0: "monday", // Fallback defaults
+  1: "monday",
+  2: "tuesday",
+  3: "wednesday",
+  4: "thursday",
+  5: "friday",
+  6: "saturday",
+  7: "sunday",
 };
 
 // Map day string to integer (e.g. monday -> 1)
 const getDayNum = (day) => {
   if (day === undefined || day === null) return 1;
-  if (typeof day === 'number') return day;
+  if (typeof day === "number") return day;
   const normalized = String(day).trim().toLowerCase();
   return DAYS_MAP[normalized] !== undefined ? DAYS_MAP[normalized] : 1;
 };
 
 // Map day integer back to string
 const getDayStr = (num) => {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  return days[num] || 'monday';
+  const days = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+  return days[num] || "monday";
 };
 
 const generateTimeSlots = (startTimeStr, endTimeStr, durationMin) => {
   const slots = [];
   if (!startTimeStr || !endTimeStr || !durationMin) return slots;
-  
-  const [startH, startM] = startTimeStr.split(':').map(Number);
-  const [endH, endM] = endTimeStr.split(':').map(Number);
-  
+
+  const [startH, startM] = startTimeStr.split(":").map(Number);
+  const [endH, endM] = endTimeStr.split(":").map(Number);
+
   let currentMin = startH * 60 + startM;
   const endTotalMin = endH * 60 + endM;
-  
+
   let index = 1;
   while (currentMin + durationMin <= endTotalMin) {
-    const h = Math.floor(currentMin / 60).toString().padStart(2, '0');
-    const m = (currentMin % 60).toString().padStart(2, '0');
+    const h = Math.floor(currentMin / 60)
+      .toString()
+      .padStart(2, "0");
+    const m = (currentMin % 60).toString().padStart(2, "0");
     slots.push({
       id: `slot_${index}`,
       time: `${h}:${m}`,
-      isAvailable: true
+      isAvailable: true,
     });
     currentMin += durationMin;
     index++;
@@ -59,12 +69,12 @@ const generateTimeSlots = (startTimeStr, endTimeStr, durationMin) => {
 
 const mapScheduleRow = (row) => {
   if (!row) return null;
-  
+
   // Format TIME (e.g., '09:00:00' to '09:00')
   const startTime = String(row.start_time).substring(0, 5);
   const endTime = String(row.end_time).substring(0, 5);
   const duration = row.slot_duration_minutes || 15;
-  
+
   return {
     id: row.id,
     doctorId: row.doctor_id,
@@ -77,7 +87,7 @@ const mapScheduleRow = (row) => {
     maxPatients: row.max_patients,
     timeSlots: generateTimeSlots(startTime, endTime, duration),
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
   };
 };
 
@@ -106,17 +116,14 @@ const create = async (data) => {
       data.endTime,
       duration,
       data.isAvailable !== false,
-      maxPatients
-    ]
+      maxPatients,
+    ],
   );
   return mapScheduleRow(rows[0]);
 };
 
 const findById = async (id) => {
-  const { rows } = await query(
-    `SELECT * FROM schedules WHERE id = $1`,
-    [id]
-  );
+  const { rows } = await query(`SELECT * FROM schedules WHERE id = $1`, [id]);
   return mapScheduleRow(rows[0]);
 };
 
@@ -124,7 +131,7 @@ const findByDoctorAndDay = async (doctorId, dayOfWeek) => {
   const dayNum = getDayNum(dayOfWeek);
   const { rows } = await query(
     `SELECT * FROM schedules WHERE doctor_id = $1 AND day_of_week = $2`,
-    [doctorId, dayNum]
+    [doctorId, dayNum],
   );
   return mapScheduleRow(rows[0]);
 };
@@ -165,12 +172,12 @@ const update = async (id, updates) => {
   let paramIndex = 2;
 
   const allowed = {
-    startTime: 'start_time',
-    endTime: 'end_time',
-    slotDurationMinutes: 'slot_duration_minutes',
-    slotDuration: 'slot_duration_minutes',
-    isAvailable: 'is_available',
-    maxPatients: 'max_patients'
+    startTime: "start_time",
+    endTime: "end_time",
+    slotDurationMinutes: "slot_duration_minutes",
+    slotDuration: "slot_duration_minutes",
+    isAvailable: "is_available",
+    maxPatients: "max_patients",
   };
 
   for (const [key, dbCol] of Object.entries(allowed)) {
@@ -190,15 +197,15 @@ const update = async (id, updates) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE schedules SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $1 RETURNING *`,
-    params
+    `UPDATE schedules SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    params,
   );
   return mapScheduleRow(rows[0]);
 };
 
 const updateByDoctorAndDay = async (doctorId, dayOfWeek, updates) => {
   const existing = await findByDoctorAndDay(doctorId, dayOfWeek);
-  
+
   if (existing) {
     return update(existing.id, updates);
   } else {
@@ -211,23 +218,20 @@ const updateByDoctorAndDay = async (doctorId, dayOfWeek, updates) => {
       endTime: updates.endTime || "17:00",
       slotDurationMinutes: updates.slotDurationMinutes || 15,
       isAvailable: updates.isAvailable !== false,
-      maxPatients: updates.maxPatients || 20
+      maxPatients: updates.maxPatients || 20,
     });
   }
 };
 
 const remove = async (id) => {
-  const { rowCount } = await query(
-    `DELETE FROM schedules WHERE id = $1`,
-    [id]
-  );
+  const { rowCount } = await query(`DELETE FROM schedules WHERE id = $1`, [id]);
   return rowCount > 0;
 };
 
 const deleteByDoctor = async (doctorId) => {
   const { rowCount } = await query(
     `DELETE FROM schedules WHERE doctor_id = $1`,
-    [doctorId]
+    [doctorId],
   );
   return rowCount;
 };
@@ -240,7 +244,11 @@ const bulkCreate = async (doctorId, schedules) => {
   return created;
 };
 
-const getAvailableTimeSlots = async (doctorId, dayOfWeek, _hospitalId = null) => {
+const getAvailableTimeSlots = async (
+  doctorId,
+  dayOfWeek,
+  _hospitalId = null,
+) => {
   const schedule = await findByDoctorAndDay(doctorId, dayOfWeek);
   if (!schedule || !schedule.isAvailable) return [];
   return schedule.timeSlots;

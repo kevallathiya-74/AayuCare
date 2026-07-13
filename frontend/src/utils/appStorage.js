@@ -92,7 +92,7 @@ export const setItem = async (key, value) => {
     if (value && value.length > 2000) {
       if (__DEV__) {
         console.warn(
-          `[appStorage] WARNING: Value for key "${key}" is approaching SecureStore limit.`,
+          `[appStorage] WARNING: Value for key "${key}" is approaching SecureStore limit.`
         );
       }
     }
@@ -157,7 +157,7 @@ export const deleteItemSync = (key) => {
     if (__DEV__) {
       console.error(
         `[appStorage] deleteItemSync error for key "${key}":`,
-        error,
+        error
       );
     }
     throw error;
@@ -203,7 +203,7 @@ export const clear = async () => {
       "aayucare_refresh_token",
     ];
     await Promise.all(
-      keysToClear.map((key) => SecureStore.deleteItemAsync(key)),
+      keysToClear.map((key) => SecureStore.deleteItemAsync(key))
     );
   } catch (error) {
     if (__DEV__) {

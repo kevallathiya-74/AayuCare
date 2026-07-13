@@ -25,12 +25,14 @@ const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
   .filter(Boolean);
 
 const allowedOrigins = Array.from(
-  new Set([
-    "http://localhost:19006",
-    "http://localhost:3000",
-    process.env.FRONTEND_URL,
-    ...configuredCorsOrigins,
-  ].filter(Boolean))
+  new Set(
+    [
+      "http://localhost:19006",
+      "http://localhost:3000",
+      process.env.FRONTEND_URL,
+      ...configuredCorsOrigins,
+    ].filter(Boolean),
+  ),
 );
 
 app.use(
@@ -52,7 +54,7 @@ app.use(
     },
     credentials: true,
     maxAge: 86400,
-  })
+  }),
 );
 
 app.use(tieredRateLimit);
@@ -70,7 +72,7 @@ app.all("/api/auth/*", (req, res, next) => {
       req,
       "Authentication service unavailable",
       500,
-      "AUTH_SERVICE_UNAVAILABLE"
+      "AUTH_SERVICE_UNAVAILABLE",
     );
   }
 });
@@ -78,7 +80,7 @@ app.all("/api/auth/*", (req, res, next) => {
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-app.set('etag', false);
+app.set("etag", false);
 
 registerModules(app);
 
@@ -96,7 +98,7 @@ app.get("/api", (req, res) => {
         medicalRecords: "/api/v1/medical-records",
       },
     },
-    "Welcome to AayuCare API"
+    "Welcome to AayuCare API",
   );
 });
 
@@ -106,17 +108,19 @@ app.get("/api/health", async (req, res) => {
     await query("SELECT 1");
     postgresStatus = "connected";
   } catch (err) {
-    logger.error("Health check — database query failed", { error: err.message });
+    logger.error("Health check — database query failed", {
+      error: err.message,
+    });
   }
 
-  let betterAuthStatus = 'not initialized';
+  let betterAuthStatus = "not initialized";
   try {
     const auth = getAuth();
-    if (auth && typeof auth.api === 'object') {
-      betterAuthStatus = 'initialized';
+    if (auth && typeof auth.api === "object") {
+      betterAuthStatus = "initialized";
     }
   } catch {
-    betterAuthStatus = 'error';
+    betterAuthStatus = "error";
   }
 
   const criticalDependenciesHealthy = postgresStatus === "connected";
@@ -134,7 +138,7 @@ app.get("/api/health", async (req, res) => {
       betterAuth: betterAuthStatus,
     },
     "AayuCare Backend Server health status",
-    criticalDependenciesHealthy ? 200 : 503
+    criticalDependenciesHealthy ? 200 : 503,
   );
 });
 
@@ -149,7 +153,9 @@ app.get("/api/readyz", async (req, res) => {
     await query("SELECT 1");
     postgresStatus = "connected";
   } catch (err) {
-    logger.error("Readiness check — database query failed", { error: err.message });
+    logger.error("Readiness check — database query failed", {
+      error: err.message,
+    });
   }
 
   const ready = postgresStatus === "connected";
@@ -164,7 +170,7 @@ app.get("/api/readyz", async (req, res) => {
       },
     },
     ready ? "Service is ready" : "Service is not ready",
-    ready ? 200 : 503
+    ready ? 200 : 503,
   );
 });
 
@@ -176,12 +182,18 @@ app.get("/", (req, res) => {
       version: "1.0.0",
       documentation: "/api/docs",
     },
-    "Welcome to AayuCare API"
+    "Welcome to AayuCare API",
   );
 });
 
 app.all("*", (req, res) => {
-  return sendError(res, req, `Can't find ${req.originalUrl} on this server!`, 404, "NOT_FOUND");
+  return sendError(
+    res,
+    req,
+    `Can't find ${req.originalUrl} on this server!`,
+    404,
+    "NOT_FOUND",
+  );
 });
 
 app.use(errorHandler);

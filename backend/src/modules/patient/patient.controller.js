@@ -59,7 +59,10 @@ exports.searchPatients = async (req, res, next) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     // Get hospitalId from request (set by hospitalMiddleware)
-    const hospitalId = req.hospitalId && req.user.role !== "super_admin" ? req.hospitalId : "MAIN";
+    const hospitalId =
+      req.hospitalId && req.user.role !== "super_admin"
+        ? req.hospitalId
+        : "MAIN";
 
     // Validate query parameter type to prevent type confusion (arrays, objects, etc.)
     if (q !== undefined && typeof q !== "string") {
@@ -68,16 +71,18 @@ exports.searchPatients = async (req, res, next) => {
 
     // Sanitize search query — enforce max length to prevent DB overload
     if (q && q.length > 100) {
-      return next(new AppError("Search query must be 100 characters or fewer", 400));
+      return next(
+        new AppError("Search query must be 100 characters or fewer", 400),
+      );
     }
-    const searchTerm = q && q.trim().length >= 1 ? q.trim() : '';
+    const searchTerm = q && q.trim().length >= 1 ? q.trim() : "";
 
     // Get patients with search from repository
     const result = await userRepository.findPatientsByHospital(
       hospitalId,
       parseInt(limit),
       offset,
-      searchTerm
+      searchTerm,
     );
 
     return sendSuccess(
@@ -93,7 +98,7 @@ exports.searchPatients = async (req, res, next) => {
         pages: Math.ceil(result.total / result.limit),
       },
       "Patients retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Patient search error:", {
@@ -119,24 +124,44 @@ exports.getCompleteHistory = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view this patient data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Get patient profile - try both id and userId
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    if (
+      patientId.match(
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+      )
+    ) {
       patient = await userRepository.findById(patientId);
     } else {
       patient = await userRepository.findByUserId(patientId);
     }
-    
+
     if (!patient) {
       return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Verify hospital access
-    if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
-      return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
+    if (
+      req.hospitalId &&
+      req.user.role !== "super_admin" &&
+      patient.hospital_id !== req.hospitalId
+    ) {
+      return sendError(
+        res,
+        req,
+        "Not authorized to access this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Use patient id for querying related collections
@@ -148,10 +173,16 @@ exports.getCompleteHistory = async (req, res, next) => {
         `SELECT 1 FROM appointments 
          WHERE doctor_id = $1 AND patient_id = $2
          LIMIT 1`,
-        [req.user.id, patientDbId]
+        [req.user.id, patientDbId],
       );
       if (hasRelationship.rows.length === 0) {
-        return sendError(res, req, "Access denied — you do not have an appointment with this patient", 403, "FORBIDDEN");
+        return sendError(
+          res,
+          req,
+          "Access denied — you do not have an appointment with this patient",
+          403,
+          "FORBIDDEN",
+        );
       }
     }
 
@@ -163,29 +194,38 @@ exports.getCompleteHistory = async (req, res, next) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       recordQuery.hospitalId = req.hospitalId;
     }
-    const medicalRecords = await medicalRecordRepository.findWithFilters(recordQuery, {
-      sort: 'created_at DESC'
-    });
+    const medicalRecords = await medicalRecordRepository.findWithFilters(
+      recordQuery,
+      {
+        sort: "created_at DESC",
+      },
+    );
 
     // Get all appointments (sorted by most recent) - PostgreSQL
     const appointmentFilters = {
       sortBy: "appointment_date",
-      sortOrder: "DESC"
+      sortOrder: "DESC",
     };
     if (req.hospitalId && req.user.role !== "super_admin") {
       appointmentFilters.hospitalId = req.hospitalId;
     }
-    const appointments = await appointmentRepository.findByPatient(patientDbId, appointmentFilters);
+    const appointments = await appointmentRepository.findByPatient(
+      patientDbId,
+      appointmentFilters,
+    );
 
     // Get all prescriptions (sorted by most recent)
     const prescriptionFilters = {
       sortBy: "createdAt",
-      sortOrder: "DESC"
+      sortOrder: "DESC",
     };
     if (req.hospitalId && req.user.role !== "super_admin") {
       prescriptionFilters.hospitalId = req.hospitalId;
     }
-    const prescriptions = await prescriptionRepository.findByPatient(patientDbId, prescriptionFilters);
+    const prescriptions = await prescriptionRepository.findByPatient(
+      patientDbId,
+      prescriptionFilters,
+    );
 
     // Calculate health statistics
     const stats = {
@@ -194,7 +234,7 @@ exports.getCompleteHistory = async (req, res, next) => {
       totalPrescriptions: prescriptions.length,
       upcomingAppointments: appointments.filter(
         (a) =>
-          a.status === "scheduled" && new Date(a.appointmentDate) > new Date()
+          a.status === "scheduled" && new Date(a.appointmentDate) > new Date(),
       ).length,
       lastVisit:
         appointments.length > 0 ? appointments[0].appointmentDate : null,
@@ -202,7 +242,7 @@ exports.getCompleteHistory = async (req, res, next) => {
 
     // Get records with ai_analysis for insights
     const recordsWithAnalysis = medicalRecords
-      .filter((r) => r.ai_analysis && typeof r.ai_analysis === 'object')
+      .filter((r) => r.ai_analysis && typeof r.ai_analysis === "object")
       .slice(0, 5)
       .map((r) => ({
         date: r.created_at || r.createdAt,
@@ -227,7 +267,13 @@ exports.getCompleteHistory = async (req, res, next) => {
       },
     };
 
-    return sendSuccess(res, req, completeHistory, "Patient history retrieved successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      completeHistory,
+      "Patient history retrieved successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Complete history error:", {
       error: error.message,
@@ -245,11 +291,23 @@ exports.getCompleteHistory = async (req, res, next) => {
 exports.getPatientProfile = async (req, res, next) => {
   try {
     let rawPatientId = null;
-    if (req.params && typeof req.params.patientId !== "undefined" && req.params.patientId !== null) {
+    if (
+      req.params &&
+      typeof req.params.patientId !== "undefined" &&
+      req.params.patientId !== null
+    ) {
       rawPatientId = req.params.patientId;
-    } else if (req.query && typeof req.query.patientId !== "undefined" && req.query.patientId !== null) {
+    } else if (
+      req.query &&
+      typeof req.query.patientId !== "undefined" &&
+      req.query.patientId !== null
+    ) {
       rawPatientId = req.query.patientId;
-    } else if (req.body && typeof req.body.patientId !== "undefined" && req.body.patientId !== null) {
+    } else if (
+      req.body &&
+      typeof req.body.patientId !== "undefined" &&
+      req.body.patientId !== null
+    ) {
       rawPatientId = req.body.patientId;
     } else if (req.user && req.user.role === "patient") {
       // Allow patients to access their own profile when patientId is omitted.
@@ -257,7 +315,13 @@ exports.getPatientProfile = async (req, res, next) => {
     }
 
     if (!rawPatientId) {
-      return sendError(res, req, "patientId is required", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "patientId is required",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     const patientId = String(rawPatientId);
@@ -268,24 +332,44 @@ exports.getPatientProfile = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view this patient data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Get patient profile
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    if (
+      patientId.match(
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+      )
+    ) {
       patient = await userRepository.findById(patientId);
     } else {
       patient = await userRepository.findByUserId(patientId);
     }
-    
+
     if (!patient || patient.role !== "patient") {
       return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
 
     // Verify hospital access
-    if (req.hospitalId && req.user.role !== "super_admin" && patient.hospital_id !== req.hospitalId) {
-      return sendError(res, req, "Not authorized to access this patient", 403, "FORBIDDEN");
+    if (
+      req.hospitalId &&
+      req.user.role !== "super_admin" &&
+      patient.hospital_id !== req.hospitalId
+    ) {
+      return sendError(
+        res,
+        req,
+        "Not authorized to access this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     if (req.user.role === "doctor") {
@@ -298,12 +382,18 @@ exports.getPatientProfile = async (req, res, next) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       statsQuery.hospitalId = req.hospitalId;
     }
-    
+
     const [recordCount, appointmentCounts, prescriptionCount] =
       await Promise.all([
         medicalRecordRepository.count(statsQuery),
-        appointmentRepository.countByStatus(patient.id, "patient", req.hospitalId),
-        prescriptionRepository.findByPatient(patient.id, {}).then(p => p.length),
+        appointmentRepository.countByStatus(
+          patient.id,
+          "patient",
+          req.hospitalId,
+        ),
+        prescriptionRepository
+          .findByPatient(patient.id, {})
+          .then((p) => p.length),
       ]);
 
     const normalizedPatient = {
@@ -328,7 +418,7 @@ exports.getPatientProfile = async (req, res, next) => {
         },
       },
       "Patient profile retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Patient profile error:", {
@@ -350,7 +440,13 @@ exports.updatePatientProfile = async (req, res, next) => {
 
     // Check access rights - supports both _id and userId formats
     if (req.user.role !== "admin" && !isOwnPatientData(req.user, patientId)) {
-      return sendError(res, req, "Not authorized to update this patient data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to update this patient data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     const allowedUserUpdates = ["name", "email", "phone", "preferred_language"];
@@ -383,12 +479,22 @@ exports.updatePatientProfile = async (req, res, next) => {
       Object.keys(userUpdates).length === 0 &&
       Object.keys(patientUpdates).length === 0
     ) {
-      return sendError(res, req, "No valid profile fields provided", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "No valid profile fields provided",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     // Find patient by userId or id
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    if (
+      patientId.match(
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+      )
+    ) {
       patient = await userRepository.findById(patientId);
     } else {
       patient = await userRepository.findByUserId(patientId);
@@ -397,7 +503,7 @@ exports.updatePatientProfile = async (req, res, next) => {
     if (!patient || patient.role !== "patient") {
       return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
-    
+
     let updatedUser = patient;
     if (Object.keys(userUpdates).length > 0) {
       updatedUser = await userRepository.update(patient.id, userUpdates);
@@ -407,11 +513,16 @@ exports.updatePatientProfile = async (req, res, next) => {
       await patientRepository.update(patient.id, patientUpdates);
     }
 
-    const refreshedPatientProfile = await patientRepository.findByUserId(patient.id);
+    const refreshedPatientProfile = await patientRepository.findByUserId(
+      patient.id,
+    );
 
     const updatedPatient = {
       id: updatedUser.id,
-      userId: updatedUser.userId || updatedUser.user_id || refreshedPatientProfile?.formatted_user_id,
+      userId:
+        updatedUser.userId ||
+        updatedUser.user_id ||
+        refreshedPatientProfile?.formatted_user_id,
       name: updatedUser.name,
       email: updatedUser.email,
       phone: updatedUser.phone,
@@ -423,8 +534,10 @@ exports.updatePatientProfile = async (req, res, next) => {
       gender: refreshedPatientProfile?.gender || null,
       bloodGroup: refreshedPatientProfile?.blood_group || null,
       address: refreshedPatientProfile?.address || null,
-      emergencyContactName: refreshedPatientProfile?.emergency_contact_name || null,
-      emergencyContactPhone: refreshedPatientProfile?.emergency_contact_phone || null,
+      emergencyContactName:
+        refreshedPatientProfile?.emergency_contact_name || null,
+      emergencyContactPhone:
+        refreshedPatientProfile?.emergency_contact_phone || null,
       emergencyContact: {
         name: refreshedPatientProfile?.emergency_contact_name || null,
         phone: refreshedPatientProfile?.emergency_contact_phone || null,
@@ -443,7 +556,13 @@ exports.updatePatientProfile = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, updatedPatient, "Profile Updated Successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      updatedPatient,
+      "Profile Updated Successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Patient profile update error:", {
       error: error.message,
@@ -468,12 +587,22 @@ exports.getHealthMetrics = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view this patient data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Fetch all metrics for the patient - handle both id and userId
     let patient;
-    if (patientId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+    if (
+      patientId.match(
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+      )
+    ) {
       patient = await userRepository.findById(patientId);
     } else {
       patient = await userRepository.findByUserId(patientId);
@@ -488,13 +617,19 @@ exports.getHealthMetrics = async (req, res, next) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       metricsQuery.hospitalId = req.hospitalId;
     }
-    
+
     const metrics = await healthMetricRepository.findWithFilters(metricsQuery, {
-      sort: 'recorded_at DESC',
-      limit: 100
+      sort: "recorded_at DESC",
+      limit: 100,
     });
 
-    return sendSuccess(res, req, { count: metrics.length, metrics }, "Health metrics retrieved successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      { count: metrics.length, metrics },
+      "Health metrics retrieved successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Get health metrics error:", {
       error: error.message,
@@ -520,24 +655,44 @@ exports.addHealthMetric = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to add metrics for this patient", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to add metrics for this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Validate metric type against HealthMetric model enum
-    const validTypes = ['bp','sugar','weight','bmi','temperature','steps','sleep','water','exercise','stress','heart-rate','oxygen'];
+    const validTypes = [
+      "bp",
+      "sugar",
+      "weight",
+      "bmi",
+      "temperature",
+      "steps",
+      "sleep",
+      "water",
+      "exercise",
+      "stress",
+      "heart-rate",
+      "oxygen",
+    ];
     if (!type || !validTypes.includes(type)) {
       return sendError(
         res,
         req,
-        `Invalid metric type. Must be one of: ${validTypes.join(', ')}`,
+        `Invalid metric type. Must be one of: ${validTypes.join(", ")}`,
         400,
-        "VALIDATION_ERROR"
+        "VALIDATION_ERROR",
       );
     }
 
     // Resolve patient using PostgreSQL repository
     let patient;
-    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const uuidRegex =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (uuidRegex.test(patientId)) {
       patient = await userRepository.findById(patientId);
     } else {
@@ -565,7 +720,13 @@ exports.addHealthMetric = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, metric, "Health metric added successfully", 201);
+    return sendSuccess(
+      res,
+      req,
+      metric,
+      "Health metric added successfully",
+      201,
+    );
   } catch (error) {
     logger.error("Add health metric error:", {
       error: error.message,
@@ -590,11 +751,18 @@ exports.getActivityData = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view this patient data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Resolve patient using PostgreSQL repository
-    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const uuidRegex =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     let activityPatient;
     if (uuidRegex.test(patientId)) {
       activityPatient = await userRepository.findById(patientId);
@@ -603,7 +771,7 @@ exports.getActivityData = async (req, res, next) => {
     }
 
     // Must resolve to a real patient — never fall back to raw URL param as DB key
-    if (!activityPatient || activityPatient.role !== 'patient') {
+    if (!activityPatient || activityPatient.role !== "patient") {
       return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
     const patientObjectId = activityPatient.id;
@@ -612,7 +780,7 @@ exports.getActivityData = async (req, res, next) => {
     // Get latest activity metrics
     const latestMetrics = await healthMetricRepository.getLatestMetrics(
       patientObjectId,
-      activityTypes
+      activityTypes,
     );
 
     // Get today's metrics for comparison
@@ -621,7 +789,7 @@ exports.getActivityData = async (req, res, next) => {
 
     const todayMetrics = await healthMetricRepository.findTodayMetrics(
       patientObjectId,
-      activityTypes
+      activityTypes,
     );
 
     return sendSuccess(
@@ -632,7 +800,7 @@ exports.getActivityData = async (req, res, next) => {
         today: todayMetrics,
       },
       "Activity data retrieved successfully",
-      200
+      200,
     );
   } catch (error) {
     logger.error("Get activity data error:", {
@@ -655,17 +823,30 @@ exports.updateActivityData = async (req, res, next) => {
 
     // Check access rights - supports both _id and userId formats
     if (!isOwnPatientData(req.user, patientId) && req.user.role !== "admin") {
-      return sendError(res, req, "Not authorized to update activity for this patient", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to update activity for this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Validate activity type
     const validTypes = ["steps", "sleep", "water", "exercise", "stress"];
     if (!validTypes.includes(type)) {
-      return sendError(res, req, "Invalid activity type", 400, "VALIDATION_ERROR");
+      return sendError(
+        res,
+        req,
+        "Invalid activity type",
+        400,
+        "VALIDATION_ERROR",
+      );
     }
 
     // Resolve patient using PostgreSQL repository
-    const uuidRegexActivity = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const uuidRegexActivity =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     let updateActivityPatient;
     if (uuidRegexActivity.test(patientId)) {
       updateActivityPatient = await userRepository.findById(patientId);
@@ -673,7 +854,9 @@ exports.updateActivityData = async (req, res, next) => {
       updateActivityPatient = await userRepository.findByUserId(patientId);
     }
 
-    const updatePatientId = updateActivityPatient ? updateActivityPatient.id : patientId;
+    const updatePatientId = updateActivityPatient
+      ? updateActivityPatient.id
+      : patientId;
     const metric = await healthMetricRepository.create({
       patient: updatePatientId,
       hospitalId: req.hospitalId || req.user.hospitalId || "MAIN",
@@ -692,7 +875,13 @@ exports.updateActivityData = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, metric, "Activity data updated successfully", 201);
+    return sendSuccess(
+      res,
+      req,
+      metric,
+      "Activity data updated successfully",
+      201,
+    );
   } catch (error) {
     logger.error("Update activity data error:", {
       error: error.message,
@@ -717,11 +906,18 @@ exports.getLatestHealthMetric = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to view this patient data", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to view this patient data",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // Resolve patient using PostgreSQL repository
-    const uuidRegexLatest = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const uuidRegexLatest =
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     let latestPatient;
     if (uuidRegexLatest.test(patientId)) {
       latestPatient = await userRepository.findById(patientId);
@@ -730,7 +926,7 @@ exports.getLatestHealthMetric = async (req, res, next) => {
     }
 
     // Must resolve to a real patient — never fall back to raw URL param as DB key
-    if (!latestPatient || latestPatient.role !== 'patient') {
+    if (!latestPatient || latestPatient.role !== "patient") {
       return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
     }
     const latestPatientId = latestPatient.id;
@@ -739,19 +935,35 @@ exports.getLatestHealthMetric = async (req, res, next) => {
     if (req.hospitalId && req.user.role !== "super_admin") {
       metricsQuery.hospitalId = req.hospitalId;
     }
-    
-    const latestMetricResult = await healthMetricRepository.findWithFilters(metricsQuery, {
-      sort: { timestamp: -1 },
-      limit: 1,
-      lean: true
-    });
-    const latestMetric = latestMetricResult.length > 0 ? latestMetricResult[0] : null;
+
+    const latestMetricResult = await healthMetricRepository.findWithFilters(
+      metricsQuery,
+      {
+        sort: { timestamp: -1 },
+        limit: 1,
+        lean: true,
+      },
+    );
+    const latestMetric =
+      latestMetricResult.length > 0 ? latestMetricResult[0] : null;
 
     if (!latestMetric) {
-      return sendError(res, req, `No ${type} metrics found for this patient`, 404, "NOT_FOUND");
+      return sendError(
+        res,
+        req,
+        `No ${type} metrics found for this patient`,
+        404,
+        "NOT_FOUND",
+      );
     }
 
-    return sendSuccess(res, req, latestMetric, "Latest health metric retrieved successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      latestMetric,
+      "Latest health metric retrieved successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Get latest health metric error:", {
       error: error.message,
@@ -776,7 +988,13 @@ exports.updateHealthMetric = async (req, res, next) => {
       req.user.role !== "doctor" &&
       !isOwnPatientData(req.user, patientId)
     ) {
-      return sendError(res, req, "Not authorized to update metrics for this patient", 403, "FORBIDDEN");
+      return sendError(
+        res,
+        req,
+        "Not authorized to update metrics for this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     const existing = await healthMetricRepository.findById(metricId);
@@ -798,7 +1016,13 @@ exports.updateHealthMetric = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, updated, "Health metric updated successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      updated,
+      "Health metric updated successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Update health metric error:", {
       error: error.message,
@@ -814,20 +1038,23 @@ exports.deleteHealthMetric = async (req, res, next) => {
     const { patientId, metricId } = req.params;
 
     // Check access rights - supports both _id and userId formats
-    if (
-      req.user.role !== "admin" &&
-      !isOwnPatientData(req.user, patientId)
-    ) {
-      return sendError(res, req, "Not authorized to delete metrics for this patient", 403, "FORBIDDEN");
+    if (req.user.role !== "admin" && !isOwnPatientData(req.user, patientId)) {
+      return sendError(
+        res,
+        req,
+        "Not authorized to delete metrics for this patient",
+        403,
+        "FORBIDDEN",
+      );
     }
 
     // First find the metric to verify it belongs to the patient
     const existingMetric = await healthMetricRepository.findById(metricId);
-    
+
     if (!existingMetric) {
       return sendError(res, req, "Metric not found", 404, "NOT_FOUND");
     }
-    
+
     await healthMetricRepository.delete(metricId);
 
     // Invalidate patient-related caches after metric deletion
@@ -838,7 +1065,13 @@ exports.deleteHealthMetric = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, metric, "Health metric deleted successfully", 200);
+    return sendSuccess(
+      res,
+      req,
+      metric,
+      "Health metric deleted successfully",
+      200,
+    );
   } catch (error) {
     logger.error("Delete health metric error:", {
       error: error.message,
@@ -848,5 +1081,3 @@ exports.deleteHealthMetric = async (req, res, next) => {
     next(error);
   }
 };
-
-

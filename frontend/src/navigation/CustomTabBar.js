@@ -85,14 +85,14 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
     options.tabBarLabel !== undefined
       ? options.tabBarLabel
       : options.title !== undefined
-        ? options.title
-        : route.name;
+      ? options.title
+      : route.name;
 
   const label =
     typeof rawLabel === "string"
       ? t(
           `navigation.${rawLabel.toLowerCase().replace(/[-_\s]+/g, "")}`,
-          rawLabel,
+          rawLabel
         )
       : rawLabel;
 
@@ -106,9 +106,7 @@ const TabItem = ({ route, options, isFocused, onPress, onLongPress }) => {
     <DynamicIcon
       name={isFocused ? icons.focused : icons.unfocused}
       size={theme.iconSizes.md}
-      color={
-        isFocused ? healthColors.primary.main : healthColors.text.tertiary
-      }
+      color={isFocused ? healthColors.primary.main : healthColors.text.tertiary}
     />
   );
 

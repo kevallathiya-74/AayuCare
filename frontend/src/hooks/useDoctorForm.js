@@ -104,8 +104,6 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         } catch {
           /* ignore parse errors */
         }
-
-
       }
       setAvailabilitySlots(parsed);
       setErrors({});
@@ -213,7 +211,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         };
         const response = await adminService.updateUserProfile(
           doctor.userId,
-          updateData,
+          updateData
         );
         if (response.success === true) {
           if (onSuccess) onSuccess();
@@ -227,7 +225,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       logger.error(
         "useDoctorForm",
         mode === "add" ? "Add doctor error" : "Edit doctor error",
-        error,
+        error
       );
       let errorMessage =
         mode === "add"
@@ -259,7 +257,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       }
       showError(
         errorMessage,
-        mode === "add" ? "Registration Failed" : "Update Failed",
+        mode === "add" ? "Registration Failed" : "Update Failed"
       );
     } finally {
       setLoading(false);
@@ -371,7 +369,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     icon,
     keyboardType = "default",
     secureTextEntry = false,
-    multiline = false,
+    multiline = false
   ) => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{label}</Text>

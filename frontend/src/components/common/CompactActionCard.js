@@ -50,7 +50,7 @@ const CompactActionCard = memo(
         )}
       </TouchableOpacity>
     );
-  },
+  }
 );
 
 CompactActionCard.displayName = "CompactActionCard";
