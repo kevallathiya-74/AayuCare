@@ -36,8 +36,10 @@ import { convertTo12Hour } from "@/utils/helpers";
 import { parseError } from "@/utils/errorHandler";
 import { DynamicIcon, Input, SkeletonCardRow } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
   const [selectedDay, setSelectedDay] = useState(null);
@@ -215,7 +217,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           >
             <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Schedule & Availability</Text>
+          <Text style={styles.headerTitle}>{t('schedule_availability')}</Text>
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.loadingSkeletonWrap}>
@@ -240,12 +242,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           >
             <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Schedule & Availability</Text>
+          <Text style={styles.headerTitle}>{t('schedule_availability')}</Text>
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.errorContainer}>
           <AlertCircle size={48} color={healthColors.error.main} />
-          <Text style={styles.errorTitle}>Failed to load schedule</Text>
+          <Text style={styles.errorTitle}>{t('failed_to_load_schedule')}d to load schedule</Text>
           <Text style={styles.errorMessage}>{parseError(error)}</Text>
           <TouchableOpacity
             style={styles.retryButton}
@@ -253,7 +255,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Retry loading schedule"
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -273,7 +275,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Schedule & Availability</Text>
+        <Text style={styles.headerTitle}>{t('schedule_availability')}</Text>
         <View style={styles.headerRightSpacer} />
       </View>
 
@@ -285,7 +287,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
         <View style={styles.infoCard}>
           <Info size={24} color={healthColors.primary.main} />
           <Text style={styles.infoText}>
-            Manage your weekly schedule and availability. Patients can only book
+            {t('manage_your_weekly_schedule_an')} Patients can only book
             during available time slots.
           </Text>
         </View>
@@ -376,7 +378,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   accessibilityLabel={`Edit ${day.label} schedule`}
                 >
                   <Edit size={18} color={healthColors.primary.main} />
-                  <Text style={styles.editButtonText}>Edit Schedule</Text>
+                  <Text style={styles.editButtonText}>{t('edit_schedule')}dule</Text>
                 </TouchableOpacity>
               </View>
             );
@@ -416,7 +418,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                   color={healthColors.primary.main}
                 />
               ) : (
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>{t('save')}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -424,12 +426,12 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
           <ScrollView style={styles.modalContent}>
             {/* Time Slots Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Time Slots</Text>
+              <Text style={styles.sectionTitle}>{t('time_slots')}</Text>
               {editingTimeSlots.map((slot, index) => (
                 <View key={index} style={styles.timeSlotEditor}>
                   <View style={styles.timeInputs}>
                     <View style={styles.timeInputGroup}>
-                      <Text style={styles.timeInputLabel}>Start</Text>
+                      <Text style={styles.timeInputLabel}>{t('start')}art</Text>
                       <Input
                         style={styles.timeInputControl}
                         inputStyle={styles.timeInputText}
@@ -437,7 +439,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                         onChangeText={(value) =>
                           updateTimeSlot(index, "startTime", value)
                         }
-                        placeholder="09:00"
+                        placeholder={t('09_00')}
                         keyboardType="numeric"
                         maxLength={5}
                         accessibilityLabel="Start time"
@@ -445,7 +447,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                     </View>
                     <Text style={styles.timeSeparator}>-</Text>
                     <View style={styles.timeInputGroup}>
-                      <Text style={styles.timeInputLabel}>End</Text>
+                      <Text style={styles.timeInputLabel}>{t('end')}</Text>
                       <Input
                         style={styles.timeInputControl}
                         inputStyle={styles.timeInputText}
@@ -453,7 +455,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                         onChangeText={(value) =>
                           updateTimeSlot(index, "endTime", value)
                         }
-                        placeholder="17:00"
+                        placeholder={t('17_00')}
                         keyboardType="numeric"
                         maxLength={5}
                         accessibilityLabel="End time"
@@ -476,16 +478,16 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 accessibilityLabel="Add time slot"
               >
                 <PlusCircle size={20} color={healthColors.primary.main} />
-                <Text style={styles.addButtonText}>Add Time Slot</Text>
+                <Text style={styles.addButtonText}>{t('add_time_slot')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Break Time Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Break Time (Optional)</Text>
+              <Text style={styles.sectionTitle}>{t('break_time_optional')}</Text>
               <View style={styles.breakTimeEditor}>
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Start</Text>
+                  <Text style={styles.timeInputLabel}>{t('start')}art</Text>
                   <Input
                     style={styles.timeInputControl}
                     inputStyle={styles.timeInputText}
@@ -493,7 +495,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                     onChangeText={(value) =>
                       setBreakTime({ ...breakTime, startTime: value })
                     }
-                    placeholder="12:00"
+                    placeholder={t('12_00')}
                     keyboardType="numeric"
                     maxLength={5}
                     accessibilityLabel="Break start time"
@@ -501,7 +503,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                 </View>
                 <Text style={styles.timeSeparator}>-</Text>
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>End</Text>
+                  <Text style={styles.timeInputLabel}>{t('end')}</Text>
                   <Input
                     style={styles.timeInputControl}
                     inputStyle={styles.timeInputText}
@@ -509,7 +511,7 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
                     onChangeText={(value) =>
                       setBreakTime({ ...breakTime, endTime: value })
                     }
-                    placeholder="14:00"
+                    placeholder={t('14_00')}
                     keyboardType="numeric"
                     maxLength={5}
                     accessibilityLabel="Break end time"
@@ -520,9 +522,9 @@ const ScheduleAvailabilityScreen = ({ navigation }) => {
 
             {/* Notes Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Notes (Optional)</Text>
+              <Text style={styles.sectionTitle}>{t('notes_optional')}</Text>
               <Input
-                placeholder="Add any special notes for this day..."
+                placeholder={t('add_any_special_notes_for_this')}
                 value={notes}
                 onChangeText={setNotes}
                 multiline

@@ -20,8 +20,11 @@ import { logError, parseError } from "@/utils/errorHandler";
 import { Input, Button } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
 import { getKeyboardConfig } from "@/utils/responsive";
+import { useTranslation } from 'react-i18next';
+import * as yup from "yup";
 
 const ChangePasswordScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -136,7 +139,7 @@ const ChangePasswordScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Change Password</Text>
+        <Text style={styles.headerTitle}>{t('change_password')}</Text>
         <View style={styles.backButton} />
       </View>
 
@@ -149,10 +152,9 @@ const ChangePasswordScreen = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Update Your Password</Text>
+            <Text style={styles.cardTitle}>{t('update_your_password')}ate Your Password</Text>
             <Text style={styles.cardSubtitle}>
-              For account security, use a strong password and do not reuse old
-              passwords.
+              {t('for_account_security_use_a_str')}
             </Text>
 
             {submitError ? (
@@ -188,14 +190,14 @@ const ChangePasswordScreen = ({ navigation }) => {
             })}
 
             <View style={styles.rulesBox}>
-              <Text style={styles.rulesTitle}>Password must include:</Text>
+              <Text style={styles.rulesTitle}>{t('password_must_include')}</Text>
               <Text
                 style={[
                   styles.ruleText,
                   rules.minLength && styles.ruleTextValid,
                 ]}
               >
-                • At least 8 characters
+                {t('at_least_8_characters')}t 8 characters
               </Text>
               <Text
                 style={[
@@ -203,7 +205,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   rules.hasUpper && styles.ruleTextValid,
                 ]}
               >
-                • One uppercase letter
+                {t('one_uppercase_letter')}case letter
               </Text>
               <Text
                 style={[
@@ -211,7 +213,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   rules.hasLower && styles.ruleTextValid,
                 ]}
               >
-                • One lowercase letter
+                {t('one_lowercase_letter')}case letter
               </Text>
               <Text
                 style={[
@@ -219,7 +221,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   rules.hasNumber && styles.ruleTextValid,
                 ]}
               >
-                • One number
+                {t('one_number')}
               </Text>
             </View>
 

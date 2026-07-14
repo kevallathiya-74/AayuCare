@@ -50,6 +50,7 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const isPlainObject = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);
@@ -125,6 +126,7 @@ const getDoctorAvailabilityText = (doctor) => {
 };
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
   const selectedSpecialty = "All";
@@ -250,7 +252,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 styles.consultationTypeTextActive,
             ]}
           >
-            CLINIC
+            {t('clinic')}LINIC
           </Text>
         </View>
         <View
@@ -275,7 +277,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
                 styles.consultationTypeTextActive,
             ]}
           >
-            TELEMEDICINE
+            {t('telemedicine')}LEMEDICINE
           </Text>
           {(doctor.telemedicine || doctor.hasTelemedicine) && (
             <CheckCircle size={16} color={healthColors.success.main} />
@@ -294,7 +296,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel={`Book appointment with ${doctor.name}`}
         >
-          <Text style={styles.actionButtonText}>Book Appointment</Text>
+          <Text style={styles.actionButtonText}>{t('book_appointment')}ment</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.viewProfileButton}
@@ -306,7 +308,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
           accessibilityRole="button"
           accessibilityLabel={`View profile for ${doctor.name}`}
         >
-          <Text style={styles.viewProfileText}>View Profile</Text>
+          <Text style={styles.viewProfileText}>{t('view_profile')}w Profile</Text>
         </TouchableOpacity>
       </View>
       {/* Fixed: BookAppointment -> AppointmentBooking (correct screen name) */}
@@ -349,7 +351,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find Specialist</Text>
+        <Text style={styles.headerTitle}>{t('find_specialist')}</Text>
         <TouchableOpacity
           style={styles.searchButton}
           accessibilityRole="button"
@@ -374,7 +376,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         {/* Title */}
         <View style={styles.titleSection}>
           <BriefcaseMedical size={20} color={healthColors.primary.main} />
-          <Text style={styles.title}>FIND YOUR SPECIALIST</Text>
+          <Text style={styles.title}>{t('find_your_specialist')}</Text>
         </View>
 
         {/* Filters */}
@@ -383,7 +385,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
                 <Cross size={18} color={healthColors.primary.main} />
-                <Text style={styles.filterLabel}>Specialty:</Text>
+                <Text style={styles.filterLabel}>{t('specialty')}</Text>
               </View>
               <TouchableOpacity
                 style={styles.filterDropdown}
@@ -397,7 +399,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
                 <Calendar size={18} color={healthColors.primary.main} />
-                <Text style={styles.filterLabel}>Availability:</Text>
+                <Text style={styles.filterLabel}>{t('availability')}</Text>
               </View>
               <TouchableOpacity
                 style={styles.filterDropdown}
@@ -411,7 +413,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
             <View style={styles.filterRow}>
               <View style={styles.filterLabelContainer}>
                 <Banknote size={18} color={healthColors.primary.main} />
-                <Text style={styles.filterLabel}>Fee Range:</Text>
+                <Text style={styles.filterLabel}>{t('fee_range')}</Text>
               </View>
               <Text style={styles.feeRangeText}>
                 {formatCurrency(feeRange[0])} - {formatCurrency(feeRange[1])}
@@ -422,7 +424,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
         {/* Specialties Chips */}
         <View style={styles.specialtiesSection}>
-          <Text style={styles.sectionTitle}>SPECIALTIES:</Text>
+          <Text style={styles.sectionTitle}>{t('specialties')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -452,7 +454,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
 
         {/* Doctor List */}
         <View style={styles.doctorsSection}>
-          <Text style={styles.sectionTitle}>DOCTOR LIST:</Text>
+          <Text style={styles.sectionTitle}>{t('doctor_list')}</Text>
           {loading ? (
             <View style={styles.loadingContainer}>
               <SkeletonCardRow />

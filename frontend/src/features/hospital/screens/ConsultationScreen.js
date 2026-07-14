@@ -47,6 +47,7 @@ import { Button, Input } from "@/components/common";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -102,6 +103,7 @@ const buildNotesText = ({ vitals, diagnosis, notes }) => {
 // ---------------------------------------------------------------------------
 
 const ConsultationScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const appointment = route?.params?.appointment || {};
 
@@ -253,7 +255,7 @@ const ConsultationScreen = ({ navigation, route }) => {
       ),
       headerTitle: () => (
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Active Consultation</Text>
+          <Text style={styles.headerTitle}>{t('active_consultation')}sultation</Text>
           <View style={styles.timerBadge}>
             <Clock size={12} color={healthColors.warning.dark} />
             <Text style={styles.timerText}>{formatElapsed(elapsed)}</Text>
@@ -344,7 +346,7 @@ const ConsultationScreen = ({ navigation, route }) => {
           {/* ── In Progress banner ── */}
           <View style={styles.statusBanner}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusBannerText}>In Progress</Text>
+            <Text style={styles.statusBannerText}>{t('in_progress')}s</Text>
             <View style={styles.flex} />
             <Clock size={14} color={healthColors.warning.dark} />
             <Text style={styles.bannerTimer}>{formatElapsed(elapsed)}</Text>
@@ -408,7 +410,7 @@ const ConsultationScreen = ({ navigation, route }) => {
                     { color: healthColors.accent.coral },
                   ]}
                 >
-                  Prescription
+                  {t('prescription')}
                 </Text>
               </TouchableOpacity>
               <View style={styles.quickActionDivider} />
@@ -427,7 +429,7 @@ const ConsultationScreen = ({ navigation, route }) => {
                     { color: healthColors.primary.main },
                   ]}
                 >
-                  History
+                  {t('history')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -437,50 +439,50 @@ const ConsultationScreen = ({ navigation, route }) => {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <Activity size={18} color={healthColors.primary.main} />
-              <Text style={styles.sectionTitle}>Vitals</Text>
-              <Text style={styles.sectionOptional}>(optional)</Text>
+              <Text style={styles.sectionTitle}>{t('vitals')}</Text>
+              <Text style={styles.sectionOptional}>{t('optional')}</Text>
             </View>
 
             {/* Blood Pressure */}
-            <Text style={styles.fieldLabel}>Blood Pressure (mmHg)</Text>
+            <Text style={styles.fieldLabel}>{t('blood_pressure_mmhg')}</Text>
             <View style={styles.bpRow}>
               <View style={styles.bpInputWrapper}>
                 <Input
                   style={styles.bpInputControl}
                   inputStyle={styles.bpInputText}
-                  placeholder="Systolic"
+                  placeholder={t('systolic')}
                   keyboardType="numeric"
                   value={vitals.bpSystolic}
                   onChangeText={(v) => updateVital("bpSystolic", v)}
                   maxLength={3}
                   accessibilityLabel="Blood pressure systolic"
                 />
-                <Text style={styles.bpUnit}>sys</Text>
+                <Text style={styles.bpUnit}>{t('sys')}ys</Text>
               </View>
               <Text style={styles.bpSlash}>/</Text>
               <View style={styles.bpInputWrapper}>
                 <Input
                   style={styles.bpInputControl}
                   inputStyle={styles.bpInputText}
-                  placeholder="Diastolic"
+                  placeholder={t('diastolic')}
                   keyboardType="numeric"
                   value={vitals.bpDiastolic}
                   onChangeText={(v) => updateVital("bpDiastolic", v)}
                   maxLength={3}
                   accessibilityLabel="Blood pressure diastolic"
                 />
-                <Text style={styles.bpUnit}>dia</Text>
+                <Text style={styles.bpUnit}>{t('dia')}</Text>
               </View>
             </View>
 
             {/* Temperature + Pulse row */}
             <View style={styles.vitalRow}>
               <View style={styles.vitalField}>
-                <Text style={styles.fieldLabel}>Temp (°F)</Text>
+                <Text style={styles.fieldLabel}>{t('temp_f')}</Text>
                 <Input
                   style={styles.inputControl}
                   inputStyle={styles.inputText}
-                  placeholder="e.g. 98.6"
+                  placeholder={t('e_g_98_6')}
                   keyboardType="decimal-pad"
                   value={vitals.temperature}
                   onChangeText={(v) => updateVital("temperature", v)}
@@ -490,11 +492,11 @@ const ConsultationScreen = ({ navigation, route }) => {
               </View>
               <View style={styles.vitalFieldGap} />
               <View style={styles.vitalField}>
-                <Text style={styles.fieldLabel}>Pulse (bpm)</Text>
+                <Text style={styles.fieldLabel}>{t('pulse_bpm')}</Text>
                 <Input
                   style={styles.inputControl}
                   inputStyle={styles.inputText}
-                  placeholder="e.g. 72"
+                  placeholder={t('e_g_72')}
                   keyboardType="numeric"
                   value={vitals.pulse}
                   onChangeText={(v) => updateVital("pulse", v)}
@@ -509,13 +511,13 @@ const ConsultationScreen = ({ navigation, route }) => {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <Clipboard size={18} color={healthColors.primary.main} />
-              <Text style={styles.sectionTitle}>Diagnosis</Text>
-              <Text style={styles.sectionOptional}>(optional)</Text>
+              <Text style={styles.sectionTitle}>{t('diagnosis')}is</Text>
+              <Text style={styles.sectionOptional}>{t('optional')}</Text>
             </View>
             <Input
               style={styles.inputControl}
               inputStyle={styles.inputText}
-              placeholder="Enter diagnosis or ICD code..."
+              placeholder={t('enter_diagnosis_or_icd_code')}
               value={diagnosis}
               onChangeText={setDiagnosis}
               maxLength={500}
@@ -528,13 +530,13 @@ const ConsultationScreen = ({ navigation, route }) => {
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <Edit size={18} color={healthColors.primary.main} />
-              <Text style={styles.sectionTitle}>Consultation Notes</Text>
-              <Text style={styles.sectionOptional}>(optional)</Text>
+              <Text style={styles.sectionTitle}>{t('consultation_notes')}ultation Notes</Text>
+              <Text style={styles.sectionOptional}>{t('optional')}</Text>
             </View>
             <Input
               style={styles.inputControl}
               inputStyle={styles.notesInputText}
-              placeholder="Enter consultation notes, observations, treatment plan..."
+              placeholder={t('enter_consultation_notes_obser')}
               value={notes}
               onChangeText={setNotes}
               multiline

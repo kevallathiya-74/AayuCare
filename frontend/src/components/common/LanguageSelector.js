@@ -29,6 +29,7 @@ const LanguageSelector = ({
   iconColor = theme.colors.white,
   compact = false,
 }) => {
+  const { t } = useTranslation();
   const { i18n } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   const currentLanguage = i18n.language || "en";
@@ -82,7 +83,7 @@ const LanguageSelector = ({
                     size={theme.iconSizes.lg}
                     color={healthColors.primary.main}
                   />
-                  <Text style={styles.modalTitle}>Select Language</Text>
+                  <Text style={styles.modalTitle}>{t('select_language')}lect Language</Text>
                 </View>
 
                 {LANGUAGES.map((language) => (

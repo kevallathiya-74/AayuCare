@@ -27,11 +27,14 @@ import { DynamicIcon } from "@/components/common";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { parseError } from "@/utils/errorHandler";
 import { getKeyboardConfig } from "@/utils/responsive";
+import { useTranslation } from 'react-i18next';
+import * as yup from "yup";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
 
 const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
+  const { t } = useTranslation();
   const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -52,6 +55,18 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const patientEditSchema = yup.object({
+    name: yup.string().trim().required(t('name_is_required', 'Name is required')),
+    email: yup.string().trim().email(t('invalid_email_format', 'Invalid email format')).required(t('email_is_required', 'Email is required')),
+    phone: yup.string().trim().matches(/^+?[1-9]d{9,14}$/, "Invalid phone format").required(t('phone_is_required', 'Phone is required')),
+    gender: yup.string().required(t('please_select_gender', 'Please select gender')),
+    dateOfBirth: yup.string().nullable(),
+    bloodGroup: yup.string().nullable(),
+    address: yup.string().nullable(),
+  });
+
   const queryClient = useQueryClient();
 
   const updatePatientMutation = useMutation({
@@ -476,7 +491,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Edit Patient Profile</Text>
+            <Text style={styles.title}>{t('edit_patient_profile')}nt Profile</Text>
             <TouchableOpacity
               onPress={handleClose}
               style={styles.closeButton}
@@ -511,7 +526,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
             )}
             {/* Date of Birth Picker */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Date of Birth</Text>
+              <Text style={styles.label}>{t('date_of_birth_1')}</Text>
               <TouchableOpacity
                 style={[
                   styles.inputWrapper,
@@ -603,7 +618,7 @@ const EditPatientModal = ({ visible, onClose, onSuccess, patient }) => {
               "default"
             )}
 
-            <Text style={styles.noteText}>* Required fields</Text>
+            <Text style={styles.noteText}>{t('required_fields')}</Text>
           </ScrollView>
 
           {/* Footer Actions */}

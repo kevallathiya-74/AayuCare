@@ -41,10 +41,12 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20;
 
 const NotificationsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const notificationPermission = useSelector(
     (state) => state.permissions?.notification || {}
@@ -438,7 +440,7 @@ const NotificationsScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={styles.headerTitle}>{t('notifications')}</Text>
           {effectiveUnreadCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{effectiveUnreadCount}</Text>
@@ -469,7 +471,7 @@ const NotificationsScreen = ({ navigation }) => {
           accessibilityLabel="Mark all notifications as read"
         >
           <CheckCheck size={18} color={healthColors.primary.main} />
-          <Text style={styles.markAllText}>Mark all as read</Text>
+          <Text style={styles.markAllText}>{t('mark_all_as_read')}</Text>
         </TouchableOpacity>
       )}
 

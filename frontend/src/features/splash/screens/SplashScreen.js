@@ -20,8 +20,10 @@ import Animated, {
 import { Image } from "expo-image";
 import { healthColors, textStyles, spacing, theme } from "@/theme";
 import logger from "@/utils/logger";
+import { useTranslation } from 'react-i18next';
 
 const SplashScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { isAuthenticated, user, isLoading } = useSelector(
     (state) => state.auth || {}
   );
@@ -137,8 +139,8 @@ const SplashScreen = ({ navigation }) => {
               transition={300}
             />
           </Animated.View>
-          <Text style={styles.title}>AayuCare</Text>
-          <Text style={styles.subtitle}>Elevating Healthcare Together</Text>
+          <Text style={styles.title}>{t('aayucare')}</Text>
+          <Text style={styles.subtitle}>{t('elevating_healthcare_together')}e Together</Text>
         </View>
       </SafeAreaView>
     </Animated.View>

@@ -57,6 +57,7 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { healthMetricsService } from "@/services";
 import { handleSmartBack } from "@/utils/navigation";
 import { fetchHealthMetrics } from "@/store/slices/healthSlice";
+import { useTranslation } from 'react-i18next';
 
 const METRIC_TYPES = [
   {
@@ -384,6 +385,7 @@ const MetricCard = React.memo(({ config, latestMetric, onAddPress }) => {
 });
 
 const HealthMetricsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
@@ -560,7 +562,7 @@ const HealthMetricsScreen = ({ navigation }) => {
           </TouchableOpacity>
           <View style={styles.headerTitleWrap} pointerEvents="none">
             <Text style={styles.headerTitle} numberOfLines={1}>
-              Health Metrics
+              {t('health_metrics')}
             </Text>
           </View>
           <View style={styles.headerPlaceholder} />
@@ -601,7 +603,7 @@ const HealthMetricsScreen = ({ navigation }) => {
         </TouchableOpacity>
         <View style={styles.headerTitleWrap} pointerEvents="none">
           <Text style={styles.headerTitle} numberOfLines={1}>
-            Health Metrics
+            {t('health_metrics')}
           </Text>
         </View>
         <View style={styles.headerPlaceholder} />
@@ -646,7 +648,7 @@ const HealthMetricsScreen = ({ navigation }) => {
                     color={healthColors.primary.main}
                   />
                   <Text style={styles.hintText}>
-                    Tap the + button on any card to log a new reading.
+                    {t('tap_the_button_on_any_card_to_')}
                   </Text>
                 </View>
               </Card>

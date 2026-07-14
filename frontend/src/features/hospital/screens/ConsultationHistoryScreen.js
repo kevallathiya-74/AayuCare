@@ -31,10 +31,12 @@ import { SkeletonCardRow, EmptyState } from "@/components/common";
 import { EmptyStateConfig } from "@/utils/constants";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20;
 
 const ConsultationHistoryScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState("all");
   const {
@@ -221,7 +223,7 @@ const ConsultationHistoryScreen = ({ navigation }) => {
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Consultation History</Text>
+          <Text style={styles.headerTitle}>{t('consultation_history')}</Text>
           <Text style={styles.headerSubtitle}>
             {consultations.length} consultations
           </Text>

@@ -68,12 +68,12 @@ export const changeLanguage = async (languageCode) => {
 };
 
 // Helper function to get current language
-export const getCurrentLanguage = () => {
+const getCurrentLanguage = () => {
   return i18n.language || "en";
 };
 
 // Helper function to get available languages
-export const getAvailableLanguages = () => {
+const getAvailableLanguages = () => {
   return [
     { code: "en", name: "English", nativeName: "English" },
     { code: "hi", name: "Hindi", nativeName: "हिन्दी" },

@@ -16,6 +16,7 @@ import { X, Check } from "lucide-react-native";
 import { theme, healthColors } from "../theme";
 import { DynamicIcon } from "../components/common";
 import { showError } from "../utils/errorHandler";
+import { useTranslation } from 'react-i18next';
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -71,6 +72,7 @@ const DAY_LABELS = {
 const TIME_SLOTS = ["09:00-12:00", "12:00-14:00", "14:00-17:00", "17:00-20:00"];
 
 export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState(initialForm);
   const [availabilitySlots, setAvailabilitySlots] = useState({});
@@ -300,7 +302,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
 
   const renderAvailabilityPicker = () => (
     <View style={styles.inputContainer}>
-      <Text style={styles.label}>Availability</Text>
+      <Text style={styles.label}>{t('availability_1')}</Text>
       <View style={styles.availabilityBox}>
         {/* Day toggle chips */}
         <View style={styles.daysRow}>
@@ -355,7 +357,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         ))}
         {Object.keys(availabilitySlots).length === 0 && (
           <Text style={styles.availabilityHint}>
-            Tap a day to add availability
+            {t('tap_a_day_to_add_availability')} to add availability
           </Text>
         )}
       </View>
@@ -437,7 +439,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         <View style={styles.dropdownOverlay}>
           <View style={styles.dropdownContainer}>
             <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>Select Specialization</Text>
+              <Text style={styles.dropdownTitle}>{t('select_specialization')}</Text>
               <TouchableOpacity
                 onPress={() => setShowSpecializationPicker(false)}
               >

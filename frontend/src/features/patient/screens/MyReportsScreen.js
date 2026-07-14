@@ -51,8 +51,10 @@ import { parseError } from "@/utils/errorHandler";
 import { medicalRecordService } from "@/services";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const MyReportsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [selectedReport, setSelectedReport] = useState(null);
   const [filterType, setFilterType] = useState(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -155,7 +157,7 @@ const MyReportsScreen = ({ navigation }) => {
           >
             <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Reports</Text>
+          <Text style={styles.headerTitle}>{t('my_reports')}</Text>
           <View style={styles.headerRightSpacer} />
         </View>
         <View style={styles.skeletonWrap}>
@@ -251,7 +253,7 @@ const MyReportsScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Reports</Text>
+        <Text style={styles.headerTitle}>{t('my_reports')}</Text>
         <TouchableOpacity
           style={styles.filterButton}
           activeOpacity={0.7}
@@ -353,7 +355,7 @@ const MyReportsScreen = ({ navigation }) => {
                   </View>
                   {selectedReport.recordData?.description && (
                     <View style={styles.detailBlock}>
-                      <Text style={styles.detailBlockTitle}>Description</Text>
+                      <Text style={styles.detailBlockTitle}>{t('description')}</Text>
                       <Text style={styles.detailBlockBody}>
                         {selectedReport.recordData.description}
                       </Text>
@@ -361,7 +363,7 @@ const MyReportsScreen = ({ navigation }) => {
                   )}
                   {selectedReport.recordData?.diagnosis && (
                     <View style={styles.detailBlock}>
-                      <Text style={styles.detailBlockTitle}>Diagnosis</Text>
+                      <Text style={styles.detailBlockTitle}>{t('diagnosis')}is</Text>
                       <Text style={styles.detailBlockBody}>
                         {selectedReport.recordData.diagnosis}
                       </Text>
@@ -369,7 +371,7 @@ const MyReportsScreen = ({ navigation }) => {
                   )}
                   {selectedReport.recordData?.aiAnalysis?.summary && (
                     <View style={styles.detailBlockAi}>
-                      <Text style={styles.detailBlockTitle}>AI Analysis</Text>
+                      <Text style={styles.detailBlockTitle}>{t('ai_analysis')}is</Text>
                       <Text style={styles.detailBlockBody}>
                         {selectedReport.recordData.aiAnalysis.summary}
                       </Text>
@@ -395,7 +397,7 @@ const MyReportsScreen = ({ navigation }) => {
                         size={theme.iconSizes.sm}
                         color={healthColors.primary.main}
                       />
-                      <Text style={styles.modalActionText}>Download</Text>
+                      <Text style={styles.modalActionText}>{t('download')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.modalActionBtn}
@@ -412,7 +414,7 @@ const MyReportsScreen = ({ navigation }) => {
                         size={theme.iconSizes.sm}
                         color={healthColors.text.secondary}
                       />
-                      <Text style={styles.modalActionText}>Share</Text>
+                      <Text style={styles.modalActionText}>{t('share')}</Text>
                     </TouchableOpacity>
                   </View>
                 </>

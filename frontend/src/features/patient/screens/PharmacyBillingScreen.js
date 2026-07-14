@@ -52,8 +52,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const [paymentResult, setPaymentResult] = useState(null);
   const [selectedPurchase, setSelectedPurchase] = useState("hospital");
   const [selectedPayment, setSelectedPayment] = useState("card");
@@ -283,9 +285,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               color={healthColors.primary.main}
             />
             <View style={styles.headerText}>
-              <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
+              <Text style={styles.headerTitle}>{t('pharmacy_billing')}</Text>
               <Text style={styles.headerSubtitle}>
-                Medicine purchase & payment
+                {t('medicine_purchase_payment')}
               </Text>
             </View>
           </View>
@@ -336,9 +338,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.headerContent}>
           <Cross size={theme.iconSizes.xxl} color={healthColors.primary.main} />
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Pharmacy & Billing</Text>
+            <Text style={styles.headerTitle}>{t('pharmacy_billing')}</Text>
             <Text style={styles.headerSubtitle}>
-              Medicine purchase & payment
+              {t('medicine_purchase_payment')}
             </Text>
           </View>
         </View>
@@ -383,7 +385,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>PRESCRIPTION DETAILS</Text>
+            <Text style={styles.sectionTitle}>{t('prescription_details_1')}CRIPTION DETAILS</Text>
           </View>
           <View style={styles.card}>
             <View style={styles.prescriptionHeader}>
@@ -396,7 +398,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 </Text>
               </View>
               <View style={styles.doctorInfo}>
-                <Text style={styles.doctorLabel}>Prescribed by:</Text>
+                <Text style={styles.doctorLabel}>{t('prescribed_by_1')}</Text>
                 <Text style={styles.doctorName}>{prescription.doctor}</Text>
               </View>
             </View>
@@ -450,7 +452,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>PURCHASE OPTIONS</Text>
+            <Text style={styles.sectionTitle}>{t('purchase_options')}E OPTIONS</Text>
           </View>
           <View style={styles.card}>
             <TouchableOpacity
@@ -480,16 +482,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 />
                 <View style={styles.purchaseOptionText}>
                   <Text style={styles.purchaseOptionTitle}>
-                    Hospital Pharmacy
+                    {t('hospital_pharmacy')}
                   </Text>
                   <Text style={styles.purchaseOptionSubtitle}>
-                    15% discount • Verified quality • Instant delivery
+                    {t('15_discount_verified_quality_i')} • Instant delivery
                   </Text>
                 </View>
               </View>
               {selectedPurchase === "hospital" && (
                 <View style={styles.discountBadge}>
-                  <Text style={styles.discountText}>15% OFF</Text>
+                  <Text style={styles.discountText}>{t('15_off')}F</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -521,10 +523,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 />
                 <View style={styles.purchaseOptionText}>
                   <Text style={styles.purchaseOptionTitle}>
-                    External Pharmacy
+                    {t('external_pharmacy')}
                   </Text>
                   <Text style={styles.purchaseOptionSubtitle}>
-                    No discount • Purchase outside hospital
+                    {t('no_discount_purchase_outside_h')}
                   </Text>
                 </View>
               </View>
@@ -540,21 +542,21 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>BILLING SUMMARY</Text>
+            <Text style={styles.sectionTitle}>{t('billing_summary')}</Text>
           </View>
           <View style={styles.card}>
             <View style={styles.billingRow}>
-              <Text style={styles.billingLabel}>Subtotal:</Text>
+              <Text style={styles.billingLabel}>{t('subtotal')}</Text>
               <Text style={styles.billingValue}>
                 {formatCurrency(subtotal)}
               </Text>
             </View>
             <View style={styles.billingRow}>
               <View style={styles.billingLabelWithIcon}>
-                <Text style={styles.billingLabel}>Hospital Discount:</Text>
+                <Text style={styles.billingLabel}>{t('hospital_discount')}</Text>
                 {selectedPurchase === "hospital" && (
                   <View style={styles.discountTag}>
-                    <Text style={styles.discountTagText}>15%</Text>
+                    <Text style={styles.discountTagText}>{t('15')}</Text>
                   </View>
                 )}
               </View>
@@ -570,7 +572,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.billingDivider} />
             <View style={styles.billingRow}>
-              <Text style={styles.billingTotal}>Total Amount:</Text>
+              <Text style={styles.billingTotal}>{t('total_amount')}</Text>
               <Text style={styles.billingTotalValue}>
                 {formatCurrency(total)}
               </Text>
@@ -585,7 +587,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>PAYMENT METHOD</Text>
+            <Text style={styles.sectionTitle}>{t('payment_method')}</Text>
           </View>
           <View style={styles.card}>
             {paymentMethods.map((method) => (
@@ -670,7 +672,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.infoBox}>
           <Info size={theme.iconSizes.md} color={theme.colors.info.main} />
           <Text style={styles.infoText}>
-            Medicine will be dispensed after successful payment verification
+            {t('medicine_will_be_dispensed_aft')}e will be dispensed after successful payment verification
           </Text>
         </View>
       </ScrollView>

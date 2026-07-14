@@ -27,6 +27,7 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import appStorage from "@/utils/appStorage";
 import { STORAGE_KEYS } from "@/utils/constants";
+import { useTranslation } from 'react-i18next';
 
 const getInitials = (name) => {
   if (!name) return "U";
@@ -36,6 +37,7 @@ const getInitials = (name) => {
 };
 
 const EditProfileScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
@@ -202,8 +204,8 @@ const EditProfileScreen = ({ navigation }) => {
             <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Edit Profile</Text>
-            <Text style={styles.headerSubtitle}>Update your information</Text>
+            <Text style={styles.headerTitle}>{t('edit_profile')}</Text>
+            <Text style={styles.headerSubtitle}>{t('update_your_information')}</Text>
           </View>
           <View style={styles.headerIconContainer}>
             <Edit size={24} color={healthColors.primary.main} />
@@ -235,7 +237,7 @@ const EditProfileScreen = ({ navigation }) => {
           <View style={styles.formSection}>
             <Input
               label="Full Name *"
-              placeholder="Enter your name"
+              placeholder={t('enter_your_name')}
               value={formData.name}
               onChangeText={(v) => handleInputChange("name", v)}
               leftIcon={<User size={18} color={healthColors.text.disabled} />}
@@ -243,7 +245,7 @@ const EditProfileScreen = ({ navigation }) => {
             {user?.role !== "admin" && (
               <Input
                 label="Specialization *"
-                placeholder="e.g., Cardiologist"
+                placeholder={t('e_g_cardiologist')}
                 value={formData.specialization}
                 onChangeText={(v) => handleInputChange("specialization", v)}
                 leftIcon={
@@ -253,7 +255,7 @@ const EditProfileScreen = ({ navigation }) => {
             )}
             <Input
               label="Phone Number *"
-              placeholder="10-digit mobile number"
+              placeholder={t('10_digit_mobile_number')}
               value={formData.phone}
               onChangeText={(v) =>
                 handleInputChange("phone", v.replace(/[^0-9]/g, ""))

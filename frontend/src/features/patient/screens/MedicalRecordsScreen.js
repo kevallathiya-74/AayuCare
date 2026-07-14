@@ -42,6 +42,7 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { parseError } from "@/utils/errorHandler";
 import { format, parseISO } from "date-fns";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 // ─────────────────────────────────────────────
 // Constants
@@ -231,10 +232,12 @@ const SkeletonList = () => (
 // Error State
 // ─────────────────────────────────────────────
 
-const ErrorView = ({ message, onRetry }) => (
+const ErrorView = ({ message, onRetry }) => {
+  const { t } = useTranslation();
+  return (
   <View style={styles.errorContainer}>
     <AlertCircle size={40} color={healthColors.error.main} />
-    <Text style={styles.errorTitle}>Could not load records</Text>
+    <Text style={styles.errorTitle}>{t('could_not_load_records')}</Text>
     <Text style={styles.errorMsg}>
       {message || "An unexpected error occurred."}
     </Text>
@@ -250,16 +253,18 @@ const ErrorView = ({ message, onRetry }) => (
         color={healthColors.text.white}
         style={styles.retryIcon}
       />
-      <Text style={styles.retryText}>Try Again</Text>
+      <Text style={styles.retryText}>{t('try_again')}</Text>
     </TouchableOpacity>
   </View>
 );
+};
 
 // ─────────────────────────────────────────────
 // Main Screen
 // ─────────────────────────────────────────────
 
 const MedicalRecordsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const [activeFilter, setActiveFilter] = useState("all");
   const {
@@ -397,7 +402,7 @@ const MedicalRecordsScreen = ({ navigation }) => {
         >
           <ChevronLeft size={22} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Medical Records</Text>
+        <Text style={styles.headerTitle}>{t('medical_records')}</Text>
         <View style={styles.backBtn} />
       </View>
 

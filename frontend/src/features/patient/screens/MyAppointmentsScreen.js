@@ -46,6 +46,7 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import { formatDate, convertTo12Hour, getStatusColor } from "@/utils/helpers";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const getAppointmentDateLabel = (appointment) => {
   const rawDate =
@@ -97,6 +98,7 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
 };
 
 const MyAppointmentsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [selectedTab, setSelectedTab] = useState("upcoming");
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
@@ -252,12 +254,12 @@ const MyAppointmentsScreen = ({ navigation }) => {
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
           <Calendar size={16} color={healthColors.text.secondary} />
-          <Text style={styles.infoLabel}>Date:</Text>
+          <Text style={styles.infoLabel}>{t('date')}</Text>
           <Text style={styles.infoText}>{getAppointmentDateLabel(item)}</Text>
         </View>
         <View style={styles.infoRow}>
           <Clock size={16} color={healthColors.text.secondary} />
-          <Text style={styles.infoLabel}>Time:</Text>
+          <Text style={styles.infoLabel}>{t('time')}</Text>
           <Text style={styles.infoText}>{getAppointmentTimeLabel(item)}</Text>
         </View>
         {!!item.type && (
@@ -301,7 +303,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
               accessibilityLabel={`Reschedule appointment with ${item.doctorName}`}
             >
               <Calendar size={18} color={healthColors.primary.main} />
-              <Text style={styles.actionText}>Reschedule</Text>
+              <Text style={styles.actionText}>{t('reschedule')}schedule</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
@@ -311,7 +313,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
               accessibilityLabel={`Cancel appointment with ${item.doctorName}`}
             >
               <XCircle size={18} color={healthColors.error.main} />
-              <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
+              <Text style={[styles.actionText, styles.cancelText]}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -337,7 +339,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Appointments</Text>
+        <Text style={styles.headerTitle}>{t('my_appointments')}</Text>
         <View style={styles.headerRightPlaceholder} />
       </View>
 
@@ -357,7 +359,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
               selectedTab === "upcoming" && styles.tabTextActive,
             ]}
           >
-            Upcoming
+            {t('upcoming')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -374,7 +376,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
               selectedTab === "past" && styles.tabTextActive,
             ]}
           >
-            Past
+            {t('past')}
           </Text>
         </TouchableOpacity>
       </View>

@@ -30,6 +30,7 @@ import { DynamicIcon } from "@/components/common";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import { queryKeys } from "@/config/reactQueryConfig";
+import { useTranslation } from 'react-i18next';
 
 const PATIENT_DETAILS_MODAL_CACHE_TTL_MS = 60 * 1000;
 const patientDetailsModalCache = new Map();
@@ -60,6 +61,7 @@ const PatientDetailsModal = ({
   patientName,
   initialPatient,
 }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -151,7 +153,7 @@ const PatientDetailsModal = ({
       <View style={styles.tabContent}>
         {/* Basic Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
+          <Text style={styles.sectionTitle}>{t('basic_information')}formation</Text>
           <View style={styles.infoGrid}>
             <InfoItem icon="person" label="Name" value={patient.name} />
             <InfoItem
@@ -189,7 +191,7 @@ const PatientDetailsModal = ({
 
         {/* Contact Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Text style={styles.sectionTitle}>{t('contact_information')}tact Information</Text>
           <View style={styles.infoGrid}>
             <InfoItem
               icon="call"
@@ -213,7 +215,7 @@ const PatientDetailsModal = ({
         {/* Emergency Contact */}
         {patient.emergencyContact?.name && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Emergency Contact</Text>
+            <Text style={styles.sectionTitle}>{t('emergency_contact')}act</Text>
             <View style={styles.infoGrid}>
               <InfoItem
                 icon="person-add"
@@ -236,13 +238,13 @@ const PatientDetailsModal = ({
 
         {/* Medical Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Medical Information</Text>
+          <Text style={styles.sectionTitle}>{t('medical_information')}formation</Text>
 
           {patient.allergies && patient.allergies.length > 0 && (
             <View style={styles.medicalItem}>
               <View style={styles.medicalItemHeader}>
                 <AlertTriangle size={18} color={healthColors.warning.main} />
-                <Text style={styles.medicalItemTitle}>Allergies</Text>
+                <Text style={styles.medicalItemTitle}>{t('allergies')}</Text>
               </View>
               <View style={styles.chipContainer}>
                 {patient.allergies.map((allergy) => (
@@ -260,7 +262,7 @@ const PatientDetailsModal = ({
                 <View style={styles.medicalItemHeader}>
                   <Cross size={18} color={healthColors.primary.main} />
                   <Text style={styles.medicalItemTitle}>
-                    Current Medications
+                    {t('current_medications')}
                   </Text>
                 </View>
                 <View style={styles.chipContainer}>
@@ -280,7 +282,7 @@ const PatientDetailsModal = ({
             <View style={styles.medicalItem}>
               <View style={styles.medicalItemHeader}>
                 <FileText size={18} color={healthColors.info.main} />
-                <Text style={styles.medicalItemTitle}>Medical History</Text>
+                <Text style={styles.medicalItemTitle}>{t('medical_history')}</Text>
               </View>
               {patient.medicalHistory.map((history) => (
                 <View key={history.condition} style={styles.historyCard}>
@@ -299,7 +301,7 @@ const PatientDetailsModal = ({
         {/* Statistics */}
         {patientData.stats && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Statistics</Text>
+            <Text style={styles.sectionTitle}>{t('statistics')}tics</Text>
             <View style={styles.statsContainer}>
               <StatCard
                 icon="calendar-outline"
@@ -515,7 +517,7 @@ const PatientDetailsModal = ({
               {Array.isArray(prescription.medicines) &&
                 prescription.medicines.length > 0 && (
                   <View style={styles.medicinesContainer}>
-                    <Text style={styles.medicinesTitle}>Medicines:</Text>
+                    <Text style={styles.medicinesTitle}>{t('medicines')}</Text>
                     {prescription.medicines.map((medicine) => (
                       <View key={medicine.name} style={styles.medicineItem}>
                         <Text style={styles.medicineName}>
@@ -655,7 +657,7 @@ const PatientDetailsModal = ({
                 accessibilityRole="button"
                 accessibilityLabel="Retry loading patient details"
               >
-                <Text style={styles.retryButtonText}>Retry</Text>
+                <Text style={styles.retryButtonText}>{t('retry')}</Text>
               </TouchableOpacity>
             </View>
           ) : (

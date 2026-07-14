@@ -55,6 +55,7 @@ import {
 } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const STATUS_FILTERS_BY_TAB = {
   today: [
@@ -77,6 +78,7 @@ const STATUS_FILTERS_BY_TAB = {
 };
 
 const TodaysAppointmentsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const queryClient = useQueryClient();
   const [selectedFilter, setSelectedFilter] = useState("today");
@@ -467,7 +469,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                             color={healthColors.text.white}
                           />
                           <Text style={styles.statusActionButtonText}>
-                            Confirm
+                            {t('confirm')}
                           </Text>
                         </>
                       )}
@@ -509,7 +511,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
                         <>
                           <XCircle size={16} color={healthColors.text.white} />
                           <Text style={styles.statusActionButtonText}>
-                            Cancel
+                            {t('cancel')}
                           </Text>
                         </>
                       )}
@@ -687,7 +689,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Appointments</Text>
+        <Text style={styles.headerTitle}>{t('appointments')}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={[
@@ -742,7 +744,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             value={searchQuery}
             onChangeText={setSearchQuery}
             onClear={() => setSearchQuery("")}
-            placeholder="Search by patient name, reason..."
+            placeholder={t('search_by_patient_name_reason')}
             returnKeyType="search"
             autoCorrect={false}
             autoCapitalize="none"
@@ -836,7 +838,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Clear filters"
           >
-            <Text style={styles.clearFiltersText}>Clear</Text>
+            <Text style={styles.clearFiltersText}>{t('clear')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -850,7 +852,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Retry loading appointments"
           >
-            <Text style={styles.retryText}>Tap to retry</Text>
+            <Text style={styles.retryText}>{t('tap_to_retry')}</Text>
           </TouchableOpacity>
         </View>
       )}

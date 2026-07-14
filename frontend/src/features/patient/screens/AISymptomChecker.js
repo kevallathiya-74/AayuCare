@@ -49,6 +49,7 @@ import Routes from "@/navigation/routes";
 import { useNetworkStatus } from "@/utils/offlineHandler";
 import aiService from "@/services/ai.service";
 import { queryKeys } from "@/config/reactQueryConfig";
+import { useTranslation } from 'react-i18next';
 
 const COMMON_SYMPTOMS = [
   "Fever",
@@ -137,6 +138,7 @@ const resolveDiseaseInfo = (conditionName) => {
 };
 
 const AISymptomChecker = ({ navigation }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user } = useSelector((state) => state.auth);
@@ -326,10 +328,10 @@ const AISymptomChecker = ({ navigation }) => {
 
         <View style={styles.headerTitleWrap} pointerEvents="none">
           <Text style={styles.headerTitle} numberOfLines={1}>
-            AI Symptom Checker
+            {t('ai_symptom_checker')}
           </Text>
           <Text style={styles.headerSubtitle} numberOfLines={2}>
-            Analyze symptoms, review likely conditions, and read disease
+            {t('analyze_symptoms_review_likely')} symptoms, review likely conditions, and read disease
             guidance
           </Text>
         </View>
@@ -353,7 +355,7 @@ const AISymptomChecker = ({ navigation }) => {
           <Card style={styles.sectionCard}>
             <SectionHeader title="1. Input Symptoms" />
 
-            <Text style={styles.fieldLabel}>Quick Select</Text>
+            <Text style={styles.fieldLabel}>{t('quick_select')}</Text>
             <View style={styles.symptomGrid}>
               {COMMON_SYMPTOMS.map((symptom) => {
                 const isSelected = selectedSymptoms.some(
@@ -384,10 +386,10 @@ const AISymptomChecker = ({ navigation }) => {
               })}
             </View>
 
-            <Text style={styles.fieldLabel}>Add Custom Symptoms</Text>
+            <Text style={styles.fieldLabel}>{t('add_custom_symptoms')}tom Symptoms</Text>
             <Input
               label="Custom symptoms"
-              placeholder="Type one or more symptoms, separated by commas"
+              placeholder={t('type_one_or_more_symptoms_sepa')}
               value={symptomDraft}
               onChangeText={(value) => {
                 setSymptomDraft(value);
@@ -423,7 +425,7 @@ const AISymptomChecker = ({ navigation }) => {
 
             {!!selectedSymptoms.length && (
               <>
-                <Text style={styles.fieldLabel}>Selected Symptoms</Text>
+                <Text style={styles.fieldLabel}>{t('selected_symptoms')}</Text>
                 <View style={styles.selectedSymptomsWrap}>
                   {selectedSymptoms.map((symptom) => (
                     <View key={symptom} style={styles.selectedSymptomPill}>
@@ -451,10 +453,10 @@ const AISymptomChecker = ({ navigation }) => {
               </>
             )}
 
-            <Text style={styles.fieldLabel}>Duration</Text>
+            <Text style={styles.fieldLabel}>{t('duration')}</Text>
             <Input
               label="Duration"
-              placeholder="How long have you had these symptoms? e.g., 2 days"
+              placeholder={t('how_long_have_you_had_these_sy')}
               value={duration}
               onChangeText={(value) => {
                 setDuration(value);
@@ -463,7 +465,7 @@ const AISymptomChecker = ({ navigation }) => {
               helperText="Duration helps improve result relevance"
             />
 
-            <Text style={styles.fieldLabel}>Severity</Text>
+            <Text style={styles.fieldLabel}>{t('severity')}</Text>
             <View style={styles.severityRow}>
               {SEVERITY_OPTIONS.map((item) => {
                 const active = severity === item.value;
@@ -526,7 +528,7 @@ const AISymptomChecker = ({ navigation }) => {
                 color={healthColors.text.secondary}
               />
               <Text style={styles.noteText}>
-                AI results are advisory only. Always consult a licensed
+                {t('ai_results_are_advisory_only_a')} Always consult a licensed
                 clinician for diagnosis.
               </Text>
             </View>
@@ -542,7 +544,7 @@ const AISymptomChecker = ({ navigation }) => {
                   color={healthColors.primary.main}
                 />
                 <Text style={styles.loadingText}>
-                  Analyzing your symptoms...
+                  {t('analyzing_your_symptoms')}..
                 </Text>
               </View>
             ) : !results ? (
@@ -597,7 +599,7 @@ const AISymptomChecker = ({ navigation }) => {
                           : healthColors.warning.main
                       }
                     />
-                    <Text style={styles.metaLabel}>Urgency</Text>
+                    <Text style={styles.metaLabel}>{t('urgency')}</Text>
                     <Text style={styles.metaValue}>
                       {String(results?.urgencyLevel || "medium").toUpperCase()}
                     </Text>
@@ -608,7 +610,7 @@ const AISymptomChecker = ({ navigation }) => {
                       size={theme.iconSizes.sm}
                       color={healthColors.primary.main}
                     />
-                    <Text style={styles.metaLabel}>Estimated Recovery</Text>
+                    <Text style={styles.metaLabel}>{t('estimated_recovery')}</Text>
                     <Text style={styles.metaValue}>
                       {results?.estimatedRecovery || "N/A"}
                     </Text>
@@ -617,7 +619,7 @@ const AISymptomChecker = ({ navigation }) => {
 
                 {!!results?.recommendations?.length && (
                   <View style={styles.listSection}>
-                    <Text style={styles.subSectionTitle}>Recommendations</Text>
+                    <Text style={styles.subSectionTitle}>{t('recommendations')}</Text>
                     {results.recommendations.map((item, index) => (
                       <View key={`rec-${index}`} style={styles.listRow}>
                         <CheckCircle2
@@ -633,7 +635,7 @@ const AISymptomChecker = ({ navigation }) => {
                 {!!results?.whenToSeekHelp?.length && (
                   <View style={styles.alertPanel}>
                     <Text style={styles.subSectionTitle}>
-                      Seek immediate help if
+                      {t('seek_immediate_help_if')}
                     </Text>
                     {results.whenToSeekHelp.map((item, index) => (
                       <View key={`warn-${index}`} style={styles.listRow}>
@@ -668,12 +670,12 @@ const AISymptomChecker = ({ navigation }) => {
                 <Text style={styles.diseaseName}>{topCondition.name}</Text>
 
                 <View style={styles.infoSection}>
-                  <Text style={styles.infoHeading}>Overview</Text>
+                  <Text style={styles.infoHeading}>{t('overview')}</Text>
                   <Text style={styles.infoBody}>{diseaseInfo.overview}</Text>
                 </View>
 
                 <View style={styles.infoSection}>
-                  <Text style={styles.infoHeading}>Symptoms</Text>
+                  <Text style={styles.infoHeading}>{t('symptoms')}</Text>
                   {diseaseInfo.symptoms.map((item) => (
                     <Text key={`sym-${item}`} style={styles.infoListItem}>
                       • {item}
@@ -682,7 +684,7 @@ const AISymptomChecker = ({ navigation }) => {
                 </View>
 
                 <View style={styles.infoSection}>
-                  <Text style={styles.infoHeading}>Causes</Text>
+                  <Text style={styles.infoHeading}>{t('causes')}es</Text>
                   {diseaseInfo.causes.map((item) => (
                     <Text key={`cause-${item}`} style={styles.infoListItem}>
                       • {item}
@@ -691,7 +693,7 @@ const AISymptomChecker = ({ navigation }) => {
                 </View>
 
                 <View style={styles.infoSection}>
-                  <Text style={styles.infoHeading}>Treatment</Text>
+                  <Text style={styles.infoHeading}>{t('treatment')}ment</Text>
                   {diseaseInfo.treatment.map((item) => (
                     <Text key={`treat-${item}`} style={styles.infoListItem}>
                       • {item}

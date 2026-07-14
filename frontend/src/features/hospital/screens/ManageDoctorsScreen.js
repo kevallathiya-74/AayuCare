@@ -40,10 +40,12 @@ import { EmptyState, SearchField, SkeletonCardRow } from "@/components/common";
 import AddDoctorModal from "./AddDoctorModal";
 import EditDoctorModal from "./EditDoctorModal";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 10;
 
 const ManageDoctorsScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
@@ -488,7 +490,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               accessibilityLabel={`Edit ${item.name}`}
             >
               <Edit size={18} color={healthColors.primary.main} />
-              <Text style={styles.editButtonText}>Edit</Text>
+              <Text style={styles.editButtonText}>{t('edit')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
@@ -500,7 +502,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
               accessibilityLabel={`Delete ${item.name}`}
             >
               <Trash2 size={18} color={healthColors.error.main} />
-              <Text style={styles.deleteButtonText}>Delete</Text>
+              <Text style={styles.deleteButtonText}>{t('delete')}lete</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -545,7 +547,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Doctors</Text>
+        <Text style={styles.headerTitle}>{t('manage_doctors')}</Text>
         {canManageUsers ? (
           <TouchableOpacity
             style={styles.addButton}
@@ -567,7 +569,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         <SearchField
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search by name, specialization..."
+          placeholder={t('search_by_name_specialization')}
           loading={searchLoading && !loading}
           onClear={() => setSearchQuery("")}
           accessibilityLabel="Search doctors"
@@ -650,7 +652,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.detailsModalContainer}>
             <View style={styles.detailsHeader}>
-              <Text style={styles.detailsTitle}>Doctor Details</Text>
+              <Text style={styles.detailsTitle}>{t('doctor_details')}</Text>
               <TouchableOpacity
                 onPress={() => {
                   setShowDetailsModal(false);
@@ -677,21 +679,21 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
               <View style={styles.detailsInfoCard}>
                 <View style={styles.detailsInfoRow}>
-                  <Text style={styles.detailsLabel}>Email</Text>
+                  <Text style={styles.detailsLabel}>{t('email')}</Text>
                   <Text style={styles.detailsValue}>
                     {selectedDoctor?.email || "N/A"}
                   </Text>
                 </View>
                 <View style={styles.detailsDivider} />
                 <View style={styles.detailsInfoRow}>
-                  <Text style={styles.detailsLabel}>Phone</Text>
+                  <Text style={styles.detailsLabel}>{t('phone')}</Text>
                   <Text style={styles.detailsValue}>
                     {selectedDoctor?.phone || "N/A"}
                   </Text>
                 </View>
                 <View style={styles.detailsDivider} />
                 <View style={styles.detailsInfoRow}>
-                  <Text style={styles.detailsLabel}>Status</Text>
+                  <Text style={styles.detailsLabel}>{t('status')}</Text>
                   <Text
                     style={[
                       styles.detailsValue,

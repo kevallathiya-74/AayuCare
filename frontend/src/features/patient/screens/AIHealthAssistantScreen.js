@@ -41,8 +41,10 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import { getLatestMetric } from "@/utils/vitalsSelector";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const AIHealthAssistantScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
   const { user } = useSelector((state) => state.auth);
@@ -261,7 +263,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Health Assistant</Text>
+        <Text style={styles.headerTitle}>{t('ai_health_assistant')}h Assistant</Text>
         <TouchableOpacity
           style={styles.voiceButton}
           onPress={() =>
@@ -299,7 +301,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           {/* Quick Suggestions */}
           {messages.length <= 1 && (
             <View style={styles.suggestionsSection}>
-              <Text style={styles.suggestionsTitle}>QUICK SUGGESTIONS:</Text>
+              <Text style={styles.suggestionsTitle}>{t('quick_suggestions')}</Text>
               {quickSuggestions.map((suggestion) => (
                 <TouchableOpacity
                   key={suggestion.id}
@@ -360,7 +362,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                   color={healthColors.primary.main}
                 />
                 <Text style={styles.typingText}>
-                  Analyzing your symptoms...
+                  {t('analyzing_your_symptoms')}..
                 </Text>
               </View>
             </View>
@@ -371,7 +373,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
             <View style={styles.insightsSection}>
               <View style={styles.insightsHeader}>
                 <BarChart2 size={20} color={healthColors.primary.main} />
-                <Text style={styles.insightsTitle}>YOUR HEALTH INSIGHTS:</Text>
+                <Text style={styles.insightsTitle}>{t('your_health_insights')}</Text>
               </View>
 
               <View style={styles.insightsCard}>
@@ -408,7 +410,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
                 accessibilityHint="Opens appointment booking"
               >
                 <PhoneCall size={20} color={theme.colors.white} />
-                <Text style={styles.doctorButtonText}>Talk to Real Doctor</Text>
+                <Text style={styles.doctorButtonText}>{t('talk_to_real_doctor')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -427,7 +429,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
           }
           sending={analyzeSymptomsMutation.isPending}
           sendDisabled={!message.trim() || analyzeSymptomsMutation.isPending}
-          placeholder="Ask anything about your health..."
+          placeholder={t('ask_anything_about_your_health')}
           maxLength={500}
         />
       </KeyboardAvoidingView>

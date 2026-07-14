@@ -13,7 +13,7 @@ export {
  * @param {string} fieldName  Used in the returned error message.
  * @returns {{ valid: boolean, error: string|null }}
  */
-export const validateRange = (val, min, max, fieldName = "Value") => {
+const validateRange = (val, min, max, fieldName = "Value") => {
   const n = Number(val);
   if (val === "" || val === null || val === undefined) {
     return { valid: false, error: `${fieldName} is required` };
@@ -38,7 +38,7 @@ export const validateRange = (val, min, max, fieldName = "Value") => {
  * @param {string} fieldName
  * @returns {{ valid: boolean, error: string|null }}
  */
-export const validateLength = (val, min, max, fieldName = "Field") => {
+const validateLength = (val, min, max, fieldName = "Field") => {
   const str = String(val ?? "").trim();
   if (str.length < min) {
     return {
@@ -84,7 +84,7 @@ export const validateBloodGroup = (bg) => {
  * @param {string} time
  * @returns {{ valid: boolean, error: string|null }}
  */
-export const validateTimeHHMM = (time) => {
+const validateTimeHHMM = (time) => {
   if (!time) return { valid: false, error: "Time is required" };
   const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
   if (!HHMM.test(time)) {
@@ -102,7 +102,7 @@ export const validateTimeHHMM = (time) => {
  * @param {string} time - "HH:MM"
  * @returns {number} total minutes, or NaN if invalid
  */
-export const timeToMinutes = (time) => {
+const timeToMinutes = (time) => {
   if (!time || !/^\d{2}:\d{2}$/.test(time)) return NaN;
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
@@ -141,7 +141,7 @@ export const validateAge = (ageStr) => {
  * @param {{ bpSystolic?: string, bpDiastolic?: string, temperature?: string, pulse?: string }} vitals
  * @returns {string[]}  Array of error messages; empty array means all valid.
  */
-export const validateVitals = ({
+const validateVitals = ({
   bpSystolic,
   bpDiastolic,
   temperature,

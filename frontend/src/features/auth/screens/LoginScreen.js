@@ -43,6 +43,9 @@ import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { loginUser } from "@/store/slices/authSlice";
 import { Input, Button } from "@/components/common";
 
@@ -58,10 +61,21 @@ const LoginScreen = ({ navigation }) => {
   // Card overlap into header — proportional so it never clips on small screens
   const cardOverlap = Math.min(headerHeight * 0.12, 48);
 
-  const [userId, setUserId] = useState("");
-  const [password, setPassword] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({ userId: "", password: "" });
   const [formError, setFormError] = useState("");
+
+  const loginSchema = yup.object({
+    userId: yup.string().trim().required(t("auth.userIdRequired", "User ID is required")),
+    password: yup.string().required(t("auth.passwordRequired", "Password is required")),
+  });
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors: fieldErrors },
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: { userId: "", password: "" },
+  });
 
   const scrollViewRef = useRef(null);
   const passwordInputRef = useRef(null);
@@ -95,58 +109,28 @@ const LoginScreen = ({ navigation }) => {
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  const handleLogin = useCallback(async () => {
+  const onSubmit = async (data) => {
     Keyboard.dismiss();
-
-    const newErrors = { userId: "", password: "" };
-    if (!userId.trim())
-      newErrors.userId = t("auth.userIdRequired", "User ID is required");
-    if (!password)
-      newErrors.password = t("auth.passwordRequired", "Password is required");
-
-    if (newErrors.userId || newErrors.password) {
-      setFieldErrors(newErrors);
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 0.95,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-      return;
-    }
-
-    setFieldErrors({ userId: "", password: "" });
     setFormError("");
-
     try {
-      await dispatch(loginUser({ userId, password })).unwrap();
+      await dispatch(loginUser({ userId: data.userId, password: data.password })).unwrap();
     } catch (error) {
       setFormError(
-        error?.message ||
-          t("auth.loginError", "Invalid credentials. Please try again.")
+        error?.message || t("auth.loginError", "Invalid credentials. Please try again.")
       );
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+      ]).start();
     }
-  }, [userId, password, dispatch, scaleAnim, t]);
+  };
 
-  const onUserIdChange = useCallback((text) => {
-    setUserId(text);
-    setFieldErrors((prev) => (prev.userId ? { ...prev, userId: "" } : prev));
-    setFormError((prev) => (prev ? "" : prev));
-  }, []);
-
-  const onPasswordChange = useCallback((text) => {
-    setPassword(text);
-    setFieldErrors((prev) =>
-      prev.password ? { ...prev, password: "" } : prev
-    );
-    setFormError((prev) => (prev ? "" : prev));
-  }, []);
+  const handleLogin = handleSubmit(onSubmit, () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -175,11 +159,8 @@ const LoginScreen = ({ navigation }) => {
           scrollViewRef={scrollViewRef}
           scrollInsets={insets}
           navigation={navigation}
-          userId={userId}
-          password={password}
-          onUserIdChange={onUserIdChange}
-          onPasswordChange={onPasswordChange}
-          fieldErrors={fieldErrors}
+          control={control}
+          errors={fieldErrors}
           formError={formError}
           isLoading={isLoading}
           handleLogin={handleLogin}
@@ -205,11 +186,8 @@ const LoginForm = memo(
     scrollViewRef,
     scrollInsets,
     navigation,
-    userId,
-    password,
-    onUserIdChange,
-    onPasswordChange,
-    fieldErrors,
+    control,
+    errors,
     formError,
     isLoading,
     handleLogin,
@@ -341,43 +319,54 @@ const LoginForm = memo(
           </View>
 
           <View style={styles.inputGroup}>
-            <Input
-              label={t("auth.emailOrUserId", "Email or User ID")}
-              value={userId}
-              onChangeText={onUserIdChange}
-              placeholder={t(
-                "auth.userIdPlaceholder",
-                "e.g. pat1, doc1, admin@aayucare.com"
+            <Controller
+              control={control}
+              name="userId"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label={t("auth.emailOrUserId", "Email or User ID")}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder={t("auth.userIdPlaceholder", "e.g. pat1, doc1, admin@aayucare.com")}
+                  leftIcon={emailIcon}
+                  error={errors.userId?.message}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onSubmitEditing={onEmailSubmit}
+                  editable={!isLoading}
+                  style={styles.inputSpacing}
+                  accessibilityLabel="Email or User ID Input"
+                  onFocus={() => handleInputFocus(60)}
+                />
               )}
-              leftIcon={emailIcon}
-              error={fieldErrors.userId}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="next"
-              onSubmitEditing={onEmailSubmit}
-              editable={!isLoading}
-              style={styles.inputSpacing}
-              accessibilityLabel="Email or User ID Input"
-              onFocus={() => handleInputFocus(60)}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Input
-              label={t("auth.password", "Password")}
-              value={password}
-              onChangeText={onPasswordChange}
-              placeholder={t("auth.passwordPlaceholder", "Enter your password")}
-              leftIcon={lockIcon}
-              secureTextEntry
-              error={fieldErrors.password}
-              ref={passwordInputRef}
-              returnKeyType="done"
-              onSubmitEditing={handleLogin}
-              editable={!isLoading}
-              style={styles.inputSpacing}
-              accessibilityLabel="Password Input"
-              onFocus={() => handleInputFocus("end")}
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label={t("auth.password", "Password")}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder={t("auth.passwordPlaceholder", "Enter your password")}
+                  leftIcon={lockIcon}
+                  secureTextEntry
+                  error={errors.password?.message}
+                  ref={passwordInputRef}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                  editable={!isLoading}
+                  style={styles.inputSpacing}
+                  accessibilityLabel="Password Input"
+                  onFocus={() => handleInputFocus("end")}
+                />
+              )}
             />
           </View>
 

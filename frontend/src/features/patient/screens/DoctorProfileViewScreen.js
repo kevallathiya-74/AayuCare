@@ -35,6 +35,7 @@ import { getScreenPadding } from "@/utils/responsive";
 import { formatCurrency } from "@/utils/helpers";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const asText = (value, fallback = "N/A") => {
   if (value == null) return fallback;
@@ -59,6 +60,7 @@ const asText = (value, fallback = "N/A") => {
 const EMPTY_OBJ = {};
 
 const DoctorProfileViewScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const doctor = route?.params?.doctor || EMPTY_OBJ;
   const doctorId = doctor?.id;
@@ -95,7 +97,7 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
-          Doctor Profile
+          {t('doctor_profile')}
         </Text>
         <View style={styles.backButton} />
       </View>
@@ -117,26 +119,26 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
           <SectionHeader title="Professional Summary" />
           <View style={styles.infoRow}>
             <BriefcaseMedical size={18} color={healthColors.primary.main} />
-            <Text style={styles.infoLabel}>Experience</Text>
+            <Text style={styles.infoLabel}>{t('experience')}rience</Text>
             <Text style={styles.infoValue}>{experience}</Text>
           </View>
           <View style={styles.infoRow}>
             <Star size={18} color={theme.colors.warning.main} />
-            <Text style={styles.infoLabel}>Rating</Text>
+            <Text style={styles.infoLabel}>{t('rating')}</Text>
             <Text style={styles.infoValue}>
               {asText(doctor?.rating, "N/A")}
             </Text>
           </View>
           <View style={styles.infoRow}>
             <Banknote size={18} color={healthColors.success.main} />
-            <Text style={styles.infoLabel}>Consultation Fee</Text>
+            <Text style={styles.infoLabel}>{t('consultation_fee')}e</Text>
             <Text style={styles.infoValue}>
               {formatCurrency(doctor?.consultationFee || doctor?.fee || 0)}
             </Text>
           </View>
           <View style={styles.infoRow}>
             <Video size={18} color={healthColors.info.main} />
-            <Text style={styles.infoLabel}>Telemedicine</Text>
+            <Text style={styles.infoLabel}>{t('telemedicine_1')}lemedicine</Text>
             <Text style={styles.infoValue}>
               {doctor?.telemedicine || doctor?.hasTelemedicine
                 ? "Available"

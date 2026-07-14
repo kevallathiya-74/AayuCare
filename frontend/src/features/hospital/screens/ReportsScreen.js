@@ -38,8 +38,10 @@ import {
 } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const ReportsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const [selectedRecordType, setSelectedRecordType] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -260,7 +262,7 @@ const ReportsScreen = ({ navigation }) => {
         ) : (
           <View style={styles.placeholder} />
         )}
-        <Text style={styles.headerTitle}>Reports & Records</Text>
+        <Text style={styles.headerTitle}>{t('reports_records')} & Records</Text>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={openFilterSheet}
@@ -272,7 +274,7 @@ const ReportsScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.selectedFilterRow}>
-        <Text style={styles.selectedFilterLabel}>Selected:</Text>
+        <Text style={styles.selectedFilterLabel}>{t('selected')}</Text>
         <Text style={styles.selectedFilterValue}>
           {selectedRecordType === "all"
             ? "All Types"

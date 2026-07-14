@@ -45,8 +45,10 @@ import { EmptyStateConfig } from "@/utils/constants";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { parseError } from "@/utils/errorHandler";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const AppointmentsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const insets = useSafeAreaInsets();
   const { refreshCount } = useAdminAppointments();
@@ -620,7 +622,7 @@ const AppointmentsScreen = ({ navigation }) => {
         ) : (
           <View style={styles.placeholder} />
         )}
-        <Text style={styles.headerTitle}>Appointments</Text>
+        <Text style={styles.headerTitle}>{t('appointments')}</Text>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={openFilterSheet}
@@ -629,7 +631,7 @@ const AppointmentsScreen = ({ navigation }) => {
           activeOpacity={0.8}
         >
           <Filter size={18} color={healthColors.text.primary} />
-          <Text style={styles.filterButtonText}>Filter</Text>
+          <Text style={styles.filterButtonText}>{t('filter')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -637,7 +639,7 @@ const AppointmentsScreen = ({ navigation }) => {
         <SearchField
           value={searchText}
           onChangeText={setSearchText}
-          placeholder="Search doctor, patient, reason, status"
+          placeholder={t('search_doctor_patient_reason_s')}
           onClear={() => setSearchText("")}
           accessibilityLabel="Search appointments"
         />

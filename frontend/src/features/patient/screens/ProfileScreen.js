@@ -56,8 +56,10 @@ import {
 } from "@/utils/dateHelpers";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const ProfileScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const insets = useSafeAreaInsets();
@@ -394,7 +396,7 @@ const ProfileScreen = ({ navigation }) => {
           >
             <Calendar size={24} color={healthColors.primary.main} />
             {renderStatValue(stats.appointments)}
-            <Text style={styles.statLabel}>Appointments</Text>
+            <Text style={styles.statLabel}>{t('appointments')}</Text>
           </View>
           <View
             style={styles.statCard}
@@ -404,7 +406,7 @@ const ProfileScreen = ({ navigation }) => {
           >
             <FileText size={24} color={healthColors.success.main} />
             {renderStatValue(stats.records)}
-            <Text style={styles.statLabel}>Records</Text>
+            <Text style={styles.statLabel}>{t('records')}</Text>
           </View>
           <View
             style={styles.statCard}
@@ -414,7 +416,7 @@ const ProfileScreen = ({ navigation }) => {
           >
             <BriefcaseMedical size={24} color={healthColors.info.main} />
             {renderStatValue(stats.prescriptions)}
-            <Text style={styles.statLabel}>Prescriptions</Text>
+            <Text style={styles.statLabel}>{t('prescriptions')}criptions</Text>
           </View>
         </View>
 
@@ -460,7 +462,7 @@ const ProfileScreen = ({ navigation }) => {
                 color={healthColors.primary.main}
               />
             </View>
-            <Text style={styles.sectionTitle}>Account Actions</Text>
+            <Text style={styles.sectionTitle}>{t('account_actions')}</Text>
           </View>
           <Card style={styles.card}>
             {actionItems.map((item, index) => {

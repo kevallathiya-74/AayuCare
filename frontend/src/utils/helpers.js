@@ -41,7 +41,7 @@ export const formatCurrency = (amount, showSymbol = true) => {
  * @param {string} phone - Phone number to format
  * @returns {string} Formatted phone number
  */
-export const formatPhoneNumber = (phone) => {
+const formatPhoneNumber = (phone) => {
   const cleaned = phone.replace(/\D/g, "");
   if (cleaned.length === 10) {
     return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
@@ -57,7 +57,7 @@ export const formatPhoneNumber = (phone) => {
  * @param {string} aadhaar - Aadhaar number
  * @returns {boolean} Is valid
  */
-export const isValidAadhaar = (aadhaar) => {
+const isValidAadhaar = (aadhaar) => {
   const cleaned = aadhaar.replace(/\D/g, "");
   return /^\d{12}$/.test(cleaned);
 };
@@ -174,7 +174,7 @@ export const getRelativeTime = (date) => {
  * @param {number} bmi - Body Mass Index
  * @returns {string} Category (Underweight, Normal, Overweight, Obese)
  */
-export const getBMICategory = (bmi) => {
+const getBMICategory = (bmi) => {
   if (bmi < 18.5) return "Underweight";
   if (bmi < 25) return "Normal";
   if (bmi < 30) return "Overweight";
@@ -187,7 +187,7 @@ export const getBMICategory = (bmi) => {
  * @param {number} diastolic - Diastolic pressure
  * @returns {string} Category (Normal, Elevated, High)
  */
-export const getBPCategory = (systolic, diastolic) => {
+const getBPCategory = (systolic, diastolic) => {
   if (systolic < 120 && diastolic < 80) return "Normal";
   if (systolic < 130 && diastolic < 80) return "Elevated";
   if (systolic < 140 || diastolic < 90) return "High (Stage 1)";
@@ -199,7 +199,7 @@ export const getBPCategory = (systolic, diastolic) => {
  * @param {number} heartRate - Heart rate in bpm
  * @returns {string} Category (Low, Normal, High)
  */
-export const getHeartRateCategory = (heartRate) => {
+const getHeartRateCategory = (heartRate) => {
   if (heartRate < 60) return "Low";
   if (heartRate <= 100) return "Normal";
   return "High";
@@ -343,7 +343,7 @@ export const capitalize = (str) => {
  * @param {number} maxLength - Maximum length
  * @returns {string} Truncated string
  */
-export const truncate = (str, maxLength = 50) => {
+const truncate = (str, maxLength = 50) => {
   if (!str || str.length <= maxLength) return str;
   return str.substring(0, maxLength - 3) + "...";
 };
@@ -367,7 +367,7 @@ export const getInitials = (name) => {
  * @param {Error|string} error - Error object or string
  * @returns {string} User-friendly message
  */
-export const getErrorMessage = (error) => {
+const getErrorMessage = (error) => {
   if (typeof error === "string") return error;
   if (error?.message) return error.message;
   return "An unexpected error occurred. Please try again.";

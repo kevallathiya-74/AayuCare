@@ -31,10 +31,12 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { parseError } from "@/utils/errorHandler";
 import { SkeletonCardRow, EmptyState, SearchField } from "@/components/common";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20;
 
 const DoctorPatientsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
@@ -181,7 +183,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
             accessibilityLabel={`Write prescription for ${item.name}`}
           >
             <FileText size={14} color={healthColors.text.white} />
-            <Text style={styles.rxButtonText}>Write Rx</Text>
+            <Text style={styles.rxButtonText}>{t('write_rx')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -206,7 +208,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>My Patients</Text>
+          <Text style={styles.headerTitle}>{t('my_patients')}</Text>
           <Text style={styles.headerSubtitle}>
             {patients.length > 0
               ? `${patients.length} patient${patients.length !== 1 ? "s" : ""}`
@@ -229,7 +231,7 @@ const DoctorPatientsScreen = ({ navigation }) => {
         <SearchField
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search by name or phone..."
+          placeholder={t('search_by_name_or_phone')}
           loading={isRefetching}
           onClear={() => setSearchQuery("")}
           accessibilityLabel="Search patients"

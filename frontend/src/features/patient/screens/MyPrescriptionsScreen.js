@@ -37,10 +37,12 @@ import { appointmentService, prescriptionService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20;
 
 const MyPrescriptionsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [selectedPrescription, setSelectedPrescription] = useState(null);
   const { user } = useSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
@@ -154,7 +156,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         if (meds.length === 0) {
           return (
             <View style={styles.diagnosisContainer}>
-              <Text style={styles.diagnosisLabel}>Diagnosis:</Text>
+              <Text style={styles.diagnosisLabel}>{t('diagnosis_2')}</Text>
               <Text style={styles.diagnosisText}>
                 {item.diagnosis || "Pending"}
               </Text>
@@ -239,7 +241,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Prescriptions</Text>
+        <Text style={styles.headerTitle}>{t('my_prescriptions')}criptions</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -265,7 +267,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
                   />
                 </View>
                 <View>
-                  <Text style={styles.modalTitle}>Prescription Details</Text>
+                  <Text style={styles.modalTitle}>{t('prescription_details')}cription Details</Text>
                   <Text style={styles.modalSubtitle}>
                     {formatDate(
                       selectedPrescription?.prescriptionDate ||
@@ -293,7 +295,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
             >
               {/* Doctor */}
               <View style={styles.detailSection}>
-                <Text style={styles.detailSectionTitle}>Prescribed By</Text>
+                <Text style={styles.detailSectionTitle}>{t('prescribed_by')}</Text>
                 <Text style={styles.detailValue}>
                   Dr. {selectedPrescription?.doctorName || "Unknown Doctor"}
                 </Text>
@@ -302,7 +304,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               {/* Diagnosis */}
               {!!selectedPrescription?.diagnosis && (
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Diagnosis</Text>
+                  <Text style={styles.detailSectionTitle}>{t('diagnosis')}is</Text>
                   <Text style={styles.detailValue}>
                     {selectedPrescription.diagnosis}
                   </Text>
@@ -311,14 +313,14 @@ const MyPrescriptionsScreen = ({ navigation }) => {
 
               {/* Medications */}
               <View style={styles.detailSection}>
-                <Text style={styles.detailSectionTitle}>Medications</Text>
+                <Text style={styles.detailSectionTitle}>{t('medications_1')}</Text>
                 {(
                   selectedPrescription?.medications ||
                   selectedPrescription?.medicines ||
                   []
                 ).length === 0 ? (
                   <Text style={styles.detailValueMuted}>
-                    No medications listed
+                    {t('no_medications_listed')}ications listed
                   </Text>
                 ) : (
                   (
@@ -369,7 +371,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               {/* Notes */}
               {!!selectedPrescription?.notes && (
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Doctor Notes</Text>
+                  <Text style={styles.detailSectionTitle}>{t('doctor_notes')}</Text>
                   <Text style={styles.detailValue}>
                     {selectedPrescription.notes}
                   </Text>
@@ -379,7 +381,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               {/* Status */}
               {!!selectedPrescription?.status && (
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Status</Text>
+                  <Text style={styles.detailSectionTitle}>{t('status')}</Text>
                   <Text style={styles.detailValue}>
                     {selectedPrescription.status.charAt(0).toUpperCase() +
                       selectedPrescription.status.slice(1)}
@@ -394,7 +396,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Text style={styles.modalDismissText}>Close</Text>
+              <Text style={styles.modalDismissText}>{t('close')}</Text>
             </TouchableOpacity>
           </View>
         </View>

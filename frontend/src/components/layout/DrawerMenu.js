@@ -36,6 +36,7 @@ const getInitials = (name) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 import { theme, healthColors } from "@/theme";
+import { useTranslation } from 'react-i18next';
 
 const ROLE_LABELS = {
   patient: "Patient Account",
@@ -53,6 +54,7 @@ const DrawerMenu = ({
   menuSections = [],
   onLogout,
 }) => {
+  const { t } = useTranslation();
   const handleItemPress = useCallback(
     (onPress) => {
       onClose();
@@ -195,7 +197,7 @@ const DrawerMenu = ({
                     />
                   </View>
                   <Text style={[styles.menuLabel, styles.logoutLabel]}>
-                    Sign Out
+                    {t('sign_out')}
                   </Text>
                 </TouchableOpacity>
               </View>

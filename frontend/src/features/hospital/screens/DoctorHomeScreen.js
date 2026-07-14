@@ -59,6 +59,7 @@ import {
   TodayAppointmentCard,
 } from "./components";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const QUICK_ACTIONS = [
   {
@@ -89,6 +90,7 @@ const QUICK_ACTIONS = [
 ];
 
 const DoctorHomeScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const isFocused = useIsFocused();
@@ -345,7 +347,7 @@ const DoctorHomeScreen = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Retry loading dashboard"
             >
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t('retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -472,7 +474,7 @@ const DoctorHomeScreen = ({ navigation }) => {
         maxHeight={0.35}
       >
         <Text style={styles.modalText}>
-          Are you sure you want to log out of your account?
+          {t('are_you_sure_you_want_to_log_o')}
         </Text>
         <View style={styles.modalActions}>
           <Button

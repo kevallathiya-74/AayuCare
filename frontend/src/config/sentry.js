@@ -64,7 +64,7 @@ const getSentryDSN = () => {
  * Initialize Sentry with proper configuration
  * Safe for both Expo Go and EAS builds
  */
-export const initializeSentry = () => {
+const initializeSentry = () => {
   // Skip if already initialized
   if (sentryInitialized) {
     if (__DEV__) {
@@ -133,7 +133,7 @@ export const initializeSentry = () => {
 /**
  * Check if Sentry is enabled
  */
-export const isSentryEnabled = () => {
+const isSentryEnabled = () => {
   return sentryInitialized && !isExpoGo && !!Sentry;
 };
 
@@ -168,7 +168,7 @@ export const captureException = (error, context = {}) => {
 /**
  * Capture message safely
  */
-export const captureMessage = (message, level = "info", context = {}) => {
+const captureMessage = (message, level = "info", context = {}) => {
   if (!isSentryEnabled()) {
     console.warn(`[${level.toUpperCase()}]`, message, context);
 
@@ -214,7 +214,7 @@ export const setUser = (user) => {
 /**
  * Add breadcrumb
  */
-export const addBreadcrumb = (breadcrumb) => {
+const addBreadcrumb = (breadcrumb) => {
   if (!isSentryEnabled()) return;
 
   try {

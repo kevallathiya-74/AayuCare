@@ -132,7 +132,7 @@ export function usePatientAppointmentsInfinite(
  * @param {Object} filters - Filter options
  * @param {Object} options - Additional React Query options
  */
-export function useDoctorAppointmentsInfinite(
+function useDoctorAppointmentsInfinite(
   doctorId,
   filters = {},
   options = {}
@@ -205,7 +205,7 @@ export function useAppointment(appointmentId, options = {}) {
 /**
  * Hook: Create new appointment
  */
-export function useCreateAppointment() {
+function useCreateAppointment() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -236,7 +236,7 @@ export function useCreateAppointment() {
 /**
  * Hook: Update appointment status
  */
-export function useUpdateAppointmentStatus() {
+function useUpdateAppointmentStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -274,7 +274,7 @@ export function useUpdateAppointmentStatus() {
 /**
  * Hook: Cancel an appointment
  */
-export function useCancelAppointment() {
+function useCancelAppointment() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -308,7 +308,7 @@ export function useCancelAppointment() {
  * @param {Object} filters - Filter options
  * @param {Number} interval - Polling interval in milliseconds (default: 30 seconds)
  */
-export function useAppointmentsRealTime(filters = {}, interval = 30000) {
+function useAppointmentsRealTime(filters = {}, interval = 30000) {
   return useQuery({
     queryKey: queryKeys.appointments.list(filters),
 

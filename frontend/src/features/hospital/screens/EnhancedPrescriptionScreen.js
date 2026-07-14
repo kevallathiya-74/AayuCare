@@ -41,8 +41,10 @@ import { formatCurrency } from "@/utils/helpers";
 import { SkeletonCardRow, Input, EmptyState } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const { patientId, appointmentId } = route.params || {};
   const insets = useSafeAreaInsets();
@@ -384,7 +386,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       return (
         <View style={styles.loadingInline}>
           <ActivityIndicator size="small" color={healthColors.primary.main} />
-          <Text style={styles.loadingInlineText}>Loading patients...</Text>
+          <Text style={styles.loadingInlineText}>{t('loading_patients')}..</Text>
         </View>
       );
     }
@@ -392,7 +394,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     if (patientOptions.length === 0) {
       return (
         <Text style={styles.emptyPatientsText}>
-          No patients available. Please create/assign appointments first.
+          {t('no_patients_available_please_c')} Please create/assign appointments first.
         </Text>
       );
     }
@@ -462,7 +464,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Prescription</Text>
+        <Text style={styles.headerTitle}>{t('create_prescription')}</Text>
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSavePrescription}
@@ -520,20 +522,20 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 }`}
               >
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Patient:</Text>
+                  <Text style={styles.infoLabel}>{t('patient')}</Text>
                   <Text style={styles.infoValue}>
                     {patient?.name || "N/A"} ({getDisplayPatientId(patient)})
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Doctor:</Text>
+                  <Text style={styles.infoLabel}>{t('doctor')}</Text>
                   <Text style={styles.infoValue}>
                     {user?.name || "Doctor"} (
                     {user?.specialization || "Specialist"})
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Date:</Text>
+                  <Text style={styles.infoLabel}>{t('date')}</Text>
                   <Text style={styles.infoValue}>{date}</Text>
                 </View>
               </View>
@@ -541,7 +543,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
 
             {/* Medications */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>MEDICATIONS:</Text>
+              <Text style={styles.sectionTitle}>{t('medications')}</Text>
               {medications.length > 0 ? (
                 <View style={styles.medicationsCard}>
                   {medications.map((med, index) => (
@@ -558,17 +560,17 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                           <View style={styles.timingsRow}>
                             {med.timings.morning && (
                               <View style={styles.timingChip}>
-                                <Text style={styles.timingText}>Morning</Text>
+                                <Text style={styles.timingText}>{t('morning')}</Text>
                               </View>
                             )}
                             {med.timings.afternoon && (
                               <View style={styles.timingChip}>
-                                <Text style={styles.timingText}>Afternoon</Text>
+                                <Text style={styles.timingText}>{t('afternoon')}oon</Text>
                               </View>
                             )}
                             {med.timings.evening && (
                               <View style={styles.timingChip}>
-                                <Text style={styles.timingText}>Evening</Text>
+                                <Text style={styles.timingText}>{t('evening')}</Text>
                               </View>
                             )}
                           </View>
@@ -588,7 +590,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               ) : (
                 <View style={styles.emptyMedications}>
                   <Text style={styles.emptyMedicationsText}>
-                    No medications added yet.
+                    {t('no_medications_added_yet')}
                   </Text>
                 </View>
               )}
@@ -600,15 +602,15 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityLabel="Add medicine"
               >
                 <PlusCircle size={20} color={healthColors.primary.main} />
-                <Text style={styles.addMedicineText}>Add Medicine</Text>
+                <Text style={styles.addMedicineText}>{t('add_medicine')}dicine</Text>
               </TouchableOpacity>
             </View>
 
             {/* Instructions */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>DIAGNOSIS:</Text>
+              <Text style={styles.sectionTitle}>{t('diagnosis_1')}</Text>
               <Input
-                placeholder="Enter diagnosis..."
+                placeholder={t('enter_diagnosis')}
                 value={diagnosis}
                 onChangeText={setDiagnosis}
                 multiline
@@ -617,9 +619,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>INSTRUCTIONS:</Text>
+              <Text style={styles.sectionTitle}>{t('instructions')}</Text>
               <Input
-                placeholder="Enter instructions for patient..."
+                placeholder={t('enter_instructions_for_patient')}
                 value={instructions}
                 onChangeText={setInstructions}
                 multiline
@@ -629,7 +631,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
 
             {/* Next Visit - Date Picker */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>NEXT VISIT:</Text>
+              <Text style={styles.sectionTitle}>{t('next_visit')}</Text>
               <TouchableOpacity
                 style={styles.dateSelector}
                 onPress={() => setShowDatePicker(true)}
@@ -681,17 +683,17 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                             accessibilityRole="button"
                             accessibilityLabel="Cancel date selection"
                           >
-                            <Text style={styles.datePickerCancel}>Cancel</Text>
+                            <Text style={styles.datePickerCancel}>{t('cancel')}</Text>
                           </TouchableOpacity>
                           <Text style={styles.datePickerTitle}>
-                            Next Visit Date
+                            {t('next_visit_date')}xt Visit Date
                           </Text>
                           <TouchableOpacity
                             onPress={() => setShowDatePicker(false)}
                             accessibilityRole="button"
                             accessibilityLabel="Done selecting date"
                           >
-                            <Text style={styles.datePickerDone}>Done</Text>
+                            <Text style={styles.datePickerDone}>{t('done')}</Text>
                           </TouchableOpacity>
                         </View>
                         <DateTimePicker
@@ -720,7 +722,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             <View style={styles.section}>
               <View style={styles.sendOptionsHeader}>
                 <CheckCircle size={20} color={healthColors.success.main} />
-                <Text style={styles.sectionTitle}>SEND TO OPTIONS:</Text>
+                <Text style={styles.sectionTitle}>{t('send_to_options')}</Text>
               </View>
               <View style={styles.sendOptionsCard}>
                 <TouchableOpacity
@@ -742,7 +744,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     }
                   />
                   <Text style={styles.checkboxLabel}>
-                    Patient Mobile App (Auto-Sync)
+                    {t('patient_mobile_app_auto_sync')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -767,7 +769,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                         : healthColors.text.disabled
                     }
                   />
-                  <Text style={styles.checkboxLabel}>Hospital Pharmacy</Text>
+                  <Text style={styles.checkboxLabel}>{t('hospital_pharmacy')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.checkboxRow}
@@ -792,7 +794,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     }
                   />
                   <Text style={styles.checkboxLabel}>
-                    External Pharmacy (Patient Choice)
+                    {t('external_pharmacy_patient_choi')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -802,20 +804,20 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             <View style={styles.section}>
               <View style={styles.costCard}>
                 <View style={styles.costRow}>
-                  <Text style={styles.costLabel}>Estimated Cost:</Text>
+                  <Text style={styles.costLabel}>{t('estimated_cost')}</Text>
                   <Text style={styles.costValue}>
                     {formatCurrency(estimatedCost)}
                   </Text>
                 </View>
                 <View style={styles.costRow}>
                   <Text style={styles.costLabel}>
-                    Hospital Pharmacy Discount:
+                    {t('hospital_pharmacy_discount')}
                   </Text>
                   <Text style={styles.discountValue}>{discount}%</Text>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.costRow}>
-                  <Text style={styles.finalCostLabel}>Final Amount:</Text>
+                  <Text style={styles.finalCostLabel}>{t('final_amount')}</Text>
                   <Text style={styles.finalCostValue}>
                     {formatCurrency(finalCost)}
                   </Text>
@@ -832,7 +834,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityLabel="Save and send prescription"
               >
                 <Text style={styles.saveAndSendText}>
-                  SAVE & SEND PRESCRIPTION
+                  {t('save_send_prescription')}D PRESCRIPTION
                 </Text>
               </TouchableOpacity>
             </View>
@@ -851,31 +853,31 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Medicine</Text>
+            <Text style={styles.modalTitle}>{t('add_medicine')}dicine</Text>
 
             <Input
-              placeholder="Medicine name"
+              placeholder={t('medicine_name')}
               value={medicineForm.name}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, name: value }))
               }
             />
             <Input
-              placeholder="Dosage (e.g. 500mg)"
+              placeholder={t('dosage_e_g_500mg')}
               value={medicineForm.dosage}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, dosage: value }))
               }
             />
             <Input
-              placeholder="Duration (e.g. 5 days)"
+              placeholder={t('duration_e_g_5_days')}
               value={medicineForm.duration}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, duration: value }))
               }
             />
             <Input
-              placeholder="Unit price"
+              placeholder={t('unit_price')}
               keyboardType="numeric"
               value={medicineForm.unitPrice}
               onChangeText={(value) =>
@@ -883,7 +885,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               }
             />
             <Input
-              placeholder="Instructions"
+              placeholder={t('instructions_1')}
               value={medicineForm.instructions}
               onChangeText={(value) =>
                 setMedicineForm((prev) => ({ ...prev, instructions: value }))
@@ -929,7 +931,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Cancel adding medicine"
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalActionButton, styles.modalSaveButton]}
@@ -937,7 +939,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityRole="button"
                 accessibilityLabel="Add medicine to prescription"
               >
-                <Text style={styles.modalSaveText}>Add</Text>
+                <Text style={styles.modalSaveText}>{t('add')}d</Text>
               </TouchableOpacity>
             </View>
           </View>

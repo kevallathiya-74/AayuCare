@@ -49,10 +49,12 @@ import { convertTo12Hour, getStatusColor } from "@/utils/helpers";
 import { SkeletonCardRow, EmptyState } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 15;
 
 const HospitalEventsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const queryClient = useQueryClient();
   const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
@@ -416,7 +418,7 @@ const HospitalEventsScreen = ({ navigation }) => {
             accessibilityLabel={`View details for ${event.title}`}
           >
             <Info size={20} color={healthColors.primary.main} />
-            <Text style={styles.detailsButtonText}>Details</Text>
+            <Text style={styles.detailsButtonText}>{t('details')}</Text>
           </TouchableOpacity>
 
           {registeredEventIds.has(event.id) ? (
@@ -569,8 +571,8 @@ const HospitalEventsScreen = ({ navigation }) => {
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Hospital Events</Text>
-          <Text style={styles.headerSubtitle}>Health camps & workshops</Text>
+          <Text style={styles.headerTitle}>{t('hospital_events')}pital Events</Text>
+          <Text style={styles.headerSubtitle}>{t('health_camps_workshops')} & workshops</Text>
         </View>
         <TouchableOpacity
           style={styles.refreshButton}
@@ -599,7 +601,7 @@ const HospitalEventsScreen = ({ navigation }) => {
       ) : isError ? (
         <View style={styles.errorContainer}>
           <AlertCircle size={64} color={healthColors.error.main} />
-          <Text style={styles.errorTitle}>Failed to Load Events</Text>
+          <Text style={styles.errorTitle}>{t('failed_to_load_events')}</Text>
           <Text style={styles.errorText}>{parseError(error)}</Text>
           <TouchableOpacity
             style={styles.retryButton}
@@ -607,7 +609,7 @@ const HospitalEventsScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Retry loading events"
           >
-            <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={styles.retryButtonText}>{t('try_again')}</Text>
           </TouchableOpacity>
         </View>
       ) : (

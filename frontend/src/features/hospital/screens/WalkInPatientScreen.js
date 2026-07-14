@@ -33,15 +33,17 @@ import { theme, healthColors } from "@/theme";
 import { getScreenPadding, getKeyboardConfig } from "@/utils/responsive";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showError, logError } from "@/utils/errorHandler";
-import { validateAge, validateBloodGroup } from "@/utils/formValidators";
+import * as yup from "yup";
 import { doctorService } from "@/services";
 import { Input, Button } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const WalkInPatientScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -131,45 +133,53 @@ const WalkInPatientScreen = ({ navigation }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      showError("Please enter patient name");
-      return false;
-    }
-    const ageValidation = validateAge(formData.age);
-    if (!ageValidation.valid) {
-      showError(ageValidation.error);
-      return false;
-    }
+  const walkInSchema = yup.object({
+    name: yup.string().trim().required(t('please_enter_patient_name', 'Please enter patient name')),
+    age: yup
+      .number()
+      .typeError(t('age_must_be_a_number', 'Age must be a number'))
+      .required(t('age_is_required', 'Age is required'))
+      .positive("Age must be positive")
+      .integer("Age must be a whole number")
+      .min(1, t('age_must_be_at_least_1', 'Age must be at least 1'))
+      .max(150, t('age_must_be_at_most_150', 'Age must be at most 150')),
+    phone: yup
+      .string()
+      .trim()
+      .required(t('phone_is_required', 'Phone is required'))
+      .matches(/^\+?[0-9]{10}$/, t('please_enter_valid_10_digit_ph', 'Please enter valid 10-digit phone number')),
+    chiefComplaint: yup
+      .string()
+      .trim()
+      .required(t('please_enter_chief_complaint_s', 'Please enter chief complaint/symptoms'))
+      .min(2, t('chief_complaint_must_be_at_lea', 'Chief complaint must be at least 2 characters')),
+    bloodGroup: yup
+      .string()
+      .nullable()
+      .oneOf(["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", null], "Invalid blood group"),
+  });
 
-    const bgValidation = validateBloodGroup(formData.bloodGroup);
-    if (!bgValidation.valid) {
-      showError(bgValidation.error);
+  const validateForm = async () => {
+    try {
+      await walkInSchema.validate(
+        {
+          name: formData.name,
+          age: formData.age === "" ? undefined : Number(formData.age),
+          phone: formData.phone,
+          chiefComplaint: formData.chiefComplaint,
+          bloodGroup: formData.bloodGroup || null,
+        },
+        { abortEarly: true }
+      );
+      return true;
+    } catch (err) {
+      showError(err.message);
       return false;
     }
-
-    // Enhanced phone validation
-    const phonePattern = /^\+?[0-9]{10}$/;
-    if (!formData.phone.trim() || !phonePattern.test(formData.phone.trim())) {
-      showError("Please enter valid 10-digit phone number");
-      return false;
-    }
-
-    if (!formData.chiefComplaint.trim()) {
-      showError("Please enter chief complaint/symptoms");
-      return false;
-    }
-
-    if (formData.chiefComplaint.trim().length < 2) {
-      showError("Chief complaint must be at least 2 characters");
-      return false;
-    }
-
-    return true;
   };
 
   const handleRegister = async () => {
-    if (!validateForm()) return;
+    if (!(await validateForm())) return;
 
     const patientData = {
       name: formData.name.trim(),
@@ -203,8 +213,8 @@ const WalkInPatientScreen = ({ navigation }) => {
             <ArrowLeft size={24} color={healthColors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Walk-in Patient</Text>
-            <Text style={styles.headerSubtitle}>Quick Registration</Text>
+            <Text style={styles.headerTitle}>{t('walk_in_patient', 'Walk-in Patient')}</Text>
+            <Text style={styles.headerSubtitle}>{t('quick_registration', 'Quick Registration')}</Text>
           </View>
           <View style={styles.headerIconContainer}>
             <UserPlus size={24} color={healthColors.primary.main} />
@@ -224,13 +234,13 @@ const WalkInPatientScreen = ({ navigation }) => {
               <View style={styles.sectionIconContainer}>
                 <User size={20} color={healthColors.primary.main} />
               </View>
-              <Text style={styles.sectionTitle}>Basic Information</Text>
+              <Text style={styles.sectionTitle}>{t('basic_information', 'Basic Information')}</Text>
             </View>
 
             {/* Name */}
             <Input
-              label="Patient Name *"
-              placeholder="Enter full name"
+              label={t('patient_name', 'Patient Name *')}
+              placeholder={t('enter_full_name', 'Enter full name')}
               value={formData.name}
               onChangeText={(value) => handleInputChange("name", value)}
               leftIcon={<User size={18} color={healthColors.text.disabled} />}
@@ -240,8 +250,8 @@ const WalkInPatientScreen = ({ navigation }) => {
             <View style={styles.row}>
               <View style={[styles.inputGroup, styles.halfWidth]}>
                 <Input
-                  label="Age *"
-                  placeholder="Age"
+                  label={t('age', 'Age *')}
+                  placeholder={t('age', 'Age')}
                   value={formData.age}
                   onChangeText={(value) =>
                     handleInputChange("age", value.replace(/[^0-9]/g, ""))
@@ -309,8 +319,8 @@ const WalkInPatientScreen = ({ navigation }) => {
 
             {/* Phone */}
             <Input
-              label="Phone Number *"
-              placeholder="mobile number"
+              label={t('phone_number', 'Phone Number *')}
+              placeholder={t('mobile_number', 'mobile number')}
               value={formData.phone}
               onChangeText={(value) =>
                 handleInputChange("phone", value.replace(/[^0-9]/g, ""))
@@ -328,7 +338,7 @@ const WalkInPatientScreen = ({ navigation }) => {
 
             {/* Blood Group */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Blood Group</Text>
+              <Text style={styles.label}>{t('blood_group', 'Blood Group')}</Text>
               <View style={styles.bloodGroupContainer}>
                 {bloodGroups.map((group) => (
                   <TouchableOpacity
@@ -370,8 +380,8 @@ const WalkInPatientScreen = ({ navigation }) => {
 
             {/* Address */}
             <Input
-              label="Address (Optional)"
-              placeholder="Patient's home address"
+              label={t('address_optional', 'Address (Optional)')}
+              placeholder={t('patient_s_home_address', 'Patient\'s home address')}
               value={formData.address}
               onChangeText={(value) => handleInputChange("address", value)}
               leftIcon={<MapPin size={18} color={healthColors.text.disabled} />}
@@ -384,13 +394,13 @@ const WalkInPatientScreen = ({ navigation }) => {
               <View style={styles.sectionIconContainer}>
                 <Cross size={20} color={healthColors.primary.main} />
               </View>
-              <Text style={styles.sectionTitle}>Medical Information</Text>
+              <Text style={styles.sectionTitle}>{t('medical_information', 'Medical Information')}</Text>
             </View>
 
             {/* Chief Complaint */}
             <Input
-              label="Chief Complaint / Symptoms *"
-              placeholder="Describe the symptoms or reason for visit"
+              label={t('chief_complaint_symptoms', 'Chief Complaint / Symptoms *')}
+              placeholder={t('describe_the_symptoms_or_reaso', 'Describe the symptoms or reason for visit')}
               value={formData.chiefComplaint}
               onChangeText={(value) =>
                 handleInputChange("chiefComplaint", value)

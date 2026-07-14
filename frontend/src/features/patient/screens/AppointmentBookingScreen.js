@@ -59,6 +59,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const isPlainObject = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);
@@ -107,6 +108,7 @@ const getDoctorExperienceText = (doctor) => {
 };
 
 const AppointmentBookingScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   // Get authenticated user for hospitalId
   const { user } = useSelector((state) => state.auth);
   const params = route?.params || {};
@@ -443,7 +445,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Book Appointment</Text>
+        <Text style={styles.headerTitle}>{t('book_appointment')}ment</Text>
         <TouchableOpacity
           style={styles.calendarButton}
           onPress={() => navigation.navigate(Routes.PATIENT.MY_APPOINTMENTS)}
@@ -472,7 +474,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.stepNumberBox}>
                 <Text style={styles.stepNumberText}>1</Text>
               </View>
-              <Text style={styles.stepTitle}>SELECT SPECIALTY:</Text>
+              <Text style={styles.stepTitle}>{t('select_specialty')}</Text>
             </View>
             <TouchableOpacity
               style={styles.specialtyCard}
@@ -499,7 +501,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Select Specialty</Text>
+                    <Text style={styles.modalTitle}>{t('select_specialty_1')}</Text>
                     <TouchableOpacity
                       onPress={() => setShowSpecialtyModal(false)}
                       accessibilityRole="button"
@@ -566,7 +568,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.stepNumberBox}>
                 <Text style={styles.stepNumberText}>2</Text>
               </View>
-              <Text style={styles.stepTitle}>CHOOSE DOCTOR:</Text>
+              <Text style={styles.stepTitle}>{t('choose_doctor')}</Text>
             </View>
 
             {loadingDoctors ? (
@@ -632,7 +634,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.stepNumberBox}>
                 <Text style={styles.stepNumberText}>3</Text>
               </View>
-              <Text style={styles.stepTitle}>APPOINTMENT TYPE:</Text>
+              <Text style={styles.stepTitle}>{t('appointment_type')}</Text>
             </View>
             <View style={styles.typeRow}>
               <Card
@@ -664,9 +666,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                     appointmentType === "in-person" && styles.typeTextSelected,
                   ]}
                 >
-                  IN-PERSON
+                  {t('in_person')}-PERSON
                 </Text>
-                <Text style={styles.typeSubtitle}>Visit Clinic</Text>
+                <Text style={styles.typeSubtitle}>{t('visit_clinic')}</Text>
               </Card>
               <Card
                 variant={
@@ -698,9 +700,9 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                       styles.typeTextSelected,
                   ]}
                 >
-                  TELEMEDICINE
+                  {t('telemedicine')}LEMEDICINE
                 </Text>
-                <Text style={styles.typeSubtitle}>Video Call</Text>
+                <Text style={styles.typeSubtitle}>{t('video_call')}l</Text>
               </Card>
             </View>
           </View>
@@ -711,7 +713,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.stepNumberBox}>
                 <Text style={styles.stepNumberText}>4</Text>
               </View>
-              <Text style={styles.stepTitle}>SELECT DATE & TIME:</Text>
+              <Text style={styles.stepTitle}>{t('select_date_time')}</Text>
             </View>
             <TouchableOpacity
               style={styles.dateCard}
@@ -737,13 +739,13 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
                 <View style={styles.datePickerModal}>
                   <View style={styles.datePickerContainer}>
                     <View style={styles.datePickerHeader}>
-                      <Text style={styles.datePickerTitle}>Select Date</Text>
+                      <Text style={styles.datePickerTitle}>{t('select_date')}lect Date</Text>
                       <TouchableOpacity
                         onPress={() => setShowDatePicker(false)}
                         accessibilityRole="button"
                         accessibilityLabel="Close date picker"
                       >
-                        <Text style={styles.datePickerDone}>Done</Text>
+                        <Text style={styles.datePickerDone}>{t('done')}</Text>
                       </TouchableOpacity>
                     </View>
                     <DateTimePicker
@@ -770,7 +772,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             )}
             <View style={styles.timeLabelRow}>
               <Clock size={18} color={healthColors.text.primary} />
-              <Text style={styles.timeLabel}>Available Slots:</Text>
+              <Text style={styles.timeLabel}>{t('available_slots')}</Text>
             </View>
             <View style={styles.timeSlotsGrid}>
               {generateAllSlots().map((slot) => {
@@ -817,11 +819,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
               <View style={styles.stepNumberBox}>
                 <Text style={styles.stepNumberText}>5</Text>
               </View>
-              <Text style={styles.stepTitle}>REASON FOR VISIT:</Text>
+              <Text style={styles.stepTitle}>{t('reason_for_visit')}</Text>
             </View>
             <Input
               label="Reason for visit"
-              placeholder="Describe your symptoms or reason..."
+              placeholder={t('describe_your_symptoms_or_reas')}
               value={reason}
               onChangeText={setReason}
               multiline

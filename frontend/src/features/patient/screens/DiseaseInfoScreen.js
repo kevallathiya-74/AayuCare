@@ -49,6 +49,7 @@ import { getScreenPadding } from "@/utils/responsive";
 import { handleSmartBack } from "@/utils/navigation";
 import { logError, parseError, showError } from "@/utils/errorHandler";
 import { useNetworkStatus } from "@/utils/offlineHandler";
+import { useTranslation } from 'react-i18next';
 
 const CATEGORIES = [
   { key: "heart", name: "Heart", icon: Heart, color: healthColors.error.main },
@@ -279,6 +280,7 @@ const DEFAULT_DISEASE_DETAILS = {
 };
 
 const DiseaseInfoScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isConnected } = useNetworkStatus();
 
@@ -388,7 +390,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
         <View style={styles.headerTitleWrap} pointerEvents="none">
           <Text style={styles.headerTitle} numberOfLines={1}>
-            Disease Info Center
+            {t('disease_info_center')}
           </Text>
         </View>
 
@@ -424,7 +426,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                 label="Search"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholder="Search categories"
+                placeholder={t('search_categories')}
                 leftIcon={
                   <Search
                     size={theme.iconSizes.sm}
@@ -584,14 +586,14 @@ const DiseaseInfoScreen = ({ navigation }) => {
 
             <ScrollView contentContainerStyle={styles.modalContent}>
               <View style={styles.detailCard}>
-                <Text style={styles.detailSectionTitle}>Overview</Text>
+                <Text style={styles.detailSectionTitle}>{t('overview')}</Text>
                 <Text style={styles.detailBody}>
                   {selectedDetails.overview}
                 </Text>
               </View>
 
               <View style={styles.detailCard}>
-                <Text style={styles.detailSectionTitle}>Symptoms</Text>
+                <Text style={styles.detailSectionTitle}>{t('symptoms')}</Text>
                 {selectedDetails.symptoms.map((item) => (
                   <View key={`symptom-${item}`} style={styles.listRow}>
                     <Text style={styles.listBullet}>•</Text>
@@ -601,7 +603,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.detailCard}>
-                <Text style={styles.detailSectionTitle}>Causes</Text>
+                <Text style={styles.detailSectionTitle}>{t('causes')}es</Text>
                 {selectedDetails.causes.map((item) => (
                   <View key={`cause-${item}`} style={styles.listRow}>
                     <Text style={styles.listBullet}>•</Text>
@@ -616,7 +618,7 @@ const DiseaseInfoScreen = ({ navigation }) => {
                     size={theme.iconSizes.sm}
                     color={healthColors.success.main}
                   />
-                  <Text style={styles.detailSectionTitle}>Treatment</Text>
+                  <Text style={styles.detailSectionTitle}>{t('treatment')}ment</Text>
                 </View>
                 {selectedDetails.treatment.map((item) => (
                   <View key={`treat-${item}`} style={styles.listRow}>

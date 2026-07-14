@@ -28,11 +28,16 @@ import { DynamicIcon } from "@/components/common";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { parseError } from "@/utils/errorHandler";
 import { getKeyboardConfig } from "@/utils/responsive";
+import { useTranslation } from 'react-i18next';
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["Male", "Female", "Other"];
 
 const AddPatientModal = ({ visible, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const queryClient = useQueryClient();
   const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);
@@ -56,6 +61,35 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  const patientSchema = yup.object({
+    name: yup.string().trim().required(t('name_is_required', 'Name is required')),
+    email: yup.string().trim().email(t('invalid_email_format', 'Invalid email format')).required(t('email_is_required', 'Email is required')),
+    phone: yup.string().trim().matches(/^+?[1-9]d{9,14}$/, "Invalid phone format").required(t('phone_is_required', 'Phone is required')),
+    password: yup
+      .string()
+      .min(8, t('password_must_be_at_least_8_ch', 'Password must be at least 8 characters'))
+      .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*d)/, t('password_must_contain_uppercas', 'Password must contain uppercase, lowercase and a number'))
+      .required(t('password_is_required', 'Password is required')),
+    dateOfBirth: yup.string().required(t('date_of_birth_is_required', 'Date of birth is required')),
+    gender: yup.string().required(t('please_select_gender', 'Please select gender')),
+    bloodGroup: yup.string().nullable(),
+    address: yup.string().nullable(),
+    emergencyContactPhone: yup.string().nullable().test(
+      "emergency-phone",
+      t('invalid_phone_format', 'Invalid phone format'),
+      (val) => !val || /^+?[1-9]d{1,14}$/.test(val.trim())
+    ),
+  });
+
+  const { trigger: triggerYup, setValue: setYupValue } = useForm({
+    resolver: yupResolver(patientSchema),
+    defaultValues: {
+      name: "", email: "", phone: "", password: "",
+      dateOfBirth: "", gender: "", bloodGroup: "",
+      address: "", emergencyContactPhone: "",
+    },
+  });
 
   const createPatientMutation = useMutation({
     mutationFn: (patientData) => adminService.createUser(patientData),
@@ -89,55 +123,44 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
 
   const loading = createPatientMutation.isPending;
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+  const validateForm = async () => {
+    // Sync formData into yup form for validation
+    const fieldMap = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      dateOfBirth: formData.dateOfBirth,
+      gender: formData.gender,
+      bloodGroup: formData.bloodGroup || null,
+      address: formData.address || null,
+      emergencyContactPhone: formData.emergencyContactPhone || null,
+    };
+    Object.entries(fieldMap).forEach(([k, v]) => setYupValue(k, v));
+    const valid = await triggerYup();
+    if (!valid) {
+      // fall back to inline error display
+      const newErrors = {};
+      if (!formData.name.trim()) newErrors.name = "Name is required";
+      if (!formData.email.trim()) newErrors.email = "Email is required";
+      else if (!/^S+@S+.S+$/.test(formData.email)) newErrors.email = "Invalid email format";
+      if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+      else if (!/^+?[1-9]d{9,14}$/.test(formData.phone)) newErrors.phone = "Invalid phone format";
+      if (!formData.password.trim()) newErrors.password = "Password is required";
+      else if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters";
+      else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*d)/.test(formData.password)) newErrors.password = "Password must contain uppercase, lowercase, and a number";
+      if (formData.emergencyContactPhone?.trim() && !/^+?[1-9]d{1,14}$/.test(formData.emergencyContactPhone.trim())) newErrors.emergencyContactPhone = "Invalid phone format";
+      if (!formData.dateOfBirth.trim()) newErrors.dateOfBirth = "Date of birth is required";
+      if (!formData.gender) newErrors.gender = "Please select gender";
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
     }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required";
-    } else if (!/^\+?[1-9]\d{9,14}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format";
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password =
-        "Password must contain uppercase, lowercase, and a number";
-    }
-
-    if (
-      formData.emergencyContactPhone.trim() &&
-      !/^\+?[1-9]\d{1,14}$/.test(formData.emergencyContactPhone.trim())
-    ) {
-      newErrors.emergencyContactPhone = "Invalid phone format";
-    }
-
-    if (!formData.dateOfBirth.trim()) {
-      newErrors.dateOfBirth = "Date of birth is required";
-    }
-
-    if (!formData.gender) {
-      newErrors.gender = "Please select gender";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    if (!(await validateForm())) {
       return;
     }
 
@@ -460,7 +483,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Register New Patient</Text>
+            <Text style={styles.title}>{t('register_new_patient')}er New Patient</Text>
             <TouchableOpacity
               onPress={handleClose}
               style={styles.closeButton}
@@ -503,7 +526,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
             )}
             {/* Date of Birth Picker */}
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Date of Birth *</Text>
+              <Text style={styles.label}>{t('date_of_birth')}</Text>
               <TouchableOpacity
                 style={[
                   styles.inputWrapper,
@@ -598,7 +621,7 @@ const AddPatientModal = ({ visible, onClose, onSuccess }) => {
               "default"
             )}
 
-            <Text style={styles.noteText}>* Required fields</Text>
+            <Text style={styles.noteText}>{t('required_fields')}</Text>
           </ScrollView>
 
           {/* Footer Actions */}

@@ -21,28 +21,31 @@ import { theme, healthColors, textStyles, spacing } from "@/theme";
 import { ModalSheet, Button } from "@/components/common";
 import logger from "@/utils/logger";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const RoleCard = memo(
   ({
-    icon: Icon,
+    Icon,
     gradientColors,
     onPress,
     accessibilityLabel,
     title,
     subtitle,
     badge,
-  }) => (
-    <TouchableOpacity
-      style={styles.cardWrapper}
-      onPress={onPress}
-      activeOpacity={0.9}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-    >
-      <LinearGradient
-        colors={gradientColors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+  }) => {
+    const { t } = useTranslation();
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+      >
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
         style={styles.cardGradient}
       >
         <View style={styles.cardContent}>
@@ -50,7 +53,7 @@ const RoleCard = memo(
             <Icon size={theme.iconSizes.xxl} color={theme.colors.text.white} />
           </View>
           <View style={styles.cardTextContainer}>
-            <Text style={styles.cardLabel}>CONTINUE AS</Text>
+            <Text style={styles.cardLabel}>{t('continue_as')}</Text>
             <Text style={styles.cardTitle}>{title}</Text>
             <Text style={styles.cardDescription}>{subtitle}</Text>
           </View>
@@ -69,10 +72,11 @@ const RoleCard = memo(
         </View>
       </LinearGradient>
     </TouchableOpacity>
-  )
-);
+  );
+});
 
 const BoxSelectionScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [showUserModal, setShowUserModal] = useState(false);
   const { height } = useWindowDimensions();
@@ -122,10 +126,10 @@ const BoxSelectionScreen = ({ navigation }) => {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <Text style={styles.brandTitle}>AayuCare</Text>
+          <Text style={styles.welcomeText}>{t('welcome_to')}</Text>
+          <Text style={styles.brandTitle}>{t('aayucare')}</Text>
           <View style={styles.subtitleWrap}>
-            <Text style={styles.subtitle}>Choose your role to get started</Text>
+            <Text style={styles.subtitle}>{t('choose_your_role_to_get_starte')}</Text>
           </View>
         </View>
 
@@ -167,7 +171,7 @@ const BoxSelectionScreen = ({ navigation }) => {
               size={theme.iconSizes.sm}
               color={healthColors.success.main}
             />
-            <Text style={styles.footerText}>Secure · Private · Trusted</Text>
+            <Text style={styles.footerText}>{t('secure_private_trusted')}</Text>
           </View>
         </View>
       </ScrollView>
@@ -180,7 +184,7 @@ const BoxSelectionScreen = ({ navigation }) => {
       >
         <View style={styles.modalContent}>
           <Text style={styles.modalBody}>
-            The User section is currently under development. Please utilize the
+            {t('the_user_section_is_currently_')} Please utilize the
             Hospital portal for doctor and admin functions.
           </Text>
           <Button
@@ -270,12 +274,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: spacing.md,
   },
-  cardWrapper: {
-    height: 128,
-    borderRadius: theme.borderRadius.xxl,
-    ...theme.shadows.md,
-    overflow: "hidden",
-  },
+
   cardGradient: {
     flex: 1,
     padding: spacing.lg,

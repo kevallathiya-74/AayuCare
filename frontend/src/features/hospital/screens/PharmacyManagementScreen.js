@@ -27,6 +27,7 @@ import { parseError } from "@/utils/errorHandler";
 import { SkeletonCardRow, EmptyState, SearchField } from "@/components/common";
 import { EmptyStateConfig } from "@/utils/constants";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const FILTERS = ["all", "pending", "preparing", "ready", "dispensed"];
 
@@ -96,6 +97,7 @@ const getSearchableText = (item) => {
 };
 
 const StatusChip = ({ label, count, isActive, onPress }) => {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -129,6 +131,7 @@ const StatusChip = ({ label, count, isActive, onPress }) => {
 };
 
 const OrderCard = ({ order }) => {
+  const { t } = useTranslation();
   const status = order.pharmacyStatus || "pending";
   const statusLabel = STATUS_CONFIG[status]?.label || "Pending";
 
@@ -170,6 +173,7 @@ const OrderCard = ({ order }) => {
 };
 
 const PharmacyManagementScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const user = useSelector((state) => state.auth.user);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -265,7 +269,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
               color={healthColors.text.primary}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pharmacy Management</Text>
+          <Text style={styles.headerTitle}>{t('pharmacy_management')}</Text>
           <View style={styles.headerIconBtn} />
         </View>
         <View style={styles.loadingListWrapper}>
@@ -297,7 +301,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Pharmacy Management</Text>
+        <Text style={styles.headerTitle}>{t('pharmacy_management')}</Text>
 
         <TouchableOpacity
           style={styles.headerIconBtn}
@@ -337,7 +341,7 @@ const PharmacyManagementScreen = ({ navigation }) => {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 onClear={() => setSearchQuery("")}
-                placeholder="Search by patient, doctor, or medicine"
+                placeholder={t('search_by_patient_doctor_or_me')}
                 accessibilityLabel="Search pharmacy orders"
                 accessibilityHint="Searches by patient, doctor, or medicine"
                 style={styles.searchField}
@@ -362,15 +366,15 @@ const PharmacyManagementScreen = ({ navigation }) => {
 
             <View style={styles.summaryRow}>
               <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Total Today</Text>
+                <Text style={styles.summaryLabel}>{t('total_today')}</Text>
                 <Text style={styles.summaryValue}>{summary.totalToday}</Text>
               </View>
               <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Pending</Text>
+                <Text style={styles.summaryLabel}>{t('pending')}</Text>
                 <Text style={styles.summaryValue}>{summary.pending}</Text>
               </View>
               <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Ready</Text>
+                <Text style={styles.summaryLabel}>{t('ready')}</Text>
                 <Text style={styles.summaryValue}>{summary.ready}</Text>
               </View>
             </View>

@@ -28,6 +28,7 @@ import { logoutUser } from "@/store/slices/authSlice";
 import { doctorService } from "@/services";
 import { DynamicIcon } from "@/components/common";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const formatDoctorName = (name) => {
   if (!name) return "Doctor";
@@ -42,6 +43,7 @@ const formatDoctorName = (name) => {
 };
 
 const DoctorProfileScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
@@ -177,7 +179,7 @@ const DoctorProfileScreen = ({ navigation }) => {
               <Text style={styles.heroStatValue}>
                 {loading ? "--" : stats.totalPatients}
               </Text>
-              <Text style={styles.heroStatLabel}>Patients</Text>
+              <Text style={styles.heroStatLabel}>{t('patients')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
@@ -188,14 +190,14 @@ const DoctorProfileScreen = ({ navigation }) => {
                   ? stats.rating.toFixed(1)
                   : "N/A"}
               </Text>
-              <Text style={styles.heroStatLabel}>Rating</Text>
+              <Text style={styles.heroStatLabel}>{t('rating')}</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
               <Text style={styles.heroStatValue}>
                 {loading ? "--" : stats.yearsExperience}
               </Text>
-              <Text style={styles.heroStatLabel}>Yrs Exp</Text>
+              <Text style={styles.heroStatLabel}>{t('yrs_exp')}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -243,7 +245,7 @@ const DoctorProfileScreen = ({ navigation }) => {
             accessibilityLabel="Logout from the app"
           >
             <LogOut size={22} color={healthColors.error.main} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Text style={styles.logoutText}>{t('logout')}</Text>
           </TouchableOpacity>
         </View>
 

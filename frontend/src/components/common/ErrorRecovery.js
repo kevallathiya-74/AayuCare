@@ -10,6 +10,7 @@ import { RefreshCw, ArrowLeft, Headphones } from "lucide-react-native";
 import { theme, healthColors } from "@/theme";
 import DynamicIcon from "./DynamicIcon";
 import { parseError } from "@/utils/errorHandler";
+import { useTranslation } from 'react-i18next';
 
 const ErrorRecovery = ({
   error,
@@ -22,6 +23,7 @@ const ErrorRecovery = ({
   customMessage,
   customSuggestions,
 }) => {
+  const { t } = useTranslation();
   // Determine error type and suggestions
   const getErrorInfo = () => {
     const errorMsg = parseError(error);
@@ -134,7 +136,7 @@ const ErrorRecovery = ({
       <Text style={styles.message}>{errorInfo.message}</Text>
 
       <View style={styles.suggestionsContainer}>
-        <Text style={styles.suggestionsTitle}>What you can do:</Text>
+        <Text style={styles.suggestionsTitle}>{t('what_you_can_do')}</Text>
         {errorInfo.suggestions.map((suggestion, index) => (
           <View key={index} style={styles.suggestionItem}>
             <DynamicIcon
@@ -156,7 +158,7 @@ const ErrorRecovery = ({
             activeOpacity={0.8}
           >
             <RefreshCw size={theme.iconSizes.md} color={healthColors.white} />
-            <Text style={styles.primaryButtonText}>Try Again</Text>
+            <Text style={styles.primaryButtonText}>{t('try_again')}</Text>
           </TouchableOpacity>
         )}
 
@@ -170,7 +172,7 @@ const ErrorRecovery = ({
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.secondaryButtonText}>Go Back</Text>
+            <Text style={styles.secondaryButtonText}>{t('go_back')}</Text>
           </TouchableOpacity>
         )}
 
@@ -184,7 +186,7 @@ const ErrorRecovery = ({
               size={theme.iconSizes.md}
               color={healthColors.text.secondary}
             />
-            <Text style={styles.supportButtonText}>Contact Support</Text>
+            <Text style={styles.supportButtonText}>{t('contact_support')}act Support</Text>
           </TouchableOpacity>
         )}
       </View>

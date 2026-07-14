@@ -59,18 +59,6 @@
           "icon": "./assets/icons/app-icon.png",
           "color": "#00ACC1"
         }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow AayuCare to access your camera to take medical record photos."
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow AayuCare to access your photos to upload medical documents."
-        }
       ]
     ]
   }

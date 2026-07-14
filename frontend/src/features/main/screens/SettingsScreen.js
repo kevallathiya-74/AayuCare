@@ -37,10 +37,12 @@ import { getItem, setItem } from "@/utils/appStorage";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
 import { setNotificationsEnabled } from "@/store/slices/permissionSlice";
+import { useTranslation } from 'react-i18next';
 
 const SETTINGS_STORAGE_KEY = "aayucare_notification_settings";
 
 const SettingsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [appointmentReminders, setAppointmentReminders] = useState(true);
   const [medicationReminders, setMedicationReminders] = useState(true);
   const [healthTips, setHealthTips] = useState(false);
@@ -300,17 +302,17 @@ const SettingsScreen = ({ navigation }) => {
             >
               <ArrowLeft size={22} color={healthColors.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Settings</Text>
+            <Text style={styles.headerTitle}>{t('settings')}</Text>
             <View style={styles.headerSpacer} />
           </View>
 
           {/* Notifications */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notifications</Text>
+            <Text style={styles.sectionTitle}>{t('notifications')}</Text>
             <Card padding={false}>
               <View style={styles.settingItem}>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>Push Notifications</Text>
+                  <Text style={styles.settingTitle}>{t('push_notifications')}h Notifications</Text>
                   <Text style={styles.settingDescription}>
                     {notificationPermission.granted
                       ? "Enable all notifications"
@@ -336,9 +338,9 @@ const SettingsScreen = ({ navigation }) => {
 
               <View style={styles.settingItem}>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>Appointment Reminders</Text>
+                  <Text style={styles.settingTitle}>{t('appointment_reminders')}</Text>
                   <Text style={styles.settingDescription}>
-                    Get notified before appointments
+                    {t('get_notified_before_appointmen')}
                   </Text>
                 </View>
                 {renderSwitch(
@@ -352,9 +354,9 @@ const SettingsScreen = ({ navigation }) => {
 
               <View style={styles.settingItem}>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>Medication Reminders</Text>
+                  <Text style={styles.settingTitle}>{t('medication_reminders')}</Text>
                   <Text style={styles.settingDescription}>
-                    Reminders to take medications
+                    {t('reminders_to_take_medications')} to take medications
                   </Text>
                 </View>
                 {renderSwitch(
@@ -368,9 +370,9 @@ const SettingsScreen = ({ navigation }) => {
 
               <View style={styles.settingItem}>
                 <View style={styles.settingInfo}>
-                  <Text style={styles.settingTitle}>Health Tips</Text>
+                  <Text style={styles.settingTitle}>{t('health_tips')}</Text>
                   <Text style={styles.settingDescription}>
-                    Daily health tips and insights
+                    {t('daily_health_tips_and_insights')} and insights
                   </Text>
                 </View>
                 {renderSwitch(healthTips, setHealthTips, "healthTips")}
@@ -380,7 +382,7 @@ const SettingsScreen = ({ navigation }) => {
 
           {/* Account */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle}>{t('account')}</Text>
             <Card padding={false}>
               {accountSettings.map((item, index) => (
                 <ListItem
@@ -394,7 +396,7 @@ const SettingsScreen = ({ navigation }) => {
 
           {/* Privacy */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Privacy & Security</Text>
+            <Text style={styles.sectionTitle}>{t('privacy_security')} & Security</Text>
             <Card padding={false}>
               {privacySettings.map((item, index) => (
                 <ListItem
@@ -408,7 +410,7 @@ const SettingsScreen = ({ navigation }) => {
 
           {/* About */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.sectionTitle}>{t('about')}</Text>
             <Card padding={false}>
               {aboutSettings.map((item, index) => (
                 <ListItem
@@ -422,7 +424,7 @@ const SettingsScreen = ({ navigation }) => {
 
           {/* App Version */}
           <View style={styles.versionContainer}>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>{t('version_1_0_0')}.0</Text>
           </View>
 
           <View style={styles.bottomSpacing} />

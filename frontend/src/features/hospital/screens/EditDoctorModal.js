@@ -18,6 +18,8 @@ import { X } from "lucide-react-native";
 import { theme, healthColors } from "@/theme";
 import { Button } from "@/components/common";
 import { getKeyboardConfig } from "@/utils/responsive";
+import { useTranslation } from 'react-i18next';
+import * as yup from "yup";
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -38,6 +40,7 @@ const SPECIALIZATIONS = [
 ];
 
 const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
+  const { t } = useTranslation();
   const {
     loading,
     handleSubmit,
@@ -62,7 +65,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
         <View style={styles.modalContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Edit Doctor Profile</Text>
+            <Text style={styles.title}>{t('edit_doctor_profile')}</Text>
             <TouchableOpacity
               onPress={handleClose}
               style={styles.closeButton}
@@ -139,7 +142,7 @@ const EditDoctorModal = ({ visible, onClose, onSuccess, doctor }) => {
             )}
             {renderAvailabilityPicker()}
 
-            <Text style={styles.noteText}>* Required fields</Text>
+            <Text style={styles.noteText}>{t('required_fields')}</Text>
           </ScrollView>
 
           {/* Footer Actions */}

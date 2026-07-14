@@ -27,11 +27,13 @@ import { DynamicIcon } from "@/components/common";
 
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const ACCESSIBILITY_SETTINGS_KEY = "aayucare_accessibility_settings";
 const FONT_SIZE_KEY = "aayucare_font_size";
 
 const SettingsAccessibilityScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [fontSize, setFontSize] = useState("Medium");
 
@@ -175,7 +177,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -187,7 +189,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Eye size={20} color={healthColors.primary.main} />
-            <Text style={styles.sectionTitle}>DISPLAY:</Text>
+            <Text style={styles.sectionTitle}>{t('display')}</Text>
           </View>
           <View style={styles.card}>
             <ActionRow
@@ -214,7 +216,7 @@ const SettingsAccessibilityScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <ShieldCheck size={20} color={healthColors.primary.main} />
-            <Text style={styles.sectionTitle}>PRIVACY:</Text>
+            <Text style={styles.sectionTitle}>{t('privacy')}</Text>
           </View>
           <View style={styles.card}>
             <ActionRow

@@ -44,12 +44,14 @@ import EditPatientModal from "./EditPatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
+import { useTranslation } from 'react-i18next';
 
 const UUID_V4_LIKE_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PAGE_SIZE = 20;
 
 const ManagePatientsScreen = ({ navigation, route }) => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
@@ -555,7 +557,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             >
               <FileText size={18} color={healthColors.accent.coral} />
               <Text style={styles.prescriptionButtonText} numberOfLines={1}>
-                Prescription
+                {t('prescription')}
               </Text>
             </TouchableOpacity>
 
@@ -572,7 +574,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 >
                   <Edit size={18} color={healthColors.primary.main} />
                   <Text style={styles.editButtonText} numberOfLines={1}>
-                    Edit
+                    {t('edit')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -586,7 +588,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
                 >
                   <Trash2 size={18} color={healthColors.error.main} />
                   <Text style={styles.deleteButtonText} numberOfLines={1}>
-                    Delete
+                    {t('delete')}lete
                   </Text>
                 </TouchableOpacity>
               </>
@@ -633,7 +635,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Manage Patients</Text>
+        <Text style={styles.headerTitle}>{t('manage_patients')}</Text>
         {canManageUsers ? (
           <TouchableOpacity
             style={styles.addButton}
@@ -655,7 +657,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         <SearchField
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search patients by name"
+          placeholder={t('search_patients_by_name')}
           loading={searchLoading && !loading}
           onClear={() => setSearchQuery("")}
           accessibilityLabel="Search patients"

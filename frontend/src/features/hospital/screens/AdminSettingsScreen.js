@@ -34,8 +34,10 @@ import { logError } from "@/utils/errorHandler";
 import { ModalSheet, Button } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import { useTranslation } from 'react-i18next';
 
 const AdminSettingsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -191,7 +193,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         ) : (
           <View style={styles.placeholder} />
         )}
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -211,7 +213,7 @@ const AdminSettingsScreen = ({ navigation }) => {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{user?.name || "Admin"}</Text>
-            <Text style={styles.profileRole}>Administrator</Text>
+            <Text style={styles.profileRole}>{t('administrator')}ator</Text>
             <Text style={styles.profileEmail}>
               {user?.email || "admin@aayucare.com"}
             </Text>
@@ -250,7 +252,7 @@ const AdminSettingsScreen = ({ navigation }) => {
           ) : (
             <>
               <LogOut size={22} color={healthColors.error.main} />
-              <Text style={styles.logoutText}>Logout</Text>
+              <Text style={styles.logoutText}>{t('logout')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -265,7 +267,7 @@ const AdminSettingsScreen = ({ navigation }) => {
         maxHeight={0.35}
       >
         <Text style={styles.modalText}>
-          Are you sure you want to log out of your account?
+          {t('are_you_sure_you_want_to_log_o')}
         </Text>
         <View style={styles.modalActions}>
           <Button

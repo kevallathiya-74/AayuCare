@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   View,
@@ -22,16 +22,14 @@ import {
   ShieldCheck,
   Shield,
 } from "lucide-react-native";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
-import {
-  showError,
-  showSuccess,
-  validateEmail,
-  validatePhone,
-} from "@/utils/errorHandler";
+import { showSuccess } from "@/utils/errorHandler";
 import { handleSmartBack } from "@/utils/navigation";
 
 const ForgotPasswordScreen = ({ navigation, route }) => {
@@ -40,9 +38,8 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
   const isHospital = userType === "hospital";
   const insets = useSafeAreaInsets();
 
-  const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState({});
   const [emailSent, setEmailSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
 
   const gradientColors = isHospital
     ? [theme.colors.success.background, theme.colors.background.primary]
@@ -54,53 +51,43 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
     ? [theme.colors.success.light, theme.colors.success.main]
     : [theme.colors.info.light, theme.colors.info.main];
 
-  const handleEmailChange = useCallback((text) => {
-    setEmail(text);
-    setErrors((prev) => (prev.email ? { ...prev, email: "" } : prev));
-  }, []);
+  const schema = yup.object({
+    email: yup
+      .string()
+      .trim()
+      .required(
+        isHospital
+          ? t("auth.hospitalIdRequired", "Hospital ID or Email is required")
+          : t("auth.emailOrPhoneRequired", "Email or Phone is required")
+      ),
+  });
 
-  const handleSendOTP = () => {
-    // Validation
-    const newErrors = {};
-    if (!email) {
-      newErrors.email = isHospital
-        ? t("auth.hospitalIdRequired", "Hospital ID or Email is required")
-        : t("auth.emailOrPhoneRequired", "Email or Phone is required");
-      setErrors(newErrors);
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: { email: "" },
+  });
 
-    // Validate email or phone format
-    if (!isHospital && email.includes("@")) {
-      if (!validateEmail(email)) {
-        showError(
-          t("auth.validEmailRequired", "Please enter a valid email address")
-        );
-        return;
-      }
-    } else if (!isHospital && !email.includes("@")) {
-      if (!validatePhone(email)) {
-        showError(
-          t("auth.validPhoneRequired", "Please enter a valid phone number")
-        );
-        return;
-      }
-    }
-
-    // Show success message
+  const onSubmit = (data) => {
+    const emailVal = data.email.trim();
+    setSentEmail(emailVal);
     showSuccess(
       t(
         "auth.otpSentMsg",
         "OTP sent successfully to {{target}}. Please check your {{type}}.",
-        { target: email, type: email.includes("@") ? "email" : "phone" }
+        { target: emailVal, type: emailVal.includes("@") ? "email" : "phone" }
       ),
       t("auth.otpSent", "OTP Sent")
     );
     setEmailSent(true);
-
-    // Navigate to reset password or OTP verification
     setTimeout(() => {
-      navigation.navigate(Routes.AUTH.RESET_PASSWORD, { email, userType });
+      navigation.navigate(Routes.AUTH.RESET_PASSWORD, {
+        email: emailVal,
+        userType,
+      });
     }, 1500);
   };
 
@@ -181,30 +168,39 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
               <>
                 {/* Form Section */}
                 <View style={styles.form}>
-                  <Input
-                    label={
-                      isHospital
-                        ? t("auth.hospitalIdOrEmail", "Hospital ID or Email")
-                        : t("auth.emailOrPhone", "Email or Phone")
-                    }
-                    placeholder={
-                      isHospital
-                        ? t("auth.hospitalIdPlaceholder", "HOS123456")
-                        : t("auth.emailPlaceholder", "example@email.com")
-                    }
-                    value={email}
-                    onChangeText={handleEmailChange}
-                    error={errors.email}
-                    leftIcon={<Mail size={20} color={iconColor} />}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
+                  <Controller
+                    control={control}
+                    name="email"
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <Input
+                        label={
+                          isHospital
+                            ? t("auth.hospitalIdOrEmail", "Hospital ID or Email")
+                            : t("auth.emailOrPhone", "Email or Phone")
+                        }
+                        placeholder={
+                          isHospital
+                            ? t("auth.hospitalIdPlaceholder", "HOS123456")
+                            : t("auth.emailPlaceholder", "example@email.com")
+                        }
+                        value={value}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        error={errors.email?.message}
+                        leftIcon={<Mail size={20} color={iconColor} />}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        returnKeyType="done"
+                        onSubmitEditing={handleSubmit(onSubmit)}
+                      />
+                    )}
                   />
 
                   <Button
                     title={t("auth.sendResetLink", "Send Reset Link")}
                     variant="primary"
                     size="large"
-                    onPress={handleSendOTP}
+                    onPress={handleSubmit(onSubmit)}
                     style={[
                       styles.sendButton,
                       isHospital && styles.hospitalButton,
@@ -240,7 +236,7 @@ const ForgotPasswordScreen = ({ navigation, route }) => {
                 </View>
                 <Text style={styles.successText}>Email Sent Successfully!</Text>
                 <Text style={styles.successSubtext}>
-                  We&#39;ve sent password reset instructions to {email}
+                  We&#39;ve sent password reset instructions to {sentEmail}
                 </Text>
               </View>
             )}

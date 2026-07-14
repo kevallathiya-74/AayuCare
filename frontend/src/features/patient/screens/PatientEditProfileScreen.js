@@ -28,11 +28,13 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import appStorage from "@/utils/appStorage";
 import { STORAGE_KEYS } from "@/utils/constants";
+import { useTranslation } from 'react-i18next';
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENDERS = ["male", "female", "other"];
 
 const PatientEditProfileScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const user = useSelector((state) => state.auth.user);
@@ -221,7 +223,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
             >
               <ArrowLeft size={22} color={healthColors.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.title}>Edit Profile</Text>
+            <Text style={styles.title}>{t('edit_profile')}</Text>
             <View style={styles.iconButton} />
           </View>
 
@@ -230,7 +232,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
               label="Full Name"
               value={form.name}
               onChangeText={(v) => handleChange("name", v)}
-              placeholder="Enter full name"
+              placeholder={t('enter_full_name')}
             />
             <Field
               label="Phone"
@@ -239,17 +241,17 @@ const PatientEditProfileScreen = ({ navigation }) => {
                 handleChange("phone", v.replace(/[^0-9+]/g, ""))
               }
               keyboardType="phone-pad"
-              placeholder="Enter phone"
+              placeholder={t('enter_phone')}
             />
             <Field
               label="Address"
               value={form.address}
               onChangeText={(v) => handleChange("address", v)}
-              placeholder="Enter address"
+              placeholder={t('enter_address')}
             />
             {/* Blood Group Selector */}
             <View style={styles.pickerGroup}>
-              <Text style={styles.pickerLabel}>Blood Group</Text>
+              <Text style={styles.pickerLabel}>{t('blood_group')}</Text>
               <View style={styles.chipRow}>
                 {BLOOD_GROUPS.map((bg) => (
                   <TouchableOpacity
@@ -277,7 +279,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
             </View>
             {/* Gender Selector */}
             <View style={styles.pickerGroup}>
-              <Text style={styles.pickerLabel}>Gender</Text>
+              <Text style={styles.pickerLabel}>{t('gender')}</Text>
               <View style={styles.chipRow}>
                 {GENDERS.map((g) => (
                   <TouchableOpacity
@@ -305,7 +307,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
             </View>
             {/* Date of Birth Picker */}
             <View style={styles.pickerGroup}>
-              <Text style={styles.pickerLabel}>Date of Birth</Text>
+              <Text style={styles.pickerLabel}>{t('date_of_birth_1')}</Text>
               <TouchableOpacity
                 style={styles.datePickerButton}
                 onPress={() => setShowDobPicker(true)}
@@ -328,7 +330,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
               label="Emergency Contact Name"
               value={form.emergencyContactName}
               onChangeText={(v) => handleChange("emergencyContactName", v)}
-              placeholder="Enter contact name"
+              placeholder={t('enter_contact_name')}
             />
             <Field
               label="Emergency Contact Phone"
@@ -337,13 +339,13 @@ const PatientEditProfileScreen = ({ navigation }) => {
                 handleChange("emergencyContactPhone", v.replace(/[^0-9+]/g, ""))
               }
               keyboardType="phone-pad"
-              placeholder="Enter contact phone"
+              placeholder={t('enter_contact_phone')}
             />
             <Field
               label="Emergency Contact Relation"
               value={form.emergencyContactRelation}
               onChangeText={(v) => handleChange("emergencyContactRelation", v)}
-              placeholder="e.g. Father, Spouse, Friend"
+              placeholder={t('e_g_father_spouse_friend')}
             />
           </Card>
 
@@ -357,7 +359,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
             onPress={handleSave}
             style={styles.saveButton}
           >
-            <Text>Save Changes</Text>
+            <Text>{t('save_changes')}</Text>
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -379,15 +381,15 @@ const PatientEditProfileScreen = ({ navigation }) => {
                   accessibilityRole="button"
                   accessibilityLabel="Cancel date selection"
                 >
-                  <Text style={styles.pickerDone}>Cancel</Text>
+                  <Text style={styles.pickerDone}>{t('cancel')}</Text>
                 </TouchableOpacity>
-                <Text style={styles.pickerTitle}>Date of Birth</Text>
+                <Text style={styles.pickerTitle}>{t('date_of_birth_1')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowDobPicker(false)}
                   accessibilityRole="button"
                   accessibilityLabel="Done selecting date"
                 >
-                  <Text style={styles.pickerDone}>Done</Text>
+                  <Text style={styles.pickerDone}>{t('done')}</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
