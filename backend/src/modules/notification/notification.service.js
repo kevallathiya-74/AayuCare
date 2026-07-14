@@ -38,6 +38,59 @@ class NotificationService {
   /**
    * Send appointment reminder notifications
    */
+  
+  /**
+   * Send appointment confirmation SMS
+   */
+  async sendAppointmentConfirmation(appointment, patient, doctor) {
+    try {
+      await this.createNotification({
+        userId: patient.id,
+        hospitalId: appointment.hospitalId,
+        type: "appointment",
+        title: "Appointment Confirmed",
+        message: `Your appointment with Dr. ${doctor.name} is confirmed for ${appointment.appointmentDate} at ${appointment.appointmentTime}`,
+        priority: "medium",
+        metadata: {
+          appointmentId: appointment.id,
+          doctorId: doctor.id,
+        },
+      });
+
+      await twilioService.sendAppointmentConfirmation(appointment, patient, doctor);
+      logger.info(`[Notification] Appointment confirmation sent to ${patient.name}`);
+    } catch (error) {
+      logger.error("[Notification] Appointment confirmation failed:", error.message);
+    }
+  }
+
+  /**
+   * Send appointment status change SMS
+   */
+  async sendAppointmentStatusChange(appointment, patient, doctor, status) {
+    try {
+      await this.createNotification({
+        userId: patient.id,
+        hospitalId: appointment.hospitalId,
+        type: "appointment",
+        title: `Appointment ${status}`,
+        message: `Your appointment with Dr. ${doctor.name} on ${appointment.appointmentDate} has been ${status.toLowerCase()}.`,
+        priority: "medium",
+        metadata: {
+          appointmentId: appointment.id,
+          doctorId: doctor.id,
+        },
+      });
+
+      const message = `AayuCare - Appointment Update\n\nHi ${patient.name},\nYour appointment with Dr. ${doctor.name} on ${new Date(appointment.appointmentDate).toLocaleDateString("en-IN")} at ${appointment.appointmentTime} has been ${status.toLowerCase()}.\n\nContact hospital for details.`.trim();
+      await twilioService.sendSMS(patient.phone, message);
+      
+      logger.info(`[Notification] Appointment ${status} sent to ${patient.name}`);
+    } catch (error) {
+      logger.error("[Notification] Appointment status change failed:", error.message);
+    }
+  }
+
   async sendAppointmentReminder(appointment, patient, doctor) {
     try {
       // Create in-app notification

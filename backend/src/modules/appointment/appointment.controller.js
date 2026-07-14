@@ -1,4 +1,6 @@
 const appointmentService = require("../appointment/appointment.service");
+const notificationService = require("../notification/notification.service");
+const doctorRepository = require("../hospital/repositories/doctor.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const userRepository = require("../auth/user.repository");
 const appointmentRepository = require("./appointment.repository");
@@ -24,6 +26,16 @@ exports.createAppointment = async (req, res, next) => {
 
     const appointment =
       await appointmentService.createAppointment(appointmentData);
+      
+    // Send SMS confirmation async
+    Promise.all([
+      userRepository.findById(appointment.patientId),
+      doctorRepository.findById(appointment.doctorId)
+    ]).then(([patient, doctor]) => {
+      if (patient && doctor) {
+        notificationService.sendAppointmentConfirmation(appointment, patient, doctor);
+      }
+    }).catch(err => logger.error("Failed to send appointment confirmation:", err.message));
 
     // Invalidate all appointment-related read caches after mutation
     try {

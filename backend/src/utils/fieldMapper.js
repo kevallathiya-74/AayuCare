@@ -1,19 +1,4 @@
 /**
- * Field Mapper Utility
- * Maps PostgreSQL snake_case fields to JavaScript camelCase
- * Ensures proper end-to-end data flow between backend and frontend
- */
-
-/**
- * Convert snake_case to camelCase
- * @param {string} str - snake_case string
- * @returns {string} camelCase string
- */
-const snakeToCamel = (str) => {
-  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-};
-
-/**
  * Map patient data from database to API response format
  * @param {Object} dbPatient - Patient data from database (snake_case)
  * @returns {Object} Mapped patient data (camelCase)
@@ -187,7 +172,6 @@ const mapArray = (data, mapperFunc) => {
 };
 
 module.exports = {
-  snakeToCamel,
   mapPatientData,
   mapAppointmentData,
   mapPrescriptionData,

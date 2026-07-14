@@ -5,6 +5,8 @@
  */
 
 const prescriptionRepository = require("./prescription.repository");
+const notificationService = require("../notification/notification.service");
+const doctorRepository = require("../hospital/repositories/doctor.repository");
 const userRepository = require("../auth/user.repository");
 const { mapPrescriptionData } = require("../../utils/fieldMapper");
 const logger = require("../../utils/logger");
@@ -424,6 +426,18 @@ exports.updatePrescriptionStatus = async (req, res, next) => {
       prescriptionId,
       pharmacyStatus,
     );
+    
+    // Send SMS if prescription is ready
+    if (prescription && pharmacyStatus === "ready") {
+      Promise.all([
+        userRepository.findById(prescription.patientId),
+        doctorRepository.findById(prescription.doctorId)
+      ]).then(([patient, doctor]) => {
+        if (patient && doctor) {
+          notificationService.sendPrescriptionNotification(prescription, patient, doctor);
+        }
+      }).catch(err => logger.error("Failed to send prescription ready SMS:", err.message));
+    }
 
     if (!prescription) {
       return sendError(res, req, "Prescription not found", 404, "NOT_FOUND");
