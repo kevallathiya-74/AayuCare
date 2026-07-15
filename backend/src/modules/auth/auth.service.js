@@ -4,10 +4,7 @@ const patientRepository = require("../patient/patient.repository");
 const authRepository = require("./auth.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const { getAuth } = require("../../lib/auth");
-const {
-  invalidateAfterAuthProfileMutation,
-  invalidateAfterPasswordMutation,
-} = require("../../utils/cacheInvalidation");
+const { invalidateByPatterns, AUTH_PROFILE_CACHE_PATTERNS, AUTH_PASSWORD_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 const bcrypt = require("bcryptjs");
 const logger = require("../../utils/logger");
 
@@ -325,7 +322,7 @@ class AuthService {
 
     // Invalidate relevant caches after profile update
     try {
-      await invalidateAfterAuthProfileMutation();
+      await invalidateByPatterns(AUTH_PROFILE_CACHE_PATTERNS);
       logger.debug("Cache invalidated after profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -371,7 +368,7 @@ class AuthService {
 
     // Invalidate session-related caches after password change
     try {
-      await invalidateAfterPasswordMutation(userId);
+      await invalidateByPatterns([...AUTH_PASSWORD_CACHE_PATTERNS, `v1:cache:user:${userId}:*`, `cache:user:${userId}:*`]);
       logger.debug("Cache invalidated after password change");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);

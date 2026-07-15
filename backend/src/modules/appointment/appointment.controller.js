@@ -1,15 +1,13 @@
+const { sendSuccess, sendError } = require("../../utils/apiResponse");
 const appointmentService = require("../appointment/appointment.service");
 const notificationService = require("../notification/notification.service");
-const doctorRepository = require("../hospital/repositories/doctor.repository");
+const doctorRepository = require("../doctor/doctor.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const userRepository = require("../auth/user.repository");
 const appointmentRepository = require("./appointment.repository");
 const logger = require("../../utils/logger");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
-const {
-  invalidateAfterAppointmentMutation,
-} = require("../../utils/cacheInvalidation");
+const { invalidateByPatterns, APPOINTMENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 
 /**
  * @desc    Create new appointment
@@ -39,7 +37,7 @@ exports.createAppointment = async (req, res, next) => {
 
     // Invalidate all appointment-related read caches after mutation
     try {
-      await invalidateAfterAppointmentMutation();
+      await invalidateByPatterns(APPOINTMENT_CACHE_PATTERNS);
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -57,13 +55,12 @@ exports.createAppointment = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      { appointment },
-      "Appointment created successfully",
-      201,
-    );
+    return res.status(201).json({
+      success: true,
+      status: "success",
+      message: "Appointment created successfully",
+      data: { appointment }
+    });
   } catch (error) {
     next(error);
   }
@@ -91,7 +88,7 @@ exports.getAllAppointmentsCursor = async (req, res, next) => {
 
     const result = await appointmentService.getAllAppointmentsCursor(filters);
 
-    return sendSuccess(res, req, result, "Appointments retrieved successfully");
+    return sendSuccess(res, 200, "Appointments retrieved successfully", result);
   } catch (error) {
     next(error);
   }
@@ -165,7 +162,7 @@ exports.getAppointmentsCursor = async (req, res, next) => {
       return next(new AppError("Not authorized to view appointments", 403));
     }
 
-    return sendSuccess(res, req, result, "Appointments retrieved successfully");
+    return sendSuccess(res, 200, "Appointments retrieved successfully", result);
   } catch (error) {
     next(error);
   }
@@ -193,7 +190,7 @@ exports.getAllAppointments = async (req, res, next) => {
 
     const result = await appointmentService.getAllAppointments(filters);
 
-    return sendSuccess(res, req, result, "Appointments retrieved successfully");
+    return sendSuccess(res, 200, "Appointments retrieved successfully", result);
   } catch (error) {
     next(error);
   }
@@ -285,12 +282,7 @@ exports.getAppointments = async (req, res, next) => {
       };
     }
 
-    return sendSuccess(
-      res,
-      req,
-      responseData,
-      "Appointments retrieved successfully",
-    );
+    return sendSuccess(res, 200, "Appointments retrieved successfully", responseData);
   } catch (error) {
     next(error);
   }
@@ -323,12 +315,12 @@ exports.getAppointment = async (req, res, next) => {
       return next(new AppError("Not authorized to view this appointment", 403));
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { appointment },
-      "Appointment retrieved successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Appointment retrieved successfully",
+      data: { appointment }
+    });
   } catch (error) {
     next(error);
   }
@@ -356,7 +348,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
 
     // Invalidate all appointment-related read caches after mutation
     try {
-      await invalidateAfterAppointmentMutation();
+      await invalidateByPatterns(APPOINTMENT_CACHE_PATTERNS);
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -373,12 +365,12 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      { appointment },
-      "Appointment status updated successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Appointment status updated successfully",
+      data: { appointment }
+    });
   } catch (error) {
     next(error);
   }
@@ -407,7 +399,7 @@ exports.cancelAppointment = async (req, res, next) => {
 
     // Invalidate all appointment-related read caches after mutation
     try {
-      await invalidateAfterAppointmentMutation();
+      await invalidateByPatterns(APPOINTMENT_CACHE_PATTERNS);
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -421,12 +413,12 @@ exports.cancelAppointment = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      { appointment },
-      "Appointment cancelled successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Appointment cancelled successfully",
+      data: { appointment }
+    });
   } catch (error) {
     next(error);
   }
@@ -453,17 +445,17 @@ exports.updateAppointment = async (req, res, next) => {
 
     // Invalidate all appointment-related read caches after mutation
     try {
-      await invalidateAfterAppointmentMutation();
+      await invalidateByPatterns(APPOINTMENT_CACHE_PATTERNS);
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { appointment },
-      "Appointment updated successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Appointment updated successfully",
+      data: { appointment }
+    });
   } catch (error) {
     next(error);
   }
@@ -487,12 +479,7 @@ exports.getAvailableSlots = async (req, res, next) => {
       date,
     );
 
-    return sendSuccess(
-      res,
-      req,
-      slots,
-      "Available slots retrieved successfully",
-    );
+    return sendSuccess(res, 200, "Available slots retrieved successfully", slots);
   } catch (error) {
     next(error);
   }
@@ -510,15 +497,16 @@ exports.getAppointmentStats = async (req, res, next) => {
       req.user.role,
     );
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Appointment stats retrieved successfully",
+
+      data: {
         stats: statsPayload.statusCounts,
         dateRanges: statsPayload.dateRanges,
-      },
-      "Appointment stats retrieved successfully",
-    );
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -538,13 +526,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     const isOwnData =
       req.user.userId === patientId || req.user.id === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return sendError(
-        res,
-        req,
-        "Not authorized to view these appointments",
-        403,
-        "FORBIDDEN",
-      );
+      return sendError(res, 403, "Not authorized to view these appointments", "FORBIDDEN", []);
     }
 
     // Find patient by either userId or _id (UUID format)
@@ -561,7 +543,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     }
 
     if (!patient || patient.role !== "patient") {
-      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
     }
 
     // Build filters for appointments
@@ -581,12 +563,12 @@ exports.getPatientAppointments = async (req, res, next) => {
       filters,
     );
 
-    return sendSuccess(
-      res,
-      req,
-      { appointments },
-      "Patient appointments retrieved successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Patient appointments retrieved successfully",
+      data: { appointments }
+    });
   } catch (error) {
     next(error);
   }

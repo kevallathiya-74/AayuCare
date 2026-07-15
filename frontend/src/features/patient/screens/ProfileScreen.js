@@ -37,13 +37,12 @@ import {
   Settings,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useSelector, useDispatch } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors, textStyles, spacing } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { getSafeAreaEdges } from "@/utils/responsive";
 import { Card } from "@/components/common";
-import { logoutUser } from "@/store/slices/authSlice";
+import { useAuth } from "@/context/AuthContext";
 import {
   appointmentService,
   medicalRecordService,
@@ -60,8 +59,7 @@ import { useTranslation } from 'react-i18next';
 
 const ProfileScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
+  const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
   const getCollectionCount = useCallback((payload, keys = []) => {
@@ -134,12 +132,13 @@ const ProfileScreen = ({ navigation }) => {
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => {
-          dispatch(logoutUser());
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Login" }],
-          });
+        onPress: async () => {
+          try {
+            await logout();
+            navigation.reset({ index: 0, routes: [{ name: Routes.AUTH.LOGIN }] });
+          } catch (e) {
+            console.error("Logout failed:", e);
+          }
         },
       },
     ]);

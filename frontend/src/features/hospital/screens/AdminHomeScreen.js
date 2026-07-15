@@ -13,7 +13,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
+
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -85,12 +85,7 @@ const resolveEntityId = (entity) => {
 const AdminHomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {}
-  );
-  const canUseNotifications =
-    !!notificationPermission.granted &&
-    !!notificationPermission.notificationsEnabled;
+  const canUseNotifications = false;
 
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
     useDrawer();

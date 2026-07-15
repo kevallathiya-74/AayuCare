@@ -12,10 +12,8 @@ import React, { useEffect, useRef } from "react";
 import { AppState } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useDispatch, useSelector } from "react-redux";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { initializeNotificationPermissions } from "@/store/slices/permissionSlice";
 
 import { healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -78,15 +76,10 @@ import ChangePasswordScreen from "@/features/main/screens/ChangePasswordScreen";
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
-  const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { isAuthenticated, user, isLoading, loadUser } = useAuth();
-  const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {}
-  );
-  const navigationRef = useRef(null);
   const authInitialized = useRef(false); // Prevent multiple auth checks
-  const permissionsInitialized = useRef(false);
+  const navigationRef = useRef(null);
   const appStateRef = useRef(AppState.currentState);
 
   logger.debug("AppNavigator", "Rendering auth state", {
@@ -122,38 +115,14 @@ const AppNavigator = () => {
     };
 
     initAuth();
-  }, [loadUser]); // dispatch is stable from Redux
-
-  useEffect(() => {
-    if (permissionsInitialized.current) {
-      return;
-    }
-
-    permissionsInitialized.current = true;
-
-    const initPermissions = async () => {
-      try {
-        await dispatch(initializeNotificationPermissions()).unwrap();
-      } catch (error) {
-        logger.warn(
-          "AppNavigator",
-          "Notification permission bootstrap failed",
-          {
-            error: error?.message || String(error),
-          }
-        );
-      }
-    };
-
-    initPermissions();
-  }, [dispatch]);
+  }, [loadUser]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
       "change",
       async (nextState) => {
         const becameActive =
-          appStateRef.current.match(/inactive|background/) &&
+           appStateRef.current.match(/inactive|background/) &&
           nextState === "active";
 
         appStateRef.current = nextState;
@@ -162,17 +131,7 @@ const AppNavigator = () => {
           return;
         }
 
-        try {
-          await dispatch(initializeNotificationPermissions()).unwrap();
-        } catch (error) {
-          logger.warn(
-            "AppNavigator",
-            "Notification permission refresh on foreground failed",
-            {
-              error: error?.message || String(error),
-            }
-          );
-        }
+
 
         // If we are not authenticated, attempt to reload/validate user session on focus (recovery)
         if (!isAuthenticated) {
@@ -188,7 +147,7 @@ const AppNavigator = () => {
     return () => {
       subscription.remove();
     };
-  }, [loadUser, isAuthenticated, dispatch]);
+  }, [loadUser, isAuthenticated]);
 
   // Auto-navigate after successful login
   useEffect(() => {
@@ -286,81 +245,13 @@ const AppNavigator = () => {
     }
   }, [isAuthenticated, isLoading]);
 
-  useEffect(() => {
-    if (
-      !isAuthenticated ||
-      !user?.role ||
-      !navigationRef.current?.isReady?.()
-    ) {
-      return;
-    }
 
-    const rolePreloadMap = {
-      admin: [
-        "AdminTabs",
-        "ManageDoctors",
-        "PatientManagement",
-        "Appointments",
-        "Reports",
-        "PharmacyManagement",
-      ],
-      doctor: [
-        "DoctorTabs",
-        "ConsultationHistory",
-        "ScheduleAvailability",
-        "WalkInPatient",
-        "Consultation",
-      ],
-      patient: [
-        "PatientTabs",
-        "Profile",
-        "PatientEditProfile",
-        "HospitalEvents",
-        "MyAppointments",
-        "MyPrescriptions",
-        "Notifications",
-        "AppointmentBooking",
-        "SpecialistCareFinder",
-        "MedicalRecords",
-        "AIHealthAssistant",
-        "AISymptomChecker",
-        "Emergency",
-        "PharmacyBilling",
-        "MyReports",
-        "DiseaseInfo",
-        "HealthMetrics",
-      ],
-    };
-
-    const preload = navigationRef.current?.preload;
-    if (typeof preload !== "function") {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      const screens = rolePreloadMap[user.role] || [];
-      screens.forEach((screenName) => {
-        try {
-          preload(screenName);
-        } catch (error) {
-          logger.warn("AppNavigator", "Screen preload skipped", {
-            screenName,
-            error: error?.message,
-          });
-        }
-      });
-    }, 250);
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, user?.role]);
 
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
     const role = user.role;
-    const canUseNotifications =
-      notificationPermission.granted &&
-      notificationPermission.notificationsEnabled;
+    const canUseNotifications = false; // Add real context-based permission check later
 
     if (role === "patient") {
       queryClient.prefetchQuery({
@@ -461,8 +352,6 @@ const AppNavigator = () => {
     user?.id,
     user?.role,
     queryClient,
-    notificationPermission.granted,
-    notificationPermission.notificationsEnabled,
   ]);
 
   // Determine user role

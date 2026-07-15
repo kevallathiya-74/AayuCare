@@ -4,7 +4,6 @@
  */
 
 const Joi = require("joi");
-const { sendError } = require("../utils/apiResponse");
 
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const VALID_DAYS = [
@@ -62,14 +61,13 @@ exports.validateSchedule = (req, res, next) => {
     abortEarly: false,
   });
   if (error) {
-    return sendError(
-      res,
-      req,
-      "Validation failed",
-      400,
-      "VALIDATION_ERROR",
-      error.details.map((d) => d.message),
-    );
+    return res.status(400).json({
+      success: false,
+      status: "error",
+      message: "Validation failed",
+      code: "VALIDATION_ERROR",
+      errors: error.details.map((d) => d.message)
+    });
   }
   next();
 };
@@ -80,14 +78,13 @@ exports.validateSchedule = (req, res, next) => {
 exports.validateTimeSlot = (req, res, next) => {
   const { error } = timeSlotSchema.validate(req.body, { abortEarly: false });
   if (error) {
-    return sendError(
-      res,
-      req,
-      "Validation failed",
-      400,
-      "VALIDATION_ERROR",
-      error.details.map((d) => d.message),
-    );
+    return res.status(400).json({
+      success: false,
+      status: "error",
+      message: "Validation failed",
+      code: "VALIDATION_ERROR",
+      errors: error.details.map((d) => d.message)
+    });
   }
   next();
 };

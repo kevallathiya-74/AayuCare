@@ -1,3 +1,4 @@
+const { sendSuccess } = require("../../utils/apiResponse");
 /**
  * Payment Controller
  * Handles pharmacy billing and payment processing
@@ -9,10 +10,7 @@ const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
 const { writeAuditLog } = require("../../utils/audit");
 const crypto = require("crypto");
-const {
-  invalidateAfterPaymentMutation,
-} = require("../../utils/cacheInvalidation");
-const { sendSuccess } = require("../../utils/apiResponse");
+const { invalidateByPatterns, PAYMENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 
 /**
  * Create a new payment record (pharmacy billing)
@@ -55,17 +53,18 @@ exports.createPayment = async (req, res, next) => {
     const isGatewayEnabled = process.env.PAYMENT_GATEWAY_ENABLED === "true";
 
     if (!isGatewayEnabled) {
-      return sendSuccess(
-        res,
-        req,
-        {
+      return res.status(200).json({
+        success: true,
+        status: "success",
+        message: "Online payment is not active. Please pay at the clinic counter.",
+
+        data: {
           paymentMode: "offline",
           instructions: "Show your appointment ID at the billing counter.",
           appointmentId: req.body?.appointmentId || null,
           prescriptionId: req.body?.prescriptionId || null,
-        },
-        "Online payment is not active. Please pay at the clinic counter.",
-      );
+        }
+      });
     }
 
     const paymentData = {
@@ -107,7 +106,7 @@ exports.createPayment = async (req, res, next) => {
 
     // Invalidate payment-related caches after creation
     try {
-      await invalidateAfterPaymentMutation();
+      await invalidateByPatterns(PAYMENT_CACHE_PATTERNS);
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
@@ -127,13 +126,7 @@ exports.createPayment = async (req, res, next) => {
 
     logger.info(`Payment created: ${payment.id} for patient ${patientId}`);
 
-    return sendSuccess(
-      res,
-      req,
-      finalPayment || payment,
-      "Payment processed successfully",
-      201,
-    );
+    return sendSuccess(res, 201, "Payment processed successfully", finalPayment || payment);
   } catch (error) {
     logger.error("createPayment error:", error);
     next(error);
@@ -176,19 +169,20 @@ exports.getPatientPayments = async (req, res, next) => {
       paymentRepository.countByPatient(patientIdToQuery, filters),
     ]);
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Patient payments retrieved successfully",
+
+      data: {
         payments,
         pagination: {
           page: pageNum,
           limit: limitNum,
           total,
         },
-      },
-      "Patient payments retrieved successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("getPatientPayments error:", error);
     next(error);
@@ -218,7 +212,7 @@ exports.getPaymentById = async (req, res, next) => {
       return next(new AppError("Access denied", 403));
     }
 
-    return sendSuccess(res, req, payment, "Payment retrieved successfully");
+    return sendSuccess(res, 200, "Payment retrieved successfully", payment);
   } catch (error) {
     logger.error("getPaymentById error:", error);
     next(error);
@@ -241,7 +235,7 @@ exports.getPaymentStats = async (req, res, next) => {
       endDate,
     });
 
-    return sendSuccess(res, req, stats, "Payment stats retrieved successfully");
+    return sendSuccess(res, 200, "Payment stats retrieved successfully", stats);
   } catch (error) {
     logger.error("getPaymentStats error:", error);
     next(error);

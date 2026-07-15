@@ -1,3 +1,4 @@
+const { sendSuccess } = require("../../utils/apiResponse");
 /**
  * Schedule Controller
  * Handles doctor schedule management endpoints.
@@ -6,7 +7,6 @@
 
 const scheduleService = require("../schedule/schedule.service");
 const { AppError } = require("../../middleware/errorHandler");
-const { sendSuccess } = require("../../utils/apiResponse");
 
 /**
  * @desc    Get a doctor's full weekly schedule
@@ -23,7 +23,7 @@ exports.getDoctorSchedule = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(res, req, schedule, "Schedule retrieved successfully");
+    return sendSuccess(res, 200, "Schedule retrieved successfully", schedule);
   } catch (error) {
     next(error);
   }
@@ -50,7 +50,7 @@ exports.getAvailableSlots = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(res, req, slots, "Available slots retrieved");
+    return sendSuccess(res, 200, "Available slots retrieved", slots);
   } catch (error) {
     next(error);
   }
@@ -80,12 +80,7 @@ exports.setWeeklySchedule = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(
-      res,
-      req,
-      result,
-      "Weekly schedule updated successfully",
-    );
+    return sendSuccess(res, 200, "Weekly schedule updated successfully", result);
   } catch (error) {
     next(error);
   }
@@ -115,7 +110,7 @@ exports.updateDaySchedule = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(res, req, updated, "Day schedule updated successfully");
+    return sendSuccess(res, 200, "Day schedule updated successfully", updated);
   } catch (error) {
     next(error);
   }
@@ -145,7 +140,7 @@ exports.addTimeSlot = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(res, req, updated, "Time slot added successfully", 201);
+    return sendSuccess(res, 201, "Time slot added successfully", updated);
   } catch (error) {
     next(error);
   }
@@ -174,7 +169,7 @@ exports.removeTimeSlot = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(res, req, updated, "Time slot removed successfully");
+    return sendSuccess(res, 200, "Time slot removed successfully", updated);
   } catch (error) {
     next(error);
   }
@@ -203,12 +198,7 @@ exports.toggleAvailability = async (req, res, next) => {
       hospitalId,
     );
 
-    return sendSuccess(
-      res,
-      req,
-      updated,
-      `Schedule availability set to ${isAvailable}`,
-    );
+    return sendSuccess(res, 200, `Schedule availability set to ${isAvailable}`, updated);
   } catch (error) {
     next(error);
   }

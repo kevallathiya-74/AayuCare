@@ -1,3 +1,4 @@
+const { sendSuccess, sendError } = require("../../utils/apiResponse");
 /**
  * Event Controller
  * Hospital events, camps, and health programs management
@@ -6,10 +7,7 @@
 const eventRepository = require("./event.repository");
 const logger = require("../../utils/logger");
 const { AppError } = require("../../middleware/errorHandler");
-const {
-  invalidateAfterEventMutation,
-} = require("../../utils/cacheInvalidation");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
+const { invalidateByPatterns, EVENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 
 /**
  * Get all upcoming events
@@ -69,12 +67,12 @@ exports.getUpcomingEvents = async (req, res, next) => {
           : Math.max(0, event.availableSpots - event.registeredCount),
     }));
 
-    return sendSuccess(
-      res,
-      req,
-      { count: eventsWithSpots.length, events: eventsWithSpots },
-      "Upcoming events retrieved successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Upcoming events retrieved successfully",
+      data: { count: eventsWithSpots.length, events: eventsWithSpots }
+    });
   } catch (error) {
     logger.error("Error in eventController.getUpcomingEvents", {
       error: error.message,
@@ -96,10 +94,10 @@ exports.getEventById = async (req, res, next) => {
     const event = await eventRepository.findById(eventId);
 
     if (!event) {
-      return sendError(res, req, "Event not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Event not found", "NOT_FOUND", []);
     }
 
-    return sendSuccess(res, req, event, "Event retrieved successfully");
+    return sendSuccess(res, 200, "Event retrieved successfully", event);
   } catch (error) {
     logger.error("Error in eventController.getEventById", {
       error: error.message,
@@ -126,13 +124,13 @@ exports.createEvent = async (req, res, next) => {
 
     // Invalidate event-related caches after creation
     try {
-      await invalidateAfterEventMutation();
+      await invalidateByPatterns(EVENT_CACHE_PATTERNS);
       logger.debug("Cache invalidated after event creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, event, "Event created successfully", 201);
+    return sendSuccess(res, 201, "Event created successfully", event);
   } catch (error) {
     logger.error("Error in eventController.createEvent", {
       error: error.message,
@@ -156,7 +154,7 @@ exports.registerForEvent = async (req, res, next) => {
     const event = await eventRepository.findById(eventId);
 
     if (!event) {
-      return sendError(res, req, "Event not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Event not found", "NOT_FOUND", []);
     }
 
     // Check if already registered
@@ -166,13 +164,7 @@ exports.registerForEvent = async (req, res, next) => {
     );
 
     if (isAlreadyRegistered) {
-      return sendError(
-        res,
-        req,
-        "You are already registered for this event",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "You are already registered for this event", "VALIDATION_ERROR", []);
     }
 
     // Check if event is full
@@ -180,18 +172,12 @@ exports.registerForEvent = async (req, res, next) => {
       event.availableSpots > 0 &&
       event.registeredCount >= event.availableSpots
     ) {
-      return sendError(res, req, "Event is full", 409, "CONFLICT");
+      return sendError(res, 409, "Event is full", "CONFLICT", []);
     }
 
     // Check if event date has passed
     if (new Date(event.date) < new Date()) {
-      return sendError(
-        res,
-        req,
-        "Cannot register for past events",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Cannot register for past events", "VALIDATION_ERROR", []);
     }
 
     // Register user for event
@@ -207,18 +193,13 @@ exports.registerForEvent = async (req, res, next) => {
 
     // Invalidate event-related caches after registration
     try {
-      await invalidateAfterEventMutation();
+      await invalidateByPatterns(EVENT_CACHE_PATTERNS);
       logger.debug("Cache invalidated after event registration");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      updatedEvent,
-      "Successfully registered for event",
-    );
+    return sendSuccess(res, 200, "Successfully registered for event", updatedEvent);
   } catch (error) {
     logger.error("Error in eventController.registerForEvent", {
       error: error.message,
@@ -242,7 +223,7 @@ exports.cancelRegistration = async (req, res, next) => {
     const event = await eventRepository.findById(eventId);
 
     if (!event) {
-      return sendError(res, req, "Event not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Event not found", "NOT_FOUND", []);
     }
 
     // Check if user is registered
@@ -252,7 +233,7 @@ exports.cancelRegistration = async (req, res, next) => {
     );
 
     if (!isRegistered) {
-      return sendError(res, req, "Registration not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Registration not found", "NOT_FOUND", []);
     }
 
     // Unregister user from event
@@ -260,13 +241,18 @@ exports.cancelRegistration = async (req, res, next) => {
 
     // Invalidate event-related caches after cancellation
     try {
-      await invalidateAfterEventMutation();
+      await invalidateByPatterns(EVENT_CACHE_PATTERNS);
       logger.debug("Cache invalidated after event registration cancellation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {}, "Registration cancelled successfully");
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Registration cancelled successfully",
+      data: {}
+    });
   } catch (error) {
     logger.error("Error in eventController.cancelRegistration", {
       error: error.message,
@@ -289,18 +275,18 @@ exports.updateEvent = async (req, res, next) => {
     const event = await eventRepository.update(eventId, req.body);
 
     if (!event) {
-      return sendError(res, req, "Event not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Event not found", "NOT_FOUND", []);
     }
 
     // Invalidate event-related caches after update
     try {
-      await invalidateAfterEventMutation();
+      await invalidateByPatterns(EVENT_CACHE_PATTERNS);
       logger.debug("Cache invalidated after event update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, event, "Event updated successfully");
+    return sendSuccess(res, 200, "Event updated successfully", event);
   } catch (error) {
     logger.error("Error in eventController.updateEvent", {
       error: error.message,
@@ -323,18 +309,23 @@ exports.deleteEvent = async (req, res, next) => {
     const event = await eventRepository.delete(eventId);
 
     if (!event) {
-      return sendError(res, req, "Event not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Event not found", "NOT_FOUND", []);
     }
 
     // Invalidate event-related caches after deletion
     try {
-      await invalidateAfterEventMutation();
+      await invalidateByPatterns(EVENT_CACHE_PATTERNS);
       logger.debug("Cache invalidated after event deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {}, "Event deleted successfully");
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Event deleted successfully",
+      data: {}
+    });
   } catch (error) {
     logger.error("Error in eventController.deleteEvent", {
       error: error.message,

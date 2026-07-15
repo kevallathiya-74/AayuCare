@@ -15,7 +15,6 @@ import { useMutation } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
 import authService from "@/features/auth/api/auth.service";
-import { logoutUser } from "@/store/slices/authSlice";
 import { logError, parseError } from "@/utils/errorHandler";
 import { Input, Button } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
@@ -25,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 const ChangePasswordScreen = ({ navigation }) => {
   const { t } = useTranslation();
   
-  const { user } = useAuth((state) => state.auth);
+  const { user, logout } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -89,7 +88,7 @@ const ChangePasswordScreen = ({ navigation }) => {
         currentPassword,
         newPassword,
       });
-      await console.warn(logoutUser()).unwrap();
+      await logout();
       navigation.reset({ index: 0, routes: [{ name: Routes.AUTH.LOGIN }] });
     } catch (error) {
       const message = parseError(error);

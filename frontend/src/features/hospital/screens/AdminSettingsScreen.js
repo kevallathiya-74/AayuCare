@@ -29,7 +29,6 @@ const getInitials = (name) => {
 };
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
-import { logoutUser } from "@/store/slices/authSlice";
 import { logError } from "@/utils/errorHandler";
 import { ModalSheet, Button } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
@@ -39,7 +38,7 @@ import { useTranslation } from 'react-i18next';
 const AdminSettingsScreen = ({ navigation }) => {
   const { t } = useTranslation();
   
-  const { user } = useAuth((state) => state.auth);
+  const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -52,7 +51,7 @@ const AdminSettingsScreen = ({ navigation }) => {
   const confirmLogout = async () => {
     setLoggingOut(true);
     try {
-      await console.warn(logoutUser()).unwrap();
+      await logout();
     } catch (err) {
       logError(err, { context: "AdminSettingsScreen.handleLogout" });
       Alert.alert("Error", "Failed to logout. Please try again.");

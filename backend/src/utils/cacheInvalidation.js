@@ -121,120 +121,24 @@ const invalidateByPatterns = async (patterns = []) => {
   }
 };
 
-const invalidateAfterAppointmentMutation = async () => {
-  await invalidateByPatterns(APPOINTMENT_CACHE_PATTERNS);
-  logger.debug("Appointment-related cache invalidation completed");
-};
-
-const invalidateAfterPatientProfileMutation = async () => {
-  await invalidateByPatterns(PATIENT_PROFILE_CACHE_PATTERNS);
-  logger.debug("Patient profile cache invalidation completed");
-};
-
-const invalidateAfterPatientHealthMutation = async () => {
-  await invalidateByPatterns(PATIENT_HEALTH_CACHE_PATTERNS);
-  logger.debug("Patient health cache invalidation completed");
-};
-
-const invalidateAfterNotificationMutation = async () => {
-  await invalidateByPatterns(NOTIFICATION_CACHE_PATTERNS);
-  logger.debug("Notification cache invalidation completed");
-};
-
-const invalidateAfterNotificationBroadcastMutation = async () => {
-  await invalidateByPatterns(NOTIFICATION_BROADCAST_CACHE_PATTERNS);
-  logger.debug("Notification broadcast cache invalidation completed");
-};
-
-const invalidateAfterEventMutation = async () => {
-  await invalidateByPatterns(EVENT_CACHE_PATTERNS);
-  logger.debug("Event cache invalidation completed");
-};
-
-const invalidateAfterMedicalRecordMutation = async () => {
-  await invalidateByPatterns(MEDICAL_RECORD_CACHE_PATTERNS);
-  logger.debug("Medical record cache invalidation completed");
-};
-
-const invalidateAfterPrescriptionMutation = async () => {
-  await invalidateByPatterns(PRESCRIPTION_CACHE_PATTERNS);
-  logger.debug("Prescription cache invalidation completed");
-};
-
-const invalidateAfterPaymentMutation = async () => {
-  await invalidateByPatterns(PAYMENT_CACHE_PATTERNS);
-  logger.debug("Payment cache invalidation completed");
-};
-
-const invalidateAfterAiMutation = async () => {
-  await invalidateByPatterns(AI_CACHE_PATTERNS);
-  logger.debug("AI cache invalidation completed");
-};
-
-const invalidateAfterAiDashboardMutation = async () => {
-  await invalidateByPatterns(AI_DASHBOARD_CACHE_PATTERNS);
-  logger.debug("AI dashboard cache invalidation completed");
-};
-
-const invalidateAfterAuthProfileMutation = async () => {
-  await invalidateByPatterns(AUTH_PROFILE_CACHE_PATTERNS);
-  logger.debug("Auth profile cache invalidation completed");
-};
-
-const invalidateAfterPasswordMutation = async (userId) => {
-  const patterns = [...AUTH_PASSWORD_CACHE_PATTERNS];
-
-  if (userId) {
-    patterns.push(`v1:cache:user:${userId}:*`, `cache:user:${userId}:*`);
-  }
-
-  await invalidateByPatterns(patterns);
-  logger.debug("Auth password/session cache invalidation completed");
-};
-
-const invalidateAfterDoctorAppointmentStatusMutation = async () => {
-  await invalidateByPatterns(DOCTOR_APPOINTMENT_STATUS_CACHE_PATTERNS);
-  logger.debug("Doctor appointment status cache invalidation completed");
-};
-
-const invalidateAfterDoctorWalkInRegistrationMutation = async () => {
-  await invalidateByPatterns(DOCTOR_WALK_IN_REGISTRATION_CACHE_PATTERNS);
-  logger.debug("Doctor walk-in registration cache invalidation completed");
-};
-
-const invalidateAfterDoctorProfileMutation = async () => {
-  await invalidateByPatterns(DOCTOR_PROFILE_CACHE_PATTERNS);
-  logger.debug("Doctor profile cache invalidation completed");
-};
-
-const invalidateAfterDoctorScheduleMutation = async () => {
-  await invalidateByPatterns(DOCTOR_SCHEDULE_CACHE_PATTERNS);
-  logger.debug("Doctor schedule cache invalidation completed");
-};
-
-const invalidateAfterDoctorScheduleBootstrapMutation = async () => {
-  await invalidateByPatterns(DOCTOR_SCHEDULE_BOOTSTRAP_CACHE_PATTERNS);
-  logger.debug("Doctor schedule bootstrap cache invalidation completed");
-};
-
 module.exports = {
   invalidateByPatterns,
-  invalidateAfterAppointmentMutation,
-  invalidateAfterPatientProfileMutation,
-  invalidateAfterPatientHealthMutation,
-  invalidateAfterNotificationMutation,
-  invalidateAfterNotificationBroadcastMutation,
-  invalidateAfterEventMutation,
-  invalidateAfterMedicalRecordMutation,
-  invalidateAfterPrescriptionMutation,
-  invalidateAfterPaymentMutation,
-  invalidateAfterAiMutation,
-  invalidateAfterAiDashboardMutation,
-  invalidateAfterAuthProfileMutation,
-  invalidateAfterPasswordMutation,
-  invalidateAfterDoctorAppointmentStatusMutation,
-  invalidateAfterDoctorWalkInRegistrationMutation,
-  invalidateAfterDoctorProfileMutation,
-  invalidateAfterDoctorScheduleMutation,
-  invalidateAfterDoctorScheduleBootstrapMutation,
+  APPOINTMENT_CACHE_PATTERNS,
+  PATIENT_PROFILE_CACHE_PATTERNS,
+  PATIENT_HEALTH_CACHE_PATTERNS,
+  NOTIFICATION_CACHE_PATTERNS,
+  NOTIFICATION_BROADCAST_CACHE_PATTERNS,
+  EVENT_CACHE_PATTERNS,
+  MEDICAL_RECORD_CACHE_PATTERNS,
+  PRESCRIPTION_CACHE_PATTERNS,
+  PAYMENT_CACHE_PATTERNS,
+  AI_CACHE_PATTERNS,
+  AI_DASHBOARD_CACHE_PATTERNS,
+  AUTH_PROFILE_CACHE_PATTERNS,
+  AUTH_PASSWORD_CACHE_PATTERNS,
+  DOCTOR_APPOINTMENT_STATUS_CACHE_PATTERNS,
+  DOCTOR_WALK_IN_REGISTRATION_CACHE_PATTERNS,
+  DOCTOR_PROFILE_CACHE_PATTERNS,
+  DOCTOR_SCHEDULE_CACHE_PATTERNS,
+  DOCTOR_SCHEDULE_BOOTSTRAP_CACHE_PATTERNS,
 };

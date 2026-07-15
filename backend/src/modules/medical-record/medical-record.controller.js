@@ -1,12 +1,10 @@
+const { sendSuccess, sendError } = require("../../utils/apiResponse");
 const medicalRecordRepository = require("./medical-record.repository");
 const userRepository = require("../auth/user.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
-const {
-  invalidateAfterMedicalRecordMutation,
-} = require("../../utils/cacheInvalidation");
+const { invalidateByPatterns, MEDICAL_RECORD_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 // Shared UUID regex — used to decide findById vs findByUserId
 const UUID_REGEX =
@@ -96,10 +94,12 @@ exports.getAllMedicalRecords = async (req, res, next) => {
     const total = await medicalRecordRepository.count(query);
 
     const totalPages = Math.ceil(total / limit);
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Medical records retrieved successfully",
+
+      data: {
         medicalRecords,
         pagination: {
           page: parseInt(page),
@@ -114,9 +114,8 @@ exports.getAllMedicalRecords = async (req, res, next) => {
         totalPages,
         hasNextPage: parseInt(page) < totalPages,
         hasPreviousPage: parseInt(page) > 1,
-      },
-      "Medical records retrieved successfully",
-    );
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -197,7 +196,7 @@ exports.createMedicalRecord = async (req, res, next) => {
 
     // Invalidate relevant caches after medical record creation
     try {
-      await invalidateAfterMedicalRecordMutation();
+      await invalidateByPatterns(MEDICAL_RECORD_CACHE_PATTERNS);
       logger.debug("Cache invalidated after medical record creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -216,13 +215,12 @@ exports.createMedicalRecord = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      { medicalRecord },
-      "Medical record created successfully",
-      201,
-    );
+    return res.status(201).json({
+      success: true,
+      status: "success",
+      message: "Medical record created successfully",
+      data: { medicalRecord }
+    });
   } catch (error) {
     next(error);
   }
@@ -261,13 +259,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       !isOwnData
     ) {
-      return sendError(
-        res,
-        req,
-        "Not authorized to view these medical records",
-        403,
-        "FORBIDDEN",
-      );
+      return sendError(res, 403, "Not authorized to view these medical records", "FORBIDDEN", []);
     }
 
     // Find patient by UUID or custom userId (e.g. "PAT001")
@@ -284,7 +276,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       }
     }
     if (!patient) {
-      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
     }
 
     // Build query
@@ -315,10 +307,12 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
     );
     const total = await medicalRecordRepository.count(query);
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Patient medical records retrieved successfully",
+
+      data: {
         medicalRecords,
         pagination: {
           page: parseInt(page),
@@ -326,9 +320,8 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
           total,
           pages: Math.ceil(total / limit),
         },
-      },
-      "Patient medical records retrieved successfully",
-    );
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -364,12 +357,12 @@ exports.getMedicalRecord = async (req, res, next) => {
       }
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { medicalRecord },
-      "Medical record retrieved successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Medical record retrieved successfully",
+      data: { medicalRecord }
+    });
   } catch (error) {
     next(error);
   }
@@ -411,18 +404,18 @@ exports.updateMedicalRecord = async (req, res, next) => {
 
     // Invalidate relevant caches after medical record update
     try {
-      await invalidateAfterMedicalRecordMutation();
+      await invalidateByPatterns(MEDICAL_RECORD_CACHE_PATTERNS);
       logger.debug("Cache invalidated after medical record update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { medicalRecord: updatedRecord },
-      "Medical record updated successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Medical record updated successfully",
+      data: { medicalRecord: updatedRecord }
+    });
   } catch (error) {
     next(error);
   }
@@ -454,13 +447,18 @@ exports.deleteMedicalRecord = async (req, res, next) => {
 
     // Invalidate relevant caches after medical record deletion
     try {
-      await invalidateAfterMedicalRecordMutation();
+      await invalidateByPatterns(MEDICAL_RECORD_CACHE_PATTERNS);
       logger.debug("Cache invalidated after medical record deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {}, "Medical record deleted successfully");
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Medical record deleted successfully",
+      data: {}
+    });
   } catch (error) {
     next(error);
   }
@@ -532,12 +530,7 @@ exports.getPatientHistory = async (req, res, next) => {
       totalRecords: medicalRecords.length,
     };
 
-    return sendSuccess(
-      res,
-      req,
-      history,
-      "Patient history retrieved successfully",
-    );
+    return sendSuccess(res, 200, "Patient history retrieved successfully", history);
   } catch (error) {
     next(error);
   }
@@ -597,13 +590,12 @@ exports.uploadAttachment = async (req, res, next) => {
       fileUrls: updatedUrls,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      { attachment, fileUrl },
-      "File uploaded successfully",
-      201,
-    );
+    return res.status(201).json({
+      success: true,
+      status: "success",
+      message: "File uploaded successfully",
+      data: { attachment, fileUrl }
+    });
   } catch (error) {
     next(error);
   }

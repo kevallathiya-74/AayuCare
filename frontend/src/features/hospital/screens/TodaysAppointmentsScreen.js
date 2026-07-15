@@ -40,7 +40,7 @@ import {
 } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
+import { useAuth } from "@/context/AuthContext";
 import { theme, healthColors } from "@/theme";
 import { doctorService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -79,7 +79,7 @@ const STATUS_FILTERS_BY_TAB = {
 
 const TodaysAppointmentsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedFilter, setSelectedFilter] = useState("today");
   const [statusFilter, setStatusFilter] = useState("all");

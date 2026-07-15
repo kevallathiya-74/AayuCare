@@ -34,7 +34,7 @@ export const queryClient = new QueryClient({
         if (__DEV__) {
           console.warn(
             "[React Query] Blocked role-mismatched query:",
-            error?.message
+            error?.message,
           );
         }
         logError(error, { context: "ReactQuery.query" });
@@ -52,7 +52,7 @@ export const queryClient = new QueryClient({
         if (__DEV__) {
           console.warn(
             "[React Query] Blocked role-mismatched mutation:",
-            error?.message
+            error?.message,
           );
         }
         logError(error, { context: "ReactQuery.mutation" });
@@ -264,7 +264,7 @@ export const queryKeys = {
 export const invalidateRelatedQueries = async (
   queryClient,
   entityType,
-  _action = "update"
+  _action = "update",
 ) => {
   const invalidations = [];
 
@@ -277,7 +277,7 @@ export const invalidateRelatedQueries = async (
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.notifications.all,
-        })
+        }),
       );
       break;
 
@@ -286,7 +286,7 @@ export const invalidateRelatedQueries = async (
         queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.dashboardStats.admin(),
-        })
+        }),
       );
       break;
 
@@ -295,7 +295,7 @@ export const invalidateRelatedQueries = async (
         queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.dashboardStats.admin(),
-        })
+        }),
       );
       break;
 
@@ -304,7 +304,7 @@ export const invalidateRelatedQueries = async (
         queryClient.invalidateQueries({
           queryKey: queryKeys.medicalRecords.all,
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all })
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
       );
       break;
 
@@ -313,7 +313,7 @@ export const invalidateRelatedQueries = async (
         queryClient.invalidateQueries({
           queryKey: queryKeys.prescriptions.all,
         }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all })
+        queryClient.invalidateQueries({ queryKey: queryKeys.patients.all }),
       );
       break;
 
@@ -321,14 +321,14 @@ export const invalidateRelatedQueries = async (
       invalidations.push(
         queryClient.invalidateQueries({
           queryKey: queryKeys.notifications.all,
-        })
+        }),
       );
       break;
 
     default:
       if (__DEV__) {
         console.warn(
-          `[React Query] Unknown entity type for invalidation: ${entityType}`
+          `[React Query] Unknown entity type for invalidation: ${entityType}`,
         );
       }
   }

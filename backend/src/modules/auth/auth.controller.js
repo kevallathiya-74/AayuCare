@@ -1,3 +1,4 @@
+const { sendSuccess } = require("../../utils/apiResponse");
 /**
  * AayuCare - Auth Controller
  * Custom endpoints extending Better Auth
@@ -8,7 +9,6 @@
 const authService = require("./auth.service");
 const logger = require("../../utils/logger");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
-const { sendSuccess } = require("../../utils/apiResponse");
 
 /**
  * @desc    Get user email by userId (for Better Auth login)
@@ -19,7 +19,7 @@ exports.getEmailByUserId = async (req, res, next) => {
   try {
     const { userId } = req.body;
     const result = await authService.getEmailByUserId(userId);
-    return sendSuccess(res, req, result, "User email retrieved successfully");
+    return sendSuccess(res, 200, "User email retrieved successfully", result);
   } catch (error) {
     logger.error("Error in getEmailByUserId", {
       error: error.message,
@@ -62,12 +62,7 @@ exports.getCurrentSession = async (req, res, next) => {
       "[auth.getCurrentSession] returning session identifier (not a Bearer token)",
     );
 
-    return sendSuccess(
-      res,
-      req,
-      result,
-      "Session token retrieved successfully",
-    );
+    return sendSuccess(res, 200, "Session token retrieved successfully", result);
   } catch (error) {
     logger.error("Error in getCurrentSession", {
       error: error.message,
@@ -94,12 +89,7 @@ exports.getSessionTokenByCredentials = async (req, res, next) => {
       password,
       requestInfo,
     );
-    return sendSuccess(
-      res,
-      req,
-      result,
-      "Session token retrieved successfully",
-    );
+    return sendSuccess(res, 200, "Session token retrieved successfully", result);
   } catch (error) {
     logger.error("Error in getSessionTokenByCredentials", {
       error: error.message,
@@ -119,7 +109,7 @@ exports.getProfileByEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
     const result = await authService.getProfileByEmail(email);
-    return sendSuccess(res, req, result, "User profile retrieved successfully");
+    return sendSuccess(res, 200, "User profile retrieved successfully", result);
   } catch (error) {
     logger.error("Error in getProfileByEmail", {
       error: error.message,
@@ -138,7 +128,7 @@ exports.getProfileByEmail = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const result = await authService.getMe(req.user, req.session);
-    return sendSuccess(res, req, result, "Current user retrieved successfully");
+    return sendSuccess(res, 200, "Current user retrieved successfully", result);
   } catch (error) {
     next(error);
   }
@@ -162,12 +152,12 @@ exports.updateProfile = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      { user: result },
-      "Profile updated successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Profile updated successfully",
+      data: { user: result }
+    });
   } catch (error) {
     next(error);
   }
@@ -191,7 +181,12 @@ exports.changePassword = async (req, res, next) => {
       req,
     });
 
-    return sendSuccess(res, req, {}, "Password changed successfully");
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Password changed successfully",
+      data: {}
+    });
   } catch (error) {
     next(error);
   }
@@ -206,7 +201,12 @@ exports.updatePushToken = async (req, res, next) => {
   try {
     const { token } = req.body;
     await authService.updatePushToken(req.user.id, token);
-    return sendSuccess(res, req, {}, "Push token updated successfully");
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Push token updated successfully",
+      data: {}
+    });
   } catch (error) {
     logger.error("Error updating push token", {
       error: error.message,

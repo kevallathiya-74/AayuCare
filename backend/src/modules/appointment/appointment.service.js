@@ -1,11 +1,6 @@
 const userRepository = require("../auth/user.repository");
 const appointmentRepository = require("../appointment/appointment.repository");
 const doctorRepository = require("../doctor/doctor.repository");
-const {
-  createAppointmentWithPayment,
-  cancelAppointmentWithRefund,
-  completeAppointmentWithPayment,
-} = require("../../utils/transaction");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
 
@@ -84,7 +79,7 @@ class AppointmentService {
     }
 
     // Create appointment and payment atomically using transaction
-    const { appointment } = await createAppointmentWithPayment(
+    const { appointment } = await appointmentRepository.createWithPayment(
       {
         appointmentId: `APT-${Date.now()}-${require("crypto").randomBytes(5).toString("hex").toUpperCase()}`,
         patientId,
@@ -406,7 +401,7 @@ class AppointmentService {
     // Use transaction for "completed" status to atomically mark payment as completed
     if (status === "completed") {
       const { appointment: updatedAppointment } =
-        await completeAppointmentWithPayment(
+        await appointmentRepository.completeWithPayment(
           appointmentId,
           null, // notes can be updated separately
         );
@@ -472,7 +467,7 @@ class AppointmentService {
 
     // Use transaction to atomically cancel appointment and refund payment
     const { appointment: updatedAppointment } =
-      await cancelAppointmentWithRefund(appointmentId, userId, cancelReason);
+      await appointmentRepository.cancelWithRefund(appointmentId, userId, cancelReason);
 
     logger.info(
       `Appointment ${appointmentId} cancelled by ${userRole}: ${userId} - refund processed`,

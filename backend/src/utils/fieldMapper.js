@@ -81,6 +81,32 @@ const mapAppointmentData = (dbAppointment) => {
 };
 
 /**
+ * Map payment data from database to API response format
+ * @param {Object} dbPayment - Payment data from database (snake_case)
+ * @returns {Object} Mapped payment data (camelCase)
+ */
+const mapPaymentData = (dbPayment) => {
+  if (!dbPayment) return null;
+
+  return {
+    id: dbPayment.id,
+    paymentId: dbPayment.payment_id,
+    appointmentId: dbPayment.appointment_id,
+    patientId: dbPayment.patient_id,
+    doctorId: dbPayment.doctor_id,
+    amount: dbPayment.amount,
+    currency: dbPayment.currency || "INR",
+    paymentMethod: dbPayment.payment_method,
+    status: dbPayment.status,
+    refundAmount: dbPayment.refund_amount,
+    paidAt: dbPayment.paid_at,
+    refundedAt: dbPayment.refunded_at,
+    createdAt: dbPayment.created_at,
+    updatedAt: dbPayment.updated_at,
+  };
+};
+
+/**
  * Map prescription data from database to API response format
  * @param {Object} dbPrescription - Prescription data from database
  * @returns {Object} Mapped prescription data (camelCase)
@@ -99,8 +125,6 @@ const mapPrescriptionData = (dbPrescription) => {
   }
 
   return {
-    // NOTE: `_id` MongoDB-shape residue was removed on 2026-06-30.
-    // PostgreSQL exposes a UUID `id` via the `prescriptions.id` column.
     id: dbPrescription.id,
     prescriptionId:
       dbPrescription.prescription_id || dbPrescription.prescriptionId,
@@ -138,25 +162,24 @@ const mapMedicalRecordData = (dbRecord) => {
   if (!dbRecord) return null;
 
   return {
-    // NOTE: `_id` MongoDB-shape residue was removed on 2026-06-30.
-    // PostgreSQL exposes a UUID `id` via the `medical_records.id` column.
-    patientId: dbRecord.patientId,
-    doctorId: dbRecord.doctorId,
-    hospitalId: dbRecord.hospitalId,
-    recordType: dbRecord.recordType,
+    id: dbRecord.id,
+    patientId: dbRecord.patient_id || dbRecord.patientId,
+    doctorId: dbRecord.doctor_id || dbRecord.doctorId,
+    hospitalId: dbRecord.hospital_id || dbRecord.hospitalId,
+    recordType: dbRecord.record_type || dbRecord.recordType,
     title: dbRecord.title,
-    date: dbRecord.date || dbRecord.createdAt,
+    date: dbRecord.date || dbRecord.created_at || dbRecord.createdAt,
     diagnosis: dbRecord.diagnosis,
     symptoms: dbRecord.symptoms || [],
-    labResults: dbRecord.labResults || [],
+    labResults: dbRecord.lab_results || dbRecord.labResults || [],
     medications: dbRecord.medications || [],
     description: dbRecord.description || null,
     files: dbRecord.files || [],
-    aiAnalysis: dbRecord.aiAnalysis || null,
-    isShared: dbRecord.isShared || false,
-    sharedWith: dbRecord.sharedWith || [],
-    createdAt: dbRecord.createdAt,
-    updatedAt: dbRecord.updatedAt,
+    aiAnalysis: dbRecord.ai_analysis || dbRecord.aiAnalysis || null,
+    isShared: dbRecord.is_shared !== undefined ? dbRecord.is_shared : (dbRecord.isShared || false),
+    sharedWith: dbRecord.shared_with || dbRecord.sharedWith || [],
+    createdAt: dbRecord.created_at || dbRecord.createdAt,
+    updatedAt: dbRecord.updated_at || dbRecord.updatedAt,
   };
 };
 
@@ -174,6 +197,7 @@ const mapArray = (data, mapperFunc) => {
 module.exports = {
   mapPatientData,
   mapAppointmentData,
+  mapPaymentData,
   mapPrescriptionData,
   mapMedicalRecordData,
   mapArray,
