@@ -175,16 +175,6 @@ export const isToday = (date) => {
  * @param {string|Date} date - Date to check
  * @returns {boolean} - True if date is in the past
  */
-export const isPast = (date) => {
-  if (!date) return false;
-
-  try {
-    const d = new Date(date);
-    return d < new Date();
-  } catch {
-    return false;
-  }
-};
 
 /**
  * Format medical history date-range

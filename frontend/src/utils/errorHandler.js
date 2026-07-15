@@ -12,7 +12,7 @@ import { captureException } from "../config/sentry";
 /**
  * Error types for categorization
  */
-export const ERROR_TYPES = {
+const ERROR_TYPES = {
   NETWORK: "NETWORK",
   AUTHENTICATION: "AUTHENTICATION",
   VALIDATION: "VALIDATION",
@@ -26,7 +26,7 @@ export const ERROR_TYPES = {
 /**
  * User-friendly error messages
  */
-export const ERROR_MESSAGES = {
+const ERROR_MESSAGES = {
   NETWORK: "Network error. Please check your internet connection.",
   AUTHENTICATION: "Authentication failed. Please login again.",
   VALIDATION: "Please check your input and try again.",
@@ -192,7 +192,7 @@ export const parseError = (error) => {
 /**
  * Alias for parseError to fulfill requirements
  */
-export const getHumanReadableError = parseError;
+const getHumanReadableError = parseError;
 
 let activeDialogTrigger = null;
 
@@ -433,7 +433,7 @@ export const validatePhone = (phone) => {
  * @param {Function} setError - Error state setter (optional)
  * @param {string} errorContext - Context for error logging
  */
-export const handleAsync = async (
+const handleAsync = async (
   asyncFn,
   setLoading,
   setError = null,
@@ -454,7 +454,7 @@ export const handleAsync = async (
   }
 };
 
-export const toSafeError = (error) => {
+const toSafeError = (error) => {
   return new Error(parseError(error));
 };
 

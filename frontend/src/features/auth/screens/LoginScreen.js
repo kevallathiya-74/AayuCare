@@ -12,6 +12,7 @@ import React, {
   useMemo,
   memo,
 } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -41,18 +42,16 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
-import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { loginUser } from "@/store/slices/authSlice";
 import { Input, Button } from "@/components/common";
 
 const LoginScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
-  const { isLoading } = useSelector((state) => state.auth);
+
+  const { isLoading, loginUser } = useAuth();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
 
@@ -64,8 +63,13 @@ const LoginScreen = ({ navigation }) => {
   const [formError, setFormError] = useState("");
 
   const loginSchema = yup.object({
-    userId: yup.string().trim().required(t("auth.userIdRequired", "User ID is required")),
-    password: yup.string().required(t("auth.passwordRequired", "Password is required")),
+    userId: yup
+      .string()
+      .trim()
+      .required(t("auth.userIdRequired", "User ID is required")),
+    password: yup
+      .string()
+      .required(t("auth.passwordRequired", "Password is required")),
   });
 
   const {
@@ -90,7 +94,7 @@ const LoginScreen = ({ navigation }) => {
         top: Math.max(insets.top + theme.spacing.sm, 16),
       },
     ],
-    [insets.top]
+    [insets.top],
   );
 
   useEffect(() => {
@@ -113,22 +117,39 @@ const LoginScreen = ({ navigation }) => {
     Keyboard.dismiss();
     setFormError("");
     try {
-      await dispatch(loginUser({ userId: data.userId, password: data.password })).unwrap();
+      await loginUser({ userId: data.userId, password: data.password });
     } catch (error) {
       setFormError(
-        error?.message || t("auth.loginError", "Invalid credentials. Please try again.")
+        error?.message ||
+          t("auth.loginError", "Invalid credentials. Please try again."),
       );
       Animated.sequence([
-        Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.95,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   };
 
   const handleLogin = handleSubmit(onSubmit, () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
     ]).start();
   });
 
@@ -213,7 +234,7 @@ const LoginForm = memo(
           }
         }, 150);
       },
-      [scrollViewRef]
+      [scrollViewRef],
     );
 
     return (
@@ -291,7 +312,7 @@ const LoginForm = memo(
             accessible={true}
             accessibilityLabel={t(
               "auth.rolesAvailable",
-              "Roles available: Admin, Doctor, Patient"
+              "Roles available: Admin, Doctor, Patient",
             )}
           >
             {[
@@ -308,8 +329,8 @@ const LoginForm = memo(
                         idx === 0
                           ? healthColors.accent.coral
                           : idx === 1
-                          ? healthColors.secondary.main
-                          : healthColors.primary.main,
+                            ? healthColors.secondary.main
+                            : healthColors.primary.main,
                     },
                   ]}
                 />
@@ -328,7 +349,10 @@ const LoginForm = memo(
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder={t("auth.userIdPlaceholder", "e.g. pat1, doc1, admin@aayucare.com")}
+                  placeholder={t(
+                    "auth.userIdPlaceholder",
+                    "e.g. pat1, doc1, admin@aayucare.com",
+                  )}
                   leftIcon={emailIcon}
                   error={errors.userId?.message}
                   autoCapitalize="none"
@@ -354,7 +378,10 @@ const LoginForm = memo(
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder={t("auth.passwordPlaceholder", "Enter your password")}
+                  placeholder={t(
+                    "auth.passwordPlaceholder",
+                    "Enter your password",
+                  )}
                   leftIcon={lockIcon}
                   secureTextEntry
                   error={errors.password?.message}
@@ -432,13 +459,13 @@ const LoginForm = memo(
           <Text style={styles.footerText}>
             {t(
               "auth.footerCompliance",
-              "End-to-end encrypted · HIPAA Compliant"
+              "End-to-end encrypted · HIPAA Compliant",
             )}
           </Text>
         </View>
       </ScrollView>
     );
-  }
+  },
 );
 
 const styles = StyleSheet.create({

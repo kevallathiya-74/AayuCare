@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -30,7 +31,6 @@ import {
   CreditCard,
   Info,
 } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { getScreenPadding } from "@/utils/responsive";
 import {
@@ -61,7 +61,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   const [selectedPayment, setSelectedPayment] = useState("card");
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
 
   // Get prescription from route params or fetch latest

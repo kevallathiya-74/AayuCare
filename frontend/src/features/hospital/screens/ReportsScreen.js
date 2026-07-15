@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -21,7 +22,6 @@ import {
 import { ChevronRight, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { medicalRecordService } from "@/services";
@@ -42,7 +42,7 @@ import { useTranslation } from 'react-i18next';
 
 const ReportsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const [selectedRecordType, setSelectedRecordType] = useState("all");
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [draftRecordType, setDraftRecordType] = useState("all");

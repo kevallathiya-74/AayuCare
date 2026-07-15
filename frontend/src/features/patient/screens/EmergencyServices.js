@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -35,7 +36,6 @@ import { EmergencyIcon } from "@/components/common/CustomIcons";
 import NetworkStatusIndicator from "@/components/common/NetworkStatusIndicator";
 import ErrorRecovery from "@/components/common/ErrorRecovery";
 import { showError, logError, parseError } from "@/utils/errorHandler";
-import { useSelector } from "react-redux";
 import { handleSmartBack } from "@/utils/navigation";
 import { Card } from "@/components/common";
 import { useTranslation } from 'react-i18next';
@@ -72,7 +72,7 @@ const EmergencyServices = ({ navigation }) => {
   const [error, setError] = useState(null);
 
   const insets = useSafeAreaInsets();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   // Build hospitals list: user's own hospital first, then generic placeholders
   const nearbyHospitals = [
     ...(user?.hospitalName

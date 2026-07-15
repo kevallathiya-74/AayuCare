@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -27,7 +28,6 @@ import {
   XCircle,
   ArrowLeft,
 } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors, textStyles } from "@/theme";
@@ -100,7 +100,7 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
 const MyAppointmentsScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const [selectedTab, setSelectedTab] = useState("upcoming");
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 

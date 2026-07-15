@@ -255,7 +255,7 @@ export const ToastProvider = ({ children }) => {
  * Hook to access the toast system.
  * @returns {{ showToast: (message: string, type?: string, duration?: number) => void }}
  */
-export const useToast = () => {
+const useToast = () => {
   const ctx = useContext(ToastContext);
   if (!ctx) {
     if (__DEV__) {

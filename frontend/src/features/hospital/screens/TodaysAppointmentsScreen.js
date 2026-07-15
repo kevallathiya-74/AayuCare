@@ -626,6 +626,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
       navigation,
       normalizeStatus,
       updatingAppointmentId,
+      t,
     ]
   );
 

@@ -108,21 +108,6 @@ export const setItem = async (key, value) => {
 /**
  * Set item in storage synchronously
  */
-export const setItemSync = (key, value) => {
-  try {
-    if (isWeb) {
-      setWebItem(key, value);
-      return;
-    }
-    SecureStore.setItem(key, value);
-  } catch (error) {
-    if (__DEV__) {
-      console.error(`[appStorage] setItemSync error for key "${key}":`, error);
-    }
-    throw error;
-  }
-};
-
 /**
  * Remove item from storage
  * @param {string} key - Storage key
@@ -146,24 +131,6 @@ export const deleteItem = async (key) => {
 /**
  * Remove item from storage synchronously
  */
-export const deleteItemSync = (key) => {
-  try {
-    if (isWeb) {
-      removeWebItem(key);
-      return;
-    }
-    SecureStore.deleteItem(key);
-  } catch (error) {
-    if (__DEV__) {
-      console.error(
-        `[appStorage] deleteItemSync error for key "${key}":`,
-        error
-      );
-    }
-    throw error;
-  }
-};
-
 /**
  * Remove item from storage (alias)
  * @param {string} key - Storage key
@@ -213,22 +180,6 @@ export const clear = async () => {
   }
 };
 
-/**
- * Get all keys in storage
- * NOTE: SecureStore does NOT support getAllKeys.
- * @returns {Promise<string[]>}
- */
-export const getAllKeys = async () => {
-  if (isWeb && canUseLocalStorage()) {
-    return Object.keys(window.localStorage);
-  }
-
-  if (__DEV__) {
-    console.warn("[appStorage] getAllKeys is not supported by SecureStore.");
-  }
-  return [];
-};
-
 // Default export as single object
 const appStorage = {
   getItem,
@@ -236,10 +187,7 @@ const appStorage = {
   deleteItem,
   removeItem,
   clear,
-  getAllKeys,
   getItemSync,
-  setItemSync,
-  deleteItemSync,
-};
+  };
 
 export default appStorage;

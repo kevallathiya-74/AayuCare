@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -33,7 +34,6 @@ import {
   Folder,
   User,
 } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -58,7 +58,7 @@ const MyReportsScreen = ({ navigation }) => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [filterType, setFilterType] = useState(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
 
   const insets = useSafeAreaInsets();
 

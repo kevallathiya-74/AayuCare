@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from "react";
-import { useSelector } from "react-redux";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -55,7 +55,7 @@ const PAGE_SIZE = 15;
 
 const HospitalEventsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const queryClient = useQueryClient();
   const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
   const [registeringId, setRegisteringId] = useState(null);

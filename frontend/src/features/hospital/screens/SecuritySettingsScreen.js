@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -29,24 +30,23 @@ import {
   LogOut,
   X,
 } from "lucide-react-native";
-import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { showError, logError, parseError } from "@/utils/errorHandler";
 import { formatDate } from "@/utils/helpers";
 import adminService from "@/services/admin.service";
-import { logoutUser } from "@/store/slices/authSlice";
+
 import { SkeletonCardRow, Input } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 const SecuritySettingsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
-  const dispatch = useDispatch();
+  const { user, logout } = useAuth();
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -89,7 +89,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
 
   const forceLogoutToLogin = async () => {
     try {
-      await dispatch(logoutUser()).unwrap();
+      logout();
     } catch (logoutError) {
       logError(logoutError, {
         context: "SecuritySettingsScreen.forceLogoutToLogin",
@@ -168,7 +168,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     text: "OK",
                     onPress: forceLogoutToLogin,
                   },
-                ]
+                ],
               );
               closePasswordModal();
             } catch (error) {
@@ -182,7 +182,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -207,7 +207,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     text: "OK",
                     onPress: forceLogoutToLogin,
                   },
-                ]
+                ],
               );
             } catch (error) {
               showError("Failed to logout from all devices");
@@ -219,7 +219,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -257,7 +257,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
               color={healthColors.text.primary}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('security_settings')}</Text>
+          <Text style={styles.headerTitle}>{t("security_settings")}</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.skeletonContainer}>
@@ -283,7 +283,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('security_settings')}</Text>
+        <Text style={styles.headerTitle}>{t("security_settings")}</Text>
         <TouchableOpacity
           style={styles.backButton}
           onPress={onRefresh}
@@ -313,7 +313,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
       >
         {/* Account Security Status */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('account_security')}</Text>
+          <Text style={styles.sectionTitle}>{t("account_security")}</Text>
           <View style={styles.statusCard}>
             <View style={styles.statusHeader}>
               <View
@@ -322,7 +322,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   {
                     backgroundColor: theme.withOpacity(
                       healthColors.success.main,
-                      0.08
+                      0.08,
                     ),
                   },
                 ]}
@@ -330,7 +330,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 <ShieldCheck size={32} color={healthColors.success.main} />
               </View>
               <View style={styles.statusContent}>
-                <Text style={styles.statusTitle}>{t('account_status')}</Text>
+                <Text style={styles.statusTitle}>{t("account_status")}</Text>
                 <Text style={styles.statusSubtitle}>
                   {securityData?.user?.isVerified
                     ? "Verified Account"
@@ -341,21 +341,21 @@ const SecuritySettingsScreen = ({ navigation }) => {
             <View style={styles.statusDetails}>
               <View style={styles.statusRow}>
                 <Clock size={18} color={healthColors.text.secondary} />
-                <Text style={styles.statusLabel}>{t('last_login')}</Text>
+                <Text style={styles.statusLabel}>{t("last_login")}</Text>
                 <Text style={styles.statusValue}>
                   {securityData?.lastActivity}
                 </Text>
               </View>
               <View style={styles.statusRow}>
                 <Calendar size={18} color={healthColors.text.secondary} />
-                <Text style={styles.statusLabel}>{t('account_created')}</Text>
+                <Text style={styles.statusLabel}>{t("account_created")}</Text>
                 <Text style={styles.statusValue}>
                   {formatDate(securityData?.user?.accountCreated)}
                 </Text>
               </View>
               <View style={styles.statusRow}>
                 <Lock size={18} color={healthColors.text.secondary} />
-                <Text style={styles.statusLabel}>{t('password_updated')}</Text>
+                <Text style={styles.statusLabel}>{t("password_updated")}</Text>
                 <Text style={styles.statusValue}>
                   {securityData?.user?.lastPasswordChange
                     ? formatDate(securityData.user.lastPasswordChange)
@@ -364,7 +364,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
               </View>
               <View style={styles.statusRow}>
                 <Smartphone size={18} color={healthColors.text.secondary} />
-                <Text style={styles.statusLabel}>{t('my_active_sessions')}</Text>
+                <Text style={styles.statusLabel}>
+                  {t("my_active_sessions")}
+                </Text>
                 <Text style={styles.statusValue}>
                   {securityData?.user?.myActiveSessions ?? 0}
                 </Text>
@@ -375,38 +377,40 @@ const SecuritySettingsScreen = ({ navigation }) => {
 
         {/* Statistics */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('security_statistics')}tics</Text>
+          <Text style={styles.sectionTitle}>
+            {t("security_statistics")}tics
+          </Text>
           <View style={styles.statsGrid}>
             {renderStatCard(
               "Active Sessions",
               securityData?.statistics?.activeSessions || 0,
               "people",
-              healthColors.success.main
+              healthColors.success.main,
             )}
             {renderStatCard(
               "Recent Logins",
               securityData?.statistics?.recentLogins || 0,
               "log-in",
-              healthColors.info.main
+              healthColors.info.main,
             )}
             {renderStatCard(
               "Verified Users",
               securityData?.statistics?.verifiedUsers || 0,
               "checkmark-circle",
-              healthColors.primary.main
+              healthColors.primary.main,
             )}
             {renderStatCard(
               "Active Users (7d)",
               securityData?.statistics?.activeUsers7d || 0,
               "pulse",
-              healthColors.warning.main
+              healthColors.warning.main,
             )}
           </View>
         </View>
 
         {/* Security Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('security_actions')}</Text>
+          <Text style={styles.sectionTitle}>{t("security_actions")}</Text>
 
           {/* Change Password */}
           <TouchableOpacity
@@ -421,7 +425,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 {
                   backgroundColor: theme.withOpacity(
                     healthColors.primary.main,
-                    0.08
+                    0.08,
                   ),
                 },
               ]}
@@ -429,9 +433,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <Lock size={24} color={healthColors.primary.main} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>{t('change_password')}</Text>
+              <Text style={styles.actionTitle}>{t("change_password")}</Text>
               <Text style={styles.actionSubtitle}>
-                {t('update_your_account_password')}ate your account password
+                {t("update_your_account_password")}ate your account password
               </Text>
             </View>
             <ChevronRight size={24} color={healthColors.text.tertiary} />
@@ -451,7 +455,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                 {
                   backgroundColor: theme.withOpacity(
                     healthColors.error.main,
-                    0.08
+                    0.08,
                   ),
                 },
               ]}
@@ -459,8 +463,10 @@ const SecuritySettingsScreen = ({ navigation }) => {
               <LogOut size={24} color={healthColors.error.main} />
             </View>
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>{t('logout_all_devices')}</Text>
-              <Text style={styles.actionSubtitle}>{t('end_all_active_sessions')}essions</Text>
+              <Text style={styles.actionTitle}>{t("logout_all_devices")}</Text>
+              <Text style={styles.actionSubtitle}>
+                {t("end_all_active_sessions")}essions
+              </Text>
             </View>
             {actionLoading ? (
               <ActivityIndicator size="small" color={healthColors.error.main} />
@@ -481,7 +487,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t('change_password')}</Text>
+                <Text style={styles.modalTitle}>{t("change_password")}</Text>
                 <TouchableOpacity
                   onPress={closePasswordModal}
                   accessibilityRole="button"
@@ -511,7 +517,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   }
                 }}
                 secureTextEntry
-                placeholder={t('enter_current_password')}
+                placeholder={t("enter_current_password")}
                 error={passwordErrors.currentPassword}
               />
 
@@ -526,7 +532,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   }
                 }}
                 secureTextEntry
-                placeholder={t('enter_new_password')}
+                placeholder={t("enter_new_password")}
                 error={passwordErrors.newPassword}
               />
 
@@ -544,7 +550,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   }
                 }}
                 secureTextEntry
-                placeholder={t('confirm_new_password')}
+                placeholder={t("confirm_new_password")}
                 error={passwordErrors.confirmPassword}
               />
               {!!confirmPassword && (
@@ -566,7 +572,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
 
               <View style={styles.passwordRulesContainer}>
                 <Text style={styles.passwordRulesTitle}>
-                  {t('password_must_include')}
+                  {t("password_must_include")}
                 </Text>
                 <Text
                   style={[
@@ -578,7 +584,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  {t('at_least_8_characters')}t 8 characters
+                  {t("at_least_8_characters")}t 8 characters
                 </Text>
                 <Text
                   style={[
@@ -590,7 +596,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  {t('one_uppercase_letter')}case letter
+                  {t("one_uppercase_letter")}case letter
                 </Text>
                 <Text
                   style={[
@@ -602,7 +608,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  {t('one_lowercase_letter')}case letter
+                  {t("one_lowercase_letter")}case letter
                 </Text>
                 <Text
                   style={[
@@ -614,7 +620,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                     },
                   ]}
                 >
-                  {t('one_number')}
+                  {t("one_number")}
                 </Text>
               </View>
 
@@ -625,7 +631,7 @@ const SecuritySettingsScreen = ({ navigation }) => {
                   accessibilityRole="button"
                   accessibilityLabel="Cancel password change"
                 >
-                  <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+                  <Text style={styles.cancelButtonText}>{t("cancel")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -644,7 +650,9 @@ const SecuritySettingsScreen = ({ navigation }) => {
                       color={theme.colors.white}
                     />
                   ) : (
-                    <Text style={styles.submitButtonText}>{t('change_password')}</Text>
+                    <Text style={styles.submitButtonText}>
+                      {t("change_password")}
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>

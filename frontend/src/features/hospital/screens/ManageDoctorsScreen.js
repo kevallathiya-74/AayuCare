@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * Manage Doctors Screen
  * Admin interface to manage doctor accounts
  */
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/reactQueryConfig";
 import {
@@ -21,7 +23,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
-import { useSelector } from "react-redux";
 import {
   User,
   Mail,
@@ -46,7 +47,7 @@ const PAGE_SIZE = 10;
 
 const ManageDoctorsScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
   const isSuperAdmin = normalizedUserRole === "super_admin";
@@ -68,6 +69,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       setDebouncedSearch(searchQuery.trim());
     }, 500);
     return () => clearTimeout(delaySearch);
+  
   }, [searchQuery]);
 
   const {
@@ -145,12 +147,14 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
   const onRefresh = useCallback(() => {
     refetch();
+  
   }, [refetch]);
 
   const onLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
+  
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleToggleStatus = useCallback(
@@ -219,14 +223,17 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
   const handleEditDoctor = useCallback((doctor) => {
     setSelectedDoctor(doctor);
     setShowEditModal(true);
-  }, []);
+  
+  }, []);  
 
   const handleEditSuccess = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
+  
   }, [queryClient]);
 
   const handleAddSuccess = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.doctors.all });
+  
   }, [queryClient]);
 
   const handleSoftDeleteDoctor = useCallback(
@@ -394,7 +401,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
         name: route?.params?.doctorName || "",
       }
     );
-  }, [doctorIdFromRoute, doctorPayloadFromRoute, doctors, navigation]); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  }, [doctorIdFromRoute, doctorPayloadFromRoute, doctors, navigation]);  
 
   const renderDoctor = useCallback(
     ({ item }) => (

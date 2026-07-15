@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   KeyboardAvoidingView,
   ScrollView,
@@ -10,7 +11,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
-import { useDispatch, useSelector } from "react-redux";
 import { useMutation } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
@@ -21,12 +21,11 @@ import { Input, Button } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
 import { getKeyboardConfig } from "@/utils/responsive";
 import { useTranslation } from 'react-i18next';
-import * as yup from "yup";
 
 const ChangePasswordScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  
+  const { user } = useAuth((state) => state.auth);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -90,7 +89,7 @@ const ChangePasswordScreen = ({ navigation }) => {
         currentPassword,
         newPassword,
       });
-      await dispatch(logoutUser()).unwrap();
+      await console.warn(logoutUser()).unwrap();
       navigation.reset({ index: 0, routes: [{ name: Routes.AUTH.LOGIN }] });
     } catch (error) {
       const message = parseError(error);

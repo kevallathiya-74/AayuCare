@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -21,7 +22,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Trash2, ArrowLeft, CheckCheck } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import {
   useInfiniteQuery,
   useQuery,
@@ -47,8 +47,8 @@ const PAGE_SIZE = 20;
 
 const NotificationsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
-  const notificationPermission = useSelector(
+  const { user } = useAuth();
+  const notificationPermission = useAuth(
     (state) => state.permissions?.notification || {}
   );
   const isAdminUser = user?.role === "admin" || user?.role === "super_admin";

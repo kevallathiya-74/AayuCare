@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -43,7 +44,6 @@ import {
   getSafeAreaEdges,
   getKeyboardConfig,
 } from "@/utils/responsive";
-import { useSelector } from "react-redux";
 import { SkeletonCardRow, EmptyState } from "@/components/common";
 import { Input, Button, Card } from "@/components/common";
 import { showError, logError, parseError } from "@/utils/errorHandler";
@@ -110,7 +110,7 @@ const getDoctorExperienceText = (doctor) => {
 const AppointmentBookingScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
   // Get authenticated user for hospitalId
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const params = route?.params || {};
   const rescheduleId = params.rescheduleId;
 
@@ -165,7 +165,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       });
       return mapDoctorsResponse(response);
     },
-    enabled: isConnected && user?.role === "patient",
+    enabled: isConnected && user?.role === "patient" && !!user?.hospitalId,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
@@ -183,7 +183,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
         });
         return mapDoctorsResponse(response);
       },
-      enabled: isConnected && user?.role === "patient",
+      enabled: isConnected && user?.role === "patient" && !!user?.hospitalId,
       staleTime: 2 * 60 * 1000,
       retry: 1,
     });
@@ -274,7 +274,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       return Array.isArray(apiSlots) ? apiSlots : [];
     },
     enabled:
-      !!selectedDoctorId && !!date && isConnected && user?.role === "patient",
+      !!selectedDoctorId && !!date && isConnected && user?.role === "patient" && !!user?.hospitalId,
     staleTime: 60 * 1000,
     retry: 1,
   });
@@ -374,6 +374,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       return;
     }
 
+    if (!user?.hospitalId) {
+      Alert.alert("Missing Information", "User hospital ID is required.");
+      return;
+    }
+
     if (reason.trim().length < 10) {
       Alert.alert(
         "Too Short",
@@ -420,7 +425,7 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
       appointmentTime: time24Hour,
       type: appointmentTypeMap[appointmentType] || "clinic_visit",
       chiefComplaint: reason.trim(),
-      hospitalId: user?.hospitalId || "MAIN",
+      hospitalId: user?.hospitalId,
     };
 
     await createAppointmentMutation.mutateAsync(appointmentData);

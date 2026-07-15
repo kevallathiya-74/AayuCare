@@ -25,7 +25,7 @@ const normalizedBaseUrl = String(APP_CONFIG?.api?.baseURL ?? "")
   .replace(/\/+$/, "");
 if (!normalizedBaseUrl) {
   throw new Error(
-    "CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL."
+    "CRITICAL: No API base URL configured. Set EXPO_PUBLIC_API_BASE_URL.",
   );
 }
 const apiBaseV1 = normalizedBaseUrl.endsWith("/v1")
@@ -133,11 +133,6 @@ const resetAuthExpiryFlag = () => {
   isHandlingAuthExpiry = false;
 };
 
-export const resetApiState = () => {
-  getResponseCache.clear();
-  inFlightGetRequests.clear();
-  isHandlingAuthExpiry = false;
-};
 
 const ENDPOINT_ROLE_RULES = [
   {
@@ -165,7 +160,7 @@ const normalizeRequestPath = (url = "") => {
       const parsed = new URL(raw);
       const normalizedAbsolutePath = `/${String(parsed.pathname || "").replace(
         /^\/+/,
-        ""
+        "",
       )}`;
       return normalizedAbsolutePath.replace(/^\/api\/v1/i, "") || "/";
     }
@@ -188,7 +183,7 @@ const normalizeRequestPath = (url = "") => {
 
 const getAllowedRolesForPath = (path = "") => {
   const matchedRule = ENDPOINT_ROLE_RULES.find((rule) =>
-    rule.pattern.test(path)
+    rule.pattern.test(path),
   );
   return matchedRule?.allowedRoles || null;
 };
@@ -196,7 +191,7 @@ const getAllowedRolesForPath = (path = "") => {
 const createRoleAccessError = ({ path, role, allowedRoles }) => {
   const safeRole = role || "unknown";
   const error = new Error(
-    `Access denied: role ${safeRole} cannot call ${path}.`
+    `Access denied: role ${safeRole} cannot call ${path}.`,
   );
   error.code = "ROLE_ACCESS_DENIED";
   error.status = 403;
@@ -209,7 +204,7 @@ if (__DEV__) {
   console.warn("[API] API Base URL:", apiBaseV1);
   console.warn(
     "[API] Environment:",
-    APP_CONFIG.env.isDevelopment ? "Development" : "Production"
+    APP_CONFIG.env.isDevelopment ? "Development" : "Production",
   );
   console.warn("[API] Expo Go:", APP_CONFIG.env.isExpoGo);
 }
@@ -220,7 +215,7 @@ api.interceptors.request.use(
     try {
       const requestPath = normalizeRequestPath(config?.url);
       const allowedRoles = getAllowedRolesForPath(requestPath);
-      const role = getCurrentUserRole();
+      const role = await getCurrentUserRole();
 
       if (
         config?.skipRoleGuard !== true &&
@@ -230,11 +225,11 @@ api.interceptors.request.use(
       ) {
         if (__DEV__) {
           console.warn(
-            `[API] Blocked disallowed role endpoint call: role=${role} path=${requestPath}`
+            `[API] Blocked disallowed role endpoint call: role=${role} path=${requestPath}`,
           );
         }
         return Promise.reject(
-          createRoleAccessError({ path: requestPath, role, allowedRoles })
+          createRoleAccessError({ path: requestPath, role, allowedRoles }),
         );
       }
 
@@ -271,7 +266,7 @@ api.interceptors.request.use(
       console.error("[ERROR] Request interceptor error:", error);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor - Handle errors
@@ -279,7 +274,7 @@ api.interceptors.response.use(
   (response) => {
     const method = String(response?.config?.method || "").toLowerCase();
     const isMutationMethod = ["post", "put", "patch", "delete"].includes(
-      method
+      method,
     );
 
     // Clear in-memory GET caches after successful writes.
@@ -287,6 +282,11 @@ api.interceptors.response.use(
     if (isMutationMethod && response?.config?.skipCacheInvalidation !== true) {
       getResponseCache.clear();
       inFlightGetRequests.clear();
+    }
+
+    // Normalize response shape
+    if (response?.data?.data !== undefined && response?.data?.success) {
+      response.data = response.data.data;
     }
 
     return response;
@@ -326,20 +326,6 @@ api.interceptors.response.use(
         await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
         await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
 
-        // Dispatch logout to Redux so UI state is also cleared
-        try {
-          const store = require("../store/store").default;
-          const { logoutUser } = require("../store/slices/authSlice");
-          store.dispatch(logoutUser({ silent: true }));
-        } catch (storeErr) {
-          if (__DEV__) {
-            console.warn(
-              "[API] Could not dispatch logoutUser to Redux store:",
-              storeErr
-            );
-          }
-        }
-
         const authError = new Error("Session expired. Please login again.");
         authError.code = "AUTH_EXPIRED";
         return Promise.reject(authError);
@@ -351,13 +337,13 @@ api.interceptors.response.use(
     // Handle network errors
     if (!error.response) {
       const networkError = new Error(
-        "Unable to connect to server. Please check your internet connection and try again."
+        "Unable to connect to server. Please check your internet connection and try again.",
       );
       if (__DEV__) {
         console.warn("[NETWORK] Network Error");
         console.warn(
           "[INFO] Attempted URL:",
-          error.config?.baseURL + error.config?.url
+          error.config?.baseURL + error.config?.url,
         );
         console.warn("[INFO] API Base URL:", APP_CONFIG.api.baseURL);
       }
@@ -370,7 +356,7 @@ api.interceptors.response.use(
       if (error.response?.data?.message) {
         console.warn(
           "[ERROR] Raw server message:",
-          error.response.data.message
+          error.response.data.message,
         );
       }
     }
@@ -379,7 +365,7 @@ api.interceptors.response.use(
     safeError.code = error.response?.data?.code || error.code;
     safeError.status = error.response?.status;
     return Promise.reject(safeError);
-  }
+  },
 );
 
 // Test API connectivity (useful for debugging)

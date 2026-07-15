@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -21,7 +22,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Cross, ChevronRight, ArrowLeft, X } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import {
@@ -44,7 +44,7 @@ const PAGE_SIZE = 20;
 const MyPrescriptionsScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const [selectedPrescription, setSelectedPrescription] = useState(null);
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
 
   const {

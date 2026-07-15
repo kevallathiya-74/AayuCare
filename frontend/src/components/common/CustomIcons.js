@@ -11,7 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "@/theme";
 
 // Animated Icon with Background
-export const IconWithBackground = ({
+const IconWithBackground = ({
   name,
   size = 24,
   color = healthColors.primary.main,
@@ -69,108 +69,7 @@ export const EmergencyIcon = (props) => (
   />
 );
 
-export const PrescriptionIcon = (props) => (
-  <IconWithBackground
-    name="document-text"
-    gradient
-    gradientColors={[healthColors.secondary.main, healthColors.secondary.dark]}
-    {...props}
-  />
-);
-
-export const AppointmentIcon = (props) => (
-  <IconWithBackground
-    name="calendar"
-    gradient
-    gradientColors={[healthColors.primary.main, healthColors.primary.dark]}
-    {...props}
-  />
-);
-
-export const HealthMetricsIcon = (props) => (
-  <IconWithBackground
-    name="fitness"
-    gradient
-    gradientColors={[healthColors.health.heartRate, healthColors.error.main]}
-    {...props}
-  />
-);
-
-export const PharmacyIcon = (props) => (
-  <IconWithBackground
-    name="medkit"
-    gradient
-    gradientColors={[healthColors.success.main, healthColors.success.dark]}
-    {...props}
-  />
-);
-
-export const ActivityIcon = (props) => (
-  <IconWithBackground
-    name="walk"
-    gradient
-    gradientColors={[healthColors.health.steps, healthColors.secondary.main]}
-    {...props}
-  />
-);
-
-export const DiseaseLibraryIcon = (props) => (
-  <IconWithBackground
-    name="book"
-    gradient
-    gradientColors={[healthColors.info.main, healthColors.primary.main]}
-    {...props}
-  />
-);
-
-export const VoiceIcon = (props) => (
-  <IconWithBackground
-    name="mic"
-    gradient
-    gradientColors={[healthColors.secondary.main, healthColors.secondary.dark]}
-    {...props}
-  />
-);
-
-export const LanguageIcon = (props) => (
-  <IconWithBackground
-    name="language"
-    gradient
-    gradientColors={[healthColors.primary.main, healthColors.info.main]}
-    {...props}
-  />
-);
-
-export const EventsIcon = (props) => (
-  <IconWithBackground
-    name="calendar-outline"
-    gradient
-    gradientColors={[healthColors.hospital.teal, healthColors.info.main]}
-    {...props}
-  />
-);
-
-export const BadgeIcon = (props) => (
-  <IconWithBackground
-    name="ribbon"
-    gradient
-    gradientColors={[healthColors.warning.main, healthColors.warning.dark]}
-    {...props}
-  />
-);
-
 export default {
-  IconWithBackground,
-  AIIcon,
+    AIIcon,
   EmergencyIcon,
-  PrescriptionIcon,
-  AppointmentIcon,
-  HealthMetricsIcon,
-  PharmacyIcon,
-  ActivityIcon,
-  DiseaseLibraryIcon,
-  VoiceIcon,
-  LanguageIcon,
-  EventsIcon,
-  BadgeIcon,
 };

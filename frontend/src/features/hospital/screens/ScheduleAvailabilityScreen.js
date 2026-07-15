@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -28,7 +29,6 @@ import {
   PlusCircle,
 } from "lucide-react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import doctorService from "@/features/hospital/api/doctor.service";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { theme, healthColors } from "@/theme";
@@ -40,7 +40,7 @@ import { useTranslation } from 'react-i18next';
 
 const ScheduleAvailabilityScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedDay, setSelectedDay] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);

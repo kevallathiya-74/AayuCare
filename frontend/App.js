@@ -4,8 +4,15 @@ import { useFonts } from "./src/hooks/useFonts";
 import { AuthProvider } from "./src/context/AuthContext";
 import { Provider as PaperProvider } from "react-native-paper";
 import { View, StyleSheet, LogBox, AppState, Platform } from "react-native";
-import { focusManager } from "@tanstack/react-query";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryClientProvider } from "@tanstack/react-query";
+import NetInfo from "@react-native-community/netinfo";
+
+
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initializeSentry } from "./src/config/sentry";
 import queryClient from "./src/config/reactQueryConfig";
@@ -98,7 +105,7 @@ try {
   if (!paperTheme.colors.primary) {
     if (__DEV__)
       console.warn(
-        "[App] theme.colors.primary is undefined, applying fallback"
+        "[App] theme.colors.primary is undefined, applying fallback",
       );
     paperTheme.colors.primary = "#00ACC1"; // Primary teal fallback
   }

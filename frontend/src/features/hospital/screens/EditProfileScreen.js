@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   KeyboardAvoidingView,
   View,
@@ -14,14 +15,12 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { ArrowLeft, Edit, User, Cross, Phone, Info } from "lucide-react-native";
-import { useSelector, useDispatch } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { fontFamilies } from "@/theme/typography";
 import { getScreenPadding, getKeyboardConfig } from "@/utils/responsive";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { doctorService, authService } from "@/services";
 import { logError } from "@/utils/errorHandler";
-import { setUser } from "@/store/slices/authSlice";
 import { Input, Button } from "@/components/common";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
@@ -38,8 +37,8 @@ const getInitials = (name) => {
 
 const EditProfileScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
+  const { user, setUser } = useAuth();
+  
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -139,7 +138,7 @@ const EditProfileScreen = ({ navigation }) => {
       if (response.success) {
         const updatedUser = response.data?.user || response.data;
         const newUserState = { ...user, ...updatedUser };
-        dispatch(setUser(newUserState));
+        setUser(newUserState);
         await appStorage.setItem(
           STORAGE_KEYS.USER_DATA,
           JSON.stringify(newUserState)

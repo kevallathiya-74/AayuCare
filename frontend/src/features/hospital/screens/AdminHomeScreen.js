@@ -13,14 +13,14 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
 import { getSafeAreaEdges } from "@/utils/responsive";
-import { logoutUser } from "@/store/slices/authSlice";
+import { useAuth } from "@/context/AuthContext";
 import { showConfirmation, logError } from "@/utils/errorHandler";
 import { queryKeys } from "@/config/reactQueryConfig";
 import adminService from "@/services/admin.service";
@@ -84,14 +84,14 @@ const resolveEntityId = (entity) => {
 
 const AdminHomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user, logout } = useAuth();
   const notificationPermission = useSelector(
     (state) => state.permissions?.notification || {}
   );
   const canUseNotifications =
     !!notificationPermission.granted &&
     !!notificationPermission.notificationsEnabled;
-  const dispatch = useDispatch();
+
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
     useDrawer();
   const { refreshCount } = useAdminAppointments();
@@ -205,12 +205,12 @@ const AdminHomeScreen = ({ navigation }) => {
   const handleLogout = useCallback(() => {
     showConfirmation(
       "Are you sure you want to logout?",
-      () => dispatch(logoutUser()),
+      () => logout(),
       () => {},
       "Logout",
       "log-out-outline"
     );
-  }, [dispatch]);
+  }, [logout]);
 
   // ── Derived data ──
   const greeting = useMemo(() => {

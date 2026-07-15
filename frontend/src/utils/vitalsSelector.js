@@ -99,11 +99,3 @@ export const getGreetingIcon = () => {
 /**
  * Return normal ranges and color indicators for metric types.
  */
-export const getMetricRanges = () => ({
-  bp: { min: 90, max: 140, label: "90-140 systolic" },
-  sugar: { min: 70, max: 140, label: "70-140 mg/dL" },
-
-  temperature: { min: 97, max: 99, label: "97-99 °F" },
-
-  heartRate: { min: 60, max: 100, label: "60-100 bpm" },
-});

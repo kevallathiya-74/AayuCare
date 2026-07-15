@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -28,7 +29,6 @@ import {
   Cross,
   Info,
 } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { getScreenPadding, getKeyboardConfig } from "@/utils/responsive";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,7 +44,7 @@ import { useTranslation } from 'react-i18next';
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({

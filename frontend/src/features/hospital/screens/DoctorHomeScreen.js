@@ -32,12 +32,11 @@ import {
   User,
   Settings,
 } from "lucide-react-native";
-import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { theme, healthColors } from "@/theme";
 import { getScreenPadding } from "@/utils/responsive";
-import { logoutUser } from "@/store/slices/authSlice";
+import { useAuth } from "@/context/AuthContext";
 import { logError, parseError } from "@/utils/errorHandler";
 import { doctorService } from "@/services";
 import { useDoctorAppointments } from "@/context/DoctorAppointmentContext";
@@ -91,8 +90,7 @@ const QUICK_ACTIONS = [
 
 const DoctorHomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
+  const { user, logout } = useAuth();
   const isFocused = useIsFocused();
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
     useDrawer();
@@ -184,7 +182,7 @@ const DoctorHomeScreen = ({ navigation }) => {
   const confirmLogout = async () => {
     setLoggingOut(true);
     try {
-      await dispatch(logoutUser()).unwrap();
+      await logout();
     } catch (err) {
       logError(err, { context: "DoctorHomeScreen.handleLogout" });
     } finally {

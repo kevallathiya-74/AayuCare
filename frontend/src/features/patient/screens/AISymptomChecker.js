@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   ActivityIndicator,
   ScrollView,
@@ -17,7 +18,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -141,7 +141,7 @@ const AISymptomChecker = ({ navigation }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const { isConnected } = useNetworkStatus();
 
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);

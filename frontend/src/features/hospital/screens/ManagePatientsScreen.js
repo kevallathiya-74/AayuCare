@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * Manage Patients Screen
  * Admin screen for CRUD operations on patients
  */
 
 import React, { useState, useCallback, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/reactQueryConfig";
 import {
@@ -20,7 +22,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
-import { useSelector } from "react-redux";
 import {
   User,
   Droplet,
@@ -52,7 +53,7 @@ const PAGE_SIZE = 20;
 
 const ManagePatientsScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
   const isSuperAdmin = normalizedUserRole === "super_admin";
@@ -76,6 +77,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     }, 500);
 
     return () => clearTimeout(delaySearch);
+  
   }, [searchQuery]);
 
   const {
@@ -177,6 +179,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         patientService.getPatientById(id, { useCache: true, cacheTTL: 45000 })
       )
     ).catch(() => {});
+  
   }, [patients, normalizedUserRole]);
 
   useFocusEffect(
@@ -187,12 +190,14 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
   const onRefresh = useCallback(() => {
     refetch();
+  
   }, [refetch]);
 
   const onLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
+  
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleToggleStatus = useCallback(
@@ -261,14 +266,17 @@ const ManagePatientsScreen = ({ navigation, route }) => {
   const handleEditPatient = useCallback((patient) => {
     setSelectedPatient(patient);
     setShowEditModal(true);
-  }, []);
+  
+  }, []);  
 
   const handleEditSuccess = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+  
   }, [queryClient]);
 
   const handleAddSuccess = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.patients.all });
+  
   }, [queryClient]);
 
   const handleSoftDeletePatient = useCallback(
@@ -451,7 +459,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
         name: route?.params?.patientName || "",
       }
     );
-  }, [patientIdFromRoute, patientPayloadFromRoute]); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  }, [patientIdFromRoute, patientPayloadFromRoute]);  
 
   const renderPatient = useCallback(
     ({ item }) => {

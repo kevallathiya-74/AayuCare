@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -26,7 +27,6 @@ const getInitials = (name) => {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
-import { useDispatch, useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import Routes from "@/navigation/routes";
 import { logoutUser } from "@/store/slices/authSlice";
@@ -38,8 +38,8 @@ import { useTranslation } from 'react-i18next';
 
 const AdminSettingsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  
+  const { user } = useAuth((state) => state.auth);
   const [loggingOut, setLoggingOut] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -52,7 +52,7 @@ const AdminSettingsScreen = ({ navigation }) => {
   const confirmLogout = async () => {
     setLoggingOut(true);
     try {
-      await dispatch(logoutUser()).unwrap();
+      await console.warn(logoutUser()).unwrap();
     } catch (err) {
       logError(err, { context: "AdminSettingsScreen.handleLogout" });
       Alert.alert("Error", "Failed to logout. Please try again.");

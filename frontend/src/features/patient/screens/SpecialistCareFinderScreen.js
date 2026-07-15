@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -13,7 +14,6 @@ import {
   StatusBar,
   RefreshControl,
 } from "react-native";
-import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import {
   SafeAreaView,
@@ -127,7 +127,7 @@ const getDoctorAvailabilityText = (doctor) => {
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
   const selectedSpecialty = "All";
   const selectedAvailability = "Today";

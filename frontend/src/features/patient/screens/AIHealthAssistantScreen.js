@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useRef, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -21,7 +22,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { ArrowLeft, Mic, BarChart2, PhoneCall } from "lucide-react-native";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import {
   verticalScale,
@@ -47,7 +47,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const [error, setError] = useState(null);
   const { isConnected } = useNetworkStatus();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([
