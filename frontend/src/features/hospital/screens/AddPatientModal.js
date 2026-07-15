@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -19,7 +20,6 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ChevronDown, X, Check, Calendar, UserPlus } from "lucide-react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import adminService from "@/services/admin.service";
 import { Button, Input } from "@/components/common";
@@ -38,7 +38,7 @@ const GENDERS = ["Male", "Female", "Other"];
 
 const AddPatientModal = ({ visible, onClose, onSuccess }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const queryClient = useQueryClient();
   const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);

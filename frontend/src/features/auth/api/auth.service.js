@@ -23,7 +23,7 @@ const getAuthBaseURL = () => {
 };
 
 // Create and configure the auth client
-export const authClient = createAuthClient({
+const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
   plugins: [
     expoClient({

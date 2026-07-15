@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo, useState, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -17,7 +18,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useDispatch, useSelector } from "react-redux";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -386,8 +386,8 @@ const MetricCard = React.memo(({ config, latestMetric, onAddPress }) => {
 
 const HealthMetricsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  
+  const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
   const { isConnected } = useNetworkStatus();
   const queryClient = useQueryClient();
@@ -458,7 +458,7 @@ const HealthMetricsScreen = ({ navigation }) => {
         }),
       ]);
 
-      dispatch(fetchHealthMetrics(user.id));
+
     },
   });
 
@@ -481,9 +481,9 @@ const HealthMetricsScreen = ({ navigation }) => {
   const handleRefresh = useCallback(() => {
     refetch();
     if (user?.id) {
-      dispatch(fetchHealthMetrics(user.id));
+      console.warn(fetchHealthMetrics(user.id));
     }
-  }, [refetch, dispatch, user?.id]);
+  }, [refetch, user?.id]);
 
   const handleSaveMetric = useCallback(async () => {
     if (!selectedType || !user?.id) {

@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -32,7 +33,6 @@ import {
 } from "@/components/common";
 import { showError, logError } from "@/utils/errorHandler";
 import { useNetworkStatus } from "@/utils/offlineHandler";
-import { useDispatch, useSelector } from "react-redux";
 import { getItem, setItem } from "@/utils/appStorage";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
@@ -50,9 +50,9 @@ const SettingsScreen = ({ navigation }) => {
   const [error, setError] = useState(null);
   useNetworkStatus();
   const insets = useSafeAreaInsets();
-  const dispatch = useDispatch();
-  const userRole = useSelector((state) => state.auth?.user?.role);
-  const notificationPermission = useSelector(
+  
+  const userRole = useAuth((state) => state.auth?.user?.role);
+  const notificationPermission = useAuth(
     (state) => state.permissions?.notification || {}
   );
   const notificationsEnabled =
@@ -124,7 +124,7 @@ const SettingsScreen = ({ navigation }) => {
 
   const handleNotificationToggle = async (value) => {
     try {
-      const result = await dispatch(setNotificationsEnabled(value)).unwrap();
+      const result = await setNotificationsEnabled(value).unwrap();
 
       if (
         value &&

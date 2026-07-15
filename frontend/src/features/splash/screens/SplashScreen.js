@@ -5,8 +5,8 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
-import { useSelector } from "react-redux";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next';
 
 const SplashScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, user, isLoading } = useSelector(
+  const { isAuthenticated, user, isLoading } = useAuth(
     (state) => state.auth || {}
   );
   const routed = useRef(false);

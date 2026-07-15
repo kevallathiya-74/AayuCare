@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { useIsFocused } from "@react-navigation/native";
 import { theme, healthColors } from "@/theme";
-import { logoutUser } from "@/store/slices/authSlice";
+import { useAuth } from "@/context/AuthContext";
 import { getSafeAreaEdges, getScreenPadding } from "@/utils/responsive";
 import { notificationService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -54,6 +54,7 @@ import Routes from "@/navigation/routes";
 const PatientDashboard = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user, isLoading: authLoading } = useSelector((state) => state.auth);
+  const { logout } = useAuth();
   const { vitals: healthMetrics, isLoading: loadingMetrics } = useSelector(
     (state) => state.health
   );
@@ -90,11 +91,16 @@ const PatientDashboard = ({ navigation }) => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([
-      dispatch(fetchHealthMetrics(user?.id)),
-      canUseNotifications ? refetchUnreadNotifications() : Promise.resolve(),
-    ]);
-    setRefreshing(false);
+    try {
+      await Promise.all([
+        dispatch(fetchHealthMetrics(user?.id)),
+        canUseNotifications ? refetchUnreadNotifications() : Promise.resolve(),
+      ]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRefreshing(false);
+    }
   }, [dispatch, refetchUnreadNotifications, user?.id, canUseNotifications]);
 
   // ── Metric helpers ──
@@ -148,8 +154,8 @@ const PatientDashboard = ({ navigation }) => {
   }, []);
 
   const handleLogout = useCallback(async () => {
-    await dispatch(logoutUser());
-  }, [dispatch]);
+    await logout();
+  }, [logout]);
 
   // ── Action cards ──
   const actionCards = useMemo(

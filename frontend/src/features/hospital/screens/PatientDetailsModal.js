@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo, useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -28,7 +29,6 @@ import { calculateAge } from "@/utils/dateHelpers";
 import { SkeletonCardRow, EmptyState } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { useQuery } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { useTranslation } from 'react-i18next';
 
@@ -62,7 +62,7 @@ const PatientDetailsModal = ({
   initialPatient,
 }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   const seededPatientData = useMemo(() => {

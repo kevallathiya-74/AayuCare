@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -18,7 +19,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { ArrowLeft, RefreshCcw } from "lucide-react-native";
 import { useQuery } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import prescriptionService from "@/services/prescription.service";
@@ -97,7 +97,6 @@ const getSearchableText = (item) => {
 };
 
 const StatusChip = ({ label, count, isActive, onPress }) => {
-  const { t } = useTranslation();
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -131,7 +130,6 @@ const StatusChip = ({ label, count, isActive, onPress }) => {
 };
 
 const OrderCard = ({ order }) => {
-  const { t } = useTranslation();
   const status = order.pharmacyStatus || "pending";
   const statusLabel = STATUS_CONFIG[status]?.label || "Pending";
 
@@ -174,7 +172,7 @@ const OrderCard = ({ order }) => {
 
 const PharmacyManagementScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const {

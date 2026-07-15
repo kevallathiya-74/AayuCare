@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * i18n Configuration
  * Multi-language support for English, Hindi, and Gujarati

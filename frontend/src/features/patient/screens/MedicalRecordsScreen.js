@@ -11,6 +11,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -21,7 +22,6 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   FileText,
@@ -265,7 +265,7 @@ const ErrorView = ({ message, onRetry }) => {
 
 const MedicalRecordsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const [activeFilter, setActiveFilter] = useState("all");
   const {
     data,

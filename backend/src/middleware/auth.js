@@ -151,53 +151,8 @@ exports.authorize = exports.restrictTo;
 /**
  * Hospital isolation - ensures data stays within hospital
  */
-exports.hospitalIsolation = (req, res, next) => {
-  if (!req.user) {
-    return next(new AppError("Authentication required", 401));
-  }
 
-  if (req.user.role === "super_admin") {
-    return next();
-  }
 
-  if (!req.user.hospitalId) {
-    return next(new AppError("Hospital association required", 403));
-  }
-
-  if (req.method === "GET") {
-    req.query.hospitalId = req.user.hospitalId;
-  } else {
-    req.body.hospitalId = req.user.hospitalId;
-  }
-
-  next();
-};
-
-/**
- * Verify ownership - user can only access own resources
- */
-exports.verifyOwnership = (field = "userId") => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return next(new AppError("Authentication required", 401));
-    }
-
-    if (["admin", "doctor", "super_admin"].includes(req.user.role)) {
-      return next();
-    }
-
-    const resourceId = req.params[field] || req.body[field];
-    if (resourceId && resourceId !== req.user.userId) {
-      return next(new AppError("Access denied", 403));
-    }
-
-    next();
-  };
-};
-
-/**
- * Optional auth - doesn't fail if no token, supports both cookie and Bearer token
- */
 exports.optionalAuth = async (req, res, next) => {
   try {
     const auth = getAuth();

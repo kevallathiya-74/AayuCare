@@ -1,3 +1,4 @@
+
 /**
  * Consultation Screen
  * Active consultation workspace for doctors.
@@ -193,7 +194,8 @@ const ConsultationScreen = ({ navigation, route }) => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  
+  }, []);  
 
   // ---------------------------------------------------------------------------
   // Back guard — hardware back (Android)
@@ -219,6 +221,7 @@ const ConsultationScreen = ({ navigation, route }) => {
     };
     const sub = BackHandler.addEventListener("hardwareBackPress", handler);
     return () => sub.remove();
+  
   }, [isDirty, navigation]);
 
   // ---------------------------------------------------------------------------
@@ -263,7 +266,8 @@ const ConsultationScreen = ({ navigation, route }) => {
         </View>
       ),
     });
-  }, [navigation, isDirty, elapsed]);
+  
+  }, [navigation, isDirty, elapsed, t]);
 
   // ---------------------------------------------------------------------------
   // Complete consultation
@@ -292,6 +296,7 @@ const ConsultationScreen = ({ navigation, route }) => {
         },
       ]
     );
+  
   }, [appointmentId, vitals, diagnosis, notes, completeConsultationMutation]);
 
   // ---------------------------------------------------------------------------
@@ -302,6 +307,7 @@ const ConsultationScreen = ({ navigation, route }) => {
       patientId: patientShortId || patientUUID,
       appointmentId,
     });
+  
   }, [navigation, patientShortId, patientUUID, appointmentId]);
 
   // ---------------------------------------------------------------------------
@@ -312,6 +318,7 @@ const ConsultationScreen = ({ navigation, route }) => {
       patientId: patientShortId || patientUUID,
       patientName,
     });
+  
   }, [navigation, patientShortId, patientUUID, patientName]);
 
   // ---------------------------------------------------------------------------
@@ -321,7 +328,8 @@ const ConsultationScreen = ({ navigation, route }) => {
     // Allow only digits and single decimal point
     const cleaned = value.replace(/[^0-9.]/g, "");
     setVitals((prev) => ({ ...prev, [key]: cleaned }));
-  }, []);
+  
+  }, []);  
 
   // ---------------------------------------------------------------------------
   // Render

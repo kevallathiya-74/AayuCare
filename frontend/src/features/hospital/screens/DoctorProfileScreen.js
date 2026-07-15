@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -18,7 +19,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CreditCard, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useDispatch, useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors, textStyles, spacing } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -44,8 +44,8 @@ const formatDoctorName = (name) => {
 
 const DoctorProfileScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
+  const { user } = useAuth((state) => state.auth);
+  
   const insets = useSafeAreaInsets();
   const {
     data: stats = { totalPatients: 0, rating: null, yearsExperience: 0 },
@@ -78,7 +78,7 @@ const DoctorProfileScreen = ({ navigation }) => {
       { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
-        onPress: () => dispatch(logoutUser()),
+        onPress: () => console.warn(logoutUser()),
         style: "destructive",
       },
     ]);

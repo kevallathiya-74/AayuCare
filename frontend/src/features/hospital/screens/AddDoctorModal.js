@@ -19,7 +19,6 @@ import { theme, healthColors } from "@/theme";
 import { Button } from "@/components/common";
 import { getKeyboardConfig } from "@/utils/responsive";
 import { useTranslation } from 'react-i18next';
-import * as yup from "yup";
 
 const SPECIALIZATIONS = [
   "Cardiology",

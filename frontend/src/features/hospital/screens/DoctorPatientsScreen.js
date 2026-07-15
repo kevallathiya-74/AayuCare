@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -23,7 +24,6 @@ import {
 import { FileText, Eye, UserPlus } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { getScreenPadding } from "@/utils/responsive";
 import { doctorService } from "@/services";
@@ -37,7 +37,7 @@ const PAGE_SIZE = 20;
 
 const DoctorPatientsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");

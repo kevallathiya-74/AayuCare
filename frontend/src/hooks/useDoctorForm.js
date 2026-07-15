@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useAuth } from "@/context/AuthContext";
 import adminService from "../services/admin.service";
 import logger from "../utils/logger";
 import {
@@ -73,7 +73,7 @@ const TIME_SLOTS = ["09:00-12:00", "12:00-14:00", "14:00-17:00", "17:00-20:00"];
 
 export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const [formData, setFormData] = useState(initialForm);
   const [availabilitySlots, setAvailabilitySlots] = useState({});
   const [errors, setErrors] = useState({});

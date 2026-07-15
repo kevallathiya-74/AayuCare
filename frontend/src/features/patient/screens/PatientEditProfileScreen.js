@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -16,13 +17,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { ArrowLeft, Calendar, ChevronDown } from "lucide-react-native";
-import { useDispatch, useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors, spacing, textStyles } from "@/theme";
 import { getSafeAreaEdges, getKeyboardConfig } from "@/utils/responsive";
 import { Card, Button, Input } from "@/components/common";
 import { patientService } from "@/services";
-import { updateUser } from "@/store/slices/authSlice";
 import { logError, parseError } from "@/utils/errorHandler";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
@@ -35,9 +34,9 @@ const GENDERS = ["male", "female", "other"];
 
 const PatientEditProfileScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
+  
   const insets = useSafeAreaInsets();
-  const user = useSelector((state) => state.auth.user);
+  const { user, setUser } = useAuth();
   const queryClient = useQueryClient();
 
   const [showDobPicker, setShowDobPicker] = useState(false);
@@ -163,7 +162,7 @@ const PatientEditProfileScreen = ({ navigation }) => {
         },
       };
 
-      dispatch(updateUser(updateDataPayload));
+      setUser(updateDataPayload);
 
       const newUserState = { ...user, ...updateDataPayload };
       await appStorage.setItem(

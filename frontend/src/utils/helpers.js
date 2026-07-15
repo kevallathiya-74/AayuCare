@@ -12,14 +12,6 @@ import { theme } from "../theme";
 export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
   Dimensions.get("window");
 
-// Device type detection
-export const isTablet = () => {
-  const aspectRatio = SCREEN_WIDTH / SCREEN_HEIGHT;
-  return (
-    Math.min(SCREEN_WIDTH, SCREEN_HEIGHT) >= 600 &&
-    (aspectRatio > 1.2 || aspectRatio < 0.9)
-  );
-};
 
 // Indian-specific formatting
 
@@ -380,7 +372,7 @@ const getErrorMessage = (error) => {
  * @param {string} type - Type of feedback ('light', 'medium', 'heavy')
  */
 
-export const hapticFeedback = (_type = "light") => {
+const hapticFeedback = (_type = "light") => {
   if (Platform.OS === "ios") {
     // iOS haptic feedback would go here
     // Requires expo-haptics
@@ -413,7 +405,7 @@ export const debounce = (func, wait = 300) => {
  * @param {number} limit - Time limit in ms
  * @returns {Function} Throttled function
  */
-export const throttle = (func, limit = 300) => {
+const throttle = (func, limit = 300) => {
   let inThrottle;
   return function executedFunction(...args) {
     if (!inThrottle) {
@@ -432,7 +424,7 @@ export const throttle = (func, limit = 300) => {
  * @param {string} key - Key to group by
  * @returns {Object} Grouped object
  */
-export const groupBy = (array, key) => {
+const groupBy = (array, key) => {
   return array.reduce((result, item) => {
     const group = item[key];
     if (!result[group]) result[group] = [];

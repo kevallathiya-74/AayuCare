@@ -14,8 +14,9 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
 import { useQueryClient } from "@tanstack/react-query";
-import { loadUser } from "@/store/slices/authSlice";
+import { useAuth } from "@/context/AuthContext";
 import { initializeNotificationPermissions } from "@/store/slices/permissionSlice";
+
 import { healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import Routes from "./routes";
@@ -79,9 +80,7 @@ const Stack = createNativeStackNavigator();
 const AppNavigator = () => {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
-  const { isAuthenticated, user, isLoading } = useSelector(
-    (state) => state.auth || {}
-  );
+  const { isAuthenticated, user, isLoading, loadUser } = useAuth();
   const notificationPermission = useSelector(
     (state) => state.permissions?.notification || {}
   );
@@ -110,7 +109,7 @@ const AppNavigator = () => {
     const initAuth = async () => {
       try {
         logger.debug("AppNavigator", "Initializing auth (once)");
-        await dispatch(loadUser()).unwrap();
+        await loadUser();
         logger.debug("AppNavigator", "Auth initialized successfully");
       } catch (error) {
         logger.error(
@@ -123,7 +122,7 @@ const AppNavigator = () => {
     };
 
     initAuth();
-  }, [dispatch]); // dispatch is stable from Redux
+  }, [loadUser]); // dispatch is stable from Redux
 
   useEffect(() => {
     if (permissionsInitialized.current) {
@@ -181,7 +180,7 @@ const AppNavigator = () => {
             "AppNavigator",
             "App focused and unauthenticated, retrying loadUser..."
           );
-          dispatch(loadUser());
+          loadUser();
         }
       }
     );
@@ -189,7 +188,7 @@ const AppNavigator = () => {
     return () => {
       subscription.remove();
     };
-  }, [dispatch, isAuthenticated]);
+  }, [loadUser, isAuthenticated, dispatch]);
 
   // Auto-navigate after successful login
   useEffect(() => {

@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -23,7 +24,6 @@ import {
 import { Calendar, ArrowLeft, Filter } from "lucide-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import { theme, healthColors } from "@/theme";
 import { formatDate, getStatusColor } from "@/utils/helpers";
 import { useAdminAppointments } from "@/context/AdminAppointmentContext";
@@ -49,7 +49,7 @@ import { useTranslation } from 'react-i18next';
 
 const AppointmentsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const user = useSelector((state) => state.auth.user);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { refreshCount } = useAdminAppointments();
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);

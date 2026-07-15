@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   View,
   Text,
@@ -30,7 +31,6 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -45,7 +45,7 @@ import { useTranslation } from 'react-i18next';
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth((state) => state.auth);
   const { patientId, appointmentId } = route.params || {};
   const insets = useSafeAreaInsets();
 
