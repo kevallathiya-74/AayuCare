@@ -24,7 +24,6 @@ import { theme, healthColors, textStyles, spacing } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { getScreenPadding, verticalScale } from "@/utils/responsive";
 import Avatar from "@/components/common/Avatar";
-import { logoutUser } from "@/store/slices/authSlice";
 import { doctorService } from "@/services";
 import { DynamicIcon } from "@/components/common";
 import Routes from "@/navigation/routes";
@@ -44,7 +43,7 @@ const formatDoctorName = (name) => {
 
 const DoctorProfileScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user, logoutUser } = useAuth();
   
   const insets = useSafeAreaInsets();
   const {

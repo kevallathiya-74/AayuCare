@@ -106,9 +106,6 @@ export const setItem = async (key, value) => {
 };
 
 /**
- * Set item in storage synchronously
- */
-/**
  * Remove item from storage
  * @param {string} key - Storage key
  * @returns {Promise<void>}
@@ -128,17 +125,6 @@ export const deleteItem = async (key) => {
   }
 };
 
-/**
- * Remove item from storage synchronously
- */
-/**
- * Remove item from storage (alias)
- * @param {string} key - Storage key
- * @returns {Promise<void>}
- */
-export const removeItem = async (key) => {
-  return deleteItem(key);
-};
 
 /**
  * Clear all storage
@@ -168,6 +154,7 @@ export const clear = async () => {
       "aayucare_user_data",
       "aayucare_session_data",
       "aayucare_refresh_token",
+      "aayucare_language",
     ];
     await Promise.all(
       keysToClear.map((key) => SecureStore.deleteItemAsync(key))
@@ -185,9 +172,8 @@ const appStorage = {
   getItem,
   setItem,
   deleteItem,
-  removeItem,
   clear,
   getItemSync,
-  };
+};
 
 export default appStorage;

@@ -4,20 +4,27 @@ import { useFonts } from "./src/hooks/useFonts";
 import { AuthProvider } from "./src/context/AuthContext";
 import { Provider as PaperProvider } from "react-native-paper";
 import { View, StyleSheet, LogBox, AppState, Platform } from "react-native";
-import { focusManager, onlineManager, QueryClientProvider } from "@tanstack/react-query";
+import {
+  focusManager,
+  onlineManager,
+} from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import NetInfo from "@react-native-community/netinfo";
 
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ToastProvider } from "./src/context/ToastContext";
+import ErrorBoundary from "./src/components/common/ErrorBoundary";
+import AppNavigator from "./src/navigation/AppNavigator";
+import { initializeSentry } from "./src/config/sentry";
+import queryClient from "./src/config/reactQueryConfig";
+import { healthColors } from "./src/theme";
+import "./src/i18n";
 
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
     setOnline(!!state.isConnected);
   });
 });
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { initializeSentry } from "./src/config/sentry";
-import queryClient from "./src/config/reactQueryConfig";
-import { healthColors } from "./src/theme";
-import "./src/config/i18n";
 
 // Global error handler to catch unhandled errors
 if (__DEV__) {
@@ -53,15 +60,6 @@ if (__DEV__) {
 LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
 ]);
-
-import { ToastProvider } from "./src/context/ToastContext";
-
-import AppNavigator from "./src/navigation/AppNavigator";
-
-import ErrorBoundary from "./src/components/common/ErrorBoundary";
-
-// Initialize i18n
-import "./src/i18n";
 
 // Import theme safely with fallback
 let paperTheme;

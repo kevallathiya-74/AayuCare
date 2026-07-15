@@ -4,11 +4,11 @@
  * All data logic stays here.
  */
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useDispatch, useSelector } from "react-redux";
+
 import { useQuery } from "@tanstack/react-query";
 import { useIsFocused } from "@react-navigation/native";
 import { theme, healthColors } from "@/theme";
@@ -16,7 +16,8 @@ import { useAuth } from "@/context/AuthContext";
 import { getSafeAreaEdges, getScreenPadding } from "@/utils/responsive";
 import { notificationService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
-import { fetchHealthMetrics } from "@/store/slices/healthSlice";
+import patientService from "@/features/patient/api/patient.service";
+
 import {
   Calendar,
   FolderOpen,
@@ -52,20 +53,22 @@ import {
 import Routes from "@/navigation/routes";
 
 const PatientDashboard = ({ navigation }) => {
-  const dispatch = useDispatch();
-  const { user, isLoading: authLoading } = useSelector((state) => state.auth);
-  const { logout } = useAuth();
-  const { vitals: healthMetrics, isLoading: loadingMetrics } = useSelector(
-    (state) => state.health
-  );
-  const notificationPermission = useSelector(
-    (state) => state.permissions?.notification || {}
-  );
+  const { user, isLoading: authLoading, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+
+  const { data: healthMetricsData = [], isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
+    queryKey: ["healthMetrics", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await patientService.getHealthMetrics(user.id);
+      return Array.isArray(res) ? res : res?.data?.metrics || res?.metrics || [];
+    },
+    enabled: !!user?.id && user?.role === "patient",
+  });
+  const healthMetrics = healthMetricsData;
+
   const isFocused = useIsFocused();
-  const canUseNotifications =
-    !!notificationPermission.granted &&
-    !!notificationPermission.notificationsEnabled;
+  const canUseNotifications = false;
 
   // ── Shared drawer hook ──
   const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
@@ -83,25 +86,20 @@ const PatientDashboard = ({ navigation }) => {
       retry: 1,
     });
 
-  useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchHealthMetrics(user.id));
-    }
-  }, [user?.id, dispatch]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        dispatch(fetchHealthMetrics(user?.id)),
         canUseNotifications ? refetchUnreadNotifications() : Promise.resolve(),
+        refetchMetrics(),
       ]);
     } catch (e) {
       console.error(e);
     } finally {
       setRefreshing(false);
     }
-  }, [dispatch, refetchUnreadNotifications, user?.id, canUseNotifications]);
+  }, [refetchUnreadNotifications, refetchMetrics, canUseNotifications]);
 
   // ── Metric helpers ──
   const safeMetrics = useMemo(

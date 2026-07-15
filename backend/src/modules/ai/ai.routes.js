@@ -2,50 +2,51 @@ const express = require("express");
 const router = express.Router();
 const aiController = require("./ai.controller");
 const { protect, authorize } = require("../../middleware/auth");
+const { validateBody, validateParams } = require("../../middleware/validation");
 const {
-  validateAnalyzeSymptoms,
-  validateRiskScore,
-  validateDietRecommendations,
-  validateExerciseRecommendations,
-  validatePatientId,
-  validateRecordId,
-} = require("../../validators/aiValidator");
+  analyzeSymptomsSchema,
+  riskScoreSchema,
+  dietRecommendationsSchema,
+  exerciseRecommendationsSchema,
+  aiPatientIdParamsSchema,
+  aiRecordIdParamsSchema,
+} = require("../../validators/schemas");
 const { cacheMiddleware } = require("../../middleware/cache");
 
 router.use(protect);
 
 router.post(
   "/analyze-symptoms",
-  validateAnalyzeSymptoms,
+  validateBody(analyzeSymptomsSchema),
   aiController.analyzeSymptoms,
 );
 
 router.get(
   "/health-insights/:patientId",
   authorize("patient", "doctor", "admin"),
-  validatePatientId,
+  validateParams(aiPatientIdParamsSchema),
   cacheMiddleware(120),
   aiController.getHealthInsights,
 );
 
-router.post("/risk-score", validateRiskScore, aiController.calculateRiskScore);
+router.post("/risk-score", validateBody(riskScoreSchema), aiController.calculateRiskScore);
 
 router.post(
   "/diet-recommendations",
-  validateDietRecommendations,
+  validateBody(dietRecommendationsSchema),
   aiController.getDietRecommendations,
 );
 
 router.post(
   "/exercise-recommendations",
-  validateExerciseRecommendations,
+  validateBody(exerciseRecommendationsSchema),
   aiController.getExerciseRecommendations,
 );
 
 router.post(
   "/analyze-medical-record/:recordId",
   authorize("doctor", "admin"),
-  validateRecordId,
+  validateParams(aiRecordIdParamsSchema),
   aiController.analyzeMedicalRecord,
 );
 

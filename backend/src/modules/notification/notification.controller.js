@@ -1,16 +1,13 @@
-﻿/**
+const { sendSuccess, sendError } = require("../../utils/apiResponse");
+/**
  * Notification Controller
  * Handles notification CRUD operations and user notifications
  */
 
 const notificationRepository = require("./notification.repository");
 const logger = require("../../utils/logger");
-const {
-  invalidateAfterNotificationMutation,
-  invalidateAfterNotificationBroadcastMutation,
-} = require("../../utils/cacheInvalidation");
+const { invalidateByPatterns, NOTIFICATION_CACHE_PATTERNS, NOTIFICATION_BROADCAST_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 const { AppError } = require("../../middleware/errorHandler");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 // Resolve user's UUID string id from the authenticated request
 const resolveUserId = (req) => req.user?.id;
@@ -45,10 +42,12 @@ exports.getUserNotifications = async (req, res, next) => {
     const total = await notificationRepository.count(query);
     const unreadCount = await notificationRepository.getUnreadCount(userId);
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Notifications retrieved successfully",
+
+      data: {
         notifications,
         pagination: {
           total,
@@ -56,9 +55,8 @@ exports.getUserNotifications = async (req, res, next) => {
           pages: Math.ceil(total / parseInt(limit)),
         },
         unreadCount,
-      },
-      "Notifications retrieved successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Get notifications error:", {
       error: error.message,
@@ -80,12 +78,12 @@ exports.getUnreadCount = async (req, res, next) => {
       ? await notificationRepository.getUnreadCount(userId)
       : 0;
 
-    return sendSuccess(
-      res,
-      req,
-      { count },
-      "Unread notification count retrieved successfully",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Unread notification count retrieved successfully",
+      data: { count }
+    });
   } catch (error) {
     logger.error("Get unread count error:", {
       error: error.message,
@@ -106,19 +104,13 @@ exports.markAsRead = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(
-        res,
-        req,
-        "Invalid user context for notifications",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
     }
 
     const notification = await notificationRepository.findById(id);
 
     if (!notification || notification.userId !== userId) {
-      return sendError(res, req, "Notification not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Notification not found", "NOT_FOUND", []);
     }
 
     await notificationRepository.markAsRead(id, userId);
@@ -128,18 +120,13 @@ exports.markAsRead = async (req, res, next) => {
 
     // Invalidate relevant caches after notification update
     try {
-      await invalidateAfterNotificationMutation();
+      await invalidateByPatterns(NOTIFICATION_CACHE_PATTERNS);
       logger.debug("Cache invalidated after notification marked as read");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      updatedNotification,
-      "Notification marked as read",
-    );
+    return sendSuccess(res, 200, "Notification marked as read", updatedNotification);
   } catch (error) {
     logger.error("Mark as read error:", {
       error: error.message,
@@ -159,31 +146,25 @@ exports.markAllAsRead = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(
-        res,
-        req,
-        "Invalid user context for notifications",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
     }
 
     const result = await notificationRepository.markAllAsRead(userId);
 
     // Invalidate relevant caches after marking all as read
     try {
-      await invalidateAfterNotificationMutation();
+      await invalidateByPatterns(NOTIFICATION_CACHE_PATTERNS);
       logger.debug("Cache invalidated after marking all notifications as read");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { updated: result.rowCount },
-      "All notifications marked as read",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "All notifications marked as read",
+      data: { updated: result.rowCount }
+    });
   } catch (error) {
     logger.error("Mark all as read error:", {
       error: error.message,
@@ -204,30 +185,29 @@ exports.deleteNotification = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(
-        res,
-        req,
-        "Invalid user context for notifications",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
     }
 
     const result = await notificationRepository.delete(id, userId);
 
     if (!result) {
-      return sendError(res, req, "Notification not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Notification not found", "NOT_FOUND", []);
     }
 
     // Invalidate relevant caches after notification deletion
     try {
-      await invalidateAfterNotificationMutation();
+      await invalidateByPatterns(NOTIFICATION_CACHE_PATTERNS);
       logger.debug("Cache invalidated after notification deletion");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, {}, "Notification deleted successfully");
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Notification deleted successfully",
+      data: {}
+    });
   } catch (error) {
     logger.error("Delete notification error:", {
       error: error.message,
@@ -247,31 +227,25 @@ exports.clearAllNotifications = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(
-        res,
-        req,
-        "Invalid user context for notifications",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
     }
 
     const result = await notificationRepository.deleteAllForUser(userId);
 
     // Invalidate relevant caches after clearing all notifications
     try {
-      await invalidateAfterNotificationMutation();
+      await invalidateByPatterns(NOTIFICATION_CACHE_PATTERNS);
       logger.debug("Cache invalidated after clearing all notifications");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { deleted: result.rowCount },
-      "All notifications cleared",
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "All notifications cleared",
+      data: { deleted: result.rowCount }
+    });
   } catch (error) {
     logger.error("Clear all notifications error:", {
       error: error.message,
@@ -293,19 +267,13 @@ exports.createNotification = async (req, res, next) => {
 
     // Validate required fields
     if (!userId || typeof userId !== "string" || !userId.trim()) {
-      return sendError(res, req, "userId is required", 400, "VALIDATION_ERROR");
+      return sendError(res, 400, "userId is required", "VALIDATION_ERROR", []);
     }
     if (!title || typeof title !== "string" || !title.trim()) {
-      return sendError(res, req, "title is required", 400, "VALIDATION_ERROR");
+      return sendError(res, 400, "title is required", "VALIDATION_ERROR", []);
     }
     if (!message || typeof message !== "string" || !message.trim()) {
-      return sendError(
-        res,
-        req,
-        "message is required",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "message is required", "VALIDATION_ERROR", []);
     }
 
     const notification = await notificationRepository.create({
@@ -322,19 +290,13 @@ exports.createNotification = async (req, res, next) => {
 
     // Invalidate relevant caches after notification creation
     try {
-      await invalidateAfterNotificationBroadcastMutation();
+      await invalidateByPatterns(NOTIFICATION_BROADCAST_CACHE_PATTERNS);
       logger.debug("Cache invalidated after notification creation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      notification,
-      "Notification created successfully",
-      201,
-    );
+    return sendSuccess(res, 201, "Notification created successfully", notification);
   } catch (error) {
     logger.error("Create notification error:", { error: error.message });
     next(error);
@@ -352,33 +314,15 @@ exports.broadcastNotification = async (req, res, next) => {
       req.body;
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
-      return sendError(
-        res,
-        req,
-        "Please provide an array of user IDs",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Please provide an array of user IDs", "VALIDATION_ERROR", []);
     }
 
     if (userIds.length > 1000) {
-      return sendError(
-        res,
-        req,
-        "Cannot broadcast to more than 1000 recipients per request",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Cannot broadcast to more than 1000 recipients per request", "VALIDATION_ERROR", []);
     }
 
     if (!title || !message) {
-      return sendError(
-        res,
-        req,
-        "title and message are required",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "title and message are required", "VALIDATION_ERROR", []);
     }
 
     const hospitalId = req.hospitalId || req.user?.hospitalId;
@@ -398,19 +342,18 @@ exports.broadcastNotification = async (req, res, next) => {
 
     // Invalidate relevant caches after broadcast notification
     try {
-      await invalidateAfterNotificationBroadcastMutation();
+      await invalidateByPatterns(NOTIFICATION_BROADCAST_CACHE_PATTERNS);
       logger.debug("Cache invalidated after broadcast notification");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      { count: result.length },
-      `Notification sent to ${result.length} users`,
-      201,
-    );
+    return res.status(201).json({
+      success: true,
+      status: "success",
+      message: `Notification sent to ${result.length} users`,
+      data: { count: result.length }
+    });
   } catch (error) {
     logger.error("Broadcast notification error:", { error: error.message });
     next(error);

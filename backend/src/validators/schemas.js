@@ -752,6 +752,52 @@ const scheduleParamsSchema = Joi.object({
 // ID validation helper
 const uuidSchema = Joi.string().uuid();
 
+// AI Validation schemas
+const analyzeSymptomsSchema = Joi.object({
+  symptoms: Joi.array().items(Joi.string().min(2).max(200)).min(1).required(),
+  duration: Joi.string().max(100).optional(),
+  severity: Joi.string().valid("mild", "moderate", "severe").optional(),
+});
+
+const riskScoreSchema = Joi.object({
+  age: Joi.number().integer().min(0).max(150).optional(),
+  bp: Joi.string()
+    .pattern(/^\d{2,3}\/\d{2,3}$/)
+    .optional(),
+  sugar: Joi.number().min(0).max(1000).optional(),
+  weight: Joi.number().min(1).max(500).optional(),
+  height: Joi.number().min(30).max(300).optional(),
+  medicalHistory: Joi.array().items(Joi.string()).optional(),
+});
+
+const dietRecommendationsSchema = Joi.object({
+  age: Joi.number().integer().min(0).max(150).optional(),
+  weight: Joi.number().min(1).max(500).optional(),
+  height: Joi.number().min(30).max(300).optional(),
+  conditions: Joi.array().items(Joi.string()).optional(),
+  allergies: Joi.array().items(Joi.string()).optional(),
+  goal: Joi.string().valid("maintain", "lose", "gain").optional(),
+});
+
+const exerciseRecommendationsSchema = Joi.object({
+  age: Joi.number().integer().min(0).max(150).optional(),
+  fitness: Joi.string()
+    .valid("sedentary", "light", "moderate", "active", "very_active")
+    .optional(),
+  conditions: Joi.array().items(Joi.string()).optional(),
+  goal: Joi.string()
+    .valid("fitness", "lose_weight", "gain_muscle", "cardio", "flexibility")
+    .optional(),
+});
+
+const aiPatientIdParamsSchema = Joi.object({
+  patientId: Joi.string().min(3).max(50).required(),
+});
+
+const aiRecordIdParamsSchema = Joi.object({
+  recordId: Joi.string().uuid().required(),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -799,4 +845,10 @@ module.exports = {
   updateUserStatusSchema,
   getMetricTypeParamsSchema,
   scheduleParamsSchema,
+  analyzeSymptomsSchema,
+  riskScoreSchema,
+  dietRecommendationsSchema,
+  exerciseRecommendationsSchema,
+  aiPatientIdParamsSchema,
+  aiRecordIdParamsSchema,
 };

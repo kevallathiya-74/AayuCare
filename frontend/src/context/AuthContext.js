@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import authService from '@/features/auth/api/auth.service';
 import appStorage from '@/utils/appStorage';
 import { STORAGE_KEYS } from '@/utils/constants';
+import queryClient from '@/config/reactQueryConfig';
 
 const AuthContext = createContext(null);
 
@@ -69,6 +70,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.warn('Logout error:', err);
     } finally {
+      queryClient.clear();
       setUser(null);
       setToken(null);
       setIsAuthenticated(false);

@@ -1,5 +1,6 @@
 const express = require("express");
 const doctorController = require("./doctor.controller");
+const { sendError } = require("../../utils/apiResponse");
 const { protect, authorize, optionalAuth } = require("../../middleware/auth");
 const { attachHospitalId } = require("../../middleware/hospitalMiddleware");
 const { validateBody, validateParams } = require("../../middleware/validation");
@@ -17,7 +18,6 @@ const {
   cacheDoctorAvailability,
   cacheDashboard,
 } = require("../../middleware/cache");
-const { sendError } = require("../../utils/apiResponse");
 
 const router = express.Router();
 
@@ -89,9 +89,8 @@ router.get(
       } else {
         return sendError(
           res,
-          req,
-          "hospitalId query parameter is required",
           400,
+          "hospitalId query parameter is required",
           "VALIDATION_ERROR",
         );
       }

@@ -1,3 +1,4 @@
+const { sendSuccess, sendError } = require("../../utils/apiResponse");
 const doctorService = require("../doctor/doctor.service");
 const appointmentRepository = require("../appointment/appointment.repository");
 const prescriptionRepository = require("../prescription/prescription.repository");
@@ -8,15 +9,8 @@ const patientRepository = require("../patient/patient.repository");
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const bcrypt = require("bcryptjs");
 const logger = require("../../utils/logger");
-const {
-  invalidateAfterDoctorAppointmentStatusMutation,
-  invalidateAfterDoctorWalkInRegistrationMutation,
-  invalidateAfterDoctorProfileMutation,
-  invalidateAfterDoctorScheduleMutation,
-  invalidateAfterDoctorScheduleBootstrapMutation,
-} = require("../../utils/cacheInvalidation");
+const { invalidateByPatterns, DOCTOR_APPOINTMENT_STATUS_CACHE_PATTERNS, DOCTOR_WALK_IN_REGISTRATION_CACHE_PATTERNS, DOCTOR_PROFILE_CACHE_PATTERNS, DOCTOR_SCHEDULE_CACHE_PATTERNS, DOCTOR_SCHEDULE_BOOTSTRAP_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 const { AppError } = require("../../middleware/errorHandler");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 
 /**
  * Calculate age from date of birth
@@ -109,7 +103,7 @@ exports.getDoctors = async (req, res, next) => {
 
     const result = await doctorService.getDoctors(filters);
 
-    return sendSuccess(res, req, result, "Doctors retrieved successfully", 200);
+    return sendSuccess(res, 200, "Doctors retrieved successfully", result);
   } catch (error) {
     next(error);
   }
@@ -124,13 +118,12 @@ exports.getDoctor = async (req, res, next) => {
   try {
     const doctor = await doctorService.getDoctorById(req.params.id);
 
-    return sendSuccess(
-      res,
-      req,
-      { doctor },
-      "Doctor retrieved successfully",
-      200,
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Doctor retrieved successfully",
+      data: { doctor }
+    });
   } catch (error) {
     next(error);
   }
@@ -145,13 +138,12 @@ exports.getDoctorStats = async (req, res, next) => {
   try {
     const stats = await doctorService.getDoctorStats(req.params.id);
 
-    return sendSuccess(
-      res,
-      req,
-      { stats },
-      "Doctor stats retrieved successfully",
-      200,
-    );
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Doctor stats retrieved successfully",
+      data: { stats }
+    });
   } catch (error) {
     next(error);
   }
@@ -334,10 +326,12 @@ exports.getDoctorDashboard = async (req, res, next) => {
       }));
     })();
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Doctor dashboard retrieved successfully",
+
+      data: {
         schedule,
         todaysAppointments: formattedAppointments,
         stats: {
@@ -355,10 +349,8 @@ exports.getDoctorDashboard = async (req, res, next) => {
           date: p.createdAt || p.created_at,
           medicationsCount: p.medicines?.length || 0,
         })),
-      },
-      "Doctor dashboard retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Doctor dashboard error:", {
       error: error.message,
@@ -383,13 +375,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
     // Validate filter early - before any other work
     const allowedFilters = new Set(["all", "pending", "completed"]);
     if (!allowedFilters.has(normalizedFilter)) {
-      return sendError(
-        res,
-        req,
-        "Invalid filter. Allowed values: all, pending, completed",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Invalid filter. Allowed values: all, pending, completed", "VALIDATION_ERROR", []);
     }
 
     const today = new Date();
@@ -474,10 +460,12 @@ exports.getTodaysAppointments = async (req, res, next) => {
             return appointmentDateTime > new Date();
           });
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Today's appointments retrieved successfully",
+
+      data: {
         count: visibleAppointments.length,
         appointments: visibleAppointments.map((apt) => {
           const formattedTime = formatAppointmentTime(apt);
@@ -501,10 +489,8 @@ exports.getTodaysAppointments = async (req, res, next) => {
             type: apt.type || "in-person",
           };
         }),
-      },
-      "Today's appointments retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Today appointments error:", {
       error: error.message,
@@ -557,10 +543,12 @@ exports.getUpcomingAppointments = async (req, res, next) => {
     );
     const total = counts.total || 0;
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Upcoming appointments retrieved successfully",
+
+      data: {
         appointments: appointments.map((apt) => {
           const formattedTime = formatAppointmentTime(apt);
           return {
@@ -585,10 +573,8 @@ exports.getUpcomingAppointments = async (req, res, next) => {
           total,
           pages: Math.ceil(total / parseInt(limit)),
         },
-      },
-      "Upcoming appointments retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Upcoming appointments error:", {
       error: error.message,
@@ -652,10 +638,12 @@ exports.searchPatients = async (req, res, next) => {
       hospitalId: effectiveHospitalId,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Patients retrieved successfully",
+
+      data: {
         data: paginatedPatients,
         patients: paginatedPatients,
         pagination: {
@@ -664,10 +652,8 @@ exports.searchPatients = async (req, res, next) => {
           total,
           pages: Math.ceil(total / limit) || 1,
         },
-      },
-      "Patients retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Patient search error:", {
       error: error.message,
@@ -717,7 +703,7 @@ exports.getPatientDetails = async (req, res, next) => {
     }
 
     if (!patientUser) {
-      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
     }
 
     const resolvedPatientId = patientUser.id;
@@ -728,13 +714,7 @@ exports.getPatientDetails = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       patientUser.hospital_id !== req.hospitalId
     ) {
-      return sendError(
-        res,
-        req,
-        "Not authorized to access this patient",
-        403,
-        "FORBIDDEN",
-      );
+      return sendError(res, 403, "Not authorized to access this patient", "FORBIDDEN", []);
     }
 
     if (req.user.role === "doctor") {
@@ -746,20 +726,14 @@ exports.getPatientDetails = async (req, res, next) => {
         [req.user.id, resolvedPatientId],
       );
       if (hasRelationship.rows.length === 0) {
-        return sendError(
-          res,
-          req,
-          "Access denied — you do not have an appointment with this patient",
-          403,
-          "FORBIDDEN",
-        );
+        return sendError(res, 403, "Access denied — you do not have an appointment with this patient", "FORBIDDEN", []);
       }
     }
 
     const dbPatient = await patientRepository.findByUserId(resolvedPatientId);
 
     if (!dbPatient) {
-      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
     }
 
     // Map patient data to camelCase format
@@ -827,10 +801,12 @@ exports.getPatientDetails = async (req, res, next) => {
       prescriptionsCount: prescriptions.length,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Patient details retrieved successfully",
+
+      data: {
         patient,
         appointments,
         medicalRecords,
@@ -840,10 +816,8 @@ exports.getPatientDetails = async (req, res, next) => {
           totalRecords: medicalRecords.length,
           totalPrescriptions: prescriptions.length,
         },
-      },
-      "Patient details retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Get patient details error:", {
       error: error.message,
@@ -876,25 +850,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       "no_show",
     ];
     if (!validStatuses.includes(normalizedStatus)) {
-      return sendError(
-        res,
-        req,
-        `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`, "VALIDATION_ERROR", []);
     }
 
     const appointment = await appointmentRepository.findById(id);
 
-    if (!appointment || appointment.doctor_id !== doctorId) {
-      return sendError(
-        res,
-        req,
-        "Appointment not found or unauthorized",
-        404,
-        "NOT_FOUND",
-      );
+    if (!appointment || (appointment.doctorId !== doctorId && appointment.doctor_id !== doctorId)) {
+      return sendError(res, 404, "Appointment not found or unauthorized", "NOT_FOUND", []);
     }
 
     const currentStatus = normalizeAppointmentStatus(
@@ -904,13 +866,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
 
     if (!allowedTransitions.includes(normalizedStatus)) {
-      return sendError(
-        res,
-        req,
-        `Cannot change status from ${currentStatus} to ${normalizedStatus}`,
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, `Cannot change status from ${currentStatus} to ${normalizedStatus}`, "VALIDATION_ERROR", []);
     }
 
     const updateData = { status: normalizedStatus };
@@ -925,7 +881,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
 
     // Invalidate appointment caches after status update
     try {
-      await invalidateAfterDoctorAppointmentStatusMutation();
+      await invalidateByPatterns(DOCTOR_APPOINTMENT_STATUS_CACHE_PATTERNS);
       logger.debug("Cache invalidated after appointment status update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
@@ -937,13 +893,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       newStatus: normalizedStatus,
     });
 
-    return sendSuccess(
-      res,
-      req,
-      updatedAppointment,
-      "Appointment status updated",
-      200,
-    );
+    return sendSuccess(res, 200, "Appointment status updated", updatedAppointment);
   } catch (error) {
     logger.error("Update appointment status error:", {
       error: error.message,
@@ -978,18 +928,18 @@ exports.getDoctorProfileStats = async (req, res, next) => {
       doctorRepository.findByUserId(doctorId),
     ]);
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Doctor profile stats retrieved successfully",
+
+      data: {
         totalPatients,
         completedConsultations: completedCounts.completed || 0,
         averageRating: null,
         yearsExperience: doctor?.experience || 0,
-      },
-      "Doctor profile stats retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Doctor profile stats error:", {
       error: error.message,
@@ -1115,20 +1065,20 @@ exports.registerWalkInPatient = async (req, res, next) => {
       }
 
       // Patient exists, return existing patient
-      return sendSuccess(
-        res,
-        req,
-        {
+      return res.status(200).json({
+        success: true,
+        status: "success",
+        message: "Patient already registered",
+
+        data: {
           patient: {
             ...patient,
             userId: patient.user_id || patient.userId,
             hospitalId: patient.hospital_id || patient.hospitalId,
           },
           isExisting: true,
-        },
-        "Patient already registered",
-        200,
-      );
+        }
+      });
     }
 
     const nextPatientUserId = await userRepository.getNextUserId("patient");
@@ -1211,16 +1161,18 @@ exports.registerWalkInPatient = async (req, res, next) => {
 
     // Invalidate relevant caches after walk-in patient registration
     try {
-      await invalidateAfterDoctorWalkInRegistrationMutation();
+      await invalidateByPatterns(DOCTOR_WALK_IN_REGISTRATION_CACHE_PATTERNS);
       logger.debug("Cache invalidated after walk-in patient registration");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(201).json({
+      success: true,
+      status: "success",
+      message: "Walk-in patient registered successfully",
+
+      data: {
         patient: {
           ...patient,
           userId: patient.user_id || patient.userId,
@@ -1232,10 +1184,8 @@ exports.registerWalkInPatient = async (req, res, next) => {
           userId: nextPatientUserId,
         },
         isExisting: false,
-      },
-      "Walk-in patient registered successfully",
-      201,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Register walk-in patient error:", {
       error: error.message,
@@ -1302,13 +1252,13 @@ exports.updateProfile = async (req, res, next) => {
 
     // Invalidate relevant caches after profile update
     try {
-      await invalidateAfterDoctorProfileMutation();
+      await invalidateByPatterns(DOCTOR_PROFILE_CACHE_PATTERNS);
       logger.debug("Cache invalidated after doctor profile update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, req, doctor, "Profile Updated Successfully", 200);
+    return sendSuccess(res, 200, "Profile Updated Successfully", doctor);
   } catch (error) {
     logger.error("Update profile error:", {
       error: error.message,
@@ -1366,10 +1316,12 @@ exports.getConsultationHistory = async (req, res, next) => {
     );
     const total = consultationCounts.total || 0;
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Consultation history retrieved successfully",
+
+      data: {
         consultations: appointments,
         pagination: {
           currentPage: parseInt(page),
@@ -1377,10 +1329,8 @@ exports.getConsultationHistory = async (req, res, next) => {
           totalItems: total,
           itemsPerPage: parseInt(limit),
         },
-      },
-      "Consultation history retrieved successfully",
-      200,
-    );
+      }
+    });
   } catch (error) {
     logger.error("Get consultation history error:", {
       error: error.message,
@@ -1441,28 +1391,16 @@ exports.getSchedule = async (req, res, next) => {
 
       // Invalidate relevant caches after default schedule creation
       try {
-        await invalidateAfterDoctorScheduleBootstrapMutation();
+        await invalidateByPatterns(DOCTOR_SCHEDULE_BOOTSTRAP_CACHE_PATTERNS);
         logger.debug("Cache invalidated after default schedule creation");
       } catch (cacheError) {
         logger.warn("Failed to invalidate cache:", cacheError.message);
       }
 
-      return sendSuccess(
-        res,
-        req,
-        created,
-        "Schedule retrieved successfully",
-        200,
-      );
+      return sendSuccess(res, 200, "Schedule retrieved successfully", created);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      schedules,
-      "Schedule retrieved successfully",
-      200,
-    );
+    return sendSuccess(res, 200, "Schedule retrieved successfully", schedules);
   } catch (error) {
     logger.error("Get schedule error:", {
       error: error.message,
@@ -1494,13 +1432,7 @@ exports.updateSchedule = async (req, res, next) => {
       "sunday",
     ];
     if (!validDays.includes(dayOfWeek.toLowerCase())) {
-      return sendError(
-        res,
-        req,
-        "Invalid day of week",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Invalid day of week", "VALIDATION_ERROR", []);
     }
 
     // Find and update or create new schedule
@@ -1538,19 +1470,13 @@ exports.updateSchedule = async (req, res, next) => {
 
     // Invalidate relevant caches after schedule update
     try {
-      await invalidateAfterDoctorScheduleMutation();
+      await invalidateByPatterns(DOCTOR_SCHEDULE_CACHE_PATTERNS);
       logger.debug("Cache invalidated after schedule update");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      schedule,
-      "Schedule updated successfully",
-      200,
-    );
+    return sendSuccess(res, 200, "Schedule updated successfully", schedule);
   } catch (error) {
     logger.error("Update schedule error:", {
       error: error.message,
@@ -1605,19 +1531,13 @@ exports.toggleDayAvailability = async (req, res, next) => {
 
     // Invalidate relevant caches after availability toggle
     try {
-      await invalidateAfterDoctorScheduleMutation();
+      await invalidateByPatterns(DOCTOR_SCHEDULE_CACHE_PATTERNS);
       logger.debug("Cache invalidated after availability toggle");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      updatedSchedule,
-      `${dayOfWeek} availability updated`,
-      200,
-    );
+    return sendSuccess(res, 200, `${dayOfWeek} availability updated`, updatedSchedule);
   } catch (error) {
     logger.error("Toggle availability error:", {
       error: error.message,

@@ -13,19 +13,16 @@ export const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
   Dimensions.get("window");
 
 
-// Indian-specific formatting
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 0,
+});
 
-/**
- * Format currency in Indian Rupees
- * @param {number} amount - Amount to format
- * @param {boolean} showSymbol - Show ₹ symbol (default: true)
- * @returns {string} Formatted currency
- */
 export const formatCurrency = (amount, showSymbol = true) => {
-  if (amount === null || amount === undefined || isNaN(amount))
-    return showSymbol ? "₹0" : "0";
-  const formatted = Math.abs(amount).toFixed(2);
-  return showSymbol ? `₹${formatted}` : formatted;
+  if (amount == null || isNaN(amount)) return showSymbol ? "₹0" : "0";
+  const formatted = currencyFormatter.format(Math.abs(amount));
+  return showSymbol ? formatted : formatted.replace("₹", "").trim();
 };
 
 /**
@@ -56,32 +53,26 @@ const isValidAadhaar = (aadhaar) => {
 
 // Date & Time utilities
 
-/**
- * Format date in Indian format (DD/MM/YYYY)
- * @param {Date|string} date - Date to format
- * @returns {string} Formatted date
- */
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
 export const formatDate = (date) => {
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+  if (!date) return "";
+  return dateFormatter.format(new Date(date));
 };
 
-/**
- * Format time in 12-hour format (Indian preference)
- * @param {Date|string} date - Date/time to format
- * @returns {string} Formatted time
- */
+const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+});
+
 export const formatTime = (date) => {
-  const d = new Date(date);
-  let hours = d.getHours();
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12 || 12;
-  const paddedHours = String(hours).padStart(2, "0");
-  return `${paddedHours}:${minutes} ${ampm}`;
+  if (!date) return "";
+  return timeFormatter.format(new Date(date));
 };
 
 /**
@@ -136,27 +127,20 @@ export const formatDateTime = (date) => {
   return `${formatDate(date)} ${formatTime(date)}`;
 };
 
-/**
- * Get relative time (e.g., "2 hours ago", "in 3 days")
- * @param {Date|string} date - Date to compare
- * @returns {string} Relative time string
- */
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
 export const getRelativeTime = (date) => {
-  const now = new Date();
-  const target = new Date(date);
-  const diffMs = target - now;
-  const diffMins = Math.floor(Math.abs(diffMs) / 60000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60)
-    return diffMs < 0 ? `${diffMins} mins ago` : `in ${diffMins} mins`;
-
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24)
-    return diffMs < 0 ? `${diffHours} hours ago` : `in ${diffHours} hours`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  return diffMs < 0 ? `${diffDays} days ago` : `in ${diffDays} days`;
+  const diffMs = new Date(date) - new Date();
+  const diffMins = Math.round(diffMs / 60000);
+  
+  if (Math.abs(diffMins) < 1) return "Just now";
+  if (Math.abs(diffMins) < 60) return relativeTimeFormatter.format(diffMins, "minute");
+  
+  const diffHours = Math.round(diffMs / 3600000);
+  if (Math.abs(diffHours) < 24) return relativeTimeFormatter.format(diffHours, "hour");
+  
+  const diffDays = Math.round(diffMs / 86400000);
+  return relativeTimeFormatter.format(diffDays, "day");
 };
 
 // Health metric utilities
@@ -416,38 +400,7 @@ const throttle = (func, limit = 300) => {
   };
 };
 
-// Array utilities
-
-/**
- * Group array items by key
- * @param {Array} array - Array to group
- * @param {string} key - Key to group by
- * @returns {Object} Grouped object
- */
-const groupBy = (array, key) => {
-  return array.reduce((result, item) => {
-    const group = item[key];
-    if (!result[group]) result[group] = [];
-    result[group].push(item);
-    return result;
-  }, {});
-};
-
-/**
- * Sort array by key
- * @param {Array} array - Array to sort
- * @param {string} key - Key to sort by
- * @param {string} order - 'asc' or 'desc'
- * @returns {Array} Sorted array
- */
-export const sortBy = (array, key, order = "asc") => {
-  return [...array].sort((a, b) => {
-    if (order === "asc") {
-      return a[key] > b[key] ? 1 : -1;
-    }
-    return a[key] < b[key] ? 1 : -1;
-  });
-};
+// Removed unneeded wrappers Array.sort and Object.groupBy which are natively available.
 
 export default {
   formatCurrency,
@@ -467,8 +420,6 @@ export default {
   hapticFeedback,
   debounce,
   throttle,
-  groupBy,
-  sortBy,
   getStatusColor,
   getStatusStyle,
 };

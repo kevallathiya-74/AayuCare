@@ -30,9 +30,8 @@ const errorHandler = (err, req, res, _next) => {
   if (err.code === "23505") {
     return sendError(
       res,
-      req,
-      "Resource already exists (duplicate entry)",
       409,
+      "Resource already exists (duplicate entry)",
       "CONFLICT",
     );
   }
@@ -41,9 +40,8 @@ const errorHandler = (err, req, res, _next) => {
   if (err.code === "23503") {
     return sendError(
       res,
-      req,
-      "Referenced resource does not exist",
       400,
+      "Referenced resource does not exist",
       "VALIDATION_ERROR",
     );
   }
@@ -52,9 +50,8 @@ const errorHandler = (err, req, res, _next) => {
   if (err.code === "23502") {
     return sendError(
       res,
-      req,
-      `Missing required field: ${err.column || "unknown"}`,
       400,
+      `Missing required field: ${err.column || "unknown"}`,
       "VALIDATION_ERROR",
     );
   }
@@ -63,9 +60,8 @@ const errorHandler = (err, req, res, _next) => {
   if (err.code === "23514") {
     return sendError(
       res,
-      req,
-      `Invalid value: ${err.constraint || "data validation failed"}`,
       400,
+      `Invalid value: ${err.constraint || "data validation failed"}`,
       "VALIDATION_ERROR",
     );
   }
@@ -74,9 +70,8 @@ const errorHandler = (err, req, res, _next) => {
   if (err.code === "22P02") {
     return sendError(
       res,
-      req,
-      "Invalid data format in request",
       400,
+      "Invalid data format in request",
       "VALIDATION_ERROR",
     );
   }
@@ -85,23 +80,21 @@ const errorHandler = (err, req, res, _next) => {
   if (err.name === "JsonWebTokenError") {
     return sendError(
       res,
-      req,
-      "Invalid token. Please log in again.",
       401,
+      "Invalid token. Please log in again.",
       "UNAUTHORIZED",
     );
   }
   if (err.name === "TokenExpiredError") {
     return sendError(
       res,
-      req,
-      "Token expired. Please log in again.",
       401,
+      "Token expired. Please log in again.",
       "UNAUTHORIZED",
     );
   }
   if (err.isJoi) {
-    return sendError(res, req, err.message, 400, "VALIDATION_ERROR");
+    return sendError(res, 400, err.message, "VALIDATION_ERROR");
   }
 
   if (process.env.NODE_ENV === "development") {
@@ -117,11 +110,10 @@ const errorHandler = (err, req, res, _next) => {
       : undefined;
     return sendError(
       res,
-      req,
-      err.message,
       err.statusCode,
+      err.message,
       mapErrorCode(err.statusCode),
-      details,
+      details || [],
     );
   } else {
     // Production - don't expose stack traces or internal error details
@@ -136,18 +128,16 @@ const errorHandler = (err, req, res, _next) => {
     if (err.isOperational) {
       return sendError(
         res,
-        req,
-        err.message,
         err.statusCode,
+        err.message,
         mapErrorCode(err.statusCode),
       );
     } else {
       // Don't leak error details
       return sendError(
         res,
-        req,
-        "Something went wrong!",
         500,
+        "Something went wrong!",
         "INTERNAL_SERVER_ERROR",
       );
     }

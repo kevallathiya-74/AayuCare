@@ -1,67 +1,43 @@
-const DEFAULT_ERROR_CODE = "INTERNAL_SERVER_ERROR";
+/**
+ * Centralized API Response Helpers
+ * Follows Context7 standard response envelope structure.
+ */
 
-const buildMeta = (req, extraMeta = {}) => ({
-  timestamp: new Date().toISOString(),
-  requestId: req?.requestId || null,
-  ...extraMeta,
-});
-
-const sendSuccess = (
-  res,
-  req,
-  data = {},
-  message = "Request successful",
-  statusCode = 200,
-  meta = {},
-) => {
-  return res.status(statusCode).json({
+/**
+ * Send a successful response
+ * @param {Object} res - Express response object
+ * @param {number} status - HTTP status code
+ * @param {string} message - Success message
+ * @param {Object|Array} data - Payload data
+ */
+const sendSuccess = (res, status, message, data = {}) => {
+  return res.status(status).json({
     success: true,
     status: "success",
     message,
     data,
-    meta: buildMeta(req, meta),
   });
 };
 
-const sendPaginated = (
-  res,
-  req,
-  data = [],
-  pagination = {},
-  message = "Request successful",
-  statusCode = 200,
-  meta = {},
-) => {
-  return res.status(statusCode).json({
-    success: true,
-    status: "success",
-    message,
-    data,
-    pagination,
-    meta: buildMeta(req, meta),
-  });
-};
-
-const sendError = (
-  res,
-  req,
-  message = "Something went wrong",
-  statusCode = 500,
-  code = DEFAULT_ERROR_CODE,
-  errors = [],
-) => {
-  return res.status(statusCode).json({
+/**
+ * Send an error response
+ * @param {Object} res - Express response object
+ * @param {number} status - HTTP status code
+ * @param {string} message - Error message
+ * @param {string} code - Application specific error code
+ * @param {Array} errors - Detailed validation/execution errors
+ */
+const sendError = (res, status, message, code = "ERROR", errors = []) => {
+  return res.status(status).json({
     success: false,
     status: "error",
     message,
     code,
-    errors: Array.isArray(errors) ? errors : [],
-    meta: buildMeta(req),
+    errors,
   });
 };
 
 module.exports = {
   sendSuccess,
-  sendPaginated,
   sendError,
 };

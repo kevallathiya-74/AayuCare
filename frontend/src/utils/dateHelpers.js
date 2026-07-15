@@ -35,85 +35,64 @@ export const calculateAge = (dateOfBirth) => {
   }
 };
 
-/**
- * Format date to readable string (DD MMM YYYY)
- * @param {string|Date} date - Date to format
- * @returns {string} - Formatted date or "N/A"
- */
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+
 export const formatDate = (date) => {
   if (!date) return "N/A";
-
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-
-    return d.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return dateFormatter.format(d);
   } catch {
     return "N/A";
   }
 };
 
-/**
- * Format date with time (DD MMM YYYY, HH:MM AM/PM)
- * @param {string|Date} date - Date to format
- * @returns {string} - Formatted date with time or "N/A"
- */
+const dateTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+});
+
 export const formatDateTime = (date) => {
   if (!date) return "N/A";
-
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-
-    const dateStr = d.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-
-    const timeStr = d.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    return `${dateStr}, ${timeStr}`;
+    return dateTimeFormatter.format(d);
   } catch {
     return "N/A";
   }
 };
 
-/**
- * Format time only (HH:MM AM/PM)
- * @param {string|Date} date - Date to extract time from
- * @returns {string} - Formatted time or "N/A"
- */
+const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+});
+
 export const formatTime = (date) => {
   if (!date) return "N/A";
-
   try {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
-
-    return d.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
+    return timeFormatter.format(d);
   } catch {
     return "N/A";
   }
 };
 
-/**
- * Get relative time string (e.g., "2 hours ago", "3 days ago")
- * @param {string|Date} date - Date to compare
- * @returns {string} - Relative time string
- */
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", {
+  numeric: "auto",
+});
+
 export const getRelativeTime = (date) => {
   if (!date) return "N/A";
 
@@ -121,28 +100,31 @@ export const getRelativeTime = (date) => {
     const d = new Date(date);
     if (isNaN(d.getTime())) return "N/A";
 
-    const now = new Date();
-    const diffMs = now - d;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    const diffMs = d - new Date();
+    const diffMins = Math.round(diffMs / 60000);
+    if (Math.abs(diffMins) < 1) return "Just now";
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-    if (diffHours < 24)
-      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-    if (diffDays < 30)
-      return `${Math.floor(diffDays / 7)} week${
-        Math.floor(diffDays / 7) > 1 ? "s" : ""
-      } ago`;
-    if (diffDays < 365)
-      return `${Math.floor(diffDays / 30)} month${
-        Math.floor(diffDays / 30) > 1 ? "s" : ""
-      } ago`;
-    return `${Math.floor(diffDays / 365)} year${
-      Math.floor(diffDays / 365) > 1 ? "s" : ""
-    } ago`;
+    if (Math.abs(diffMins) < 60)
+      return relativeTimeFormatter.format(diffMins, "minute");
+
+    const diffHours = Math.round(diffMs / 3600000);
+    if (Math.abs(diffHours) < 24)
+      return relativeTimeFormatter.format(diffHours, "hour");
+
+    const diffDays = Math.round(diffMs / 86400000);
+    if (Math.abs(diffDays) < 7)
+      return relativeTimeFormatter.format(diffDays, "day");
+
+    const diffWeeks = Math.round(diffDays / 7);
+    if (Math.abs(diffDays) < 30)
+      return relativeTimeFormatter.format(diffWeeks, "week");
+
+    const diffMonths = Math.round(diffDays / 30);
+    if (Math.abs(diffDays) < 365)
+      return relativeTimeFormatter.format(diffMonths, "month");
+
+    const diffYears = Math.round(diffDays / 365);
+    return relativeTimeFormatter.format(diffYears, "year");
   } catch {
     return "N/A";
   }
@@ -175,6 +157,16 @@ export const isToday = (date) => {
  * @param {string|Date} date - Date to check
  * @returns {boolean} - True if date is in the past
  */
+export const isPast = (date) => {
+  if (!date) return false;
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return false;
+    return d.getTime() < new Date().getTime();
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Format medical history date-range

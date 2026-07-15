@@ -1,3 +1,4 @@
+const { sendError } = require("../../utils/apiResponse");
 /**
  * AI Controller
  * Handles AI-powered health analysis and recommendations
@@ -6,11 +7,7 @@
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const userRepository = require("../auth/user.repository");
 const logger = require("../../utils/logger");
-const {
-  invalidateAfterAiMutation,
-  invalidateAfterAiDashboardMutation,
-} = require("../../utils/cacheInvalidation");
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
+const { invalidateByPatterns, AI_CACHE_PATTERNS, AI_DASHBOARD_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 
 /**
  * @desc    Analyze symptoms and provide AI insights
@@ -22,13 +19,7 @@ exports.analyzeSymptoms = async (req, res, next) => {
     const { symptoms = [], severity = "moderate" } = req.body;
 
     if (!symptoms || symptoms.length === 0) {
-      return sendError(
-        res,
-        req,
-        "Please provide at least one symptom",
-        400,
-        "VALIDATION_ERROR",
-      );
+      return sendError(res, 400, "Please provide at least one symptom", "VALIDATION_ERROR", []);
     }
 
     // AI Analysis Logic (Simplified version - can integrate with OpenAI/Gemini)
@@ -39,16 +30,18 @@ exports.analyzeSymptoms = async (req, res, next) => {
 
     // Invalidate AI-related caches after analysis
     try {
-      await invalidateAfterAiMutation();
+      await invalidateByPatterns(AI_CACHE_PATTERNS);
       logger.debug("Cache invalidated after symptom analysis");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Symptoms analyzed successfully",
+
+      data: {
         analysis: {
           possibleConditions,
           urgencyLevel,
@@ -57,9 +50,8 @@ exports.analyzeSymptoms = async (req, res, next) => {
           estimatedRecovery: calculateRecoveryTime(severity),
         },
         tagline: "Your health, enhanced by intelligence.",
-      },
-      "Symptoms analyzed successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Symptom analysis error:", {
       error: error.message,
@@ -86,13 +78,7 @@ exports.getHealthInsights = async (req, res, next) => {
     const isOwnData =
       req.user.id === safePatientId || req.user.userId === safePatientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return sendError(
-        res,
-        req,
-        "Not authorized to view this data",
-        403,
-        "FORBIDDEN",
-      );
+      return sendError(res, 403, "Not authorized to view this data", "FORBIDDEN", []);
     }
 
     // Get patient data - supports both UUID (users.id) and custom userId (users.user_id)
@@ -107,7 +93,7 @@ exports.getHealthInsights = async (req, res, next) => {
 
     // Verify it's actually a patient
     if (!patient || patient.role !== "patient") {
-      return sendError(res, req, "Patient not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
     }
 
     // Get recent medical records using patient.id
@@ -119,15 +105,16 @@ exports.getHealthInsights = async (req, res, next) => {
     // Generate comprehensive insights
     const insights = generateHealthInsights(patient, records);
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Health insights retrieved successfully",
+
+      data: {
         insights,
         tagline: "Your health, enhanced by intelligence.",
-      },
-      "Health insights retrieved successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Health insights error:", {
       error: error.message,
@@ -209,16 +196,18 @@ exports.calculateRiskScore = async (req, res, next) => {
 
     // Invalidate AI-related caches after risk calculation
     try {
-      await invalidateAfterAiMutation();
+      await invalidateByPatterns(AI_CACHE_PATTERNS);
       logger.debug("Cache invalidated after risk score calculation");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Risk score calculated successfully",
+
+      data: {
         riskScore,
         riskLevel,
         riskFactors,
@@ -240,9 +229,8 @@ exports.calculateRiskScore = async (req, res, next) => {
         },
         recommendations: generateRiskRecommendations(riskLevel, riskFactors),
         tagline: "Your health, enhanced by intelligence.",
-      },
-      "Risk score calculated successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Risk score calculation error:", {
       error: error.message,
@@ -280,21 +268,22 @@ exports.getDietRecommendations = async (req, res, next) => {
 
     // Invalidate AI-related caches after generating diet recommendations
     try {
-      await invalidateAfterAiMutation();
+      await invalidateByPatterns(AI_CACHE_PATTERNS);
       logger.debug("Cache invalidated after diet recommendations");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Diet recommendations generated successfully",
+
+      data: {
         dietPlan,
         tagline: "Your health, enhanced by intelligence.",
-      },
-      "Diet recommendations generated successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Diet recommendations error:", {
       error: error.message,
@@ -323,21 +312,22 @@ exports.getExerciseRecommendations = async (req, res, next) => {
 
     // Invalidate AI-related caches after generating exercise recommendations
     try {
-      await invalidateAfterAiMutation();
+      await invalidateByPatterns(AI_CACHE_PATTERNS);
       logger.debug("Cache invalidated after exercise recommendations");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Exercise recommendations generated successfully",
+
+      data: {
         exercisePlan,
         tagline: "Your health, enhanced by intelligence.",
-      },
-      "Exercise recommendations generated successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Exercise recommendations error:", {
       error: error.message,
@@ -355,21 +345,19 @@ exports.getExerciseRecommendations = async (req, res, next) => {
  */
 exports.analyzeMedicalRecord = async (req, res, next) => {
   try {
-    if (req.user.role !== "doctor" && req.user.role !== "admin") {
-      return sendError(
-        res,
-        req,
-        "Only doctors and admins can analyze medical records",
-        403,
-        "FORBIDDEN",
-      );
-    }
-
     const { recordId } = req.params;
     const record = await medicalRecordRepository.findById(recordId);
 
     if (!record) {
-      return sendError(res, req, "Medical record not found", 404, "NOT_FOUND");
+      return sendError(res, 404, "Medical record not found", "NOT_FOUND", []);
+    }
+
+    if (req.user.role !== "doctor" && req.user.role !== "admin" && req.user.role !== "super_admin") {
+      return sendError(res, 403, "Only doctors and admins can analyze medical records", "FORBIDDEN", []);
+    }
+
+    if (req.user.role === "doctor" && req.hospitalId && record.hospital_id !== req.hospitalId) {
+      return sendError(res, 403, "Not authorized to analyze this record", "FORBIDDEN", []);
     }
 
     // Generate AI analysis
@@ -380,21 +368,22 @@ exports.analyzeMedicalRecord = async (req, res, next) => {
 
     // Invalidate caches after record analysis
     try {
-      await invalidateAfterAiDashboardMutation();
+      await invalidateByPatterns(AI_DASHBOARD_CACHE_PATTERNS);
       logger.debug("Cache invalidated after medical record analysis");
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(
-      res,
-      req,
-      {
+    return res.status(200).json({
+      success: true,
+      status: "success",
+      message: "Medical record analyzed successfully",
+
+      data: {
         aiAnalysis,
         tagline: "Your health, enhanced by intelligence.",
-      },
-      "Medical record analyzed successfully",
-    );
+      }
+    });
   } catch (error) {
     logger.error("Medical record analysis error:", {
       error: error.message,

@@ -1,6 +1,7 @@
 const { query } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
-const { mapAppointmentData, mapArray } = require("../../utils/fieldMapper");
+const { mapAppointmentData, mapPaymentData, mapArray } = require("../../utils/fieldMapper");
+const { withTransaction } = require("../../utils/transaction");
 
 /**
  * Appointment Repository - PostgreSQL data access layer
@@ -45,6 +46,128 @@ class AppointmentRepository {
     ]);
 
     return result.rows[0];
+  }
+
+  /**
+   * Create appointment with payment in transaction
+   * @param {Object} appointmentData - Appointment data
+   * @param {Object} paymentData - Payment data
+   * @returns {Promise<Object>} Created appointment and payment
+   */
+  async createWithPayment(appointmentData, paymentData) {
+    return withTransaction(async (client) => {
+      const appointmentSql = `
+        INSERT INTO appointments (appointment_id, patient_id, doctor_id, hospital_id, 
+                                 appointment_date, appointment_time, type, symptoms, chief_complaint, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'scheduled')
+        RETURNING *
+      `;
+      const appointmentResult = await client.query(appointmentSql, [
+        appointmentData.appointmentId,
+        appointmentData.patientId,
+        appointmentData.doctorId,
+        appointmentData.hospitalId,
+        appointmentData.appointmentDate,
+        appointmentData.appointmentTime,
+        appointmentData.type || "consultation",
+        appointmentData.symptoms || [],
+        appointmentData.chiefComplaint || null,
+      ]);
+      const appointment = mapAppointmentData(appointmentResult.rows[0]);
+
+      const paymentSql = `
+        INSERT INTO payments (payment_id, appointment_id, patient_id, doctor_id, amount, 
+                             currency, payment_method, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+        RETURNING *
+      `;
+      const paymentResult = await client.query(paymentSql, [
+        paymentData.paymentId,
+        appointment.id,
+        appointmentData.patientId,
+        appointmentData.doctorId,
+        paymentData.amount,
+        paymentData.currency || "INR",
+        paymentData.paymentMethod || null,
+      ]);
+      const payment = mapPaymentData(paymentResult.rows[0]);
+
+      return { appointment, payment };
+    });
+  }
+
+  /**
+   * Cancel appointment and refund payment in transaction
+   * @param {string} appointmentId - Appointment UUID
+   * @param {string} cancelledBy - User UUID who cancelled
+   * @param {string} cancellationReason - Reason for cancellation
+   * @returns {Promise<Object>} Updated appointment and payment
+   */
+  async cancelWithRefund(appointmentId, cancelledBy, cancellationReason) {
+    return withTransaction(async (client) => {
+      const appointmentSql = `
+        UPDATE appointments
+        SET status = 'cancelled', 
+            cancelled_by = $1, 
+            cancellation_reason = $2
+        WHERE id = $3
+        RETURNING *
+      `;
+      const appointmentResult = await client.query(appointmentSql, [
+        cancelledBy,
+        cancellationReason,
+        appointmentId,
+      ]);
+      const appointment = appointmentResult.rows[0];
+      if (!appointment) throw new Error("Appointment not found");
+
+      const paymentSql = `
+        UPDATE payments
+        SET status = 'refunded', 
+            refunded_at = NOW(),
+            refund_amount = amount
+        WHERE appointment_id = $1 AND status = 'completed'
+        RETURNING *
+      `;
+      const paymentResult = await client.query(paymentSql, [appointmentId]);
+      const payment = paymentResult.rows[0] || null;
+
+      return { appointment, payment };
+    });
+  }
+
+  /**
+   * Complete appointment and mark payment as completed
+   * @param {string} appointmentId - Appointment UUID
+   * @param {string} notes - Completion notes
+   * @returns {Promise<Object>} Updated appointment and payment
+   */
+  async completeWithPayment(appointmentId, notes = null) {
+    return withTransaction(async (client) => {
+      const appointmentSql = `
+        UPDATE appointments
+        SET status = 'completed', notes = COALESCE($1, notes)
+        WHERE id = $2
+        RETURNING *
+      `;
+      const appointmentResult = await client.query(appointmentSql, [
+        notes,
+        appointmentId,
+      ]);
+      const appointment = appointmentResult.rows[0];
+      if (!appointment) throw new Error("Appointment not found");
+
+      const paymentSql = `
+        UPDATE payments
+        SET status = 'completed', paid_at = NOW()
+        WHERE appointment_id = $1 AND status = 'pending'
+        RETURNING *
+      `;
+      const paymentResult = await client.query(paymentSql, [appointmentId]);
+      const payment = paymentResult.rows[0] || null;
+
+      return { appointment, payment };
+    });
   }
 
   /**
