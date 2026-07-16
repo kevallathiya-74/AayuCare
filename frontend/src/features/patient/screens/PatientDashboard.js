@@ -56,12 +56,18 @@ const PatientDashboard = ({ navigation }) => {
   const { user, isLoading: authLoading, logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: healthMetricsData = [], isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
+  const {
+    data: healthMetricsData = [],
+    isLoading: loadingMetrics,
+    refetch: refetchMetrics,
+  } = useQuery({
     queryKey: ["healthMetrics", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const res = await patientService.getHealthMetrics(user.id);
-      return Array.isArray(res) ? res : res?.data?.metrics || res?.metrics || [];
+      return Array.isArray(res)
+        ? res
+        : res?.data?.metrics || res?.metrics || [];
     },
     enabled: !!user?.id && user?.role === "patient",
   });
@@ -71,7 +77,7 @@ const PatientDashboard = ({ navigation }) => {
   const canUseNotifications = false;
 
   // ── Shared drawer hook ──
-  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
+  const { menuVisible, openMenu, closeMenu } =
     useDrawer();
 
   const { data: unreadNotifications = 0, refetch: refetchUnreadNotifications } =
@@ -85,7 +91,6 @@ const PatientDashboard = ({ navigation }) => {
       staleTime: 30 * 1000,
       retry: 1,
     });
-
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -104,44 +109,40 @@ const PatientDashboard = ({ navigation }) => {
   // ── Metric helpers ──
   const safeMetrics = useMemo(
     () => (Array.isArray(healthMetrics) ? healthMetrics : []),
-    [healthMetrics]
+    [healthMetrics],
   );
 
-  const formatBP = useCallback(() => {
-    const m = getLatestMetric(safeMetrics, "bp");
-    if (!m?.value) return "N/A";
-    return `${m.value.systolic}/${m.value.diastolic}`;
+  const { bp, sugar, temp, lastUpdated } = useMemo(() => {
+    const bpMetric = getLatestMetric(safeMetrics, "bp");
+    const sugarMetric = getLatestMetric(safeMetrics, "sugar");
+    const tempMetric = getLatestMetric(safeMetrics, "temperature");
+
+    let updated = "No data";
+    if (safeMetrics.length) {
+      const latest = [...safeMetrics].sort(
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
+      )[0];
+      const date = new Date(latest.timestamp);
+      const isToday = date.toDateString() === new Date().toDateString();
+      updated = isToday
+        ? `Today ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
+        : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+
+    return {
+      bp: bpMetric?.value
+        ? `${bpMetric.value.systolic}/${bpMetric.value.diastolic} mmHg`
+        : "N/A",
+      sugar: sugarMetric?.value ? `${sugarMetric.value} mg/dL` : "N/A",
+      temp: tempMetric?.value ? `${tempMetric.value}°F` : "N/A",
+      lastUpdated: updated,
+    };
   }, [safeMetrics]);
 
-  const formatSugar = useCallback(() => {
-    const m = getLatestMetric(safeMetrics, "sugar");
-    return m?.value ? `${m.value}` : "N/A";
-  }, [safeMetrics]);
-
-  const formatTemp = useCallback(() => {
-    const m = getLatestMetric(safeMetrics, "temperature");
-    return m?.value ? `${m.value}°F` : "N/A";
-  }, [safeMetrics]);
-
-  const getHealthStatus = useCallback(() => {
-    return computeHealthStatus(safeMetrics);
-  }, [safeMetrics]);
-
-  const getLastUpdateTime = useCallback(() => {
-    if (!safeMetrics.length) return "No data";
-    const latest = [...safeMetrics].sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-    )[0];
-    const date = new Date(latest.timestamp);
-    const isToday = date.toDateString() === new Date().toDateString();
-    if (isToday)
-      return `Today ${date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })}`;
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }, [safeMetrics]);
+  const healthStatus = useMemo(
+    () => computeHealthStatus(safeMetrics),
+    [safeMetrics],
+  );
 
   const getGreeting = useCallback(() => {
     return getTimeBasedGreeting();
@@ -220,7 +221,7 @@ const PatientDashboard = ({ navigation }) => {
         onPress: () => navigation.navigate(Routes.PATIENT.PHARMACY_BILLING),
       },
     ],
-    [navigation]
+    [navigation],
   );
 
   // ── Drawer menu sections ──
@@ -229,7 +230,7 @@ const PatientDashboard = ({ navigation }) => {
       closeMenu();
       setTimeout(() => navigation.navigate(screen, params), 100);
     },
-    [navigation, closeMenu]
+    [navigation, closeMenu],
   );
 
   const menuSections = useMemo(
@@ -326,10 +327,8 @@ const PatientDashboard = ({ navigation }) => {
         ],
       },
     ],
-    [nav]
+    [nav],
   );
-
-  const healthStatus = useMemo(() => getHealthStatus(), [getHealthStatus]);
 
   if (authLoading && !user) {
     return (
@@ -392,10 +391,10 @@ const PatientDashboard = ({ navigation }) => {
             loadingMetrics={loadingMetrics}
             status={healthStatus.status}
             riskScore={healthStatus.riskScore}
-            bp={formatBP()}
-            sugar={formatSugar()}
-            temp={formatTemp()}
-            lastUpdated={getLastUpdateTime()}
+            bp={bp}
+            sugar={sugar}
+            temp={temp}
+            lastUpdated={lastUpdated}
             onPress={() => navigation.navigate(Routes.PATIENT.HEALTH_METRICS)}
           />
 
@@ -430,8 +429,6 @@ const PatientDashboard = ({ navigation }) => {
       <DrawerMenu
         visible={menuVisible}
         onClose={closeMenu}
-        slideAnim={slideAnim}
-        drawerWidth={drawerWidth}
         user={user}
         role="Patient"
         menuSections={menuSections}

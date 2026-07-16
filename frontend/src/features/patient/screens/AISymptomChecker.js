@@ -36,9 +36,7 @@ import {
   Button,
   Card,
   EmptyState,
-  ErrorRecovery,
   Input,
-  NetworkStatusIndicator,
   SectionHeader,
 } from "@/components/common";
 import { AIIcon } from "@/components/common/CustomIcons";
@@ -284,22 +282,8 @@ const AISymptomChecker = ({ navigation }) => {
     queryClient.removeQueries({ queryKey: analysisQueryKey });
   }, [analysisQueryKey, queryClient]);
 
-  const handleRetry = useCallback(() => {
-    setScreenError(null);
-    setValidationMessage("");
-  }, []);
-
   if (screenError && !results) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={screenError}
-          onRetry={handleRetry}
-          onDismiss={() => setScreenError(null)}
-        />
-      </SafeAreaView>
-    );
+    throw new Error(screenError || "Unknown Error");
   }
 
   return (
@@ -308,7 +292,6 @@ const AISymptomChecker = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.card}
       />
-      <NetworkStatusIndicator />
 
       <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}

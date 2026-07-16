@@ -25,7 +25,10 @@ const resolvePolicy = (req) => {
 
   if (
     path.startsWith("/api/auth/sign-in") ||
-    path.startsWith("/api/auth/sign-up")
+    path.startsWith("/api/auth/sign-up") ||
+    path.startsWith("/api/auth/forgot-password") ||
+    path.startsWith("/api/auth/reset-password") ||
+    path.startsWith("/api/auth/change-password")
   ) {
     return {
       scope: "auth",
@@ -92,7 +95,10 @@ const tieredRateLimit = async (req, res, next) => {
     const path = req.path || req.originalUrl || "";
     if (
       path.startsWith("/api/auth/sign-in") ||
-      path.startsWith("/api/auth/sign-up")
+      path.startsWith("/api/auth/sign-up") ||
+      path.startsWith("/api/auth/forgot-password") ||
+      path.startsWith("/api/auth/reset-password") ||
+      path.startsWith("/api/auth/change-password")
     ) {
       logger.error(
         `Rate limiter critical error on auth endpoint: ${error.message}`,

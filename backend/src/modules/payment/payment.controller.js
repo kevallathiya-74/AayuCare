@@ -18,7 +18,7 @@ const { invalidateByPatterns, PAYMENT_CACHE_PATTERNS } = require('../../utils/ca
  */
 exports.createPayment = async (req, res, next) => {
   try {
-    const { prescriptionId, amount, paymentMethod, purchaseType } = req.body;
+    const { appointmentId, amount, paymentMethod, purchaseType } = req.body;
     const patientId = req.user?.id;
     const hospitalId = req.hospitalId;
 
@@ -31,14 +31,11 @@ exports.createPayment = async (req, res, next) => {
     }
 
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount)) {
-      return next(new AppError("Amount must be a valid number", 400));
-    }
-    if (parsedAmount <= 0) {
-      return next(new AppError("Amount must be greater than zero", 400));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return next(new AppError("Amount must be a valid number greater than zero", 400));
     }
 
-    const validMethods = ["card", "upi", "cash", "netbanking", "wallet"];
+    const validMethods = ["card", "upi", "cash", "netbanking", "wallet", "online"];
     if (!validMethods.includes(paymentMethod)) {
       return next(
         new AppError(
@@ -48,8 +45,19 @@ exports.createPayment = async (req, res, next) => {
       );
     }
 
-    const paymentId = crypto.randomUUID();
+    // Must fetch appointment to get doctorId since payments table requires it
+    const appointmentRepository = require("../appointment/appointment.repository");
+    const appointment = await appointmentRepository.findById(appointmentId);
+    if (!appointment) {
+      return next(new AppError("Appointment not found", 404));
+    }
+    
+    // Ensure patient owns this appointment
+    if (appointment.patientId !== patientId && req.user.role !== "admin") {
+      return next(new AppError("Not authorized to pay for this appointment", 403));
+    }
 
+    const paymentId = crypto.randomUUID();
     const isGatewayEnabled = process.env.PAYMENT_GATEWAY_ENABLED === "true";
 
     if (!isGatewayEnabled) {
@@ -57,25 +65,23 @@ exports.createPayment = async (req, res, next) => {
         success: true,
         status: "success",
         message: "Online payment is not active. Please pay at the clinic counter.",
-
         data: {
           paymentMode: "offline",
           instructions: "Show your appointment ID at the billing counter.",
-          appointmentId: req.body?.appointmentId || null,
-          prescriptionId: req.body?.prescriptionId || null,
+          appointmentId: appointment.id,
         }
       });
     }
 
     const paymentData = {
       paymentId,
+      appointmentId: appointment.id,
       patientId,
+      doctorId: appointment.doctorId,
       amount: parsedAmount,
       currency: "INR",
       paymentMethod,
       status: paymentMethod === "cash" ? "pending" : "completed",
-      ...(prescriptionId && { prescriptionId }),
-      ...(purchaseType && { purchaseType }),
     };
 
     const payment = await paymentRepository.create(paymentData);

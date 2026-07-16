@@ -5,13 +5,11 @@ const { protect, authorize, optionalAuth } = require("../../middleware/auth");
 const { attachHospitalId } = require("../../middleware/hospitalMiddleware");
 const { validateBody, validateParams } = require("../../middleware/validation");
 const {
-  validateUpdateAppointmentStatus,
-} = require("../../validators/appointmentValidator");
-const {
   updateDoctorProfileSchema,
   walkInPatientSchema,
   scheduleUpdateSchema,
   scheduleParamsSchema,
+  updateAppointmentSchema,
 } = require("../../validators/schemas");
 const {
   cacheDoctorList,
@@ -67,7 +65,7 @@ router.patch(
   protect,
   attachHospitalId,
   authorize("doctor"),
-  validateUpdateAppointmentStatus,
+  validateBody(updateAppointmentSchema),
   doctorController.updateAppointmentStatus,
 );
 

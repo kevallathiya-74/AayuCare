@@ -87,7 +87,7 @@ const AdminHomeScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
   const canUseNotifications = false;
 
-  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
+  const { menuVisible, openMenu, closeMenu } =
     useDrawer();
   const { refreshCount } = useAdminAppointments();
 
@@ -624,8 +624,6 @@ const AdminHomeScreen = ({ navigation }) => {
       <DrawerMenu
         visible={menuVisible}
         onClose={closeMenu}
-        slideAnim={slideAnim}
-        drawerWidth={drawerWidth}
         user={user}
         role="Admin"
         menuSections={menuSections}

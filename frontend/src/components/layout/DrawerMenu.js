@@ -1,17 +1,12 @@
 /**
  * AayuCare - DrawerMenu Component
  *
- * Shared animated slide-in drawer used across Patient, Doctor, and Admin dashboards.
- * Accepts configurable menu sections so each role can supply its own nav links.
- *
  * Props:
  *   visible      — boolean
  *   onClose      — function
- *   slideAnim    — Animated.Value (from useDrawer)
- *   drawerWidth  — number
  *   user         — auth user object
  *   role         — "patient" | "doctor" | "admin"
- *   menuSections — Array<{ title: string, items: Array<{ icon, iconColor, label, onPress }> }>
+ *   menuSections — Array<{ title: string, items: Array }>
  *   onLogout     — function
  */
 
@@ -21,10 +16,10 @@ import {
   Text,
   Modal,
   Pressable,
-  Animated,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  SafeAreaView,
 } from "react-native";
 import { X, ChevronRight, LogOut } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,8 +42,6 @@ const ROLE_LABELS = {
 const DrawerMenu = ({
   visible,
   onClose,
-  slideAnim,
-  drawerWidth,
   user,
   role = "patient",
   menuSections = [],
@@ -80,17 +73,9 @@ const DrawerMenu = ({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.overlay}>
-        {/* Tap-outside to close */}
+      <SafeAreaView style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
-        {/* Drawer panel */}
-        <Animated.View
-          style={[
-            styles.drawer,
-            { width: drawerWidth, transform: [{ translateX: slideAnim }] },
-          ]}
-        >
+        <View style={styles.drawer}>
           {/* Header */}
           <LinearGradient
             colors={[healthColors.primary.main, healthColors.primary.dark]}
@@ -206,8 +191,8 @@ const DrawerMenu = ({
             {/* Bottom spacer */}
             <View style={styles.bottomSpacer} />
           </ScrollView>
-        </Animated.View>
-      </View>
+        </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -219,6 +204,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   drawer: {
+    width: "75%",
     height: "100%",
     backgroundColor: healthColors.background.primary,
     ...theme.shadows.xl,

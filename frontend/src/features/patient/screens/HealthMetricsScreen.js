@@ -38,10 +38,8 @@ import { getScreenPadding, verticalScale } from "@/utils/responsive";
 import {
   Button,
   Card,
-  ErrorRecovery,
   Input,
   ModalSheet,
-  NetworkStatusIndicator,
   SectionHeader,
   SkeletonCardRow,
   SkeletonStatGrid,
@@ -50,7 +48,6 @@ import {
   showError,
   showSuccess,
   logError,
-  parseError,
 } from "@/utils/errorHandler";
 import { useNetworkStatus } from "@/utils/offlineHandler";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -536,6 +533,10 @@ const HealthMetricsScreen = ({ navigation }) => {
     [latestMetricMap, openAddModal]
   );
 
+  if (isError) {
+    throw error || new Error("Unknown Error");
+  }
+
   if (isLoading && !isRefetching) {
     return (
       <SafeAreaView
@@ -585,7 +586,6 @@ const HealthMetricsScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.card}
       />
-      <NetworkStatusIndicator />
 
       <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
@@ -609,13 +609,7 @@ const HealthMetricsScreen = ({ navigation }) => {
         <View style={styles.headerPlaceholder} />
       </View>
 
-      {isError ? (
-        <ErrorRecovery
-          error={parseError(error)}
-          onRetry={handleRefresh}
-          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
-        />
-      ) : (
+
         <FlatList
           data={METRIC_TYPES}
           keyExtractor={(item) => item.key}
@@ -675,7 +669,6 @@ const HealthMetricsScreen = ({ navigation }) => {
           initialNumToRender={5}
           showsVerticalScrollIndicator={false}
         />
-      )}
 
       <ModalSheet
         visible={modalVisible}

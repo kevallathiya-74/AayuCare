@@ -1,4 +1,5 @@
 const { query } = require("../../config/postgres");
+const { mapPaymentData, mapArray } = require("../../utils/fieldMapper");
 const { AppError } = require("../../middleware/errorHandler");
 
 /**
@@ -66,7 +67,7 @@ class PaymentRepository {
       paymentMethod || null,
     ]);
 
-    return result.rows[0];
+    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
   }
 
   /**
@@ -88,7 +89,7 @@ class PaymentRepository {
         `;
 
     const result = await query(sql, [id]);
-    return result.rows[0] || null;
+    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
   }
 
   /**
@@ -104,7 +105,7 @@ class PaymentRepository {
         `;
 
     const result = await query(sql, [appointmentId]);
-    return result.rows[0] || null;
+    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
   }
 
   /**
@@ -138,7 +139,7 @@ class PaymentRepository {
       `${sql} ORDER BY p.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
-    return result.rows;
+    return mapArray(result.rows, mapPaymentData);
   }
 
   /**
@@ -208,7 +209,7 @@ class PaymentRepository {
         `;
 
     const result = await query(sql, values);
-    return result.rows[0];
+    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
   }
 
   /**
@@ -258,7 +259,7 @@ class PaymentRepository {
     }
 
     const result = await query(sql, params);
-    return result.rows[0];
+    return mapPaymentData(result.rows[0]);
   }
 }
 

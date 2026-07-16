@@ -37,13 +37,12 @@ import {
 import { theme, healthColors } from "@/theme";
 import { verticalScale, getScreenPadding } from "@/utils/responsive";
 import {
-  ErrorRecovery,
-  NetworkStatusIndicator,
+  
   SkeletonCardRow,
   EmptyState,
   Card,
 } from "@/components/common";
-import { parseError } from "@/utils/errorHandler";
+import {} from "@/utils/errorHandler";
 import { formatCurrency } from "@/utils/helpers";
 import { doctorService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -148,7 +147,6 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     isLoading: loading,
     isRefetching,
     isError,
-    error,
     refetch,
   } = useQuery({
     queryKey: queryKeys.doctors.list({
@@ -187,9 +185,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
     await refetch();
   }, [refetch]);
 
-  const handleRetry = () => {
-    refetch();
-  };
+  
 
   const renderDoctorCard = (doctor) => (
     <Card key={doctor.id} style={styles.doctorCard}>
@@ -317,20 +313,7 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
   );
 
   if (isError) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor={healthColors.background.primary}
-        />
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={parseError(error)}
-          onRetry={handleRetry}
-          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
-        />
-      </SafeAreaView>
-    );
+    throw new Error("Unknown Error");
   }
 
   return (
@@ -339,7 +322,6 @@ const SpecialistCareFinderScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
       />
-      <NetworkStatusIndicator />
 
       {/* Header */}
       <View style={styles.header}>

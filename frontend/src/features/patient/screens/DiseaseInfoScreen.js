@@ -40,9 +40,7 @@ import {
   Button,
   Card,
   EmptyState,
-  ErrorRecovery,
   Input,
-  NetworkStatusIndicator,
   SectionHeader,
 } from "@/components/common";
 import { getScreenPadding } from "@/utils/responsive";
@@ -347,21 +345,8 @@ const DiseaseInfoScreen = ({ navigation }) => {
     setDetailVisible(false);
   }, []);
 
-  const handleRetry = useCallback(() => {
-    setScreenError(null);
-  }, []);
-
   if (screenError) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={screenError}
-          onRetry={handleRetry}
-          onDismiss={() => setScreenError(null)}
-        />
-      </SafeAreaView>
-    );
+    throw new Error(screenError || "Unknown Error");
   }
 
   return (
@@ -370,7 +355,6 @@ const DiseaseInfoScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.card}
       />
-      <NetworkStatusIndicator />
 
       <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
