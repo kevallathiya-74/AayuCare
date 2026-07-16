@@ -2,8 +2,6 @@ const crypto = require("crypto");
 const { checkRateLimit } = require("../config/cache");
 const logger = require("../utils/logger");
 const { APP_ENV } = require("../config/env");
-const { sendError } = require("../utils/apiResponse");
-
 const buildIdentifier = (req) => {
   if (req.user?.id) {
     return `user:${req.user.id}`;
@@ -81,12 +79,7 @@ const tieredRateLimit = async (req, res, next) => {
 
     if (!result.allowed) {
       res.setHeader("Retry-After", String(result.resetInSeconds));
-      return sendError(
-        res,
-        429,
-        "Too many requests. Please wait before trying again.",
-        "RATE_LIMIT_EXCEEDED",
-      );
+      return res.status(429).json({ success: false, message: "Too many requests. Please wait before trying again.", code: "RATE_LIMIT_EXCEEDED" });
     }
 
     return next();
@@ -103,12 +96,7 @@ const tieredRateLimit = async (req, res, next) => {
       logger.error(
         `Rate limiter critical error on auth endpoint: ${error.message}`,
       );
-      return sendError(
-        res,
-        503,
-        "Authentication service temporarily unavailable",
-        "AUTH_SERVICE_UNAVAILABLE",
-      );
+      return res.status(503).json({ success: false, message: "Authentication service temporarily unavailable", code: "AUTH_SERVICE_UNAVAILABLE" });
     }
     logger.warn(`Rate limiter fallback (fail-open): ${error.message}`);
     return next();

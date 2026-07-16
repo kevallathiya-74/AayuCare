@@ -5,63 +5,48 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  Modal,
-  ActivityIndicator,
-  Platform,
-} from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import {
-  CheckCircle,
-  ArrowLeft,
-  Save,
-  XCircle,
-  PlusCircle,
-  Calendar,
-  ChevronRight,
-} from "lucide-react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal, ActivityIndicator, Platform, Alert } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { CheckCircle, ArrowLeft, Save, XCircle, PlusCircle, Calendar, ChevronRight } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { verticalScale, getScreenPadding } from "@/utils/responsive";
-import { patientService, doctorService } from "@/services";
+import { patientService, doctorService, prescriptionService } from "@/services";
 import { formatCurrency } from "@/utils/helpers";
-import { SkeletonCardRow, Input, EmptyState } from "@/components/common";
-import { DynamicIcon } from "@/components/common";
+import { SkeletonCardRow, Input, EmptyState, DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
+import Routes from "@/navigation/routes";
 import { useTranslation } from "react-i18next";
-import usePrescriptionForm from "@/hooks/usePrescriptionForm";
 import AddMedicineModal from "./AddMedicineModal";
+import { logError } from "@/utils/errorHandler";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
   const { user } = useAuth((state) => state.auth);
   const { patientId, appointmentId } = route.params || {};
   const insets = useSafeAreaInsets();
-
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || null);
 
-  useEffect(() => {
-    if (patientId) {
-      setSelectedPatientId(patientId);
-    }
-  }, [patientId]);
+  const [saving, setSaving] = useState(false);
+  const [medications, setMedications] = useState([]);
+  const [diagnosis, setDiagnosis] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [nextVisitDate, setNextVisitDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [sendOptions, setSendOptions] = useState({ patientApp: true, hospitalPharmacy: true, externalPharmacy: false });
+  const [showAddMedicine, setShowAddMedicine] = useState(false);
+  
+  const estimatedCost = medications.reduce((total, med) => total + (med.unitPrice || 50) * (parseInt(med.duration) || 5), 0);
+  const discount = 15;
+  const finalCost = estimatedCost - (estimatedCost * discount) / 100;
+
+  useEffect(() => { if (patientId) setSelectedPatientId(patientId); }, [patientId]);
 
   const { data: patient, isLoading: loading } = useQuery({
     queryKey: queryKeys.patients.detail(selectedPatientId || "none"),
-    enabled:
-      !!selectedPatientId &&
-      (user?.role === "doctor" || user?.role === "admin"),
+    enabled: !!selectedPatientId && (user?.role === "doctor" || user?.role === "admin"),
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const response = await patientService.getPatientById(selectedPatientId);
@@ -70,15 +55,8 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     },
   });
 
-  const {
-    data: patientOptions = [],
-    isLoading: loadingPatients,
-    refetch: refetchPatientOptions,
-  } = useQuery({
-    queryKey: queryKeys.patients.list({
-      scope: "prescription-patient-options",
-      doctorId: user?.id,
-    }),
+  const { data: patientOptions = [], isLoading: loadingPatients } = useQuery({
+    queryKey: queryKeys.patients.list({ scope: "prescription-patient-options", doctorId: user?.id }),
     staleTime: 5 * 60 * 1000,
     enabled: !!user?.id && (user?.role === "doctor" || user?.role === "admin"),
     queryFn: async () => {
@@ -87,76 +65,58 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         isDoctor ? doctorService.searchMyPatients("") : Promise.resolve([]),
         patientService.getAllPatients({}),
       ]);
-
-      const doctorLinkedVal =
-        doctorLinkedResult.status === "fulfilled"
-          ? doctorLinkedResult.value
-          : null;
-      const doctorLinkedPatients = Array.isArray(doctorLinkedVal)
-        ? doctorLinkedVal
-        : Array.isArray(doctorLinkedVal?.data)
-          ? doctorLinkedVal.data
-          : doctorLinkedVal?.data?.patients ||
-            doctorLinkedVal?.data?.data ||
-            doctorLinkedVal?.patients ||
-            [];
-
-      const allPatientsVal =
-        allPatientsResult.status === "fulfilled"
-          ? allPatientsResult.value
-          : null;
-      const allPatients = Array.isArray(allPatientsVal)
-        ? allPatientsVal
-        : Array.isArray(allPatientsVal?.data)
-          ? allPatientsVal.data
-          : allPatientsVal?.data?.patients ||
-            allPatientsVal?.data?.data ||
-            allPatientsVal?.patients ||
-            [];
-
-      const merged = [...doctorLinkedPatients, ...allPatients].filter(Boolean);
-      const uniquePatients = Array.from(
-        new Map(
-          merged.map((entry) => {
-            const uniqueId = entry?.id || entry?.userId;
-            return [uniqueId, entry];
-          }),
-        ).values(),
-      );
-
-      return uniquePatients.filter((entry) => entry?.id || entry?.userId);
+      const merged = [...(doctorLinkedResult.value?.data || doctorLinkedResult.value || []), ...(allPatientsResult.value?.data || allPatientsResult.value || [])];
+      return Array.from(new Map(merged.map(e => [e?.id || e?.userId, e])).values()).filter(e => e?.id || e?.userId);
     },
   });
 
-  const {
-    saving,
-    medications,
-    diagnosis,
-    setDiagnosis,
-    instructions,
-    setInstructions,
-    nextVisitDate,
-    showDatePicker,
-    setShowDatePicker,
-    sendOptions,
-    showAddMedicine,
-    setShowAddMedicine,
-    estimatedCost,
-    discount,
-    finalCost,
-    handleDatePickerChange,
-    handleClearDate,
-    handleAddMedicine,
-    addMedicine,
-    removeMedicine,
-    toggleSendOption,
-    handleSavePrescription,
-  } = usePrescriptionForm({
-    patient,
-    appointmentId,
-    navigation,
-    refetchPatientOptions,
-  });
+  const handleDatePickerChange = (_event, date) => {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (date) setNextVisitDate(date);
+  };
+  const handleClearDate = () => setNextVisitDate(null);
+  const handleAddMedicine = () => setShowAddMedicine(true);
+  const addMedicine = (med) => { setMedications(p => [...p, med]); setShowAddMedicine(false); };
+  const removeMedicine = (id) => setMedications(p => p.filter(m => m.id !== id));
+  const toggleSendOption = (opt) => setSendOptions(p => ({ ...p, [opt]: !p[opt] }));
+
+  const handleSavePrescription = async () => {
+    if (saving) return;
+    if (!medications.length) return Alert.alert("Error", "Please add at least one medicine");
+    if (!patient?.id && !patient?.userId) return Alert.alert("Patient Required", "Please select a patient.");
+    if (nextVisitDate && new Date(nextVisitDate).setHours(0,0,0,0) < new Date().setHours(0,0,0,0)) return Alert.alert("Invalid Date", "Next visit date must be today or a future date.");
+
+    setSaving(true);
+    try {
+      const response = await prescriptionService.createPrescription({
+        patientId: patient.id || patient.userId,
+        appointmentId,
+        diagnosis: diagnosis.trim() || undefined,
+        medications: medications.map(med => {
+          const timingKeys = ["morning", "afternoon", "evening"].filter(t => med.timings?.[t]);
+          const derivedFrequency = timingKeys.length > 0 ? timingKeys.join(", ") : med.frequency || "morning, evening";
+          return {
+            name: med.name, dosage: med.dosage, frequency: derivedFrequency,
+            duration: med.duration, instructions: med.instructions || "", unitPrice: med.unitPrice, price: med.unitPrice,
+          };
+        }),
+        instructions: instructions.trim() || undefined,
+        followUpDate: nextVisitDate ? `${nextVisitDate.getFullYear()}-${String(nextVisitDate.getMonth() + 1).padStart(2, "0")}-${String(nextVisitDate.getDate()).padStart(2, "0")}` : undefined,
+        sendOptions,
+      });
+
+      if (response?.success) {
+        Alert.alert("Prescription Saved", "Prescription has been saved successfully.", [{ text: "OK", onPress: () => handleSmartBack(navigation, Routes.TABS.DOCTOR) }]);
+      } else {
+        Alert.alert("Error", response?.message || "Failed to save prescription");
+      }
+    } catch (err) {
+      logError(err, { context: "EnhancedPrescriptionScreen.handleSavePrescription" });
+      Alert.alert("Error", "Unable to save prescription. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // User-friendly display: e.g. "15 Mar 2026"
   const formatDateDisplay = (date) => {
@@ -246,7 +206,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => handleSmartBack(navigation, "DoctorTabs")}
+          onPress={() => handleSmartBack(navigation, Routes.TABS.DOCTOR)}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"

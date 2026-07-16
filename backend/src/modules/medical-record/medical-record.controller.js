@@ -1,4 +1,3 @@
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 const medicalRecordRepository = require("./medical-record.repository");
 const userRepository = require("../auth/user.repository");
 const { AppError } = require("../../middleware/errorHandler");
@@ -259,7 +258,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       !isOwnData
     ) {
-      return sendError(res, 403, "Not authorized to view these medical records", "FORBIDDEN", []);
+      return res.status(403).json({ success: false, message: "Not authorized to view these medical records", code: "FORBIDDEN" });
     }
 
     // Find patient by UUID or custom userId (e.g. "PAT001")
@@ -276,7 +275,7 @@ exports.getPatientMedicalRecords = async (req, res, next) => {
       }
     }
     if (!patient) {
-      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
     }
 
     // Build query
@@ -530,7 +529,7 @@ exports.getPatientHistory = async (req, res, next) => {
       totalRecords: medicalRecords.length,
     };
 
-    return sendSuccess(res, 200, "Patient history retrieved successfully", history);
+    return res.status(200).json({ success: true, message: "Patient history retrieved successfully", data: history });
   } catch (error) {
     next(error);
   }

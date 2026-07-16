@@ -63,7 +63,9 @@ describe("AppointmentRepository", () => {
         patient_id: "pat-123",
       };
 
-      query.mockResolvedValueOnce({ rows: [mockDbRow], rowCount: 1 });
+      query
+        .mockResolvedValueOnce({ rows: [mockDbRow], rowCount: 1 })
+        .mockResolvedValueOnce({ rows: [{ count: "1" }], rowCount: 1 });
 
       const result = await repository.findByPatient("pat-123", {});
 

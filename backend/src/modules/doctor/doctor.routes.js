@@ -1,6 +1,5 @@
 const express = require("express");
 const doctorController = require("./doctor.controller");
-const { sendError } = require("../../utils/apiResponse");
 const { protect, authorize, optionalAuth } = require("../../middleware/auth");
 const { attachHospitalId } = require("../../middleware/hospitalMiddleware");
 const { validateBody, validateParams } = require("../../middleware/validation");
@@ -85,12 +84,7 @@ router.get(
       if (req.user?.hospitalId) {
         req.query.hospitalId = req.user.hospitalId;
       } else {
-        return sendError(
-          res,
-          400,
-          "hospitalId query parameter is required",
-          "VALIDATION_ERROR",
-        );
+        return res.status(400).json({ success: false, message: "hospitalId query parameter is required", code: "VALIDATION_ERROR" });
       }
     }
     next();

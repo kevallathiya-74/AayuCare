@@ -1,4 +1,3 @@
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 const appointmentService = require("../appointment/appointment.service");
 const notificationService = require("../notification/notification.service");
 const doctorRepository = require("../doctor/doctor.repository");
@@ -94,7 +93,7 @@ exports.getAllAppointmentsCursor = async (req, res, next) => {
 
     const result = await appointmentService.getAllAppointmentsCursor(filters);
 
-    return sendSuccess(res, 200, "Appointments retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Appointments retrieved successfully", data: result });
   } catch (error) {
     next(error);
   }
@@ -158,7 +157,7 @@ exports.getAppointmentsCursor = async (req, res, next) => {
       return next(new AppError("Not authorized to view appointments", 403));
     }
 
-    return sendSuccess(res, 200, "Appointments retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Appointments retrieved successfully", data: result });
   } catch (error) {
     next(error);
   }
@@ -176,7 +175,7 @@ exports.getAllAppointments = async (req, res, next) => {
 
     const result = await appointmentService.getAllAppointments(filters);
 
-    return sendSuccess(res, 200, "Appointments retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Appointments retrieved successfully", data: result });
   } catch (error) {
     next(error);
   }
@@ -258,7 +257,7 @@ exports.getAppointments = async (req, res, next) => {
       };
     }
 
-    return sendSuccess(res, 200, "Appointments retrieved successfully", responseData);
+    return res.status(200).json({ success: true, message: "Appointments retrieved successfully", data: responseData });
   } catch (error) {
     next(error);
   }
@@ -455,7 +454,7 @@ exports.getAvailableSlots = async (req, res, next) => {
       date,
     );
 
-    return sendSuccess(res, 200, "Available slots retrieved successfully", slots);
+    return res.status(200).json({ success: true, message: "Available slots retrieved successfully", data: slots });
   } catch (error) {
     next(error);
   }
@@ -502,7 +501,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     const isOwnData =
       req.user.userId === patientId || req.user.id === patientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return sendError(res, 403, "Not authorized to view these appointments", "FORBIDDEN", []);
+      return res.status(403).json({ success: false, message: "Not authorized to view these appointments", code: "FORBIDDEN" });
     }
 
     // Find patient by either userId or _id (UUID format)
@@ -519,7 +518,7 @@ exports.getPatientAppointments = async (req, res, next) => {
     }
 
     if (!patient || patient.role !== "patient") {
-      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
     }
 
     // Build filters for appointments

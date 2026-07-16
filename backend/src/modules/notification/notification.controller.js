@@ -1,4 +1,3 @@
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 /**
  * Notification Controller
  * Handles notification CRUD operations and user notifications
@@ -104,13 +103,13 @@ exports.markAsRead = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Invalid user context for notifications", code: "VALIDATION_ERROR" });
     }
 
     const notification = await notificationRepository.findById(id);
 
     if (!notification || notification.userId !== userId) {
-      return sendError(res, 404, "Notification not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Notification not found", code: "NOT_FOUND" });
     }
 
     await notificationRepository.markAsRead(id, userId);
@@ -126,7 +125,7 @@ exports.markAsRead = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, 200, "Notification marked as read", updatedNotification);
+    return res.status(200).json({ success: true, message: "Notification marked as read", data: updatedNotification });
   } catch (error) {
     logger.error("Mark as read error:", {
       error: error.message,
@@ -146,7 +145,7 @@ exports.markAllAsRead = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Invalid user context for notifications", code: "VALIDATION_ERROR" });
     }
 
     const result = await notificationRepository.markAllAsRead(userId);
@@ -185,13 +184,13 @@ exports.deleteNotification = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Invalid user context for notifications", code: "VALIDATION_ERROR" });
     }
 
     const result = await notificationRepository.delete(id, userId);
 
     if (!result) {
-      return sendError(res, 404, "Notification not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Notification not found", code: "NOT_FOUND" });
     }
 
     // Invalidate relevant caches after notification deletion
@@ -227,7 +226,7 @@ exports.clearAllNotifications = async (req, res, next) => {
     const userId = resolveUserId(req);
 
     if (!userId) {
-      return sendError(res, 400, "Invalid user context for notifications", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Invalid user context for notifications", code: "VALIDATION_ERROR" });
     }
 
     const result = await notificationRepository.deleteAllForUser(userId);
@@ -267,13 +266,13 @@ exports.createNotification = async (req, res, next) => {
 
     // Validate required fields
     if (!userId || typeof userId !== "string" || !userId.trim()) {
-      return sendError(res, 400, "userId is required", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "userId is required", code: "VALIDATION_ERROR" });
     }
     if (!title || typeof title !== "string" || !title.trim()) {
-      return sendError(res, 400, "title is required", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "title is required", code: "VALIDATION_ERROR" });
     }
     if (!message || typeof message !== "string" || !message.trim()) {
-      return sendError(res, 400, "message is required", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "message is required", code: "VALIDATION_ERROR" });
     }
 
     const notification = await notificationRepository.create({
@@ -296,7 +295,7 @@ exports.createNotification = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, 201, "Notification created successfully", notification);
+    return res.status(201).json({ success: true, message: "Notification created successfully", data: notification });
   } catch (error) {
     logger.error("Create notification error:", { error: error.message });
     next(error);
@@ -314,15 +313,15 @@ exports.broadcastNotification = async (req, res, next) => {
       req.body;
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
-      return sendError(res, 400, "Please provide an array of user IDs", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Please provide an array of user IDs", code: "VALIDATION_ERROR" });
     }
 
     if (userIds.length > 1000) {
-      return sendError(res, 400, "Cannot broadcast to more than 1000 recipients per request", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Cannot broadcast to more than 1000 recipients per request", code: "VALIDATION_ERROR" });
     }
 
     if (!title || !message) {
-      return sendError(res, 400, "title and message are required", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "title and message are required", code: "VALIDATION_ERROR" });
     }
 
     const hospitalId = req.hospitalId || req.user?.hospitalId;

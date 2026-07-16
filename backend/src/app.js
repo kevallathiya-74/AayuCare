@@ -8,7 +8,6 @@ const { tieredRateLimit } = require("./middleware/rateLimit");
 const logger = require("./utils/logger");
 const { getAuth } = require("./lib/auth");
 const { query } = require("./config/postgres");
-const { sendSuccess, sendError } = require("./utils/apiResponse");
 const { registerModules } = require("./modules");
 const { toNodeHandler } = require("better-auth/node");
 
@@ -67,7 +66,7 @@ app.all("/api/auth/*", (req, res, next) => {
     const auth = getAuth();
     return toNodeHandler(auth)(req, res, next);
   } catch {
-    return sendError(res, 500, "Authentication service unavailable", "AUTH_SERVICE_UNAVAILABLE");
+    return res.status(500).json({ success: false, message: "Authentication service unavailable", code: "AUTH_SERVICE_UNAVAILABLE" });
   }
 });
 
@@ -79,7 +78,7 @@ app.set("etag", false);
 registerModules(app);
 
 app.get("/api", (req, res) => {
-  return sendSuccess(res, 200, "Welcome to AayuCare API", {
+  return res.status(200).json({ success: true, message: "Welcome to AayuCare API", data: {
     version: "1.0.0",
     endpoints: {
       health: "/api/health",
@@ -88,7 +87,7 @@ app.get("/api", (req, res) => {
       doctors: "/api/v1/doctors",
       medicalRecords: "/api/v1/medical-records",
     },
-  });
+  } });
 });
 
 app.get("/api/health", async (req, res) => {
@@ -123,14 +122,14 @@ app.get("/api/health", async (req, res) => {
   };
 
   if (criticalDependenciesHealthy) {
-    return sendSuccess(res, 200, "AayuCare Backend Server health status", data);
+    return res.status(200).json({ success: true, message: "AayuCare Backend Server health status", data: data });
   } else {
-    return sendError(res, 503, "AayuCare Backend Server health status", "HEALTH_CHECK_FAILED", [data]);
+    return res.status(503).json({ success: false, message: "AayuCare Backend Server health status", code: "HEALTH_CHECK_FAILED", errors: [data] });
   }
 });
 
 app.get("/api/livez", (req, res) => {
-  return sendSuccess(res, 200, "Process is alive", { status: "alive" });
+  return res.status(200).json({ success: true, message: "Process is alive", data: { status: "alive" } });
 });
 
 app.get("/api/readyz", async (req, res) => {
@@ -152,21 +151,21 @@ app.get("/api/readyz", async (req, res) => {
   };
 
   if (ready) {
-    return sendSuccess(res, 200, "Service is ready", data);
+    return res.status(200).json({ success: true, message: "Service is ready", data: data });
   } else {
-    return sendError(res, 503, "Service is not ready", "READINESS_CHECK_FAILED", [data]);
+    return res.status(503).json({ success: false, message: "Service is not ready", code: "READINESS_CHECK_FAILED", errors: [data] });
   }
 });
 
 app.get("/", (req, res) => {
-  return sendSuccess(res, 200, "Welcome to AayuCare API", {
+  return res.status(200).json({ success: true, message: "Welcome to AayuCare API", data: {
     version: "1.0.0",
     documentation: "/api/docs",
-  });
+  } });
 });
 
 app.all("*", (req, res) => {
-  return sendError(res, 404, `Can't find ${req.originalUrl} on this server!`, "NOT_FOUND");
+  return res.status(404).json({ success: false, message: `Can't find ${req.originalUrl} on this server!`, code: "NOT_FOUND" });
 });
 
 app.use(errorHandler);

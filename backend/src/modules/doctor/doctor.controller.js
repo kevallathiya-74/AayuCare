@@ -1,4 +1,3 @@
-const { sendSuccess, sendError } = require("../../utils/apiResponse");
 const doctorService = require("../doctor/doctor.service");
 const appointmentRepository = require("../appointment/appointment.repository");
 const prescriptionRepository = require("../prescription/prescription.repository");
@@ -103,7 +102,7 @@ exports.getDoctors = async (req, res, next) => {
 
     const result = await doctorService.getDoctors(filters);
 
-    return sendSuccess(res, 200, "Doctors retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Doctors retrieved successfully", data: result });
   } catch (error) {
     next(error);
   }
@@ -375,7 +374,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
     // Validate filter early - before any other work
     const allowedFilters = new Set(["all", "pending", "completed"]);
     if (!allowedFilters.has(normalizedFilter)) {
-      return sendError(res, 400, "Invalid filter. Allowed values: all, pending, completed", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Invalid filter. Allowed values: all, pending, completed", code: "VALIDATION_ERROR" });
     }
 
     const today = new Date();
@@ -703,7 +702,7 @@ exports.getPatientDetails = async (req, res, next) => {
     }
 
     if (!patientUser) {
-      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
     }
 
     const resolvedPatientId = patientUser.id;
@@ -714,7 +713,7 @@ exports.getPatientDetails = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       patientUser.hospital_id !== req.hospitalId
     ) {
-      return sendError(res, 403, "Not authorized to access this patient", "FORBIDDEN", []);
+      return res.status(403).json({ success: false, message: "Not authorized to access this patient", code: "FORBIDDEN" });
     }
 
     if (req.user.role === "doctor") {
@@ -726,14 +725,14 @@ exports.getPatientDetails = async (req, res, next) => {
         [req.user.id, resolvedPatientId],
       );
       if (hasRelationship.rows.length === 0) {
-        return sendError(res, 403, "Access denied — you do not have an appointment with this patient", "FORBIDDEN", []);
+        return res.status(403).json({ success: false, message: "Access denied — you do not have an appointment with this patient", code: "FORBIDDEN" });
       }
     }
 
     const dbPatient = await patientRepository.findByUserId(resolvedPatientId);
 
     if (!dbPatient) {
-      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
     }
 
     // Map patient data to camelCase format
@@ -850,13 +849,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       "no_show",
     ];
     if (!validStatuses.includes(normalizedStatus)) {
-      return sendError(res, 400, `Invalid status. Must be one of: ${validStatuses.join(", ")}`, "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`, code: "VALIDATION_ERROR" });
     }
 
     const appointment = await appointmentRepository.findById(id);
 
     if (!appointment || (appointment.doctorId !== doctorId && appointment.doctor_id !== doctorId)) {
-      return sendError(res, 404, "Appointment not found or unauthorized", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Appointment not found or unauthorized", code: "NOT_FOUND" });
     }
 
     const currentStatus = normalizeAppointmentStatus(
@@ -866,7 +865,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
 
     if (!allowedTransitions.includes(normalizedStatus)) {
-      return sendError(res, 400, `Cannot change status from ${currentStatus} to ${normalizedStatus}`, "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: `Cannot change status from ${currentStatus} to ${normalizedStatus}`, code: "VALIDATION_ERROR" });
     }
 
     const updateData = { status: normalizedStatus };
@@ -893,7 +892,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       newStatus: normalizedStatus,
     });
 
-    return sendSuccess(res, 200, "Appointment status updated", updatedAppointment);
+    return res.status(200).json({ success: true, message: "Appointment status updated", data: updatedAppointment });
   } catch (error) {
     logger.error("Update appointment status error:", {
       error: error.message,
@@ -1258,7 +1257,7 @@ exports.updateProfile = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, 200, "Profile Updated Successfully", doctor);
+    return res.status(200).json({ success: true, message: "Profile Updated Successfully", data: doctor });
   } catch (error) {
     logger.error("Update profile error:", {
       error: error.message,
@@ -1397,10 +1396,10 @@ exports.getSchedule = async (req, res, next) => {
         logger.warn("Failed to invalidate cache:", cacheError.message);
       }
 
-      return sendSuccess(res, 200, "Schedule retrieved successfully", created);
+      return res.status(200).json({ success: true, message: "Schedule retrieved successfully", data: created });
     }
 
-    return sendSuccess(res, 200, "Schedule retrieved successfully", schedules);
+    return res.status(200).json({ success: true, message: "Schedule retrieved successfully", data: schedules });
   } catch (error) {
     logger.error("Get schedule error:", {
       error: error.message,
@@ -1432,7 +1431,7 @@ exports.updateSchedule = async (req, res, next) => {
       "sunday",
     ];
     if (!validDays.includes(dayOfWeek.toLowerCase())) {
-      return sendError(res, 400, "Invalid day of week", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Invalid day of week", code: "VALIDATION_ERROR" });
     }
 
     // Find and update or create new schedule
@@ -1476,7 +1475,7 @@ exports.updateSchedule = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, 200, "Schedule updated successfully", schedule);
+    return res.status(200).json({ success: true, message: "Schedule updated successfully", data: schedule });
   } catch (error) {
     logger.error("Update schedule error:", {
       error: error.message,
@@ -1537,7 +1536,7 @@ exports.toggleDayAvailability = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return sendSuccess(res, 200, `${dayOfWeek} availability updated`, updatedSchedule);
+    return res.status(200).json({ success: true, message: `${dayOfWeek} availability updated`, data: updatedSchedule });
   } catch (error) {
     logger.error("Toggle availability error:", {
       error: error.message,
