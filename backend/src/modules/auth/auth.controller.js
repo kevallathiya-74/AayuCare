@@ -1,4 +1,3 @@
-const { sendSuccess } = require("../../utils/apiResponse");
 /**
  * AayuCare - Auth Controller
  * Custom endpoints extending Better Auth
@@ -19,7 +18,7 @@ exports.getEmailByUserId = async (req, res, next) => {
   try {
     const { userId } = req.body;
     const result = await authService.getEmailByUserId(userId);
-    return sendSuccess(res, 200, "User email retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "User email retrieved successfully", data: result });
   } catch (error) {
     logger.error("Error in getEmailByUserId", {
       error: error.message,
@@ -62,7 +61,7 @@ exports.getCurrentSession = async (req, res, next) => {
       "[auth.getCurrentSession] returning session identifier (not a Bearer token)",
     );
 
-    return sendSuccess(res, 200, "Session token retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Session token retrieved successfully", data: result });
   } catch (error) {
     logger.error("Error in getCurrentSession", {
       error: error.message,
@@ -89,7 +88,7 @@ exports.getSessionTokenByCredentials = async (req, res, next) => {
       password,
       requestInfo,
     );
-    return sendSuccess(res, 200, "Session token retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Session token retrieved successfully", data: result });
   } catch (error) {
     logger.error("Error in getSessionTokenByCredentials", {
       error: error.message,
@@ -109,7 +108,7 @@ exports.getProfileByEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
     const result = await authService.getProfileByEmail(email);
-    return sendSuccess(res, 200, "User profile retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "User profile retrieved successfully", data: result });
   } catch (error) {
     logger.error("Error in getProfileByEmail", {
       error: error.message,
@@ -128,7 +127,7 @@ exports.getProfileByEmail = async (req, res, next) => {
 exports.getMe = async (req, res, next) => {
   try {
     const result = await authService.getMe(req.user, req.session);
-    return sendSuccess(res, 200, "Current user retrieved successfully", result);
+    return res.status(200).json({ success: true, message: "Current user retrieved successfully", data: result });
   } catch (error) {
     next(error);
   }

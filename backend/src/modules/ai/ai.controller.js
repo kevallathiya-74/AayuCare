@@ -1,4 +1,3 @@
-const { sendError } = require("../../utils/apiResponse");
 /**
  * AI Controller
  * Handles AI-powered health analysis and recommendations
@@ -19,7 +18,7 @@ exports.analyzeSymptoms = async (req, res, next) => {
     const { symptoms = [], severity = "moderate" } = req.body;
 
     if (!symptoms || symptoms.length === 0) {
-      return sendError(res, 400, "Please provide at least one symptom", "VALIDATION_ERROR", []);
+      return res.status(400).json({ success: false, message: "Please provide at least one symptom", code: "VALIDATION_ERROR" });
     }
 
     // AI Analysis Logic (Simplified version - can integrate with OpenAI/Gemini)
@@ -78,7 +77,7 @@ exports.getHealthInsights = async (req, res, next) => {
     const isOwnData =
       req.user.id === safePatientId || req.user.userId === safePatientId;
     if (req.user.role !== "admin" && req.user.role !== "doctor" && !isOwnData) {
-      return sendError(res, 403, "Not authorized to view this data", "FORBIDDEN", []);
+      return res.status(403).json({ success: false, message: "Not authorized to view this data", code: "FORBIDDEN" });
     }
 
     // Get patient data - supports both UUID (users.id) and custom userId (users.user_id)
@@ -93,7 +92,7 @@ exports.getHealthInsights = async (req, res, next) => {
 
     // Verify it's actually a patient
     if (!patient || patient.role !== "patient") {
-      return sendError(res, 404, "Patient not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
     }
 
     // Get recent medical records using patient.id
@@ -349,15 +348,15 @@ exports.analyzeMedicalRecord = async (req, res, next) => {
     const record = await medicalRecordRepository.findById(recordId);
 
     if (!record) {
-      return sendError(res, 404, "Medical record not found", "NOT_FOUND", []);
+      return res.status(404).json({ success: false, message: "Medical record not found", code: "NOT_FOUND" });
     }
 
     if (req.user.role !== "doctor" && req.user.role !== "admin" && req.user.role !== "super_admin") {
-      return sendError(res, 403, "Only doctors and admins can analyze medical records", "FORBIDDEN", []);
+      return res.status(403).json({ success: false, message: "Only doctors and admins can analyze medical records", code: "FORBIDDEN" });
     }
 
     if (req.user.role === "doctor" && req.hospitalId && record.hospital_id !== req.hospitalId) {
-      return sendError(res, 403, "Not authorized to analyze this record", "FORBIDDEN", []);
+      return res.status(403).json({ success: false, message: "Not authorized to analyze this record", code: "FORBIDDEN" });
     }
 
     // Generate AI analysis

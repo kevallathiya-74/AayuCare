@@ -1,5 +1,4 @@
-import React from "react";
-import useDoctorForm from "@/hooks/useDoctorForm";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -10,12 +9,20 @@ import {
   KeyboardAvoidingView,
   TextInput,
   FlatList,
+  Alert,
 } from "react-native";
 import { X, Check } from "lucide-react-native";
 import { theme, healthColors } from "@/theme";
 import { Button, DynamicIcon } from "@/components/common";
 import { getKeyboardConfig } from "@/utils/responsive";
+import { logError } from "@/utils/errorHandler";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/AuthContext";
+import adminService from "@/services/admin.service";
+import { showError } from "@/utils/errorHandler";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 
 const DAYS = [
   "monday",
@@ -26,7 +33,6 @@ const DAYS = [
   "saturday",
   "sunday",
 ];
-
 const DAY_LABELS = {
   monday: "Mon",
   tuesday: "Tue",
@@ -36,150 +42,391 @@ const DAY_LABELS = {
   saturday: "Sat",
   sunday: "Sun",
 };
-
 const TIME_SLOTS = ["09:00-12:00", "12:00-14:00", "14:00-17:00", "17:00-20:00"];
+const SPECIALIZATIONS = [
+  "Cardiology",
+  "Dermatology",
+  "Endocrinology",
+  "Gastroenterology",
+  "General Medicine",
+  "Neurology",
+  "Obstetrics & Gynecology",
+  "Oncology",
+  "Orthopedics",
+  "Pediatrics",
+  "Psychiatry",
+  "Pulmonology",
+  "Radiology",
+  "Surgery",
+  "Urology",
+];
 
-const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null }) => {
+const getValidationSchema = (mode) =>
+  yup.object().shape({
+    name: yup.string().required("Name is required"),
+    email: yup
+      .string()
+      .email("Invalid email format")
+      .required("Email is required"),
+    phone: yup
+      .string()
+      .matches(/^\+?[1-9]\d{9,14}$/, "Invalid phone format")
+      .required("Phone is required"),
+    password:
+      mode === "add"
+        ? yup
+            .string()
+            .min(8, "Password must be at least 8 characters")
+            .required("Password is required")
+        : yup.string().optional(),
+    specialization: yup.string().required("Please select a specialization"),
+    qualification: yup.string().required("Qualification is required"),
+    experience: yup
+      .number()
+      .typeError("Experience must be a positive number")
+      .min(0, "Experience must be a positive number")
+      .required("Experience is required"),
+    department: yup.string().optional(),
+    consultationFee: yup
+      .number()
+      .typeError("Consultation fee must be a positive number")
+      .min(0, "Consultation fee must be a positive number")
+      .optional()
+      .default(500),
+    licenseNumber: yup.string().required("License number is required"),
+    bio: yup.string().required("Bio is required"),
+  });
+
+const DoctorModal = ({
+  visible,
+  onClose,
+  onSuccess,
+  mode = "add",
+  doctor = null,
+}) => {
   const { t } = useTranslation();
+  const { user } = useAuth((state) => state.auth);
+  const [loading, setLoading] = useState(false);
+  const [showSpecializationPicker, setShowSpecializationPicker] =
+    useState(false);
+  const [availabilitySlots, setAvailabilitySlots] = useState({});
+
   const {
-    formData,
-    errors,
-    loading,
-    availabilitySlots,
-    showSpecializationPicker,
-    setShowSpecializationPicker,
-    handleInputChange,
-    handlePickerChange,
+    control,
     handleSubmit,
-    handleClose,
-    toggleDay,
-    toggleSlot,
-    SPECIALIZATIONS,
-  } = useDoctorForm({ mode, doctor, onClose, onSuccess });
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(getValidationSchema(mode)),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      specialization: "",
+      qualification: "",
+      experience: "",
+      department: "",
+      consultationFee: "500",
+      licenseNumber: "",
+      bio: "",
+    },
+  });
+
+  useEffect(() => {
+    if (mode === "edit" && doctor) {
+      reset({
+        name: doctor.name || "",
+        email: doctor.email || "",
+        phone: doctor.phone || "",
+        specialization: doctor.specialization || "",
+        qualification: doctor.qualification || "",
+        experience: doctor.experience?.toString() || "0",
+        department: doctor.department || "",
+        consultationFee: doctor.consultationFee?.toString() || "500",
+        licenseNumber: doctor.license_number || doctor.licenseNumber || "",
+        bio: doctor.bio || "",
+      });
+      let parsed = {};
+      if (doctor.availability) {
+        parsed =
+          typeof doctor.availability === "object" ? doctor.availability : {};
+        try {
+          if (typeof doctor.availability === "string")
+            parsed = JSON.parse(doctor.availability);
+        } catch (err) {
+          logError(err, { context: "DoctorModal Parse Availability" });
+        }
+      }
+      setAvailabilitySlots(parsed);
+    } else if (mode === "add") {
+      reset();
+      setAvailabilitySlots({});
+    }
+  }, [mode, doctor, reset, visible]);
+
+  const onSubmit = async (data) => {
+    setLoading(true);
+    try {
+      if (mode === "add") {
+        const doctorData = {
+          name: data.name.trim(),
+          email: data.email.trim().toLowerCase(),
+          phone: data.phone.trim(),
+          password: data.password,
+          role: "doctor",
+          specialization: data.specialization,
+          qualification: data.qualification.trim(),
+          experience: Number(data.experience),
+          consultationFee: data.consultationFee ? Number(data.consultationFee) : 500,
+          department:
+            data.department?.trim() || data.specialization || "General",
+          licenseNumber: data.licenseNumber.trim(),
+          bio: data.bio.trim(),
+          availability: availabilitySlots,
+          isActive: true,
+          hospitalId: user?.hospitalId,
+          hospitalName: user?.hospitalName,
+        };
+        const response = await adminService.createUser(doctorData);
+        if (response.success === true || response.user) {
+          onSuccess?.();
+          handleClose();
+          setTimeout(
+            () => Alert.alert("Success", "Doctor added successfully"),
+            300,
+          );
+        } else {
+          showError(response.message || "Failed to add doctor.", "Registration Failed");
+        }
+      } else {
+        const updateData = {
+          name: data.name.trim(),
+          email: data.email.trim().toLowerCase(),
+          phone: data.phone.trim(),
+          specialization: data.specialization,
+          qualification: data.qualification.trim(),
+          experience: Number(data.experience),
+          department: data.department?.trim() || data.specialization,
+          consultationFee: data.consultationFee ? Number(data.consultationFee) : 500,
+          licenseNumber: data.licenseNumber.trim(),
+          bio: data.bio.trim(),
+          availability: availabilitySlots,
+        };
+        const targetId = doctor.userId || doctor.id;
+        if (!targetId) {
+          Alert.alert("Error", "Could not identify doctor for update");
+          setLoading(false);
+          return;
+        }
+        const response = await adminService.updateUserProfile(
+          targetId,
+          updateData,
+        );
+        if (response.success === true) {
+          onSuccess?.();
+          handleClose();
+          setTimeout(
+            () => Alert.alert("Success", "Doctor Profile Updated Successfully"),
+            300,
+          );
+        } else {
+          showError(response.message || "Failed to update profile.", "Update Failed");
+        }
+      }
+    } catch (err) {
+      logError(err, { context: "DoctorModal" });
+      const msg =
+        typeof err === "string"
+          ? err
+          : err.response?.data?.message ||
+            err.message ||
+            (mode === "add"
+              ? "Failed to add doctor."
+              : "Failed to update profile.");
+      showError(msg, mode === "add" ? "Registration Failed" : "Update Failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    reset();
+    setAvailabilitySlots({});
+    onClose();
+  };
+
+  const toggleDay = (day) =>
+    setAvailabilitySlots((prev) => {
+      if (prev[day]) {
+        const next = { ...prev };
+        delete next[day];
+        return next;
+      }
+      return { ...prev, [day]: ["09:00-12:00", "14:00-17:00"] };
+    });
+
+  const toggleSlot = (day, slot) =>
+    setAvailabilitySlots((prev) => {
+      const current = prev[day] || [];
+      if (current.includes(slot)) {
+        const updated = current.filter((s) => s !== slot);
+        if (updated.length === 0) {
+          const next = { ...prev };
+          delete next[day];
+          return next;
+        }
+        return { ...prev, [day]: updated };
+      }
+      return { ...prev, [day]: [...current, slot] };
+    });
 
   const renderInput = (
-    key,
+    name,
     label,
     placeholder,
     icon,
     keyboardType = "default",
     secureTextEntry = false,
-    multiline = false
+    multiline = false,
   ) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View
-        style={[
-          styles.inputWrapper,
-          errors[key] && styles.inputError,
-          multiline && styles.inputWrapperMultiline,
-        ]}
-      >
-        <DynamicIcon
-          name={icon}
-          size={18}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.secondary
-          }
-          style={[styles.inputIcon, multiline && styles.inputIconMultiline]}
-        />
-        <TextInput
-          style={[styles.input, multiline && styles.inputMultiline]}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          value={formData[key] || ""}
-          onChangeText={(value) => handleInputChange(key, value)}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          autoCapitalize={key === "email" ? "none" : "sentences"}
-          multiline={multiline}
-          textAlignVertical={multiline ? "top" : "center"}
-        />
-      </View>
-      {errors[key] ? <Text style={styles.errorText}>{errors[key]}</Text> : null}
-    </View>
-  );
-
-  const renderPicker = (key, label, icon, options) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.inputWrapper, errors[key] && styles.inputError]}
-        onPress={() => setShowSpecializationPicker(true)}
-        activeOpacity={0.8}
-      >
-        <DynamicIcon
-          name={icon}
-          size={18}
-          color={healthColors.text.secondary}
-          style={styles.inputIcon}
-        />
-        <Text
-          style={[styles.pickerText, !formData[key] && styles.placeholderText]}
-        >
-          {formData[key] || t("select_specialization")}
-        </Text>
-        <DynamicIcon name="chevron-down" size={18} color={healthColors.text.secondary} />
-      </TouchableOpacity>
-
-      <Modal
-        statusBarTranslucent
-        visible={showSpecializationPicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSpecializationPicker(false)}
-      >
-        <View style={styles.dropdownOverlay}>
-          <View style={styles.dropdownContainer}>
-            <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>{t("select_specialization")}</Text>
-              <TouchableOpacity
-                onPress={() => setShowSpecializationPicker(false)}
-              >
-                <X size={22} color={healthColors.text.primary} />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => {
-                const selected = formData[key] === item;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.dropdownItem,
-                      selected && styles.dropdownItemSelected,
-                    ]}
-                    onPress={() => handlePickerChange(key, item)}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        selected && styles.dropdownItemTextSelected,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                    {selected ? (
-                      <Check size={18} color={healthColors.primary.main} />
-                    ) : null}
-                  </TouchableOpacity>
-                );
-              }}
+    <Controller
+      control={control}
+      name={name}
+      render={({ field: { onChange, onBlur, value } }) => (
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>{label}</Text>
+          <View
+            style={[
+              styles.inputWrapper,
+              errors[name] && styles.inputError,
+              multiline && styles.inputWrapperMultiline,
+            ]}
+          >
+            <DynamicIcon
+              name={icon}
+              size={18}
+              color={
+                errors[name]
+                  ? healthColors.error.main
+                  : healthColors.text.secondary
+              }
+              style={[styles.inputIcon, multiline && styles.inputIconMultiline]}
+            />
+            <TextInput
+              style={[styles.input, multiline && styles.inputMultiline]}
+              placeholder={placeholder}
+              placeholderTextColor={healthColors.text.tertiary}
+              value={value ? value.toString() : ""}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              keyboardType={keyboardType}
+              secureTextEntry={secureTextEntry}
+              autoCapitalize={name === "email" ? "none" : "sentences"}
+              multiline={multiline}
+              textAlignVertical={multiline ? "top" : "center"}
             />
           </View>
+          {errors[name] && (
+            <Text style={styles.errorText}>{errors[name]?.message}</Text>
+          )}
         </View>
-      </Modal>
+      )}
+    />
+  );
 
-      {errors[key] ? <Text style={styles.errorText}>{errors[key]}</Text> : null}
-    </View>
+  const renderPicker = (name, label, icon, options) => (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field: { value } }) => (
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>{label}</Text>
+          <TouchableOpacity
+            style={[styles.inputWrapper, errors[name] && styles.inputError]}
+            onPress={() => setShowSpecializationPicker(true)}
+            activeOpacity={0.8}
+          >
+            <DynamicIcon
+              name={icon}
+              size={18}
+              color={healthColors.text.secondary}
+              style={styles.inputIcon}
+            />
+            <Text style={[styles.pickerText, !value && styles.placeholderText]}>
+              {value || t("select_specialization")}
+            </Text>
+            <DynamicIcon
+              name="chevron-down"
+              size={18}
+              color={healthColors.text.secondary}
+            />
+          </TouchableOpacity>
+          <Modal
+            statusBarTranslucent
+            visible={showSpecializationPicker}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowSpecializationPicker(false)}
+          >
+            <View style={styles.dropdownOverlay}>
+              <View style={styles.dropdownContainer}>
+                <View style={styles.dropdownHeader}>
+                  <Text style={styles.dropdownTitle}>
+                    {t("select_specialization")}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowSpecializationPicker(false)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close"
+                  >
+                    <X size={22} color={healthColors.text.primary} />
+                  </TouchableOpacity>
+                </View>
+                <FlatList
+                  data={options}
+                  keyExtractor={(i) => i}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownItem,
+                        value === item && styles.dropdownItemSelected,
+                      ]}
+                      onPress={() => {
+                        setValue(name, item, { shouldValidate: true });
+                        setShowSpecializationPicker(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          value === item && styles.dropdownItemTextSelected,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                      {value === item && (
+                        <Check size={18} color={healthColors.primary.main} />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </View>
+          </Modal>
+          {errors[name] && (
+            <Text style={styles.errorText}>{errors[name]?.message}</Text>
+          )}
+        </View>
+      )}
+    />
   );
 
   const renderAvailabilityPicker = () => (
     <View style={styles.inputContainer}>
       <Text style={styles.label}>{t("availability_1")}</Text>
       <View style={styles.availabilityBox}>
-        {/* Day toggle chips */}
         <View style={styles.daysRow}>
           {DAYS.map((day) => {
             const active = !!availabilitySlots[day];
@@ -201,7 +448,6 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
             );
           })}
         </View>
-        {/* Time slots per active day */}
         {DAYS.filter((day) => availabilitySlots[day]).map((day) => (
           <View key={day} style={styles.daySlotRow}>
             <Text style={styles.daySlotLabel}>
@@ -244,7 +490,7 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
       statusBarTranslucent
       visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
@@ -252,7 +498,6 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
         style={styles.modalOverlay}
       >
         <View style={styles.modalContent}>
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>
               {mode === "add" ? t("add_new_doctor") : t("edit_doctor_profile")}
@@ -262,13 +507,11 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
               style={styles.closeButton}
               disabled={loading}
               accessibilityRole="button"
-              accessibilityLabel="Close modal form"
+              accessibilityLabel="Close"
             >
               <X size={24} color={healthColors.text.primary} />
             </TouchableOpacity>
           </View>
-
-          {/* Form */}
           <ScrollView
             style={styles.formContainer}
             showsVerticalScrollIndicator={false}
@@ -280,43 +523,42 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
               "Email Address *",
               "doctor@example.com",
               "mail",
-              "email-address"
+              "email-address",
             )}
             {renderInput(
               "phone",
               "Phone Number *",
               "+911234567890",
               "call",
-              "phone-pad"
+              "phone-pad",
             )}
-            
-            {mode === "add" && renderInput(
-              "password",
-              "Password *",
-              "Minimum 8 characters",
-              "lock-closed",
-              "default",
-              true
-            )}
-
+            {mode === "add" &&
+              renderInput(
+                "password",
+                "Password *",
+                "Minimum 8 characters",
+                "lock-closed",
+                "default",
+                true,
+              )}
             {renderPicker(
               "specialization",
               "Specialization *",
               "medical",
-              SPECIALIZATIONS
+              SPECIALIZATIONS,
             )}
             {renderInput(
               "qualification",
               "Qualification *",
               "MBBS, MD",
-              "school"
+              "school",
             )}
             {renderInput(
               "experience",
               "Years of Experience *",
               "5",
               "time",
-              "numeric"
+              "numeric",
             )}
             {renderInput("department", "Department", "Cardiology", "business")}
             {renderInput(
@@ -324,13 +566,13 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
               "Consultation Fee",
               "500",
               "cash",
-              "numeric"
+              "numeric",
             )}
             {renderInput(
               "licenseNumber",
               "License Number *",
               "MH/12345/2010",
-              "id-card"
+              "id-card",
             )}
             {renderInput(
               "bio",
@@ -339,15 +581,11 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
               "information-circle",
               "default",
               false,
-              true
+              true,
             )}
-            
             {renderAvailabilityPicker()}
-
             <Text style={styles.noteText}>{t("required_fields")}</Text>
           </ScrollView>
-
-          {/* Footer Actions */}
           <View style={styles.footer}>
             <Button
               variant="secondary"
@@ -359,7 +597,7 @@ const DoctorModal = ({ visible, onClose, onSuccess, mode = "add", doctor = null 
             <Button
               variant="primary"
               loading={loading}
-              onPress={handleSubmit}
+              onPress={handleSubmit(onSubmit)}
               style={styles.flexButton}
               title={mode === "add" ? "Add Doctor" : "Save Changes"}
             />
@@ -396,13 +634,8 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: healthColors.text.primary,
   },
-  closeButton: {
-    padding: theme.spacing.xs,
-  },
-  formContainer: {
-    padding: theme.spacing.lg,
-    flexShrink: 1,
-  },
+  closeButton: { padding: theme.spacing.xs },
+  formContainer: { padding: theme.spacing.lg, flexShrink: 1 },
   noteText: {
     fontSize: theme.typography.sizes.sm,
     color: healthColors.text.tertiary,
@@ -417,12 +650,8 @@ const styles = StyleSheet.create({
     borderTopColor: healthColors.border.light,
     gap: theme.spacing.md,
   },
-  flexButton: {
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: theme.spacing.md,
-  },
+  flexButton: { flex: 1 },
+  inputContainer: { marginBottom: theme.spacing.md },
   label: {
     fontSize: theme.typography.sizes.sm,
     fontWeight: theme.typography.weights.semibold,
@@ -442,25 +671,16 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingVertical: theme.spacing.sm,
   },
-  inputError: {
-    borderColor: healthColors.error.main,
-  },
-  inputIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  inputIconMultiline: {
-    marginTop: 2,
-  },
+  inputError: { borderColor: healthColors.error.main },
+  inputIcon: { marginRight: theme.spacing.sm },
+  inputIconMultiline: { marginTop: 2 },
   input: {
     flex: 1,
     paddingVertical: theme.spacing.md,
     fontSize: theme.typography.sizes.body,
     color: healthColors.text.primary,
   },
-  inputMultiline: {
-    minHeight: 10,
-    paddingTop: 2,
-  },
+  inputMultiline: { minHeight: 10, paddingTop: 2 },
   availabilityBox: {
     backgroundColor: healthColors.background.card,
     borderRadius: theme.borderRadius.md,
@@ -491,9 +711,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     fontWeight: theme.typography.weights.medium,
   },
-  dayChipTextActive: {
-    color: healthColors.text.white,
-  },
+  dayChipTextActive: { color: healthColors.text.white },
   daySlotRow: {
     marginTop: theme.spacing.sm,
     paddingTop: theme.spacing.sm,
@@ -506,11 +724,7 @@ const styles = StyleSheet.create({
     color: healthColors.text.primary,
     marginBottom: 6,
   },
-  slotsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
+  slotsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   slotChip: {
     paddingVertical: 4,
     paddingHorizontal: 10,
@@ -526,9 +740,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.caption,
     color: healthColors.primary.main,
   },
-  slotChipTextActive: {
-    fontWeight: theme.typography.weights.semibold,
-  },
+  slotChipTextActive: { fontWeight: theme.typography.weights.semibold },
   availabilityHint: {
     fontSize: theme.typography.sizes.sm,
     color: healthColors.text.tertiary,
@@ -541,9 +753,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.sizes.body,
     color: healthColors.text.primary,
   },
-  placeholderText: {
-    color: healthColors.text.tertiary,
-  },
+  placeholderText: { color: healthColors.text.tertiary },
   dropdownOverlay: {
     flex: 1,
     backgroundColor: healthColors.background.overlay,

@@ -1,4 +1,3 @@
-const { sendSuccess } = require("../../utils/apiResponse");
 /**
  * Payment Controller
  * Handles pharmacy billing and payment processing
@@ -132,7 +131,7 @@ exports.createPayment = async (req, res, next) => {
 
     logger.info(`Payment created: ${payment.id} for patient ${patientId}`);
 
-    return sendSuccess(res, 201, "Payment processed successfully", finalPayment || payment);
+    return res.status(201).json({ success: true, message: "Payment processed successfully", data: finalPayment || payment });
   } catch (error) {
     logger.error("createPayment error:", error);
     next(error);
@@ -218,7 +217,7 @@ exports.getPaymentById = async (req, res, next) => {
       return next(new AppError("Access denied", 403));
     }
 
-    return sendSuccess(res, 200, "Payment retrieved successfully", payment);
+    return res.status(200).json({ success: true, message: "Payment retrieved successfully", data: payment });
   } catch (error) {
     logger.error("getPaymentById error:", error);
     next(error);
@@ -241,7 +240,7 @@ exports.getPaymentStats = async (req, res, next) => {
       endDate,
     });
 
-    return sendSuccess(res, 200, "Payment stats retrieved successfully", stats);
+    return res.status(200).json({ success: true, message: "Payment stats retrieved successfully", data: stats });
   } catch (error) {
     logger.error("getPaymentStats error:", error);
     next(error);

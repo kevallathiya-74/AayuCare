@@ -1,5 +1,4 @@
 const logger = require("../utils/logger");
-const { sendError } = require("../utils/apiResponse");
 
 const mapErrorCode = (statusCode) => {
   if (statusCode === 400) return "VALIDATION_ERROR";
@@ -28,73 +27,38 @@ const errorHandler = (err, req, res, _next) => {
 
   // PostgreSQL unique constraint violation
   if (err.code === "23505") {
-    return sendError(
-      res,
-      409,
-      "Resource already exists (duplicate entry)",
-      "CONFLICT",
-    );
+    return res.status(409).json({ success: false, message: "Resource already exists (duplicate entry)", code: "CONFLICT" });
   }
 
   // PostgreSQL foreign key constraint violation
   if (err.code === "23503") {
-    return sendError(
-      res,
-      400,
-      "Referenced resource does not exist",
-      "VALIDATION_ERROR",
-    );
+    return res.status(400).json({ success: false, message: "Referenced resource does not exist", code: "VALIDATION_ERROR" });
   }
 
   // PostgreSQL not-null constraint violation
   if (err.code === "23502") {
-    return sendError(
-      res,
-      400,
-      `Missing required field: ${err.column || "unknown"}`,
-      "VALIDATION_ERROR",
-    );
+    return res.status(400).json({ success: false, message: `Missing required field: ${err.column || "unknown"}`, code: "VALIDATION_ERROR" });
   }
 
   // PostgreSQL check constraint violation
   if (err.code === "23514") {
-    return sendError(
-      res,
-      400,
-      `Invalid value: ${err.constraint || "data validation failed"}`,
-      "VALIDATION_ERROR",
-    );
+    return res.status(400).json({ success: false, message: `Invalid value: ${err.constraint || "data validation failed"}`, code: "VALIDATION_ERROR" });
   }
 
   // PostgreSQL invalid value for enum / data type
   if (err.code === "22P02") {
-    return sendError(
-      res,
-      400,
-      "Invalid data format in request",
-      "VALIDATION_ERROR",
-    );
+    return res.status(400).json({ success: false, message: "Invalid data format in request", code: "VALIDATION_ERROR" });
   }
 
   // Handle specific well-known error types before env branching
   if (err.name === "JsonWebTokenError") {
-    return sendError(
-      res,
-      401,
-      "Invalid token. Please log in again.",
-      "UNAUTHORIZED",
-    );
+    return res.status(401).json({ success: false, message: "Invalid token. Please log in again.", code: "UNAUTHORIZED" });
   }
   if (err.name === "TokenExpiredError") {
-    return sendError(
-      res,
-      401,
-      "Token expired. Please log in again.",
-      "UNAUTHORIZED",
-    );
+    return res.status(401).json({ success: false, message: "Token expired. Please log in again.", code: "UNAUTHORIZED" });
   }
   if (err.isJoi) {
-    return sendError(res, 400, err.message, "VALIDATION_ERROR");
+    return res.status(400).json({ success: false, message: err.message, code: "VALIDATION_ERROR" });
   }
 
   if (process.env.NODE_ENV === "development") {
@@ -108,13 +72,13 @@ const errorHandler = (err, req, res, _next) => {
     const details = includeStack
       ? [{ field: null, message: err.stack }]
       : undefined;
-    return sendError(
-      res,
-      err.statusCode,
-      err.message,
-      mapErrorCode(err.statusCode),
-      details || [],
-    );
+      
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      code: mapErrorCode(err.statusCode),
+      errors: details || []
+    });
   } else {
     // Production - don't expose stack traces or internal error details
     logger.error("Error:", {
@@ -126,20 +90,14 @@ const errorHandler = (err, req, res, _next) => {
     });
 
     if (err.isOperational) {
-      return sendError(
-        res,
-        err.statusCode,
-        err.message,
-        mapErrorCode(err.statusCode),
-      );
+      return res.status(err.statusCode).json({
+        success: false,
+        message: err.message,
+        code: mapErrorCode(err.statusCode)
+      });
     } else {
       // Don't leak error details
-      return sendError(
-        res,
-        500,
-        "Something went wrong!",
-        "INTERNAL_SERVER_ERROR",
-      );
+      return res.status(500).json({ success: false, message: "Something went wrong!", code: "INTERNAL_SERVER_ERROR" });
     }
   }
 };
