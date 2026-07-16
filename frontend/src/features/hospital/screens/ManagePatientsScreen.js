@@ -40,8 +40,7 @@ import { calculateAge } from "@/utils/dateHelpers";
 import logger from "@/utils/logger";
 import { EmptyState, SearchField, SkeletonCardRow } from "@/components/common";
 import { EmptyStateConfig } from "@/utils/constants";
-import AddPatientModal from "./AddPatientModal";
-import EditPatientModal from "./EditPatientModal";
+import PatientModal from "./PatientModal";
 import PatientDetailsModal from "./PatientDetailsModal";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
@@ -724,7 +723,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       {/* Add Patient Modal */}
       {canManageUsers && (
-        <AddPatientModal
+        <PatientModal
+          mode="add"
           visible={showAddModal}
           onClose={() => setShowAddModal(false)}
           onSuccess={handleAddSuccess}
@@ -733,7 +733,8 @@ const ManagePatientsScreen = ({ navigation, route }) => {
 
       {/* Edit Patient Modal */}
       {canManageUsers && (
-        <EditPatientModal
+        <PatientModal
+          mode="edit"
           visible={showEditModal}
           onClose={() => {
             setShowEditModal(false);

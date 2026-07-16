@@ -1,4 +1,5 @@
 const { query } = require("../../config/postgres");
+const { mapPatientData } = require("../../utils/fieldMapper");
 const { AppError } = require("../../middleware/errorHandler");
 
 /**
@@ -46,7 +47,7 @@ class PatientRepository {
       chronicConditions || [],
     ]);
 
-    return result.rows[0];
+    return mapPatientData(result.rows[0]);
   }
 
   /**
@@ -71,7 +72,7 @@ class PatientRepository {
         `;
 
     const result = await query(sql, [userId]);
-    return result.rows[0] || null;
+    return mapPatientData(result.rows[0]) || null;
   }
 
   /**
@@ -122,7 +123,7 @@ class PatientRepository {
         `;
 
     const result = await query(sql, values);
-    return result.rows[0];
+    return mapPatientData(result.rows[0]);
   }
 }
 

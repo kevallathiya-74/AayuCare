@@ -12,6 +12,10 @@ const PHI_FIELDS = new Set([
   "jwt",
   "secret",
   "authorization",
+  "cookie",
+  "session",
+  "sessionToken",
+  "auth",
   "ssn",
   "aadhaar",
   "pan",
@@ -37,23 +41,13 @@ const PHI_FIELDS = new Set([
   "medical_history",
 ]);
 
-// Recursively redact known PHI fields from objects
-const redactPHI = (obj, depth = 0) => {
-  if (depth > 10 || obj === null || obj === undefined) return obj;
-  if (typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) return obj.map((item) => redactPHI(item, depth + 1));
-
-  const sanitized = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (PHI_FIELDS.has(key)) {
-      sanitized[key] = "[REDACTED]";
-    } else if (typeof value === "object" && value !== null) {
-      sanitized[key] = redactPHI(value, depth + 1);
-    } else {
-      sanitized[key] = value;
-    }
+const redactPHI = (obj) => {
+  if (!obj || typeof obj !== "object") return obj;
+  try {
+    return JSON.parse(JSON.stringify(obj, (key, val) => PHI_FIELDS.has(key) ? "[REDACTED]" : val));
+  } catch  {
+    return "[UNSERIALIZABLE_OBJECT_REDACTED]";
   }
-  return sanitized;
 };
 
 const phiRedactFormat = winston.format((info) => {
@@ -69,10 +63,10 @@ const phiRedactFormat = winston.format((info) => {
 const logger = winston.createLogger({
   level: APP_ENV.logging.level,
   format: winston.format.combine(
-    phiRedactFormat(),
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.errors({ stack: true }),
     winston.format.splat(),
+    phiRedactFormat(),
     winston.format.json(),
   ),
   defaultMeta: { service: "aayucare-backend" },

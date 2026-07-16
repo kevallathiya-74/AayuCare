@@ -30,11 +30,9 @@ import {
 import { theme, healthColors } from "@/theme";
 import {
   SkeletonCardRow,
-  ErrorRecovery,
-  NetworkStatusIndicator,
   EmptyState,
 } from "@/components/common";
-import { showError, logError, parseError } from "@/utils/errorHandler";
+import { showError, logError } from "@/utils/errorHandler";
 import { useNetworkStatus } from "@/utils/offlineHandler";
 import { adminService, notificationService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -64,7 +62,6 @@ const NotificationsScreen = ({ navigation }) => {
     data,
     isLoading: loading,
     isError,
-    error,
     refetch,
     isRefetching,
     fetchNextPage,
@@ -403,20 +400,7 @@ const NotificationsScreen = ({ navigation }) => {
   };
 
   if (isError) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor={healthColors.background.primary}
-        />
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={parseError(error)}
-          onRetry={refetch}
-          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
-        />
-      </SafeAreaView>
-    );
+    throw new Error("Unknown Error");
   }
 
   return (
@@ -425,7 +409,6 @@ const NotificationsScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
       />
-      <NetworkStatusIndicator />
 
       {/* Header */}
       <View style={styles.header}>

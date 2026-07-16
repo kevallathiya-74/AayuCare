@@ -45,7 +45,7 @@ class AppointmentRepository {
       chiefComplaint || null,
     ]);
 
-    return result.rows[0];
+    return mapAppointmentData(result.rows[0]);
   }
 
   /**
@@ -187,7 +187,7 @@ class AppointmentRepository {
         `;
 
     const result = await query(sql, [id]);
-    return result.rows[0] || null;
+    return mapAppointmentData(result.rows[0]) || null;
   }
 
   /**
@@ -262,9 +262,13 @@ class AppointmentRepository {
     sql += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
     params.push(limit, offset);
 
-    const result = await query(sql, params);
+    const { rows } = await query(sql, params);
+    const total = await this.countByPatient(patientId, filters);
     // Map snake_case to camelCase for frontend compatibility
-    return mapArray(result.rows, mapAppointmentData);
+    return {
+      appointments: mapArray(rows, mapAppointmentData),
+      total,
+    };
   }
 
   /**

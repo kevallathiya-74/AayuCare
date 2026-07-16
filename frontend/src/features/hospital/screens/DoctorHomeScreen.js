@@ -92,7 +92,7 @@ const DoctorHomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const isFocused = useIsFocused();
-  const { menuVisible, openMenu, closeMenu, slideAnim, drawerWidth } =
+  const { menuVisible, openMenu, closeMenu } =
     useDrawer();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -456,8 +456,6 @@ const DoctorHomeScreen = ({ navigation }) => {
       <DrawerMenu
         visible={menuVisible}
         onClose={closeMenu}
-        slideAnim={slideAnim}
-        drawerWidth={drawerWidth}
         user={user}
         role="Doctor"
         menuSections={menuSections}

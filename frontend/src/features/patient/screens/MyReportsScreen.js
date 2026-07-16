@@ -38,7 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import {
-  ErrorRecovery,
+  
   SkeletonCardRow,
   EmptyState,
   ModalSheet,
@@ -47,7 +47,6 @@ import {
   FilterChipGroup,
   Card,
 } from "@/components/common";
-import { parseError } from "@/utils/errorHandler";
 import { medicalRecordService } from "@/services";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
@@ -66,8 +65,6 @@ const MyReportsScreen = ({ navigation }) => {
     data: reports = [],
     isLoading: loading,
     isRefetching,
-    isError,
-    error,
     refetch,
   } = useQuery({
     queryKey: queryKeys.medicalRecords.list({
@@ -266,13 +263,7 @@ const MyReportsScreen = ({ navigation }) => {
       </View>
 
       {/* Reports List */}
-      {isError && !reports.length ? (
-        <ErrorRecovery
-          error={parseError(error)}
-          onRetry={refetch}
-          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
-        />
-      ) : (
+
         <FlatList
           data={filteredReports}
           renderItem={renderReport}
@@ -303,7 +294,6 @@ const MyReportsScreen = ({ navigation }) => {
             />
           }
         />
-      )}
 
       {/* Report Detail Modal */}
       <Modal

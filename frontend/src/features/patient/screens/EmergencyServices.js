@@ -33,12 +33,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { theme, healthColors } from "@/theme";
 import { getScreenPadding, verticalScale } from "@/utils/responsive";
 import { EmergencyIcon } from "@/components/common/CustomIcons";
-import NetworkStatusIndicator from "@/components/common/NetworkStatusIndicator";
-import ErrorRecovery from "@/components/common/ErrorRecovery";
 import { showError, logError, parseError } from "@/utils/errorHandler";
 import { handleSmartBack } from "@/utils/navigation";
 import { Card } from "@/components/common";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 const emergencyNumbers = [
   {
@@ -171,12 +169,12 @@ const EmergencyServices = ({ navigation }) => {
                   context: "EmergencyServices.handleAmbulanceCall",
                 });
                 showError(
-                  "Failed to call ambulance. Please dial 108 manually."
+                  "Failed to call ambulance. Please dial 108 manually.",
                 );
               }
             },
           },
-        ]
+        ],
       );
     } catch (err) {
       logError(err, { context: "EmergencyServices.handleAmbulanceCall" });
@@ -184,26 +182,14 @@ const EmergencyServices = ({ navigation }) => {
     }
   };
 
-  const handleRetry = () => {
-    setError(null);
-  };
+  
 
   if (error) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={error}
-          onRetry={handleRetry}
-          onDismiss={() => setError(null)}
-        />
-      </SafeAreaView>
-    );
+    throw error instanceof Error ? error : new Error(String(error));
   }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      <NetworkStatusIndicator />
       {/* Header */}
       <LinearGradient
         colors={[healthColors.error.main, healthColors.error.dark]}
@@ -220,8 +206,10 @@ const EmergencyServices = ({ navigation }) => {
         <View style={styles.headerContent}>
           <EmergencyIcon size={32} />
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>{t('emergency_services')}</Text>
-            <Text style={styles.headerSubtitle}>{t('quick_access_to_help')}</Text>
+            <Text style={styles.headerTitle}>{t("emergency_services")}</Text>
+            <Text style={styles.headerSubtitle}>
+              {t("quick_access_to_help")}
+            </Text>
           </View>
         </View>
         <View style={styles.headerRightSpacer} />
@@ -255,10 +243,10 @@ const EmergencyServices = ({ navigation }) => {
               <BriefcaseMedical size={48} color={theme.colors.white} />
             </View>
             <View style={styles.ambulanceText}>
-              <Text style={styles.ambulanceTitle}>{t('call_ambulance')}</Text>
+              <Text style={styles.ambulanceTitle}>{t("call_ambulance")}</Text>
               <Text style={styles.ambulanceNumber}>108</Text>
               <Text style={styles.ambulanceSubtext}>
-                {t('24_7_emergency_service')}rgency Service
+                {t("24_7_emergency_service")}rgency Service
               </Text>
             </View>
             <Phone size={32} color={theme.colors.white} />
@@ -267,7 +255,7 @@ const EmergencyServices = ({ navigation }) => {
 
         {/* Emergency Numbers */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('emergency_hotlines')}</Text>
+          <Text style={styles.sectionTitle}>{t("emergency_hotlines")}</Text>
           <View style={styles.numbersGrid}>
             {emergencyNumbers.map((item) => {
               const EmergencyIconComponent = item.Icon;
@@ -296,13 +284,15 @@ const EmergencyServices = ({ navigation }) => {
         {/* Nearby Hospitals */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('nearby_hospitals')}pitals</Text>
+            <Text style={styles.sectionTitle}>
+              {t("nearby_hospitals")}pitals
+            </Text>
             <TouchableOpacity
               onPress={() => handleOpenMaps("hospitals near me")}
               accessibilityRole="button"
               accessibilityLabel="Open nearby hospitals map"
             >
-              <Text style={styles.viewAllText}>{t('view_map')}</Text>
+              <Text style={styles.viewAllText}>{t("view_map")}</Text>
             </TouchableOpacity>
           </View>
           {nearbyHospitals.map((hospital, index) => (
@@ -315,7 +305,7 @@ const EmergencyServices = ({ navigation }) => {
                   <Text style={styles.hospitalName}>{hospital.name}</Text>
                   {hospital.emergency && (
                     <View style={styles.emergencyBadge}>
-                      <Text style={styles.emergencyBadgeText}>{t('24_7')}</Text>
+                      <Text style={styles.emergencyBadgeText}>{t("24_7")}</Text>
                     </View>
                   )}
                 </View>
@@ -352,24 +342,31 @@ const EmergencyServices = ({ navigation }) => {
 
         {/* Safety Tips */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('emergency_tips')}</Text>
+          <Text style={styles.sectionTitle}>{t("emergency_tips")}</Text>
           <Card style={styles.tipsCard} padding={false}>
             <View style={styles.tipItem}>
               <CheckCircle size={20} color={healthColors.success.main} />
-              <Text style={styles.tipText}>{t('stay_calm_and_speak_clearly')} calm and speak clearly</Text>
-            </View>
-            <View style={styles.tipItem}>
-              <CheckCircle size={20} color={healthColors.success.main} />
-              <Text style={styles.tipText}>{t('provide_exact_location_details')}</Text>
-            </View>
-            <View style={styles.tipItem}>
-              <CheckCircle size={20} color={healthColors.success.main} />
-              <Text style={styles.tipText}>{t('describe_the_emergency_clearly')} clearly</Text>
+              <Text style={styles.tipText}>
+                {t("stay_calm_and_speak_clearly")} calm and speak clearly
+              </Text>
             </View>
             <View style={styles.tipItem}>
               <CheckCircle size={20} color={healthColors.success.main} />
               <Text style={styles.tipText}>
-                {t('don_39_t_hang_up_until_told_to')}n&#39;t hang up until told to do so
+                {t("provide_exact_location_details")}
+              </Text>
+            </View>
+            <View style={styles.tipItem}>
+              <CheckCircle size={20} color={healthColors.success.main} />
+              <Text style={styles.tipText}>
+                {t("describe_the_emergency_clearly")} clearly
+              </Text>
+            </View>
+            <View style={styles.tipItem}>
+              <CheckCircle size={20} color={healthColors.success.main} />
+              <Text style={styles.tipText}>
+                {t("don_39_t_hang_up_until_told_to")}n&#39;t hang up until told
+                to do so
               </Text>
             </View>
           </Card>
@@ -379,9 +376,8 @@ const EmergencyServices = ({ navigation }) => {
         <View style={styles.disclaimer}>
           <Info size={20} color={healthColors.text.tertiary} />
           <Text style={styles.disclaimerText}>
-            {t('for_life_threatening_emergenci')} This app is
-            a convenience tool and should not replace professional emergency
-            services.
+            {t("for_life_threatening_emergenci")} This app is a convenience tool
+            and should not replace professional emergency services.
           </Text>
         </View>
       </ScrollView>

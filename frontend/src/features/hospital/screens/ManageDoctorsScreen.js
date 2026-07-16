@@ -38,8 +38,7 @@ import { doctorService, adminService } from "@/services";
 import { logError, parseError } from "@/utils/errorHandler";
 import logger from "@/utils/logger";
 import { EmptyState, SearchField, SkeletonCardRow } from "@/components/common";
-import AddDoctorModal from "./AddDoctorModal";
-import EditDoctorModal from "./EditDoctorModal";
+import DoctorModal from "./DoctorModal";
 import { handleSmartBack } from "@/utils/navigation";
 import { useTranslation } from 'react-i18next';
 
@@ -627,7 +626,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
       {/* Add Doctor Modal */}
       {canManageUsers && (
-        <AddDoctorModal
+        <DoctorModal
+          mode="add"
           visible={showAddModal}
           onClose={() => setShowAddModal(false)}
           onSuccess={handleAddSuccess}
@@ -636,7 +636,8 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
 
       {/* Edit Doctor Modal */}
       {canManageUsers && (
-        <EditDoctorModal
+        <DoctorModal
+          mode="edit"
           visible={showEditModal}
           onClose={() => {
             setShowEditModal(false);

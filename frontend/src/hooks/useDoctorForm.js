@@ -2,21 +2,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import adminService from "../services/admin.service";
 import logger from "../utils/logger";
-import {
-  Alert,
-  FlatList,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  StyleSheet,
-} from "react-native";
-import { X, Check } from "lucide-react-native";
-import { theme, healthColors } from "../theme";
-import { DynamicIcon } from "../components/common";
+import { Alert } from "react-native";
 import { showError } from "../utils/errorHandler";
-import { useTranslation } from 'react-i18next';
 
 const SPECIALIZATIONS = [
   "Cardiology",
@@ -51,35 +38,13 @@ const initialForm = {
   availability: "",
 };
 
-const DAYS = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-const DAY_LABELS = {
-  monday: "Mon",
-  tuesday: "Tue",
-  wednesday: "Wed",
-  thursday: "Thu",
-  friday: "Fri",
-  saturday: "Sat",
-  sunday: "Sun",
-};
-const TIME_SLOTS = ["09:00-12:00", "12:00-14:00", "14:00-17:00", "17:00-20:00"];
-
 export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
-  const { t } = useTranslation();
   const { user } = useAuth((state) => state.auth);
   const [formData, setFormData] = useState(initialForm);
   const [availabilitySlots, setAvailabilitySlots] = useState({});
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showSpecializationPicker, setShowSpecializationPicker] =
-    useState(false);
+  const [showSpecializationPicker, setShowSpecializationPicker] = useState(false);
 
   useEffect(() => {
     if (mode === "edit" && doctor) {
@@ -98,8 +63,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       // Parse availability into structured state
       let parsed = {};
       if (doctor.availability) {
-        parsed =
-          typeof doctor.availability === "object" ? doctor.availability : {};
+        parsed = typeof doctor.availability === "object" ? doctor.availability : {};
         try {
           if (typeof doctor.availability === "string")
             parsed = JSON.parse(doctor.availability);
@@ -128,8 +92,8 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     if (mode === "add") {
       if (!formData.password.trim())
         newErrors.password = "Password is required";
-      else if (formData.password.length < 6)
-        newErrors.password = "Password must be at least 6 characters";
+      else if (formData.password.length < 8)
+        newErrors.password = "Password must be at least 8 characters";
     }
     if (!formData.specialization)
       newErrors.specialization = "Please select a specialization";
@@ -141,8 +105,7 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
       newErrors.experience = "Experience must be a positive number";
     if (
       formData.consultationFee &&
-      (isNaN(formData.consultationFee) ||
-        parseInt(formData.consultationFee) < 0)
+      (isNaN(formData.consultationFee) || parseInt(formData.consultationFee) < 0)
     )
       newErrors.consultationFee = "Consultation fee must be a positive number";
     if (!formData.licenseNumber.trim())
@@ -168,7 +131,6 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     setLoading(true);
     try {
       if (mode === "add") {
-        const parsedAvailability = availabilitySlots;
         const doctorData = {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
@@ -179,11 +141,10 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           qualification: formData.qualification.trim(),
           experience: parseInt(formData.experience),
           consultationFee: parseInt(formData.consultationFee) || 500,
-          department:
-            formData.department.trim() || formData.specialization || "General",
+          department: formData.department.trim() || formData.specialization || "General",
           licenseNumber: formData.licenseNumber.trim(),
           bio: formData.bio.trim(),
-          availability: parsedAvailability,
+          availability: availabilitySlots,
           isActive: true,
           hospitalId: user?.hospitalId,
           hospitalName: user?.hospitalName,
@@ -197,7 +158,6 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           }, 300);
         }
       } else if (mode === "edit" && doctor) {
-        const parsedAvailability = availabilitySlots;
         const updateData = {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
@@ -209,12 +169,15 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
           consultationFee: parseInt(formData.consultationFee) || 500,
           licenseNumber: formData.licenseNumber.trim(),
           bio: formData.bio.trim(),
-          availability: parsedAvailability,
+          availability: availabilitySlots,
         };
-        const response = await adminService.updateUserProfile(
-          doctor.userId,
-          updateData
-        );
+        const targetId = doctor.userId || doctor.id;
+        if (!targetId) {
+          Alert.alert("Error", "Could not identify doctor for update");
+          setLoading(false);
+          return;
+        }
+        const response = await adminService.updateUserProfile(targetId, updateData);
         if (response.success === true) {
           if (onSuccess) onSuccess();
           onClose();
@@ -229,38 +192,22 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
         mode === "add" ? "Add doctor error" : "Edit doctor error",
         error
       );
-      let errorMessage =
-        mode === "add"
-          ? "Failed to add doctor. Please try again."
-          : "Failed to update doctor profile. Please try again.";
+      let errorMessage = mode === "add" ? "Failed to add doctor." : "Failed to update doctor profile.";
       if (typeof error === "string") errorMessage = error;
-      else if (error.response?.data?.message)
-        errorMessage = error.response.data.message;
+      else if (error.response?.data?.message) errorMessage = error.response.data.message;
       else if (error.message) errorMessage = error.message;
 
       const lowerMessage = errorMessage.toLowerCase();
       if (lowerMessage.includes("already exists")) {
         if (lowerMessage.includes("email")) {
-          errorMessage =
-            "This email is already registered. Please use a different email.";
-          setErrors((prev) => ({
-            ...prev,
-            email: "This email is already registered",
-          }));
+          errorMessage = "This email is already registered.";
+          setErrors((prev) => ({ ...prev, email: "This email is already registered" }));
         } else if (lowerMessage.includes("phone")) {
           errorMessage = "This phone number is already registered.";
-          setErrors((prev) => ({
-            ...prev,
-            phone: "This phone number is already registered",
-          }));
-        } else {
-          errorMessage = "A doctor with these details already exists.";
+          setErrors((prev) => ({ ...prev, phone: "This phone number is already registered" }));
         }
       }
-      showError(
-        errorMessage,
-        mode === "add" ? "Registration Failed" : "Update Failed"
-      );
+      showError(errorMessage, mode === "add" ? "Registration Failed" : "Update Failed");
     } finally {
       setLoading(false);
     }
@@ -300,375 +247,20 @@ export default function useDoctorForm({ mode, doctor, onClose, onSuccess }) {
     });
   };
 
-  const renderAvailabilityPicker = () => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{t('availability_1')}</Text>
-      <View style={styles.availabilityBox}>
-        {/* Day toggle chips */}
-        <View style={styles.daysRow}>
-          {DAYS.map((day) => {
-            const active = !!availabilitySlots[day];
-            return (
-              <TouchableOpacity
-                key={day}
-                style={[styles.dayChip, active && styles.dayChipActive]}
-                onPress={() => toggleDay(day)}
-              >
-                <Text
-                  style={[
-                    styles.dayChipText,
-                    active && styles.dayChipTextActive,
-                  ]}
-                >
-                  {DAY_LABELS[day]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        {/* Time slots per active day */}
-        {DAYS.filter((day) => availabilitySlots[day]).map((day) => (
-          <View key={day} style={styles.daySlotRow}>
-            <Text style={styles.daySlotLabel}>
-              {day.charAt(0).toUpperCase() + day.slice(1)}
-            </Text>
-            <View style={styles.slotsWrap}>
-              {TIME_SLOTS.map((slot) => {
-                const active = (availabilitySlots[day] || []).includes(slot);
-                return (
-                  <TouchableOpacity
-                    key={slot}
-                    style={[styles.slotChip, active && styles.slotChipActive]}
-                    onPress={() => toggleSlot(day, slot)}
-                  >
-                    <Text
-                      style={[
-                        styles.slotChipText,
-                        active && styles.slotChipTextActive,
-                      ]}
-                    >
-                      {slot}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        ))}
-        {Object.keys(availabilitySlots).length === 0 && (
-          <Text style={styles.availabilityHint}>
-            {t('tap_a_day_to_add_availability')} to add availability
-          </Text>
-        )}
-      </View>
-    </View>
-  );
-
-  const renderInput = (
-    key,
-    label,
-    placeholder,
-    icon,
-    keyboardType = "default",
-    secureTextEntry = false,
-    multiline = false
-  ) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <View
-        style={[
-          styles.inputWrapper,
-          errors[key] && styles.inputError,
-          multiline && styles.inputWrapperMultiline,
-        ]}
-      >
-        <DynamicIcon
-          name={icon}
-          size={18}
-          color={
-            errors[key] ? healthColors.error.main : healthColors.text.secondary
-          }
-          style={[styles.inputIcon, multiline]}
-        />
-        <TextInput
-          style={[styles.input, multiline && styles.inputMultiline]}
-          placeholder={placeholder}
-          placeholderTextColor={healthColors.text.tertiary}
-          value={formData[key] || ""}
-          onChangeText={(value) => handleInputChange(key, value)}
-          keyboardType={keyboardType}
-          secureTextEntry={secureTextEntry}
-          autoCapitalize={key === "email" ? "none" : "sentences"}
-          multiline={multiline}
-          textAlignVertical={multiline ? "top" : "center"}
-        />
-      </View>
-      {errors[key] ? <Text style={styles.errorText}>{errors[key]}</Text> : null}
-    </View>
-  );
-
-  const renderPicker = (key, label, icon, options) => (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.inputWrapper, errors[key] && styles.inputError]}
-        onPress={() => setShowSpecializationPicker(true)}
-        activeOpacity={0.8}
-      >
-        <DynamicIcon
-          name={icon}
-          size={18}
-          color={healthColors.text.secondary}
-          style={styles.inputIcon}
-        />
-        <Text
-          style={[styles.pickerText, !formData[key] && styles.placeholderText]}
-        >
-          {formData[key] || "Select specialization"}
-        </Text>
-        <DynamicIcon size={18} color={healthColors.text.secondary} />
-      </TouchableOpacity>
-
-      <Modal
-        statusBarTranslucent
-        visible={showSpecializationPicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSpecializationPicker(false)}
-      >
-        <View style={styles.dropdownOverlay}>
-          <View style={styles.dropdownContainer}>
-            <View style={styles.dropdownHeader}>
-              <Text style={styles.dropdownTitle}>{t('select_specialization')}</Text>
-              <TouchableOpacity
-                onPress={() => setShowSpecializationPicker(false)}
-              >
-                <X size={22} color={healthColors.text.primary} />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => {
-                const selected = formData[key] === item;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.dropdownItem,
-                      selected && styles.dropdownItemSelected,
-                    ]}
-                    onPress={() => handlePickerChange(key, item)}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        selected && styles.dropdownItemTextSelected,
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                    {selected ? (
-                      <Check size={18} color={healthColors.primary.main} />
-                    ) : null}
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {errors[key] ? <Text style={styles.errorText}>{errors[key]}</Text> : null}
-    </View>
-  );
-
   return {
     user,
     formData,
     errors,
     loading,
+    availabilitySlots,
     showSpecializationPicker,
     setShowSpecializationPicker,
     handleInputChange,
     handlePickerChange,
     handleSubmit,
     handleClose,
-    renderInput,
-    renderPicker,
-    renderAvailabilityPicker,
+    toggleDay,
+    toggleSlot,
     SPECIALIZATIONS,
   };
 }
-
-const styles = StyleSheet.create({
-  inputContainer: {
-    marginBottom: theme.spacing.md,
-  },
-  label: {
-    fontSize: theme.typography.sizes.sm,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    paddingHorizontal: theme.spacing.md,
-  },
-  inputWrapperMultiline: {
-    alignItems: "flex-start",
-    paddingVertical: theme.spacing.sm,
-  },
-  inputError: {
-    borderColor: healthColors.error.main,
-  },
-  inputIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.sizes.body,
-    color: healthColors.text.primary,
-  },
-  inputMultiline: {
-    minHeight: 10,
-    paddingTop: 2,
-  },
-  availabilityBox: {
-    backgroundColor: healthColors.background.card,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    padding: theme.spacing.md,
-  },
-  daysRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: theme.spacing.sm,
-  },
-  dayChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    backgroundColor: healthColors.background.primary,
-  },
-  dayChipActive: {
-    backgroundColor: healthColors.primary.main,
-    borderColor: healthColors.primary.main,
-  },
-  dayChipText: {
-    fontSize: theme.typography.sizes.sm,
-    color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.medium,
-  },
-  dayChipTextActive: {
-    color: healthColors.text.white,
-  },
-  daySlotRow: {
-    marginTop: theme.spacing.sm,
-    paddingTop: theme.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: healthColors.border.light,
-  },
-  daySlotLabel: {
-    fontSize: theme.typography.sizes.sm,
-    fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-    marginBottom: 6,
-  },
-  slotsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  slotChip: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: healthColors.primary.main,
-    backgroundColor: healthColors.background.primary,
-  },
-  slotChipActive: {
-    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.12),
-  },
-  slotChipText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.primary.main,
-  },
-  slotChipTextActive: {
-    fontWeight: theme.typography.weights.semibold,
-  },
-  availabilityHint: {
-    fontSize: theme.typography.sizes.sm,
-    color: healthColors.text.tertiary,
-    textAlign: "center",
-    paddingVertical: theme.spacing.sm,
-  },
-  pickerText: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    fontSize: theme.typography.sizes.body,
-    color: healthColors.text.primary,
-  },
-  placeholderText: {
-    color: healthColors.text.tertiary,
-  },
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: healthColors.background.overlay,
-    justifyContent: "flex-end",
-  },
-  dropdownContainer: {
-    backgroundColor: healthColors.background.primary,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
-    maxHeight: "60%",
-    ...theme.shadows.lg,
-  },
-  dropdownHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  dropdownTitle: {
-    fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
-  dropdownItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
-  dropdownItemSelected: {
-    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
-  },
-  dropdownItemText: {
-    fontSize: theme.typography.sizes.body,
-    color: healthColors.text.primary,
-  },
-  dropdownItemTextSelected: {
-    color: healthColors.primary.main,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  errorText: {
-    fontSize: theme.typography.sizes.xs,
-    color: healthColors.error.main,
-    marginTop: theme.spacing.xs,
-  },
-});

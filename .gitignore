@@ -58,5 +58,6 @@ Thumbs.db
 # Test coverage
 coverage/
 .nyc_output/
-
+# Only ignore test coverage output, not test source files
+backend/coverage
 dump.rdb

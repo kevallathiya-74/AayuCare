@@ -28,7 +28,6 @@ import { theme, healthColors } from "@/theme";
 import {
   Card,
   Button,
-  NetworkStatusIndicator,
   SectionHeader,
 } from "@/components/common";
 import { getScreenPadding } from "@/utils/responsive";
@@ -80,7 +79,6 @@ const DoctorProfileViewScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-      <NetworkStatusIndicator />
 
       <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}

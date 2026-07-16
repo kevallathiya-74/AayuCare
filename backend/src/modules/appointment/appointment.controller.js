@@ -9,6 +9,22 @@ const logger = require("../../utils/logger");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
 const { invalidateByPatterns, APPOINTMENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
 
+const extractFilters = (query, req) => {
+  const { status, startDate, endDate, date, cursor, page, limit } = query;
+  const filters = {};
+  if (status) filters.status = String(status);
+  if (startDate) filters.startDate = String(startDate);
+  if (endDate) filters.endDate = String(endDate);
+  if (date) filters.date = String(date);
+  if (cursor) filters.cursor = String(cursor);
+  if (page) filters.page = parseInt(String(page), 10) || 1;
+  filters.limit = parseInt(String(limit), 10) || 20;
+  if (req.hospitalId && req.user.role !== "super_admin") {
+    filters.hospitalId = req.hospitalId;
+  }
+  return filters;
+};
+
 /**
  * @desc    Create new appointment
  * @route   POST /api/appointments
@@ -74,17 +90,7 @@ exports.createAppointment = async (req, res, next) => {
 exports.getAllAppointmentsCursor = async (req, res, next) => {
   try {
     // Whitelist safe filter fields — never spread req.query directly into DB filters
-    const { status, startDate, endDate, date, cursor, limit } = req.query;
-    const filters = {};
-    if (status) filters.status = String(status);
-    if (startDate) filters.startDate = String(startDate);
-    if (endDate) filters.endDate = String(endDate);
-    if (date) filters.date = String(date);
-    if (cursor) filters.cursor = String(cursor);
-    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
+    const filters = extractFilters(req.query, req);
 
     const result = await appointmentService.getAllAppointmentsCursor(filters);
 
@@ -104,17 +110,7 @@ exports.getAppointmentsCursor = async (req, res, next) => {
     let result;
 
     // Whitelist safe filter fields — never spread req.query directly into DB filters
-    const { status, startDate, endDate, date, cursor, limit } = req.query;
-    const filters = {};
-    if (status) filters.status = String(status);
-    if (startDate) filters.startDate = String(startDate);
-    if (endDate) filters.endDate = String(endDate);
-    if (date) filters.date = String(date);
-    if (cursor) filters.cursor = String(cursor);
-    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
+    const filters = extractFilters(req.query, req);
 
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointmentsCursor(
@@ -176,17 +172,7 @@ exports.getAppointmentsCursor = async (req, res, next) => {
 exports.getAllAppointments = async (req, res, next) => {
   try {
     // Whitelist safe filter fields — never spread req.query directly into DB filters
-    const { status, startDate, endDate, date, page, limit } = req.query;
-    const filters = {};
-    if (status) filters.status = String(status);
-    if (startDate) filters.startDate = String(startDate);
-    if (endDate) filters.endDate = String(endDate);
-    if (date) filters.date = String(date);
-    if (page) filters.page = parseInt(String(page), 10) || 1;
-    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
+    const filters = extractFilters(req.query, req);
 
     const result = await appointmentService.getAllAppointments(filters);
 
@@ -206,17 +192,7 @@ exports.getAppointments = async (req, res, next) => {
     let result;
 
     // Whitelist safe filter fields — never spread req.query directly into DB filters
-    const { status, startDate, endDate, date, page, limit } = req.query;
-    const filters = {};
-    if (status) filters.status = String(status);
-    if (startDate) filters.startDate = String(startDate);
-    if (endDate) filters.endDate = String(endDate);
-    if (date) filters.date = String(date);
-    if (page) filters.page = parseInt(String(page), 10) || 1;
-    if (limit) filters.limit = parseInt(String(limit), 10) || 20;
-    if (req.hospitalId && req.user.role !== "super_admin") {
-      filters.hospitalId = req.hospitalId;
-    }
+    const filters = extractFilters(req.query, req);
 
     if (req.user.role === "patient") {
       result = await appointmentService.getPatientAppointments(

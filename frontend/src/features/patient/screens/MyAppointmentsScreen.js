@@ -33,12 +33,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { theme, healthColors, textStyles } from "@/theme";
 import {
   SkeletonCardRow,
-  ErrorRecovery,
-  NetworkStatusIndicator,
   EmptyState,
   Card,
 } from "@/components/common";
-import { logError, parseError } from "@/utils/errorHandler";
+import { logError } from "@/utils/errorHandler";
 import { usePatientAppointmentsInfinite } from "@/hooks/useAppointments";
 import { appointmentService } from "@/services";
 import { EmptyStateConfig } from "@/utils/constants";
@@ -320,13 +318,16 @@ const MyAppointmentsScreen = ({ navigation }) => {
     </Card>
   );
 
+  if (isError) {
+    throw error || new Error("Unknown Error");
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
       />
-      <NetworkStatusIndicator />
 
       {/* Header */}
       <View style={styles.header}>
@@ -382,14 +383,7 @@ const MyAppointmentsScreen = ({ navigation }) => {
       </View>
 
       {/* Appointments List */}
-      {isError ? (
-        <ErrorRecovery
-          error={parseError(error)}
-          onRetry={() => refetch()}
-          onGoBack={() => handleSmartBack(navigation, "PatientTabs")}
-          context="loading appointments"
-        />
-      ) : isLoading ? (
+      {isLoading ? (
         <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (
             <SkeletonCardRow key={i} />

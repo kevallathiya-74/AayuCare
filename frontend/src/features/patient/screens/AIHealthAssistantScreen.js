@@ -30,8 +30,6 @@ import {
 } from "@/utils/responsive";
 import {
   ChatComposer,
-  ErrorRecovery,
-  NetworkStatusIndicator,
 } from "@/components/common";
 import { showError, logError } from "@/utils/errorHandler";
 import { useNetworkStatus } from "@/utils/offlineHandler";
@@ -45,7 +43,7 @@ import { useTranslation } from 'react-i18next';
 
 const AIHealthAssistantScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
   const { isConnected } = useNetworkStatus();
   const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
@@ -219,29 +217,14 @@ const AIHealthAssistantScreen = ({ navigation }) => {
     });
   };
 
-  const handleRetry = () => {
-    setError(null);
-  };
+  
 
   const handleSuggestionPress = (suggestion) => {
     setMessage(suggestion.text);
   };
 
   if (error) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor={healthColors.background.primary}
-        />
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={error}
-          onRetry={handleRetry}
-          onBack={() => handleSmartBack(navigation, "PatientTabs")}
-        />
-      </SafeAreaView>
-    );
+    throw error || new Error("Unknown Error");
   }
 
   return (
@@ -250,7 +233,6 @@ const AIHealthAssistantScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
       />
-      <NetworkStatusIndicator />
 
       {/* Header */}
       <View style={styles.header}>

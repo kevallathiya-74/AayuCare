@@ -13,12 +13,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  StatusBar,
-} from "react-native";
+  StatusBar} from "react-native";
 import {
   SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+  useSafeAreaInsets} from "react-native-safe-area-context";
 
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -29,37 +27,30 @@ import {
   BriefcaseMedical,
   Building,
   CreditCard,
-  Info,
-} from "lucide-react-native";
+  Info} from "lucide-react-native";
 import { theme, healthColors } from "@/theme";
 import { getScreenPadding } from "@/utils/responsive";
-import {
-  SkeletonCardRow,
-  NetworkStatusIndicator,
-  ErrorRecovery,
-  EmptyState,
-} from "@/components/common";
+import { SkeletonCardRow, EmptyState } from "@/components/common";
 import { showError, logError } from "@/utils/errorHandler";
 import { useNetworkStatus } from "@/utils/offlineHandler";
 import { formatCurrency } from "@/utils/helpers";
 import {
   prescriptionService,
   paymentService,
-  appointmentService,
-} from "@/services";
+  appointmentService} from "@/services";
 import { DynamicIcon } from "@/components/common";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 const PharmacyBillingScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
   const [paymentResult, setPaymentResult] = useState(null);
   const [selectedPurchase, setSelectedPurchase] = useState("hospital");
   const [selectedPayment, setSelectedPayment] = useState("card");
-  const [error, setError] = useState(null);
+
   const { isConnected } = useNetworkStatus();
   const { user } = useAuth((state) => state.auth);
   const insets = useSafeAreaInsets();
@@ -69,13 +60,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
   const {
     data: fetchedPrescription,
-    isLoading: fetchingPrescription,
-    refetch: refetchPrescription,
-  } = useQuery({
+    isLoading: fetchingPrescription} = useQuery({
     queryKey: queryKeys.prescriptions.patient(user?.id || "unknown"),
     queryFn: async () => {
       const response = await prescriptionService.getPatientPrescriptions(
-        user.id
+        user.id,
       );
       if (!response?.success) {
         return null;
@@ -91,12 +80,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       return {
         id: latest.id,
         date: new Date(
-          latest.prescriptionDate || latest.createdAt
+          latest.prescriptionDate || latest.createdAt,
         ).toLocaleDateString("en-IN", {
           day: "numeric",
           month: "short",
-          year: "numeric",
-        }),
+          year: "numeric"}),
         doctor: latest.doctorName || "Doctor",
         medicines: (latest.medicines || latest.medications || []).map(
           (med) => ({
@@ -104,23 +92,19 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             dosage: med.dosage || med.frequency || "As directed",
             duration: med.duration || "7 days",
             price: med.price || 50,
-            qty: med.quantity || 1,
-          })
-        ),
-      };
+            qty: med.quantity || 1}),
+        )};
     },
     enabled: !!user?.id && !routePrescription,
     staleTime: 60 * 1000,
-    retry: 1,
-  });
+    retry: 1});
 
   const prescription = routePrescription || fetchedPrescription || null;
 
   const { data: hasUpcomingAppointment = false } = useQuery({
     queryKey: queryKeys.appointments.list({
       scope: "pharmacy-empty-state-appointment-check",
-      patientId: user?.id,
-    }),
+      patientId: user?.id}),
     enabled: !!user?.id,
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -138,13 +122,12 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 
         return ["scheduled", "confirmed", "in_progress"].includes(status);
       });
-    },
-  });
+    }});
 
   const subtotal =
     prescription?.medicines?.reduce(
       (sum, med) => sum + (med.price || 0) * (med.qty || 1),
-      0
+      0,
     ) || 0;
   const discount = selectedPurchase === "hospital" ? subtotal * 0.15 : 0;
   const total = subtotal - discount;
@@ -154,20 +137,17 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       id: "card",
       icon: "card",
       name: "Card Payment",
-      color: theme.colors.info.main,
-    },
+      color: theme.colors.info.main},
     {
       id: "upi",
       icon: "phone-portrait",
       name: "UPI",
-      color: theme.colors.success.main,
-    },
+      color: theme.colors.success.main},
     {
       id: "cash",
       icon: "cash",
       name: "Cash",
-      color: theme.colors.warning.main,
-    },
+      color: theme.colors.warning.main},
   ];
 
   const paymentMutation = useMutation({
@@ -178,11 +158,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         Alert.alert(
           "Payment Successful",
           `Payment of ${formatCurrency(
-            total
+            total,
           )} via ${selectedPayment.toUpperCase()} processed successfully!\nPayment ID: ${
             response.data?.payment_id || "N/A"
           }`,
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         return;
       }
@@ -193,12 +173,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       logError(err, {
         context: "PharmacyBillingScreen.handlePayment",
         amount: total,
-        method: selectedPayment,
-      });
-      setError(err?.message || "Payment failed");
+        method: selectedPayment});
+      logError("Error in pharmacy billing", err?.message || "Payment failed");
       showError("Payment failed. Please try again.");
-    },
-  });
+    }});
 
   const handlePayment = async () => {
     if (!isConnected) {
@@ -206,41 +184,19 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
       return;
     }
 
-    setError(null);
+    logError("Error in pharmacy billing", null);
     await paymentMutation.mutateAsync({
       amount: total,
       paymentMethod: selectedPayment,
       purchaseType: selectedPurchase,
       prescriptionId: prescription?.id || null,
-      medicines: prescription?.medicines || [],
-    });
+      medicines: prescription?.medicines || []});
   };
-
-  const handleRetry = () => {
-    setError(null);
-    if (!routePrescription) {
-      refetchPrescription();
-    }
-  };
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <NetworkStatusIndicator />
-        <ErrorRecovery
-          error={error}
-          onRetry={handleRetry}
-          onDismiss={() => setError(null)}
-        />
-      </SafeAreaView>
-    );
-  }
 
   // Loading state
   if (fetchingPrescription) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <NetworkStatusIndicator />
         <View style={styles.loadingListWrapper}>
           {[1, 2, 3, 4].map((i) => (
             <SkeletonCardRow key={i} />
@@ -265,7 +221,6 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
           barStyle="dark-content"
           backgroundColor={healthColors.background.card}
         />
-        <NetworkStatusIndicator />
         <View
           style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
         >
@@ -285,9 +240,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               color={healthColors.primary.main}
             />
             <View style={styles.headerText}>
-              <Text style={styles.headerTitle}>{t('pharmacy_billing')}</Text>
+              <Text style={styles.headerTitle}>{t("pharmacy_billing")}</Text>
               <Text style={styles.headerSubtitle}>
-                {t('medicine_purchase_payment')}
+                {t("medicine_purchase_payment")}
               </Text>
             </View>
           </View>
@@ -320,7 +275,6 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.card}
       />
-      <NetworkStatusIndicator />
       {/* Header */}
       <View
         style={[styles.header, { paddingTop: insets.top + theme.spacing.xs }]}
@@ -338,9 +292,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.headerContent}>
           <Cross size={theme.iconSizes.xxl} color={healthColors.primary.main} />
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>{t('pharmacy_billing')}</Text>
+            <Text style={styles.headerTitle}>{t("pharmacy_billing")}</Text>
             <Text style={styles.headerSubtitle}>
-              {t('medicine_purchase_payment')}
+              {t("medicine_purchase_payment")}
             </Text>
           </View>
         </View>
@@ -352,14 +306,14 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                   `Payment ID: ${
                     paymentResult.payment_id
                   }\nAmount: ${formatCurrency(
-                    total
+                    total,
                   )}\nMethod: ${selectedPayment.toUpperCase()}\nStatus: ${
                     paymentResult.status || "completed"
-                  }`
+                  }`,
                 )
               : Alert.alert(
                   "No Receipt",
-                  "Complete a payment to view the receipt."
+                  "Complete a payment to view the receipt.",
                 )
           }
           accessibilityRole="button"
@@ -385,7 +339,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>{t('prescription_details_1')}CRIPTION DETAILS</Text>
+            <Text style={styles.sectionTitle}>
+              {t("prescription_details_1")}CRIPTION DETAILS
+            </Text>
           </View>
           <View style={styles.card}>
             <View style={styles.prescriptionHeader}>
@@ -398,7 +354,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 </Text>
               </View>
               <View style={styles.doctorInfo}>
-                <Text style={styles.doctorLabel}>{t('prescribed_by_1')}</Text>
+                <Text style={styles.doctorLabel}>{t("prescribed_by_1")}</Text>
                 <Text style={styles.doctorName}>{prescription.doctor}</Text>
               </View>
             </View>
@@ -452,7 +408,9 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>{t('purchase_options')}E OPTIONS</Text>
+            <Text style={styles.sectionTitle}>
+              {t("purchase_options")}E OPTIONS
+            </Text>
           </View>
           <View style={styles.card}>
             <TouchableOpacity
@@ -482,16 +440,16 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 />
                 <View style={styles.purchaseOptionText}>
                   <Text style={styles.purchaseOptionTitle}>
-                    {t('hospital_pharmacy')}
+                    {t("hospital_pharmacy")}
                   </Text>
                   <Text style={styles.purchaseOptionSubtitle}>
-                    {t('15_discount_verified_quality_i')} • Instant delivery
+                    {t("15_discount_verified_quality_i")} • Instant delivery
                   </Text>
                 </View>
               </View>
               {selectedPurchase === "hospital" && (
                 <View style={styles.discountBadge}>
-                  <Text style={styles.discountText}>{t('15_off')}F</Text>
+                  <Text style={styles.discountText}>{t("15_off")}F</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -523,10 +481,10 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
                 />
                 <View style={styles.purchaseOptionText}>
                   <Text style={styles.purchaseOptionTitle}>
-                    {t('external_pharmacy')}
+                    {t("external_pharmacy")}
                   </Text>
                   <Text style={styles.purchaseOptionSubtitle}>
-                    {t('no_discount_purchase_outside_h')}
+                    {t("no_discount_purchase_outside_h")}
                   </Text>
                 </View>
               </View>
@@ -542,21 +500,23 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>{t('billing_summary')}</Text>
+            <Text style={styles.sectionTitle}>{t("billing_summary")}</Text>
           </View>
           <View style={styles.card}>
             <View style={styles.billingRow}>
-              <Text style={styles.billingLabel}>{t('subtotal')}</Text>
+              <Text style={styles.billingLabel}>{t("subtotal")}</Text>
               <Text style={styles.billingValue}>
                 {formatCurrency(subtotal)}
               </Text>
             </View>
             <View style={styles.billingRow}>
               <View style={styles.billingLabelWithIcon}>
-                <Text style={styles.billingLabel}>{t('hospital_discount')}</Text>
+                <Text style={styles.billingLabel}>
+                  {t("hospital_discount")}
+                </Text>
                 {selectedPurchase === "hospital" && (
                   <View style={styles.discountTag}>
-                    <Text style={styles.discountTagText}>{t('15')}</Text>
+                    <Text style={styles.discountTagText}>{t("15")}</Text>
                   </View>
                 )}
               </View>
@@ -572,7 +532,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.billingDivider} />
             <View style={styles.billingRow}>
-              <Text style={styles.billingTotal}>{t('total_amount')}</Text>
+              <Text style={styles.billingTotal}>{t("total_amount")}</Text>
               <Text style={styles.billingTotalValue}>
                 {formatCurrency(total)}
               </Text>
@@ -587,7 +547,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
               size={theme.iconSizes.md}
               color={healthColors.primary.main}
             />
-            <Text style={styles.sectionTitle}>{t('payment_method')}</Text>
+            <Text style={styles.sectionTitle}>{t("payment_method")}</Text>
           </View>
           <View style={styles.card}>
             {paymentMethods.map((method) => (
@@ -672,7 +632,8 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
         <View style={styles.infoBox}>
           <Info size={theme.iconSizes.md} color={theme.colors.info.main} />
           <Text style={styles.infoText}>
-            {t('medicine_will_be_dispensed_aft')}e will be dispensed after successful payment verification
+            {t("medicine_will_be_dispensed_aft")}e will be dispensed after
+            successful payment verification
           </Text>
         </View>
       </ScrollView>
@@ -683,13 +644,11 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: healthColors.background.primary,
-  },
+    backgroundColor: healthColors.background.primary},
 
   loadingListWrapper: {
     padding: theme.spacing.md,
-    gap: theme.spacing.sm + theme.spacing.xs,
-  },
+    gap: theme.spacing.sm + theme.spacing.xs},
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -698,85 +657,68 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.md,
     backgroundColor: healthColors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: healthColors.border.light,
-  },
+    borderBottomColor: healthColors.border.light},
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.md,
     flex: 1,
-    marginLeft: theme.spacing.md,
-  },
+    marginLeft: theme.spacing.md},
   headerText: {
-    flex: 1,
-  },
+    flex: 1},
   headerTitle: {
     fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
+    color: healthColors.text.primary},
   headerSubtitle: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
+    color: healthColors.text.secondary},
   content: {
-    padding: getScreenPadding(),
-  },
+    padding: getScreenPadding()},
   section: {
-    marginBottom: theme.spacing.xl,
-  },
+    marginBottom: theme.spacing.xl},
   sectionTitleContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: theme.spacing.md,
-  },
+    marginBottom: theme.spacing.md},
   sectionTitle: {
     fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
+    color: healthColors.text.primary},
   card: {
     backgroundColor: healthColors.background.card,
     borderRadius: 16,
     padding: theme.spacing.lg,
-    ...theme.shadows.md,
-  },
+    ...theme.shadows.md},
   prescriptionHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-  },
+    justifyContent: "space-between"},
   prescriptionId: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: 4,
-  },
+    marginBottom: 4},
   prescriptionDate: {
     fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.tertiary,
-  },
+    color: healthColors.text.tertiary},
   doctorInfo: {
-    alignItems: "flex-end",
-  },
+    alignItems: "flex-end"},
   doctorLabel: {
     fontSize: theme.typography.sizes.overline,
     color: healthColors.text.tertiary,
-    marginBottom: 2,
-  },
+    marginBottom: 2},
   doctorName: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
-    color: healthColors.text.primary,
-  },
+    color: healthColors.text.primary},
   medicineItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: theme.spacing.md,
     backgroundColor: healthColors.background.primary,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.sm,
-  },
+    marginBottom: theme.spacing.sm},
   medicineIcon: {
     width: 48,
     height: 48,
@@ -784,35 +726,28 @@ const styles = StyleSheet.create({
     backgroundColor: healthColors.info.light,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: theme.spacing.md,
-  },
+    marginRight: theme.spacing.md},
 
   medicineInfo: {
-    flex: 1,
-  },
+    flex: 1},
   medicineName: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: 2,
-  },
+    marginBottom: 2},
   medicineDosage: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
-    marginBottom: 2,
-  },
+    marginBottom: 2},
   medicineQty: {
     fontSize: theme.typography.sizes.overline,
-    color: healthColors.text.tertiary,
-  },
+    color: healthColors.text.tertiary},
   medicinePrice: {
-    alignItems: "flex-end",
-  },
+    alignItems: "flex-end"},
   priceText: {
     fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.success.dark,
-  },
+    color: healthColors.success.dark},
   purchaseOption: {
     flexDirection: "row",
     alignItems: "center",
@@ -822,92 +757,74 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.sm,
     borderWidth: 2,
-    borderColor: healthColors.transparent,
-  },
+    borderColor: healthColors.transparent},
   purchaseOptionSelected: {
     borderColor: healthColors.success.dark,
-    backgroundColor: healthColors.success.light,
-  },
+    backgroundColor: healthColors.success.light},
   purchaseOptionContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.md,
-    flex: 1,
-  },
+    flex: 1},
   purchaseOptionText: {
-    flex: 1,
-  },
+    flex: 1},
   purchaseOptionTitle: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.semibold,
     color: healthColors.text.primary,
-    marginBottom: 2,
-  },
+    marginBottom: 2},
   purchaseOptionSubtitle: {
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
-    lineHeight: 18,
-  },
+    lineHeight: 18},
   discountBadge: {
     backgroundColor: healthColors.success.dark,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
-    borderRadius: 8,
-  },
+    borderRadius: 8},
   discountText: {
     fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
+    color: theme.colors.white},
   billingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: theme.spacing.sm,
-  },
+    marginBottom: theme.spacing.sm},
   billingLabelWithIcon: {
     flexDirection: "row",
     alignItems: "center",
-    gap: theme.spacing.xs,
-  },
+    gap: theme.spacing.xs},
   billingLabel: {
     fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
+    color: healthColors.text.secondary},
   billingValue: {
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
-    color: healthColors.text.primary,
-  },
+    color: healthColors.text.primary},
   discountValue: {
-    color: healthColors.success.main,
-  },
+    color: healthColors.success.main},
   discountTag: {
     backgroundColor: healthColors.success.main,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
-  },
+    borderRadius: 4},
   discountTagText: {
     fontSize: theme.typography.sizes.overline,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
+    color: theme.colors.white},
   billingDivider: {
     height: 1,
     backgroundColor: healthColors.border.light,
-    marginVertical: theme.spacing.md,
-  },
+    marginVertical: theme.spacing.md},
   billingTotal: {
     fontSize: theme.typography.sizes.bodyLarge,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-  },
+    color: healthColors.text.primary},
   billingTotalValue: {
     fontSize: theme.typography.sizes.h4,
     fontWeight: theme.typography.weights.bold,
-    color: healthColors.success.dark,
-  },
+    color: healthColors.success.dark},
   paymentMethod: {
     flexDirection: "row",
     alignItems: "center",
@@ -916,61 +833,50 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.sm,
     borderWidth: 2,
-    borderColor: healthColors.transparent,
-  },
+    borderColor: healthColors.transparent},
   paymentMethodSelected: {
     borderColor: healthColors.success.dark,
-    backgroundColor: healthColors.success.light,
-  },
+    backgroundColor: healthColors.success.light},
   paymentIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: theme.spacing.md,
-  },
+    marginRight: theme.spacing.md},
   paymentName: {
     flex: 1,
     fontSize: theme.typography.sizes.bodyMedium,
     fontWeight: theme.typography.weights.medium,
-    color: healthColors.text.primary,
-  },
+    color: healthColors.text.primary},
   payButton: {
     borderRadius: theme.borderRadius.md,
     overflow: "hidden",
     marginBottom: theme.spacing.lg,
-    ...theme.shadows.lg,
-  },
+    ...theme.shadows.lg},
   payGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
+    gap: theme.spacing.sm},
   payButtonText: {
     fontSize: theme.typography.sizes.h5,
     fontWeight: theme.typography.weights.bold,
-    color: theme.colors.white,
-  },
+    color: theme.colors.white},
   infoBox: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: healthColors.info.light,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    gap: theme.spacing.sm,
-  },
+    gap: theme.spacing.sm},
   infoText: {
     flex: 1,
     fontSize: theme.typography.sizes.caption,
     color: healthColors.text.secondary,
-    lineHeight: 18,
-  },
+    lineHeight: 18},
   headerRightSpacer: {
-    width: 24,
-  },
-});
+    width: 24}});
 
 export default PharmacyBillingScreen;

@@ -182,57 +182,6 @@ const getHeartRateCategory = (heartRate) => {
 };
 
 /**
- * Get color associated with a status string
- * @param {string} status - The status string
- * @param {string} context - The context (appointment, payment, etc.)
- * @returns {string} Hex color code
- */
-export const getStatusColor = (status, _context = "appointment") => {
-  if (!status) return theme.colors.grays.gray500;
-
-  const s = status.toLowerCase();
-
-  // Generic success/active states
-  if (
-    [
-      "completed",
-      "confirmed",
-      "ready",
-      "dispensed",
-      "paid",
-      "active",
-      "success",
-    ].includes(s)
-  ) {
-    return theme.colors.success.main;
-  }
-
-  // Generic warning/pending states
-  if (
-    ["pending", "processing", "scheduled", "preparing", "ongoing"].includes(s)
-  ) {
-    return theme.colors.warning.main;
-  }
-
-  // Generic error/cancelled states
-  if (
-    [
-      "cancelled",
-      "failed",
-      "refunded",
-      "no_show",
-      "inactive",
-      "critical",
-    ].includes(s)
-  ) {
-    return theme.colors.error.main;
-  }
-
-  // Default fallback
-  return theme.colors.primary;
-};
-
-/**
  * Get full style object (text & background colors) for a status badge
  * @param {string} status - The status string
  * @returns {Object} { color, backgroundColor } style object
@@ -420,6 +369,5 @@ export default {
   hapticFeedback,
   debounce,
   throttle,
-  getStatusColor,
   getStatusStyle,
 };

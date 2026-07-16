@@ -3,7 +3,7 @@
  * AUTO-SYNC to patient app and pharmacy
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   View,
@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   StatusBar,
   Modal,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
@@ -35,13 +34,14 @@ import { useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { verticalScale, getScreenPadding } from "@/utils/responsive";
-import { prescriptionService, patientService, doctorService } from "@/services";
-import { logError } from "@/utils/errorHandler";
+import { patientService, doctorService } from "@/services";
 import { formatCurrency } from "@/utils/helpers";
 import { SkeletonCardRow, Input, EmptyState } from "@/components/common";
 import { DynamicIcon } from "@/components/common";
 import { handleSmartBack } from "@/utils/navigation";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
+import usePrescriptionForm from "@/hooks/usePrescriptionForm";
+import AddMedicineModal from "./AddMedicineModal";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
@@ -50,46 +50,6 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
 
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || null);
-  const [saving, setSaving] = useState(false);
-  const [date] = useState(
-    new Date().toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  );
-  const [medications, setMedications] = useState([]);
-  const [diagnosis, setDiagnosis] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [nextVisit, setNextVisit] = useState("");
-  // Date picker state for Next Visit field
-  const [nextVisitDate, setNextVisitDate] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [sendOptions, setSendOptions] = useState({
-    patientApp: true,
-    hospitalPharmacy: true,
-    externalPharmacy: false,
-  });
-  const [showAddMedicine, setShowAddMedicine] = useState(false);
-  const [medicineForm, setMedicineForm] = useState({
-    name: "",
-    dosage: "",
-    duration: "",
-    instructions: "",
-    morning: true,
-    afternoon: false,
-    evening: true,
-    unitPrice: "",
-  });
-  const [estimatedCost, setEstimatedCost] = useState(0);
-  const [discount] = useState(15); // Hospital pharmacy discount percentage
-
-  const getDisplayPatientId = useCallback((entry) => {
-    if (entry?.patientId) return String(entry.patientId);
-    if (entry?.userId) return String(entry.userId);
-    if (entry?.id) return String(entry.id);
-    return "N/A";
-  }, []);
 
   useEffect(() => {
     if (patientId) {
@@ -135,11 +95,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       const doctorLinkedPatients = Array.isArray(doctorLinkedVal)
         ? doctorLinkedVal
         : Array.isArray(doctorLinkedVal?.data)
-        ? doctorLinkedVal.data
-        : doctorLinkedVal?.data?.patients ||
-          doctorLinkedVal?.data?.data ||
-          doctorLinkedVal?.patients ||
-          [];
+          ? doctorLinkedVal.data
+          : doctorLinkedVal?.data?.patients ||
+            doctorLinkedVal?.data?.data ||
+            doctorLinkedVal?.patients ||
+            [];
 
       const allPatientsVal =
         allPatientsResult.status === "fulfilled"
@@ -148,11 +108,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
       const allPatients = Array.isArray(allPatientsVal)
         ? allPatientsVal
         : Array.isArray(allPatientsVal?.data)
-        ? allPatientsVal.data
-        : allPatientsVal?.data?.patients ||
-          allPatientsVal?.data?.data ||
-          allPatientsVal?.patients ||
-          [];
+          ? allPatientsVal.data
+          : allPatientsVal?.data?.patients ||
+            allPatientsVal?.data?.data ||
+            allPatientsVal?.patients ||
+            [];
 
       const merged = [...doctorLinkedPatients, ...allPatients].filter(Boolean);
       const uniquePatients = Array.from(
@@ -160,31 +120,43 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
           merged.map((entry) => {
             const uniqueId = entry?.id || entry?.userId;
             return [uniqueId, entry];
-          })
-        ).values()
+          }),
+        ).values(),
       );
 
       return uniquePatients.filter((entry) => entry?.id || entry?.userId);
     },
   });
 
-  useEffect(() => {
-    // Calculate estimated cost based on medications
-    const cost = medications.reduce((total, med) => {
-      // Simplified cost calculation - in real app, fetch from medicine database
-      return total + (med.unitPrice || 50) * (parseInt(med.duration) || 5);
-    }, 0);
-    setEstimatedCost(cost);
-  }, [medications]);
-
-  // Format a Date object to YYYY-MM-DD for the API
-  const formatDateToISO = (date) => {
-    if (!date) return "";
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
+  const {
+    saving,
+    medications,
+    diagnosis,
+    setDiagnosis,
+    instructions,
+    setInstructions,
+    nextVisitDate,
+    showDatePicker,
+    setShowDatePicker,
+    sendOptions,
+    showAddMedicine,
+    setShowAddMedicine,
+    estimatedCost,
+    discount,
+    finalCost,
+    handleDatePickerChange,
+    handleClearDate,
+    handleAddMedicine,
+    addMedicine,
+    removeMedicine,
+    toggleSendOption,
+    handleSavePrescription,
+  } = usePrescriptionForm({
+    patient,
+    appointmentId,
+    navigation,
+    refetchPatientOptions,
+  });
 
   // User-friendly display: e.g. "15 Mar 2026"
   const formatDateDisplay = (date) => {
@@ -196,197 +168,14 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     });
   };
 
-  const handleDatePickerChange = (_event, selectedDate) => {
-    // On Android the picker closes automatically; on iOS we close manually
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-    }
-    if (selectedDate) {
-      setNextVisitDate(selectedDate);
-      setNextVisit(formatDateToISO(selectedDate));
-    }
-  };
-
-  const handleAddMedicine = () => setShowAddMedicine(true);
-
-  const handleSaveMedicine = () => {
-    if (
-      !medicineForm.name.trim() ||
-      !medicineForm.dosage.trim() ||
-      !medicineForm.duration.trim()
-    ) {
-      Alert.alert(
-        "Missing details",
-        "Please enter medicine name, dosage, and duration."
-      );
-      return;
-    }
-
-    const timings = {
-      morning: medicineForm.morning,
-      afternoon: medicineForm.afternoon,
-      evening: medicineForm.evening,
-    };
-
-    if (!timings.morning && !timings.afternoon && !timings.evening) {
-      Alert.alert(
-        "Missing timing",
-        "Please select at least one medicine timing."
-      );
-      return;
-    }
-
-    const selectedTimings = Object.entries(timings)
-      .filter(([, enabled]) => enabled)
-      .map(([label]) => label)
-      .join(", ");
-
-    const medicineEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: medicineForm.name.trim(),
-      dosage: medicineForm.dosage.trim(),
-      duration: medicineForm.duration.trim(),
-      frequency: selectedTimings || "morning, evening",
-      instructions: medicineForm.instructions.trim(),
-      timings,
-      unitPrice: parseFloat(medicineForm.unitPrice) || 50,
-    };
-
-    setMedications((prev) => [...prev, medicineEntry]);
-    setShowAddMedicine(false);
-    setMedicineForm({
-      name: "",
-      dosage: "",
-      duration: "",
-      instructions: "",
-      morning: true,
-      afternoon: false,
-      evening: true,
-      unitPrice: "50",
-    });
-  };
-
-  const handleRemoveMedicine = (id) => {
-    setMedications(medications.filter((med) => med.id !== id));
-  };
-
-  const toggleSendOption = (option) => {
-    setSendOptions((prev) => ({
-      ...prev,
-      [option]: !prev[option],
-    }));
-  };
-
-  const handleSavePrescription = async () => {
-    if (medications.length === 0) {
-      Alert.alert("Error", "Please add at least one medicine");
-      return;
-    }
-
-    const resolvedPatientId = patient?.id;
-    if (!resolvedPatientId) {
-      Alert.alert(
-        "Patient Required",
-        "Please select a patient before creating a prescription.",
-        [
-          {
-            text: "Select Patient",
-            onPress: () => refetchPatientOptions(),
-          },
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-        ]
-      );
-      return;
-    }
-
-    if (nextVisit) {
-      const isValidFollowUpDate = /^\d{4}-\d{2}-\d{2}$/.test(nextVisit);
-      if (!isValidFollowUpDate) {
-        Alert.alert(
-          "Invalid Date",
-          "Next visit date is invalid. Please pick a date using the calendar."
-        );
-        return;
-      }
-      // Follow-up date must be in the future
-      const followUp = new Date(nextVisit);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (followUp < today) {
-        Alert.alert(
-          "Invalid Date",
-          "Next visit date must be today or a future date."
-        );
-        return;
-      }
-    }
-
-    setSaving(true);
-    try {
-      const prescriptionData = {
-        patientId: resolvedPatientId,
-        appointmentId: appointmentId || undefined,
-        diagnosis: diagnosis.trim() || undefined,
-        medications: medications.map((med) => ({
-          name: med.name,
-          dosage: med.dosage,
-          frequency: med.frequency || "morning, evening",
-          duration: med.duration,
-          instructions: med.instructions || "",
-          unitPrice: med.unitPrice || undefined,
-          price: med.unitPrice || undefined,
-        })),
-        instructions: instructions.trim() || undefined,
-        followUpDate: nextVisit || undefined,
-        sendOptions,
-      };
-
-      const response = await prescriptionService.createPrescription(
-        prescriptionData
-      );
-
-      if (response?.success) {
-        Alert.alert(
-          "Prescription Saved",
-          `Prescription has been saved and will be sent to:\n${
-            sendOptions.patientApp ? "Patient Mobile App\n" : ""
-          }${sendOptions.hospitalPharmacy ? "Hospital Pharmacy\n" : ""}${
-            sendOptions.externalPharmacy ? "External Pharmacy" : ""
-          }`,
-          [
-            {
-              text: "OK",
-              onPress: () => handleSmartBack(navigation, "DoctorTabs"),
-            },
-          ]
-        );
-      } else {
-        Alert.alert(
-          "Error",
-          response?.message || "Failed to save prescription"
-        );
-      }
-    } catch (err) {
-      logError(err, {
-        context: "EnhancedPrescriptionScreen.handleSavePrescription",
-      });
-      Alert.alert("Error", "Unable to save prescription. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const finalCost = estimatedCost - (estimatedCost * discount) / 100;
-
   const renderPatientPicker = () => {
     if (loadingPatients) {
       return (
         <View style={styles.loadingInline}>
           <ActivityIndicator size="small" color={healthColors.primary.main} />
-          <Text style={styles.loadingInlineText}>{t('loading_patients')}..</Text>
+          <Text style={styles.loadingInlineText}>
+            {t("loading_patients")}
+          </Text>
         </View>
       );
     }
@@ -394,7 +183,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
     if (patientOptions.length === 0) {
       return (
         <Text style={styles.emptyPatientsText}>
-          {t('no_patients_available_please_c')} Please create/assign appointments first.
+          {t("no_patients_available_please_c")}
         </Text>
       );
     }
@@ -464,7 +253,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         >
           <ArrowLeft size={24} color={healthColors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('create_prescription')}</Text>
+        <Text style={styles.headerTitle}>{t("create_prescription")}</Text>
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSavePrescription}
@@ -522,28 +311,35 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 }`}
               >
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('patient')}</Text>
+                  <Text style={styles.infoLabel}>{t("patient")}</Text>
                   <Text style={styles.infoValue}>
-                    {patient?.name || "N/A"} ({getDisplayPatientId(patient)})
+                    {patient?.name || "N/A"} (
+                    {patient?.id || patient?.userId || "N/A"})
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('doctor')}</Text>
+                  <Text style={styles.infoLabel}>{t("doctor")}</Text>
                   <Text style={styles.infoValue}>
                     {user?.name || "Doctor"} (
                     {user?.specialization || "Specialist"})
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('date')}</Text>
-                  <Text style={styles.infoValue}>{date}</Text>
+                  <Text style={styles.infoLabel}>{t("date")}</Text>
+                  <Text style={styles.infoValue}>
+                    {new Date().toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </Text>
                 </View>
               </View>
             </View>
 
             {/* Medications */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('medications')}</Text>
+              <Text style={styles.sectionTitle}>{t("medications")}</Text>
               {medications.length > 0 ? (
                 <View style={styles.medicationsCard}>
                   {medications.map((med, index) => (
@@ -560,24 +356,30 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                           <View style={styles.timingsRow}>
                             {med.timings.morning && (
                               <View style={styles.timingChip}>
-                                <Text style={styles.timingText}>{t('morning')}</Text>
+                                <Text style={styles.timingText}>
+                                  {t("morning")}
+                                </Text>
                               </View>
                             )}
                             {med.timings.afternoon && (
                               <View style={styles.timingChip}>
-                                <Text style={styles.timingText}>{t('afternoon')}oon</Text>
+                                <Text style={styles.timingText}>
+                                  {t("afternoon")}oon
+                                </Text>
                               </View>
                             )}
                             {med.timings.evening && (
                               <View style={styles.timingChip}>
-                                <Text style={styles.timingText}>{t('evening')}</Text>
+                                <Text style={styles.timingText}>
+                                  {t("evening")}
+                                </Text>
                               </View>
                             )}
                           </View>
                         </View>
                         <TouchableOpacity
+                          onPress={() => removeMedicine(med.id)}
                           style={styles.removeButton}
-                          onPress={() => handleRemoveMedicine(med.id)}
                           accessibilityRole="button"
                           accessibilityLabel={`Remove ${med.name}`}
                         >
@@ -590,7 +392,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
               ) : (
                 <View style={styles.emptyMedications}>
                   <Text style={styles.emptyMedicationsText}>
-                    {t('no_medications_added_yet')}
+                    {t("no_medications_added_yet")}
                   </Text>
                 </View>
               )}
@@ -602,15 +404,17 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityLabel="Add medicine"
               >
                 <PlusCircle size={20} color={healthColors.primary.main} />
-                <Text style={styles.addMedicineText}>{t('add_medicine')}dicine</Text>
+                <Text style={styles.addMedicineText}>
+                  {t("add_medicine")}dicine
+                </Text>
               </TouchableOpacity>
             </View>
 
             {/* Instructions */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('diagnosis_1')}</Text>
+              <Text style={styles.sectionTitle}>{t("diagnosis_1")}</Text>
               <Input
-                placeholder={t('enter_diagnosis')}
+                placeholder={t("enter_diagnosis")}
                 value={diagnosis}
                 onChangeText={setDiagnosis}
                 multiline
@@ -619,9 +423,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('instructions')}</Text>
+              <Text style={styles.sectionTitle}>{t("instructions")}</Text>
               <Input
-                placeholder={t('enter_instructions_for_patient')}
+                placeholder={t("enter_instructions_for_patient")}
                 value={instructions}
                 onChangeText={setInstructions}
                 multiline
@@ -631,7 +435,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
 
             {/* Next Visit - Date Picker */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('next_visit')}</Text>
+              <Text style={styles.sectionTitle}>{t("next_visit")}</Text>
               <TouchableOpacity
                 style={styles.dateSelector}
                 onPress={() => setShowDatePicker(true)}
@@ -651,10 +455,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 </Text>
                 {nextVisitDate ? (
                   <TouchableOpacity
-                    onPress={() => {
-                      setNextVisitDate(null);
-                      setNextVisit("");
-                    }}
+                    onPress={handleClearDate}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
                     accessibilityLabel="Clear next visit date"
@@ -683,17 +484,21 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                             accessibilityRole="button"
                             accessibilityLabel="Cancel date selection"
                           >
-                            <Text style={styles.datePickerCancel}>{t('cancel')}</Text>
+                            <Text style={styles.datePickerCancel}>
+                              {t("cancel")}
+                            </Text>
                           </TouchableOpacity>
                           <Text style={styles.datePickerTitle}>
-                            {t('next_visit_date')}xt Visit Date
+                            {t("next_visit_date")}xt Visit Date
                           </Text>
                           <TouchableOpacity
                             onPress={() => setShowDatePicker(false)}
                             accessibilityRole="button"
                             accessibilityLabel="Done selecting date"
                           >
-                            <Text style={styles.datePickerDone}>{t('done')}</Text>
+                            <Text style={styles.datePickerDone}>
+                              {t("done")}
+                            </Text>
                           </TouchableOpacity>
                         </View>
                         <DateTimePicker
@@ -722,7 +527,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             <View style={styles.section}>
               <View style={styles.sendOptionsHeader}>
                 <CheckCircle size={20} color={healthColors.success.main} />
-                <Text style={styles.sectionTitle}>{t('send_to_options')}</Text>
+                <Text style={styles.sectionTitle}>{t("send_to_options")}</Text>
               </View>
               <View style={styles.sendOptionsCard}>
                 <TouchableOpacity
@@ -744,7 +549,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     }
                   />
                   <Text style={styles.checkboxLabel}>
-                    {t('patient_mobile_app_auto_sync')}
+                    {t("patient_mobile_app_auto_sync")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -769,7 +574,9 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                         : healthColors.text.disabled
                     }
                   />
-                  <Text style={styles.checkboxLabel}>{t('hospital_pharmacy')}</Text>
+                  <Text style={styles.checkboxLabel}>
+                    {t("hospital_pharmacy")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.checkboxRow}
@@ -794,7 +601,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                     }
                   />
                   <Text style={styles.checkboxLabel}>
-                    {t('external_pharmacy_patient_choi')}
+                    {t("external_pharmacy_patient_choi")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -804,20 +611,20 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
             <View style={styles.section}>
               <View style={styles.costCard}>
                 <View style={styles.costRow}>
-                  <Text style={styles.costLabel}>{t('estimated_cost')}</Text>
+                  <Text style={styles.costLabel}>{t("estimated_cost")}</Text>
                   <Text style={styles.costValue}>
                     {formatCurrency(estimatedCost)}
                   </Text>
                 </View>
                 <View style={styles.costRow}>
                   <Text style={styles.costLabel}>
-                    {t('hospital_pharmacy_discount')}
+                    {t("hospital_pharmacy_discount")}
                   </Text>
                   <Text style={styles.discountValue}>{discount}%</Text>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.costRow}>
-                  <Text style={styles.finalCostLabel}>{t('final_amount')}</Text>
+                  <Text style={styles.finalCostLabel}>{t("final_amount")}</Text>
                   <Text style={styles.finalCostValue}>
                     {formatCurrency(finalCost)}
                   </Text>
@@ -834,7 +641,7 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
                 accessibilityLabel="Save and send prescription"
               >
                 <Text style={styles.saveAndSendText}>
-                  {t('save_send_prescription')}D PRESCRIPTION
+                  {t("save_send_prescription")}D PRESCRIPTION
                 </Text>
               </TouchableOpacity>
             </View>
@@ -844,107 +651,11 @@ const EnhancedPrescriptionScreen = ({ navigation, route }) => {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      <Modal
-        statusBarTranslucent
+      <AddMedicineModal
         visible={showAddMedicine}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAddMedicine(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t('add_medicine')}dicine</Text>
-
-            <Input
-              placeholder={t('medicine_name')}
-              value={medicineForm.name}
-              onChangeText={(value) =>
-                setMedicineForm((prev) => ({ ...prev, name: value }))
-              }
-            />
-            <Input
-              placeholder={t('dosage_e_g_500mg')}
-              value={medicineForm.dosage}
-              onChangeText={(value) =>
-                setMedicineForm((prev) => ({ ...prev, dosage: value }))
-              }
-            />
-            <Input
-              placeholder={t('duration_e_g_5_days')}
-              value={medicineForm.duration}
-              onChangeText={(value) =>
-                setMedicineForm((prev) => ({ ...prev, duration: value }))
-              }
-            />
-            <Input
-              placeholder={t('unit_price')}
-              keyboardType="numeric"
-              value={medicineForm.unitPrice}
-              onChangeText={(value) =>
-                setMedicineForm((prev) => ({ ...prev, unitPrice: value }))
-              }
-            />
-            <Input
-              placeholder={t('instructions_1')}
-              value={medicineForm.instructions}
-              onChangeText={(value) =>
-                setMedicineForm((prev) => ({ ...prev, instructions: value }))
-              }
-              multiline
-            />
-
-            <View style={styles.timingToggleRow}>
-              {[
-                ["morning", "Morning"],
-                ["afternoon", "Afternoon"],
-                ["evening", "Evening"],
-              ].map(([key, label]) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[
-                    styles.timingToggleChip,
-                    medicineForm[key] && styles.timingToggleChipActive,
-                  ]}
-                  onPress={() =>
-                    setMedicineForm((prev) => ({ ...prev, [key]: !prev[key] }))
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Toggle ${label} timing`}
-                  accessibilityState={{ selected: !!medicineForm[key] }}
-                >
-                  <Text
-                    style={[
-                      styles.timingToggleText,
-                      medicineForm[key] && styles.timingToggleTextActive,
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalActionButton, styles.modalCancelButton]}
-                onPress={() => setShowAddMedicine(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel adding medicine"
-              >
-                <Text style={styles.modalCancelText}>{t('cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalActionButton, styles.modalSaveButton]}
-                onPress={handleSaveMedicine}
-                accessibilityRole="button"
-                accessibilityLabel="Add medicine to prescription"
-              >
-                <Text style={styles.modalSaveText}>{t('add')}d</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowAddMedicine(false)}
+        onAdd={addMedicine}
+      />
     </SafeAreaView>
   );
 };
@@ -1242,88 +953,6 @@ const styles = StyleSheet.create({
     color: healthColors.text.secondary,
     textAlign: "center",
     paddingHorizontal: 20,
-  },
-  loadingInline: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  loadingInlineText: {
-    fontSize: theme.typography.sizes.bodyMedium,
-    color: healthColors.text.secondary,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: healthColors.background.overlay,
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: healthColors.background.card,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-    gap: 10,
-  },
-  modalTitle: {
-    fontSize: theme.typography.sizes.h6,
-    fontWeight: theme.typography.weights.bold,
-    color: healthColors.text.primary,
-    marginBottom: 8,
-  },
-
-  timingToggleRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  timingToggleChip: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: healthColors.border.light,
-    borderRadius: 8,
-    paddingVertical: 8,
-    alignItems: "center",
-    backgroundColor: healthColors.background.primary,
-  },
-  timingToggleChipActive: {
-    backgroundColor: theme.withOpacity(healthColors.primary.main, 0.08),
-    borderColor: healthColors.primary.main,
-  },
-  timingToggleText: {
-    fontSize: theme.typography.sizes.caption,
-    color: healthColors.text.secondary,
-    fontWeight: theme.typography.weights.medium,
-  },
-  timingToggleTextActive: {
-    color: healthColors.primary.main,
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 8,
-  },
-  modalActionButton: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  modalCancelButton: {
-    backgroundColor: healthColors.background.tertiary,
-  },
-  modalSaveButton: {
-    backgroundColor: healthColors.primary.main,
-  },
-  modalCancelText: {
-    color: healthColors.text.secondary,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  modalSaveText: {
-    color: theme.colors.white,
-    fontSize: theme.typography.sizes.bodyMedium,
-    fontWeight: theme.typography.weights.semibold,
   },
   bottomSpacer: {
     height: 80,

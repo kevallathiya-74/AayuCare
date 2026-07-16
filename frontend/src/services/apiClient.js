@@ -18,8 +18,6 @@ if (!appStorage || typeof appStorage.getItem !== "function") {
   throw new Error("appStorage module is not properly initialized");
 }
 
-// Create axios instance using centralized configuration.
-// Guard against malformed runtime config values to avoid startup crashes.
 const normalizedBaseUrl = String(APP_CONFIG?.api?.baseURL ?? "")
   .trim()
   .replace(/\/+$/, "");
@@ -39,16 +37,6 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-
-let isHandlingAuthExpiry = false;
-
-const resetAuthExpiryFlag = () => {
-  isHandlingAuthExpiry = false;
-};
-
-
-
 
 // Log API URL for debugging (dev only)
 if (__DEV__) {
@@ -123,30 +111,18 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
-      if (isHandlingAuthExpiry) {
-        const authError = new Error("Session expired. Please login again.");
-        authError.code = "AUTH_EXPIRED";
-        return Promise.reject(authError);
+      if (__DEV__) {
+        console.warn("[API] 401 error - Session expired, clearing storage");
       }
 
-      isHandlingAuthExpiry = true;
+      // Better Auth doesn't use refresh tokens - session is managed server-side
+      // Clear storage and force re-login
+      await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
+      await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
 
-      try {
-        if (__DEV__) {
-          console.warn("[API] 401 error - Session expired, clearing storage");
-        }
-
-        // Better Auth doesn't use refresh tokens - session is managed server-side
-        // Clear storage and force re-login
-        await appStorage.deleteItem(STORAGE_KEYS.AUTH_TOKEN);
-        await appStorage.deleteItem(STORAGE_KEYS.USER_DATA);
-
-        const authError = new Error("Session expired. Please login again.");
-        authError.code = "AUTH_EXPIRED";
-        return Promise.reject(authError);
-      } finally {
-        resetAuthExpiryFlag();
-      }
+      const authError = new Error("Session expired. Please login again.");
+      authError.code = "AUTH_EXPIRED";
+      return Promise.reject(authError);
     }
 
     // Handle network errors

@@ -26,12 +26,10 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { theme, healthColors } from "@/theme";
 import {
   SkeletonCardRow,
-  ErrorRecovery,
-  NetworkStatusIndicator,
   EmptyState,
   Card,
 } from "@/components/common";
-import { parseError } from "@/utils/errorHandler";
+import {} from "@/utils/errorHandler";
 import { formatDate } from "@/utils/helpers";
 import { appointmentService, prescriptionService } from "@/services";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -51,7 +49,6 @@ const MyPrescriptionsScreen = ({ navigation }) => {
     data,
     isLoading: loading,
     isError,
-    error,
     refetch,
     isRefetching,
     fetchNextPage,
@@ -211,15 +208,7 @@ const MyPrescriptionsScreen = ({ navigation }) => {
   );
 
   if (isError && !prescriptions.length) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        <ErrorRecovery
-          error={parseError(error)}
-          onRetry={refetch}
-          message="Unable to load prescriptions"
-        />
-      </SafeAreaView>
-    );
+    throw new Error("Unknown Error");
   }
 
   return (
@@ -228,7 +217,6 @@ const MyPrescriptionsScreen = ({ navigation }) => {
         barStyle="dark-content"
         backgroundColor={healthColors.background.primary}
       />
-      <NetworkStatusIndicator />
 
       {/* Header */}
       <View style={styles.header}>

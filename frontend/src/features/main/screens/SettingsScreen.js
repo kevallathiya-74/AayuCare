@@ -27,8 +27,6 @@ import { theme, healthColors, textStyles, spacing } from "@/theme";
 import {
   Card,
   ListItem,
-  ErrorRecovery,
-  NetworkStatusIndicator,
   SkeletonCardRow,
 } from "@/components/common";
 import { showError, logError } from "@/utils/errorHandler";
@@ -47,7 +45,7 @@ const SettingsScreen = ({ navigation }) => {
   const [medicationReminders, setMedicationReminders] = useState(true);
   const [healthTips, setHealthTips] = useState(false);
   const [loading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
   useNetworkStatus();
   const insets = useSafeAreaInsets();
   
@@ -270,16 +268,17 @@ const SettingsScreen = ({ navigation }) => {
     },
   ];
 
+  if (error) {
+    throw error || new Error("Unknown Error");
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor={healthColors.background.secondary}
       />
-      <NetworkStatusIndicator />
-      {error ? (
-        <ErrorRecovery error={error} onRetry={() => setError(null)} />
-      ) : loading ? (
+      {loading ? (
         <View style={styles.loadingSkeleton}>
           {[1, 2, 3, 4].map((i) => (
             <SkeletonCardRow key={i} />
