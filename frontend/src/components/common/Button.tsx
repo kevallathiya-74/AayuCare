@@ -3,17 +3,16 @@
  *
  * Variants: primary, secondary, outline, ghost, text, danger
  * Sizes: small, medium, large
- * Features: spring press animation, gradient, loading state, icon support, full-width, accessibility, memoization
+ * Features: gradient, loading state, icon support, full-width, accessibility, memoization
  */
 
-import React, { useRef, useMemo, memo } from "react";
+import React, { useMemo, memo } from "react";
 import {
   Pressable,
   Text,
   StyleSheet,
   ActivityIndicator,
   View,
-  Animated,
   PressableProps,
   StyleProp,
   ViewStyle,
@@ -30,8 +29,6 @@ import {
   getButtonHeight,
 } from "@/utils/responsive";
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export type ButtonVariant =
   | "primary"
   | "secondary"
@@ -42,8 +39,10 @@ export type ButtonVariant =
 export type ButtonSize = "small" | "medium" | "large";
 export type IconPosition = "left" | "right";
 
-export interface ButtonProps
-  extends Omit<PressableProps, "style" | "children"> {
+export interface ButtonProps extends Omit<
+  PressableProps,
+  "style" | "children"
+> {
   title?: string;
   children?: React.ReactNode;
   onPress?: (event: GestureResponderEvent) => void;
@@ -75,43 +74,7 @@ const Button: React.FC<ButtonProps> = ({
   textStyle,
   ...props
 }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(1)).current;
   const labelContent = children ?? title;
-
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.96,
-        useNativeDriver: true,
-        damping: 15,
-        stiffness: 300,
-        mass: 0.8,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0.88,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        damping: 12,
-        stiffness: 280,
-        mass: 0.8,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
 
   const handlePress = (event: GestureResponderEvent) => {
     if (!disabled && !loading && onPress) {
@@ -152,7 +115,6 @@ const Button: React.FC<ButtonProps> = ({
     }
 
     if (disabled || loading) baseStyle.push(styles.disabled);
-
     return baseStyle;
   }, [variant, size, disabled, loading, fullWidth]);
 
@@ -221,57 +183,52 @@ const Button: React.FC<ButtonProps> = ({
     </View>
   );
 
-  const animStyle = {
-    transform: [{ scale: scaleAnim }],
-    opacity: opacityAnim,
-  };
-
   const isGradientEnabled =
     gradient && variant === "primary" && !disabled && !loading;
 
+  let gradientColors: [string, string, ...string[]] = [
+    healthColors.primary.main,
+    healthColors.primary.main,
+  ];
   if (isGradientEnabled) {
-    const rawColors =
-      healthColors.gradients && healthColors.gradients.primary
-        ? healthColors.gradients.primary
-        : [
-            healthColors.primary.main,
-            healthColors.secondary?.main || healthColors.primary.main,
-          ];
-    const gradientColors: [string, string, ...string[]] = [
+    const rawColors = healthColors.gradients?.primary || [
+      healthColors.primary.main,
+      healthColors.secondary?.main || healthColors.primary.main,
+    ];
+    gradientColors = [
       rawColors[0] || healthColors.primary.main,
       rawColors[1] || healthColors.primary.main,
       ...rawColors.slice(2),
     ];
+  }
 
-    const sizeStyle = styles[size] as {
-      height?: number;
-      paddingHorizontal?: number;
-    };
-    const buttonHeight = sizeStyle?.height ?? 50;
-    const buttonPadding = sizeStyle?.paddingHorizontal ?? 20;
+  const sizeStyle = styles[size] as {
+    height?: number;
+    paddingHorizontal?: number;
+  };
+  const buttonHeight = sizeStyle?.height ?? 50;
+  const buttonPadding = sizeStyle?.paddingHorizontal ?? 20;
 
-    return (
-      <AnimatedPressable
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        disabled={disabled || loading}
-        style={[
-          animStyle,
-          styles.button,
-          { height: buttonHeight },
-          styles.gradientWrapper,
-          fullWidth && styles.fullWidth,
-          style,
-        ]}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: disabled || loading, busy: loading }}
-        accessibilityLabel={
-          typeof labelContent === "string" ? labelContent : undefined
-        }
-        collapsable={false}
-        {...props}
-      >
+  return (
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled || loading}
+      style={({ pressed }) => [
+        isGradientEnabled
+          ? [styles.button, { height: buttonHeight }, styles.gradientWrapper]
+          : buttonStyle,
+        fullWidth && styles.fullWidth,
+        style,
+        pressed && styles.pressed,
+      ]}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      accessibilityLabel={
+        typeof labelContent === "string" ? labelContent : undefined
+      }
+      {...props}
+    >
+      {isGradientEnabled ? (
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
@@ -280,27 +237,10 @@ const Button: React.FC<ButtonProps> = ({
         >
           {renderContent()}
         </LinearGradient>
-      </AnimatedPressable>
-    );
-  }
-
-  return (
-    <AnimatedPressable
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled || loading}
-      style={[animStyle, buttonStyle, style]}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      accessibilityLabel={
-        typeof labelContent === "string" ? labelContent : undefined
-      }
-      collapsable={false}
-      {...props}
-    >
-      {renderContent()}
-    </AnimatedPressable>
+      ) : (
+        renderContent()
+      )}
+    </Pressable>
   );
 };
 
@@ -310,6 +250,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
+  },
+  pressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.98 }],
   },
   fullWidth: {
     width: "100%",

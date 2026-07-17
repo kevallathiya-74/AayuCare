@@ -74,7 +74,7 @@ const PatientDashboard = ({ navigation }) => {
   const healthMetrics = healthMetricsData;
 
   const isFocused = useIsFocused();
-  const canUseNotifications = false;
+  const canUseNotifications = true;
 
   // ── Shared drawer hook ──
   const { menuVisible, openMenu, closeMenu } =
@@ -119,9 +119,9 @@ const PatientDashboard = ({ navigation }) => {
 
     let updated = "No data";
     if (safeMetrics.length) {
-      const latest = [...safeMetrics].sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
-      )[0];
+      const latest = safeMetrics.reduce((newest, curr) => 
+        new Date(curr.timestamp) > new Date(newest.timestamp) ? curr : newest
+      );
       const date = new Date(latest.timestamp);
       const isToday = date.toDateString() === new Date().toDateString();
       updated = isToday

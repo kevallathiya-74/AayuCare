@@ -94,7 +94,7 @@ export const PATIENT = Object.freeze({
   DOCTOR_PROFILE_VIEW: "DoctorProfileView",
   APPOINTMENT_BOOKING: "AppointmentBooking",
   MEDICAL_RECORDS: "MedicalRecords",
-  AI_SYMPTOM_CHECKER: "AISymptomChecker",
+  AI_SYMPTOM_CHECKER: "AISymptomCheckerScreen",
   EMERGENCY: "Emergency",
   NOTIFICATIONS: "Notifications",
   MY_APPOINTMENTS: "MyAppointments",

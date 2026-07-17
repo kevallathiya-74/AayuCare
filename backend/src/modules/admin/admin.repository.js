@@ -1,4 +1,4 @@
-const { query, withTransaction } = require("../../config/postgres");
+const { query, getClient } = require("../../config/postgres");
 
 /**
  * Admin Repository
@@ -652,7 +652,10 @@ class AdminRepository {
   }
 
   async purgeUserData(user) {
-    await withTransaction(async (client) => {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
       // 1. Delete payments
       await client.query(
         "DELETE FROM payments WHERE patient_id = $1 OR doctor_id = $1",
@@ -716,7 +719,14 @@ class AdminRepository {
 
       // 9. Finally, delete the user row itself
       await client.query("DELETE FROM users WHERE id = $1", [user.id]);
-    });
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // Returns the raw pool client for bulk transactions

@@ -2,7 +2,7 @@ const medicalRecordRepository = require("./medical-record.repository");
 const userRepository = require("../auth/user.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
-const { invalidateByPatterns, MEDICAL_RECORD_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
 
 // Shared UUID regex — used to decide findById vs findByUserId

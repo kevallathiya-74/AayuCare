@@ -6,7 +6,7 @@ const userRepository = require("../auth/user.repository");
 const appointmentRepository = require("./appointment.repository");
 const logger = require("../../utils/logger");
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
-const { invalidateByPatterns, APPOINTMENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 
 const extractFilters = (query, req) => {
   const { status, startDate, endDate, date, cursor, page, limit } = query;

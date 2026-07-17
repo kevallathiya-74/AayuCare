@@ -5,8 +5,9 @@
 
 const eventRepository = require("./event.repository");
 const logger = require("../../utils/logger");
+const { invalidateByPatterns, EVENT_CACHE_PATTERNS } = require("../../utils/cacheInvalidation");
 const { AppError } = require("../../middleware/errorHandler");
-const { invalidateByPatterns, EVENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 
 /**
  * Get all upcoming events

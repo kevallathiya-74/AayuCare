@@ -27,7 +27,7 @@ import {
   notificationService,
   prescriptionService,
 } from "@/services";
-import logger from "@/utils/logger";
+
 import SplashScreen from "@/features/splash/screens/SplashScreen";
 import BoxSelectionScreen from "@/features/splash/screens/BoxSelectionScreen";
 import LoginScreen from "@/features/auth/screens/LoginScreen";
@@ -64,8 +64,8 @@ import SpecialistCareFinderScreen from "@/features/patient/screens/SpecialistCar
 import DoctorProfileViewScreen from "@/features/patient/screens/DoctorProfileViewScreen";
 import AppointmentBookingScreen from "@/features/patient/screens/AppointmentBookingScreen";
 import MedicalRecordsScreen from "@/features/patient/screens/MedicalRecordsScreen";
-import AISymptomChecker from "@/features/patient/screens/AISymptomChecker";
-import EmergencyServices from "@/features/patient/screens/EmergencyServices";
+import AISymptomCheckerScreen from "@/features/patient/screens/AISymptomCheckerScreen";
+import EmergencyServicesScreen from "@/features/patient/screens/EmergencyServicesScreen";
 import MyAppointmentsScreen from "@/features/patient/screens/MyAppointmentsScreen";
 import MyReportsScreen from "@/features/patient/screens/MyReportsScreen";
 
@@ -82,17 +82,10 @@ const AppNavigator = () => {
   const navigationRef = useRef(null);
   const appStateRef = useRef(AppState.currentState);
 
-  logger.debug("AppNavigator", "Rendering auth state", {
-    isAuthenticated,
-    user: user?.id,
-    isLoading,
-    authInitialized: authInitialized.current,
-  });
-
   useEffect(() => {
     // Prevent multiple auth initializations
     if (authInitialized.current) {
-      logger.debug("AppNavigator", "Auth already initialized, skipping");
+      
       return;
     }
 
@@ -101,15 +94,11 @@ const AppNavigator = () => {
     // Load user asynchronously with error handling
     const initAuth = async () => {
       try {
-        logger.debug("AppNavigator", "Initializing auth (once)");
+        
         await loadUser();
-        logger.debug("AppNavigator", "Auth initialized successfully");
-      } catch (error) {
-        logger.error(
-          "AppNavigator",
-          "Auth initialization error",
-          error?.message || error
-        );
+        
+      } catch {
+        
         // Continue anyway - auth will default to logged out state
       }
     };
@@ -131,14 +120,9 @@ const AppNavigator = () => {
           return;
         }
 
-
-
         // If we are not authenticated, attempt to reload/validate user session on focus (recovery)
         if (!isAuthenticated) {
-          logger.debug(
-            "AppNavigator",
-            "App focused and unauthenticated, retrying loadUser..."
-          );
+          
           loadUser();
         }
       }
@@ -155,19 +139,9 @@ const AppNavigator = () => {
       const currentRoute = navigationRef.current.getCurrentRoute();
       const userRole = user.role;
 
-      logger.debug(
-        "AppNavigator",
-        "User authenticated on route",
-        currentRoute?.name
-      );
-      logger.debug("AppNavigator", "User role", userRole);
-
       // Don't auto-navigate if on splash screen (let splash handle it)
       if (currentRoute && currentRoute.name === Routes.AUTH.SPLASH) {
-        logger.debug(
-          "AppNavigator",
-          "On splash screen, navigation handled there"
-        );
+        
         return;
       }
 
@@ -179,11 +153,7 @@ const AppNavigator = () => {
         Routes.AUTH.BOX_SELECTION,
       ];
       if (currentRoute && !authScreens.includes(currentRoute.name)) {
-        logger.debug(
-          "AppNavigator",
-          "Already on protected screen, skipping auto-navigate",
-          currentRoute.name
-        );
+        
         return;
       }
 
@@ -196,12 +166,12 @@ const AppNavigator = () => {
 
       const targetScreen = roleScreens[userRole];
       if (currentRoute && currentRoute.name === targetScreen) {
-        logger.debug("AppNavigator", "Already on correct screen", targetScreen);
+        
         return;
       }
 
       // Navigate to appropriate tab navigator based on role
-      logger.debug("AppNavigator", "Navigating to target", targetScreen);
+      
       if (navigationRef.current?.isReady()) {
         if (userRole === "admin") {
           navigationRef.current?.reset({
@@ -236,7 +206,7 @@ const AppNavigator = () => {
       ];
 
       if (currentRoute && !authScreens.includes(currentRoute.name)) {
-        logger.debug("AppNavigator", "Logged out, navigating to Login");
+        
         navigationRef.current.reset({
           index: 0,
           routes: [{ name: Routes.AUTH.LOGIN }],
@@ -245,13 +215,11 @@ const AppNavigator = () => {
     }
   }, [isAuthenticated, isLoading]);
 
-
-
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
     const role = user.role;
-    const canUseNotifications = false; // Add real context-based permission check later
+    const canUseNotifications = true; // Add real context-based permission check later
 
     if (role === "patient") {
       queryClient.prefetchQuery({
@@ -561,11 +529,11 @@ const AppNavigator = () => {
                   />
                   <Stack.Screen
                     name={Routes.PATIENT.AI_SYMPTOM_CHECKER}
-                    component={AISymptomChecker}
+                    component={AISymptomCheckerScreen}
                   />
                   <Stack.Screen
                     name={Routes.PATIENT.EMERGENCY}
-                    component={EmergencyServices}
+                    component={EmergencyServicesScreen}
                   />
                   <Stack.Screen
                     name={Routes.PATIENT.NOTIFICATIONS}

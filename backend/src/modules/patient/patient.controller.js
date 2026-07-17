@@ -10,7 +10,7 @@ const prescriptionRepository = require("../prescription/prescription.repository"
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const healthMetricRepository = require("../patient/health-metric.repository");
 const logger = require("../../utils/logger");
-const { invalidateByPatterns, PATIENT_PROFILE_CACHE_PATTERNS, PATIENT_HEALTH_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 const { AppError } = require("../../middleware/errorHandler");
 
 /**

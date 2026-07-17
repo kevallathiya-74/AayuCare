@@ -5,11 +5,12 @@
  */
 
 const paymentRepository = require("./payment.repository");
+const paymentService = require("./payment.service");
 const { AppError } = require("../../middleware/errorHandler");
 const logger = require("../../utils/logger");
 const { writeAuditLog } = require("../../utils/audit");
-const crypto = require("crypto");
-const { invalidateByPatterns, PAYMENT_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
+const { PAYMENT_CACHE_PATTERNS } = require("../../utils/cacheInvalidation");
 
 /**
  * Create a new payment record (pharmacy billing)
@@ -29,109 +30,43 @@ exports.createPayment = async (req, res, next) => {
       return next(new AppError("Amount and payment method are required", 400));
     }
 
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      return next(new AppError("Amount must be a valid number greater than zero", 400));
-    }
-
-    const validMethods = ["card", "upi", "cash", "netbanking", "wallet", "online"];
-    if (!validMethods.includes(paymentMethod)) {
-      return next(
-        new AppError(
-          `Invalid payment method. Allowed: ${validMethods.join(", ")}`,
-          400,
-        ),
-      );
-    }
-
-    // Must fetch appointment to get doctorId since payments table requires it
-    const appointmentRepository = require("../appointment/appointment.repository");
-    const appointment = await appointmentRepository.findById(appointmentId);
-    if (!appointment) {
-      return next(new AppError("Appointment not found", 404));
-    }
-    
-    // Ensure patient owns this appointment
-    if (appointment.patientId !== patientId && req.user.role !== "admin") {
-      return next(new AppError("Not authorized to pay for this appointment", 403));
-    }
-
-    const paymentId = crypto.randomUUID();
-    const isGatewayEnabled = process.env.PAYMENT_GATEWAY_ENABLED === "true";
-
-    if (!isGatewayEnabled) {
-      return res.status(200).json({
-        success: true,
-        status: "success",
-        message: "Online payment is not active. Please pay at the clinic counter.",
-        data: {
-          paymentMode: "offline",
-          instructions: "Show your appointment ID at the billing counter.",
-          appointmentId: appointment.id,
-        }
-      });
-    }
-
-    const paymentData = {
-      paymentId,
-      appointmentId: appointment.id,
-      patientId,
-      doctorId: appointment.doctorId,
-      amount: parsedAmount,
-      currency: "INR",
+    const result = await paymentService.processPayment({
+      appointmentId,
+      amount,
       paymentMethod,
-      status: paymentMethod === "cash" ? "pending" : "completed",
-    };
-
-    const payment = await paymentRepository.create(paymentData);
-
-    if (!paymentData.status || paymentData.status === "pending") {
-      // Cash payment — mark as pending
-    } else {
-      // Card/UPI
-      if (isGatewayEnabled) {
-        // Future integration with Razorpay/Stripe
-        // E.g. creating a payment intent and returning client_secret
-        logger.info(
-          "Payment gateway is enabled - initializing real payment intent",
-        );
-      } else {
-        // Development stub: auto-complete the payment
-        await paymentRepository.update(payment.id, {
-          status: "completed",
-          paid_at: new Date().toISOString(),
-          transaction_id: `MOCK_TXN_${Date.now()}`,
-          payment_gateway: "stub",
-        });
-      }
-    }
-
-    // Re-fetch with updated status
-    const finalPayment = await paymentRepository.findById(payment.id);
+      purchaseType,
+      patientId,
+      userRole: req.user.role,
+      isGatewayEnabled: process.env.PAYMENT_GATEWAY_ENABLED === "true",
+    });
 
     // Invalidate payment-related caches after creation
     try {
-      await invalidateByPatterns(PAYMENT_CACHE_PATTERNS);
+      if (PAYMENT_CACHE_PATTERNS) {
+        await invalidateByPatterns(PAYMENT_CACHE_PATTERNS);
+      }
     } catch (cacheError) {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    await writeAuditLog({
-      userId: patientId,
-      action: "PAYMENT_CREATED",
-      entity: "payment",
-      entityId: payment.id,
-      details: {
-        amount,
-        paymentMethod,
-        purchaseType,
-        hospitalId,
-      },
-    });
+    if (result.statusCode === 201) {
+      await writeAuditLog({
+        userId: patientId,
+        action: "PAYMENT_CREATED",
+        entity: "payment",
+        entityId: result.data.id,
+        details: {
+          amount,
+          paymentMethod,
+          purchaseType,
+          hospitalId,
+        },
+      });
+      logger.info(`Payment created: ${result.data.id} for patient ${patientId}`);
+    }
 
-    logger.info(`Payment created: ${payment.id} for patient ${patientId}`);
-
-    return res.status(201).json({ success: true, message: "Payment processed successfully", data: finalPayment || payment });
+    const { statusCode, ...responseBody } = result;
+    return res.status(statusCode).json(responseBody);
   } catch (error) {
     logger.error("createPayment error:", error);
     next(error);

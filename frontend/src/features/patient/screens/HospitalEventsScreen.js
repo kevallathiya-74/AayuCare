@@ -43,7 +43,7 @@ import { queryKeys } from "@/config/reactQueryConfig";
 import { getScreenPadding } from "@/utils/responsive";
 
 import { logError, parseError } from "@/utils/errorHandler";
-import logger from "@/utils/logger";
+
 import { eventService } from "@/services";
 import { convertTo12Hour, getStatusColor } from "@/utils/helpers";
 import { SkeletonCardRow, EmptyState } from "@/components/common";
@@ -83,7 +83,7 @@ const HospitalEventsScreen = ({ navigation }) => {
       });
       const eventData = response?.data || response || [];
       const eventsArray = Array.isArray(eventData) ? eventData : [];
-      logger.debug("HospitalEventsScreen", "Events count", eventsArray.length);
+      
       return {
         items: eventsArray,
         total: Number(response?.total || response?.pagination?.total || 0),

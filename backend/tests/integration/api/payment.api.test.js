@@ -26,7 +26,7 @@ jest.mock("../../../src/modules/appointment/appointment.repository", () => ({
 }));
 
 jest.mock("better-auth/node", () => ({
-  toNodeHandler: jest.fn((auth) => (req, res, next) => next())
+  toNodeHandler: jest.fn((_auth) => (req, res, next) => next())
 }));
 
 jest.mock("../../../src/lib/auth", () => ({

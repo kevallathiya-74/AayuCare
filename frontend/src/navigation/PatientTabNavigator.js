@@ -15,7 +15,7 @@ import {
 import { healthColors, theme } from "@/theme";
 import ErrorBoundary from "../components/common/ErrorBoundary";
 import CustomTabBar from "./CustomTabBar";
-import PatientDashboard from "@/features/patient/screens/PatientDashboard";
+import PatientDashboardScreen from "@/features/patient/screens/PatientDashboardScreen";
 import HealthMetricsScreen from "@/features/patient/screens/HealthMetricsScreen";
 import DiseaseInfoScreen from "@/features/patient/screens/DiseaseInfoScreen";
 import SettingsScreen from "@/features/main/screens/SettingsScreen";
@@ -54,7 +54,7 @@ const PatientTabNavigator = () => {
       >
         <Tab.Screen
           name={Routes.PATIENT_TABS.DASHBOARD}
-          component={PatientDashboard}
+          component={PatientDashboardScreen}
           options={{
             tabBarLabel: "Home",
           }}

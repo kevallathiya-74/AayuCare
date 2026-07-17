@@ -1,7 +1,5 @@
 const request = require("supertest");
 const app = require("../../../src/app");
-const { query } = require("../../../src/config/postgres");
-const { protect, restrictTo } = require("../../../src/middleware/auth");
 
 jest.mock("../../../src/config/postgres", () => ({
   query: jest.fn(),
@@ -32,7 +30,7 @@ jest.mock("../../../src/modules/appointment/appointment.repository", () => ({
 }));
 
 jest.mock("better-auth/node", () => ({
-  toNodeHandler: jest.fn((auth) => (req, res, next) => next())
+  toNodeHandler: jest.fn((_auth) => (req, res, next) => next())
 }));
 
 jest.mock("../../../src/lib/auth", () => ({

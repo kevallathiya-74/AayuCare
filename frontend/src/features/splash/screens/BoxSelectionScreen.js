@@ -19,7 +19,7 @@ import {
 } from "lucide-react-native";
 import { theme, healthColors, textStyles, spacing } from "@/theme";
 import { ModalSheet, Button } from "@/components/common";
-import logger from "@/utils/logger";
+
 import Routes from "@/navigation/routes";
 import { useTranslation } from 'react-i18next';
 
@@ -85,7 +85,7 @@ const BoxSelectionScreen = ({ navigation }) => {
     try {
       navigation.navigate(Routes.AUTH.LOGIN);
     } catch (error) {
-      logger.error("BoxSelectionScreen", "Navigation error", error);
+      console.error("BoxSelectionScreen", "Navigation error", error);
     }
   }, [navigation]);
 

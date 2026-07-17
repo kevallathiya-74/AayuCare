@@ -6,7 +6,8 @@
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const userRepository = require("../auth/user.repository");
 const logger = require("../../utils/logger");
-const { invalidateByPatterns, AI_CACHE_PATTERNS, AI_DASHBOARD_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+const { invalidateByPatterns, AI_CACHE_PATTERNS, AI_DASHBOARD_CACHE_PATTERNS } = require("../../utils/cacheInvalidation");
+
 
 /**
  * @desc    Analyze symptoms and provide AI insights
@@ -414,13 +415,29 @@ function analyzeSymptomsPattern(symptoms, severity) {
   );
 
   if (hasCold) {
-    conditions.push({ name: "Common Cold", probability: 85, severity: "mild" });
+    conditions.push({ 
+      name: "Common Cold", 
+      probability: 85, 
+      severity: "mild",
+      details: {
+        overview: "Common cold is a viral upper-respiratory infection that usually resolves within a week with supportive care.",
+        symptoms: ["Runny nose", "Sneezing", "Sore throat", "Mild cough"],
+        causes: ["Rhinovirus infection", "Close contact", "Seasonal spread"],
+        treatment: ["Hydration", "Rest", "Steam inhalation", "Symptom-relief medication"],
+      }
+    });
   }
   if (hasFever && hasFlu) {
     conditions.push({
       name: "Viral Fever",
       probability: 75,
       severity: "moderate",
+      details: {
+        overview: "Viral fever is a temperature rise caused by viral infection and is often accompanied by fatigue and body pain.",
+        symptoms: ["Fever", "Body ache", "Fatigue", "Headache"],
+        causes: ["Seasonal viruses", "Exposure to infected individuals"],
+        treatment: ["Rest", "Fluids", "Temperature monitoring", "Doctor review if persistent"],
+      }
     });
   }
   if (hasFever && hasCold && hasFlu) {
@@ -428,6 +445,12 @@ function analyzeSymptomsPattern(symptoms, severity) {
       name: "Seasonal Flu",
       probability: 70,
       severity: "moderate",
+      details: {
+        overview: "Seasonal flu is an influenza infection that can cause moderate to high fever and respiratory symptoms.",
+        symptoms: ["Fever", "Cough", "Body pain", "Headache", "Weakness"],
+        causes: ["Influenza virus", "Airborne spread", "Crowded settings"],
+        treatment: ["Rest", "Hydration", "Antiviral guidance from doctor", "Isolation while symptomatic"],
+      }
     });
   }
 
@@ -437,6 +460,12 @@ function analyzeSymptomsPattern(symptoms, severity) {
       name: "General Illness",
       probability: 50,
       severity: severity,
+      details: {
+        overview: "General illness indicates non-specific symptoms that need monitoring and clinical correlation.",
+        symptoms: ["Low energy", "Mild discomfort", "Variable symptoms"],
+        causes: ["Transient infection", "Lifestyle stress", "Insufficient sleep"],
+        treatment: ["Symptom tracking", "Hydration", "Balanced nutrition", "Clinical follow-up if worsening"],
+      }
     });
   }
 

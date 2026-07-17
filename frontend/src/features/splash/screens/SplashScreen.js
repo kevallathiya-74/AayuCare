@@ -19,7 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { healthColors, textStyles, spacing, theme } from "@/theme";
-import logger from "@/utils/logger";
+
 import { useTranslation } from 'react-i18next';
 
 const SplashScreen = ({ navigation }) => {
@@ -46,35 +46,25 @@ const SplashScreen = ({ navigation }) => {
     );
   }, [pulseScale]);
 
-  logger.debug("SplashScreen", "Rendering");
-
   useEffect(() => {
     if (routed.current) {
       return;
     }
 
     if (isLoading) {
-      logger.debug("SplashScreen", "Auth still loading");
+      
       return;
     }
 
     routed.current = true;
 
     if (!isAuthenticated) {
-      logger.debug(
-        "SplashScreen",
-        "Not authenticated — navigate to BoxSelection"
-      );
+      
       navigation.replace("BoxSelection");
       return;
     }
 
     const role = user?.role;
-    logger.debug("SplashScreen", "Auth check complete", {
-      isAuthenticated,
-      user: user?.id,
-      role,
-    });
 
     const navigateTo = (screen) => {
       // Fade out animation before navigating

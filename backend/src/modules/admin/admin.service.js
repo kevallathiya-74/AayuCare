@@ -12,9 +12,10 @@ const patientRepository = require("../patient/patient.repository");
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const notificationRepository = require("../notification/notification.repository");
 const { AppError } = require("../../middleware/errorHandler");
-const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
+
 const { writeAuditLog, AUDIT_ACTIONS } = require("../../utils/audit");
 const logger = require("../../utils/logger");
+const { invalidateByPatterns } = require("../../utils/cacheInvalidation");
 const bcrypt = require("bcryptjs");
 
 const CACHE_KEYS = {

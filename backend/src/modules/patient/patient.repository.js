@@ -1,5 +1,4 @@
 const { query } = require("../../config/postgres");
-const { mapPatientData } = require("../../utils/fieldMapper");
 const { AppError } = require("../../middleware/errorHandler");
 
 /**
@@ -29,9 +28,9 @@ class PatientRepository {
             INSERT INTO patients (user_id, date_of_birth, gender, blood_group, address, 
                                  emergency_contact_name, emergency_contact_phone, emergency_contact_relation, allergies, chronic_conditions)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING id, user_id, date_of_birth, gender, blood_group, address,
-                      emergency_contact_name, emergency_contact_phone, emergency_contact_relation, allergies, chronic_conditions,
-                      created_at, updated_at
+            RETURNING id, user_id AS "userId", date_of_birth AS "dateOfBirth", gender, blood_group AS "bloodGroup", address,
+                      emergency_contact_name AS "emergencyContactName", emergency_contact_phone AS "emergencyContactPhone", emergency_contact_relation AS "emergencyContactRelation", allergies, chronic_conditions AS "chronicConditions",
+                      created_at AS "createdAt", updated_at AS "updatedAt"
         `;
 
     const result = await query(sql, [
@@ -47,7 +46,7 @@ class PatientRepository {
       chronicConditions || [],
     ]);
 
-    return mapPatientData(result.rows[0]);
+    return result.rows[0];
   }
 
   /**
@@ -57,22 +56,34 @@ class PatientRepository {
    */
   async findByUserId(userId) {
     const sql = `
-            SELECT p.*, 
-                   u.id as internal_id,
-                   u.user_id as formatted_user_id,
+            SELECT p.id,
+                   p.user_id AS "userId", 
+                   p.date_of_birth AS "dateOfBirth",
+                   p.gender,
+                   p.blood_group AS "bloodGroup",
+                   p.address,
+                   p.emergency_contact_name AS "emergencyContactName",
+                   p.emergency_contact_phone AS "emergencyContactPhone",
+                   p.emergency_contact_relation AS "emergencyContactRelation",
+                   p.allergies,
+                   p.chronic_conditions AS "chronicConditions",
+                   p.created_at AS "createdAt",
+                   p.updated_at AS "updatedAt",
+                   u.id as "internalId",
+                   u.user_id as "formattedUserId",
                    u.name, 
                    u.email, 
                    u.phone, 
-                   u.is_active,
-                   u.hospital_id, 
-                   u.hospital_name
+                   u.is_active AS "isActive",
+                   u.hospital_id AS "hospitalId", 
+                   u.hospital_name AS "hospitalName"
             FROM patients p
             INNER JOIN users u ON p.user_id = u.id
             WHERE p.user_id = $1
         `;
 
     const result = await query(sql, [userId]);
-    return mapPatientData(result.rows[0]) || null;
+    return result.rows[0] || null;
   }
 
   /**
@@ -117,13 +128,13 @@ class PatientRepository {
             UPDATE patients
             SET ${updateFields.join(", ")}
             WHERE user_id = $${paramCount}
-            RETURNING id, user_id, date_of_birth, gender, blood_group, address,
-                      emergency_contact_name, emergency_contact_phone, emergency_contact_relation, allergies, chronic_conditions,
-                      created_at, updated_at
+            RETURNING id, user_id AS "userId", date_of_birth AS "dateOfBirth", gender, blood_group AS "bloodGroup", address,
+                      emergency_contact_name AS "emergencyContactName", emergency_contact_phone AS "emergencyContactPhone", emergency_contact_relation AS "emergencyContactRelation", allergies, chronic_conditions AS "chronicConditions",
+                      created_at AS "createdAt", updated_at AS "updatedAt"
         `;
 
     const result = await query(sql, values);
-    return mapPatientData(result.rows[0]);
+    return result.rows[0];
   }
 }
 

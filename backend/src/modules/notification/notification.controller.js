@@ -5,7 +5,7 @@
 
 const notificationRepository = require("./notification.repository");
 const logger = require("../../utils/logger");
-const { invalidateByPatterns, NOTIFICATION_CACHE_PATTERNS, NOTIFICATION_BROADCAST_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 const { AppError } = require("../../middleware/errorHandler");
 
 // Resolve user's UUID string id from the authenticated request
