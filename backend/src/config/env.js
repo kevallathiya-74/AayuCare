@@ -43,14 +43,7 @@ const APP_ENV = {
   nodeEnv,
   isProduction,
   isDevelopment,
-  logging: {
-    level: process.env.LOG_LEVEL || (isProduction ? "info" : "debug"),
-    morganFormat:
-      process.env.MORGAN_FORMAT ||
-      (isProduction
-        ? ":method :url :status :res[content-length] - :response-time ms"
-        : "dev"),
-  },
+  logLevel: process.env.LOG_LEVEL || (isProduction ? "info" : "debug"),
   cache: {
     enabled: toBoolean(process.env.CACHE_ENABLED, isProduction),
     mode: process.env.CACHE_MODE || (isProduction ? "full" : "minimal"),

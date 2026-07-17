@@ -275,11 +275,11 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
         case "confirmed":
           return "Confirmed";
         case "completed":
-          return "Completed";
+          return t("status_completed", "Completed");
         case "cancelled":
-          return "Cancelled";
+          return t("status_cancelled", "Cancelled");
         case "in_progress":
-          return "In Progress";
+          return t("status_in_progress", "In Progress");
         case "no_show":
           return "No Show";
         case "scheduled":
@@ -288,7 +288,7 @@ const TodaysAppointmentsScreen = ({ navigation }) => {
           return "Pending";
       }
     },
-    [normalizeStatus],
+    [normalizeStatus, t],
   );
 
   const handleCreatePrescription = useCallback(

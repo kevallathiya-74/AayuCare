@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const morgan = require("morgan");
 const { APP_ENV } = require("./config/env");
 const { errorHandler } = require("./middleware/errorHandler");
 const { tieredRateLimit } = require("./middleware/rateLimit");
@@ -57,9 +56,6 @@ app.use(
 );
 
 app.use(tieredRateLimit);
-
-const morganFormat = APP_ENV.logging.morganFormat;
-app.use(morgan(morganFormat));
 
 app.all("/api/auth/*", (req, res, next) => {
   try {

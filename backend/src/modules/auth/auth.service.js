@@ -4,9 +4,10 @@ const patientRepository = require("../patient/patient.repository");
 const authRepository = require("./auth.repository");
 const { AppError } = require("../../middleware/errorHandler");
 const { getAuth } = require("../../lib/auth");
-const { invalidateByPatterns, AUTH_PROFILE_CACHE_PATTERNS, AUTH_PASSWORD_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 const bcrypt = require("bcryptjs");
 const logger = require("../../utils/logger");
+const { invalidateByPatterns, AUTH_PROFILE_CACHE_PATTERNS, AUTH_PASSWORD_CACHE_PATTERNS } = require("../../utils/cacheInvalidation");
 
 /**
  * Auth Service - Handles authentication business logic

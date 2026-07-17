@@ -134,12 +134,12 @@ const AppointmentCard = ({
                       disabled={isBusy}
                       onPress={() => {
                         Alert.alert(
-                          "Cancel Appointment",
-                          "Are you sure you want to cancel this appointment?",
+                          t("cancel_appointment_title", "Cancel Appointment"),
+                          t("cancel_appointment_msg", "Are you sure you want to cancel this appointment?"),
                           [
-                            { text: "No", style: "cancel" },
+                            { text: t("no", "No"), style: "cancel" },
                             {
-                              text: "Yes, Cancel",
+                              text: t("yes_cancel", "Yes, Cancel"),
                               style: "destructive",
                               onPress: () =>
                                 handleStatusUpdate(item, "cancelled"),
@@ -177,15 +177,15 @@ const AppointmentCard = ({
             onPress={async () => {
               if (!item.phone || item.phone === "N/A") {
                 Alert.alert(
-                  "Call Unavailable",
-                  "Patient phone number is not available.",
+                  t("call_unavailable", "Call Unavailable"),
+                  t("patient_phone_unavailable", "Patient phone number is not available."),
                 );
                 return;
               }
               const phoneUrl = `tel:${item.phone}`;
               const canOpen = await Linking.canOpenURL(phoneUrl);
               if (!canOpen) {
-                Alert.alert("Call Failed", "Unable to open phone dialer.");
+                Alert.alert(t("call_failed", "Call Failed"), t("unable_to_open_dialer", "Unable to open phone dialer."));
                 return;
               }
               await Linking.openURL(phoneUrl);
@@ -211,8 +211,8 @@ const AppointmentCard = ({
                 )
               ) {
                 Alert.alert(
-                  "Unavailable",
-                  "Consultation can only be started for scheduled, confirmed, or in-progress appointments.",
+                  t("unavailable", "Unavailable"),
+                  t("consultation_invalid_status", "Consultation can only be started for scheduled, confirmed, or in-progress appointments."),
                 );
                 return;
               }

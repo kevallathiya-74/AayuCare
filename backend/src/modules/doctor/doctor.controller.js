@@ -8,7 +8,7 @@ const patientRepository = require("../patient/patient.repository");
 const medicalRecordRepository = require("../medical-record/medical-record.repository");
 const bcrypt = require("bcryptjs");
 const logger = require("../../utils/logger");
-const { invalidateByPatterns, DOCTOR_APPOINTMENT_STATUS_CACHE_PATTERNS, DOCTOR_WALK_IN_REGISTRATION_CACHE_PATTERNS, DOCTOR_PROFILE_CACHE_PATTERNS, DOCTOR_SCHEDULE_CACHE_PATTERNS, DOCTOR_SCHEDULE_BOOTSTRAP_CACHE_PATTERNS } = require('../../utils/cacheInvalidation');
+
 const { AppError } = require("../../middleware/errorHandler");
 
 /**
@@ -102,7 +102,13 @@ exports.getDoctors = async (req, res, next) => {
 
     const result = await doctorService.getDoctors(filters);
 
-    return res.status(200).json({ success: true, message: "Doctors retrieved successfully", data: result });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Doctors retrieved successfully",
+        data: result,
+      });
   } catch (error) {
     next(error);
   }
@@ -121,7 +127,7 @@ exports.getDoctor = async (req, res, next) => {
       success: true,
       status: "success",
       message: "Doctor retrieved successfully",
-      data: { doctor }
+      data: { doctor },
     });
   } catch (error) {
     next(error);
@@ -141,7 +147,7 @@ exports.getDoctorStats = async (req, res, next) => {
       success: true,
       status: "success",
       message: "Doctor stats retrieved successfully",
-      data: { stats }
+      data: { stats },
     });
   } catch (error) {
     next(error);
@@ -348,7 +354,7 @@ exports.getDoctorDashboard = async (req, res, next) => {
           date: p.createdAt || p.created_at,
           medicationsCount: p.medicines?.length || 0,
         })),
-      }
+      },
     });
   } catch (error) {
     logger.error("Doctor dashboard error:", {
@@ -374,7 +380,13 @@ exports.getTodaysAppointments = async (req, res, next) => {
     // Validate filter early - before any other work
     const allowedFilters = new Set(["all", "pending", "completed"]);
     if (!allowedFilters.has(normalizedFilter)) {
-      return res.status(400).json({ success: false, message: "Invalid filter. Allowed values: all, pending, completed", code: "VALIDATION_ERROR" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Invalid filter. Allowed values: all, pending, completed",
+          code: "VALIDATION_ERROR",
+        });
     }
 
     const today = new Date();
@@ -488,7 +500,7 @@ exports.getTodaysAppointments = async (req, res, next) => {
             type: apt.type || "in-person",
           };
         }),
-      }
+      },
     });
   } catch (error) {
     logger.error("Today appointments error:", {
@@ -572,7 +584,7 @@ exports.getUpcomingAppointments = async (req, res, next) => {
           total,
           pages: Math.ceil(total / parseInt(limit)),
         },
-      }
+      },
     });
   } catch (error) {
     logger.error("Upcoming appointments error:", {
@@ -651,7 +663,7 @@ exports.searchPatients = async (req, res, next) => {
           total,
           pages: Math.ceil(total / limit) || 1,
         },
-      }
+      },
     });
   } catch (error) {
     logger.error("Patient search error:", {
@@ -681,11 +693,6 @@ exports.getPatientDetails = async (req, res, next) => {
 
     // Get complete patient details (users + patients table joined)
     const patientRepository = require("../patient/patient.repository");
-    const {
-      mapPatientData,
-      mapPrescriptionData,
-      mapArray,
-    } = require("../../utils/fieldMapper");
 
     const patientLookupValue = String(patientId || "").trim();
     const isUuid =
@@ -702,7 +709,13 @@ exports.getPatientDetails = async (req, res, next) => {
     }
 
     if (!patientUser) {
-      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Patient not found",
+          code: "NOT_FOUND",
+        });
     }
 
     const resolvedPatientId = patientUser.id;
@@ -713,7 +726,13 @@ exports.getPatientDetails = async (req, res, next) => {
       req.user.role !== "super_admin" &&
       patientUser.hospital_id !== req.hospitalId
     ) {
-      return res.status(403).json({ success: false, message: "Not authorized to access this patient", code: "FORBIDDEN" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Not authorized to access this patient",
+          code: "FORBIDDEN",
+        });
     }
 
     if (req.user.role === "doctor") {
@@ -725,18 +744,31 @@ exports.getPatientDetails = async (req, res, next) => {
         [req.user.id, resolvedPatientId],
       );
       if (hasRelationship.rows.length === 0) {
-        return res.status(403).json({ success: false, message: "Access denied — you do not have an appointment with this patient", code: "FORBIDDEN" });
+        return res
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "Access denied — you do not have an appointment with this patient",
+            code: "FORBIDDEN",
+          });
       }
     }
 
     const dbPatient = await patientRepository.findByUserId(resolvedPatientId);
 
     if (!dbPatient) {
-      return res.status(404).json({ success: false, message: "Patient not found", code: "NOT_FOUND" });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Patient not found",
+          code: "NOT_FOUND",
+        });
     }
 
-    // Map patient data to camelCase format
-    const patient = mapPatientData(dbPatient);
+    // Patient data is already mapped to camelCase from the repository
+    const patient = dbPatient;
 
     const appointmentFilters = {
       patientId: resolvedPatientId,
@@ -790,7 +822,7 @@ exports.getPatientDetails = async (req, res, next) => {
         : [];
 
     // Map prescriptions to proper format
-    const prescriptions = mapArray(dbPrescriptions, mapPrescriptionData);
+    const prescriptions = dbPrescriptions;
 
     logger.info("Patient details retrieved:", {
       patientId: resolvedPatientUserId || resolvedPatientId,
@@ -815,7 +847,7 @@ exports.getPatientDetails = async (req, res, next) => {
           totalRecords: medicalRecords.length,
           totalPrescriptions: prescriptions.length,
         },
-      }
+      },
     });
   } catch (error) {
     logger.error("Get patient details error:", {
@@ -849,13 +881,28 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       "no_show",
     ];
     if (!validStatuses.includes(normalizedStatus)) {
-      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`, code: "VALIDATION_ERROR" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+          code: "VALIDATION_ERROR",
+        });
     }
 
     const appointment = await appointmentRepository.findById(id);
 
-    if (!appointment || (appointment.doctorId !== doctorId && appointment.doctor_id !== doctorId)) {
-      return res.status(404).json({ success: false, message: "Appointment not found or unauthorized", code: "NOT_FOUND" });
+    if (
+      !appointment ||
+      (appointment.doctorId !== doctorId && appointment.doctor_id !== doctorId)
+    ) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Appointment not found or unauthorized",
+          code: "NOT_FOUND",
+        });
     }
 
     const currentStatus = normalizeAppointmentStatus(
@@ -865,7 +912,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       APPOINTMENT_STATUS_TRANSITIONS[currentStatus] || [];
 
     if (!allowedTransitions.includes(normalizedStatus)) {
-      return res.status(400).json({ success: false, message: `Cannot change status from ${currentStatus} to ${normalizedStatus}`, code: "VALIDATION_ERROR" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: `Cannot change status from ${currentStatus} to ${normalizedStatus}`,
+          code: "VALIDATION_ERROR",
+        });
     }
 
     const updateData = { status: normalizedStatus };
@@ -892,7 +945,13 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       newStatus: normalizedStatus,
     });
 
-    return res.status(200).json({ success: true, message: "Appointment status updated", data: updatedAppointment });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Appointment status updated",
+        data: updatedAppointment,
+      });
   } catch (error) {
     logger.error("Update appointment status error:", {
       error: error.message,
@@ -937,7 +996,7 @@ exports.getDoctorProfileStats = async (req, res, next) => {
         completedConsultations: completedCounts.completed || 0,
         averageRating: null,
         yearsExperience: doctor?.experience || 0,
-      }
+      },
     });
   } catch (error) {
     logger.error("Doctor profile stats error:", {
@@ -1076,7 +1135,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
             hospitalId: patient.hospital_id || patient.hospitalId,
           },
           isExisting: true,
-        }
+        },
       });
     }
 
@@ -1183,7 +1242,7 @@ exports.registerWalkInPatient = async (req, res, next) => {
           userId: nextPatientUserId,
         },
         isExisting: false,
-      }
+      },
     });
   } catch (error) {
     logger.error("Register walk-in patient error:", {
@@ -1257,7 +1316,13 @@ exports.updateProfile = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return res.status(200).json({ success: true, message: "Profile Updated Successfully", data: doctor });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Profile Updated Successfully",
+        data: doctor,
+      });
   } catch (error) {
     logger.error("Update profile error:", {
       error: error.message,
@@ -1328,7 +1393,7 @@ exports.getConsultationHistory = async (req, res, next) => {
           totalItems: total,
           itemsPerPage: parseInt(limit),
         },
-      }
+      },
     });
   } catch (error) {
     logger.error("Get consultation history error:", {
@@ -1396,10 +1461,22 @@ exports.getSchedule = async (req, res, next) => {
         logger.warn("Failed to invalidate cache:", cacheError.message);
       }
 
-      return res.status(200).json({ success: true, message: "Schedule retrieved successfully", data: created });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: "Schedule retrieved successfully",
+          data: created,
+        });
     }
 
-    return res.status(200).json({ success: true, message: "Schedule retrieved successfully", data: schedules });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Schedule retrieved successfully",
+        data: schedules,
+      });
   } catch (error) {
     logger.error("Get schedule error:", {
       error: error.message,
@@ -1431,7 +1508,13 @@ exports.updateSchedule = async (req, res, next) => {
       "sunday",
     ];
     if (!validDays.includes(dayOfWeek.toLowerCase())) {
-      return res.status(400).json({ success: false, message: "Invalid day of week", code: "VALIDATION_ERROR" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Invalid day of week",
+          code: "VALIDATION_ERROR",
+        });
     }
 
     // Find and update or create new schedule
@@ -1475,7 +1558,13 @@ exports.updateSchedule = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return res.status(200).json({ success: true, message: "Schedule updated successfully", data: schedule });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Schedule updated successfully",
+        data: schedule,
+      });
   } catch (error) {
     logger.error("Update schedule error:", {
       error: error.message,
@@ -1536,7 +1625,13 @@ exports.toggleDayAvailability = async (req, res, next) => {
       logger.warn("Failed to invalidate cache:", cacheError.message);
     }
 
-    return res.status(200).json({ success: true, message: `${dayOfWeek} availability updated`, data: updatedSchedule });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: `${dayOfWeek} availability updated`,
+        data: updatedSchedule,
+      });
   } catch (error) {
     logger.error("Toggle availability error:", {
       error: error.message,

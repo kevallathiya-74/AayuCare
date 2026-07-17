@@ -1,5 +1,4 @@
 const { query } = require("../../config/postgres");
-const { mapPaymentData, mapArray } = require("../../utils/fieldMapper");
 const { AppError } = require("../../middleware/errorHandler");
 
 /**
@@ -53,8 +52,8 @@ class PaymentRepository {
             INSERT INTO payments (payment_id, appointment_id, patient_id, doctor_id, amount, 
                                  currency, payment_method, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
-            RETURNING id, payment_id, appointment_id, patient_id, doctor_id, amount, currency,
-                      status, payment_method, created_at, updated_at
+            RETURNING id, payment_id AS "paymentId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", amount, currency,
+                      status, payment_method AS "paymentMethod", created_at AS "createdAt", updated_at AS "updatedAt"
         `;
 
     const result = await query(sql, [
@@ -67,7 +66,7 @@ class PaymentRepository {
       paymentMethod || null,
     ]);
 
-    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
+    return result.rows[0] || null;
   }
 
   /**
@@ -77,10 +76,25 @@ class PaymentRepository {
    */
   async findById(id) {
     const sql = `
-            SELECT p.*, 
-                   a.appointment_date, a.appointment_time,
-                   pat.name as patient_name, pat.email as patient_email,
-                   doc.name as doctor_name, doc.email as doctor_email
+            SELECT p.id,
+                   p.payment_id AS "paymentId",
+                   p.appointment_id AS "appointmentId",
+                   p.patient_id AS "patientId",
+                   p.doctor_id AS "doctorId",
+                   p.amount,
+                   p.currency,
+                   p.payment_method AS "paymentMethod",
+                   p.transaction_id AS "transactionId",
+                   p.payment_gateway AS "paymentGateway",
+                   p.status,
+                   p.paid_at AS "paidAt",
+                   p.refunded_at AS "refundedAt",
+                   p.refund_amount AS "refundAmount",
+                   p.created_at AS "createdAt",
+                   p.updated_at AS "updatedAt",
+                   a.appointment_date AS "appointmentDate", a.appointment_time AS "appointmentTime",
+                   pat.name as "patientName", pat.email as "patientEmail",
+                   doc.name as "doctorName", doc.email as "doctorEmail"
             FROM payments p
             LEFT JOIN appointments a ON p.appointment_id = a.id
             LEFT JOIN users pat ON p.patient_id = pat.id
@@ -89,7 +103,7 @@ class PaymentRepository {
         `;
 
     const result = await query(sql, [id]);
-    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
+    return result.rows[0] || null;
   }
 
   /**
@@ -99,13 +113,17 @@ class PaymentRepository {
    */
   async findByAppointmentId(appointmentId) {
     const sql = `
-            SELECT * FROM payments
-            WHERE appointment_id = $1
+            SELECT p.id, p.payment_id AS "paymentId", p.appointment_id AS "appointmentId", p.patient_id AS "patientId",
+                   p.doctor_id AS "doctorId", p.amount, p.currency, p.payment_method AS "paymentMethod",
+                   p.transaction_id AS "transactionId", p.payment_gateway AS "paymentGateway", p.status, p.paid_at AS "paidAt",
+                   p.refunded_at AS "refundedAt", p.refund_amount AS "refundAmount", p.created_at AS "createdAt", p.updated_at AS "updatedAt"
+            FROM payments p
+            WHERE p.appointment_id = $1
             LIMIT 1
         `;
 
     const result = await query(sql, [appointmentId]);
-    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
+    return result.rows[0] || null;
   }
 
   /**
@@ -122,9 +140,24 @@ class PaymentRepository {
     );
 
     const sql = `
-            SELECT p.*,
-                   a.appointment_date, a.appointment_time,
-                   d.name as doctor_name,
+            SELECT p.id,
+                   p.payment_id AS "paymentId",
+                   p.appointment_id AS "appointmentId",
+                   p.patient_id AS "patientId",
+                   p.doctor_id AS "doctorId",
+                   p.amount,
+                   p.currency,
+                   p.payment_method AS "paymentMethod",
+                   p.transaction_id AS "transactionId",
+                   p.payment_gateway AS "paymentGateway",
+                   p.status,
+                   p.paid_at AS "paidAt",
+                   p.refunded_at AS "refundedAt",
+                   p.refund_amount AS "refundAmount",
+                   p.created_at AS "createdAt",
+                   p.updated_at AS "updatedAt",
+                   a.appointment_date AS "appointmentDate", a.appointment_time AS "appointmentTime",
+                   d.name as "doctorName",
                    doc.specialization
             FROM payments p
             LEFT JOIN appointments a ON p.appointment_id = a.id
@@ -139,7 +172,7 @@ class PaymentRepository {
       `${sql} ORDER BY p.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
-    return mapArray(result.rows, mapPaymentData);
+    return result.rows;
   }
 
   /**
@@ -203,13 +236,13 @@ class PaymentRepository {
             UPDATE payments
             SET ${updateFields.join(", ")}
             WHERE id = $${paramCount}
-            RETURNING id, payment_id, appointment_id, patient_id, doctor_id, amount, currency,
-                      status, payment_method, transaction_id, payment_gateway, paid_at,
-                      refunded_at, refund_amount, created_at, updated_at
+            RETURNING id, payment_id AS "paymentId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", amount, currency,
+                      status, payment_method AS "paymentMethod", transaction_id AS "transactionId", payment_gateway AS "paymentGateway", paid_at AS "paidAt",
+                      refunded_at AS "refundedAt", refund_amount AS "refundAmount", created_at AS "createdAt", updated_at AS "updatedAt"
         `;
 
     const result = await query(sql, values);
-    return result.rows[0] ? mapPaymentData(result.rows[0]) : null;
+    return result.rows[0] || null;
   }
 
   /**
@@ -222,10 +255,10 @@ class PaymentRepository {
 
     let sql = `
             SELECT 
-                COUNT(*) as total_payments,
-              SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END) as total_revenue,
-              SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END) as pending_amount,
-              AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as average_payment
+                COUNT(*) as "totalPayments",
+              SUM(CASE WHEN p.status = 'completed' THEN p.amount ELSE 0 END) as "totalRevenue",
+              SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END) as "pendingAmount",
+              AVG(CASE WHEN p.status = 'completed' THEN p.amount ELSE NULL END) as "averagePayment"
             FROM payments p
             LEFT JOIN appointments a ON p.appointment_id = a.id
             WHERE 1=1
@@ -259,7 +292,7 @@ class PaymentRepository {
     }
 
     const result = await query(sql, params);
-    return mapPaymentData(result.rows[0]);
+    return result.rows[0] || null;
   }
 }
 

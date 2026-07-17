@@ -36,7 +36,7 @@ import {
 import { theme, healthColors } from "@/theme";
 import { doctorService, adminService } from "@/services";
 import { logError, parseError } from "@/utils/errorHandler";
-import logger from "@/utils/logger";
+
 import { EmptyState, SearchField, SkeletonCardRow } from "@/components/common";
 import DoctorModal from "./DoctorModal";
 import { handleSmartBack } from "@/utils/navigation";
@@ -164,12 +164,6 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       }
 
       const newStatus = !doctor.isActive;
-      logger.debug("ManageDoctorsScreen", "Updating doctor status", {
-        doctorId: doctor.id,
-        userId: doctor.userId,
-        currentStatus: doctor.isActive,
-        requestedStatus: newStatus,
-      });
 
       Alert.alert(
         newStatus ? "Activate Doctor" : "Deactivate Doctor",
@@ -183,14 +177,10 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
             onPress: async () => {
               setUpdatingId(doctor.id || doctor.userId);
               try {
-                const response = await adminService.updateUserStatus(
+                await adminService.updateUserStatus(
                   doctor.userId,
                   newStatus
                 );
-                logger.debug("ManageDoctorsScreen", "Status update response", {
-                  success: response.success,
-                  updatedStatus: response.data?.isActive,
-                });
 
                 // Invalidate cache global
                 queryClient.invalidateQueries({
@@ -361,10 +351,10 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
     ]
   );
 
-  const handleDoctorPress = (doctor) => {
+  const handleDoctorPress = useCallback((doctor) => {
     setSelectedDoctor(doctor);
     setShowDetailsModal(true);
-  };
+  }, []);
 
   useEffect(() => {
     if (!doctorIdFromRoute && !doctorPayloadFromRoute) {
@@ -401,7 +391,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       }
     );
   
-  }, [doctorIdFromRoute, doctorPayloadFromRoute, doctors, navigation]);  
+  }, [doctorIdFromRoute, doctorPayloadFromRoute, doctors, navigation, handleDoctorPress]);  
 
   const renderDoctor = useCallback(
     ({ item }) => (
@@ -521,6 +511,7 @@ const ManageDoctorsScreen = ({ navigation, route }) => {
       handleEditDoctor,
       handleDeleteDoctor,
       updatingId,
+      t,
     ]
   );
 

@@ -20,7 +20,7 @@ import { formatDate } from "@/utils/helpers";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import adminService from "@/services/admin.service";
-import logger from "@/utils/logger";
+
 import { showError } from "@/utils/errorHandler";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/reactQueryConfig";
@@ -272,7 +272,7 @@ const PatientModal = ({
         }
       }
     } catch (error) {
-      logger.error("PatientModal", "Submit error", error);
+      console.error("PatientModal", "Submit error", error);
       showError(
         error,
         mode === "add" ? "Registration Failed" : "Update Failed",

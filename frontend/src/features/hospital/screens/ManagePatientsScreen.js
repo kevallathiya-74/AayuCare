@@ -37,7 +37,7 @@ import { theme, healthColors } from "@/theme";
 import { patientService, adminService, doctorService } from "@/services";
 import { logError, parseError } from "@/utils/errorHandler";
 import { calculateAge } from "@/utils/dateHelpers";
-import logger from "@/utils/logger";
+
 import { EmptyState, SearchField, SkeletonCardRow } from "@/components/common";
 import { EmptyStateConfig } from "@/utils/constants";
 import PatientModal from "./PatientModal";
@@ -207,12 +207,6 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       }
 
       const newStatus = !patient.isActive;
-      logger.debug("ManagePatientsScreen", "Updating patient status", {
-        patientId: patient.id,
-        userId: patient.userId,
-        currentStatus: patient.isActive,
-        requestedStatus: newStatus,
-      });
 
       Alert.alert(
         newStatus ? "Activate Patient" : "Deactivate Patient",
@@ -226,15 +220,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
             onPress: async () => {
               setUpdatingId(patient.id || patient.userId);
               try {
-                const response = await adminService.updateUserStatus(
+                await adminService.updateUserStatus(
                   patient.userId,
                   newStatus
                 );
-
-                logger.debug("ManagePatientsScreen", "Status update response", {
-                  success: response.success,
-                  updatedStatus: response.data?.isActive,
-                });
 
                 queryClient.invalidateQueries({
                   queryKey: queryKeys.patients.all,
@@ -405,10 +394,10 @@ const ManagePatientsScreen = ({ navigation, route }) => {
     ]
   );
 
-  const handlePatientPress = (patient) => {
+  const handlePatientPress = useCallback((patient) => {
     setSelectedPatient(patient);
     setShowDetailsModal(true);
-  };
+  }, []);
 
   const handleCreatePrescription = useCallback(
     (patient) => {
@@ -459,7 +448,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       }
     );
   
-  }, [patientIdFromRoute, patientPayloadFromRoute]);  
+  }, [patientIdFromRoute, patientPayloadFromRoute, handlePatientPress, patients, navigation]);  
 
   const renderPatient = useCallback(
     ({ item }) => {
@@ -612,6 +601,7 @@ const ManagePatientsScreen = ({ navigation, route }) => {
       handleDeletePatient,
       handleCreatePrescription,
       updatingId,
+      t,
     ]
   );
 

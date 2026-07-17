@@ -10,7 +10,7 @@ const create = async (data) => {
       prescription_id, appointment_id, patient_id, doctor_id, hospital_id,
       diagnosis, chief_complaint, medications, instructions, follow_up_date, pharmacy_status
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-    RETURNING *`,
+    RETURNING id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt"`,
     [
       prescriptionId,
       data.appointmentId || null,
@@ -29,7 +29,7 @@ const create = async (data) => {
 };
 
 const findById = async (id) => {
-  const { rows } = await query(`SELECT * FROM prescriptions WHERE id = $1`, [
+  const { rows } = await query(`SELECT id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM prescriptions WHERE id = $1`, [
     id,
   ]);
   return rows[0] || null;
@@ -37,7 +37,7 @@ const findById = async (id) => {
 
 const findByPrescriptionId = async (prescriptionId) => {
   const { rows } = await query(
-    `SELECT * FROM prescriptions WHERE prescription_id = $1`,
+    `SELECT id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM prescriptions WHERE prescription_id = $1`,
     [prescriptionId],
   );
   return rows[0] || null;
@@ -46,7 +46,7 @@ const findByPrescriptionId = async (prescriptionId) => {
 const findByPatientId = async (patientId, options = {}) => {
   const { limit = 50, offset = 0 } = options;
   const { rows } = await query(
-    `SELECT * FROM prescriptions WHERE patient_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+    `SELECT id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM prescriptions WHERE patient_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
     [patientId, limit, offset],
   );
   return rows;
@@ -55,7 +55,7 @@ const findByPatientId = async (patientId, options = {}) => {
 const findByDoctorId = async (doctorId, options = {}) => {
   const { limit = 50, offset = 0 } = options;
   const { rows } = await query(
-    `SELECT * FROM prescriptions WHERE doctor_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+    `SELECT id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM prescriptions WHERE doctor_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
     [doctorId, limit, offset],
   );
   return rows;
@@ -63,7 +63,7 @@ const findByDoctorId = async (doctorId, options = {}) => {
 
 const findWithFilters = async (filters = {}, options = {}) => {
   const { limit = 50, offset = 0 } = options;
-  let queryText = `SELECT * FROM prescriptions WHERE 1=1`;
+  let queryText = `SELECT id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM prescriptions WHERE 1=1`;
   const params = [];
   let paramIndex = 1;
 
@@ -177,7 +177,7 @@ const update = async (id, updates) => {
   if (fields.length === 0) return findById(id);
 
   const { rows } = await query(
-    `UPDATE prescriptions SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    `UPDATE prescriptions SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt"`,
     params,
   );
   return rows[0] || null;
@@ -185,7 +185,7 @@ const update = async (id, updates) => {
 
 const updatePharmacyStatus = async (id, status) => {
   const { rows } = await query(
-    `UPDATE prescriptions SET pharmacy_status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
+    `UPDATE prescriptions SET pharmacy_status = $2, updated_at = NOW() WHERE id = $1 RETURNING id, prescription_id AS "prescriptionId", appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", diagnosis, chief_complaint AS "chiefComplaint", medications, instructions, follow_up_date AS "followUpDate", pharmacy_status AS "pharmacyStatus", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt"`,
     [id, status],
   );
   return rows[0] || null;

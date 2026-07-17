@@ -1,7 +1,5 @@
-const { query } = require("../../config/postgres");
+const { query, getClient } = require("../../config/postgres");
 const { AppError } = require("../../middleware/errorHandler");
-const { mapAppointmentData, mapPaymentData, mapArray } = require("../../utils/fieldMapper");
-const { withTransaction } = require("../../utils/transaction");
 
 /**
  * Appointment Repository - PostgreSQL data access layer
@@ -29,8 +27,10 @@ class AppointmentRepository {
             INSERT INTO appointments (appointment_id, patient_id, doctor_id, hospital_id, 
                                      appointment_date, appointment_time, type, symptoms, chief_complaint, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'scheduled')
-            RETURNING id, appointment_id, patient_id, doctor_id, hospital_id, appointment_date,
-                      appointment_time, status, type, symptoms, chief_complaint, created_at, updated_at
+            RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
         `;
 
     const result = await query(sql, [
@@ -45,7 +45,7 @@ class AppointmentRepository {
       chiefComplaint || null,
     ]);
 
-    return mapAppointmentData(result.rows[0]);
+    return result.rows[0];
   }
 
   /**
@@ -55,12 +55,17 @@ class AppointmentRepository {
    * @returns {Promise<Object>} Created appointment and payment
    */
   async createWithPayment(appointmentData, paymentData) {
-    return withTransaction(async (client) => {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
       const appointmentSql = `
         INSERT INTO appointments (appointment_id, patient_id, doctor_id, hospital_id, 
                                  appointment_date, appointment_time, type, symptoms, chief_complaint, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'scheduled')
-        RETURNING *
+        RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
       `;
       const appointmentResult = await client.query(appointmentSql, [
         appointmentData.appointmentId,
@@ -73,13 +78,16 @@ class AppointmentRepository {
         appointmentData.symptoms || [],
         appointmentData.chiefComplaint || null,
       ]);
-      const appointment = mapAppointmentData(appointmentResult.rows[0]);
+      const appointment = appointmentResult.rows[0];
 
       const paymentSql = `
         INSERT INTO payments (payment_id, appointment_id, patient_id, doctor_id, amount, 
                              currency, payment_method, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
-        RETURNING *
+        RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
       `;
       const paymentResult = await client.query(paymentSql, [
         paymentData.paymentId,
@@ -90,10 +98,16 @@ class AppointmentRepository {
         paymentData.currency || "INR",
         paymentData.paymentMethod || null,
       ]);
-      const payment = mapPaymentData(paymentResult.rows[0]);
+      const payment = paymentResult.rows[0];
 
+      await client.query("COMMIT");
       return { appointment, payment };
-    });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -104,14 +118,19 @@ class AppointmentRepository {
    * @returns {Promise<Object>} Updated appointment and payment
    */
   async cancelWithRefund(appointmentId, cancelledBy, cancellationReason) {
-    return withTransaction(async (client) => {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
       const appointmentSql = `
         UPDATE appointments
         SET status = 'cancelled', 
             cancelled_by = $1, 
             cancellation_reason = $2
         WHERE id = $3
-        RETURNING *
+        RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
       `;
       const appointmentResult = await client.query(appointmentSql, [
         cancelledBy,
@@ -127,13 +146,22 @@ class AppointmentRepository {
             refunded_at = NOW(),
             refund_amount = amount
         WHERE appointment_id = $1 AND status = 'completed'
-        RETURNING *
+        RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
       `;
       const paymentResult = await client.query(paymentSql, [appointmentId]);
       const payment = paymentResult.rows[0] || null;
 
+      await client.query("COMMIT");
       return { appointment, payment };
-    });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -143,12 +171,17 @@ class AppointmentRepository {
    * @returns {Promise<Object>} Updated appointment and payment
    */
   async completeWithPayment(appointmentId, notes = null) {
-    return withTransaction(async (client) => {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
       const appointmentSql = `
         UPDATE appointments
         SET status = 'completed', notes = COALESCE($1, notes)
         WHERE id = $2
-        RETURNING *
+        RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
       `;
       const appointmentResult = await client.query(appointmentSql, [
         notes,
@@ -161,13 +194,22 @@ class AppointmentRepository {
         UPDATE payments
         SET status = 'completed', paid_at = NOW()
         WHERE appointment_id = $1 AND status = 'pending'
-        RETURNING *
+        RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
       `;
       const paymentResult = await client.query(paymentSql, [appointmentId]);
       const payment = paymentResult.rows[0] || null;
 
+      await client.query("COMMIT");
       return { appointment, payment };
-    });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -177,7 +219,10 @@ class AppointmentRepository {
    */
   async findById(id) {
     const sql = `
-            SELECT a.*, 
+            SELECT a.id, a.appointment_id AS "appointmentId", a.patient_id AS "patientId", a.doctor_id AS "doctorId", a.hospital_id AS "hospitalId",
+                   a.appointment_date AS "appointmentDate", a.appointment_time AS "appointmentTime", a.status, a.type, a.symptoms,
+                   a.chief_complaint AS "chiefComplaint", a.notes, a.cancellation_reason AS "cancellationReason",
+                   a.cancelled_by AS "cancelledBy", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
                    p.name as patient_name, p.email as patient_email, p.phone as patient_phone,
                    d.name as doctor_name, d.email as doctor_email
             FROM appointments a
@@ -187,7 +232,7 @@ class AppointmentRepository {
         `;
 
     const result = await query(sql, [id]);
-    return mapAppointmentData(result.rows[0]) || null;
+    return result.rows[0] || null;
   }
 
   /**
@@ -208,7 +253,10 @@ class AppointmentRepository {
     } = filters;
 
     let sql = `
-            SELECT a.*, 
+            SELECT a.id, a.appointment_id AS "appointmentId", a.patient_id AS "patientId", a.doctor_id AS "doctorId", a.hospital_id AS "hospitalId",
+                   a.appointment_date AS "appointmentDate", a.appointment_time AS "appointmentTime", a.status, a.type, a.symptoms,
+                   a.chief_complaint AS "chiefComplaint", a.notes, a.cancellation_reason AS "cancellationReason",
+                   a.cancelled_by AS "cancelledBy", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
                    p.name as patient_name, p.email as patient_email,
                    d.name as doctor_name, d.email as doctor_email,
                    doc.specialization, doc.consultation_fee
@@ -266,7 +314,7 @@ class AppointmentRepository {
     const total = await this.countByPatient(patientId, filters);
     // Map snake_case to camelCase for frontend compatibility
     return {
-      appointments: mapArray(rows, mapAppointmentData),
+      appointments: rows,
       total,
     };
   }
@@ -289,7 +337,10 @@ class AppointmentRepository {
     } = filters;
 
     let sql = `
-            SELECT a.*, 
+            SELECT a.id, a.appointment_id AS "appointmentId", a.patient_id AS "patientId", a.doctor_id AS "doctorId", a.hospital_id AS "hospitalId",
+                   a.appointment_date AS "appointmentDate", a.appointment_time AS "appointmentTime", a.status, a.type, a.symptoms,
+                   a.chief_complaint AS "chiefComplaint", a.notes, a.cancellation_reason AS "cancellationReason",
+                   a.cancelled_by AS "cancelledBy", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
                    p.name as patient_name, p.email as patient_email, p.phone as patient_phone,
                    p.user_id as patient_user_id,
                    pat.date_of_birth, pat.gender, pat.blood_group
@@ -344,7 +395,7 @@ class AppointmentRepository {
 
     const result = await query(sql, params);
     // Map snake_case to camelCase for frontend compatibility
-    return mapArray(result.rows, mapAppointmentData);
+    return result.rows;
   }
 
   /**
@@ -365,7 +416,10 @@ class AppointmentRepository {
     } = filters;
 
     let sql = `
-            SELECT a.*, 
+            SELECT a.id, a.appointment_id AS "appointmentId", a.patient_id AS "patientId", a.doctor_id AS "doctorId", a.hospital_id AS "hospitalId",
+                   a.appointment_date AS "appointmentDate", a.appointment_time AS "appointmentTime", a.status, a.type, a.symptoms,
+                   a.chief_complaint AS "chiefComplaint", a.notes, a.cancellation_reason AS "cancellationReason",
+                   a.cancelled_by AS "cancelledBy", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
                    p.name as patient_name, p.email as patient_email,
                    d.name as doctor_name, d.email as doctor_email,
                    doc.specialization
@@ -427,7 +481,7 @@ class AppointmentRepository {
 
     const result = await query(sql, params);
     // Map snake_case to camelCase for frontend compatibility
-    return mapArray(result.rows, mapAppointmentData);
+    return result.rows;
   }
 
   /**
@@ -472,9 +526,10 @@ class AppointmentRepository {
             UPDATE appointments
             SET ${updateFields.join(", ")}
             WHERE id = $${paramCount}
-            RETURNING id, appointment_id, patient_id, doctor_id, hospital_id, appointment_date,
-                      appointment_time, status, type, symptoms, chief_complaint, notes,
-                      cancellation_reason, cancelled_by, created_at, updated_at
+            RETURNING id, appointment_id AS "appointmentId", patient_id AS "patientId", doctor_id AS "doctorId", hospital_id AS "hospitalId", 
+                                 appointment_date AS "appointmentDate", appointment_time AS "appointmentTime", status, type, symptoms, 
+                                 chief_complaint AS "chiefComplaint", notes, cancellation_reason AS "cancellationReason", 
+                                 cancelled_by AS "cancelledBy", created_at AS "createdAt", updated_at AS "updatedAt"
         `;
 
     const result = await query(sql, values);

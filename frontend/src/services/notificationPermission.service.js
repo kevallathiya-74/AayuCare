@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import { getItem, setItem } from "../utils/appStorage";
 import { APP_CONFIG } from "../config/appConfig";
 
@@ -10,7 +9,6 @@ const DEFAULT_SETTINGS = {
 };
 
 const isNotificationRuntimeSupported = () => {
-  if (Platform.OS === "web") return false;
   if (APP_CONFIG?.env?.isExpoGo) return false;
   return true;
 };

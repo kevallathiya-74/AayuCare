@@ -61,7 +61,7 @@ const phiRedactFormat = winston.format((info) => {
 });
 
 const logger = winston.createLogger({
-  level: APP_ENV.logging.level,
+  level: APP_ENV.logLevel,
   format: winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.errors({ stack: true }),

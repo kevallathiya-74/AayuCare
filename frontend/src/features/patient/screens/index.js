@@ -3,7 +3,7 @@
  * Export all patient-related screens
  */
 
-export { default as PatientDashboard } from "./PatientDashboard";
+export { default as PatientDashboardScreen } from "./PatientDashboardScreen";
 export { default as ProfileScreen } from "./ProfileScreen";
 export { default as MyAppointmentsScreen } from "./MyAppointmentsScreen";
 export { default as MyReportsScreen } from "./MyReportsScreen";
@@ -13,8 +13,8 @@ export { default as DiseaseInfoScreen } from "./DiseaseInfoScreen";
 export { default as HospitalEventsScreen } from "./HospitalEventsScreen";
 export { default as PharmacyBillingScreen } from "./PharmacyBillingScreen";
 export { default as MedicalRecordsScreen } from "./MedicalRecordsScreen";
-export { default as AISymptomChecker } from "./AISymptomChecker";
-export { default as EmergencyServices } from "./EmergencyServices";
+export { default as AISymptomCheckerScreen } from "./AISymptomCheckerScreen";
+export { default as EmergencyServicesScreen } from "./EmergencyServicesScreen";
 export { default as AIHealthAssistantScreen } from "./AIHealthAssistantScreen";
 export { default as SpecialistCareFinderScreen } from "./SpecialistCareFinderScreen";
 export { default as DoctorProfileViewScreen } from "./DoctorProfileViewScreen";
