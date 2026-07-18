@@ -30,7 +30,6 @@
       "package": "com.aayucare.app",
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
-      "edgeToEdgeEnabled": true,
       "permissions": ["INTERNET", "CAMERA", "READ_MEDIA_IMAGES"]
     },
     "updates": {

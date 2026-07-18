@@ -6,60 +6,56 @@
 
 import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
+import {
+  View,
+  Text,
+  StyleSheet,
+  useWindowDimensions,
+  Animated,
   Easing,
-  runOnJS,
-} from "react-native-reanimated";
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { healthColors, textStyles, spacing, theme } from "@/theme";
-
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 const SplashScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const { isAuthenticated, user, isLoading } = useAuth(
-    (state) => state.auth || {}
+    (state) => state.auth || {},
   );
   const routed = useRef(false);
   const { height } = useWindowDimensions();
 
-  // Reanimated shared values
-  const opacity = useSharedValue(1);
-  const pulseScale = useSharedValue(1);
+  const opacity = useRef(new Animated.Value(1)).current;
+  const pulseScale = useRef(new Animated.Value(1)).current;
 
-  // Start pulsing animation on mount
   useEffect(() => {
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1, // Infinite repeat
-      true
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseScale, {
+          toValue: 1.05,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseScale, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
   }, [pulseScale]);
 
   useEffect(() => {
-    if (routed.current) {
-      return;
-    }
-
-    if (isLoading) {
-      
-      return;
-    }
+    if (routed.current) return;
+    if (isLoading) return;
 
     routed.current = true;
 
     if (!isAuthenticated) {
-      
       navigation.replace("BoxSelection");
       return;
     }
@@ -67,49 +63,27 @@ const SplashScreen = ({ navigation }) => {
     const role = user?.role;
 
     const navigateTo = (screen) => {
-      // Fade out animation before navigating
-      opacity.value = withTiming(
-        0,
-        { duration: 400, easing: Easing.inOut(Easing.ease) },
-        () => {
-          runOnJS(navigation.replace)(screen);
-        }
-      );
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 400,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }).start(() => {
+        navigation.replace(screen);
+      });
     };
 
-    if (role === "admin") {
-      navigateTo("AdminTabs");
-      return;
-    }
-
-    if (role === "doctor") {
-      navigateTo("DoctorTabs");
-      return;
-    }
-
-    if (role === "patient") {
-      navigateTo("PatientTabs");
-      return;
-    }
+    if (role === "admin") return navigateTo("AdminTabs");
+    if (role === "doctor") return navigateTo("DoctorTabs");
+    if (role === "patient") return navigateTo("PatientTabs");
 
     navigateTo("BoxSelection");
   }, [isAuthenticated, user?.id, user?.role, isLoading, navigation, opacity]);
 
-  const animatedContainerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    flex: 1,
-    backgroundColor: healthColors.background.primary,
-  }));
-
-  const animatedLogoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  // Dynamic logo size based on screen height
   const logoSize = height < 600 ? 80 : 96;
 
   return (
-    <Animated.View style={animatedContainerStyle}>
+    <Animated.View style={[styles.container, { opacity }]}>
       <SafeAreaView
         style={styles.container}
         edges={["top", "left", "right", "bottom"]}
@@ -118,8 +92,10 @@ const SplashScreen = ({ navigation }) => {
           <Animated.View
             style={[
               styles.logoContainer,
-              animatedLogoStyle,
-              { borderRadius: (logoSize + spacing.md * 2) / 2 },
+              {
+                borderRadius: (logoSize + spacing.md * 2) / 2,
+                transform: [{ scale: pulseScale }],
+              },
             ]}
           >
             <Image
@@ -129,8 +105,10 @@ const SplashScreen = ({ navigation }) => {
               transition={300}
             />
           </Animated.View>
-          <Text style={styles.title}>{t('aayucare')}</Text>
-          <Text style={styles.subtitle}>{t('elevating_healthcare_together')}e Together</Text>
+          <Text style={styles.title}>{t("aayucare")}</Text>
+          <Text style={styles.subtitle}>
+            {t("elevating_healthcare_together")}e Together
+          </Text>
         </View>
       </SafeAreaView>
     </Animated.View>
