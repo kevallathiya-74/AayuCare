@@ -28,6 +28,7 @@ export { default as SkeletonLoader } from "../ui/SkeletonLoader";
 export { SkeletonCardRow, SkeletonStatGrid } from "../ui/SkeletonLoader";
 export { default as SectionHeader } from "../ui/SectionHeader";
 export { default as ModalSheet } from "../ui/ModalSheet";
+export { FilterHeaderRow, FilterSectionTitle, FilterSelectField, FilterDropdownList, FilterChipGroup } from "../ui/FilterComponents";
 
 // health/ sub-folder
 

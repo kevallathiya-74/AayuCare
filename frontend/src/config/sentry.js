@@ -1,101 +1,81 @@
 /**
  * Sentry Configuration
- *
- * Centralizes Sentry initialization with proper environment handling
- * Gracefully handles Expo Go limitations
+ * Safe for Expo Go + Development + Production
  */
 
 import Constants from "expo-constants";
 
-// Lazy import Sentry to prevent crash if not available
+// Lazy load Sentry
 let Sentry = null;
+
 try {
   Sentry = require("@sentry/react-native");
-} catch {
+} catch (e) {
   if (__DEV__) {
-    console.warn("[Sentry] Module not available in Expo Go");
+    console.warn("[Sentry] Module not available.");
   }
 }
 
 /**
- * Check if running in Expo Go
- * Expo Go doesn't support native Sentry features
+ * Expo execution environment
+ *
+ * Possible values:
+ * "storeClient" -> Expo Go / Dev Client
+ * "standalone" -> Production Build
+ * "bare"        -> Bare React Native
  */
 
-const isExpoGo =
-  Constants.executionEnvironment === Constants.ExecutionEnvironment.StoreClient;
+const executionEnvironment = Constants?.executionEnvironment;
 
-/**
- * Track initialization state
- */
+const isExpoGo = executionEnvironment === "storeClient";
+
+if (__DEV__) {
+  console.log("[Sentry] Execution Environment:", executionEnvironment);
+  console.log("[Sentry] Is Expo Go:", isExpoGo);
+}
+
 let sentryInitialized = false;
 
-/**
- * Get Sentry DSN from configuration
- */
 const getSentryDSN = () => {
   try {
-    // Try expo config extra
     const dsn =
-      Constants.expoConfig?.extra?.SENTRY_DSN ||
-      Constants.expoConfig?.extra?.sentryDSN ||
+      Constants?.expoConfig?.extra?.SENTRY_DSN ??
+      Constants?.expoConfig?.extra?.sentryDSN ??
       null;
 
-    // Validate DSN format - ensure dsn is a string before calling includes
     if (
-      dsn &&
       typeof dsn === "string" &&
-      !dsn.includes("your-dsn-here") &&
+      dsn.trim() !== "" &&
       dsn !== "null" &&
-      dsn !== ""
+      !dsn.includes("your-dsn-here")
     ) {
       return dsn;
     }
-  } catch {
-    if (__DEV__) {
-      console.warn("[Sentry] Error getting DSN");
-    }
-  }
 
-  return null;
+    return null;
+  } catch (e) {
+    console.warn("[Sentry] Failed reading DSN.", e);
+    return null;
+  }
 };
 
-/**
- * Initialize Sentry with proper configuration
- * Safe for both Expo Go and EAS builds
- */
-const initializeSentry = () => {
-  // Skip if already initialized
-  if (sentryInitialized) {
-    if (__DEV__) {
-      console.warn("[Sentry] Already initialized");
-    }
-    return;
-  }
+export function initializeSentry() {
+  if (sentryInitialized) return;
 
-  // Skip in Expo Go
   if (isExpoGo) {
-    if (__DEV__) {
-      console.warn("[Sentry] Skipped - running in Expo Go");
-    }
+    console.log("[Sentry] Running inside Expo Go. Initialization skipped.");
     return;
   }
 
-  // Skip if Sentry module not available
   if (!Sentry) {
-    if (__DEV__) {
-      console.warn("[Sentry] Skipped - module not available");
-    }
+    console.warn("[Sentry] SDK unavailable.");
     return;
   }
 
   const dsn = getSentryDSN();
 
-  // Skip if no DSN configured
   if (!dsn) {
-    if (__DEV__) {
-      console.warn("[Sentry] Skipped - no DSN configured");
-    }
+    console.warn("[Sentry] No DSN configured.");
     return;
   }
 
@@ -104,141 +84,56 @@ const initializeSentry = () => {
       dsn,
       debug: __DEV__,
       environment: __DEV__ ? "development" : "production",
-      enableAutoSessionTracking: true,
-      sessionTrackingIntervalMillis: 30000,
-      tracesSampleRate: __DEV__ ? 1.0 : 0.2,
-      enableNative: !isExpoGo,
-      enableNativeCrashHandling: !isExpoGo,
+      tracesSampleRate: __DEV__ ? 1 : 0.2,
       attachStacktrace: true,
-      beforeSend(event) {
-        // Filter out development errors
-        if (__DEV__) {
-          console.warn("[Sentry] Event captured:", event);
-        }
-        return event;
-      },
     });
 
     sentryInitialized = true;
-    if (__DEV__) {
-      console.warn("[Sentry] Initialized successfully");
-    }
+
+    console.log("[Sentry] Initialized successfully.");
   } catch (error) {
-    if (__DEV__) {
-      console.error("[Sentry] Initialization failed:", error);
-    }
+    console.error("[Sentry] Initialization failed.", error);
   }
-};
+}
 
-/**
- * Check if Sentry is enabled
- */
-const isSentryEnabled = () => {
-  return sentryInitialized && !isExpoGo && !!Sentry;
-};
+function isSentryEnabled() {
+  return sentryInitialized && !!Sentry && !isExpoGo;
+}
 
-/**
- * Capture exception safely
- */
-export const captureException = (error, context = {}) => {
+export function captureException(error, context = {}) {
   if (!isSentryEnabled()) {
-    // No Sentry configured, just console log
-    console.error("[Error]", context, error);
-
+    console.error(error);
     return;
   }
 
-  try {
-    Sentry.captureException(error, {
-      tags: context.tags || {},
-      extra: context.extra || {},
-      level: context.level || "error",
-      contexts: context.contexts || {},
-    });
-  } catch (sentryError) {
-    if (__DEV__) {
-      console.error("[Sentry] Failed to capture exception:", sentryError);
-    }
-    if (__DEV__) {
-      console.error("[Original Error]", error);
-    }
-  }
-};
+  Sentry.captureException(error, context);
+}
 
-/**
- * Capture message safely
- */
-const captureMessage = (message, level = "info", context = {}) => {
+export function captureMessage(message, level = "info") {
   if (!isSentryEnabled()) {
-    console.warn(`[${level.toUpperCase()}]`, message, context);
-
+    console.log(`[${level}]`, message);
     return;
   }
 
-  try {
-    Sentry.captureMessage(message, {
-      level,
-      tags: context.tags || {},
-      extra: context.extra || {},
-    });
-  } catch (error) {
-    if (__DEV__) {
-      console.error("[Sentry] Failed to capture message:", error);
-    }
-  }
-};
+  Sentry.captureMessage(message, { level });
+}
 
-/**
- * Set user context
- */
-export const setUser = (user) => {
+export function setUser(user) {
   if (!isSentryEnabled()) return;
 
-  try {
-    Sentry.setUser(
-      user
-        ? {
-            id: user.id,
-            email: user.email,
-            username: user.name,
-          }
-        : null
-    );
-  } catch (error) {
-    if (__DEV__) {
-      console.error("[Sentry] Failed to set user:", error);
-    }
-  }
-};
+  Sentry.setUser(user || null);
+}
 
-/**
- * Add breadcrumb
- */
-const addBreadcrumb = (breadcrumb) => {
+export function addBreadcrumb(breadcrumb) {
   if (!isSentryEnabled()) return;
 
-  try {
-    Sentry.addBreadcrumb({
-      message: breadcrumb.message,
-      category: breadcrumb.category || "general",
-      level: breadcrumb.level || "info",
-      data: breadcrumb.data || {},
-    });
-  } catch (error) {
-    if (__DEV__) {
-      console.error("[Sentry] Failed to add breadcrumb:", error);
-    }
-  }
-};
+  Sentry.addBreadcrumb(breadcrumb);
+}
 
-/**
- * Default export with all methods
- */
 export default {
   initialize: initializeSentry,
   captureException,
   captureMessage,
   setUser,
   addBreadcrumb,
-  isEnabled: isSentryEnabled,
 };

@@ -4,21 +4,17 @@ import { useFonts } from "./src/hooks/useFonts";
 import { AuthProvider } from "./src/context/AuthContext";
 import { Provider as PaperProvider } from "react-native-paper";
 import { View, StyleSheet, LogBox, AppState, Platform } from "react-native";
-import {
-  focusManager,
-  onlineManager,
-} from "@tanstack/react-query";
+import { focusManager, onlineManager } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import NetInfo from "@react-native-community/netinfo";
-
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ToastProvider } from "./src/context/ToastContext";
 import ErrorBoundary from "./src/components/common/ErrorBoundary";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { initializeSentry } from "./src/config/sentry";
 import queryClient from "./src/config/reactQueryConfig";
 import { healthColors } from "./src/theme";
 import "./src/i18n";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
@@ -150,20 +146,18 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
-        <View style={styles.container} onLayout={onLayoutRootView}>
-          <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <PaperProvider theme={paperTheme}>
-                <ToastProvider>
+      <GestureHandlerRootView style={styles.container} onLayout={onLayoutRootView}>
+        <SafeAreaProvider>
+            <AuthProvider>
+              <QueryClientProvider client={queryClient}>
+                <PaperProvider theme={paperTheme}>
                   <StatusBar style="auto" />
                   <AppNavigator />
-                </ToastProvider>
-              </PaperProvider>
-            </QueryClientProvider>
-          </AuthProvider>
-        </View>
-      </SafeAreaProvider>
+                </PaperProvider>
+              </QueryClientProvider>
+            </AuthProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }

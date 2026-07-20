@@ -186,6 +186,8 @@ const getHeartRateCategory = (heartRate) => {
  * @param {string} status - The status string
  * @returns {Object} { color, backgroundColor } style object
  */
+export const getStatusColor = (status) => getStatusStyle(status).color;
+
 export const getStatusStyle = (status) => {
   if (!status)
     return {
