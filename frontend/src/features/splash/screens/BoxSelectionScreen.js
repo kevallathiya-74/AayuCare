@@ -129,7 +129,7 @@ const BoxSelectionScreen = ({ navigation }) => {
           <Text style={styles.welcomeText}>{t('welcome_to')}</Text>
           <Text style={styles.brandTitle}>{t('aayucare')}</Text>
           <View style={styles.subtitleWrap}>
-            <Text style={styles.subtitle}>{t('choose_your_role_to_get_starte')}</Text>
+            <Text style={styles.subtitle}>{t('choose_your_role_to_get_started', 'Choose your role to get started')}</Text>
           </View>
         </View>
 
@@ -184,8 +184,7 @@ const BoxSelectionScreen = ({ navigation }) => {
       >
         <View style={styles.modalContent}>
           <Text style={styles.modalBody}>
-            {t('the_user_section_is_currently_')} Please utilize the
-            Hospital portal for doctor and admin functions.
+            {t('the_user_section_is_currently_under_construction', 'The user section is currently under construction. Please utilize the Hospital portal for doctor and admin functions.')}
           </Text>
           <Button
             variant="primary"

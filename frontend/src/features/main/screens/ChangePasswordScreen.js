@@ -150,7 +150,7 @@ const ChangePasswordScreen = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>{t('update_your_password')}ate Your Password</Text>
+            <Text style={styles.cardTitle}>{t('update_your_password', 'Update Your Password')}</Text>
             <Text style={styles.cardSubtitle}>
               {t('for_account_security_use_a_str')}
             </Text>
@@ -195,7 +195,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   rules.minLength && styles.ruleTextValid,
                 ]}
               >
-                {t('at_least_8_characters')}t 8 characters
+                {t('at_least_8_characters', 'At least 8 characters')}
               </Text>
               <Text
                 style={[
@@ -203,7 +203,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   rules.hasUpper && styles.ruleTextValid,
                 ]}
               >
-                {t('one_uppercase_letter')}case letter
+                {t('one_uppercase_letter', 'One uppercase letter')}
               </Text>
               <Text
                 style={[
@@ -211,7 +211,7 @@ const ChangePasswordScreen = ({ navigation }) => {
                   rules.hasLower && styles.ruleTextValid,
                 ]}
               >
-                {t('one_lowercase_letter')}case letter
+                {t('one_lowercase_letter', 'One lowercase letter')}
               </Text>
               <Text
                 style={[

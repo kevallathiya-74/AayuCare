@@ -139,8 +139,14 @@ const connectPostgres = async () => {
  */
 const runMigrations = async () => {
   try {
+    const fs = require("fs");
     const pgm = require("node-pg-migrate");
     const migrationsPath = path.join(__dirname, "../../migrations");
+
+    if (!fs.existsSync(migrationsPath)) {
+      logger.info("ℹ️ No migrations directory found. Skipping automatic migrations.");
+      return;
+    }
 
     logger.info("🔄 Running database migrations...");
 
@@ -161,7 +167,7 @@ const runMigrations = async () => {
       logger.info("✅ Database schema is up-to-date (no migrations needed)");
     }
   } catch (error) {
-    const message = error?.message || String(error);
+    const message = error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
     const duplicateObjectDetected = /already exists|42P07|42P16/i.test(message);
 
     if (duplicateObjectDetected) {

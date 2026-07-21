@@ -13,11 +13,21 @@ class TwilioService {
     this.phoneNumber = process.env.TWILIO_PHONE_NUMBER;
     this.verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-    // Initialize Twilio client if credentials are provided
+    // Initialize Twilio client if credentials are provided and valid
     if (this.accountSid && this.authToken && this.phoneNumber) {
-      this.client = twilio(this.accountSid, this.authToken);
-      this.isConfigured = true;
-      logger.info("[Twilio] Service initialized successfully");
+      if (this.accountSid.startsWith("AC")) {
+        try {
+          this.client = twilio(this.accountSid, this.authToken);
+          this.isConfigured = true;
+          logger.info("[Twilio] Service initialized successfully");
+        } catch (error) {
+          this.isConfigured = false;
+          logger.warn(`[Twilio] Initialization failed: ${error.message}`);
+        }
+      } else {
+        this.isConfigured = false;
+        logger.warn("[Twilio] Invalid accountSid - must start with 'AC'. SMS features disabled.");
+      }
     } else {
       this.isConfigured = false;
       logger.warn("[Twilio] Service not configured - SMS features disabled");

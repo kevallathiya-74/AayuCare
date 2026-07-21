@@ -107,7 +107,7 @@ const SplashScreen = ({ navigation }) => {
           </Animated.View>
           <Text style={styles.title}>{t("aayucare")}</Text>
           <Text style={styles.subtitle}>
-            {t("elevating_healthcare_together")}e Together
+            {t("elevating_healthcare_together", "Elevating Healthcare Together")}
           </Text>
         </View>
       </SafeAreaView>

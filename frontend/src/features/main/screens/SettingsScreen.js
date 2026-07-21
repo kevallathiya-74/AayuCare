@@ -34,7 +34,7 @@ import { useNetworkStatus } from "@/utils/offlineHandler";
 import { getItem, setItem } from "@/utils/appStorage";
 import { handleSmartBack } from "@/utils/navigation";
 import Routes from "@/navigation/routes";
-import { setNotificationsEnabled } from "@/store/slices/permissionSlice";
+import notificationPermissionService from "@/services/notificationPermission.service";
 import { useTranslation } from 'react-i18next';
 
 const SETTINGS_STORAGE_KEY = "aayucare_notification_settings";
@@ -122,11 +122,17 @@ const SettingsScreen = ({ navigation }) => {
 
   const handleNotificationToggle = async (value) => {
     try {
-      const result = await setNotificationsEnabled(value).unwrap();
+      let result;
+      if (value) {
+        result = await notificationPermissionService.requestPermission();
+      } else {
+        // Just mock the result for disabling, since we can't un-request permissions
+        result = { notificationsEnabled: false, canAskAgain: true };
+      }
 
       if (
         value &&
-        !result.notificationsEnabled &&
+        !result.granted &&
         result.canAskAgain === false
       ) {
         Alert.alert(

@@ -22,6 +22,8 @@ const getAuthBaseURL = () => {
   return baseURL.replace(/\/api\/?$/, "");
 };
 
+import * as SecureStore from "expo-secure-store";
+
 // Create and configure the auth client
 const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
@@ -29,31 +31,7 @@ const authClient = createAuthClient({
     expoClient({
       scheme: "aayucare",
       storagePrefix: "aayucare_auth",
-      storage: {
-        getItem: (key) => {
-          try {
-            return appStorage.getItemSync(key);
-          } catch (error) {
-            if (__DEV__) logger.error("[Auth] Storage getItem error:", error);
-            return null;
-          }
-        },
-        setItem: async (key, value) => {
-          try {
-            await appStorage.setItem(key, value);
-          } catch (error) {
-            if (__DEV__) logger.error("[Auth] Storage setItem error:", error);
-          }
-        },
-        removeItem: async (key) => {
-          try {
-            await appStorage.deleteItem(key);
-          } catch (error) {
-            if (__DEV__)
-              logger.error("[Auth] Storage removeItem error:", error);
-          }
-        },
-      },
+      storage: SecureStore,
     }),
   ],
 });

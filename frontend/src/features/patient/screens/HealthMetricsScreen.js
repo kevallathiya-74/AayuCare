@@ -53,7 +53,6 @@ import { useNetworkStatus } from "@/utils/offlineHandler";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { healthMetricsService } from "@/services";
 import { handleSmartBack } from "@/utils/navigation";
-import { fetchHealthMetrics } from "@/store/slices/healthSlice";
 import { useTranslation } from 'react-i18next';
 
 const METRIC_TYPES = [
@@ -477,9 +476,6 @@ const HealthMetricsScreen = ({ navigation }) => {
 
   const handleRefresh = useCallback(() => {
     refetch();
-    if (user?.id) {
-      console.warn(fetchHealthMetrics(user.id));
-    }
   }, [refetch, user?.id]);
 
   const handleSaveMetric = useCallback(async () => {
