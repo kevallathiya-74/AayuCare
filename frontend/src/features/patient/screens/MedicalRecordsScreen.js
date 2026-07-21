@@ -40,7 +40,7 @@ import { getSafeAreaEdges } from "@/utils/responsive";
 import { getPatientMedicalRecords } from "@/services/medicalRecord.service";
 import { queryKeys } from "@/config/reactQueryConfig";
 import { parseError } from "@/utils/errorHandler";
-import { format, parseISO } from "date-fns";
+import { formatDate as formatDateHelper } from "@/utils/dateHelpers";
 import { handleSmartBack } from "@/utils/navigation";
 import { useTranslation } from 'react-i18next';
 
@@ -130,7 +130,7 @@ const getTypeMeta = (type = "") =>
 
 const formatDate = (dateStr) => {
   try {
-    return format(parseISO(dateStr), "MMM dd, yyyy");
+    return formatDateHelper(dateStr) || dateStr || "—";
   } catch {
     return dateStr || "—";
   }

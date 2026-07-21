@@ -3,6 +3,7 @@
     "name": "AayuCare",
     "slug": "aayucare",
     "version": "1.0.0",
+    "jsEngine": "jsc",
     "orientation": "portrait",
     "icon": "./assets/icons/app-icon.png",
     "userInterfaceStyle": "light",
@@ -30,7 +31,6 @@
       "package": "com.aayucare.app",
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
-      "edgeToEdgeEnabled": true,
       "permissions": ["INTERNET", "CAMERA", "READ_MEDIA_IMAGES"]
     },
     "updates": {

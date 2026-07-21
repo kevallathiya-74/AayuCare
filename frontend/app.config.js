@@ -7,7 +7,17 @@ module.exports = ({ config }) => {
 
   return {
     ...base,
-    plugins: [...(base.plugins || []), "expo-image"],
+    plugins: [
+      ...(base.plugins || []),
+      "expo-image",
+      [
+        "expo-secure-store",
+        {
+          "google-services-file":
+            "./secrets/google-services.json",
+        },
+      ],
+    ],
     updates: {
       ...base.updates,
       url: `https://u.expo.dev/${projectId}`,
