@@ -105,7 +105,7 @@ const DoctorModal = ({
   doctor = null,
 }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showSpecializationPicker, setShowSpecializationPicker] =
     useState(false);

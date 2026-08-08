@@ -3,7 +3,7 @@
     "name": "AayuCare",
     "slug": "aayucare",
     "version": "1.0.0",
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "orientation": "portrait",
     "icon": "./assets/icons/app-icon.png",
     "userInterfaceStyle": "light",

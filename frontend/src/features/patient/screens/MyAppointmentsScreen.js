@@ -98,7 +98,7 @@ const removeAppointmentFromInfinitePages = (currentData, appointmentId) => {
 const MyAppointmentsScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const [selectedTab, setSelectedTab] = useState("upcoming");
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 

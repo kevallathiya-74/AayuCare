@@ -21,9 +21,7 @@ import { useTranslation } from "react-i18next";
 
 const SplashScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { isAuthenticated, user, isLoading } = useAuth(
-    (state) => state.auth || {},
-  );
+  const { isAuthenticated, user, isLoading } = useAuth();
   const routed = useRef(false);
   const { height } = useWindowDimensions();
 

@@ -45,7 +45,7 @@ const AIHealthAssistantScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const [error] = useState(null);
   const { isConnected } = useNetworkStatus();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([

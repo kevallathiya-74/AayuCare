@@ -71,7 +71,7 @@ const AISymptomChecker = ({ navigation }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const { isConnected } = useNetworkStatus();
 
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);

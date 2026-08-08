@@ -92,7 +92,7 @@ Backend health endpoints typically run on:
 ## 2) Frontend setup
 
 1. Install dependencies:
-   cd frontend
+   cd 
    npm install
 
 2. Start Expo:

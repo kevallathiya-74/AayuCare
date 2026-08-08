@@ -55,7 +55,7 @@ const PAGE_SIZE = 15;
 
 const HospitalEventsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [registeredEventIds, setRegisteredEventIds] = useState(new Set());
   const [registeringId, setRegisteringId] = useState(null);

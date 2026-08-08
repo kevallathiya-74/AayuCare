@@ -52,7 +52,7 @@ const PAGE_SIZE = 20;
 
 const ManagePatientsScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const normalizedUserRole = String(user?.role || "").toLowerCase();
   const canManageUsers = ["admin", "super_admin"].includes(normalizedUserRole);
   const isSuperAdmin = normalizedUserRole === "super_admin";

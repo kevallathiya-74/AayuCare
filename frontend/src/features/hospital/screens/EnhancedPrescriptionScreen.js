@@ -24,7 +24,7 @@ import { logError } from "@/utils/errorHandler";
 
 const EnhancedPrescriptionScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const { patientId, appointmentId } = route.params || {};
   const insets = useSafeAreaInsets();
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || null);

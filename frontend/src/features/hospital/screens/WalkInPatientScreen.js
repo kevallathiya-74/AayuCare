@@ -44,7 +44,7 @@ import { useTranslation } from 'react-i18next';
 
 const WalkInPatientScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [formData, setFormData] = useState({

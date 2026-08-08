@@ -42,7 +42,7 @@ const PAGE_SIZE = 20;
 const MyPrescriptionsScreen = ({ navigation }) => {
   const { t } = useTranslation();
   const [selectedPrescription, setSelectedPrescription] = useState(null);
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   const {

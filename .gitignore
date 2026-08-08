@@ -1,63 +1,99 @@
+# ==============================================================================
+# AayuCare Workspace Git Ignore Configuration
+# ==============================================================================
+
 # Dependencies
 node_modules/
 backend/node_modules/
 frontend/node_modules/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
 
-# Expo
+# Build Outputs & Bundles
+dist/
+build/
+web-build/
+frontend/dist/
+frontend/build/
+frontend/android
+backend/dist/
+backend/build/
+.next/
+out/
+.turbo/
+.vercel/
+
+# Expo & Mobile Build Artifacts
 .expo/
 .expo-shared/
 frontend/.expo/
-web-build/
-dist/
+*.apk
+*.aab
+*.ipa
+*.app
 
-# Environment variables
+# Environment Variables & Secrets
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.keystore
 
-# Build outputs
-build/
-dist/
-coverage/
-
-# Logs
+# Logs & Runtime Cache
 *.log
-npm-debug.*
+npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+.cache/
+.tsbuildinfo
+dump.rdb
 
-# OS files
+# Database & Storage
+*.sqlite
+*.sqlite3
+*.db
+backend/*.sqlite
+backend/*.db
+
+# Test Coverage & Temp Reports
+coverage/
+.nyc_output/
+backend/coverage/
+frontend/coverage/
+*.tmp
+*.temp
+
+# Operating System Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
-# IDE
-.vscode/
+# IDE & Editor Specific Configuration
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# Certificates and keys
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
-*.pem
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-# Database
-*.sqlite
-*.db
-
-# Test coverage
-coverage/
-.nyc_output/
-# Only ignore test coverage output, not test source files
-backend/coverage
-dump.rdb
+# AI Agent Local Cache & Ephemeral Files
+.claude/local/
+.claude/*.local.json
+.agents/cache/
+.opencode/cache/

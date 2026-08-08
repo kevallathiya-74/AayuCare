@@ -110,7 +110,7 @@ const getDoctorExperienceText = (doctor) => {
 const AppointmentBookingScreen = ({ navigation, route }) => {
   const { t } = useTranslation();
   // Get authenticated user for hospitalId
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const params = route?.params || {};
   const rescheduleId = params.rescheduleId;
 

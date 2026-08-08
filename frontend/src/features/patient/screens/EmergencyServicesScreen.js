@@ -70,7 +70,7 @@ const EmergencyServices = ({ navigation }) => {
   const [error, setError] = useState(null);
 
   const insets = useSafeAreaInsets();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   // Build hospitals list: user's own hospital first, then generic placeholders
   const nearbyHospitals = [
     ...(user?.hospitalName

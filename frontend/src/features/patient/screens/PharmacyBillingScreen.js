@@ -52,7 +52,7 @@ const PharmacyBillingScreen = ({ navigation, route }) => {
   const [selectedPayment, setSelectedPayment] = useState("card");
 
   const { isConnected } = useNetworkStatus();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   // Get prescription from route params or fetch latest

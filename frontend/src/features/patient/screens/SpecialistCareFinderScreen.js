@@ -126,7 +126,7 @@ const getDoctorAvailabilityText = (doctor) => {
 
 const SpecialistCareFinderScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const selectedSpecialty = "All";
   const selectedAvailability = "Today";

@@ -49,13 +49,10 @@ const SettingsScreen = ({ navigation }) => {
   useNetworkStatus();
   const insets = useSafeAreaInsets();
   
-  const userRole = useAuth((state) => state.auth?.user?.role);
-  const notificationPermission = useAuth(
-    (state) => state.permissions?.notification || {}
-  );
-  const notificationsEnabled =
-    !!notificationPermission.granted &&
-    !!notificationPermission.notificationsEnabled;
+  const { user: authUser } = useAuth();
+  const userRole = authUser?.role;
+  const notificationPermission = {};
+  const notificationsEnabled = false;
 
   // Load persisted notification preferences on mount
   useEffect(() => {

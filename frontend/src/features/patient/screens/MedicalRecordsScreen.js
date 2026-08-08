@@ -265,7 +265,7 @@ const ErrorView = ({ message, onRetry }) => {
 
 const MedicalRecordsScreen = ({ navigation }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState("all");
   const {
     data,

@@ -95,7 +95,7 @@ const PatientModal = ({
   patient = null,
 }) => {
   const { t } = useTranslation();
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [showBloodGroupPicker, setShowBloodGroupPicker] = useState(false);

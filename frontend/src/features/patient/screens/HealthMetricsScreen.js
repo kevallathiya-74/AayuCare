@@ -383,7 +383,7 @@ const MetricCard = React.memo(({ config, latestMetric, onAddPress }) => {
 const HealthMetricsScreen = ({ navigation }) => {
   const { t } = useTranslation();
   
-  const { user } = useAuth((state) => state.auth);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { isConnected } = useNetworkStatus();
   const queryClient = useQueryClient();
